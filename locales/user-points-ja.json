@@ -1,0 +1,56 @@
+{
+  "points": {
+    "title": "ポイント",
+    "balance": "現在の残高",
+    "history": "ポイント履歴",
+    "daily_bonus": "デイリーボーナス",
+    "claim_bonus": "デイリーボーナスを受け取る",
+    "bonus_claimed": "ボーナスを受け取りました！",
+    "bonus_already_claimed": "今日はすでに受け取り済み",
+    "next_bonus": "次のボーナス受取可能時間",
+    "login_streak": "連続ログイン日数",
+    "days": "日",
+    "leaderboard": "ランキング",
+    "rank": "順位",
+    "earned": "獲得",
+    "spent": "消費",
+    "awarded": "付与",
+    "deducted": "減算",
+    "insufficient": "ポイントが足りません",
+    "transaction_types": {
+      "credit": "獲得",
+      "debit": "消費"
+    },
+    "sources": {
+      "system": "システム",
+      "chat": "チャット活動",
+      "image": "画像生成",
+      "daily_login": "デイリーログイン",
+      "admin": "管理者操作",
+      "purchase": "購入",
+      "bonus": "ボーナス",
+      "achievement": "実績"
+    },
+    "actions": {
+      "view_history": "履歴を見る",
+      "claim_daily": "デイリーボーナスを受け取る",
+      "view_leaderboard": "ランキングを見る"
+    },
+    "messages": {
+      "points_added": "ポイントが正常に追加されました",
+      "points_removed": "ポイントが正常に減算されました",
+      "daily_bonus_claimed": "デイリーボーナスを受け取りました！ +{points} ポイント",
+      "streak_bonus": "連続ボーナス！{streak}日目",
+      "insufficient_points": "この操作にはポイントが足りません",
+      "error": "ポイント処理中にエラーが発生しました"
+    },
+    "admin": {
+      "manage_points": "ユーザーポイント管理",
+      "set_points": "ポイントを設定",
+      "add_points": "ポイントを追加",
+      "remove_points": "ポイントを減算",
+      "reason": "理由",
+      "amount": "金額"
+    }
+  }
+}

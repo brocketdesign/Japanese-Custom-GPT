@@ -73,7 +73,7 @@ async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt) {
         const settings = await getUserChatToolSettings(db, userId, chatId);
         
         let enhancedPrompt = basePrompt;
-        
+        console.log({basePrompt})
         // Apply character tone
         const toneInstructions = {
             casual: 'Respond in a casual, friendly manner. Use informal language and be relaxed.',
@@ -84,7 +84,7 @@ async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt) {
         };
         
         if (toneInstructions[settings.characterTone]) {
-            enhancedPrompt += `\n\nTone Instructions: ${toneInstructions[settings.characterTone]}`;
+            enhancedPrompt += `\n\n# User preferences: \nTone Instructions: ${toneInstructions[settings.characterTone]}`;
         }
         
         // Apply relationship type
@@ -97,7 +97,7 @@ async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt) {
         };
         
         if (relationshipInstructions[settings.relationshipType]) {
-            enhancedPrompt += `\n\nRelationship Context: ${relationshipInstructions[settings.relationshipType]}`;
+            enhancedPrompt += `\nRelationship Context: ${relationshipInstructions[settings.relationshipType]}`;
         }
         
         return enhancedPrompt;

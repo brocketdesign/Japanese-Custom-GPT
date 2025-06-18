@@ -76,7 +76,7 @@ $(document).ready(async function() {
                         if(image && messageId){
                             const loaderElement = $(`
                                 <div id="${messageId}" class="d-flex flex-row justify-content-start mb-4 message-container assistant animate__animated animate__fadeIn">
-                                    <img src="${thumbnail || '/img/default-avatar.png'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="width: 45px; height: 45px; object-fit: cover; object-position: top;">
+                                    <img src="${thumbnail || '/img/default-avatar.png'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="width: 45px; height: 45px; object-fit: cover; object-position: top;" onclick="openCharacterInfoModal('${chatId}', event)">
                                     <div class="load d-flex justify-content-center align-items-center px-3">
                                         <img src="/img/image-placeholder.gif" width="50px" alt="loading">
                                     </div>
@@ -617,7 +617,7 @@ function setupChatInterface(chat, character) {
             const botResponseContainer = $(`
                 <div id="starter-${uniqueId}" class="starter-on">
                     <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
-                        <img src="${ thumbnail ? thumbnail : '/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;">
+                        <img src="${ thumbnail ? thumbnail : '/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;" onclick="openCharacterInfoModal('${chatId}', event)">
                         <div class="audio-controller">
                             <button id="play-${uniqueId}" 
                             class="audio-content badge bg-dark rounded-pill shadow-sm border-light">►</button>
@@ -750,7 +750,11 @@ function setupChatInterface(chat, character) {
                         messageHtml = `
                             <div id="container-${designStep}">
                                 <div class="d-flex flex-row justify-content-start mb-4 message-container">
-                                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
+                                    <img 
+                                    src="${thumbnail || '/img/logo.webp'}" 
+                                    alt="avatar 1" 
+                                    class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;"
+                                    onclick="openCharacterInfoModal('${chatId}', event)">
                                     <div class="ms-3 position-relative">
                                         <div 
                                         onclick="showImagePreview(this)"
@@ -803,7 +807,12 @@ function setupChatInterface(chat, character) {
                         messageHtml = `
                             <div id="container-${designStep}">
                                 <div class="d-flex flex-row justify-content-start mb-4 message-container">
-                                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
+                                    <img src="${thumbnail || '/img/logo.webp'}" 
+                                    alt="avatar 1" 
+                                    class="rounded-circle chatbot-image-chat" 
+                                    data-id="${chatId}" 
+                                    style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;"
+                                    onclick="openCharacterInfoModal('${chatId}', event)">
                                     <div class="ms-3 position-relative">
                                         <div 
                                         onclick="showImagePreview(this)"
@@ -872,7 +881,7 @@ function setupChatInterface(chat, character) {
                         messageHtml = `
                             <div id="container-${designStep}">
                                 <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
-                                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;">
+                                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;" onclick="openCharacterInfoModal('${chatId}', event)">
                                     <div class="audio-controller">
                                         <button id="play-${designStep}" 
                                         class="audio-content badge bg-dark rounded-pill shadow-sm border-light" data-content="${message}">►</button>
@@ -954,7 +963,7 @@ function setupChatInterface(chat, character) {
             const placeholderHtml = `
             <div id="container-${designStep}">
                 <div class="d-flex flex-row justify-content-start mb-4 message-container">
-                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
+                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;" onclick="openCharacterInfoModal('${chatId}', event)">
                     <div class="ms-3 position-relative">
                         <div 
                         onclick="showImagePreview(this)"
@@ -1014,7 +1023,7 @@ function setupChatInterface(chat, character) {
             const placeholderHtml = `
             <div id="container-${designStep}">
                 <div class="d-flex flex-row justify-content-start mb-4 message-container">
-                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
+                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;" onclick="openCharacterInfoModal('${chatId}', event)">
                     <div class="ms-3 position-relative">
                         <div 
                         onclick="showImagePreview(this)"
@@ -1092,7 +1101,7 @@ function setupChatInterface(chat, character) {
             const placeholderHtml = `
             <div id="container-${designStep}">
                 <div class="d-flex flex-row justify-content-start mb-4 message-container">
-                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
+                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;" onclick="openCharacterInfoModal('${chatId}', event)">
                     <div class="ms-3 position-relative" style="max-width: 200px;">
                         <div class="ps-0 text-start assistant-video-box">
                             <div id="video-${videoId}" class="video-loading-placeholder">
@@ -1349,7 +1358,7 @@ function setupChatInterface(chat, character) {
         const container = $(`
             <div id="container-${uniqueId}">
                 <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
-                    <img src="${thumbnail ? thumbnail : '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width:45px;width:45px;height:45px;border-radius:15%;object-fit:cover;object-position:top;cursor:pointer;">
+                    <img src="${thumbnail ? thumbnail : '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width:45px;width:45px;height:45px;border-radius:15%;object-fit:cover;object-position:top;cursor:pointer;" onclick="openCharacterInfoModal('${chatId}', event)">
                     <div class="audio-controller">
                         <button id="play-${uniqueId}" 
                         class="audio-content badge bg-dark rounded-pill shadow-sm border-light">►</button>
@@ -1458,7 +1467,7 @@ function setupChatInterface(chat, character) {
             
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
-                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
+                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;" onclick="openCharacterInfoModal('${chatId}', event)">
                     <div class="ms-3 position-relative">
                         <div 
                         onclick="showImagePreview(this)" 
@@ -1502,7 +1511,7 @@ function setupChatInterface(chat, character) {
         else if (messageClass === 'bot-image-nsfw'&& message instanceof HTMLElement) {
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass} unlock-nsfw" style="position: relative;">
-                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">
+                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;" onclick="openCharacterInfoModal('${chatId}', event)">
                     <div class="ms-3 position-relative">
                         <div 
                         onclick="showImagePreview(this)"
@@ -1525,7 +1534,7 @@ function setupChatInterface(chat, character) {
             const uniqueId = `completion-${currentStep}-${Date.now()}`;
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container ${animationClass}">
-                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top; cursor:pointer;">
+                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top; cursor:pointer;" onclick="openCharacterInfoModal('${chatId}', event)">
                     <div class="audio-controller">
                         <button id="play-${uniqueId}" 
                         class="audio-content badge bg-dark rounded-pill shadow-sm border-light" 

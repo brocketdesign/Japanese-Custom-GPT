@@ -62,72 +62,38 @@ $(document).on('click','#menu-chat, .menu-chat-sm',function(){
     }
 });
 
-$(document).on('click', '.delete-chat', function(e) {
-    e.preventDefault()
-    e.stopPropagation();
-    const chatId = $(this).data('id');
-    const userId = user._id
-    Swal.fire({
-        title: '本当に削除しますか？',
-        text: "この操作は元に戻せません！",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'はい、削除します！',
-        cancelButtonText: 'キャンセル'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            $.ajax({
-                url: `/api/delete-chat/${chatId}`,
-                type: 'DELETE',
-                data: { chatId },
-                success: function(response) {
-                    renderChatList(userId)
-                },
-                error: function(xhr, status, error) {
-                    Swal.fire(
-                        'エラー',
-                        'チャットの削除に失敗しました。',
-                        'error'
-                    );
-                }
-            });
+// Delete chat function
+function deleteChatHandler(chatId) {
+    const userId = user._id;
+    
+    $.ajax({
+        url: `/api/delete-chat/${chatId}`,
+        type: 'DELETE',
+        data: { chatId },
+        success: function(response) {
+            renderChatList(userId);
+            showNotification(translations.deleteSuccess, 'success');
+        },
+        error: function(xhr, status, error) {
+            showNotification(translations.error, 'error');
         }
     });
-});
-$(document).on('click', '.delete-chat-history', function(e) {
-    e.preventDefault()
-    e.stopPropagation();
-    const selectedChatId = $(this).data('id');
-    Swal.fire({
-        title: '本当に削除しますか？',
-        text: "この操作は元に戻せません！",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'はい、削除します！',
-        cancelButtonText: 'キャンセル'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            $.ajax({
-                url: `/api/delete-chat-history/${selectedChatId}`,
-                type: 'DELETE',
-                success: function(response) {
-                    $(document).find(`.user-chat-history[data-chat="${selectedChatId}"]`).fadeOut().remove()
-                },
-                error: function(xhr, status, error) {
-                    Swal.fire(
-                        'エラー',
-                        'チャットの削除に失敗しました。',
-                        'error'
-                    );
-                }
-            });
+}
+
+// Delete chat history function
+function deleteChatHistoryHandler(selectedChatId) {
+    $.ajax({
+        url: `/api/delete-chat-history/${selectedChatId}`,
+        type: 'DELETE',
+        success: function(response) {
+            $(document).find(`.user-chat-history[data-chat="${selectedChatId}"]`).fadeOut().remove();
+            showNotification(translations.deleteSuccess, 'success');
+        },
+        error: function(xhr, status, error) {
+            showNotification(translations.error, 'error');
         }
     });
-});
+}
 
 // Main function to display chat list
 function displayChatList(reset, userId) {
@@ -257,16 +223,69 @@ function displayChatList(reset, userId) {
     }
 }
 
+// Function to update navbar chat actions dropdown
+function updateNavbarChatActions(chat) {
+    const dropdown = $('#chat-actions-dropdown');
+    const dropdownMenu = dropdown.find('.dropdown-menu');
+    
+    if (!chat) {
+        dropdown.hide();
+        return;
+    }
+    
+    const isOwner = chat.userId === userId;
+    
+    const dropdownItems = `
+        <li>
+            <a href="#" class="dropdown-item d-flex align-items-center py-2" 
+               onclick="${!isOwner ? `loadCharacterCreationPage('${chat._id}')` : `loadCharacterUpdatePage('${chat._id}')`}">
+                <i class="bi bi-pencil me-2 text-primary"></i>
+                <span>${!isOwner ? window.translations.edit : window.translations.update}</span>
+            </a>
+        </li>
+        <li>
+            <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start" onclick="showChatHistory('${chat._id}')">
+                <i class="bi bi-clock-history me-2 text-info"></i>
+                <span>${window.translations.chatHistory}</span>
+            </button>
+        </li>
+        <li>
+            <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start" 
+                    onclick="handleChatReset(this)"
+                    data-id="${chat._id}">
+                <i class="bi bi-plus-square me-2 text-success"></i>
+                <span>${window.translations.newChat}</span>
+            </button>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li class="d-none">
+            <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start text-danger" onclick="deleteChatHandler('${chat._id}')">
+                <i class="bi bi-trash me-2"></i>
+                <span>${window.translations.delete}</span>
+            </button>
+        </li>
+    `;
+    
+    dropdownMenu.html(dropdownItems);
+    dropdown.show();
+}
+
+// Function to hide navbar chat actions
+function hideNavbarChatActions() {
+    $('#chat-actions-dropdown').hide();
+}
 // Function to update current chat in the list
 function updateCurrentChat(chatId, userId) {
     if(!chatId) {
         console.log('No chatId provided');
+        hideNavbarChatActions();
         return;
     }
     let currentChat = chatCache.data.find(chat => chat._id === chatId);
 
     if (currentChat) {
         updateChatListDisplay(currentChat);
+        updateNavbarChatActions(currentChat);
     } else {
         fetchChatDataInfo(chatId);
     }
@@ -306,79 +325,41 @@ function updateChatListDisplay(currentChat) {
 
     let chatHtml = constructChatItemHtml(currentChat, true);
     $('#chat-list').prepend(chatHtml);
+
+    // Update navbar dropdown
+    updateNavbarChatActions(currentChat);
 }
 
-// Enhanced function to construct chat item HTML with compact design
+// Enhanced function to construct chat item HTML with ultra-compact design for 260px sidebar
 function constructChatItemHtml(chat, isActive) {
     const isOwner = chat.userId === userId;
     const lastMessageTime = chat.updatedAt ? new Date(chat.updatedAt).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' }) : '';
     
     return `
-        <div class="${isActive ? 'active' : ''} chat-list item user-chat chat-item-enhanced d-flex align-items-center justify-content-between mx-1 mb-2 rounded-2 shadow-sm w-100" 
-            data-id="${chat._id}">
-            <div class="d-flex align-items-center justify-content-between  w-100">
-                <div class="user-chat-content d-flex align-items-center flex-1"
-                onclick="handleChatListItemClick(this)">
+        <div class="list-group-item list-group-item-action border-0 p-0 ${isActive ? 'active bg-primary bg-opacity-10' : ''} chat-list item user-chat chat-item-enhanced" 
+            data-id="${chat._id}" style="position: relative;">
+            <div class="d-flex align-items-center w-100 px-2 py-1">
+                <div class="user-chat-content d-flex align-items-center flex-grow-1"
+                onclick="handleChatListItemClick(this)" style="cursor: pointer; min-width: 0;">
                     <div class="chat-avatar-container position-relative me-2">
                         <img class="chat-avatar rounded-circle border" 
                              src="${chat.chatImageUrl || '/img/logo.webp'}" 
                              alt="${chat.name}"
-                             style="width: 40px; height: 40px; object-fit: cover;">
-                        <div class="chat-status-indicator ${isActive ? 'active' : ''}"></div>
+                             style="width: 32px; height: 32px; object-fit: cover;">
+                        ${isActive ? '<div class="position-absolute top-0 end-0 bg-primary rounded-circle" style="width: 8px; height: 8px; border: 1px solid white;"></div>' : ''}
                     </div>
-                    <div class="chat-content flex-grow-1 min-w-0" style="align-items: start; display: flex; flex-direction: column; justify-content: center;">
-                        <div class="d-flex justify-content-between align-items-start mb-1">
-                            <h6 class="chat-name mb-0 fw-semibold text-truncate pe-1" style="max-width: 100px; font-size: 0.85rem;">${chat.name}</h6>
-                            <small class="chat-time text-muted flex-shrink-0" style="font-size: 0.7rem;">${lastMessageTime}</small>
+                    <div class="chat-content flex-grow-1 min-w-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h6 class="chat-name mb-0 fw-semibold text-truncate" style="max-width: 120px; font-size: 0.8rem; line-height: 1.1;">${chat.name}</h6>
+                            <small class="chat-time text-muted flex-shrink-0 ms-1" style="font-size: 0.65rem;">${lastMessageTime}</small>
                         </div>
-                        <p class="chat-preview mb-0 text-muted small text-truncate ${chat.lastMessage ? '' : 'd-none'}" 
-                           style="max-width: 140px; font-size: 0.75rem;">
-                            ${chat.lastMessage ? chat.lastMessage.content : ''}
-                        </p>
-                        ${!chat.lastMessage ? `<small class="text-muted fst-italic" style="font-size: 0.7rem;">${translations.newChat}</small>` : ''}
-                    </div>
-                </div>
-                <div class="chat-actions d-flex align-items-center">
-                    <div onclick="enableToggleDropdown(this)" class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary border-0 rounded-circle chat-menu-btn" 
-                                type="button" 
-                                id="dropdownMenuButton_${chat._id}" 
-                                data-mdb-toggle="dropdown" 
-                                aria-expanded="false"
-                                style="width: 26px; height: 26px; font-size: 0.7rem;">
-                            <i class="bi bi-three-dots-vertical"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end chat-dropdown-menu shadow" 
-                            aria-labelledby="dropdownMenuButton_${chat._id}">
-                            <li>
-                                <a href="#" class="dropdown-item" 
-                                   onclick="${ !isOwner ? `loadCharacterCreationPage('${chat._id}')` : `loadCharacterUpdatePage('${chat._id}')`}">
-                                    <i class="bi bi-pencil me-2 text-primary"></i>
-                                    ${!isOwner ? window.translations.edit : window.translations.update}
-                                </a>
-                            </li>
-                            <li>
-                                <button class="dropdown-item history-chat" data-id="${chat._id}">
-                                    <i class="bi bi-clock-history me-2 text-info"></i>
-                                    ${window.translations.chatHistory}
-                                </button>
-                            </li>
-                            <li>
-                                <button class="dropdown-item reset-chat" 
-                                        data-id="${chat._id}"
-                                        onclick="handleChatReset(this)">
-                                    <i class="bi bi-plus-square me-2 text-success"></i>
-                                    ${window.translations.newChat}
-                                </button>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li class="d-none">
-                                <button class="dropdown-item text-danger delete-chat" data-id="${chat._id}">
-                                    <i class="bi bi-trash me-2"></i>
-                                    ${window.translations.delete}
-                                </button>
-                            </li>
-                        </ul>
+                        <div class="mt-1">
+                            <p class="chat-preview mb-0 text-muted small text-truncate ${chat.lastMessage ? '' : 'd-none'}" 
+                               style="max-width: 130px; font-size: 0.7rem; line-height: 1.2;">
+                                ${chat.lastMessage ? chat.lastMessage.content : ''}
+                            </p>
+                            ${!chat.lastMessage ? `<small class="text-muted fst-italic" style="font-size: 0.7rem;">${translations.newChat}</small>` : ''}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -386,7 +367,7 @@ function constructChatItemHtml(chat, isActive) {
     `;
 }
 
-// Enhanced function to display user chat history in modal (renamed to avoid conflict)
+// Enhanced function to display user chat history in modal with compact design
 function displayUserChatHistoryInModal(userChat) {
     const chatHistoryList = $('#chat-history-list');
     chatHistoryList.empty();
@@ -396,9 +377,9 @@ function displayUserChatHistoryInModal(userChat) {
         
         if (userChats.length === 0) {
             chatHistoryList.html(`
-                <div class="text-center py-5">
-                    <i class="bi bi-chat-square-dots display-4 text-muted mb-3"></i>
-                    <p class="text-muted">${translations.noChatHistory}</p>
+                <div class="text-center py-4">
+                    <i class="bi bi-chat-square-dots display-5 text-muted mb-2"></i>
+                    <p class="text-muted small">${translations.noChatHistory}</p>
                 </div>
             `);
             return;
@@ -418,38 +399,43 @@ function displayUserChatHistoryInModal(userChat) {
             });
 
             const historyItem = $(`
-                <div class="chat-history-item d-flex align-items-center justify-content-between p-3 border rounded-3 mb-2 user-chat-history"
+                <div class="list-group-item list-group-item-action border-0 p-2 user-chat-history"
                      data-id="${chat.chatId}" 
                      data-chat="${chat._id}" 
-                     onclick="handleUserChatHistoryClick(this)">
-                    <div class="d-flex align-items-center flex-grow-1">
-                        <div class="chat-history-icon me-3">
-                            <i class="bi bi-chat-dots-fill text-primary fs-4"></i>
+                     onclick="handleUserChatHistoryClick(this)"
+                     style="cursor: pointer; border-radius: 8px; margin-bottom: 0.25rem;">
+                    <div class="d-flex align-items-center justify-content-between w-100">
+                        <div class="d-flex align-items-center flex-grow-1 min-w-0">
+                            <div class="chat-history-icon me-2">
+                                <i class="bi bi-chat-dots-fill text-primary" style="font-size: 1.2rem;"></i>
+                            </div>
+                            <div class="chat-history-content min-w-0">
+                                <div class="chat-history-date fw-semibold text-dark mb-0" style="font-size: 0.8rem;">${formattedDate}</div>
+                                <small class="text-muted" style="font-size: 0.7rem;">${formattedTime}</small>
+                            </div>
                         </div>
-                        <div class="chat-history-content">
-                            <div class="chat-history-date fw-semibold text-dark mb-1">${formattedDate}</div>
-                            <small class="text-muted">${formattedTime}</small>
-                        </div>
-                    </div>
-                    <div class="chat-history-actions">
-                        <div onclick="enableToggleDropdown(this); event.stopPropagation();" class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary border-0 rounded-circle" 
-                                    type="button" 
-                                    id="historyDropdown_${chat._id}" 
-                                    data-mdb-toggle="dropdown" 
-                                    aria-expanded="false">
-                                <i class="bi bi-three-dots-vertical"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow" 
-                                aria-labelledby="historyDropdown_${chat._id}">
-                                <li>
-                                    <button class="dropdown-item text-danger delete-chat-history" 
-                                            data-id="${chat._id}">
-                                        <i class="bi bi-trash me-2"></i>
-                                        ${translations.delete}
-                                    </button>
-                                </li>
-                            </ul>
+                        <div class="chat-history-actions">
+                            <div onclick="enableToggleDropdown(this); event.stopPropagation();" class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary border-0 rounded-circle" 
+                                        type="button" 
+                                        id="historyDropdown_${chat._id}" 
+                                        data-mdb-toggle="dropdown" 
+                                        aria-expanded="false"
+                                        style="width: 24px; height: 24px; z-index: 1000; font-size: 0.7rem;">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0" 
+                                    aria-labelledby="historyDropdown_${chat._id}"
+                                    style="z-index: 1050; font-size: 0.75rem;">
+                                    <li>
+                                        <button class="dropdown-item d-flex align-items-center py-1 border-0 bg-transparent w-100 text-start text-danger" 
+                                                onclick="deleteChatHistoryHandler('${chat._id}')">
+                                            <i class="bi bi-trash me-2" style="width: 16px; font-size: 0.7rem;"></i>
+                                            <span style="font-size: 0.75rem;">${translations.delete}</span>
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -459,115 +445,41 @@ function displayUserChatHistoryInModal(userChat) {
         });
     } else {
         chatHistoryList.html(`
-            <div class="text-center py-5">
-                <i class="bi bi-chat-square-dots display-4 text-muted mb-3"></i>
-                <p class="text-muted">${translations.noChatHistory}</p>
+            <div class="text-center py-4">
+                <i class="bi bi-chat-square-dots display-5 text-muted mb-2"></i>
+                <p class="text-muted small">${translations.noChatHistory}</p>
             </div>
         `);
     }
 }
 
-// Function to display user chat history (keep this for sidebar)
-function displayUserChatHistory(userChat) {
-    const chatHistoryContainer = $('#chat-history');
-    chatHistoryContainer.empty();
-
-    if (userChat && userChat.length > 0) {
-        // Create two separate cards for user and widget chat history
-        const userChatCard = $('<div class="card rounded-0 shadow-0 bg-transparent"></div>');
-        const widgetChatCard = $('<div class="card rounded-0 shadow-0 bg-transparent"></div>');
-
-        // User chat history
-        const userChatHeader = $('<div class="card-header"></div>');
-        userChatHeader.text(translations.chatHistory);
-        //userChatCard.append(userChatHeader);
-
-        const userChatListGroup = $('<ul class="list-group list-group-flush"></ul>');
-        const userChats = userChat.filter(chat => !chat.isWidget);
-        userChats.forEach(chat => {
-            const listItem = $(`<li 
-                class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" 
-                data-id="${chat.chatId}" 
-                data-chat="${chat._id}" 
-                onclick="handleUserChatHistoryClick(this)"></li>`);
-            listItem.css('cursor', 'pointer');
-
-            const small = $('<small class="text-secondary"></small>');
-            small.append($('<i class="bi bi-clock me-1"></i>'));
-            var chatUpdatedAt = new Date(chat.updatedAt);
-            // Convert to Japanese localized date string
-            var japaneseDateString = chatUpdatedAt.toLocaleDateString('ja-JP', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                weekday: 'long'
-            });
-            small.append(japaneseDateString);
-
-            const dropdown = renderChatDropdown(chat);
-            
-            listItem.append(small);
-            listItem.append(dropdown);
-            userChatListGroup.append(listItem);
-        });
-
-        userChatCard.append(userChatListGroup);
-        chatHistoryContainer.append(userChatCard);
-        
-        // Widget chat history
-        const widgetChatHeader = $('<div class="card-header"></div>');
-        widgetChatHeader.text(translations.widgetChatHistory);
-        widgetChatCard.append(widgetChatHeader);
-
-        const widgetChatListGroup = $('<ul class="list-group list-group-flush"></ul>');
-        const widgetChats = userChat.filter(chat => chat.isWidget);
-        widgetChats.forEach(chat => {
-            const listItem = $(`<li 
-                class="list-group-item user-chat-history bg-transparent d-flex align-items-center justify-content-between" 
-                data-id="${chat.chatId}" 
-                data-chat="${chat._id}" 
-                onclick="handleUserChatHistoryClick(this)"></li>`);
-            listItem.css('cursor', 'pointer');
-
-            const small = $('<small class="text-secondary"></small>');
-            small.append($('<i class="bi bi-clock me-1"></i>'));
-            small.append(chat.updatedAt);
-
-            const dropdown = renderChatDropdown(chat);
-            
-            listItem.append(small);
-            listItem.append(dropdown);
-            widgetChatListGroup.append(listItem);
-        });
-
-        //widgetChatCard.append(widgetChatListGroup);
-        //chatHistoryContainer.append(widgetChatCard);
-    }
-}
-
-// Function to render chat dropdown
+// Enhanced function to render chat dropdown with compact design
 function renderChatDropdown(chat) {
     const chatId = chat._id;
     const dropdownHtml = `
         <div class="d-inline-block align-items-center">
-            <!-- Dropdown -->
-            <div 
-                onclick="enableToggleDropdown(this)"
-                class="dropdown pe-2">
-                <button
-                class="btn border-0 shadow-0 dropdown-toggle ms-2" type="button" id="dropdownMenuButton_${chatId}" data-mdb-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-three-dots text-secondary"></i>
+            <div onclick="enableToggleDropdown(this)" class="dropdown pe-2">
+                <button class="btn btn-sm btn-outline-secondary border-0 rounded-circle" 
+                        type="button" 
+                        id="dropdownMenuButton_${chatId}" 
+                        data-mdb-toggle="dropdown" 
+                        aria-expanded="false"
+                        style="width: 30px; height: 30px; z-index: 1000;">
+                    <i class="bi bi-three-dots-vertical"></i>
                 </button>
-                <ul class="chat-option-menu dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton_${chatId}">
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0" 
+                    aria-labelledby="dropdownMenuButton_${chatId}"
+                    style="z-index: 1050;">
                     <li>
-                        <span data-id="${chatId}" class="dropdown-item text-danger delete-chat-history" style="cursor:pointer">
-                            <i class="bi bi-trash me-2"></i>
-                            <span class="text-muted" style="font-size:12px"></span>${translations.delete}</span>
+                        <span onclick="deleteChatHistoryHandler('${chatId}')" 
+                              class="dropdown-item d-flex align-items-center py-2 text-danger" 
+                              style="cursor:pointer">
+                            <i class="bi bi-trash me-3"></i>
+                            <span>${translations.delete}</span>
                         </span>
                     </li>
                 </ul>
             </div>
-            <!-- End of Dropdown -->
         </div>
     `;
 
@@ -578,7 +490,7 @@ async function getUserChatHistory(chatId) {
     try {
         const response = await fetch(`/api/chat-history/${chatId}`);
         const data = await response.json();
-        displayUserChatHistory(data);
+        displayUserChatHistoryInModal(data);
         const lastChat = data.find(chat => !chat.isWidget);
         if (lastChat) {
             const userChatId = lastChat._id;
@@ -632,11 +544,7 @@ function handleChatListItemClick(el) {
 };
 
 // Show chat history modal (fixed with proper modal management)
-$(document).on('click', '.history-chat', async function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    const chatId = $(this).data('id');
-    
+function showChatHistory(chatId) {
     // Close all other modals first
     if (typeof window.closeAllModals === 'function') {
         window.closeAllModals();
@@ -667,7 +575,7 @@ $(document).on('click', '.history-chat', async function(e) {
             $('#chat-history-list').html(`
                 <div class="text-center py-5">
                     <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
+                        <span class="visually-hidden">${translations.loading}</span>
                     </div>
                     <p class="text-muted mt-3">${translations.loadingHistory}</p>
                 </div>
@@ -693,13 +601,15 @@ $(document).on('click', '.history-chat', async function(e) {
             `);
         }
     }, 200); // Small delay to ensure other modals are closed
-});
+}
 
 // Make functions available globally
 window.displayChatList = displayChatList;
-window.displayUserChatHistory = displayUserChatHistory;
 window.displayUserChatHistoryInModal = displayUserChatHistoryInModal;
 window.updateCurrentChat = updateCurrentChat;
 window.getUserChatHistory = getUserChatHistory;
 window.handleUserChatHistoryClick = handleUserChatHistoryClick;
 window.handleChatListItemClick = handleChatListItemClick;
+window.deleteChatHandler = deleteChatHandler;
+window.deleteChatHistoryHandler = deleteChatHistoryHandler;
+window.showChatHistory = showChatHistory;

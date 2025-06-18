@@ -1,0 +1,379 @@
+/* Legacy dropdown styles (keeping for compatibility) */
+.avatar-menu .dropdown-item {
+    padding: 7px 15px;
+}
+
+.avatar-menu li {
+    padding: 5px 10px;
+}
+
+.animated.fadeInDown .swal2-image {
+    margin: 0;
+}
+
+.animated.fadeInDown .swal2-close {
+    border: 0;
+}
+
+.center-image {
+    display: block; 
+    margin: auto !important;
+}
+
+/* Offcanvas styles */
+#userMenuOffcanvas {
+    width: 300px;
+    max-width: 85vw;
+    z-index: 1055;
+    max-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15);
+    border-left: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 20px 0 0 20px;
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    overflow: hidden;
+}
+
+/* Smooth slide animations */
+#userMenuOffcanvas:not(.show) {
+    visibility: hidden !important;
+    transform: translateX(100%) !important;
+}
+
+#userMenuOffcanvas.show {
+    visibility: visible !important;
+    transform: translateX(25px) !important;
+}
+
+#userMenuOffcanvas.showing {
+    visibility: visible !important;
+}
+
+#userMenuOffcanvas.hiding {
+    transform: translateX(100%) !important;
+}
+
+#userMenuOffcanvas .offcanvas-body {
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: white;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+    padding: 0.5rem;
+}
+
+#userMenuOffcanvas .list-group {
+    max-height: 100%;
+    background: white;
+}
+
+#userMenuOffcanvas .list-group-item {
+    padding: 12px 20px;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    border: 1px solid #e9ecef !important;
+    border-radius: 10px !important;
+    margin-bottom: 0.5rem;
+    white-space: nowrap;
+    background: linear-gradient(145deg, #ffffff, #f8f9fa);
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+#userMenuOffcanvas .list-group-item:hover {
+    background: linear-gradient(145deg, #f0e6ff, #e6d3ff);
+    border-color: #6E20F4 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(110, 32, 244, 0.15);
+}
+
+#userMenuOffcanvas .list-group-item i {
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+    margin-right: 12px;
+    transition: transform 0.3s ease;
+}
+
+#userMenuOffcanvas .list-group-item:hover i {
+    transform: scale(1.1);
+}
+
+#userMenuOffcanvas .list-group-item span {
+    flex: 1;
+    text-align: left;
+    font-weight: 500;
+}
+
+#userMenuOffcanvas .offcanvas-header {
+    padding: 1rem 1.25rem;
+    flex-shrink: 0;
+    background: white;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    display: block;
+    border-radius: 20px 0 0 0;
+}
+
+#userMenuOffcanvas .offcanvas-header h6 {
+    font-weight: 600;
+    color: #333;
+}
+
+/* Avatar container for proper sizing and centering */
+.avatar-container {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #f8f9fa;
+    flex-shrink: 0;
+}
+
+.avatar-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Main avatar button styling - fixed position at right edge */
+#avatarMenuBtn {
+    border-radius: 50%;
+    padding: 2px;
+    transition: all 0.3s ease;
+    position: fixed !important;
+    top: 5px !important;
+    right: 5px !important;
+    z-index: 1040 !important; /* Below offcanvas (1055) */
+    width: 39px;
+    height: 39px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    visibility: visible;
+}
+
+#avatarMenuBtn img {
+    width: 35px;
+    height: 35px;
+    object-fit: cover;
+}
+
+#avatarMenuBtn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#avatarMenuBtn:focus {
+    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+    outline: none;
+}
+
+/* Upgrade banner positioning */
+.upgrade-banner {
+    position: fixed !important;
+    top: 70px !important;
+    right: 5px !important;
+    z-index: 1040 !important; /* Below offcanvas */
+    max-width: 200px;
+}
+
+/* Premium indicator positioning */
+.premiumIndicator {
+    z-index: 10;
+}
+
+/* Remove backdrop styles completely */
+.offcanvas-backdrop {
+    display: none !important;
+}
+
+/* Divider styling */
+#userMenuOffcanvas hr {
+    margin: 8px 0;
+    border-color: rgba(110, 32, 244, 0.1);
+}
+
+/* Admin section styling */
+#userMenuOffcanvas .px-3.py-2 {
+    background: rgba(110, 32, 244, 0.02);
+    border-radius: 8px;
+    margin: 0.5rem;
+}
+
+/* Custom gradient background override for subscription item */
+#userMenuOffcanvas .custom-gradient-bg.text-white {
+    background: linear-gradient(45deg, #667eea 0%, #764ba2 100%) !important;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+    border: 1px solid #667eea !important;
+}
+
+#userMenuOffcanvas .custom-gradient-bg.text-white:hover {
+    background: linear-gradient(45deg, #5a6fd8 0%, #6a4190 100%) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    border-color: #5a6fd8 !important;
+}
+
+#userMenuOffcanvas .custom-gradient-bg.text-white i {
+    color: white;
+}
+
+#userMenuOffcanvas .custom-gradient-bg.text-white span {
+    color: white;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 576px) {
+    #userMenuOffcanvas.show {
+        transform: translateX(0) !important;
+    }
+    
+    #userMenuOffcanvas {
+        width: 280px;
+        max-width: 90vw;
+        box-shadow: -8px 0 25px rgba(0, 0, 0, 0.12);
+        border-radius: 15px 0 0 15px;
+    }
+    
+    #avatarMenuBtn {
+        top: 15px !important;
+        right: 5px !important;
+    }
+    
+    .upgrade-banner {
+        top: 60px !important;
+        right: 5px !important;
+    }
+    
+    .avatar-container {
+        width: 40px;
+        height: 40px;
+    }
+    
+    #userMenuOffcanvas .list-group-item {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+        border-radius: 8px !important;
+    }
+    
+    #userMenuOffcanvas .offcanvas-header {
+        padding: 0.75rem 1rem;
+        display: block;
+        border-radius: 15px 0 0 0;
+    }
+    
+    #userMenuOffcanvas .offcanvas-header img {
+        height: 35px !important;
+    }
+    
+    #userMenuOffcanvas .offcanvas-body {
+        max-height: calc(100vh - 100px);
+        padding: 0.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    #userMenuOffcanvas {
+        width: 260px;
+        max-width: 95vw;
+        box-shadow: -6px 0 20px rgba(0, 0, 0, 0.1);
+        border-radius: 12px 0 0 12px;
+    }
+    
+    #avatarMenuBtn {
+        top: 10px !important;
+        right: 5px !important;
+    }
+    
+    .upgrade-banner {
+        top: 55px !important;
+        right: 5px !important;
+    }
+    
+    .avatar-container {
+        width: 35px;
+        height: 35px;
+    }
+    
+    #userMenuOffcanvas .list-group-item {
+        padding: 8px 12px;
+        border-radius: 6px !important;
+    }
+    
+    #userMenuOffcanvas .offcanvas-header {
+        padding: 0.5rem 0.75rem;
+        display: block;
+        border-radius: 12px 0 0 0;
+    }
+    
+    #userMenuOffcanvas .offcanvas-header h6 {
+        font-size: 0.9rem;
+    }
+    
+    #userMenuOffcanvas .offcanvas-header small {
+        font-size: 0.75rem;
+    }
+}
+
+/* Large screen specific styles */
+@media (min-width: 992px) {
+    #avatarMenuBtn {
+        top: 5px !important;
+        right: 5px !important;
+        z-index: 1040 !important;
+    }
+    
+    .upgrade-banner {
+        top: 75px !important;
+        right: 5px !important;
+        z-index: 1040 !important;
+    }
+    
+    .avatar-container {
+        width: 55px;
+        height: 55px;
+    }
+    
+    #userMenuOffcanvas {
+        border-radius: 25px 0 0 25px;
+    }
+    
+    #userMenuOffcanvas .offcanvas-header {
+        padding: 1.25rem 1.5rem;
+        display: block;
+        border-radius: 25px 0 0 0;
+    }
+    
+    #userMenuOffcanvas .list-group-item {
+        padding: 14px 24px;
+        border-radius: 12px !important;
+    }
+    
+    #userMenuOffcanvas .list-group-item i {
+        width: 22px;
+        margin-right: 14px;
+    }
+    
+    #userMenuOffcanvas .offcanvas-header img {
+        height: 60px !important;
+    }
+    
+    #userMenuOffcanvas .offcanvas-header h6 {
+        font-size: 1.1rem;
+    }
+    
+    #userMenuOffcanvas .offcanvas-body {
+        padding: 0.75rem;
+    }
+}

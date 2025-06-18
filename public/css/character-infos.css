@@ -1,0 +1,88 @@
+.character-info-modal .modal-content {
+    border: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.character-info-modal .modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-bottom: none;
+}
+
+.character-info-modal .modal-title {
+    font-weight: 600;
+}
+
+.character-info-header {
+    padding: 1rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.character-avatar img,
+.character-avatar div {
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.detail-section {
+    border-left: 3px solid #007bff;
+    padding-left: 1rem;
+    margin-left: 0.5rem;
+}
+
+.detail-section h6 {
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+}
+
+.card-header h6 {
+    color: #495057;
+    font-weight: 600;
+}
+
+.form-control-plaintext {
+    background: #f8f9fa;
+    border-radius: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    min-height: 1.5rem;
+    word-wrap: break-word;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.character-info-modal .spinner-border {
+    width: 2rem;
+    height: 2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .character-info-modal .modal-dialog {
+        margin: 0.5rem;
+    }
+    
+    .character-info-header .row {
+        text-align: center;
+    }
+    
+    .character-info-header .col-auto,
+    .character-info-header .col {
+        flex: 0 0 100%;
+        max-width: 100%;
+        margin-bottom: 1rem;
+    }
+}

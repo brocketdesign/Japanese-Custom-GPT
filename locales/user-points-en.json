@@ -1,0 +1,56 @@
+{
+  "points": {
+    "title": "Points",
+    "balance": "Current Balance",
+    "history": "Points History",
+    "daily_bonus": "Daily Bonus",
+    "claim_bonus": "Claim Daily Bonus",
+    "bonus_claimed": "Bonus Claimed!",
+    "bonus_already_claimed": "Already claimed today",
+    "next_bonus": "Next bonus available",
+    "login_streak": "Login Streak",
+    "days": "days",
+    "leaderboard": "Leaderboard",
+    "rank": "Rank",
+    "earned": "Earned",
+    "spent": "Spent",
+    "awarded": "Awarded",
+    "deducted": "Deducted",
+    "insufficient": "Insufficient points",
+    "transaction_types": {
+      "credit": "Earned",
+      "debit": "Spent"
+    },
+    "sources": {
+      "system": "System",
+      "chat": "Chat Activity",
+      "image": "Image Generation",
+      "daily_login": "Daily Login",
+      "admin": "Admin Action",
+      "purchase": "Purchase",
+      "bonus": "Bonus",
+      "achievement": "Achievement"
+    },
+    "actions": {
+      "view_history": "View History",
+      "claim_daily": "Claim Daily Bonus",
+      "view_leaderboard": "View Leaderboard"
+    },
+    "messages": {
+      "points_added": "Points added successfully",
+      "points_removed": "Points removed successfully",
+      "daily_bonus_claimed": "Daily bonus claimed! +{points} points",
+      "streak_bonus": "Streak bonus! Day {streak}",
+      "insufficient_points": "You don't have enough points for this action",
+      "error": "An error occurred while processing points"
+    },
+    "admin": {
+      "manage_points": "Manage User Points",
+      "set_points": "Set Points",
+      "add_points": "Add Points",
+      "remove_points": "Remove Points",
+      "reason": "Reason",
+      "amount": "Amount"
+    }
+  }
+}

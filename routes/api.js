@@ -117,10 +117,10 @@ async function routes(fastify, options) {
                     startMessage.sendImage = true;
                     if (subscriptionActive) {
                         startMessage.content =
-                        "Start by greeting me, say it's nice to meet me for the first time, and mention you can send images.";
+                        "Start by greeting me, say it's nice to meet me for the first time, introduce yourself and mention you can send images.";
                     } else {
                         startMessage.content =
-                        "Start by greeting me, say it's nice to meet me for the first time, and mention you can send images.";
+                        "Start by greeting me, say it's nice to meet me for the first time, introduce yourself and mention you can send images.";
                     }
                     const chatsGalleryCollection = fastify.mongo.db.collection('gallery');
                     const gallery = await chatsGalleryCollection.findOne({
@@ -129,10 +129,10 @@ async function routes(fastify, options) {
                     if (!gallery?.images || gallery.images.length === 0) {
                         if (subscriptionActive) {
                         startMessage.content =
-                            "Start by greeting me, say it's nice to meet me, and inform me that you want to send an image , but ask which image I prefer.";
+                            "Start by greeting me, say it's nice to meet me, introduce yourself and inform me that you want to send an image , but ask which image I prefer.";
                         } else {
                         startMessage.content =
-                            "Start by greeting me, say it's nice to meet me, inform me that you want to send an image (the chat is temporary because I'm not subscribed), ask which image I prefer, and express your hope that I'll enjoy the chat and become a permanent user.";
+                            "Start by greeting me, say it's nice to meet me, introduce yourself and inform me that you want to send an image (the chat is temporary because I'm not subscribed), ask which image I prefer, and express your hope that I'll enjoy the chat and become a permanent user.";
                         }
                         startMessage.sendImage = false;
                     }
@@ -592,37 +592,27 @@ async function routes(fastify, options) {
         if(!data) return "";
         
         const system_prompt = data?.system_prompt;
-        
-        if(system_prompt){
-            return `
-                Name: ${data.name || "Unknown"}
-                Short Introduction: ${data.short_intro || ""}
-                Instructions: ${system_prompt}
-            `;
-        }
-
-        if (!data?.base_personality) return "";
-
-        const base_personality = data.base_personality;
+        const base_personality = data?.base_personality;
         const expressionStyle = base_personality?.expression_style || {};
 
         return `
             Name: ${data.name || "Unknown"}
             Short Introduction: ${data.short_intro || ""}
-            Traits: ${base_personality.traits ? base_personality.traits.join(', ') : ""}
-            Preferences: ${base_personality.preferences ? base_personality.preferences.join(', ') : ""}
+            Instructions: ${system_prompt}
+            Traits: ${base_personality?.traits ? base_personality.traits.join(', ') : ""}
+            Preferences: ${base_personality?.preferences ? base_personality.preferences.join(', ') : ""}
             
             Expression Style:
-            - Tone: ${expressionStyle.tone || ""}
-            - Vocabulary: ${expressionStyle.vocabulary || ""}
-            - Speech Pattern: ${expressionStyle.speech_pattern || ""}
-            - Verbal Tics: ${expressionStyle.verbal_tics || ""}
-            - Emotional Expression: ${expressionStyle.emotional_expression || ""}
-            - Sentence Structure: ${expressionStyle.sentence_structure || ""}
-            - Politeness Level: ${expressionStyle.politeness_level || ""}
-            - Unique Feature: ${expressionStyle.unique_feature || ""}
-            
-            Tags: ${data.tags ? data.tags.join(', ') : ""}
+            - Tone: ${expressionStyle?.tone || ""}
+            - Vocabulary: ${expressionStyle?.vocabulary || ""}
+            - Speech Pattern: ${expressionStyle?.speech_pattern || ""}
+            - Verbal Tics: ${expressionStyle?.verbal_tics || ""}
+            - Emotional Expression: ${expressionStyle?.emotional_expression || ""}
+            - Sentence Structure: ${expressionStyle?.sentence_structure || ""}
+            - Politeness Level: ${expressionStyle?.politeness_level || ""}
+            - Unique Feature: ${expressionStyle?.unique_feature || ""}
+
+            Tags: ${data?.tags ? data.tags.join(', ') : ""}
         `.trim();
     }
     
@@ -642,23 +632,26 @@ async function routes(fastify, options) {
                 : '';
             }
 
-            try {
-                const activeSystemPrompt = await getActiveSystemPrompt(fastify.mongo.db);
-                if (activeSystemPrompt) {
-                    return activeSystemPrompt
-                        .replace('{{character_name}}', chatDocument.name)
-                        .replace('{{character_description}}', chatDescription)
-                        .replace('{{user_details}}', userDetails)
-                        .replace('{{current_date}}', currentTimeInJapanese)
-                        .replace('{{language}}', language);
+            // [DEBUG] Disable temporary
+            if(false){
+                try {
+                    const activeSystemPrompt = await getActiveSystemPrompt(fastify.mongo.db);
+                    if (activeSystemPrompt) {
+                        return activeSystemPrompt
+                            .replace('{{character_name}}', chatDocument.name)
+                            .replace('{{character_description}}', chatDescription)
+                            .replace('{{user_details}}', userDetails)
+                            .replace('{{current_date}}', currentTimeInJapanese)
+                            .replace('{{language}}', language);
+                    }
+                } catch (error) {
+                    console.error('Error in getting active system prompt:', error);
                 }
-            } catch (error) {
-                console.error('Error in getting active system prompt:', error);
             }
 
             // Fall back to the old format
             return `
-            You must act as a character named ${chatDocument.name}.\n\n
+            You must act as a real character with feelings.\n\n
             
             # Character info :\n
             ${chatDescription}\n\n
@@ -676,12 +669,12 @@ async function routes(fastify, options) {
 
             # Guidelines :\n
             - Current date: ${currentTimeInJapanese}\n
-            - Respond in ${language} with short, natural, chat-style messages. Use emojis and relaxed, informal language, including casual and sexual words without hesitation.\n
+            - Respond in ${language} with short, natural, chat-style messages. Use emojis.\n
             - Do not translate anything.\n
             - Do not include notes, annotations, or lists in your response.\n
             - Adapt to the user chat subject.\n
-            - Provide extra short answers switable for a chat.\n
-        
+            - Provide extra short answers suitable for a chat.\n
+
             `.replace(/^\s+/gm, '').trim();
         } catch (error) {
             console.error('Error in completionSystemContent:', error);
@@ -756,7 +749,7 @@ async function routes(fastify, options) {
                 console.log(`[/api/openai-chat-completion] Error fetching persona: ${error}`);
            }
            userInfo_or_persona = personaInfo || userInfo
-          let enhancedSystemContent = systemContent = completionSystemContent(
+          let enhancedSystemContent = systemContent = await completionSystemContent(
             chatDocument,
             userInfo_or_persona,
             chatDescription,
@@ -824,6 +817,7 @@ async function routes(fastify, options) {
             ]
           }
           const customModel = (language === 'ja' || language === 'japanese') ? 'deepseek' : 'mistral';
+          console.log(messagesForCompletion)
           console.log(`[/api/openai-chat-completion] current lang ${language}, customModel: ${customModel}`);
           generateCompletion(messagesForCompletion, 600, customModel, language).then(async (completion) => {
             if(completion){

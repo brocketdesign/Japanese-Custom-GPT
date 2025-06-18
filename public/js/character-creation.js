@@ -25,8 +25,10 @@ $(document).ready(function() {
 
     // Add a small delay before accessing DOM elements
     setTimeout(function() {
-        const uploadArea = document.getElementById('uploadArea');
-        const fileInput = document.getElementById('imageUpload');
+        const $uploadArea = $('#uploadArea');
+        const $fileInput = $('#imageUpload');
+        const uploadArea = $uploadArea.length ? $uploadArea[0] : null;
+        const fileInput = $fileInput.length ? $fileInput[0] : null;
 
         const subscriptionStatus = user.subscriptionStatus == 'active';
         if(subscriptionStatus && fileInput){

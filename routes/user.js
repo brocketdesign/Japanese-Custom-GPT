@@ -58,6 +58,7 @@ async function routes(fastify, options) {
           clerkId,
           createdAt: new Date(),
           coins: 100,
+          points: 100, // Initialize with starting points
           lang: request.lang,
           username: clerkUserData.username,
           nickname: clerkUserData.username,
@@ -91,6 +92,15 @@ async function routes(fastify, options) {
           // Update the user object with the new data
           Object.assign(user, updateData);
           console.log(`[/user/clerk-auth] Updated user with clerkId ${clerkId} to match Clerk data`);
+        }
+  
+        // Initialize points if not present
+        if (user.points === undefined) {
+          await usersCollection.updateOne(
+            { clerkId },
+            { $set: { points: 100 } }
+          );
+          user.points = 100;
         }
   
         // Check for subscription status if not present

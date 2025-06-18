@@ -1,0 +1,314 @@
+/* Points System Styles */
+.points-container {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 15px;
+  padding: 20px;
+  color: white;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.points-balance {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.points-balance h2 {
+  font-size: 2.5rem;
+  margin: 0;
+  font-weight: bold;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.points-balance .points-label {
+  font-size: 1rem;
+  opacity: 0.9;
+  margin-top: 5px;
+}
+
+.points-icon {
+  color: #ffd700;
+  margin-right: 8px;
+  font-size: 1.2em;
+}
+
+/* Daily Bonus Section */
+.daily-bonus {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 15px;
+  backdrop-filter: blur(10px);
+}
+
+.daily-bonus-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.streak-counter {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.bonus-btn {
+  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  border: none;
+  color: #333;
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+}
+
+.bonus-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+}
+
+.bonus-claimed {
+  background: rgba(76, 175, 80, 0.3);
+  color: #fff;
+  border: 2px solid #4caf50;
+}
+
+/* Points History */
+.points-history {
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.points-history-header {
+  background: #f8f9fa;
+  padding: 15px 20px;
+  border-bottom: 1px solid #dee2e6;
+  font-weight: bold;
+  color: #495057;
+}
+
+.points-history-item {
+  padding: 15px 20px;
+  border-bottom: 1px solid #f1f3f4;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.2s ease;
+}
+
+.points-history-item:hover {
+  background-color: #f8f9fa;
+}
+
+.points-history-item:last-child {
+  border-bottom: none;
+}
+
+.transaction-info {
+  flex: 1;
+}
+
+.transaction-reason {
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.transaction-meta {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.transaction-amount {
+  font-weight: bold;
+  font-size: 1.1rem;
+  padding: 5px 10px;
+  border-radius: 20px;
+  min-width: 80px;
+  text-align: center;
+}
+
+.transaction-amount.credit {
+  color: #28a745;
+  background-color: rgba(40, 167, 69, 0.1);
+}
+
+.transaction-amount.debit {
+  color: #dc3545;
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+/* Leaderboard */
+.leaderboard {
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.leaderboard-item {
+  padding: 15px 20px;
+  border-bottom: 1px solid #f1f3f4;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.2s ease;
+}
+
+.leaderboard-item:hover {
+  background-color: #f8f9fa;
+}
+
+.leaderboard-item:last-child {
+  border-bottom: none;
+}
+
+.leaderboard-rank {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #495057;
+  margin-right: 15px;
+  min-width: 30px;
+}
+
+.leaderboard-rank.first {
+  color: #ffd700;
+}
+
+.leaderboard-rank.second {
+  color: #c0c0c0;
+}
+
+.leaderboard-rank.third {
+  color: #cd7f32;
+}
+
+.leaderboard-user {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.leaderboard-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 12px;
+  object-fit: cover;
+}
+
+.leaderboard-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.leaderboard-points {
+  font-weight: bold;
+  color: #667eea;
+  font-size: 1.1rem;
+}
+
+/* Points Widget (for display in other pages) */
+.points-widget {
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+
+.points-widget:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.points-widget .points-icon {
+  margin-right: 5px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .points-container {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+  
+  .points-balance h2 {
+    font-size: 2rem;
+  }
+  
+  .daily-bonus-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .points-history-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .transaction-amount {
+    align-self: flex-end;
+  }
+  
+  .leaderboard-item {
+    padding: 12px 15px;
+  }
+  
+  .leaderboard-user {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+}
+
+/* Animation for point changes */
+@keyframes pointsUpdate {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+    color: #ffd700;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.points-updated {
+  animation: pointsUpdate 0.6s ease-in-out;
+}
+
+/* Loading states */
+.points-loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.points-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

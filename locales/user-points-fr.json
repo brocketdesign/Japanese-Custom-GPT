@@ -1,0 +1,56 @@
+{
+  "points": {
+    "title": "Points",
+    "balance": "Solde actuel",
+    "history": "Historique des points",
+    "daily_bonus": "Bonus quotidien",
+    "claim_bonus": "Réclamer le bonus quotidien",
+    "bonus_claimed": "Bonus réclamé !",
+    "bonus_already_claimed": "Déjà réclamé aujourd'hui",
+    "next_bonus": "Prochain bonus disponible",
+    "login_streak": "Série de connexions",
+    "days": "jours",
+    "leaderboard": "Classement",
+    "rank": "Rang",
+    "earned": "Gagné",
+    "spent": "Dépensé",
+    "awarded": "Attribué",
+    "deducted": "Déduit",
+    "insufficient": "Points insuffisants",
+    "transaction_types": {
+      "credit": "Gagné",
+      "debit": "Dépensé"
+    },
+    "sources": {
+      "system": "Système",
+      "chat": "Activité de chat",
+      "image": "Génération d'image",
+      "daily_login": "Connexion quotidienne",
+      "admin": "Action administrateur",
+      "purchase": "Achat",
+      "bonus": "Bonus",
+      "achievement": "Succès"
+    },
+    "actions": {
+      "view_history": "Voir l'historique",
+      "claim_daily": "Réclamer le bonus quotidien",
+      "view_leaderboard": "Voir le classement"
+    },
+    "messages": {
+      "points_added": "Points ajoutés avec succès",
+      "points_removed": "Points retirés avec succès",
+      "daily_bonus_claimed": "Bonus quotidien réclamé ! +{points} points",
+      "streak_bonus": "Bonus de série ! Jour {streak}",
+      "insufficient_points": "Vous n'avez pas assez de points pour cette action",
+      "error": "Une erreur s'est produite lors du traitement des points"
+    },
+    "admin": {
+      "manage_points": "Gérer les points des utilisateurs",
+      "set_points": "Définir les points",
+      "add_points": "Ajouter des points",
+      "remove_points": "Retirer des points",
+      "reason": "Raison",
+      "amount": "Montant"
+    }
+  }
+}

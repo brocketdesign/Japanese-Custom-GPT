@@ -15,13 +15,250 @@
                 <i class="bi bi-gender-ambiguous me-1"></i>
                 <span id="characterGender">Unknown</span> • 
                 <i class="bi bi-clock-history ms-2 me-1"></i>
-                {{translations.characterUpdate.lastModified}}
+                {{translations.characterUpdate.lastModified}}: <span id="characterUpdatedAt">-</span>
+            </p>
+            <p class="mb-0">
+                <small class="text-muted">
+                    <i class="bi bi-chat-dots me-1"></i>
+                    {{translations.characterUpdate.messagesCount}}: <span id="characterMessagesCount">0</span> • 
+                    <i class="bi bi-images ms-2 me-1"></i>
+                    {{translations.characterUpdate.imageCount}}: <span id="characterImageCount">0</span>
+                </small>
             </p>
         </div>
     </div>
 </div>
 
 <form class="character-update-form pt-3">
+    <!-- Basic Information Section -->
+    <div class="form-section basic-info-section">
+        <div class="form-section-header" data-bs-toggle="collapse" data-bs-target="#basicInfoSection">
+            <span>
+                <i class="bi bi-info-circle me-2"></i>
+                {{translations.characterUpdate.basicInformation}}
+            </span>
+            <i class="bi bi-chevron-down"></i>
+        </div>
+        <div id="basicInfoSection" class="collapse show">
+            <div class="form-section-content">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="basic_name" class="form-label">
+                            <i class="bi bi-person me-1"></i>
+                            {{translations.characterUpdate.characterName}}
+                        </label>
+                        <input type="text" class="form-control" id="basic_name" name="basic_name" placeholder="Enter character name">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="basic_slug" class="form-label">
+                            <i class="bi bi-link me-1"></i>
+                            {{translations.characterUpdate.slug}}
+                        </label>
+                        <input type="text" class="form-control" id="basic_slug" name="basic_slug" placeholder="character-url-slug" readonly>
+                        <div class="field-description">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {{translations.characterUpdate.slugHelp}}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <label for="basic_short_intro" class="form-label">
+                            <i class="bi bi-chat-quote me-1"></i>
+                            {{translations.characterUpdate.shortIntro}}
+                        </label>
+                        <textarea class="form-control" id="basic_short_intro" name="basic_short_intro" rows="2" placeholder="{{translations.characterUpdate.shortIntroPlaceholder}}"></textarea>
+                        <div class="field-description">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {{translations.characterUpdate.shortIntroHelp}}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <label for="basic_description" class="form-label">
+                            <i class="bi bi-card-text me-1"></i>
+                            {{translations.characterUpdate.description}}
+                        </label>
+                        <textarea class="form-control" id="basic_description" name="basic_description" rows="4" placeholder="{{translations.characterUpdate.descriptionPlaceholder}}"></textarea>
+                        <div class="field-description">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {{translations.characterUpdate.descriptionHelp}}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="basic_gender" class="form-label">
+                            <i class="bi bi-gender-ambiguous me-1"></i>
+                            {{translations.characterUpdate.gender}}
+                        </label>
+                        <select class="form-select" id="basic_gender" name="basic_gender">
+                            <option value="">{{translations.characterUpdate.selectOption}}</option>
+                            <option value="male">{{translations.characterUpdate.male}}</option>
+                            <option value="female">{{translations.characterUpdate.female}}</option>
+                            <option value="non-binary">{{translations.characterUpdate.nonBinary}}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="basic_nsfw" class="form-label">
+                            <i class="bi bi-shield-exclamation me-1"></i>
+                            {{translations.characterUpdate.contentRating}}
+                        </label>
+                        <select class="form-select" id="basic_nsfw" name="basic_nsfw">
+                            <option value="false">{{translations.characterUpdate.sfw}}</option>
+                            <option value="true">{{translations.characterUpdate.nsfw}}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Character Prompts Section -->
+    <div class="form-section prompts-section">
+        <div class="form-section-header" data-bs-toggle="collapse" data-bs-target="#promptsSection">
+            <span>
+                <i class="bi bi-code-square me-2"></i>
+                {{translations.characterUpdate.characterPrompts}}
+            </span>
+            <i class="bi bi-chevron-down"></i>
+        </div>
+        <div id="promptsSection" class="collapse">
+            <div class="form-section-content">
+                <div class="row">
+                    <div class="col-md-12">
+                        <label for="prompts_characterPrompt" class="form-label">
+                            <i class="bi bi-pencil-square me-1"></i>
+                            {{translations.characterUpdate.characterPrompt}}
+                        </label>
+                        <textarea class="form-control" id="prompts_characterPrompt" name="prompts_characterPrompt" rows="3" placeholder="{{translations.characterUpdate.characterPromptPlaceholder}}"></textarea>
+                        <div class="field-description">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {{translations.characterUpdate.characterPromptHelp}}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <label for="prompts_enhancedPrompt" class="form-label">
+                            <i class="bi bi-stars me-1"></i>
+                            {{translations.characterUpdate.enhancedPrompt}}
+                        </label>
+                        <textarea class="form-control" id="prompts_enhancedPrompt" name="prompts_enhancedPrompt" rows="3" placeholder="{{translations.characterUpdate.enhancedPromptPlaceholder}}"></textarea>
+                        <div class="field-description">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {{translations.characterUpdate.enhancedPromptHelp}}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <label for="prompts_systemPrompt" class="form-label">
+                            <i class="bi bi-gear me-1"></i>
+                            {{translations.characterUpdate.systemPrompt}}
+                        </label>
+                        <textarea class="form-control" id="prompts_systemPrompt" name="prompts_systemPrompt" rows="3" placeholder="{{translations.characterUpdate.systemPromptPlaceholder}}"></textarea>
+                        <div class="field-description">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {{translations.characterUpdate.systemPromptHelp}}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <label for="prompts_firstMessage" class="form-label">
+                            <i class="bi bi-chat-left-text me-1"></i>
+                            {{translations.characterUpdate.firstMessage}}
+                        </label>
+                        <textarea class="form-control" id="prompts_firstMessage" name="prompts_firstMessage" rows="3" placeholder="{{translations.characterUpdate.firstMessagePlaceholder}}"></textarea>
+                        <div class="field-description">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {{translations.characterUpdate.firstMessageHelp}}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <label for="prompts_tags" class="form-label">
+                            <i class="bi bi-tags me-1"></i>
+                            {{translations.characterUpdate.tags}}
+                        </label>
+                        <input type="text" class="form-control array-field" id="prompts_tags" name="prompts_tags" placeholder="{{translations.characterUpdate.tagsPlaceholder}}">
+                        <div class="field-description">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {{translations.characterUpdate.separateWithCommas}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Configuration Section -->
+    <div class="form-section model-config-section">
+        <div class="form-section-header" data-bs-toggle="collapse" data-bs-target="#modelConfigSection">
+            <span>
+                <i class="bi bi-cpu me-2"></i>
+                {{translations.characterUpdate.modelConfiguration}}
+            </span>
+            <i class="bi bi-chevron-down"></i>
+        </div>
+        <div id="modelConfigSection" class="collapse">
+            <div class="form-section-content">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="model_currentModel" class="form-label">
+                            <i class="bi bi-gear me-1"></i>
+                            {{translations.characterUpdate.currentModel}}
+                        </label>
+                        <div class="current-model-display p-3 bg-light rounded border">
+                            <div class="d-flex align-items-center">
+                                <img id="currentModelImage" src="" alt="Current Model" class="model-preview-image me-3" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; display: none;">
+                                <div>
+                                    <div class="fw-bold" id="currentModelName">{{translations.characterUpdate.loading}}</div>
+                                    <div class="text-muted small" id="currentModelStyle">-</div>
+                                    <div class="text-muted small">ID: <span id="currentModelId">-</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="model_newModel" class="form-label">
+                            <i class="bi bi-arrow-repeat me-1"></i>
+                            {{translations.characterUpdate.changeModel}}
+                        </label>
+                        <select class="form-select" id="model_newModel" name="model_newModel">
+                            <option value="">{{translations.characterUpdate.selectNewModel}}</option>
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                        <div class="field-description">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {{translations.characterUpdate.modelChangeWarning}}
+                        </div>
+                    </div>
+                </div>
+                <div class="row" id="newModelPreview" style="display: none;">
+                    <div class="col-md-12">
+                        <div class="new-model-preview p-3 bg-info bg-opacity-10 rounded border border-info mt-3">
+                            <h6 class="text-info mb-2">
+                                <i class="bi bi-eye me-2"></i>
+                                {{translations.characterUpdate.newModelPreview}}
+                            </h6>
+                            <div class="d-flex align-items-center">
+                                <img id="newModelImage" src="" alt="New Model" class="model-preview-image me-3" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                                <div>
+                                    <div class="fw-bold" id="newModelName">-</div>
+                                    <div class="text-muted small" id="newModelStyle">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Physical Appearance Section -->
     <div class="form-section appearance-section">
         <div class="form-section-header" data-bs-toggle="collapse" data-bs-target="#appearanceSection">
@@ -31,7 +268,7 @@
             </span>
             <i class="bi bi-chevron-down"></i>
         </div>
-        <div id="appearanceSection" class="collapse show">
+        <div id="appearanceSection" class="collapse">
             <div class="form-section-content">
                 <div class="row">
                     <div class="col-md-6">

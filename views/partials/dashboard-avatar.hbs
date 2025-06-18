@@ -32,116 +32,6 @@
             style="max-height: 400px; overflow-y: auto;">
         </ul>
     </li>
-    
-    <li class="nav-item dropdown onchat">
-
-        {{#if (eq user.subscriptionStatus 'active')}}
-        {{else}}
-        <div class="pt-0 pb-3 text-center onchat-on" style="bottom:0;left:0;right:0;display:inline-block;">
-            <button onclick="loadPlanPage()" class="btn d-flex justify-content-center align-items-center rounded-pill fw-bold custom-gradient-bg gap-2 px-2 py-1.5 text-sm text-white bg-white mx-auto" style="border: 1px solid #000;">
-                <div>
-                    <span class="text-white">{{translations.upgrade}}</span>
-                    <span id="countdown-timer-avatar" class="countdown-timer"></span>
-                </div>
-            </button>
-        </div>
-        {{/if}}
-        <a data-mdb-dropdown-init class="nav-link dropdown-toggle hidden-arrow d-inline align-items-center" href="#"
-            id="navbarDropdownMenuLink" role="button" aria-expanded="false">
-            <div class="btn rounded-circle p-0">
-                <img src="{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}" 
-                class="rounded-circle avatar" height="35px" alt="Avatar"
-                loading="lazy" />
-            </div>
-            {{#if (eq user.subscriptionStatus 'active')}}
-                <div class="premiumIndicator position-absolute top-0 start-0" style="font-size: 10px;">
-                    <span class="badge custom-gradient-bg">
-                        <i class="bi bi-gem"></i>
-                    </span>
-                </div>
-            {{/if}}
-        </a>
-            <ul class="avatar-menu dropdown-menu dropdown-menu-end mx-3" aria-labelledby="navbarDropdownMenuLink">
-                <li class="{{#if (eq user.subscriptionStatus 'active')}}d-none{{/if}} ">
-                    <a class="dropdown-item text-secondary custom-gradient-bg text-white" href="#" onclick="loadPlanPage()">
-                        <i class="bi bi-layers me-3"></i> 
-                        <span>{{translations.avatar.subscription}}</span>
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item text-secondary" href="/user/{{user._id}}">
-                        <i class="bi bi-person-circle me-3"></i>{{translations.avatar.profile}}
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item text-secondary" href="#" onclick="redirectToChatPage()">
-                        <i class="bi bi-chat me-3"></i>{{translations.chatList}}
-                    </a>
-                </li>
-                <li class="d-none">
-                    <a class="dropdown-item text-secondary" href="/chat/list/{{user._id}}">
-                        <i class="bi bi-people me-3"></i>{{translations.avatar.characters}}
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item text-secondary" href="#" onclick="loadCharacterCreationPage()">
-                        <i class="bi bi-plus-circle me-3"></i>{{translations.avatar.createCharacter}}
-                    </a>
-                </li>
-                <li class="{{#if isAdmin }}{{else}}d-none{{/if}}">
-                    <a class="dropdown-item text-secondary" href="/admin/users">
-                        <i class="bi bi-people me-3"></i>{{translations.admin.users}}
-                    </a>
-                </li>
-                <li class="{{#if isAdmin }}{{else}}d-none{{/if}}">
-                    <a class="dropdown-item text-secondary" href="/admin/prompts">
-                        <i class="bi bi-pencil me-3"></i>{{translations.admin.prompts}}
-                    </a>
-                </li>
-                <li class="{{#if isAdmin }}{{else}}d-none{{/if}}">
-                    <a class="dropdown-item text-secondary" href="/admin/system-prompts">
-                        <i class="bi bi-pencil me-3"></i>{{translations.admin.system_prompts}}
-                    </a>
-                </li>
-                <li class="{{#if isAdmin }}{{else}}d-none{{/if}}">
-                    <a class="dropdown-item text-secondary" href="/admin/gifts">
-                        <i class="bi bi-gift me-3"></i>{{translations.admin.gifts}}
-                    </a>
-                </li>
-                <li class="{{#if isAdmin }}{{else}}d-none{{/if}}">
-                    <a class="dropdown-item text-secondary" href="/admin/models">
-                        <i class="bi bi-person-badge me-3"></i>{{translations.admin.models}}
-                    </a>
-                </li>
-                <li class="{{#if isAdmin }}{{else}}d-none{{/if}}">
-                    <a class="dropdown-item text-secondary" href="/admin/civitai">
-                        <i class="bi bi-clock me-3"></i>{{translations.admin_model_chats.title}}
-                    </a>
-                </li>
-                <li class="{{#if isAdmin }}{{else}}d-none{{/if}}">
-                    <a class="dropdown-item text-secondary" href="/admin/notifications">
-                        <i class="bi bi-bell me-3"></i>{{translations.admin.notifications}}
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item text-secondary" href="#" onclick="openUserProfile()">
-                        <i class="bi bi-pencil-square me-3"></i>{{translations.avatar.editProfile}}
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item text-secondary" href="#" onclick="loadSettingsPage()">
-                        <i class="bi bi-gear me-3"></i>{{translations.avatar.settings}}
-                    </a>
-                </li>
-                <hr>
-                <li>
-                    <a class="dropdown-item text-danger logout" href="#">
-                        <i class="bi bi-box-arrow-right me-3"></i>{{translations.avatar.logout}}
-                    </a>
-                </li>
-            </ul>
-    </li>
-
     {{/if}}
 {{else}}
         <li class="nav-item dropdown">
@@ -151,21 +41,222 @@
     </li>
 {{/if}}
 
-<style>
-    .avatar-menu .dropdown-item{
-        padding: 7px 15px;
+<!-- Fixed Avatar Button - Outside nav structure -->
+{{#if user}}
+    {{#unless user.isTemporary}}
+        <div class="d-flex align-items-center gap-2 position-fixed" style="top:0px;right:65px;z-index:1059;">
+            {{#if (eq user.subscriptionStatus 'active')}}
+            {{else}}
+            <div class="pt-0 pb-3 text-center onchat-on mt-2">
+                <button onclick="loadPlanPage()" class="btn d-flex justify-content-center align-items-center rounded-pill fw-bold custom-gradient-bg gap-2 px-2 py-1.5 text-sm text-white bg-white mx-auto" style="border: 1px solid #000;">
+                    <div>
+                        <span class="text-white">{{translations.upgrade}}</span>
+                        <span id="countdown-timer-avatar" class="countdown-timer"></span>
+                    </div>
+                </button>
+            </div>
+            {{/if}}
+
+            <button id="avatarMenuBtn" 
+                class="btn p-0 border-0 bg-transparent" 
+                type="button" data-bs-toggle="offcanvas" data-bs-target="#userMenuOffcanvas" aria-controls="userMenuOffcanvas">
+                <div class="position-relative">
+                    <img src="{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}" 
+                        class="rounded-circle avatar" height="35px" alt="Avatar"
+                        loading="lazy" />
+                    {{#if (eq user.subscriptionStatus 'active')}}
+                        <div class="premiumIndicator position-absolute top-0 start-0" style="font-size: 10px;">
+                            <span class="badge custom-gradient-bg">
+                                <i class="bi bi-gem"></i>
+                            </span>
+                        </div>
+                    {{/if}}
+                </div>
+            </button>
+        </div>
+    {{/unless}}
+{{/if}}
+
+<!-- User Menu Offcanvas -->
+{{#if user}}
+    {{#unless user.isTemporary}}
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="userMenuOffcanvas" aria-labelledby="userMenuOffcanvasLabel" style="visibility: hidden;">
+        <div class="offcanvas-header border-bottom">
+            <div class="d-flex align-items-center w-100">
+                <div class="avatar-container me-3">
+                    <img src="{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}" 
+                         class="rounded-circle" alt="Avatar" loading="lazy" />
+                </div>
+                <div class="user-info flex-grow-1">
+                    <h6 class="mb-0">{{user.username}}</h6>
+                    {{#if (eq user.subscriptionStatus 'active')}}
+                        <small class="text-muted">
+                            <i class="bi bi-gem text-warning"></i> Premium
+                        </small>
+                    {{/if}}
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+        </div>
+        <div class="offcanvas-body px-3">
+            <div class="list-group list-group-flush">
+                <div class="{{#if (eq user.subscriptionStatus 'active')}}d-none{{/if}}">
+                    <a class="list-group-item list-group-item-action custom-gradient-bg text-white border-0 menu-item" href="#" onclick="loadPlanPage()">
+                        <i class="bi bi-layers me-3"></i> 
+                        <span>{{translations.avatar.subscription}}</span>
+                    </a>
+                </div>
+                
+                <a class="list-group-item list-group-item-action border-0 menu-item" href="/user/{{user._id}}">
+                    <i class="bi bi-person-circle me-3"></i>{{translations.avatar.profile}}
+                </a>
+                
+                <a class="list-group-item list-group-item-action border-0 menu-item" href="#" data-bs-toggle="modal" data-bs-target="#userPointsModal">
+                    <i class="bi bi-coin me-3"></i>
+                    {{userPointsTranslations.points.title}}: <span class="user-points-balance">0</span>
+                </a>
+                
+                <a class="list-group-item list-group-item-action border-0 menu-item" href="#" onclick="redirectToChatPage()">
+                    <i class="bi bi-chat me-3"></i>{{translations.chatList}}
+                </a>
+                
+                <div class="d-none">
+                    <a class="list-group-item list-group-item-action border-0 menu-item" href="/chat/list/{{user._id}}">
+                        <i class="bi bi-people me-3"></i>{{translations.avatar.characters}}
+                    </a>
+                </div>
+                
+                <a class="list-group-item list-group-item-action border-0 menu-item" href="#" onclick="loadCharacterCreationPage()">
+                    <i class="bi bi-plus-circle me-3"></i>{{translations.avatar.createCharacter}}
+                </a>
+                
+                {{#if isAdmin}}
+                    <hr class="my-2">
+                    <div class="px-3 py-2">
+                        <small class="text-muted fw-bold">ADMIN</small>
+                    </div>
+                    
+                    <a class="list-group-item list-group-item-action border-0 menu-item" href="/admin/users">
+                        <i class="bi bi-people me-3"></i>{{translations.admin.users}}
+                    </a>
+                    
+                    <a class="list-group-item list-group-item-action border-0 menu-item" href="/admin/prompts">
+                        <i class="bi bi-pencil me-3"></i>{{translations.admin.prompts}}
+                    </a>
+                    
+                    <a class="list-group-item list-group-item-action border-0 menu-item" href="/admin/system-prompts">
+                        <i class="bi bi-pencil me-3"></i>{{translations.admin.system_prompts}}
+                    </a>
+                    
+                    <a class="list-group-item list-group-item-action border-0 menu-item" href="/admin/gifts">
+                        <i class="bi bi-gift me-3"></i>{{translations.admin.gifts}}
+                    </a>
+                    
+                    <a class="list-group-item list-group-item-action border-0 menu-item" href="/admin/models">
+                        <i class="bi bi-person-badge me-3"></i>{{translations.admin.models}}
+                    </a>
+                    
+                    <a class="list-group-item list-group-item-action border-0 menu-item" href="/admin/civitai">
+                        <i class="bi bi-clock me-3"></i>{{translations.admin_model_chats.title}}
+                    </a>
+                    
+                    <a class="list-group-item list-group-item-action border-0 menu-item" href="/admin/notifications">
+                        <i class="bi bi-bell me-3"></i>{{translations.admin.notifications}}
+                    </a>
+                {{/if}}
+                
+                <hr class="my-2">
+                
+                <a class="list-group-item list-group-item-action border-0 menu-item" href="#" onclick="openUserProfile()">
+                    <i class="bi bi-pencil-square me-3"></i>{{translations.avatar.editProfile}}
+                </a>
+                
+                <a class="list-group-item list-group-item-action border-0 menu-item" href="#" onclick="loadSettingsPage()">
+                    <i class="bi bi-gear me-3"></i>{{translations.avatar.settings}}
+                </a>
+                
+                <a class="list-group-item list-group-item-action border-0 text-danger logout menu-item" href="#">
+                    <i class="bi bi-box-arrow-right me-3"></i>{{translations.avatar.logout}}
+                </a>
+            </div>
+        </div>
+    </div>
+    {{/unless}}
+{{/if}}
+
+<link rel="stylesheet" href="/css/dashboard-avatar.css">
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const avatarBtn = document.getElementById('avatarMenuBtn');
+    const offcanvasElement = document.getElementById('userMenuOffcanvas');
+    const menuItems = document.querySelectorAll('.menu-item');
+    const navbarContainer = document.getElementById('navbarNav');
+
+    if (avatarBtn && offcanvasElement) {
+        // Remove any existing show class on page load
+        offcanvasElement.classList.remove('show');
+        offcanvasElement.style.visibility = 'hidden';
+        
+        // Initialize Bootstrap offcanvas without backdrop
+        const bsOffcanvas = new bootstrap.Offcanvas(offcanvasElement, {
+            backdrop: false,
+            keyboard: true,
+            scroll: true
+        });
+        
+        // Hide avatar button when offcanvas shows
+        offcanvasElement.addEventListener('show.bs.offcanvas', function() {
+            if (avatarBtn) {
+                avatarBtn.style.opacity = '0';
+                avatarBtn.style.visibility = 'hidden';
+            }
+            if(navbarContainer) {
+                navbarContainer.style.right = '20px';
+            }
+        });
+        
+        // Show avatar button when offcanvas hides
+        offcanvasElement.addEventListener('hidden.bs.offcanvas', function() {
+            if (avatarBtn) {
+                avatarBtn.style.opacity = '1';
+                avatarBtn.style.visibility = 'visible';
+            }
+            if(navbarContainer) {
+                navbarContainer.style.right = '-50vw';
+            }
+        });
+        
+        // Close offcanvas when clicking menu items that have onclick handlers
+        menuItems.forEach(item => {
+            if (item.getAttribute('onclick')) {
+                item.addEventListener('click', function() {
+                    setTimeout(() => {
+                        bsOffcanvas.hide();
+                    }, 100);
+                });
+            }
+        });
+        
+        // Close offcanvas when clicking links (except modal triggers)
+        menuItems.forEach(item => {
+            if (item.getAttribute('href') && item.getAttribute('href') !== '#' && !item.getAttribute('data-bs-toggle')) {
+                item.addEventListener('click', function() {
+                    setTimeout(() => {
+                        bsOffcanvas.hide();
+                    }, 100);
+                });
+            }
+        });
+        
+        // Close offcanvas when clicking outside
+        document.addEventListener('click', function(e) {
+            if (offcanvasElement.classList.contains('show') && 
+                !offcanvasElement.contains(e.target) && 
+                !avatarBtn.contains(e.target)) {
+                bsOffcanvas.hide();
+            }
+        });
     }
-    .avatar-menu li {
-        padding: 5px 10px;
-    }
-    .animated.fadeInDown .swal2-image{
-        margin:0;
-    }
-    .animated.fadeInDown .swal2-close{
-        border:0;
-    }
-    .center-image {
-        display: block; 
-        margin: auto !important;
-    }
-</style>
+});
+</script>

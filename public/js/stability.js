@@ -189,7 +189,6 @@ window.generateImage = async function(data) {
     const imageId = data.imageId || data.id;
     
     if (!imageId || sentImageIds.has(imageId)) {
-        console.log('[generateImage] Skipping - no imageId or already sent:', { imageId, alreadySent: sentImageIds.has(imageId) });
         return;
     }
     

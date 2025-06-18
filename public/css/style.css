@@ -55,7 +55,7 @@
   }
   
   .text-muted {
-  color:#aeb0b4!important;
+  color:#dddedf!important;
   font-weight:300
   }
   
@@ -2481,4 +2481,16 @@ opacity: 0.8;
 
 #latest-video-chats-gallery::-webkit-scrollbar-thumb:hover {
     background: #555;
+}
+
+.character-update-form textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  resize: vertical;
+}
+.message-action-btn, .message-regenerate-btn {
+padding: 5px !important;
 }

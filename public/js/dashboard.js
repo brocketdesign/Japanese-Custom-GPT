@@ -1792,7 +1792,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                       
                       <!-- Non-clickable controls that overlay the image -->
                       <div class="position-absolute top-0 start-0 m-1" style="z-index:3;">
-                          ${isOwner ? `<span class="badge bg-light text-secondary shadow" style="opacity:0.8; font-size: 1rem !important; padding: 0.2em 0.4em !important;" onclick="loadCharacterUpdatePage('${chat.chatId || chat._id}',event)"><i class="bi bi-pencil-square"></i></span>` : ''}
+                          ${isOwner ? `<button class="btn btn-sm btn-light rounded mb-1 mx-2" onclick="loadCharacterUpdatePage('${chat.chatId || chat._id}',event)"><i class="bi bi-pencil-square"></i></button>` : ''}
                       </div>
                       <div class="gallery-badges position-absolute top-0 end-0 m-2 d-flex flex-column align-items-end" style="z-index:3;">
                           ${chat.premium ? `<span class="custom-gradient-bg badge bg-gradient-primary mb-1 mx-2"> ${translations.premium}</span>` : ''}
@@ -3357,6 +3357,7 @@ function loadSettingsPage() {
 
 
 // Function to load character creation page & execute scripts & open #characterCreationModal
+
 function loadCharacterCreationPage(chatId) {
     if (modalStatus.isCharacterCreationLoading) return;
     modalStatus.isCharacterCreationLoading = true;
@@ -3366,7 +3367,8 @@ function loadCharacterCreationPage(chatId) {
     const characterCreationModal = new bootstrap.Modal(document.getElementById('characterCreationModal'));
     $('#character-creation-container').html('<div class="position-absolute d-flex justify-content-center align-items-center" style="inset:0;"><div class="spinner-border" role="status"></div></div>');
     characterCreationModal.show();
-
+    
+    
     let redirectUrl = '/chat/edit/';
     if (chatId) {
         redirectUrl += chatId;
@@ -3380,43 +3382,89 @@ function loadCharacterCreationPage(chatId) {
         },
         success: function(data) {
             if(!data){
-                $('#characterCreationModal').one('shown.bs.modal', () => {
-                    characterCreationModal.hide();
-                    modalStatus.isCharacterCreationLoading = false;
-                    loadPlanPage();
-                    return
-                });
+              characterCreationModal.hide();
+              modalStatus.isCharacterCreationLoading = false;
+              loadPlanPage();
+              return;
+            }else{
+              // On close, refresh the page
+              $('#characterCreationModal').on('hidden.bs.modal', function () {
+                  modalStatus.isCharacterCreationLoading = false;
+                  setTimeout(() => {
+                    location.reload();
+                  }, 500);
+              });
             }
+            
+            // Set the modal content first
             $('#character-creation-container').html(data);
 
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = '/css/image-uploader.css';
-            document.head.appendChild(link);
-            
-            const sidebarLink = document.createElement('link');
-            sidebarLink.rel = 'stylesheet';
-            sidebarLink.href = '/css/character-creation-sidebar-layout.css';
-            document.head.appendChild(sidebarLink);
+            // Wait for modal to be fully shown before loading scripts
+            $('#characterCreationModal').one('shown.bs.modal', function() {
+                // Load CSS files first
+                const cssPromises = [];
+                
+                // Load image uploader CSS
+                const imageUploaderCSS = new Promise((resolve) => {
+                    const link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = '/css/image-uploader.css';
+                    link.onload = resolve;
+                    link.onerror = resolve; // Continue even if CSS fails
+                    document.head.appendChild(link);
+                });
+                cssPromises.push(imageUploaderCSS);
+                
+                // Load sidebar CSS
+                const sidebarCSS = new Promise((resolve) => {
+                    const sidebarLink = document.createElement('link');
+                    sidebarLink.rel = 'stylesheet';
+                    sidebarLink.href = '/css/character-creation-sidebar-layout.css';
+                    sidebarLink.onload = resolve;
+                    sidebarLink.onerror = resolve; // Continue even if CSS fails
+                    document.head.appendChild(sidebarLink);
+                });
+                cssPromises.push(sidebarCSS);
 
-            const imageUploaderScript = document.createElement('script');
-            imageUploaderScript.src = '/js/image-uploader.js';
-            document.body.appendChild(imageUploaderScript);
-
-            const script = document.createElement('script');
-            script.src = '/js/character-creation.js';
-            script.onload = function() {
-                modalStatus.isCharacterCreationLoading = false;
-            };
-            script.onerror = function() {
-                console.error('Failed to load character-creation.js script.');
-                modalStatus.isCharacterCreationLoading = false;
-            };
-            document.body.appendChild(script);
+                // Wait for CSS to load, then load scripts in order
+                Promise.all(cssPromises).then(() => {
+                    // Additional delay to ensure DOM is fully rendered
+                    setTimeout(() => {
+                        // Load image uploader script first
+                        const imageUploaderScript = document.createElement('script');
+                        imageUploaderScript.src = '/js/image-uploader.js';
+                        
+                        imageUploaderScript.onload = function() {
+                            // Wait for image uploader to initialize, then load character creation script
+                            setTimeout(() => {
+                                const characterCreationScript = document.createElement('script');
+                                characterCreationScript.src = '/js/character-creation.js';
+                                characterCreationScript.onload = function() {
+                                    modalStatus.isCharacterCreationLoading = false;
+                                    console.log('Character creation page loaded successfully');
+                                };
+                                characterCreationScript.onerror = function() {
+                                    console.error('Failed to load character-creation.js script.');
+                                    modalStatus.isCharacterCreationLoading = false;
+                                };
+                                document.body.appendChild(characterCreationScript);
+                            }, 200);
+                        };
+                        
+                        imageUploaderScript.onerror = function() {
+                            console.error('Failed to load image-uploader.js script.');
+                            modalStatus.isCharacterCreationLoading = false;
+                        };
+                        
+                        document.body.appendChild(imageUploaderScript);
+                    }, 300); // Additional delay for DOM rendering
+                });
+            });
         },
         error: function(err) {
             console.error('Failed to load character creation page', err);
             modalStatus.isCharacterCreationLoading = false;
+            characterCreationModal.hide();
         }
     });
 }

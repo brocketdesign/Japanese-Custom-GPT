@@ -1,0 +1,480 @@
+<!-- User Points Modal -->
+<div class="modal fade" id="userPointsModal" tabindex="-1" aria-labelledby="userPointsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content mx-auto">
+            <div class="modal-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h5 class="modal-title d-flex align-items-center" id="userPointsModalLabel">
+                    <i class="bi bi-star-fill me-2" style="color: #ffd700;"></i>
+                    {{userPointsTranslations.points.title}}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <!-- Current Points Balance Section -->
+                <div class="points-container mx-3">
+                    <div class="points-balance text-center">
+                        <div class="d-flex align-items-center justify-content-center mb-2">
+                            <i class="bi bi-star-fill points-icon me-2" style="font-size: 1.5rem;"></i>
+                            <h2 class="user-points-balance mb-0" style="font-size: 2.5rem; font-weight: bold;">{{user.points}}</h2>
+                        </div>
+                        <div class="points-label" style="opacity: 0.9;">{{userPointsTranslations.points.balance}}</div>
+                    </div>
+                    
+                    <!-- Daily Bonus Section -->
+                    <div class="daily-bonus">
+                        <div class="daily-bonus-header">
+                            <div>
+                                <strong>{{userPointsTranslations.points.daily_bonus}}</strong>
+                                <div class="streak-counter mt-1">0 {{userPointsTranslations.points.days}}</div>
+                            </div>
+                            <button class="bonus-btn">{{userPointsTranslations.points.claim_bonus}}</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Debug Section -->
+                {{#if isAdmin}}
+                <div class="bg-warning bg-opacity-10 border-top border-warning p-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-tools me-2 text-warning"></i>
+                        <h6 class="mb-0 text-warning">{{userPointsTranslations.points.admin.manage_points}} (Debug)</h6>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <label class="form-label small">{{userPointsTranslations.points.admin.amount}}</label>
+                            <input type="number" class="form-control form-control-sm" id="adminPointsAmount" placeholder="0" min="0" step="1">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label small">{{userPointsTranslations.points.admin.reason}}</label>
+                            <input type="text" class="form-control form-control-sm" id="adminPointsReason" placeholder="Admin adjustment" maxlength="100">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">&nbsp;</label>
+                            <div class="d-flex gap-1">
+                                <button type="button" class="btn btn-success btn-sm flex-fill admin-add-points" title="Add points to user">
+                                    <i class="bi bi-plus-circle"></i> Add
+                                </button>
+                                <button type="button" class="btn btn-danger btn-sm flex-fill admin-remove-points" title="Remove points from user">
+                                    <i class="bi bi-dash-circle"></i> Remove
+                                </button>
+                                <button type="button" class="btn btn-warning btn-sm flex-fill admin-set-points" title="Set exact points amount">
+                                    <i class="bi bi-pencil"></i> Set
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Debug tools for user: <strong>{{user.nickname}}</strong> ({{user._id}})<br>
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            <em>Add/Remove: Enter amount to add or subtract. Set: Enter exact total amount.</em>
+                        </small>
+                    </div>
+                </div>
+                {{/if}}
+
+                <!-- Content Tabs -->
+                <div class="container-fluid p-3">
+                    <ul class="nav nav-tabs border-0" id="pointsTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active fw-semibold" id="history-tab" data-bs-toggle="tab" data-bs-target="#history-pane" type="button" role="tab">
+                                <i class="bi bi-clock-history me-2"></i>{{userPointsTranslations.points.history}}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-semibold" id="leaderboard-tab" data-bs-toggle="tab" data-bs-target="#leaderboard-pane" type="button" role="tab">
+                                <i class="bi bi-trophy me-2"></i>{{userPointsTranslations.points.leaderboard}}
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content mt-3" id="pointsTabContent">
+                        <!-- Points History Tab -->
+                        <div class="tab-pane fade show active" id="history-pane" role="tabpanel">
+                            <div class="points-history bg-white rounded shadow-sm">
+                                <div class="points-history-header d-flex justify-content-between align-items-center">
+                                    <span>{{userPointsTranslations.points.history}}</span>
+                                    <button class="btn btn-sm btn-outline-primary refresh-points">
+                                        <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                                    </button>
+                                </div>
+                                <div class="points-history-list" style="max-height: 400px; overflow-y: auto;">
+                                    <div class="text-center p-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <div class="mt-2 text-muted">Loading history...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Leaderboard Tab -->
+                        <div class="tab-pane fade" id="leaderboard-pane" role="tabpanel">
+                            <div class="leaderboard bg-white rounded shadow-sm">
+                                <div class="points-history-header">
+                                    <i class="bi bi-trophy-fill me-2 text-warning"></i>{{userPointsTranslations.points.leaderboard}}
+                                </div>
+                                <div class="leaderboard-list" style="max-height: 400px; overflow-y: auto;">
+                                    <div class="text-center p-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <div class="mt-2 text-muted">Loading leaderboard...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Points are updated in real-time
+                    </small>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg me-1"></i>Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End User Points Modal -->
+
+<!-- Reconnect Prompt Modal -->
+<div class="modal fade" id="reconnectModal" tabindex="-1" aria-labelledby="reconnectModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered mx-0">
+        <div class="modal-content mx-auto">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reconnectModalLabel">
+                    <i class="bi bi-wifi-off text-warning me-2"></i>{{translations.reconnect.title}}
+                </h5>
+            </div>
+            <div class="modal-body text-center">
+                <p class="mb-3">{{translations.reconnect.message}}</p>
+                <div id="reconnectStatus" class="mb-3" style="display: none;">
+                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span id="reconnectStatusText">{{translations.reconnect.attempting}}</span>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-primary" id="retryConnectionBtn">
+                    <i class="bi bi-arrow-clockwise me-2"></i>{{translations.reconnect.retry}}
+                </button>
+                <button type="button" class="btn btn-secondary" id="refreshPageBtn">
+                    <i class="bi bi-arrow-counterclockwise me-2"></i>{{translations.reconnect.refresh}}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="openShareModal" aria-hidden="true">
+    <div class="modal-dialog mx-0">
+        <div class="modal-content mx-auto">
+            <div class="modal-header">
+                <h5 class="modal-title" id="shareModalLabel">Share</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body d-flex flex-column align-items-center">
+                <button id="twitterShareButton" class="btn btn-outline-primary mb-2 col-lg-8 col-12">
+                    <i class="bi bi-twitter me-2"></i>Twitter
+                </button>
+                <button id="facebookShareButton" class="btn btn-outline-primary mb-2  col-lg-8 col-12">
+                    <i class="bi bi-facebook me-2"></i>Facebook
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Authenticate Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog mx-0">
+        <div class="modal-content mx-auto ">
+            <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-white p-0 m-0" id="login-container" style="border-radius: 9%;"></div>
+        </div>
+    </div>
+</div>
+<!-- Settings Modal -->
+<div class="modal fade " id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable mx-0">
+        <div class="modal-content mx-auto">
+            <div class="modal-header">
+                <h5 class="modal-title" id="settingsModalLabel">{{translations.avatar.settings}}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body position-relative">
+                <div id="settings-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Character Creation Modal -->
+<div class="modal fade" id="characterCreationModal" tabindex="-1" aria-labelledby="characterCreationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl mx-0">
+        <div class="modal-content mx-auto">
+            <div class="modal-header">
+                <h5 class="modal-title" id="characterCreationModalLabel">{{translations.newCharacter.characterCreationForm}}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0 position-relative" style="overflow: hidden;">
+                <div id="character-creation-container" class="character-creation-sidebar-layout">
+                    <!-- Sidebar layout will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Character Modal -->
+<div class="modal fade" id="characterModal" tabindex="-1" aria-labelledby="characterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable mx-0">
+        <div class="modal-content mx-auto">
+            <div class="modal-header">
+                <h5 class="modal-title" id="characterModalLabel">{{translations.character.title}}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body position-relative">
+                <div id="character-modal-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Plan Upgrade Modal #plan-container-->
+<div class="modal fade" id="planUpgradeModal" tabindex="-1" aria-labelledby="planUpgradeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable mx-0">
+        <div class="modal-content mx-auto">
+            <div class="modal-header">
+                <h5 class="modal-title" id="planUpgradeModalLabel">{{translations.plan_page.features}}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body m-0 p-0 position-relative">
+                <div id="plan-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Subscription Cancellation Feedback Modal -->
+<div class="modal fade" id="cancelSubscriptionModal" tabindex="-1" aria-labelledby="cancelSubscriptionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered mx-0">
+        <div class="modal-content mx-auto">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancelSubscriptionModalLabel">{{translations.cancel_subscription_modal_title}}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>{{translations.cancel_subscription_warning}}</p>
+                <form id="cancelFeedbackForm">
+                    <div class="mb-3">
+                        <label for="cancellationReason" class="form-label">{{translations.why_cancel_label}}</label>
+                        <textarea class="form-control" id="cancellationReason" name="cancellationReason" rows="3" placeholder="{{translations.why_cancel_placeholder}}"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{translations.do_not_cancel_button}}</button>
+                <button type="button" class="btn btn-danger" id="confirmCancelSubscriptionButton">{{translations.continue_cancellation_button}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Character Update Modal -->
+<div class="modal fade character-update-modal" id="characterUpdateModal" tabindex="-1" aria-labelledby="characterUpdateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable mx-0">
+        <div class="modal-content mx-auto">
+            <div class="modal-header p-0">
+                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close" style="z-index: 10;"></button>
+            </div>
+            <div class="modal-body">
+                <div id="character-update-container">
+                    <!-- Character update form will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" id="clearCharacterForm">
+                    <i class="bi bi-eraser me-2"></i>{{translations.characterUpdate.clearForm}}
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="resetCharacterForm">
+                    <i class="bi bi-arrow-counterclockwise me-2"></i>{{translations.characterUpdate.resetForm}}
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg me-2"></i>{{translations.characterUpdate.cancel}}
+                </button>
+                <button type="button" class="btn custom-gradient-bg text-white" id="saveCharacterUpdate">
+                    <i class="bi bi-check-lg me-2"></i>{{translations.characterUpdate.saveChanges}}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Chat History Modal with High Z-Index -->
+<div class="modal fade" id="chatHistoryModal" tabindex="-1" aria-labelledby="chatHistoryModalLabel" aria-hidden="true" 
+     style="z-index: 1062 !important; height: auto; min-height: 400px;" data-bs-backdrop="true" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" style="z-index: 1061 !important;">
+        <div class="modal-content chat-history-modal mx-auto" style="z-index: 1062 !important;">
+            <div class="modal-header border-bottom-0 pb-2 mx-0">
+                <div class="d-flex align-items-center">
+                    <div class="chat-history-modal-icon me-3">
+                        <i class="bi bi-clock-history text-white fs-3"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title mb-0 text-white" id="chatHistoryModalLabel">{{translations.chatHistoryTitle}}</h4>
+                        <small class="text-white opacity-75">{{translations.chatHistoryDescription}}</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close" style="z-index: 10;"></button>
+            </div>
+            <div class="modal-body pt-2">
+                <div id="chat-history-list" class="chat-history-container">
+                    <!-- Chat history items will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Character Info Modal (Read-only) -->
+<div class="modal fade character-info-modal" id="characterInfoModal" tabindex="-1" aria-labelledby="characterInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable mx-0">
+        <div class="modal-content mx-auto">
+            <div class="modal-header">
+                <h5 class="modal-title" id="characterInfoModalLabel">
+                    <i class="bi bi-info-circle me-2"></i>{{translations.characterInfo.title}}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="character-info-container">
+                    <!-- Loading state -->
+                    <div class="text-center p-4" id="characterInfoLoading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <div class="mt-2 text-muted">Loading character information...</div>
+                    </div>
+                    
+                    <!-- Character info content -->
+                    <div id="characterInfoContent" style="display: none;">
+                        <!-- Character Header -->
+                        <div class="character-info-header mb-4">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <div class="character-avatar">
+                                        <img id="charInfoImage" src="" alt="Character Image" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover; display: none;">
+                                        <div id="charInfoImagePlaceholder" class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                            <i class="bi bi-person fs-1 text-muted"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <h4 id="charInfoName" class="mb-1">-</h4>
+                                    <div class="text-muted mb-2">
+                                        <span id="charInfoGender">-</span> • 
+                                        <span id="charInfoUpdatedAt">-</span>
+                                    </div>
+                                    <div class="d-flex gap-3">
+                                        <small class="text-muted">
+                                            <i class="bi bi-chat-dots me-1"></i>
+                                            <span id="charInfoMessages">0</span> messages
+                                        </small>
+                                        <small class="text-muted">
+                                            <i class="bi bi-image me-1"></i>
+                                            <span id="charInfoImages">0</span> images
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Basic Information -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="bi bi-person-badge me-2"></i>Basic Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label small text-muted">Short Introduction</label>
+                                            <div id="charInfoShortIntro" class="form-control-plaintext">-</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label small text-muted">NSFW</label>
+                                            <div id="charInfoNsfw" class="form-control-plaintext">-</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small text-muted">Description</label>
+                                    <div id="charInfoDescription" class="form-control-plaintext">-</div>
+                                </div>
+                                <div class="mb-0">
+                                    <label class="form-label small text-muted">Tags</label>
+                                    <div id="charInfoTags" class="form-control-plaintext">-</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Model Information -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="bi bi-cpu me-2"></i>Model Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-auto">
+                                        <img id="charInfoModelImage" src="" alt="Model Image" class="rounded" style="width: 60px; height: 60px; object-fit: cover; display: none;">
+                                        <div id="charInfoModelPlaceholder" class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                            <i class="bi bi-cpu fs-4 text-muted"></i>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="mb-1">
+                                            <strong id="charInfoModelName">-</strong>
+                                        </div>
+                                        <div class="text-muted small">
+                                            Style: <span id="charInfoModelStyle">-</span>
+                                        </div>
+                                        <div class="text-muted small">
+                                            Model ID: <span id="charInfoModelId">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Character Details -->
+                        <div class="card" id="charInfoDetailsCard" style="display: none;">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="bi bi-list-ul me-2"></i>Character Details</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="charInfoDetails"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg me-1"></i>Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

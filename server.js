@@ -94,6 +94,8 @@ const chatFooter = fs.readFileSync('views/partials/chat-footer.hbs', 'utf8');
 handlebars.registerPartial('chat-footer', chatFooter);
 const chatHistorySidebar = fs.readFileSync('views/partials/chat-history-sidebar.hbs', 'utf8');
 handlebars.registerPartial('chat-history-sidebar', chatHistorySidebar);
+const dashboardModals = fs.readFileSync('views/partials/dashboard-modals.hbs', 'utf8');
+handlebars.registerPartial('dashboard-modals', dashboardModals);
 
 fastify.register(require('@fastify/view'), {
   engine: { handlebars: require('handlebars') },
@@ -167,6 +169,8 @@ fastify.register(require('./routes/eventlab-api'));
 fastify.register(require('./routes/merge-face-api'));
 fastify.register(require('./routes/chat-tool-message-api'));
 fastify.register(require('./routes/system-prompt-api'));
+fastify.register(require('./routes/user-points-api'));
+fastify.register(require('./routes/character-infos-api'));
 
 fastify.get('/', async (request, reply) => {
   const db = fastify.mongo.db;

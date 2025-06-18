@@ -1,211 +1,10 @@
-
-<!-- Reconnect Prompt Modal -->
-<div class="modal fade" id="reconnectModal" tabindex="-1" aria-labelledby="reconnectModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered mx-0">
-        <div class="modal-content mx-auto">
-            <div class="modal-header">
-                <h5 class="modal-title" id="reconnectModalLabel">
-                    <i class="bi bi-wifi-off text-warning me-2"></i>{{translations.reconnect.title}}
-                </h5>
-            </div>
-            <div class="modal-body text-center">
-                <p class="mb-3">{{translations.reconnect.message}}</p>
-                <div id="reconnectStatus" class="mb-3" style="display: none;">
-                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <span id="reconnectStatusText">{{translations.reconnect.attempting}}</span>
-                </div>
-            </div>
-            <div class="modal-footer justify-content-center">
-                <button type="button" class="btn btn-primary" id="retryConnectionBtn">
-                    <i class="bi bi-arrow-clockwise me-2"></i>{{translations.reconnect.retry}}
-                </button>
-                <button type="button" class="btn btn-secondary" id="refreshPageBtn">
-                    <i class="bi bi-arrow-counterclockwise me-2"></i>{{translations.reconnect.refresh}}
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Share Modal -->
-<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="openShareModal" aria-hidden="true">
-    <div class="modal-dialog mx-0">
-        <div class="modal-content mx-auto">
-            <div class="modal-header">
-                <h5 class="modal-title" id="shareModalLabel">Share</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body d-flex flex-column align-items-center">
-                <button id="twitterShareButton" class="btn btn-outline-primary mb-2 col-lg-8 col-12">
-                    <i class="bi bi-twitter me-2"></i>Twitter
-                </button>
-                <button id="facebookShareButton" class="btn btn-outline-primary mb-2  col-lg-8 col-12">
-                    <i class="bi bi-facebook me-2"></i>Facebook
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Authenticate Modal -->
-<div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog mx-0">
-        <div class="modal-content mx-auto ">
-            <div class="modal-header">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body bg-white p-0 m-0" id="login-container" style="border-radius: 9%;"></div>
-        </div>
-    </div>
-</div>
-<!-- Settings Modal -->
-<div class="modal fade " id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable mx-0">
-        <div class="modal-content mx-auto">
-            <div class="modal-header">
-                <h5 class="modal-title" id="settingsModalLabel">{{translations.avatar.settings}}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body position-relative">
-                <div id="settings-container"></div>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Character Creation Modal -->
-<div class="modal fade" id="characterCreationModal" tabindex="-1" aria-labelledby="characterCreationModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl mx-0">
-        <div class="modal-content mx-auto">
-            <div class="modal-header">
-                <h5 class="modal-title" id="characterCreationModalLabel">{{translations.newCharacter.characterCreationForm}}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-0 position-relative" style="overflow: hidden;">
-                <div id="character-creation-container" class="character-creation-sidebar-layout">
-                    <!-- Sidebar layout will be injected here -->
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Character Modal -->
-<div class="modal fade" id="characterModal" tabindex="-1" aria-labelledby="characterModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable mx-0">
-        <div class="modal-content mx-auto">
-            <div class="modal-header">
-                <h5 class="modal-title" id="characterModalLabel">{{translations.character.title}}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body position-relative">
-                <div id="character-modal-container"></div>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Plan Upgrade Modal #plan-container-->
-<div class="modal fade" id="planUpgradeModal" tabindex="-1" aria-labelledby="planUpgradeModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable mx-0">
-        <div class="modal-content mx-auto">
-            <div class="modal-header">
-                <h5 class="modal-title" id="planUpgradeModalLabel">{{translations.plan_page.features}}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body m-0 p-0 position-relative">
-                <div id="plan-container"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Subscription Cancellation Feedback Modal -->
-<div class="modal fade" id="cancelSubscriptionModal" tabindex="-1" aria-labelledby="cancelSubscriptionModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered mx-0">
-        <div class="modal-content mx-auto">
-            <div class="modal-header">
-                <h5 class="modal-title" id="cancelSubscriptionModalLabel">{{translations.cancel_subscription_modal_title}}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>{{translations.cancel_subscription_warning}}</p>
-                <form id="cancelFeedbackForm">
-                    <div class="mb-3">
-                        <label for="cancellationReason" class="form-label">{{translations.why_cancel_label}}</label>
-                        <textarea class="form-control" id="cancellationReason" name="cancellationReason" rows="3" placeholder="{{translations.why_cancel_placeholder}}"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{translations.do_not_cancel_button}}</button>
-                <button type="button" class="btn btn-danger" id="confirmCancelSubscriptionButton">{{translations.continue_cancellation_button}}</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Character Update Modal -->
-<div class="modal fade character-update-modal" id="characterUpdateModal" tabindex="-1" aria-labelledby="characterUpdateModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable mx-0">
-        <div class="modal-content mx-auto">
-            <div class="modal-header p-0">
-                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close" style="z-index: 10;"></button>
-            </div>
-            <div class="modal-body">
-                <div id="character-update-container">
-                    <!-- Character update form will be loaded here -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" id="clearCharacterForm">
-                    <i class="bi bi-eraser me-2"></i>{{translations.characterUpdate.clearForm}}
-                </button>
-                <button type="button" class="btn btn-outline-primary" id="resetCharacterForm">
-                    <i class="bi bi-arrow-counterclockwise me-2"></i>{{translations.characterUpdate.resetForm}}
-                </button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-lg me-2"></i>{{translations.characterUpdate.cancel}}
-                </button>
-                <button type="button" class="btn custom-gradient-bg text-white" id="saveCharacterUpdate">
-                    <i class="bi bi-check-lg me-2"></i>{{translations.characterUpdate.saveChanges}}
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-<!-- Chat History Modal with High Z-Index -->
-<div class="modal fade" id="chatHistoryModal" tabindex="-1" aria-labelledby="chatHistoryModalLabel" aria-hidden="true" 
-     style="z-index: 1062 !important; height: auto; min-height: 400px;" data-bs-backdrop="true" data-bs-keyboard="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg" style="z-index: 1061 !important;">
-        <div class="modal-content chat-history-modal mx-auto" style="z-index: 1062 !important;">
-            <div class="modal-header border-bottom-0 pb-2 mx-0">
-                <div class="d-flex align-items-center">
-                    <div class="chat-history-modal-icon me-3">
-                        <i class="bi bi-clock-history text-white fs-3"></i>
-                    </div>
-                    <div>
-                        <h4 class="modal-title mb-0 text-white" id="chatHistoryModalLabel">{{translations.chatHistoryTitle}}</h4>
-                        <small class="text-white opacity-75">{{translations.chatHistoryDescription}}</small>
-                    </div>
-                </div>
-                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close" style="z-index: 10;"></button>
-            </div>
-            <div class="modal-body pt-2">
-                <div id="chat-history-list" class="chat-history-container">
-                    <!-- Chat history items will be populated here -->
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
+{{> dashboard-modals}}
 <div class="sticky-bottom" style="bottom:0; left:0; right:0;">
     {{> chat-footer promptData=promptData}}
     {{#if (eq user.subscriptionStatus 'active')}}
     {{else}}
     <div class="text-center onchat-off" style="bottom:0;left:0;right:0;">
-        <button onclick="loadPlanPage()" class="btn d-flex justify-content-center align-items-center rounded-0 fw-bold custom-gradient-bg gap-2 px-2 py-3 fs-3 text-white bg-white mx-auto w-100" style="border: 1px solid #000;">
+        <button onclick="loadPlanPage()" class="btn d-flex justify-content-center align-items-center rounded-0 fw-bold custom-gradient-bg gap-2 px-2 py-3 fs-3 text-white bg-white mx-auto mb-1 w-100" style="border: 1px solid #000;">
             <div>
             {{translations.premium}}
             <span class="text-rose-400 text-sm  text-danger">{{translations.discount}}</span>
@@ -337,6 +136,7 @@
 <script src="/js/moment-with-locales.js"></script>
 <script src="/js/personas.js"></script>
 <script src="/js/dashboard.js"></script>
+<script src="/js/user-points.js"></script>
 <script src="/js/dashboard-infinite-scroll.js"></script>
 <script src="/js/stability.js"></script>
 <script src="/js/notifications.js"></script>
@@ -719,6 +519,12 @@ window.showDiscovery = function() {
         $(this).hide()
     })
     resetChatUrl();
+
+    // Hide navbar chat actions when in discovery mode
+    if (typeof hideNavbarChatActions === 'function') {
+        hideNavbarChatActions();
+    }
+    
     window.postMessage('resizeIframe', '*');
 }
 
@@ -1012,7 +818,28 @@ window.handleClerkUserUpdate = function() {
 
 $(document).ready(function(){
     fetchAndAppendModels();
-})
+    
+    // Points modal event handlers
+    $('#userPointsModal').on('shown.bs.modal', function() {
+        if (window.userPointsManager) {
+            // Load history by default (active tab)
+            window.userPointsManager.loadPointsHistory();
+        }
+    });
+    
+    // Tab switching events
+    $('#history-tab').on('shown.bs.tab', function() {
+        if (window.userPointsManager) {
+            window.userPointsManager.loadPointsHistory();
+        }
+    });
+    
+    $('#leaderboard-tab').on('shown.bs.tab', function() {
+        if (window.userPointsManager) {
+            window.userPointsManager.loadLeaderboard();
+        }
+    });
+});
 </script>
 <script>
      // Parse the URL and get query parameters
@@ -1109,4 +936,26 @@ $(document).ready(function(){
             // Assign Clerk to window
             window.Clerk = Clerk;
         })
+</script>
+<script>
+window.loadCharacterUpdateModal = function(chatId) {
+    if (!chatId) {
+        showNotification('No character ID provided', 'error');
+        return;
+    }
+    
+    // Set the character ID in a cookie for the update form
+    $.cookie('character-update-id', chatId);
+    
+    // Load the character update form
+    $('#character-update-container').load('/character-update.hbs', function(response, status, xhr) {
+        if (status === 'error') {
+            console.error('Failed to load character update form:', xhr.status, xhr.statusText);
+            showNotification('Failed to load character update form', 'error');
+        } else {
+            // Show the modal
+            $('#characterUpdateModal').modal('show');
+        }
+    });
+};
 </script>

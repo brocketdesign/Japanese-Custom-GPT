@@ -3399,8 +3399,6 @@ function loadCharacterCreationPage(chatId) {
             // Set the modal content first
             $('#character-creation-container').html(data);
 
-            // Wait for modal to be fully shown before loading scripts
-            $('#characterCreationModal').one('shown.bs.modal', function() {
                 // Load CSS files first
                 const cssPromises = [];
                 
@@ -3410,7 +3408,10 @@ function loadCharacterCreationPage(chatId) {
                     link.rel = 'stylesheet';
                     link.href = '/css/image-uploader.css';
                     link.onload = resolve;
-                    link.onerror = resolve; // Continue even if CSS fails
+                    link.onerror = (err) => {
+                        console.error('Failed to load /css/image-uploader.css', err);
+                        resolve(); // Continue even if CSS fails
+                    };                    
                     document.head.appendChild(link);
                 });
                 cssPromises.push(imageUploaderCSS);
@@ -3421,7 +3422,10 @@ function loadCharacterCreationPage(chatId) {
                     sidebarLink.rel = 'stylesheet';
                     sidebarLink.href = '/css/character-creation-sidebar-layout.css';
                     sidebarLink.onload = resolve;
-                    sidebarLink.onerror = resolve; // Continue even if CSS fails
+                    sidebarLink.onerror = (err) => {
+                        console.error('Failed to load /css/character-creation-sidebar-layout.css', err);
+                        resolve(); // Continue even if CSS fails
+                    };
                     document.head.appendChild(sidebarLink);
                 });
                 cssPromises.push(sidebarCSS);
@@ -3459,7 +3463,6 @@ function loadCharacterCreationPage(chatId) {
                         document.body.appendChild(imageUploaderScript);
                     }, 300); // Additional delay for DOM rendering
                 });
-            });
         },
         error: function(err) {
             console.error('Failed to load character creation page', err);

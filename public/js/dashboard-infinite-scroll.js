@@ -272,7 +272,7 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedInde
                             </button>
                             <span class="btn btn-light float-end col-6 image-fav ${isLiked ? 'liked' : ''}" 
                                 data-id="${item._id}" onclick="toggleImageFavorite(this)">
-                                <i class="bi bi-heart-fill" style="cursor: pointer;"></i>
+                                <i class="bi bi-heart" style="cursor: pointer;"></i>
                             </span>
                         </div>` : ''
                     }`

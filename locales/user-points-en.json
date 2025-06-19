@@ -97,6 +97,20 @@
       "remove_points": "Remove Points",
       "reason": "Reason",
       "amount": "Amount"
+    },
+    "image_generation": {
+      "reward": "Image generated! +{points} points",
+      "milestone_title": "Image Generation Milestone!",
+      "milestone_message": "Congratulations! You've generated {totalImages} images and reached the {milestone} milestone!",
+      "points_earned": "Points earned!",
+      "points_spent": "Points spent!",
+      "milestone_rewards": {
+        "first_image": "First Image Generated!",
+        "tenth_image": "10 Images Generated!",
+        "fiftieth_image": "50 Images Generated!",
+        "hundredth_image": "100 Images Generated!",
+        "creator_milestone": "Image Creator!"
+      }
     }
   }
 }

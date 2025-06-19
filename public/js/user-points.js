@@ -839,7 +839,8 @@ class UserPointsManager {
       source,
       isMilestone = false,
       milestoneMessage = '',
-      totalLikes = 0
+      totalLikes = 0,
+      totalImages = 0
     } = rewardData;
 
     // Remove any existing reward notifications
@@ -847,6 +848,17 @@ class UserPointsManager {
 
     // Try to auto-play sound first
     const soundPlayed = await this.autoPlayRewardSound('reward', isMilestone);
+
+    // Determine icon and title based on source
+    let mainIcon = '<i class="bi bi-heart-fill"></i>';
+    let titleText = '❤️ Like Reward!';
+    
+    if (source === 'image_milestone' || source === 'image_generation') {
+      mainIcon = '<i class="bi bi-image-fill"></i>';
+      titleText = isMilestone ? 
+        '🎨 ' + (this.translations.image_milestone_title || 'Image Generation Milestone!') :
+        '🖼️ ' + (this.translations.image_generation_reward?.replace('{points}', points) || 'Image Generated!');
+    }
 
     // Create the notification HTML with conditional play button
     const notificationHtml = `
@@ -859,21 +871,22 @@ class UserPointsManager {
               <i class="bi bi-star-fill reward-star star-2"></i>
               <i class="bi bi-star-fill reward-star star-3"></i>
               <div class="reward-main-icon">
-                ${isMilestone ? '<i class="bi bi-trophy-fill"></i>' : '<i class="bi bi-heart-fill"></i>'}
+                ${isMilestone ? '<i class="bi bi-trophy-fill"></i>' : mainIcon}
               </div>
             </div>
             <div class="reward-text">
               <h3 class="reward-title">
-                ${isMilestone ? '🎉 Milestone Achieved!' : '❤️ Like Reward!'}
+                ${isMilestone ? '🎉 ' + (this.translations.milestone_achieved || 'Milestone Achieved!') : titleText}
               </h3>
               <p class="reward-message">
                 ${milestoneMessage || reason}
               </p>
               <div class="reward-points">
                 <span class="points-earned">+${points}</span>
-                <span class="points-label">points</span>
+                <span class="points-label">${this.translations.points || 'points'}</span>
               </div>
-              ${totalLikes > 0 ? `<div class="reward-meta">Total likes: ${totalLikes}</div>` : ''}
+              ${totalLikes > 0 ? `<div class="reward-meta">${this.translations.total_likes || 'Total likes'}: ${totalLikes}</div>` : ''}
+              ${totalImages > 0 ? `<div class="reward-meta">${this.translations.total_images || 'Total images'}: ${totalImages}</div>` : ''}
               ${!soundPlayed ? `
                 <div class="reward-actions mt-3">
                   <button class="btn btn-sm btn-outline-light play-reward-sound" data-milestone="${isMilestone}">
@@ -1182,10 +1195,10 @@ class UserPointsManager {
     const mockMilestoneData = {
       points: 100,
       reason: 'Milestone achieved!',
-      source: 'milestone',
+      source: 'image_milestone',
       isMilestone: true,
-      milestoneMessage: 'Congratulations! You reached 50 total likes!',
-      totalLikes: 50
+      milestoneMessage: 'Congratulations! You reached 50 images generated!',
+      totalImages: 50
     };
     
     this.showSpecialRewardNotification(mockMilestoneData);

@@ -53,7 +53,11 @@ function initializeWebSocket(onConnectionResult = null) {
       // Removed console.log('[WebSocket] Parsed message data:', data);
       
       if (data.notification) {
-        // Removed console.log('[WebSocket] Processing notification type:', data.notification.type);
+        // Try to handle with user points handler first
+        if (window.webSocketUserPointsHandler && 
+            window.webSocketUserPointsHandler.handlePointsMessage(data)) {
+          return; // Message was handled by points handler
+        }
         
         switch (data.notification.type) {
           case 'log':
@@ -194,48 +198,6 @@ function initializeWebSocket(onConnectionResult = null) {
             console.log('[WebSocket] Displaying similar chats for chatId:', chatId, 'with data:', similarChats);
             if (window.displaySimilarChats) {
               window.displaySimilarChats(similarChats);
-            }
-            break;
-          }
-          case 'likeRewardNotification': {
-            const { 
-              userId, 
-              points, 
-              reason, 
-              source, 
-              isMilestone, 
-              milestoneMessage, 
-              totalLikes 
-            } = data.notification;
-            
-            // Only show notification for the current user
-            if (userId === user._id && window.userPointsManager) {
-              window.userPointsManager.showSpecialRewardNotification({
-                points,
-                reason,
-                source,
-                isMilestone,
-                milestoneMessage,
-                totalLikes
-              });
-            }
-            break;
-          }
-          case 'dailyBonusClaimed': {
-            const { 
-              userId, 
-              pointsAwarded, 
-              currentStreak, 
-              newBalance 
-            } = data.notification;
-            
-            // Only show notification for the current user
-            if (userId === user._id && window.userPointsManager) {
-              window.userPointsManager.showDailyBonusNotification({
-                pointsAwarded,
-                currentStreak,
-                newBalance
-              });
             }
             break;
           }

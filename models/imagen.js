@@ -5,6 +5,7 @@ const axios = require('axios');
 const { createHash } = require('crypto');
 const { addNotification, saveChatImageToDB, getLanguageName, uploadToS3 } = require('../models/tool')
 const { getUserMinImages, getAutoMergeFaceSetting } = require('../models/chat-tool-settings-utils')
+const { awardImageGenerationReward, awardImageMilestoneReward } = require('./user-points-utils');
 const slugify = require('slugify');
 const sharp = require('sharp');
 const default_prompt = {
@@ -1315,6 +1316,15 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
           { _id: new ObjectId(userId) },
           { $inc: { imageCount: 1 } }
       );
+      
+      try {
+        // Award base points for image generation
+        await awardImageGenerationReward(db, userId, fastify);
+        // Check for image generation milestones
+        await awardImageMilestoneReward(db, userId, fastify);
+      } catch (error) {
+        console.error('Error awarding image generation points:', error);
+      }
       
       if (!userChatId || !ObjectId.isValid(userChatId)) {
         console.log('[saveImageToDB] Returning data for non-user chat:', {

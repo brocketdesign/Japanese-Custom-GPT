@@ -652,7 +652,6 @@ window.toggleImageFavorite = function(el) {
   const isLiked = $this.find('i').hasClass('bi-heart-fill'); // Check if already liked
 
   const action = isLiked ? 'unlike' : 'like'; // Determine action
-  console.log({action})
   const likeIconClass = (isLiked || action) ? 'bi-heart-fill text-danger' : 'bi-heart';
   $this.find('i').removeClass('bi-heart bi-heart-fill').addClass(likeIconClass); // Toggle icon class
 

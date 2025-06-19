@@ -529,19 +529,46 @@ window.showDiscovery = function() {
     window.postMessage('resizeIframe', '*');
 }
 
+
 window.showNotification = (message, type = 'info') => {
     if(!message || typeof message !== 'string' || message.trim() === '' || message == 'undefined') {
         console.warn('Invalid message for notification:', message);
         return;
     }
+
     const styleMap = {
-        success: { iconColor: 'text-success', icon: 'bi-check-circle-fill', barColorClass: 'bg-success' },
-        error:   { iconColor: 'text-danger',  icon: 'bi-exclamation-triangle-fill', barColorClass: 'bg-danger' },
-        warning: { iconColor: 'text-warning', icon: 'bi-exclamation-circle-fill', barColorClass: 'bg-warning' },
-        info:    { iconColor: 'text-info',    icon: 'bi-info-circle-fill', barColorClass: 'bg-info' },
+        success: { 
+            iconColor: 'text-success', 
+            icon: 'bi-check-circle-fill', 
+            barColorClass: 'bg-success',
+            bgGradient: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+            shadowColor: 'rgba(40, 167, 69, 0.3)'
+        },
+        error: { 
+            iconColor: 'text-danger', 
+            icon: 'bi-exclamation-triangle-fill', 
+            barColorClass: 'bg-danger',
+            bgGradient: 'linear-gradient(135deg, #dc3545 0%, #fd7e14 100%)',
+            shadowColor: 'rgba(220, 53, 69, 0.3)'
+        },
+        warning: { 
+            iconColor: 'text-warning', 
+            icon: 'bi-exclamation-circle-fill', 
+            barColorClass: 'bg-warning',
+            bgGradient: 'linear-gradient(135deg, #ffc107 0%, #fd7e14 100%)',
+            shadowColor: 'rgba(255, 193, 7, 0.3)'
+        },
+        info: { 
+            iconColor: 'text-info', 
+            icon: 'bi-info-circle-fill', 
+            barColorClass: 'bg-info',
+            bgGradient: 'linear-gradient(135deg, #6E20F4 0%, #8240FF 100%)',
+            shadowColor: 'rgba(110, 32, 244, 0.3)'
+        },
     };
-    const { iconColor, icon, barColorClass } = styleMap[type] || styleMap.info;
-    const toastDelay = 5000; // Notification display time in ms
+
+    const { iconColor, icon, barColorClass, bgGradient, shadowColor } = styleMap[type] || styleMap.info;
+    const toastDelay = 5000;
 
     // Ensure notification container exists and is styled
     let container = document.getElementById('notification-container');
@@ -550,7 +577,7 @@ window.showNotification = (message, type = 'info') => {
         container.id = 'notification-container';
         document.body.appendChild(container);
 
-        // Inject custom styles for container and toast animations once
+        // Inject modern custom styles
         if (!document.getElementById('toast-custom-styles')) {
             const styleSheet = document.createElement("style");
             styleSheet.id = 'toast-custom-styles';
@@ -559,111 +586,248 @@ window.showNotification = (message, type = 'info') => {
                 #notification-container {
                     position: fixed;
                     top: 20px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    z-index: 1060; /* Above most other elements */
+                    right: 20px;
+                    z-index: 1060;
                     display: flex;
                     flex-direction: column;
-                    align-items: center;
-                    gap: 0.75rem; /* Spacing between toasts */
+                    align-items: flex-end;
+                    gap: 12px;
                     width: auto;
-                    max-width: 90%; /* Max width for the container */
+                    max-width: 90%;
+                    pointer-events: none;
                 }
-                #notification-container .toast {
-                    min-width: 280px; /* Minimum width for toasts */
-                    max-width: 400px; /* Maximum width for toasts */
-                    transition: transform 0.35s ease-in-out, opacity 0.35s ease-in-out;
+
+                .modern-toast {
+                    min-width: 320px;
+                    max-width: 420px;
+                    background: rgba(255, 255, 255, 0.95);
+                    backdrop-filter: blur(20px);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    border-radius: 16px;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+                    transform: translateX(100%) scale(0.8);
                     opacity: 0;
-                    transform: translateY(-30px); /* Start off-screen (top) */
+                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
                     will-change: transform, opacity;
-                    overflow: hidden; /* Important for rounded corners with progress bar */
+                    overflow: hidden;
+                    pointer-events: auto;
+                    position: relative;
                 }
-                #notification-container .toast.show {
+
+                .modern-toast.show {
                     opacity: 1;
-                    transform: translateY(0); /* Slide in */
+                    transform: translateX(0) scale(1);
                 }
-                #notification-container .toast.hiding {
+
+                .modern-toast.hiding {
                     opacity: 0;
-                    transform: translateY(-30px); /* Slide out */
+                    transform: translateX(100%) scale(0.8);
                 }
-                .toast-progress-bar-wrapper {
+
+                .modern-toast::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 4px;
+                    background: var(--toast-gradient);
+                    border-radius: 16px 16px 0 0;
+                }
+
+                .toast-content {
+                    padding: 16px 20px;
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 12px;
+                }
+
+                .toast-icon-wrapper {
+                    flex-shrink: 0;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 12px;
+                    background: var(--toast-gradient);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    animation: iconPulse 0.6s ease-out;
+                }
+
+                .toast-icon {
+                    font-size: 18px;
+                    color: white;
+                }
+
+                .toast-body {
+                    flex: 1;
+                    padding-top: 2px;
+                }
+
+                .toast-message {
+                    color: #2d3748;
+                    font-size: 14px;
+                    font-weight: 500;
+                    line-height: 1.4;
+                    margin: 0;
+                }
+
+                .toast-close {
+                    flex-shrink: 0;
+                    background: none;
+                    border: none;
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    color: #718096;
+                    margin-top: -2px;
+                }
+
+                .toast-close:hover {
+                    background: rgba(0, 0, 0, 0.05);
+                    color: #2d3748;
+                    transform: scale(1.1);
+                }
+
+                .toast-progress-wrapper {
                     position: absolute;
                     bottom: 0;
                     left: 0;
-                    width: 100%;
-                    height: 4px;
-                    background-color: rgba(0,0,0,0.1); /* Track color for the progress bar */
+                    right: 0;
+                    height: 3px;
+                    background: rgba(0, 0, 0, 0.05);
+                    overflow: hidden;
                 }
-                .toast-progress-bar {
+
+                .toast-progress {
                     height: 100%;
+                    background: var(--toast-gradient);
                     width: 100%;
+                    transition: width linear;
+                    border-radius: 0 0 16px 16px;
+                }
+
+                @keyframes iconPulse {
+                    0% { transform: scale(0.8); opacity: 0; }
+                    50% { transform: scale(1.1); }
+                    100% { transform: scale(1); opacity: 1; }
+                }
+
+                @keyframes slideIn {
+                    0% { transform: translateX(100%) scale(0.8); opacity: 0; }
+                    100% { transform: translateX(0) scale(1); opacity: 1; }
+                }
+
+                @media (max-width: 768px) {
+                    #notification-container {
+                        top: 10px;
+                        right: 10px;
+                        left: 10px;
+                        align-items: center;
+                    }
+                    
+                    .modern-toast {
+                        min-width: auto;
+                        width: 100%;
+                        max-width: none;
+                        transform: translateY(-100%) scale(0.9);
+                    }
+                    
+                    .modern-toast.show {
+                        transform: translateY(0) scale(1);
+                    }
+                    
+                    .modern-toast.hiding {
+                        transform: translateY(-100%) scale(0.9);
+                    }
                 }
             `;
             document.head.appendChild(styleSheet);
         }
     }
 
-    // Build the toast element
+    // Create the modern toast element
     const toastEl = document.createElement('div');
-    toastEl.className = 'toast bg-white text-dark border-0 shadow-lg rounded-pill';
-    toastEl.setAttribute('role', 'alert');
-    toastEl.setAttribute('aria-live', 'assertive');
-    toastEl.setAttribute('aria-atomic', 'true');
+    toastEl.className = 'modern-toast';
+    toastEl.style.setProperty('--toast-gradient', bgGradient);
+    toastEl.style.setProperty('--toast-shadow', shadowColor);
 
     toastEl.innerHTML = `
-        <div class="d-flex py-2 px-3">
-            <div class="flex-shrink-0 d-flex align-items-center">
-                <i class="bi ${icon} ${iconColor} fs-4 me-3"></i>
+        <div class="toast-content">
+            <div class="toast-icon-wrapper">
+                <i class="bi ${icon} toast-icon"></i>
             </div>
-            <div class="flex-grow-1 align-self-center">
-                ${message}
+            <div class="toast-body">
+                <div class="toast-message">${message}</div>
             </div>
-            <div class="flex-shrink-0 ms-auto ps-2 align-self-center">
-                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
+            <button type="button" class="toast-close" data-dismiss="toast">
+                <i class="bi bi-x" style="font-size: 16px;"></i>
+            </button>
         </div>
-        <div class="toast-progress-bar-wrapper">
-                <div class="toast-progress-bar ${barColorClass}" style="width: 100%;"></div>
+        <div class="toast-progress-wrapper">
+            <div class="toast-progress"></div>
         </div>
     `;
 
-    container.prepend(toastEl); // Add new toasts to the top of the container
+    // Add to container
+    container.appendChild(toastEl);
 
-    const toastProgressBar = toastEl.querySelector('.toast-progress-bar');
-    const toastOptions = { delay: toastDelay, autohide: true };
-    let animationFrameId = null;
+    // Handle close button
+    const closeBtn = toastEl.querySelector('.toast-close');
+    closeBtn.addEventListener('click', () => {
+        hideToast();
+    });
 
-    toastEl.addEventListener('shown.bs.toast', () => {
-        if (toastOptions.autohide && toastProgressBar) {
-            let startTime = performance.now();
-            const duration = toastOptions.delay;
-            
-            function animateProgressBar(currentTime) {
-                const elapsedTime = currentTime - startTime;
-                let progress = 1 - (elapsedTime / duration);
-                if (progress < 0) progress = 0;
-                
-                toastProgressBar.style.width = `${progress * 100}%`;
+    // Progress bar animation
+    const progressBar = toastEl.querySelector('.toast-progress');
+    let startTime = null;
+    let animationId = null;
 
-                if (progress > 0) {
-                    animationFrameId = requestAnimationFrame(animateProgressBar);
-                } else {
-                    toastProgressBar.style.width = '0%';
-                }
+    function animateProgress(currentTime) {
+        if (!startTime) startTime = currentTime;
+        const elapsed = currentTime - startTime;
+        const progress = Math.max(0, 1 - (elapsed / toastDelay));
+        
+        progressBar.style.width = `${progress * 100}%`;
+        
+        if (progress > 0) {
+            animationId = requestAnimationFrame(animateProgress);
+        } else {
+            hideToast();
+        }
+    }
+
+    function hideToast() {
+        if (animationId) {
+            cancelAnimationFrame(animationId);
+        }
+        
+        toastEl.classList.add('hiding');
+        
+        setTimeout(() => {
+            if (toastEl.parentNode) {
+                toastEl.parentNode.removeChild(toastEl);
             }
-            animationFrameId = requestAnimationFrame(animateProgressBar);
-        }
-    });
+        }, 400);
+    }
 
-    toastEl.addEventListener('hidden.bs.toast', () => {
-        if (animationFrameId) {
-            cancelAnimationFrame(animationFrameId);
-        }
-        toastEl.remove();
-    });
+    // Show the toast with animation
+    setTimeout(() => {
+        toastEl.classList.add('show');
+        animationId = requestAnimationFrame(animateProgress);
+    }, 50);
 
-    const toast = new bootstrap.Toast(toastEl, toastOptions);
-    toast.show();
+    // Auto-hide after delay
+    setTimeout(() => {
+        if (toastEl.parentNode) {
+            hideToast();
+        }
+    }, toastDelay);
 };
 
 window.fetchUser = async function() {
@@ -938,6 +1102,7 @@ $(document).ready(function(){
             window.Clerk = Clerk;
         })
 </script>
+
 <script>
 window.loadCharacterUpdateModal = function(chatId) {
     if (!chatId) {
@@ -959,4 +1124,204 @@ window.loadCharacterUpdateModal = function(chatId) {
         }
     });
 };
+</script>
+
+<script>
+    // ...existing code...
+
+/**
+ * Debug function to showcase all notification styles
+ * Call from console: debugNotifications()
+ */
+window.debugNotifications = function() {
+    console.log('🔧 Testing all notification styles...');
+    
+    const notifications = [
+        {
+            type: 'success',
+            message: '✅ Success notification - Operation completed successfully!',
+            delay: 0
+        },
+        {
+            type: 'error', 
+            message: '❌ Error notification - Something went wrong with your request',
+            delay: 1000
+        },
+        {
+            type: 'warning',
+            message: '⚠️ Warning notification - Please check your input before proceeding',
+            delay: 2000
+        },
+        {
+            type: 'info',
+            message: 'ℹ️ Info notification - Here is some helpful information for you',
+            delay: 3000
+        },
+        {
+            type: 'success',
+            message: 'Long message test: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+            delay: 4000
+        },
+        {
+            type: 'error',
+            message: 'HTML test: <strong>Bold text</strong> and <em>italic text</em> with <br>line breaks',
+            delay: 5000
+        }
+    ];
+
+    // Clear any existing notifications first
+    $('#notification-container').empty();
+
+    // Show each notification with delay
+    notifications.forEach((notif, index) => {
+        setTimeout(() => {
+            console.log(`Showing ${notif.type} notification:`, notif.message);
+            window.showNotification(notif.message, notif.type);
+        }, notif.delay);
+    });
+
+    // Show special rewards after basic notifications
+    setTimeout(() => {
+        console.log('Showing special reward notification...');
+        if (window.userPointsManager) {
+            window.userPointsManager.debugShowSpecialRewardNotification();
+        }
+    }, 6500);
+
+    setTimeout(() => {
+        console.log('Showing milestone reward notification...');
+        if (window.userPointsManager) {
+            window.userPointsManager.debugShowMilestoneRewardNotification();
+        }
+    }, 8000);
+
+    setTimeout(() => {
+        console.log('Showing daily bonus notification...');
+        if (window.userPointsManager) {
+            window.userPointsManager.debugShowDailyBonusNotification();
+        }
+    }, 9500);
+
+    console.log('All notifications will appear over the next 10 seconds');
+    console.log('Types tested: success, error, warning, info, special rewards, milestone, daily bonus');
+    
+    return 'Debug notifications started! Check the top-right corner of your screen.';
+};
+
+/**
+ * Debug function to test notification positioning and stacking
+ */
+window.debugNotificationStacking = function() {
+    console.log('🔧 Testing notification stacking...');
+    
+    // Show 5 notifications rapidly to test stacking
+    for (let i = 1; i <= 5; i++) {
+        setTimeout(() => {
+            window.showNotification(
+                `Stacking test notification #${i} - This tests how multiple notifications appear together`,
+                i % 2 === 0 ? 'success' : 'info'
+            );
+        }, i * 200);
+    }
+    
+    return 'Stacking test started! 5 notifications will appear rapidly.';
+};
+
+/**
+ * Debug function to test notification with different message lengths
+ */
+window.debugNotificationLengths = function() {
+    console.log('🔧 Testing notification message lengths...');
+    
+    const messages = [
+        'Short',
+        'Medium length notification message',
+        'This is a longer notification message that should test how the notification handles text wrapping and longer content',
+        'Very very very very very very very very very very very very very very very very very very long message to test extreme cases',
+        'Message with\nline breaks\nand special characters: !@#$%^&*()_+-=[]{}|;:\'",.<>?/~`'
+    ];
+    
+    messages.forEach((message, index) => {
+        setTimeout(() => {
+            const types = ['success', 'error', 'warning', 'info'];
+            window.showNotification(message, types[index % types.length]);
+        }, index * 1500);
+    });
+    
+    return 'Length test started! Different message lengths will be tested.';
+};
+
+/**
+ * Debug function to test notification responsiveness
+ */
+window.debugNotificationResponsive = function() {
+    console.log('🔧 Testing notification responsiveness...');
+    console.log('Resize your browser window to see how notifications adapt');
+    
+    window.showNotification(
+        'Responsive test: Resize your browser window to see how this notification adapts to different screen sizes',
+        'info'
+    );
+    
+    setTimeout(() => {
+        window.showNotification(
+            'Mobile test: This notification tests mobile responsiveness and positioning',
+            'warning'
+        );
+    }, 1000);
+    
+    return 'Responsive test started! Resize your browser window to test.';
+};
+
+/**
+ * Debug function to clear all notifications
+ */
+window.debugClearNotifications = function() {
+    const container = document.getElementById('notification-container');
+    if (container) {
+        container.innerHTML = '';
+        console.log('✅ All notifications cleared');
+        return 'All notifications cleared!';
+    } else {
+        console.log('ℹ️ No notification container found');
+        return 'No notifications to clear.';
+    }
+};
+
+/**
+ * Show debug help in console
+ */
+window.debugNotificationsHelp = function() {
+    console.log(`
+🔧 NOTIFICATION DEBUG FUNCTIONS:
+
+Basic Functions:
+• debugNotifications() - Test all notification types
+• debugNotificationStacking() - Test multiple notifications
+• debugNotificationLengths() - Test different message lengths
+• debugNotificationResponsive() - Test responsive behavior
+• debugClearNotifications() - Clear all notifications
+
+Points System (if available):
+• debugDailyBonus() - Show daily bonus notification
+• debugSpecialReward() - Show special reward notification
+• debugMilestoneReward() - Show milestone reward notification
+
+Manual Testing:
+• showNotification('Your message', 'type') - Show custom notification
+  Types: 'success', 'error', 'warning', 'info'
+
+Example:
+showNotification('Custom test message', 'success')
+    `);
+    return 'Debug help displayed in console!';
+};
+
+// Auto-show help on page load for developers
+if (window.MODE === 'development' || window.location.hostname === 'localhost') {
+    setTimeout(() => {
+        console.log('🔧 Notification debug functions loaded! Type debugNotificationsHelp() for help.');
+    }, 1000);
+}
+
 </script>

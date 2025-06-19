@@ -19,9 +19,37 @@ $(document).ready(function() {
         $('#generatedImage').css('opacity', '1');
     }
 
+
+    // Helper function to reset regenerate button state
+    function resetRegenerateButton() {
+        const $button = $('#regenerateImagesButton');
+        const $generateButton = $('#generateButton');
+        
+        $button.prop('disabled', false);
+        $button.html('<i class="bi bi-arrow-clockwise me-2"></i>' + translations.newCharacter.regenerate_images);
+        
+        $generateButton.prop('disabled', false);
+    }
+
+    // After the image is generated, save the image and redirect to the chat
+    function resetCharacterForm(){
+        // Enable buttons and reset text
+        $('.chatRedirection').show();
+        $('#characterPrompt').prop('disabled', false);
+        $('#chatName').prop('disabled', false);
+        $('#chatPurpose').prop('disabled', false);
+        $('#generateButton').prop('disabled', false);
+        $('#generateButton').html('<i class="bi bi-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
+        
+        // Reset regenerate button if it was disabled
+        resetRegenerateButton();
+    }
+
     // Add these functions to window for global access
     window.showImageSpinner = showImageSpinner;
     window.hideImageSpinner = hideImageSpinner;
+    window.resetCharacterForm = resetCharacterForm;
+
 
     // Add a small delay before accessing DOM elements
     setTimeout(function() {
@@ -314,31 +342,6 @@ $(document).ready(function() {
             });
         }
 
-        // Helper function to reset regenerate button state
-        function resetRegenerateButton() {
-            const $button = $('#regenerateImagesButton');
-            const $generateButton = $('#generateButton');
-            
-            $button.prop('disabled', false);
-            $button.html('<i class="bi bi-arrow-clockwise me-2"></i>' + translations.newCharacter.regenerate_images);
-            
-            $generateButton.prop('disabled', false);
-        }
-
-        // After the image is generated, save the image and redirect to the chat
-        function resetCharacterForm(){
-            // Enable buttons and reset text
-            $('.chatRedirection').show();
-            $('#characterPrompt').prop('disabled', false);
-            $('#chatName').prop('disabled', false);
-            $('#chatPurpose').prop('disabled', false);
-            $('#generateButton').prop('disabled', false);
-            $('#generateButton').html('<i class="bi bi-magic me-2"></i>'+translations.newCharacter.generate_with_AI);
-            
-            // Reset regenerate button if it was disabled
-            resetRegenerateButton();
-        }
-
         function resetInfiniteScroll(){
             const imageStyle = $('.style-option.selected').data('style')
             const imageModel = $('.style-option.selected').data('model')
@@ -454,12 +457,6 @@ $(document).ready(function() {
         }
 
         $('#imageGenerationDescription').show();
-
-        // Update button text for comprehensive generation
-        $button.html(`<div class="me-2 spinner-border spinner-border-sm" role="status">
-        <span class="visually-hidden">Loading...</span>
-        </div>${translations.newCharacter.comprehensive_generation_started}`);
-
         $('#characterPrompt').prop('disabled', true);
         $('#chatName').prop('disabled', true);
         $('#chatPurpose').prop('disabled', true);

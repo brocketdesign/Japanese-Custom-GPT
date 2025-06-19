@@ -22,18 +22,6 @@
         $('#generatedImage').css('opacity', '1');
     }
 
-
-    // Helper function to reset regenerate button state
-    function resetRegenerateButton() {
-        const $button = $('#regenerateImagesButton');
-        const $generateButton = $('#generateButton');
-        
-        $button.prop('disabled', false);
-        $button.html('<i class="bi bi-arrow-clockwise me-2"></i>' + translations.newCharacter.regenerate_images);
-        
-        $generateButton.prop('disabled', false);
-    }
-
     // After the image is generated, save the image and redirect to the chat
     function resetCharacterForm(){
         // Enable buttons and reset text
@@ -335,7 +323,6 @@ $(document).ready(function() {
             })
             .then(() => {
                 resetRegenerateButton();
-                showNotification(translations.newCharacter.images_regenerated, 'success');
             })
             .catch((error) => {
                 console.error('Error regenerating images:', error);
@@ -593,6 +580,18 @@ function previewImage(event) {
         $('#mergeFaceContainer').hide();
         $('#enableMergeFace').prop('disabled', true).prop('checked', false);
     }
+}
+
+
+// Helper function to reset regenerate button state
+function resetRegenerateButton() {
+    const $button = $('#regenerateImagesButton');
+    const $generateButton = $('#generateButton');
+    
+    $button.prop('disabled', false);
+    $button.html('<i class="bi bi-arrow-clockwise me-2"></i>' + translations.newCharacter.regenerate_images);
+    
+    $generateButton.prop('disabled', false);
 }
 
 function resetChatList(){

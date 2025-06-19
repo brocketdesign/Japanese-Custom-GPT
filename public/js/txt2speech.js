@@ -227,7 +227,7 @@ async function getVoiceUrl(message) {
         return Promise.reject(new Error('Message is required for text-to-speech'));
     }
     // OpenAI API
-    if (typeof language !== 'undefined' && language !== 'japanese') {
+    if (typeof language !== 'undefined' && language !== 'japanese' && language !== 'ja') {
         return `/api/txt2speech?message=${encodeURIComponent(message)}&language=${language}&chatId=${typeof chatId !== 'undefined' ? chatId : ''}&userId=${typeof userId !== 'undefined' ? userId : ''}`;
     }
 

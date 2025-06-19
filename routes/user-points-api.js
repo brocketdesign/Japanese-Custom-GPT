@@ -357,6 +357,7 @@ async function routes(fastify, options) {
       if (result.success) {
         // Send WebSocket notification to user
         fastify.sendNotificationToUser(userId, 'dailyBonusClaimed', {
+          userId,
           pointsAwarded: result.pointsAwarded,
           currentStreak: result.currentStreak,
           newBalance: result.user.points

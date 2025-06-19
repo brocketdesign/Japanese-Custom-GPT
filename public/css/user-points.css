@@ -312,3 +312,351 @@
     background-position: -200% 0;
   }
 }
+
+/* Daily Bonus Notification Styles */
+.daily-bonus-notification {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.daily-bonus-notification.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.daily-bonus-notification.hiding {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.daily-bonus-container {
+  background: linear-gradient(135deg, #ff9a56 0%, #ff6b6b 50%, #ffa726 100%);
+  border: 3px solid #fff;
+  box-shadow: 0 25px 50px rgba(255, 154, 86, 0.4);
+}
+
+.daily-bonus-calendar {
+  position: relative;
+  font-size: 3rem;
+  color: #fff;
+  animation: bounceIn 0.8s ease-out;
+}
+
+.calendar-day {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #ff6b6b;
+  background: #fff;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: dayBounce 1.5s ease-out;
+}
+
+.streak-fire {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  font-size: 2rem;
+  color: #ff4444;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.streak-fire.active {
+  opacity: 1;
+  animation: fireFlicker 1.5s infinite;
+}
+
+.streak-number {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #fff;
+  color: #ff4444;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.streak-info {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 8px 15px;
+  margin-top: 10px;
+  font-size: 0.9rem;
+  backdrop-filter: blur(10px);
+}
+
+/* Special Reward Notification Styles */
+.special-reward-notification {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.special-reward-notification.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.special-reward-notification.hiding {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.reward-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+}
+
+.reward-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+.special-reward-notification.show .reward-container,
+.daily-bonus-notification.show .reward-container {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.reward-content {
+  text-align: center;
+  color: white;
+  position: relative;
+  z-index: 2;
+}
+
+.reward-icon-container {
+  position: relative;
+  margin-bottom: 20px;
+  height: 80px;
+}
+
+.reward-main-icon {
+  font-size: 3rem;
+  color: #ffd700;
+  animation: bounceIn 0.8s ease-out;
+}
+
+.reward-star {
+  position: absolute;
+  color: #ffd700;
+  font-size: 1.2rem;
+  animation: twinkle 2s infinite;
+}
+
+.star-1 {
+  top: 10px;
+  left: 20px;
+  animation-delay: 0.2s;
+}
+
+.star-2 {
+  top: 5px;
+  right: 30px;
+  animation-delay: 0.5s;
+}
+
+.star-3 {
+  bottom: 10px;
+  left: 30px;
+  animation-delay: 0.8s;
+}
+
+.reward-title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.reward-message {
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+  opacity: 0.9;
+}
+
+.reward-points {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
+  padding: 15px;
+  margin-bottom: 15px;
+  backdrop-filter: blur(10px);
+}
+
+.points-earned {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  animation: pointsGlow 2s infinite alternate;
+}
+
+.points-label {
+  display: block;
+  font-size: 1rem;
+  opacity: 0.8;
+  margin-top: 5px;
+}
+
+.reward-meta {
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+.reward-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.reward-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.reward-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #ffd700;
+  border-radius: 50%;
+  opacity: 0;
+  animation: particleFloat 3s infinite;
+}
+
+.particle-1 { left: 10%; animation-delay: 0.2s; }
+.particle-2 { left: 25%; animation-delay: 0.8s; }
+.particle-3 { left: 50%; animation-delay: 0.4s; }
+.particle-4 { left: 75%; animation-delay: 1.2s; }
+.particle-5 { left: 85%; animation-delay: 0.6s; }
+.particle-6 { left: 40%; animation-delay: 1.0s; }
+
+/* Notification Animation Keyframes */
+@keyframes bounceIn {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes pointsGlow {
+  0% { text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); }
+  100% { text-shadow: 0 2px 20px rgba(255, 215, 0, 0.8); }
+}
+
+@keyframes particleFloat {
+  0% { transform: translateY(100%); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(-100%); opacity: 0; }
+}
+
+/* Daily Bonus Specific Animation Keyframes */
+@keyframes calendarPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes dayBounce {
+  0% { transform: translate(-50%, -50%) scale(0); }
+  60% { transform: translate(-50%, -50%) scale(1.2); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes fireFlicker {
+  0%, 100% { transform: scale(1) rotate(-2deg); }
+  25% { transform: scale(1.1) rotate(2deg); }
+  50% { transform: scale(0.95) rotate(-1deg); }
+  75% { transform: scale(1.05) rotate(1deg); }
+}
+
+/* Responsive Design for Notifications */
+@media (max-width: 480px) {
+  .reward-container {
+    padding: 30px 20px;
+    max-width: 350px;
+  }
+
+  .reward-title {
+    font-size: 1.5rem;
+  }
+
+  .points-earned {
+    font-size: 2rem;
+  }
+
+  .reward-main-icon,
+  .daily-bonus-calendar {
+    font-size: 2.5rem;
+  }
+}

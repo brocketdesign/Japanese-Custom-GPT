@@ -221,6 +221,24 @@ function initializeWebSocket(onConnectionResult = null) {
             }
             break;
           }
+          case 'dailyBonusClaimed': {
+            const { 
+              userId, 
+              pointsAwarded, 
+              currentStreak, 
+              newBalance 
+            } = data.notification;
+            
+            // Only show notification for the current user
+            if (userId === user._id && window.userPointsManager) {
+              window.userPointsManager.showDailyBonusNotification({
+                pointsAwarded,
+                currentStreak,
+                newBalance
+              });
+            }
+            break;
+          }
           default:
             // Removed console.log('[WebSocket] Unhandled notification type:', data.notification.type);
             break;

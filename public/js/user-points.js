@@ -8,6 +8,10 @@ class UserPointsManager {
     this.baseUrl = window.API_URL || '';
     this.translations = window.userPointsTranslations || {};
     this.currentUser = window.user || {};
+    // Audio management similar to txt2speech.js
+    this.audioCache = new Map();
+    this.audioPool = [];
+    this.audioPermissionGranted = true; // Default to true like txt2speech.js
     this.init();
   }
 
@@ -15,6 +19,31 @@ class UserPointsManager {
     this.bindEvents();
     this.updatePointsDisplay();
     this.checkDailyBonus();
+    this.initializeAudioPool();
+  }
+
+  /**
+   * Initialize audio context with user interaction
+   */
+  async initAudioContext() {
+    try {
+      if (!window.AudioContext && !window.webkitAudioContext) {
+        return null;
+      }
+      
+      if (!this.audioContext) {
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      
+      if (this.audioContext.state === 'suspended') {
+        await this.audioContext.resume();
+      }
+      
+      return this.audioContext;
+    } catch (error) {
+      console.log('Could not initialize audio context:', error);
+      return null;
+    }
   }
 
   bindEvents() {
@@ -46,6 +75,11 @@ class UserPointsManager {
 
     $(document).on('click', '.admin-set-points', (e) => {
       this.setAdminPoints();
+    });
+
+    // Initialize audio context on any user interaction
+    $(document).one('click', async () => {
+      await this.initAudioContext();
     });
   }
 
@@ -116,7 +150,7 @@ class UserPointsManager {
     const $bonusBtn = $('.bonus-btn');
     const originalText = $bonusBtn.text();
     
-    $bonusBtn.prop('disabled', true).text('Claiming...');
+    $bonusBtn.prop('disabled', true).text(this.translations.claiming || 'Claiming...');
 
     try {
       const response = await fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/daily-bonus`, {
@@ -132,7 +166,7 @@ class UserPointsManager {
       if (data.success) {
         // Show success notification
         showNotification(
-          this.translations.messages?.daily_bonus_claimed?.replace('{points}', data.pointsAwarded) || 
+          this.translations.daily_bonus_claimed?.replace('{points}', data.pointsAwarded) || 
           `Daily bonus claimed! +${data.pointsAwarded} points`,
           'success'
         );
@@ -151,7 +185,7 @@ class UserPointsManager {
         if (data.currentStreak > 1) {
           setTimeout(() => {
             showNotification(
-              this.translations.messages?.streak_bonus?.replace('{streak}', data.currentStreak) || 
+              this.translations.streak_bonus?.replace('{streak}', data.currentStreak) || 
               `Streak bonus! Day ${data.currentStreak}`,
               'info'
             );
@@ -159,12 +193,12 @@ class UserPointsManager {
         }
       } else {
         $bonusBtn.prop('disabled', false).text(originalText);
-        showNotification(data.message || 'Failed to claim bonus', 'error');
+        showNotification(data.message || this.translations.failed_claim_bonus || 'Failed to claim bonus', 'error');
       }
     } catch (error) {
       console.error('Error claiming daily bonus:', error);
       $bonusBtn.prop('disabled', false).text(originalText);
-      showNotification('Error claiming bonus', 'error');
+      showNotification(this.translations.error_claiming_bonus || 'Error claiming bonus', 'error');
     }
   }
 
@@ -178,9 +212,9 @@ class UserPointsManager {
     $historyContainer.html(`
       <div class="text-center p-4">
         <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
+          <span class="visually-hidden">${this.translations.loading || 'Loading...'}</span>
         </div>
-        <div class="mt-2 text-muted">Loading history...</div>
+        <div class="mt-2 text-muted">${this.translations.loading_history || 'Loading history...'}</div>
       </div>
     `);
 
@@ -202,7 +236,7 @@ class UserPointsManager {
         $historyContainer.html(`
           <div class="text-center p-4 text-muted">
             <i class="bi bi-clock-history fs-1 opacity-50"></i>
-            <div class="mt-2">No transaction history found</div>
+            <div class="mt-2">${this.translations.no_history || 'No transaction history found'}</div>
           </div>
         `);
       }
@@ -211,9 +245,9 @@ class UserPointsManager {
       $historyContainer.html(`
         <div class="text-center p-4 text-danger">
           <i class="bi bi-exclamation-circle fs-1"></i>
-          <div class="mt-2">Error loading history</div>
+          <div class="mt-2">${this.translations.error_loading_history || 'Error loading history'}</div>
           <button class="btn btn-sm btn-outline-primary mt-2 refresh-points">
-            <i class="bi bi-arrow-clockwise me-1"></i>Try Again
+            <i class="bi bi-arrow-clockwise me-1"></i>${this.translations.try_again || 'Try Again'}
           </button>
         </div>
       `);
@@ -275,7 +309,7 @@ class UserPointsManager {
     
     // Previous button
     html += `<li class="page-item ${pagination.currentPage === 1 ? 'disabled' : ''}">
-      <a class="page-link" href="#" data-page="${pagination.currentPage - 1}">Previous</a>
+      <a class="page-link" href="#" data-page="${pagination.currentPage - 1}">${this.translations.previous || 'Previous'}</a>
     </li>`;
     
     // Page numbers
@@ -294,7 +328,7 @@ class UserPointsManager {
     
     // Next button
     html += `<li class="page-item ${pagination.currentPage === pagination.totalPages ? 'disabled' : ''}">
-      <a class="page-link" href="#" data-page="${pagination.currentPage + 1}">Next</a>
+      <a class="page-link" href="#" data-page="${pagination.currentPage + 1}">${this.translations.next || 'Next'}</a>
     </li>`;
     
     html += '</ul></nav>';
@@ -311,9 +345,9 @@ class UserPointsManager {
     $leaderboardContainer.html(`
       <div class="text-center p-4">
         <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
+          <span class="visually-hidden">${this.translations.loading || 'Loading...'}</span>
         </div>
-        <div class="mt-2 text-muted">Loading leaderboard...</div>
+        <div class="mt-2 text-muted">${this.translations.loading_leaderboard || 'Loading leaderboard...'}</div>
       </div>
     `);
 
@@ -335,7 +369,7 @@ class UserPointsManager {
         $leaderboardContainer.html(`
           <div class="text-center p-4 text-muted">
             <i class="bi bi-trophy fs-1 opacity-50"></i>
-            <div class="mt-2">No leaderboard data available</div>
+            <div class="mt-2">${this.translations.no_leaderboard || 'No leaderboard data available'}</div>
           </div>
         `);
       }
@@ -344,9 +378,9 @@ class UserPointsManager {
       $leaderboardContainer.html(`
         <div class="text-center p-4 text-danger">
           <i class="bi bi-exclamation-circle fs-1"></i>
-          <div class="mt-2">Error loading leaderboard</div>
+          <div class="mt-2">${this.translations.error_loading_leaderboard || 'Error loading leaderboard'}</div>
           <button class="btn btn-sm btn-outline-primary mt-2" onclick="window.userPointsManager.loadLeaderboard()">
-            <i class="bi bi-arrow-clockwise me-1"></i>Try Again
+            <i class="bi bi-arrow-clockwise me-1"></i>${this.translations.try_again || 'Try Again'}
           </button>
         </div>
       `);
@@ -364,7 +398,7 @@ class UserPointsManager {
       html = `
         <div class="text-center p-4 text-muted">
           <i class="bi bi-trophy fs-1 opacity-50"></i>
-          <div class="mt-2">No users on leaderboard yet</div>
+          <div class="mt-2">${this.translations.no_users_leaderboard || 'No users on leaderboard yet'}</div>
         </div>
       `;
     } else {
@@ -392,12 +426,12 @@ class UserPointsManager {
               <img src="${avatar}" alt="${user.nickname}" class="rounded-circle" width="40" height="40">
             </div>
             <div class="flex-grow-1">
-              <div class="fw-semibold ${isCurrentUser ? 'text-primary' : ''}">${user.nickname || 'Anonymous'}</div>
-              ${user.loginStreak ? `<small class="text-muted"><i class="bi bi-fire"></i> ${user.loginStreak} day streak</small>` : ''}
+              <div class="fw-semibold ${isCurrentUser ? 'text-primary' : ''}">${user.nickname || this.translations.anonymous || 'Anonymous'}</div>
+              ${user.loginStreak ? `<small class="text-muted"><i class="bi bi-fire"></i> ${user.loginStreak} ${this.translations.day_streak || 'day streak'}</small>` : ''}
             </div>
             <div class="flex-shrink-0">
               <span class="fw-bold text-warning">${user.points || 0}</span>
-              <small class="text-muted d-block">points</small>
+              <small class="text-muted d-block">${this.translations.points || 'points'}</small>
             </div>
           </div>
         `;
@@ -412,16 +446,16 @@ class UserPointsManager {
    */
   async addAdminPoints() {
     const amount = parseInt($('#adminPointsAmount').val());
-    const reason = $('#adminPointsReason').val() || 'Admin adjustment';
+    const reason = $('#adminPointsReason').val() || this.translations.admin_adjustment || 'Admin adjustment';
 
     if (!amount || amount <= 0) {
-      showNotification('Please enter a valid amount', 'error');
+      showNotification(this.translations.enter_valid_amount || 'Please enter a valid amount', 'error');
       return;
     }
 
     const $btn = $('.admin-add-points');
     const originalText = $btn.html();
-    $btn.prop('disabled', true).html('<i class="bi bi-hourglass"></i> Adding...');
+    $btn.prop('disabled', true).html(`<i class="bi bi-hourglass"></i> ${this.translations.adding || 'Adding...'}`);
 
     try {
       const response = await fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/add`, {
@@ -440,16 +474,16 @@ class UserPointsManager {
       const data = await response.json();
 
       if (data.success) {
-        showNotification(`Successfully added ${amount} points`, 'success');
+        showNotification(this.translations.successfully_added_points?.replace('{amount}', amount) || `Successfully added ${amount} points`, 'success');
         await this.updatePointsDisplay();
         $('#adminPointsAmount').val('');
         $('#adminPointsReason').val('');
       } else {
-        showNotification(data.error || 'Failed to add points', 'error');
+        showNotification(data.error || this.translations.failed_add_points || 'Failed to add points', 'error');
       }
     } catch (error) {
       console.error('Error adding points:', error);
-      showNotification('Error adding points', 'error');
+      showNotification(this.translations.error_adding_points || 'Error adding points', 'error');
     } finally {
       $btn.prop('disabled', false).html(originalText);
     }
@@ -460,16 +494,16 @@ class UserPointsManager {
    */
   async removeAdminPoints() {
     const amount = parseInt($('#adminPointsAmount').val());
-    const reason = $('#adminPointsReason').val() || 'Admin adjustment';
+    const reason = $('#adminPointsReason').val() || this.translations.admin_adjustment || 'Admin adjustment';
 
     if (!amount || amount <= 0) {
-      showNotification('Please enter a valid amount', 'error');
+      showNotification(this.translations.enter_valid_amount || 'Please enter a valid amount', 'error');
       return;
     }
 
     const $btn = $('.admin-remove-points');
     const originalText = $btn.html();
-    $btn.prop('disabled', true).html('<i class="bi bi-hourglass"></i> Removing...');
+    $btn.prop('disabled', true).html(`<i class="bi bi-hourglass"></i> ${this.translations.removing || 'Removing...'}`);
 
     try {
       const response = await fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/remove`, {
@@ -488,16 +522,16 @@ class UserPointsManager {
       const data = await response.json();
 
       if (data.success) {
-        showNotification(`Successfully removed ${amount} points`, 'success');
+        showNotification(this.translations.successfully_removed_points?.replace('{amount}', amount) || `Successfully removed ${amount} points`, 'success');
         await this.updatePointsDisplay();
         $('#adminPointsAmount').val('');
         $('#adminPointsReason').val('');
       } else {
-        showNotification(data.error || 'Failed to remove points', 'error');
+        showNotification(data.error || this.translations.failed_remove_points || 'Failed to remove points', 'error');
       }
     } catch (error) {
       console.error('Error removing points:', error);
-      showNotification('Error removing points', 'error');
+      showNotification(this.translations.error_removing_points || 'Error removing points', 'error');
     } finally {
       $btn.prop('disabled', false).html(originalText);
     }
@@ -508,16 +542,16 @@ class UserPointsManager {
    */
   async setAdminPoints() {
     const amount = parseInt($('#adminPointsAmount').val());
-    const reason = $('#adminPointsReason').val() || 'Admin set points';
+    const reason = $('#adminPointsReason').val() || this.translations.admin_set_points || 'Admin set points';
 
     if (amount === undefined || amount < 0 || isNaN(amount)) {
-      showNotification('Please enter a valid amount (0 or greater)', 'error');
+      showNotification(this.translations.enter_valid_amount_zero || 'Please enter a valid amount (0 or greater)', 'error');
       return;
     }
 
     const $btn = $('.admin-set-points');
     const originalText = $btn.html();
-    $btn.prop('disabled', true).html('<i class="bi bi-hourglass"></i> Setting...');
+    $btn.prop('disabled', true).html(`<i class="bi bi-hourglass"></i> ${this.translations.setting || 'Setting...'}`);
 
     try {
       const response = await fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/set`, {
@@ -535,16 +569,16 @@ class UserPointsManager {
       const data = await response.json();
 
       if (data.success) {
-        showNotification(`Successfully set points to ${amount}`, 'success');
+        showNotification(this.translations.successfully_set_points?.replace('{amount}', amount) || `Successfully set points to ${amount}`, 'success');
         await this.updatePointsDisplay();
         $('#adminPointsAmount').val('');
         $('#adminPointsReason').val('');
       } else {
-        showNotification(data.error || 'Failed to set points', 'error');
+        showNotification(data.error || this.translations.failed_set_points || 'Failed to set points', 'error');
       }
     } catch (error) {
       console.error('Error setting points:', error);
-      showNotification('Error setting points', 'error');
+      showNotification(this.translations.error_setting_points || 'Error setting points', 'error');
     } finally {
       $btn.prop('disabled', false).html(originalText);
     }
@@ -555,7 +589,7 @@ class UserPointsManager {
    */
   async refreshPoints() {
     await this.updatePointsDisplay();
-    showNotification('Points refreshed', 'success');
+    showNotification(this.translations.points_refreshed || 'Points refreshed', 'success');
   }
 
   /**
@@ -573,10 +607,232 @@ class UserPointsManager {
   }
 
   /**
+   * Initialize audio pool for sound effects
+   */
+  initializeAudioPool() {
+    // Create initial audio elements in the pool
+    for (let i = 0; i < 3; i++) {
+      const audio = new Audio();
+      this.audioPool.push(audio);
+    }
+  }
+
+  /**
+   * Get an available audio element from the pool
+   */
+  getAvailableAudio() {
+    const idleAudio = this.audioPool.find(a => a.paused && a.currentTime === 0);
+    if (idleAudio) {
+      return idleAudio;
+    } else {
+      const newAudio = new Audio();
+      this.audioPool.push(newAudio);
+      return newAudio;
+    }
+  }
+
+  /**
+   * Request audio permission from user (simplified like txt2speech.js)
+   */
+  async requestAudioPermission() {
+    // Always return true for points system - simpler approach
+    return Promise.resolve(true);
+  }
+
+  /**
+   * Stop all currently playing point sound effects
+   */
+  stopAllPointsSounds() {
+    this.audioPool.forEach(audio => {
+      if (!audio.paused) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    });
+  }
+
+  /**
+   * Auto-play reward sound effect (simplified)
+   */
+  async autoPlayRewardSound(soundType, isMilestone = false, hasStreak = false) {
+    try {
+      // Stop any currently playing sounds
+      this.stopAllPointsSounds();
+
+      // Generate a cache key for this sound
+      const cacheKey = `${soundType}_${isMilestone}_${hasStreak}`;
+      
+      // Check if we have this sound cached
+      let audioBlob = this.audioCache.get(cacheKey);
+      
+      if (!audioBlob) {
+        // Generate the sound and cache it
+        audioBlob = await this.generatePointsSound(soundType, isMilestone, hasStreak);
+        if (audioBlob) {
+          this.audioCache.set(cacheKey, audioBlob);
+        }
+      }
+
+      if (audioBlob) {
+        const audio = this.getAvailableAudio();
+        audio.src = audioBlob;
+        
+        // Try to play - if it fails, that's okay
+        try {
+          await audio.play();
+          return true;
+        } catch (error) {
+          return false;
+        }
+      }
+
+      return false;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Generate sound effects as audio blobs for caching
+   */
+  async generatePointsSound(soundType, isMilestone = false, hasStreak = false) {
+    try {
+      const audioContext = await this.initAudioContext();
+      if (!audioContext || audioContext.state !== 'running') {
+        return null;
+      }
+
+      // Create an offline audio context to generate the sound
+      const sampleRate = audioContext.sampleRate;
+      let duration, frequencies;
+
+      if (soundType === 'reward') {
+        if (isMilestone) {
+          duration = 0.5;
+          frequencies = [
+            { freq: 523.25, start: 0, duration: 0.1, volume: 0.3 },      // C5
+            { freq: 659.25, start: 0.15, duration: 0.1, volume: 0.3 },   // E5
+            { freq: 783.99, start: 0.3, duration: 0.2, volume: 0.4 }     // G5
+          ];
+        } else {
+          duration = 0.1;
+          frequencies = [
+            { freq: 800, start: 0, duration: 0.1, volume: 0.2 }
+          ];
+        }
+      } else if (soundType === 'daily_bonus') {
+        if (hasStreak) {
+          duration = 0.55;
+          frequencies = [
+            { freq: 440, start: 0, duration: 0.1, volume: 0.2 },         // A4
+            { freq: 554.37, start: 0.1, duration: 0.1, volume: 0.2 },   // C#5
+            { freq: 659.25, start: 0.2, duration: 0.15, volume: 0.3 },  // E5
+            { freq: 880, start: 0.35, duration: 0.2, volume: 0.3 }      // A5
+          ];
+        } else {
+          duration = 0.35;
+          frequencies = [
+            { freq: 523.25, start: 0, duration: 0.2, volume: 0.3 },     // C5
+            { freq: 659.25, start: 0.2, duration: 0.15, volume: 0.2 }   // E5
+          ];
+        }
+      }
+
+      const offlineContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(
+        1, sampleRate * duration, sampleRate
+      );
+
+      // Generate the sound with multiple tones
+      frequencies.forEach(({ freq, start, duration: toneDuration, volume }) => {
+        const oscillator = offlineContext.createOscillator();
+        const gainNode = offlineContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(offlineContext.destination);
+        
+        oscillator.frequency.setValueAtTime(freq, start);
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0, start);
+        gainNode.gain.linearRampToValueAtTime(volume, start + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, start + toneDuration);
+        
+        oscillator.start(start);
+        oscillator.stop(start + toneDuration);
+      });
+
+      const renderedBuffer = await offlineContext.startRendering();
+      
+      // Convert audio buffer to blob
+      const audioBlob = this.audioBufferToBlob(renderedBuffer);
+      return audioBlob;
+      
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * Convert AudioBuffer to Blob URL
+   */
+  audioBufferToBlob(audioBuffer) {
+    const numberOfChannels = audioBuffer.numberOfChannels;
+    const length = audioBuffer.length * numberOfChannels * 2 + 44;
+    const buffer = new ArrayBuffer(length);
+    const view = new DataView(buffer);
+    const channels = [];
+    let sample;
+    let offset = 0;
+    let pos = 0;
+
+    // Write WAV header
+    const setUint16 = (data) => {
+      view.setUint16(pos, data, true);
+      pos += 2;
+    };
+    const setUint32 = (data) => {
+      view.setUint32(pos, data, true);
+      pos += 4;
+    };
+
+    setUint32(0x46464952); // "RIFF"
+    setUint32(length - 8); // file length - 8
+    setUint32(0x45564157); // "WAVE"
+    setUint32(0x20746d66); // "fmt " chunk
+    setUint32(16); // length = 16
+    setUint16(1); // PCM (uncompressed)
+    setUint16(numberOfChannels);
+    setUint32(audioBuffer.sampleRate);
+    setUint32(audioBuffer.sampleRate * 2 * numberOfChannels); // avg. bytes/sec
+    setUint16(numberOfChannels * 2); // block-align
+    setUint16(16); // 16-bit
+    setUint32(0x61746164); // "data" - chunk
+    setUint32(length - pos - 4); // chunk length
+
+    // Write interleaved data
+    for (let i = 0; i < numberOfChannels; i++) {
+      channels.push(audioBuffer.getChannelData(i));
+    }
+
+    while (pos < length) {
+      for (let i = 0; i < numberOfChannels; i++) {
+        sample = Math.max(-1, Math.min(1, channels[i][offset])); // clamp
+        sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0; // scale to 16-bit signed int
+        view.setInt16(pos, sample, true); // write 16-bit sample
+        pos += 2;
+      }
+      offset++; // next source sample
+    }
+
+    const blob = new Blob([buffer], { type: 'audio/wav' });
+    return URL.createObjectURL(blob);
+  }
+
+  /**
    * Show special point reward notification with animations
    * @param {Object} rewardData - Reward information
    */
-  showSpecialRewardNotification(rewardData) {
+  async showSpecialRewardNotification(rewardData) {
     const {
       points,
       reason,
@@ -589,7 +845,10 @@ class UserPointsManager {
     // Remove any existing reward notifications
     $('.special-reward-notification').remove();
 
-    // Create the notification HTML
+    // Try to auto-play sound first
+    const soundPlayed = await this.autoPlayRewardSound('reward', isMilestone);
+
+    // Create the notification HTML with conditional play button
     const notificationHtml = `
       <div class="special-reward-notification">
         <div class="reward-backdrop"></div>
@@ -615,6 +874,13 @@ class UserPointsManager {
                 <span class="points-label">points</span>
               </div>
               ${totalLikes > 0 ? `<div class="reward-meta">Total likes: ${totalLikes}</div>` : ''}
+              ${!soundPlayed ? `
+                <div class="reward-actions mt-3">
+                  <button class="btn btn-sm btn-outline-light play-reward-sound" data-milestone="${isMilestone}">
+                    <i class="bi bi-volume-up"></i> ${this.translations.play_sound || 'Play Sound'}
+                  </button>
+                </div>
+              ` : ''}
             </div>
             <div class="reward-particles">
               <div class="particle particle-1"></div>
@@ -635,6 +901,12 @@ class UserPointsManager {
     // Add to body
     $('body').append(notificationHtml);
 
+    // Bind sound play event only if button exists
+    $('.play-reward-sound').on('click', (e) => {
+      const isMilestone = $(e.target).data('milestone') === 'true' || $(e.target).data('milestone') === true;
+      this.playRewardSound(isMilestone);
+    });
+
     // Add styles if not already present
     if (!$('#reward-notification-styles').length) {
       this.addRewardNotificationStyles();
@@ -645,16 +917,13 @@ class UserPointsManager {
       $('.special-reward-notification').addClass('show');
     }, 100);
 
-    // Auto-close after 5 seconds
+    // Auto-close after 5 seconds (reduced since sound plays automatically)
     setTimeout(() => {
       this.closeRewardNotification();
     }, 5000);
 
     // Update points display
     this.updatePointsDisplay();
-
-    // Play sound effect if available
-    this.playRewardSound(isMilestone);
   }
 
   /**
@@ -674,263 +943,184 @@ class UserPointsManager {
    * Add CSS styles for reward notifications
    */
   addRewardNotificationStyles() {
-    const styles = `
-      <style id="reward-notification-styles">
-        .special-reward-notification {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          z-index: 9999;
-          opacity: 0;
-          visibility: hidden;
-          transition: all 0.3s ease;
-        }
+    // Styles are now in the CSS file - no longer needed here
+    return;
+  }
 
-        .special-reward-notification.show {
-          opacity: 1;
-          visibility: visible;
-        }
+  /**
+   * Show special daily bonus notification with animations
+   * @param {Object} bonusData - Daily bonus information
+   */
+  async showDailyBonusNotification(bonusData) {
+    const {
+      pointsAwarded,
+      currentStreak,
+      newBalance
+    } = bonusData;
 
-        .special-reward-notification.hiding {
-          opacity: 0;
-          transform: scale(0.8);
-        }
+    // Remove any existing daily bonus notifications
+    $('.daily-bonus-notification').remove();
 
-        .reward-backdrop {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: rgba(0, 0, 0, 0.7);
-          backdrop-filter: blur(5px);
-        }
+    // Try to auto-play sound first
+    const soundPlayed = await this.autoPlayRewardSound('daily_bonus', false, currentStreak > 1);
 
-        .reward-container {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%) scale(0.8);
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          border-radius: 20px;
-          padding: 40px;
-          max-width: 400px;
-          width: 90%;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-          transition: all 0.3s ease;
-          overflow: hidden;
-          position: relative;
-        }
-
-        .special-reward-notification.show .reward-container {
-          transform: translate(-50%, -50%) scale(1);
-        }
-
-        .reward-content {
-          text-align: center;
-          color: white;
-          position: relative;
-          z-index: 2;
-        }
-
-        .reward-icon-container {
-          position: relative;
-          margin-bottom: 20px;
-          height: 80px;
-        }
-
-        .reward-main-icon {
-          font-size: 3rem;
-          color: #ffd700;
-          animation: bounceIn 0.8s ease-out;
-        }
-
-        .reward-star {
-          position: absolute;
-          color: #ffd700;
-          font-size: 1.2rem;
-          animation: twinkle 2s infinite;
-        }
-
-        .star-1 {
-          top: 10px;
-          left: 20px;
-          animation-delay: 0.2s;
-        }
-
-        .star-2 {
-          top: 5px;
-          right: 30px;
-          animation-delay: 0.5s;
-        }
-
-        .star-3 {
-          bottom: 10px;
-          left: 30px;
-          animation-delay: 0.8s;
-        }
-
-        .reward-title {
-          font-size: 1.8rem;
-          font-weight: bold;
-          margin-bottom: 10px;
-          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .reward-message {
-          font-size: 1.1rem;
-          margin-bottom: 20px;
-          opacity: 0.9;
-        }
-
-        .reward-points {
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 15px;
-          padding: 15px;
-          margin-bottom: 15px;
-          backdrop-filter: blur(10px);
-        }
-
-        .points-earned {
-          font-size: 2.5rem;
-          font-weight: bold;
-          color: #ffd700;
-          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-          animation: pointsGlow 2s infinite alternate;
-        }
-
-        .points-label {
-          display: block;
-          font-size: 1rem;
-          opacity: 0.8;
-          margin-top: 5px;
-        }
-
-        .reward-meta {
-          font-size: 0.9rem;
-          opacity: 0.7;
-        }
-
-        .reward-close-btn {
-          position: absolute;
-          top: 15px;
-          right: 15px;
-          background: rgba(255, 255, 255, 0.2);
-          border: none;
-          color: white;
-          width: 35px;
-          height: 35px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          backdrop-filter: blur(10px);
-        }
-
-        .reward-close-btn:hover {
-          background: rgba(255, 255, 255, 0.3);
-          transform: scale(1.1);
-        }
-
-        .reward-particles {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          pointer-events: none;
-          overflow: hidden;
-        }
-
-        .particle {
-          position: absolute;
-          width: 8px;
-          height: 8px;
-          background: #ffd700;
-          border-radius: 50%;
-          opacity: 0;
-          animation: particleFloat 3s infinite;
-        }
-
-        .particle-1 { left: 10%; animation-delay: 0.2s; }
-        .particle-2 { left: 25%; animation-delay: 0.8s; }
-        .particle-3 { left: 50%; animation-delay: 0.4s; }
-        .particle-4 { left: 75%; animation-delay: 1.2s; }
-        .particle-5 { left: 85%; animation-delay: 0.6s; }
-        .particle-6 { left: 40%; animation-delay: 1.0s; }
-
-        @keyframes bounceIn {
-          0% { transform: scale(0); opacity: 0; }
-          50% { transform: scale(1.2); opacity: 1; }
-          100% { transform: scale(1); }
-        }
-
-        @keyframes twinkle {
-          0%, 100% { opacity: 0.4; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.2); }
-        }
-
-        @keyframes pointsGlow {
-          0% { text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); }
-          100% { text-shadow: 0 2px 20px rgba(255, 215, 0, 0.8); }
-        }
-
-        @keyframes particleFloat {
-          0% { transform: translateY(100%); opacity: 0; }
-          20% { opacity: 1; }
-          80% { opacity: 1; }
-          100% { transform: translateY(-100%); opacity: 0; }
-        }
-
-        @media (max-width: 480px) {
-          .reward-container {
-            padding: 30px 20px;
-            max-width: 350px;
-          }
-
-          .reward-title {
-            font-size: 1.5rem;
-          }
-
-          .points-earned {
-            font-size: 2rem;
-          }
-
-          .reward-main-icon {
-            font-size: 2.5rem;
-          }
-        }
-      </style>
+    // Create the notification HTML with conditional play button
+    const notificationHtml = `
+      <div class="daily-bonus-notification">
+        <div class="reward-backdrop"></div>
+        <div class="reward-container daily-bonus-container">
+          <div class="reward-content">
+            <div class="reward-icon-container">
+              <i class="bi bi-star-fill reward-star star-1"></i>
+              <i class="bi bi-star-fill reward-star star-2"></i>
+              <i class="bi bi-star-fill reward-star star-3"></i>
+              <div class="reward-main-icon daily-bonus-calendar">
+                <i class="bi bi-calendar-check-fill"></i>
+                <div class="calendar-day">${new Date().getDate()}</div>
+              </div>
+              <div class="streak-fire ${currentStreak > 1 ? 'active' : ''}">
+                <i class="bi bi-fire"></i>
+                ${currentStreak > 1 ? `<span class="streak-number">${currentStreak}</span>` : ''}
+              </div>
+            </div>
+            <div class="reward-text">
+              <h3 class="reward-title">
+                🌅 ${this.translations.daily_bonus_title || 'Daily Bonus!'}
+              </h3>
+              <p class="reward-message">
+                ${currentStreak > 1 ? 
+                  (this.translations.streak_bonus_message?.replace('{streak}', currentStreak) || `${currentStreak} day streak bonus!`) :
+                  (this.translations.daily_login_reward || 'Thanks for logging in today!')
+                }
+              </p>
+              <div class="reward-points">
+                <span class="points-earned">+${pointsAwarded}</span>
+                <span class="points-label">${this.translations.points || 'points'}</span>
+              </div>
+              <div class="reward-meta">
+                ${this.translations.new_balance || 'New balance'}: ${newBalance} ${this.translations.points || 'points'}
+              </div>
+              ${currentStreak > 1 ? `
+                <div class="streak-info">
+                  <i class="bi bi-fire text-warning"></i>
+                  ${this.translations.streak_days?.replace('{days}', currentStreak) || `${currentStreak} days streak!`}
+                </div>
+              ` : ''}
+              ${!soundPlayed ? `
+                <div class="reward-actions mt-3">
+                  <button class="btn btn-sm btn-outline-light play-bonus-sound" data-streak="${currentStreak > 1}">
+                    <i class="bi bi-volume-up"></i> ${this.translations.play_sound || 'Play Sound'}
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+            <div class="reward-particles">
+              <div class="particle particle-1"></div>
+              <div class="particle particle-2"></div>
+              <div class="particle particle-3"></div>
+              <div class="particle particle-4"></div>
+              <div class="particle particle-5"></div>
+              <div class="particle particle-6"></div>
+            </div>
+          </div>
+          <button class="reward-close-btn" onclick="window.userPointsManager.closeDailyBonusNotification()">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+      </div>
     `;
-    
-    $('head').append(styles);
+
+    // Add to body
+    $('body').append(notificationHtml);
+
+    // Bind sound play event only if button exists
+    $('.play-bonus-sound').on('click', (e) => {
+      const hasStreak = $(e.target).data('streak') === 'true' || $(e.target).data('streak') === true;
+      this.playDailyBonusSound(hasStreak);
+    });
+
+    // Trigger entrance animation
+    setTimeout(() => {
+      $('.daily-bonus-notification').addClass('show');
+    }, 100);
+
+    // Auto-close after 4 seconds (reduced since sound plays automatically)
+    setTimeout(() => {
+      this.closeDailyBonusNotification();
+    }, 4000);
+
+    // Update points display
+    this.updatePointsDisplay();
+  }
+
+  /**
+   * Close the daily bonus notification
+   */
+  closeDailyBonusNotification() {
+    const $notification = $('.daily-bonus-notification');
+    if ($notification.length) {
+      $notification.addClass('hiding');
+      setTimeout(() => {
+        $notification.remove();
+      }, 300);
+    }
+  }
+
+  /**
+   * Add CSS styles for daily bonus notifications
+   */
+  addDailyBonusNotificationStyles() {
+    // Styles are now in the CSS file - no longer needed here
+    return;
   }
 
   /**
    * Play reward sound effect
    */
-  playRewardSound(isMilestone = false) {
+  async playRewardSound(isMilestone = false) {
     try {
-      // Create audio context for sound effects
-      if (window.AudioContext || window.webkitAudioContext) {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        
-        if (isMilestone) {
-          // Play celebration sound for milestones
-          this.playTone(audioContext, 523.25, 0.1, 0.3); // C5
-          setTimeout(() => this.playTone(audioContext, 659.25, 0.1, 0.3), 150); // E5
-          setTimeout(() => this.playTone(audioContext, 783.99, 0.2, 0.4), 300); // G5
-        } else {
-          // Play simple notification sound for regular likes
-          this.playTone(audioContext, 800, 0.1, 0.2);
-        }
+      const audioContext = await this.initAudioContext();
+      if (!audioContext || audioContext.state !== 'running') {
+        return;
+      }
+      
+      if (isMilestone) {
+        // Play celebration sound for milestones
+        this.playTone(audioContext, 523.25, 0.1, 0.3); // C5
+        setTimeout(() => this.playTone(audioContext, 659.25, 0.1, 0.3), 150); // E5
+        setTimeout(() => this.playTone(audioContext, 783.99, 0.2, 0.4), 300); // G5
+      } else {
+        // Play simple notification sound for regular likes
+        this.playTone(audioContext, 800, 0.1, 0.2);
       }
     } catch (error) {
       // Silently fail if audio context is not available
+      console.log('Audio not available:', error);
+    }
+  }
+
+  /**
+   * Play daily bonus sound effect
+   */
+  async playDailyBonusSound(hasStreak = false) {
+    try {
+      const audioContext = await this.initAudioContext();
+      if (!audioContext || audioContext.state !== 'running') {
+        return;
+      }
+      
+      if (hasStreak) {
+        // Play enhanced sound for streak bonus
+        this.playTone(audioContext, 440, 0.1, 0.2); // A4
+        setTimeout(() => this.playTone(audioContext, 554.37, 0.1, 0.2), 100); // C#5
+        setTimeout(() => this.playTone(audioContext, 659.25, 0.15, 0.3), 200); // E5
+        setTimeout(() => this.playTone(audioContext, 880, 0.2, 0.3), 350); // A5
+      } else {
+        // Simple daily bonus sound
+        this.playTone(audioContext, 523.25, 0.2, 0.3); // C5
+        setTimeout(() => this.playTone(audioContext, 659.25, 0.15, 0.2), 200); // E5
+      }
+    } catch (error) {
       console.log('Audio not available:', error);
     }
   }
@@ -955,12 +1145,70 @@ class UserPointsManager {
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + duration);
   }
+
+  /**
+   * Show daily bonus notification for debugging purposes (no points awarded)
+   */
+  debugShowDailyBonusNotification() {
+    const mockBonusData = {
+      pointsAwarded: 50,
+      currentStreak: 5,
+      newBalance: 1250
+    };
+    
+    this.showDailyBonusNotification(mockBonusData);
+  }
+
+  /**
+   * Show special reward notification for debugging purposes (no points awarded)
+   */
+  debugShowSpecialRewardNotification() {
+    const mockRewardData = {
+      points: 25,
+      reason: 'Post received a like!',
+      source: 'like',
+      isMilestone: false,
+      milestoneMessage: '',
+      totalLikes: 15
+    };
+    
+    this.showSpecialRewardNotification(mockRewardData);
+  }
+
+  /**
+   * Show milestone reward notification for debugging purposes (no points awarded)
+   */
+  debugShowMilestoneRewardNotification() {
+    const mockMilestoneData = {
+      points: 100,
+      reason: 'Milestone achieved!',
+      source: 'milestone',
+      isMilestone: true,
+      milestoneMessage: 'Congratulations! You reached 50 total likes!',
+      totalLikes: 50
+    };
+    
+    this.showSpecialRewardNotification(mockMilestoneData);
+  }
 }
 
 // Initialize points manager when DOM is ready
 $(document).ready(() => {
   if (window.user && !window.user.isTemporary) {
     window.userPointsManager = new UserPointsManager();
+  }
+});
+
+// Open the modal to get claim daily bonus, once the user is logged in and only once a day
+$(document).ready(() => {
+  if (window.user && !window.user.isTemporary) {
+    const lastBonusClaimed = localStorage.getItem('lastBonusClaimed');
+    const today = new Date().toISOString().split('T')[0];
+
+    if (!lastBonusClaimed || lastBonusClaimed !== today) {
+      $('.bonus-btn').trigger('click');
+      localStorage.setItem('lastBonusClaimed', today);
+    }
   }
 });
 
@@ -983,3 +1231,23 @@ window.refreshUserPoints = () => {
     window.userPointsManager.updatePointsDisplay();
   }
 };
+
+//[DEBUG] Global debug helper functions
+window.debugDailyBonus = () => {
+  if (window.userPointsManager) {
+    window.userPointsManager.debugShowDailyBonusNotification();
+  }
+};
+
+window.debugSpecialReward = () => {
+  if (window.userPointsManager) {
+    window.userPointsManager.debugShowSpecialRewardNotification();
+  }
+};
+
+window.debugMilestoneReward = () => {
+  if (window.userPointsManager) {
+    window.userPointsManager.debugShowMilestoneRewardNotification();
+  }
+};
+//[DEBUG] End of global debug helpers

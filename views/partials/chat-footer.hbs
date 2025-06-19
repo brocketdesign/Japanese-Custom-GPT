@@ -357,14 +357,13 @@
                 <!-- EvenLabs Voices -->
                 <div class="settings-field" id="evenlab-voices" style="display: none;">
                     <label class="settings-label">{{translations.settings.selectEvenLabsVoice}}</label>
-                    <div class="settings-voice-grid">
-                        <div class="settings-evenlab-voice-option selected" data-voice="sakura">
-                            <div class="settings-voice-name">{{translations.settings.voices.sakura.name}}</div>
-                            <div class="settings-voice-description">{{translations.settings.voices.sakura.description}}</div>
-                        </div>
-                        <div class="settings-evenlab-voice-option" data-voice="mat">
-                            <div class="settings-voice-name">{{translations.settings.voices.mat.name}}</div>
-                            <div class="settings-voice-description">{{translations.settings.voices.mat.description}}</div>
+                    <div class="settings-voice-grid" id="evenlab-voices-grid">
+                        <!-- EvenLab voices will be dynamically loaded here -->
+                        <div class="voice-loading-spinner text-center">
+                            <div class="spinner-border spinner-border-sm" role="status">
+                                <span class="visually-hidden">Loading voices...</span>
+                            </div>
+                            <div class="loading-text">Loading EvenLab voices...</div>
                         </div>
                     </div>
                 </div>

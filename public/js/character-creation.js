@@ -1,4 +1,7 @@
-$(document).ready(function() {
+
+(function() {
+    
+    $(document).ready(function() {
     fetchAndAppendModels();
 
     if (typeof chatCreationId === 'undefined') {
@@ -740,3 +743,5 @@ $(window).on('resize', function() {
 setTimeout(function() {
     initializeMobileView();
 }, 100);
+
+})();

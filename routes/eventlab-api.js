@@ -1,5 +1,5 @@
 const { ObjectId } = require('mongodb');
-const { generateSpeech, getAvailableVoices, validateApiKey, getEvenLabVoiceConfig } = require('../models/eventlab-utils');
+const { getVoiceConfig, generateSpeech, getAvailableVoices, validateApiKey, getEvenLabVoiceConfig } = require('../models/eventlab-utils');
 const { getVoiceSettings } = require('../models/chat-tool-settings-utils');
 
 async function routes(fastify, options) {
@@ -52,7 +52,7 @@ async function routes(fastify, options) {
                     style: 0.0,
                     use_speaker_boost: true
                 }
-            });
+            }, fastify);
         
             // Set appropriate headers for audio response
             res.header('Content-Type', 'audio/mpeg');
@@ -144,6 +144,36 @@ async function routes(fastify, options) {
         }
     });
 
+    // Get available EvenLab voices
+    fastify.get('/api/evenlab-voices', async (request, reply) => {
+        try {
+
+            // Get voice configuration with translations
+            const voiceConfig = getVoiceConfig(fastify);
+            
+            // Transform voice config to array format for frontend
+            const voices = Object.entries(voiceConfig).map(([key, config]) => ({
+                key: key,
+                name: config.name,
+                description: config.description,
+                gender: config.gender,
+                language: config.language,
+                voice_id: config.voice_id
+            }));
+
+            reply.send({ 
+                success: true, 
+                voices: voices.filter(voice => voice.key !== 'default') // Exclude default entry
+            });
+            
+        } catch (error) {
+            console.error('Error fetching EvenLab voices:', error);
+            reply.status(500).send({ 
+                success: false, 
+                error: 'Failed to fetch EvenLab voices' 
+            });
+        }
+    });
 }
 
 module.exports = routes;

@@ -11,20 +11,67 @@ const DEFAULT_VOICE_SETTINGS = {
 };
 
 /**
- * Voice configuration mapping for EvenLab voices
+ * Get voice configuration mapping for EvenLab voices with translations
+ * @param {Object} fastify - Fastify instance
+ * @returns {Object} Voice configuration mapping
  */
-const VOICE_CONFIG = {
-    sakura: { voice_id: 'RBnMinrYKeccY3vaUxlZ', gender: 'female', language: 'ja', name: 'Sakura', description: 'Japanese Female Voice' },
-    mat: { voice_id: 'xYWUvKNK6zWCgsdAK7Wi', gender: 'male', language: 'en', name: 'Mat', description: 'English Male Voice' },
-    default: { voice_id: 'RBnMinrYKeccY3vaUxlZ', gender: 'female', language: 'ja', name: 'Sakura', description: 'Japanese Female Voice' }
-};
+function getVoiceConfig(fastify) {
+    const translations = fastify.getTranslations(fastify.request?.lang || 'en');
+    
+    return {
+        default: { 
+            voice_id: 'RBnMinrYKeccY3vaUxlZ', 
+            gender: 'female', 
+            language: 'en', 
+            name: translations?.voices?.Sophia?.name || 'Sophia', 
+            description: translations?.voices?.Sophia?.description || 'Japanese Female Voice' 
+        },
+        Thandiwe: { 
+            voice_id: 'hWg8YNuo5PLOL69ByIl6', 
+            gender: 'female', 
+            language: 'en', 
+            name: translations?.voices?.ThandiweDlamini?.name || 'Thandiwe Dlamini', 
+            description: translations?.voices?.ThandiweDlamini?.description || 'A South African strategic brand leader' 
+        },
+        Miranda: { 
+            voice_id: 'PoHUWWWMHFrA8z7Q88pu', 
+            gender: 'female', 
+            language: 'pt', 
+            name: translations?.voices?.Miranda?.name || 'Miranda', 
+            description: translations?.voices?.Miranda?.description || 'A sweet and bubbly young woman' 
+        },
+        Nana: { 
+            voice_id: 'uyfkySFC5J00qZ6iLAdh', 
+            gender: 'female', 
+            language: 'en', 
+            name: translations?.voices?.NanaChan?.name || 'Nana-chan', 
+            description: translations?.voices?.NanaChan?.description || 'A youthful female voice, cute and' 
+        },
+        Sophia: { 
+            voice_id: 'Qy12wuGOtvKPVgCREzXh', 
+            gender: 'female', 
+            language: 'en', 
+            name: translations?.voices?.Sophia?.name || 'Sophia', 
+            description: translations?.voices?.Sophia?.description || 'An American girl talking softly with a' 
+        },
+        Fena: { 
+            voice_id: 'BlgEcC0TfWpBak7FmvHW', 
+            gender: 'female', 
+            language: 'en', 
+            name: translations?.voices?.FenaCharacter?.name || 'Fena - Character', 
+            description: translations?.voices?.FenaCharacter?.description || 'Young, sassy girl character' 
+        }
+    };
+}
 
 /**
  * Get EvenLab voice configuration
  * @param {string} voiceName - Voice name from user settings
+ * @param {Object} fastify - Fastify instance
  * @returns {Object} Voice configuration
  */
-function getEvenLabVoiceConfig(voiceName = 'nova') {
+function getEvenLabVoiceConfig(voiceName = 'Sophia', fastify) {
+    const VOICE_CONFIG = getVoiceConfig(fastify);
     return VOICE_CONFIG[voiceName] || VOICE_CONFIG.default;
 }
 
@@ -33,11 +80,12 @@ function getEvenLabVoiceConfig(voiceName = 'nova') {
  * @param {string} text - Text to convert to speech
  * @param {string} voiceName - Voice name to use
  * @param {Object} options - Additional options
+ * @param {Object} fastify - Fastify instance
  * @returns {Promise<Buffer>} Audio buffer
  */
-async function generateSpeech(text, voiceName = 'nova', options = {}) {
+async function generateSpeech(text, voiceName = 'Sophia', options = {}, fastify) {
     try {
-        const voiceConfig = getEvenLabVoiceConfig(voiceName);
+        const voiceConfig = getEvenLabVoiceConfig(voiceName, fastify);
         console.log('[eventlab generateSpeech] Using voice config:', voiceConfig);
         const apiKey = process.env.EVENTLAB_API_KEY;
         
@@ -140,7 +188,7 @@ async function validateApiKey() {
 
 module.exports = {
     DEFAULT_VOICE_SETTINGS,
-    VOICE_CONFIG,
+    getVoiceConfig,
     getEvenLabVoiceConfig,
     generateSpeech,
     getAvailableVoices,

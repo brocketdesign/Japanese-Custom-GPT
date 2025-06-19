@@ -7,12 +7,13 @@ class ChatToolSettings {
             relationshipType: 'companion',
             selectedVoice: 'nova',
             voiceProvider: 'openai',
-            evenLabVoice: 'sakura',
+            evenLabVoice: 'Thandiwe',
             autoMergeFace: true
         };
         
         this.isLoading = false;
-        this.userId = window.userId || window.user?.id; // Get from global variables
+        this.userId = window.userId || window.user?.id;
+        this.evenLabVoices = [];
         
         this.init();
         this.loadSettings();
@@ -188,6 +189,64 @@ class ChatToolSettings {
         console.log('EvenLab voice selected:', this.settings.evenLabVoice);
     }
 
+
+    async loadEvenLabVoices() {
+        try {
+            const response = await fetch('/api/evenlab-voices');
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                this.evenLabVoices = data.voices;
+                this.renderEvenLabVoices();
+            } else {
+                console.error('Failed to load EvenLab voices:', data.error);
+                this.showEvenLabVoicesError();
+            }
+        } catch (error) {
+            console.error('Error loading EvenLab voices:', error);
+            this.showEvenLabVoicesError();
+        }
+    }
+
+    renderEvenLabVoices() {
+        const grid = document.getElementById('evenlab-voices-grid');
+        if (!grid || !this.evenLabVoices.length) return;
+
+        grid.innerHTML = '';
+        
+        this.evenLabVoices.forEach(voice => {
+            const voiceOption = document.createElement('div');
+            voiceOption.className = 'settings-evenlab-voice-option';
+            voiceOption.setAttribute('data-voice', voice.key);
+            
+            if (voice.key === this.settings.evenLabVoice) {
+                voiceOption.classList.add('selected');
+            }
+            
+            voiceOption.innerHTML = `
+                <div class="settings-voice-name">${voice.name}</div>
+                <div class="settings-voice-description">${voice.description}</div>
+            `;
+            
+            grid.appendChild(voiceOption);
+        });
+    }
+
+    showEvenLabVoicesError() {
+        const grid = document.getElementById('evenlab-voices-grid');
+        if (!grid) return;
+        
+        grid.innerHTML = `
+            <div class="voice-error text-center text-muted">
+                <i class="bi bi-exclamation-triangle"></i>
+                <div>Failed to load EvenLab voices</div>
+                <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="window.chatToolSettings.loadEvenLabVoices()">
+                    Retry
+                </button>
+            </div>
+        `;
+    }
+
     toggleVoiceProviderUI() {
         const openaiVoices = document.getElementById('openai-voices');
         const evenlabVoices = document.getElementById('evenlab-voices');
@@ -195,6 +254,11 @@ class ChatToolSettings {
         if (this.settings.voiceProvider === 'evenlab') {
             openaiVoices.style.display = 'none';
             evenlabVoices.style.display = 'block';
+            
+            // Load EvenLab voices if not already loaded
+            if (this.evenLabVoices.length === 0) {
+                this.loadEvenLabVoices();
+            }
         } else {
             openaiVoices.style.display = 'block';
             evenlabVoices.style.display = 'none';
@@ -557,6 +621,8 @@ class ChatToolSettings {
 
         return this.settings;
     }
+
+    
 }
 
 // Initialize when DOM is loaded

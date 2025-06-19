@@ -99,6 +99,26 @@
       "assistant": "Assistant"
     },
     "voices": {
+    "Thandiwe": {
+      "name": "Thandiwe Dlamini",
+      "description": "A South African strategic brand leader"
+    },
+    "Miranda": {
+      "name": "Miranda",
+      "description": "A sweet and bubbly young woman"
+    },
+    "Nana": {
+      "name": "Nana-chan",
+      "description": "A youthful female voice, cute and"
+    },
+    "Sophia": {
+      "name": "Sophia",
+      "description": "An American girl talking softly with a"
+    },
+    "Fena": {
+      "name": "Fena - Character",
+      "description": "Young, sassy girl character"
+    },
       "nova": {
         "name": "Nova",
         "description": "Bright and energetic female voice"

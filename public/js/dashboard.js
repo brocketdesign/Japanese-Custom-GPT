@@ -3386,14 +3386,6 @@ function loadCharacterCreationPage(chatId) {
               modalStatus.isCharacterCreationLoading = false;
               loadPlanPage();
               return;
-            }else{
-              // On close, refresh the page
-              $('#characterCreationModal').on('hidden.bs.modal', function () {
-                  modalStatus.isCharacterCreationLoading = false;
-                  setTimeout(() => {
-                    location.reload();
-                  }, 500);
-              });
             }
             
             // Set the modal content first

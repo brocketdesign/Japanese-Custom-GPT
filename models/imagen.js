@@ -75,7 +75,7 @@ const default_prompt = {
   } 
 
 // Module to generate an image
-async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSeed, regenerate, userId, chatId, userChatId, imageType, image_num, image_base64, chatCreation, placeholderId, translations, fastify, flux = false, customPromptId = null, customGiftId = null, enableMergeFace = false}) {
+async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSeed, modelId, regenerate, userId, chatId, userChatId, imageType, image_num, image_base64, chatCreation, placeholderId, translations, fastify, flux = false, customPromptId = null, customGiftId = null, enableMergeFace = false}) {
     const db = fastify.mongo.db;
 
     // Fetch the user
@@ -91,7 +91,18 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     const chat = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
     const imageVersion = chat.imageVersion || 'sdxl';
     const selectedStyle = !flux ? default_prompt[imageVersion] || default_prompt['sdxl'] : default_prompt.flux;
-    const imageModel = chat.imageModel || 'novaAnimeXL_ponyV20_461138';
+    
+    let imageModel = chat.imageModel || 'novaAnimeXL_ponyV20_461138';
+    if(modelId && regenerate){
+      try {
+          const modelData = await db.collection('myModels').findOne({ modelId });
+          console.log(`[generateImg] Using modelId: ${modelId}, modelData:`, modelData);
+          imageModel = modelData?.model || imageModel;
+      } catch (error) {
+        console.error('Error fetching model data:', error);
+      }
+    }
+
     
     const gender = chat.gender
 
@@ -138,7 +149,8 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
         steps: regenerate ? params.steps + 10 : params.steps,
       };
     }
-
+    // Log imageModel
+    console.log(`[generateImg] Using imageModel: ${imageModel}, imageType: ${imageType}`);
     // Add number of images to request
     const userMinImage = await getUserMinImages(db, userId, chatId);
     console.log(`[generateImg] userMinImage: ${userMinImage}, image_num: ${image_num}`);

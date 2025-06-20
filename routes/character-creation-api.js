@@ -192,12 +192,13 @@ function createSystemPayload(prompt, gender, details) {
 }
 
 // Enhanced function for extracting details from prompt
-function extractDetailsFromPrompt(prompt, gender ='female') {
+function extractDetailsFromPrompt(prompt, chatPurpose = '', gender ='female') {
     return [
         {
             role: "system",
-            content: `You are an expert character analyst. Extract detailed physical and personality attributes from the given character description.
-            
+            content: `You are an expert character creator 6 analyst. 
+            Extract and imagine detailed physical and personality attributes from the given character description.
+
             Analyze the prompt and return structured details in the exact format required by the details_description schema.
             Focus on extracting:
             - Physical appearance (age, ethnicity, height, body type)
@@ -206,14 +207,18 @@ function extractDetailsFromPrompt(prompt, gender ='female') {
             - Style and fashion choices
             - Personality traits and background
             
-            Return only valid data that can be inferred from the prompt. Use "undefined" for unclear attributes.
+            Provide creative data for unclear attributes.
             Respond with a properly formatted JSON object matching the details_description schema.`
         },
         {
             role: "user", 
-            content: `Character Description: ${prompt}
+            content: `
+            ${chatPurpose && chatPurpose.trim() !== '' ? `Character Purpose: ${chatPurpose}` : ''}
+            Character Description: ${prompt}
             
-            Extract and structure all available details from this description.`
+            Extract and structure all available details from this description.
+            All the fields should be filled based on the description & not left empty.
+            If a detail is not mentioned, you must imagine it.`
         }
     ];
 }
@@ -224,7 +229,7 @@ async function routes(fastify, options) {
         console.log('[API/generate-character-comprehensive] Starting comprehensive character generation');
         
         try {
-            const { prompt, gender, name, language: requestLanguage, imageType, image_base64, enableMergeFace } = request.body;
+            const { prompt, gender, name, chatPurpose, language: requestLanguage, imageType, image_base64, enableMergeFace } = request.body;
             let chatId = request.body.chatId || request.query.chatId || request.params.chatId || null;
             const userId = request.user._id;
             const language = requestLanguage || request.lang;
@@ -263,7 +268,7 @@ async function routes(fastify, options) {
                 icon: 'info' 
             });
 
-            const detailsExtractionPayload = extractDetailsFromPrompt(prompt, gender);
+            const detailsExtractionPayload = extractDetailsFromPrompt(prompt, chatPurpose, gender);
             const openai = new OpenAI();
             
             const detailsResponse = await openai.chat.completions.create({

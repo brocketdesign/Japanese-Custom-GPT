@@ -3390,7 +3390,7 @@ function loadCharacterCreationPage(chatId) {
               // On close refresh the page after 1second
               $('#characterCreationModal').on('hidden.bs.modal', function () {
                 setTimeout(() => {
-                    location.reload();
+                    //location.reload();
                 }, 1000);
               });
             }
@@ -3444,7 +3444,6 @@ function loadCharacterCreationPage(chatId) {
                                 characterCreationScript.src = '/js/character-creation.js';
                                 characterCreationScript.onload = function() {
                                     modalStatus.isCharacterCreationLoading = false;
-                                    console.log('Character creation page loaded successfully');
                                 };
                                 characterCreationScript.onerror = function() {
                                     console.error('Failed to load character-creation.js script.');

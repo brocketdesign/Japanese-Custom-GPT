@@ -157,17 +157,9 @@ async function getVoiceSettings(db, userId, chatId = null) {
             // Map voice names to TTS configurations using supported OpenAI voices
             const voiceConfig = {
                 alloy: { voice: 'alloy', gender: 'neutral' },
-                echo: { voice: 'echo', gender: 'male' },
                 fable: { voice: 'fable', gender: 'neutral' },
-                onyx: { voice: 'onyx', gender: 'male' },
                 nova: { voice: 'nova', gender: 'female' },
-                shimmer: { voice: 'shimmer', gender: 'female' },
-                coral: { voice: 'coral', gender: 'female' },
-                verse: { voice: 'verse', gender: 'neutral' },
-                ballad: { voice: 'ballad', gender: 'neutral' },
-                ash: { voice: 'ash', gender: 'neutral' },
-                sage: { voice: 'sage', gender: 'neutral' },
-                default: { voice: 'nova', gender: 'female' }
+                shimmer: { voice: 'shimmer', gender: 'female' }
             };
             
             const voiceConfig_ = voiceConfig[selectedVoice] || voiceConfig.default;

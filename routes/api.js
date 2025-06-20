@@ -588,7 +588,7 @@ async function routes(fastify, options) {
    // This route handles streaming chat completions from OpenAI for a given session ID.
 
     function chatDataToString(data) {
-        
+        console.log(data);
         if(!data) return "";
         
         const system_prompt = data?.system_prompt;

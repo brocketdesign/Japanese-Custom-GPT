@@ -95,8 +95,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     let imageModel = chat.imageModel || 'novaAnimeXL_ponyV20_461138';
     if(modelId && regenerate){
       try {
-          const modelData = await db.collection('myModels').findOne({ modelId });
-          console.log(`[generateImg] Using modelId: ${modelId}, modelData:`, modelData);
+          const modelData = await db.collection('myModels').findOne({ modelId:modelId.toString() });
           imageModel = modelData?.model || imageModel;
       } catch (error) {
         console.error('Error fetching model data:', error);

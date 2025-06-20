@@ -306,7 +306,7 @@
         resetInfiniteScroll();
 
         const modelId = $('.style-option.selected').data('id')
-
+        console.log('Regenerating images with modelId:', modelId);
         // Generate new images with existing prompt
         novitaImageGeneration(userId, chatCreationId, null, {
                 prompt: enhancedPrompt,
@@ -314,12 +314,12 @@
                 file,
                 chatCreation: true,
                 enableMergeFace: enableMergeFace,
-                regeneration: true,
+                regenerate: true,
                 modelId: modelId
             })
             .then(() => {
                 resetRegenerateButton();
-
+                $('.regenerateImages').show();
             })
             .catch((error) => {
                 console.error('Error regenerating images:', error);
@@ -554,8 +554,6 @@
         $button.html('<i class="bi bi-arrow-clockwise me-2"></i>' + translations.newCharacter.regenerate_images);
 
         $generateButton.prop('disabled', false);
-
-        $('.regenerateImages').hide();
     }
 
     function resetChatList() {

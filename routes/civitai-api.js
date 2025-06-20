@@ -221,7 +221,7 @@ async function routes(fastify, options) {
       if (modelId) {
         // Find the model in the database
         const modelsCollection = db.collection('myModels');
-        const model = await modelsCollection.findOne({ modelId });
+        const model = await modelsCollection.findOne({ modelId:modelId.toString() });
         
         if (!model) {
           console.log(`[/civitai/model-chats/generate] Model not found: ${modelId}`);

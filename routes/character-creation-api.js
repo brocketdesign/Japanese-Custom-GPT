@@ -16,69 +16,68 @@ const { ObjectId } = require('mongodb');
         tags:z.array(z.string()),
         first_message: z.string(),
  });
-
 const details_description = z.object({
     // Physical Appearance - Core Features
     appearance: z.object({
-        age: z.string().nullable(),
-        gender: z.enum(['male', 'female', 'non-binary']).nullable(),
-        ethnicity: z.string().nullable(),
-        height: z.string().nullable(),
-        weight: z.string().nullable(),
-        bodyType: z.enum(['slim', 'athletic', 'average', 'curvy', 'muscular', 'heavy']).nullable(),
+        age: z.string(),
+        gender: z.enum(['male', 'female', 'non-binary']),
+        ethnicity: z.string(),
+        height: z.string(),
+        weight: z.string(),
+        bodyType: z.enum(['slim', 'athletic', 'average', 'curvy', 'muscular', 'heavy']),
     }),
     
     // Facial Features
     face: z.object({
-        faceShape: z.enum(['oval', 'round', 'square', 'heart', 'long', 'diamond']).nullable(),
-        skinColor: z.string().nullable(),
-        eyeColor: z.string().nullable(),
-        eyeShape: z.enum(['almond', 'round', 'hooded', 'monolid', 'upturned', 'downturned']).nullable(),
-        eyeSize: z.enum(['small', 'medium', 'large']).nullable(),
-        facialFeatures: z.string().nullable(),
-        makeup: z.string().nullable(),
+        faceShape: z.enum(['oval', 'round', 'square', 'heart', 'long', 'diamond']),
+        skinColor: z.string(),
+        eyeColor: z.string(),
+        eyeShape: z.enum(['almond', 'round', 'hooded', 'monolid', 'upturned', 'downturned']),
+        eyeSize: z.enum(['small', 'medium', 'large']),
+        facialFeatures: z.string(),
+        makeup: z.string(),
     }),
     
     // Hair
     hair: z.object({
-        hairColor: z.string().nullable(),
-        hairLength: z.enum(['very short', 'short', 'medium', 'long', 'very long']).nullable(),
-        hairStyle: z.string().nullable(),
-        hairTexture: z.enum(['straight', 'wavy', 'curly', 'coily']).nullable(),
+        hairColor: z.string(),
+        hairLength: z.enum(['very short', 'short', 'medium', 'long', 'very long']),
+        hairStyle: z.string(),
+        hairTexture: z.enum(['straight', 'wavy', 'curly', 'coily']),
     }),
     
     // Body Features (Gender-specific)
     body: z.object({
         // Female-specific
-        breastSize: z.enum(['small', 'medium', 'large', 'very large']).nullable(),
-        assSize: z.enum(['small', 'medium', 'large', 'very large']).nullable(),
-        bodyCurves: z.enum(['minimal', 'subtle', 'pronounced', 'very pronounced']).nullable(),
+        breastSize: z.enum(['small', 'medium', 'large', 'very large']),
+        assSize: z.enum(['small', 'medium', 'large', 'very large']),
+        bodyCurves: z.enum(['minimal', 'subtle', 'pronounced', 'very pronounced']),
         // Male-specific
-        chestBuild: z.enum(['slim', 'average', 'muscular', 'broad']).nullable(),
-        shoulderWidth: z.enum(['narrow', 'average', 'broad', 'very broad']).nullable(),
-        absDefinition: z.enum(['none', 'slight', 'defined', 'very defined']).nullable(),
-        armMuscles: z.enum(['slim', 'toned', 'muscular', 'very muscular']).nullable(),
+        chestBuild: z.enum(['slim', 'average', 'muscular', 'broad']),
+        shoulderWidth: z.enum(['narrow', 'average', 'broad', 'very broad']),
+        absDefinition: z.enum(['none', 'slight', 'defined', 'very defined']),
+        armMuscles: z.enum(['slim', 'toned', 'muscular', 'very muscular']),
     }),
     
     // Style & Fashion
     style: z.object({
-        clothingStyle: z.string().nullable(),
-        accessories: z.string().nullable(),
-        tattoos: z.string().nullable(),
-        piercings: z.string().nullable(),
-        scars: z.string().nullable(),
+        clothingStyle: z.string(),
+        accessories: z.string(),
+        tattoos: z.string(),
+        piercings: z.string(),
+        scars: z.string(),
     }),
     
     // Personality & Character
     personality: z.object({
-        personality: z.string().nullable(),
-        hobbies: z.array(z.string()).nullable(),
-        interests: z.array(z.string()).nullable(),
-        likes: z.array(z.string()).nullable(),
-        dislikes: z.array(z.string()).nullable(),
-        background: z.string().nullable(),
-        occupation: z.string().nullable(),
-        specialAbilities: z.array(z.string()).nullable(),
+        personality: z.string(),
+        hobbies: z.array(z.string()),
+        interests: z.array(z.string()),
+        likes: z.array(z.string()),
+        dislikes: z.array(z.string()),
+        background: z.string(),
+        occupation: z.string(),
+        specialAbilities: z.array(z.string()),
     }),
 });
 
@@ -225,12 +224,12 @@ async function routes(fastify, options) {
         console.log('[API/generate-character-comprehensive] Starting comprehensive character generation');
         
         try {
-            const { prompt, gender, name, language: requestLanguage } = request.body;
+            const { prompt, gender, name, language: requestLanguage, imageType, image_base64, enableMergeFace } = request.body;
             let chatId = request.body.chatId || request.query.chatId || request.params.chatId || null;
             const userId = request.user._id;
             const language = requestLanguage || request.lang;
  
-            console.log(`[API/generate-character-comprehensive] Input parameters - chatId: ${chatId || 'undefined'}, gender: ${gender || 'undefined'}, language: ${language}, prompt: ${prompt ? prompt.substring(0, 50) + '...' : 'undefined'}, name: ${name || 'undefined'}`);
+            console.log(`[API/generate-character-comprehensive] Input parameters - chatId: ${chatId || 'undefined'}, gender: ${gender || 'undefined'}, language: ${language}, prompt: ${prompt ? prompt.substring(0, 50) + '...' : 'undefined'}, name: ${name || 'undefined'}, hasImageBase64: ${!!image_base64}, enableMergeFace: ${!!enableMergeFace}`);
             
             if (!prompt || prompt.trim() === '') {
                 fastify.sendNotificationToUser(userId, 'showNotification', { message: 'Please provide a valid prompt.', icon: 'error' });
@@ -277,7 +276,7 @@ async function routes(fastify, options) {
             try {
                 extractedDetails = JSON.parse(detailsResponse.choices[0].message.content);
                 console.log('[API/generate-character-comprehensive] Successfully extracted details');
-                
+                console.log('[API/generate-character-comprehensive] Extracted details:', extractedDetails);
                 fastify.sendNotificationToUser(userId, 'showNotification', { 
                     message: request.translations.newCharacter.character_analysis_complete, 
                     icon: 'success' 
@@ -309,6 +308,62 @@ async function routes(fastify, options) {
                 message: request.translations.newCharacter.enhancedPrompt_complete, 
                 icon: 'success' 
             });
+            
+            fastify.sendNotificationToUser(userId, 'updateEnhancedPrompt', {
+                enhancedPrompt
+            });
+
+            reply.send({
+                success: true,
+                chatId,
+                enhancedPrompt,
+                imageGenerationTriggered: true
+            });
+
+            // Step 2.5: Trigger image generation immediately after enhanced prompt is available
+            console.log('[API/generate-character-comprehensive] Step 2.5: Triggering image generation with enhanced prompt');
+            fastify.sendNotificationToUser(userId, 'showNotification', { 
+                message: request.translations.newCharacter.image_generation_started, 
+                icon: 'info' 
+            });
+
+            try {
+                const { generateImg } = require('../models/imagen');
+                
+                // Generate placeholder ID for tracking
+                const placeholderId = new fastify.mongo.ObjectId().toString();
+                
+                // Trigger image generation asynchronously with enhanced prompt
+                generateImg({
+                    prompt: enhancedPrompt,
+                    userId: userId,
+                    chatId: chatId,
+                    userChatId: null,
+                    image_num: 4,
+                    imageType,
+                    image_base64: image_base64 || null,
+                    chatCreation: true,
+                    placeholderId: placeholderId,
+                    translations: request.translations,
+                    fastify: fastify,
+                    enableMergeFace: enableMergeFace || false
+                }).catch(error => {
+                    console.error('[API/generate-character-comprehensive] Image generation error:', error);
+                    fastify.sendNotificationToUser(userId, 'showNotification', { 
+                        message: request.translations.newCharacter.image_generation_error || 'Image generation failed', 
+                        icon: 'error' 
+                    });
+                });
+
+                console.log(`[API/generate-character-comprehensive] Image generation triggered with placeholder ID: ${placeholderId}`);
+                
+            } catch (imageError) {
+                console.error('[API/generate-character-comprehensive] Error triggering image generation:', imageError);
+                fastify.sendNotificationToUser(userId, 'showNotification', { 
+                    message: request.translations.newCharacter.image_generation_error || 'Image generation failed', 
+                    icon: 'error' 
+                });
+            }
 
             // Step 3: Generate character personality
             console.log('[API/generate-character-comprehensive] Step 3: Generating character personality');
@@ -332,72 +387,13 @@ async function routes(fastify, options) {
                 icon: 'success' 
             });
 
-            // [SKIP] Step 4: Optional debrided enhancement
-            const skip_step_4 = true; // Set to true to skip debrided enhancement
-            if(!skip_step_4){
-                try {
-                    console.log('[API/generate-character-comprehensive] Step 4: Attempting debrided enhancement');
-                    fastify.sendNotificationToUser(userId, 'showNotification', { 
-                        message: request.translations.newCharacter.debrided_generation_started, 
-                        icon: 'info' 
-                    });
-
-                    const debridedSystemMessage = [
-                        {
-                            role: "system",
-                            content: `You are a helpful NSFW assistant. You will take a JSON object and update it to make it more human-like and spicy. You must answer with a JSON object.`
-                        },
-                        {
-                            role: "user",
-                            content: `Here is the JSON object to enhance: ${JSON.stringify(chatData)}
-                            Make it more human-like and spicy.`
-                        },
-                    ];
-                    
-                    let debridedResponse = await generateCompletion(debridedSystemMessage, 1000, 'mistral', language);
-                    console.log(`[API/generate-character-comprehensive] Debrided response received`);
-                    
-                    const JSONCleaner = (str) => {  
-                        const start = str.indexOf('{');
-                        const end = str.lastIndexOf('}');
-                        if (start === -1 || end === -1) {
-                            return null;
-                        }
-                        return str.substring(start, end + 1);
-                    };
-                    
-                    debridedResponse = JSONCleaner(debridedResponse);
-                    const debridedChatData = JSON.parse(debridedResponse);
-                    const validationResult = characterSchema.safeParse(debridedChatData);
-                    
-                    if (!validationResult.success) {
-                        console.log('[API/generate-character-comprehensive] Validation error in debrided response:', validationResult.error);
-                    } else {
-                        chatData = debridedChatData;
-                        console.log('[API/generate-character-comprehensive] Debrided enhancement successful');
-                        fastify.sendNotificationToUser(userId, 'showNotification', { 
-                            message: request.translations.newCharacter.debridedChatData_complete, 
-                            icon: 'success' 
-                        });
-                    }
-                } catch (error) {
-                    console.log('[API/generate-character-comprehensive] Error in debrided enhancement:', error);
-                    fastify.sendNotificationToUser(userId, 'showNotification', { 
-                        message: request.translations.newCharacter.debrided_generation_error, 
-                        icon: 'warning' 
-                    });
-                }
-            } else {
-                console.log('[API/generate-character-comprehensive] Skipping debrided enhancement step');
-            }
-
-            // Step 5: Save to database
-            console.log('[API/generate-character-comprehensive] Step 5: Saving to database');
+            // Step 4: Save to database
+            console.log('[API/generate-character-comprehensive] Step 4: Saving to database');
             fastify.sendNotificationToUser(userId, 'showNotification', { 
                 message: request.translations.newCharacter.saving_character_data, 
                 icon: 'info' 
             });
-
+            
             // Prepare final data
             chatData.language = language;
             chatData.gender = gender;
@@ -409,7 +405,9 @@ async function routes(fastify, options) {
             chatData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
 
             const collectionChats = fastify.mongo.db.collection('chats');
-            // Generate slug
+
+            // Step 5: Generate unique slug if name is provided
+            console.log('[API/generate-character-comprehensive] Step 5: Generating unique slug if name is provided');
             if (chatData.name) {
                 const baseSlug = slugify(chatData.name, { lower: true, strict: true });
                 let slug = baseSlug;
@@ -428,7 +426,9 @@ async function routes(fastify, options) {
                 chatData.slug = slug;
             }
 
-            // Save generated tags
+            // Step 6: Update tags in the database
+            console.log('[API/generate-character-comprehensive] Step 6: Updating tags in the database');
+
             const tagsCollection = fastify.mongo.db.collection('tags');
             const generatedTags = chatData.tags;
             
@@ -439,6 +439,10 @@ async function routes(fastify, options) {
                     { upsert: true }
                 );
             }
+
+            fastify.sendNotificationToUser(userId, 'updateChatData', {
+                chatData
+            });
 
             // Update chat document
             const updateResult = await collectionChats.updateOne(
@@ -459,14 +463,6 @@ async function routes(fastify, options) {
                 icon: 'success' 
             });
 
-            reply.send({
-                success: true,
-                chatId,
-                chatData,
-                extractedDetails,
-                enhancedPrompt,
-                processingTime: totalTime
-            });
 
         } catch (err) {
             const totalTime = Date.now() - startTime;

@@ -184,7 +184,7 @@ window.displayLatestVideoChats = function(videoChatsData, targetGalleryId) {
                     <!-- Top badges -->
                     <div class="position-absolute top-0 start-0 m-1" style="z-index:3;">
                         ${isOwner ? `
-                            <span class="badge bg-light text-secondary shadow" style="opacity:0.8; font-size: 0.7rem;">
+                            <span class="btn btn-light text-secondary shadow" style="opacity:0.8; font-size: 0.7rem;">
                                 <i class="bi bi-person-fill"></i>
                             </span>
                         ` : ''}
@@ -1594,7 +1594,7 @@ window.displaySimilarChats = function (chatData, targetGalleryIdParam) {
                 </div>
                 <div class="position-absolute top-0 start-0 m-1 d-flex flex-column align-items-start" style="z-index:3;">
                     ${isOwner ? `
-                    <span class="badge bg-light text-secondary shadow" style="font-size: 0.6rem !important; padding: 0.2em 0.4em !important;opacity:0.8;">
+                    <span class="btn btn-light text-secondary shadow" style="font-size: 0.6rem !important; padding: 0.2em 0.4em !important;opacity:0.8;">
                         <i class="bi bi-person-fill"></i>
                     </span>
                     ` : ''}
@@ -1680,7 +1680,7 @@ window.displayLatestChats = function (chatData, targetGalleryId, modal = false) 
           <div class="position-absolute top-0 start-0 w-100 px-2 pt-2 d-flex justify-content-between align-items-center" style="z-index:3;">
             <div class="d-flex align-items-center gap-1">
               ${isOwner ? `
-                <span class="badge bg-light text-secondary shadow" style="font-size: 0.6rem !important; padding: 0.2em 0.4em !important;opacity:0.8;">
+                <span class="btn btn-light text-secondary shadow" style="font-size: 0.6rem !important; padding: 0.2em 0.4em !important;opacity:0.8;">
                   <i class="bi bi-person-fill"></i>
                 </span>
               ` : ''}

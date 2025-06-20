@@ -307,6 +307,7 @@ async function getPointsLeaderboard(db, limit = 10) {
 async function awardLikeMilestoneReward(db, userId, fastify = null) {
   const usersCollection = db.collection('users');
   const imagesLikesCollection = db.collection('images_likes');
+  const milestonesCollection = db.collection('user_milestones');
   
   // Get current user data
   const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
@@ -314,6 +315,7 @@ async function awardLikeMilestoneReward(db, userId, fastify = null) {
   
   // Count total likes by user
   const totalLikes = await imagesLikesCollection.countDocuments({ userId: new ObjectId(userId) });
+  
   // Define milestone rewards (likes -> points)
   const milestones = {
     1: { points: 5, message: 'First like!' },
@@ -337,6 +339,22 @@ async function awardLikeMilestoneReward(db, userId, fastify = null) {
     };
   }
   
+  // Check if milestone already granted
+  const existingMilestone = await milestonesCollection.findOne({
+    userId: new ObjectId(userId),
+    type: 'like_milestone',
+    milestone: totalLikes
+  });
+  
+  if (existingMilestone) {
+    return {
+      success: false,
+      totalLikes,
+      message: 'Milestone already granted',
+      alreadyGranted: true
+    };
+  }
+  
   // Award milestone points
   const result = await addUserPoints(
     db, 
@@ -345,6 +363,16 @@ async function awardLikeMilestoneReward(db, userId, fastify = null) {
     `Like milestone: ${milestone.message}`, 
     'like_milestone'
   );
+  
+  // Record milestone as granted
+  await milestonesCollection.insertOne({
+    userId: new ObjectId(userId),
+    type: 'like_milestone',
+    milestone: totalLikes,
+    points: milestone.points,
+    message: milestone.message,
+    grantedAt: new Date()
+  });
   
   // Send websocket notification for milestone reward
   if (fastify && fastify.sendNotificationToUser) {
@@ -427,6 +455,7 @@ async function awardLikeActionReward(db, userId, fastify = null) {
 async function awardImageMilestoneReward(db, userId, fastify = null) {
   const usersCollection = db.collection('users');
   const galleryCollection = db.collection('gallery');
+  const milestonesCollection = db.collection('user_milestones');
   
   // Get current user data
   const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
@@ -459,6 +488,22 @@ async function awardImageMilestoneReward(db, userId, fastify = null) {
     };
   }
   
+  // Check if milestone already granted
+  const existingMilestone = await milestonesCollection.findOne({
+    userId: new ObjectId(userId),
+    type: 'image_milestone',
+    milestone: totalImages
+  });
+  
+  if (existingMilestone) {
+    return {
+      success: false,
+      totalImages,
+      message: 'Milestone already granted',
+      alreadyGranted: true
+    };
+  }
+  
   // Award milestone points
   const result = await addUserPoints(
     db, 
@@ -467,6 +512,16 @@ async function awardImageMilestoneReward(db, userId, fastify = null) {
     `Image generation milestone: ${milestone.message}`, 
     'image_milestone'
   );
+  
+  // Record milestone as granted
+  await milestonesCollection.insertOne({
+    userId: new ObjectId(userId),
+    type: 'image_milestone',
+    milestone: totalImages,
+    points: milestone.points,
+    message: milestone.message,
+    grantedAt: new Date()
+  });
   
   // Send websocket notification for milestone reward
   if (fastify && fastify.sendNotificationToUser) {

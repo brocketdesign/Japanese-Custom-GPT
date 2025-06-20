@@ -1430,7 +1430,7 @@ async function routes(fastify, options) {
                     maxAge: 3600
                 });
 
-            } else {zodResponsesFunction
+            } else {
                 await fastify.mongo.db.collection('users').updateOne(
                     { _id: user._id },
                     { $set: { lang: userLang } }

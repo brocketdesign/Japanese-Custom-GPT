@@ -145,6 +145,20 @@ function initializeWebSocket(onConnectionResult = null) {
             });
             break;
           }
+          case 'updateChatData': {
+            const { chatData } = data.notification;
+            if (window.updateChatData) {
+              window.updateChatData(chatData);
+            }
+            break;
+          }
+          case 'updateEnhancedPrompt': {
+            const { enhancedPrompt } = data.notification;
+            if (window.updateEnhancedPrompt) {
+              window.updateEnhancedPrompt(enhancedPrompt);
+            }
+            break;
+          }
           case 'characterImageGenerated':
             if ($('#imageContainer').length > 0) {
               const { imageUrl, nsfw } = data.notification;

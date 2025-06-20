@@ -453,17 +453,6 @@ $(document).ready(function() {
         
         let moderationResult = {flagged: false};
         try {
-            // Call moderation function on prompt content
-            moderationResult = await moderateContent(chatCreationId, prompt);
-            
-            // Check if the content is NSFW
-            if (moderationResult.flagged) {
-                if (false && !subscriptionStatus) { // Allow user to generate NSFW prompt
-                    showUpgradePopup('nsfw-prompt');
-                    resetCharacterForm();
-                    return
-                }
-            }
 
             // Start image generation with enhanced prompt
             $button.html(`<div class="me-2 spinner-border spinner-border-sm" role="status">
@@ -472,11 +461,22 @@ $(document).ready(function() {
             $('.genexp').fadeIn();
             showImageSpinner(); // Show spinner overlay
 
+            const imageType = moderationResult.flagged ? 'nsfw' : 'sfw';
+            const file = $('#imageUpload')[0].files[0];
+            const enableMergeFace = $('#enableMergeFace').is(':checked');
+
+            let image_base64 = null;
+            if(file){
+                image_base64 = await uploadAndConvertToBase64(file);
+            }
             // Use new comprehensive generation route
             const comprehensiveData = {
                 prompt,
                 gender,
                 name,
+                imageType,
+                image_base64,
+                enableMergeFace,
                 chatId: chatCreationId,
                 language: lang
             };
@@ -487,54 +487,10 @@ $(document).ready(function() {
                 contentType: 'application/json',
                 data: JSON.stringify(comprehensiveData)
             });
-
-            if (comprehensiveResponse && comprehensiveResponse.success) {
-                // Update form fields with generated data
-                const chatData = comprehensiveResponse.chatData;
-                const enhancedPrompt = comprehensiveResponse.enhancedPrompt;
-                
-                $('#chatName').val(chatData.name);
-                $('#chatPurpose').val(chatData.short_intro);
-                $('#enhancedPrompt').val(enhancedPrompt);
-                
-                resizeTextarea($('#chatPurpose')[0]);
-                                
-                const imageType = moderationResult.flagged ? 'nsfw' : 'sfw';
-                const file = $('#imageUpload')[0].files[0];
-                const enableMergeFace = $('#enableMergeFace').is(':checked');
-                
-                novitaImageGeneration(userId, chatCreationId, null, { 
-                    prompt: enhancedPrompt, 
-                    imageType, 
-                    file, 
-                    chatCreation: true,
-                    enableMergeFace: enableMergeFace
-                })
-                .then(() => {
-                    $('.chatRedirection').show();
-                    $('.regenerateImages').show(); 
-                    $('#navigateToImageButton').show();
-                    resetCharacterForm();
-                    
-                    // Ensure we're showing the right column on mobile after generation
-                    if (isMobile()) {
-                        showMobileRightColumn();
-                    }
-                })
-                .catch((error) => {
-                    console.error('Error generating image:', error);
-                    hideImageSpinner(); // Hide spinner overlay
-                    resetCharacterForm();
-                    
-                    // Return to left column on mobile if there was an error
-                    if (isMobile()) {
-                        showMobileLeftColumn();
-                    }
-                });
-                
-            } else {
-                resetCharacterForm();
-                showNotification(translations.newCharacter.character_generation_error, 'error');
+            
+            // Ensure we're showing the right column on mobile after generation
+            if (isMobile()) {
+                showMobileRightColumn();
             }
 
         } catch (error) {
@@ -598,6 +554,40 @@ function resetChatList(){
     const imageModel = $('.style-option.selected').data('model')
     $(document).find(`#imageStyleTabs button[data-model="${imageModel}"]`).click()
 }
+// Global function to update chat data in the frontend
+window.updateChatData = function(chatData) {
+    if (!chatData) return;
+    
+    $('#chatName').val(chatData.name || '');
+    $('#chatPurpose').val(chatData.short_intro || '');
+    
+    // Resize textarea to fit content
+    if (chatData.short_intro) {
+        resizeTextarea($('#chatPurpose')[0]);
+    }
+    
+    // Show relevant UI elements
+    $('.chatRedirection').show();
+    $('.regenerateImages').show(); 
+    $('#navigateToImageButton').show();
+    
+    // Reset form state
+    resetCharacterForm();
+    
+};
+
+// Global function to update enhanced prompt in the frontend
+window.updateEnhancedPrompt = function(enhancedPrompt) {
+    if (!enhancedPrompt) return;
+    
+    $('#enhancedPrompt').val(enhancedPrompt);
+    
+    // Resize textarea if needed
+    const promptTextarea = $('#enhancedPrompt')[0];
+    if (promptTextarea && typeof resizeTextarea === 'function') {
+        resizeTextarea(promptTextarea);
+    }
+};
 
 window.saveSelectedImage = function(imageUrl, callback) {
     $.ajax({

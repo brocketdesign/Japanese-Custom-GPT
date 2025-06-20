@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="{{lang}}">
+<head>
+    {{> dashboard-header}}
+    <title>{{#if chat}}{{chat.name}} - {{/if}}AI Character</title>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .sitemap-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+        
+        .section-header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .character-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border-left: 4px solid #667eea;
+        }
+        
+        .character-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .character-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #667eea;
+        }
+        
+        .tag-item {
+            display: inline-block;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            margin: 0.25rem;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+        }
+        
+        .tag-item:hover {
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border-top: 4px solid #667eea;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+        
+        .language-tab {
+            background: transparent;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            margin-right: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .language-tab.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .search-box {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 15px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+        
+        .last-updated {
+            color: #666;
+            font-size: 0.9rem;
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    {{> dashboard-nav}}
+    <div class="container">
+        <div class="sitemap-container">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <h1 class="display-4 mb-3">
+                    <span class="text-primary">🗺️</span>
+                    {{translations.sitemap.title}}
+                </h1>
+                <p class="lead text-muted">{{translations.sitemap.description}}</p>
+            </div>
+            
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">{{totalCharacters}}</div>
+                    <div class="text-muted">{{translations.sitemap.totalCharacters}}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{totalTags}}</div>
+                    <div class="text-muted">{{translations.sitemap.totalTags}}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{#each characters}}{{#if @first}}{{@root.characters.length}}{{/if}}{{/each}}</div>
+                    <div class="text-muted">{{translations.sitemap.languages}}</div>
+                </div>
+            </div>
+            
+            <!-- Characters Section -->
+            <div class="section-header">
+                <h2 class="mb-0">
+                    <span class="me-2">👥</span>
+                    {{translations.sitemap.characters}}
+                </h2>
+            </div>
+            
+            <!-- Search Box -->
+            <input type="text" id="characterSearch" class="form-control search-box" placeholder="{{translations.sitemap.searchCharacters}}">
+            
+            <!-- Language Tabs -->
+            <div class="mb-3">
+                {{#each characters}}
+                <button class="btn language-tab {{#if @first}}active{{/if}}" data-language="{{@key}}">
+                    {{#if (eq @key "en")}}English{{/if}}
+                    {{#if (eq @key "ja")}}日本語{{/if}}
+                    {{#if (eq @key "fr")}}Français{{/if}}
+                    {{#if (not (or (eq @key "en") (eq @key "ja") (eq @key "fr")))}}{{@key}}{{/if}}
+                    ({{this.length}})
+                </button>
+                {{/each}}
+            </div>
+            
+            <!-- Characters List -->
+            <div id="charactersContainer">
+                {{#each characters}}
+                <div class="character-language-group" data-language="{{@key}}" style="{{#unless @first}}display: none;{{/unless}}">
+                    <div class="row">
+                        {{#each this}}
+                        <div class="col-md-6 character-item" data-name="{{name}}">
+                            <div class="character-card">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{chatImageUrl}}" alt="{{name}}" class="character-image me-3" loading="lazy">
+                                    <div class="flex-grow-1">
+                                        <h5 class="mb-1">
+                                            <a href="/character/slug/{{slug}}" class="text-decoration-none">{{name}}</a>
+                                        </h5>
+                                        <div class="text-muted small">
+                                            {{#if gender}}<span class="badge bg-light text-dark me-1">{{gender}}</span>{{/if}}
+                                            {{#if imageStyle}}<span class="badge bg-light text-dark">{{imageStyle}}</span>{{/if}}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+                {{/each}}
+            </div>
+            
+            <!-- Tags Section -->
+            <div class="section-header mt-5">
+                <h2 class="mb-0">
+                    <span class="me-2">🏷️</span>
+                    {{translations.sitemap.popularTags}}
+                </h2>
+            </div>
+            
+            <input type="text" id="tagSearch" class="form-control search-box" placeholder="{{translations.sitemap.searchTags}}">
+            
+            <div id="tagsContainer">
+                {{#each tags}}
+                <a href="/search?q={{name}}" class="tag-item" data-tag="{{name}}">
+                    {{name}}
+                </a>
+                {{/each}}
+            </div>
+            
+            <!-- Last Updated -->
+            <div class="last-updated">
+                <span class="me-1">🕐</span>
+                {{translations.sitemap.lastUpdated}}: {{formatDate lastUpdated}}
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Character search functionality
+        document.getElementById('characterSearch').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const characterItems = document.querySelectorAll('.character-item');
+            
+            characterItems.forEach(item => {
+                const name = item.dataset.name.toLowerCase();
+                if (name.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+        
+        // Tag search functionality
+        document.getElementById('tagSearch').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const tagItems = document.querySelectorAll('.tag-item');
+            
+            tagItems.forEach(item => {
+                const tag = item.dataset.tag.toLowerCase();
+                if (tag.includes(searchTerm)) {
+                    item.style.display = 'inline-block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+        
+        // Language tab functionality
+        document.querySelectorAll('.language-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active class from all tabs
+                document.querySelectorAll('.language-tab').forEach(t => t.classList.remove('active'));
+                // Add active class to clicked tab
+                this.classList.add('active');
+                
+                // Hide all language groups
+                document.querySelectorAll('.character-language-group').forEach(group => {
+                    group.style.display = 'none';
+                });
+                
+                // Show selected language group
+                const language = this.dataset.language;
+                console.log('Selected language:', language); // Debug line
+                const targetGroup = document.querySelector(`.character-language-group[data-language="${language}"]`);
+                console.log('Target group:', targetGroup); // Debug line
+                if (targetGroup) {
+                    targetGroup.style.display = 'block';
+                }
+                
+                // Clear search when switching languages
+                document.getElementById('characterSearch').value = '';
+                
+                // Reset all character items to be visible in the new language group
+                const visibleGroup = document.querySelector(`.character-language-group[data-language="${language}"]`);
+                if (visibleGroup) {
+                    visibleGroup.querySelectorAll('.character-item').forEach(item => {
+                        item.style.display = 'block';
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

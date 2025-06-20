@@ -1475,6 +1475,18 @@
     "viewedMarked":"通知が確認済みとしてマークされました",
     "viewed":"確認済み",
     "nothing" : "新しい通知はありません"
+  },
+  "sitemap": {
+    "title": "サイトマップ",
+    "description": "当プラットフォームで利用可能なすべてのAIキャラクターとコンテンツを探索",
+    "totalCharacters": "総キャラクター数",
+    "totalTags": "総タグ数",
+    "languages": "言語",
+    "characters": "AIキャラクター",
+    "searchCharacters": "キャラクターを検索...",
+    "popularTags": "人気のタグ",
+    "searchTags": "タグを検索...",
+    "lastUpdated": "最終更新日"
   }
   
 }

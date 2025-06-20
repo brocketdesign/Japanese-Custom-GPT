@@ -8,6 +8,7 @@ const { pollTaskStatus } = require('./imagen');
 const { handleTaskCompletion, checkTaskStatus } = require('./imagen'); // <-- import the handler
 const { ObjectId } = require('mongodb');
 const fs = require('fs');
+const { cacheSitemapData } = require('./sitemap-utils'); // <-- import sitemap utils
 // Store active cron jobs
 const cronJobs = {};
 
@@ -528,6 +529,25 @@ const cachePopularChatsTask = (fastify) => async () => {
 };
 
 /**
+ * Cache sitemap data task (characters and tags for SEO)
+ * @param {Object} fastify - Fastify instance
+ */
+const cacheSitemapDataTask = (fastify) => async () => {
+  console.log('[cacheSitemapDataTask] Starting sitemap data caching task...');
+  const db = fastify.mongo.db;
+  
+  try {
+    // Check if the database is accessible
+    await db.command({ ping: 1 });
+    
+    await cacheSitemapData(db);
+    console.log('[cacheSitemapDataTask] Sitemap data caching completed successfully');
+  } catch (err) {
+    console.error('[cacheSitemapDataTask] Error caching sitemap data:', err);
+  }
+};
+
+/**
  * Initialize cron jobs from database settings
  * 
  * @param {Object} fastify - Fastify instance
@@ -595,6 +615,14 @@ const initializeCronJobs = async (fastify) => {
         cleanupExpiredAudioFiles(fastify)
     );
     
+    // Add sitemap caching task (daily at 2 AM)
+    configureCronJob(
+        'sitemapDataCacher',
+        '0 2 * * *', // Runs every day at 2:00 AM
+        true, // Enable this job
+        cacheSitemapDataTask(fastify)
+    );
+    
   } catch (error) {
     console.error('[initializeCronJobs] Error initializing cron jobs:', error);
   }
@@ -645,6 +673,7 @@ module.exports = {
   processBackgroundTasks,
   processBackgroundVideoTasks,
   cachePopularChatsTask,
+  cacheSitemapDataTask,
   getJobInfo,
   getNextRunTime
 };

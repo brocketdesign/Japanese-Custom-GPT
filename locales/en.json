@@ -1488,5 +1488,17 @@
     "viewedMarked":"Notification marked as viewed",
     "viewed":"Mark as Viewed",
     "nothing" : "No new notification"
+  },
+  "sitemap": {
+    "title": "Site Map",
+    "description": "Explore all available AI characters and content on our platform",
+    "totalCharacters": "Total Characters",
+    "totalTags": "Total Tags",
+    "languages": "Languages",
+    "characters": "AI Characters",
+    "searchCharacters": "Search characters...",
+    "popularTags": "Popular Tags",
+    "searchTags": "Search tags...",
+    "lastUpdated": "Last updated"
   }
 }

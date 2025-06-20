@@ -99,3 +99,26 @@ handlebars.registerHelper('math', function(lvalue, operator, rvalue) {
     '>=': lvalue >= rvalue
   }[operator];
 });
+handlebars.registerHelper('not', function(value) {
+  if (value === undefined || value === null) {
+    return true;
+  }
+  if (typeof value === 'boolean') {
+    return !value;
+  }
+  if (typeof value === 'number') {
+    return value === 0;
+  }
+  if (typeof value === 'string') {
+    return value.trim() === '';
+  }
+  return false;
+});
+handlebars.registerHelper('or', function(...args) {
+  for (let i = 0; i < args.length - 1; i++) {
+    if (args[i]) {
+      return true;
+    }
+  }
+  return false;
+});

@@ -1295,5 +1295,17 @@
           "viewedMarked": "Notification marquée comme vue",
           "viewed": "Marquer comme vue",
           "nothing": "Aucune nouvelle notification"
-        }
+        },
+  "sitemap": {
+    "title": "Plan du site",
+    "description": "Explorez tous les personnages IA et le contenu disponibles sur notre plateforme",
+    "totalCharacters": "Nombre total de personnages",
+    "totalTags": "Nombre total de tags",
+    "languages": "Langues",
+    "characters": "Personnages IA",
+    "searchCharacters": "Rechercher des personnages...",
+    "popularTags": "Tags populaires",
+    "searchTags": "Rechercher des tags...",
+    "lastUpdated": "Dernière mise à jour"
+  }
       }

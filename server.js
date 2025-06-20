@@ -14,7 +14,7 @@ const {
 } = require('./models/databasemanagement');
 const { checkUserAdmin, getUserData, updateCounter, fetchTags } = require('./models/tool');
 const { deleteOldTasks } = require('./models/imagen');
-const { cronJobs, configureCronJob, initializeCronJobs } = require('./models/cronManager');
+const { cronJobs, cacheSitemapDataTask, configureCronJob, initializeCronJobs } = require('./models/cronManager');
 
 // Expose cron jobs and configuration to routes
 fastify.decorate('cronJobs', cronJobs);
@@ -49,6 +49,7 @@ fastify.ready(async () => {
       console.log(obj.result.n + " document(s) deleted");
     }
   });
+
   // Initialize configured cron jobs
   await initializeCronJobs(fastify);
 
@@ -171,6 +172,7 @@ fastify.register(require('./routes/chat-tool-message-api'));
 fastify.register(require('./routes/system-prompt-api'));
 fastify.register(require('./routes/user-points-api'));
 fastify.register(require('./routes/character-infos-api'));
+fastify.register(require('./routes/sitemap-api')); // <-- add sitemap API routes
 
 fastify.get('/', async (request, reply) => {
   const db = fastify.mongo.db;
@@ -972,6 +974,49 @@ fastify.get('/settings', async (request, reply) => {
   }
 });
 
+// Add sitemap route before the existing routes
+fastify.get('/sitemap', async (request, reply) => {
+  try {
+    const db = fastify.mongo.db;
+    const { getCachedSitemapData } = require('./models/sitemap-utils');
+    let { translations, lang, user } = request;
+    
+    // Get cached sitemap data
+    let sitemapData = await getCachedSitemapData(db);
+    
+    // If no cached data, return empty template
+    if (!sitemapData) {
+      console.log('[/sitemap] No cached data found, rendering empty template');
+      sitemapData = {
+        characters: {},
+        tags: [],
+        totalCharacters: 0,
+        totalTags: 0,
+        lastUpdated: new Date()
+      };
+    }
+    
+    return reply.renderWithGtm('sitemap.hbs', {
+      title: `${translations.sitemap?.title || 'Sitemap'} | ${translations.seo.title}`,
+      characters: sitemapData.characters,
+      tags: sitemapData.tags,
+      totalCharacters: sitemapData.totalCharacters,
+      totalTags: sitemapData.totalTags,
+      lastUpdated: sitemapData.lastUpdated,
+      seo: [
+        { name: 'description', content: translations.sitemap?.description || 'Complete sitemap of all characters and tags' },
+        { name: 'keywords', content: `sitemap, characters, tags, ${translations.seo.keywords}` },
+        { property: 'og:title', content: `${translations.sitemap?.title || 'Sitemap'} | ${translations.seo.title}` },
+        { property: 'og:description', content: translations.sitemap?.description || 'Complete sitemap of all characters and tags' },
+        { property: 'og:image', content: '/img/share.png' },
+        { property: 'og:url', content: 'https://chatlamix/sitemap' },
+      ],
+    });
+  } catch (error) {
+    console.error('[/sitemap] Error:', error);
+    return reply.status(500).send({ error: 'Internal Server Error' });
+  }
+});
 
 const start = async () => {
   try {

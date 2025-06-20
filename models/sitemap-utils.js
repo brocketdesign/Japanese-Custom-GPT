@@ -54,7 +54,7 @@ const fetchTagsForSitemap = async (db) => {
         name: 1,
         count: 1
       }
-    }).sort({ count: -1 }).limit(500).toArray(); // Limit to top 500 tags
+    }).sort({ count: -1 }).toArray(); // Limit to top 500 tags
 
     return tags;
   } catch (error) {

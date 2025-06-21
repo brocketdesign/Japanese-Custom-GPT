@@ -412,25 +412,16 @@ async function saveGiftIdToChat(db, chatId, userChatId, giftId) {
           const { taskId } = request.params;
           const db = fastify.mongo.db;
           
-          console.log(`[DEBUG api/task-status] Checking task: ${taskId}`);
           
           const task = await db.collection('tasks').findOne({ taskId });
           
           if (!task) {
-              console.log(`[DEBUG api/task-status] Task not found: ${taskId}`);
               return reply.status(404).send({ error: 'Task not found' });
           }
           
-          console.log(`[DEBUG api/task-status] Task found - status: ${task.status}, userChatId: ${task.userChatId}`);
           
           if (task.status === 'completed' && task.result && task.result.images) {
-              console.log(`[DEBUG api/task-status] Returning completed task with ${task.result.images.length} images`);
-              
-              // Log merge status of images being returned
-              task.result.images.forEach((img, index) => {
-                  console.log(`[DEBUG api/task-status] Image ${index + 1}: merged=${img.isMerged}, url=${img.imageUrl?.includes('merged-face') ? 'MERGED' : 'ORIGINAL'}`);
-              });
-              
+
               return reply.send({
                   status: 'completed',
                   userChatId: task.userChatId,

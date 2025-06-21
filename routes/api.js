@@ -817,7 +817,7 @@ async function routes(fastify, options) {
             ]
           }
           const customModel = (language === 'ja' || language === 'japanese') ? 'deepseek' : 'mistral';
-        
+
           console.log(`[/api/openai-chat-completion] current lang ${language}, customModel: ${customModel}`);
           generateCompletion(messagesForCompletion, 600, customModel, language).then(async (completion) => {
             if(completion){

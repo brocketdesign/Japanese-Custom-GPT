@@ -1015,6 +1015,7 @@ function setupChatInterface(chat, character) {
             });
         });
     }
+
     function getImageUrlById(imageId, designStep, thumbnail, actions = null) {
         const placeholderImageUrl = '/img/placeholder-image-2.gif'; // Placeholder image URL
 

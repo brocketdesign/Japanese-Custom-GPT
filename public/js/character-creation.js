@@ -306,7 +306,6 @@
         resetInfiniteScroll();
 
         const modelId = $('.style-option.selected').data('id')
-        console.log('Regenerating images with modelId:', modelId);
         // Generate new images with existing prompt
         novitaImageGeneration(userId, chatCreationId, null, {
                 prompt: enhancedPrompt,

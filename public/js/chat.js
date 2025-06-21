@@ -182,6 +182,9 @@ $(document).ready(async function() {
         sendMessage();
     });
 
+    $('#sendImageMessage').on('click', function() {
+        sendImageMessage();
+    });
 
     // Event handler for the Enter key
     $('#userMessage').on('keypress', function(event) {
@@ -223,8 +226,10 @@ $(document).ready(async function() {
             $(this).attr('href','/chat/edit/'+newchatId)
         })
     }
-
-    window.sendMessage = function(customMessage, displayStatus = true) {
+    window.sendImageMessage = function(customMessage, displayStatus = true) {
+        sendMessage(customMessage, displayStatus, true);
+    }
+    window.sendMessage = function(customMessage, displayStatus = true, image_request = false) {
 
         hidePrompts();
         $('#startButtonContained, #introChat').hide();
@@ -247,7 +252,7 @@ $(document).ready(async function() {
         if (finalMessage.trim() !== '') {
             if (displayStatus) displayMessage('user', message, userChatId);
             $('#userMessage').val('');
-            addMessageToChat(chatId, userChatId, { role: 'user', message: finalMessage }, () => {
+            addMessageToChat(chatId, userChatId, { role: 'user', message: finalMessage, image_request }, () => {
                 generateChatCompletion(null, true);
             });
         }
@@ -1782,7 +1787,8 @@ window.addMessageToChat = function(chatId, userChatId, option, callback) {
             chatId: chatId,
             userChatId: userChatId,
             role: role,
-            message: message
+            message: message,
+            image_request: image_request || null
         }),
         success: function(response) {
             if(typeof callback == 'function'){

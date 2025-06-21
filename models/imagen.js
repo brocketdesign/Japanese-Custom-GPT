@@ -179,7 +179,6 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
 
     // Check if auto merge should be applied
     const autoMergeFaceEnabled = await getAutoMergeFaceSetting(db, userId.toString(), chatId.toString());
-    console.log(`[generateImg] autoMergeFaceEnabled: ${autoMergeFaceEnabled}, userId: ${userId}, chatId: ${chatId}`);
     const isPhotorealistic = chat && chat.imageStyle === 'photorealistic' || chat && chat.imageStyle !== 'anime';
     console.log(`[generateImg] isPhotorealistic: ${isPhotorealistic}, chat.imageStyle: ${chat.imageStyle}`);
     
@@ -444,19 +443,6 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
     images = [taskStatus.result.images];
   }
 
-  console.log('[handleTaskCompletion] Processing images:', {
-    imageCount: images.length,
-    images: images.map((img, index) => ({
-      index,
-      imageId: img.imageId,
-      hasImageUrl: !!img.imageUrl,
-      isMerged: img.isMerged,
-      hasPrompt: !!img.prompt,
-      hasTitle: !!img.title,
-      nsfw: img.nsfw
-    }))
-  });
-
   if (typeof fastify.sendNotificationToUser !== 'function') {
     console.error('fastify.sendNotificationToUser is not a function');
     return;
@@ -501,11 +487,6 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
           isAutoMerge: isMerged || false,
           url: imageUrl // Add url field for compatibility
         };
-        
-        console.log(`[handleTaskCompletion] Sending notification for image ${imageId}:`, {
-          ...notificationData,
-          imageUrl: notificationData.imageUrl?.includes('merged-face') ? 'MERGED_URL' : 'ORIGINAL_URL'
-        });
         
         fastify.sendNotificationToUser(userId, 'imageGenerated', notificationData);
       }
@@ -904,8 +885,12 @@ const images = Array.isArray(result) ? result : [result];
     processedImages = images.map(imageData => ({ ...imageData, isMerged: false }));
   }
   
-  // Save processed images to database
-  const savedImages = await Promise.all(processedImages.map(async (imageData, arrayIndex) => {
+  
+  // Save processed images to database with timeout to prevent overlapping
+  const savedImages = [];
+  for (let arrayIndex = 0; arrayIndex < processedImages.length; arrayIndex++) {
+    const imageData = processedImages[arrayIndex];
+    
     let nsfw = task.type === 'nsfw';
     if (imageData.nsfw_detection_result && imageData.nsfw_detection_result.valid && imageData.nsfw_detection_result.confidence >= 50) {
       nsfw = true;
@@ -954,10 +939,16 @@ const images = Array.isArray(result) ? result : [result];
       }
     }
 
-    return {
+    savedImages.push({
       ...imageResult,
-      status: 'completed'};
-  }));
+      status: 'completed'
+    });
+
+    // Add small delay between saves to prevent overlapping (except for the last image)
+    if (arrayIndex < processedImages.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay
+    }
+  }
 
   // Update task status to completed with proper merge information
   const updateResult = await tasksCollection.findOneAndUpdate(
@@ -1176,23 +1167,84 @@ async function getPromptById(db, id) {
   }
 }
 
-async function checkImageDescription(db, chatId) {
-  if (!ObjectId.isValid(chatId)) {
-    throw new Error('Invalid chatId format');
+function characterDescriptionToString(data) {
+    if(!data) return "";
+    
+    const details = data?.details_description;
+    const appearance = details?.appearance;
+    const face = details?.face;
+    const hair = details?.hair;
+    const body = details?.body;
+    const style = details?.style;
+    
+    // Build physical description string
+    let description = [];
+    
+    // Basic appearance
+    if (appearance?.age) description.push(`Age: ${appearance.age}`);
+    if (appearance?.gender) description.push(`Gender: ${appearance.gender}`);
+    if (appearance?.ethnicity) description.push(`Ethnicity: ${appearance.ethnicity}`);
+    if (appearance?.height) description.push(`Height: ${appearance.height}`);
+    if (appearance?.weight) description.push(`Weight: ${appearance.weight}`);
+    if (appearance?.bodyType) description.push(`Body Type: ${appearance.bodyType}`);
+    
+    // Face features
+    if (face?.faceShape) description.push(`Face Shape: ${face.faceShape}`);
+    if (face?.skinColor) description.push(`Skin: ${face.skinColor}`);
+    if (face?.eyeColor) description.push(`Eyes: ${face.eyeColor}`);
+    if (face?.eyeShape) description.push(`Eye Shape: ${face.eyeShape}`);
+    if (face?.eyeSize) description.push(`Eye Size: ${face.eyeSize}`);
+    if (face?.facialFeatures) description.push(`Facial Features: ${face.facialFeatures}`);
+    if (face?.makeup) description.push(`Makeup: ${face.makeup}`);
+    
+    // Hair
+    if (hair?.hairColor) description.push(`Hair Color: ${hair.hairColor}`);
+    if (hair?.hairLength) description.push(`Hair Length: ${hair.hairLength}`);
+    if (hair?.hairStyle) description.push(`Hair Style: ${hair.hairStyle}`);
+    if (hair?.hairTexture) description.push(`Hair Texture: ${hair.hairTexture}`);
+    
+    // Body details
+    if (body?.breastSize) description.push(`Breast Size: ${body.breastSize}`);
+    if (body?.assSize) description.push(`Ass Size: ${body.assSize}`);
+    if (body?.bodyCurves) description.push(`Body Curves: ${body.bodyCurves}`);
+    if (body?.chestBuild) description.push(`Chest Build: ${body.chestBuild}`);
+    if (body?.shoulderWidth) description.push(`Shoulders: ${body.shoulderWidth}`);
+    if (body?.absDefinition) description.push(`Abs: ${body.absDefinition}`);
+    if (body?.armMuscles) description.push(`Arms: ${body.armMuscles}`);
+    
+    // Style and accessories
+    if (style?.clothingStyle) description.push(`Clothing Style: ${style.clothingStyle}`);
+    if (style?.accessories) description.push(`Accessories: ${style.accessories}`);
+    if (style?.tattoos && style.tattoos !== 'none') description.push(`Tattoos: ${style.tattoos}`);
+    if (style?.piercings && style.piercings !== 'none') description.push(`Piercings: ${style.piercings}`);
+    if (style?.scars && style.scars !== 'none') description.push(`Scars: ${style.scars}`);
+    
+    // Fallback to existing description fields if no structured data
+    if (description.length === 0) {
+        const fallbackDescription = data?.enhancedPrompt || data?.imageDescription || data?.characterPrompt || "";
+        return fallbackDescription;
+    }
+    
+    return description.join(', ');
+}
+async function checkImageDescription(db, chatId = null, chatRawData = null) {
+  try {
+    let chatData = chatRawData;
+    if (!chatData) {
+      chatData = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
+    }
+  
+    const characterPrompt = chatData?.enhancedPrompt || chatData?.imageDescription || chatData?.characterPrompt || null;
+    const characterDescriptionString = characterDescriptionToString(chatData);
+    characterDescription = (characterPrompt ? ` ${characterPrompt}` : '') +' '+ (characterDescriptionString ? ` ${characterDescriptionString}` : '');
+    
+    return characterDescription;
+
+  } catch (error) {
+    console.error('Error checking image description:', error);
+    return { imageDescription: null };
+    
   }
-
-  const objectId = new ObjectId(chatId);
-  const collection = db.collection('chats');
-
-  const chatData = await collection.findOne({ _id: objectId });
-  const characterPrompt = chatData?.imageDescription || chatData?.enhancedPrompt || chatData?.characterPrompt || null;
-  const characterDescription = characterPrompt;
-
-  if (!characterDescription || characterDescription.includes('sorry')) {
-    return false;
-  }
-
-  return { imageDescription: characterDescription };
 }
 
 async function getImageSeed(db, imageId) {
@@ -1378,7 +1430,6 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
             userId: new ObjectId(userId),
             _id: new ObjectId(userChatId),
           });
-          console.log({ "mergeMessage.originalImageUrl" : mergeMessage.originalImageUrl });
           // Find the index of the original message for merge
           const originalIndex = userChatData.messages.findIndex(msg => {
             if (msg.imageUrl && msg.role === 'assistant' && msg.type === 'image') {
@@ -1387,7 +1438,6 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
               return isImageMatch && msg.role === 'assistant' && msg.type === 'image';
             }
           });
-          console.log('[updateOriginalMessageWithMerge] Found originalMessage index:', originalIndex);
 
           if (originalIndex !== -1) {
             // Combine originalMessage with mergeMessage
@@ -1405,7 +1455,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
             };
             // Update the message in the array
             userChatData.messages[originalIndex] = resultMessage;
-            console.log({resultMessage})
+
             // Update the whole messages array in the database
             await userDataCollection.updateOne(
               {
@@ -1532,6 +1582,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
     getPromptById,
     getImageSeed,
     checkImageDescription,
+    characterDescriptionToString,
     getTasks,
     deleteOldTasks,
     deleteAllTasks,

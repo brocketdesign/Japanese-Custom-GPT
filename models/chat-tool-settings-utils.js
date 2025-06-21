@@ -73,7 +73,6 @@ async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt) {
         const settings = await getUserChatToolSettings(db, userId, chatId);
         
         let enhancedPrompt = basePrompt;
-        console.log({basePrompt})
         // Apply character tone
         const toneInstructions = {
             casual: 'Respond in a casual, friendly manner. Use informal language and be relaxed.',

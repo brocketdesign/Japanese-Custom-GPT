@@ -318,12 +318,10 @@ opacity: 0.8;
   
   #sendMessage,#chatInput .load {
   border-left:0!important;
-  border-radius:0 30px 30px 0!important;
   box-shadow:none
   }
   
   #userMessage {
-  border-radius:30px 0 0 30px!important;
   background-color:#f8f9fa
   }
   
@@ -336,7 +334,6 @@ opacity: 0.8;
     background-size: 45px;
     background-position: left;
     background-repeat: no-repeat;
-    border-radius: 15px;
     padding-left: 50px;
   }
   
@@ -1518,7 +1515,6 @@ opacity: 0.8;
   
   #sendMessage,#chatInput .load {
   border-left:0!important;
-  border-radius:0 30px 30px 0!important;
   box-shadow:none
   }
   
@@ -1536,9 +1532,7 @@ opacity: 0.8;
   box-shadow:none
   }
   
-  #userMessage.male {
-  border-radius:50px 0 0 50px!important
-  }
+
   
   .user-chat {
   cursor:pointer

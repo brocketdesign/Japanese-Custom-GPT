@@ -50,9 +50,7 @@ async function routes(fastify, options) {
         imageType = nsfw ? 'nsfw' : 'sfw'
         processPromptToTags(db,customPrompt);
         
-        let imageDescriptionResponse = await checkImageDescription(db, chatId);
-        const imageDescription = imageDescriptionResponse.imageDescription
-        newPrompt = !!imageDescription ? imageDescription +','+ customPrompt : customPrompt;
+        const imageDescription = await checkImageDescription(db, chatId);
         newPrompt = await createPrompt(customPrompt, imageDescription, nsfw);
         // Prompt must be shorter than 900 characters
         if (newPrompt.length > 900) {
@@ -64,6 +62,7 @@ async function routes(fastify, options) {
             newPrompt = newPrompt.substring(0, 900);
           }
         }
+        console.log( '[generate-img] New prompt after processing:', newPrompt );
       } else if(giftId) {
         // New gift handling logic
         const giftData = await getGiftById(db, giftId);

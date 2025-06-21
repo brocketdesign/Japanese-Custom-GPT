@@ -6,6 +6,7 @@ const {
     generatePromptSuggestions
 } = require('../models/openai')
 const { 
+    checkImageDescription,
     generateImg,
     getPromptById, 
     getTasks
@@ -341,7 +342,7 @@ async function routes(fastify, options) {
     });
       
     fastify.post('/api/chat/add-message', async (request, reply) => {
-        const { chatId, userChatId, role, message } = request.body;
+        const { chatId, userChatId, role, message, image_request } = request.body;
         console.log('[/api/chat/add-message] Adding message to chat:', { chatId, userChatId, role, message });
         try {
             const collectionUserChat = fastify.mongo.db.collection('userChat');
@@ -352,6 +353,7 @@ async function routes(fastify, options) {
             }
             let newMessage = { role: role };    
             newMessage.content = message
+            newMessage.image_request = image_request || false;
             newMessage.timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
             userData.messages.push(newMessage);
             userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
@@ -585,32 +587,27 @@ async function routes(fastify, options) {
         }
     });
 
-   // This route handles streaming chat completions from OpenAI for a given session ID.
-
     function chatDataToString(data) {
 
         if(!data) return "";
         
         const system_prompt = data?.system_prompt;
-        const base_personality = data?.base_personality;
-        const expressionStyle = base_personality?.expression_style || {};
+        const details_description = data?.details_description;
+        const personality = details_description?.personality;
 
         return `
             Name: ${data.name || "Unknown"}
             Short Introduction: ${data.short_intro || ""}
             Instructions: ${system_prompt}
-            Traits: ${base_personality?.traits ? base_personality.traits.join(', ') : ""}
-            Preferences: ${base_personality?.preferences ? base_personality.preferences.join(', ') : ""}
             
-            Expression Style:
-            - Tone: ${expressionStyle?.tone || ""}
-            - Vocabulary: ${expressionStyle?.vocabulary || ""}
-            - Speech Pattern: ${expressionStyle?.speech_pattern || ""}
-            - Verbal Tics: ${expressionStyle?.verbal_tics || ""}
-            - Emotional Expression: ${expressionStyle?.emotional_expression || ""}
-            - Sentence Structure: ${expressionStyle?.sentence_structure || ""}
-            - Politeness Level: ${expressionStyle?.politeness_level || ""}
-            - Unique Feature: ${expressionStyle?.unique_feature || ""}
+            Personality: ${personality?.personality || ""}
+            Background: ${personality?.background || ""}
+            Occupation: ${personality?.occupation || ""}
+            Hobbies: ${personality?.hobbies ? personality.hobbies.join(', ') : ""}
+            Interests: ${personality?.interests ? personality.interests.join(', ') : ""}
+            Likes: ${personality?.likes ? personality.likes.join(', ') : ""}
+            Dislikes: ${personality?.dislikes ? personality.dislikes.join(', ') : ""}
+            Special Abilities: ${personality?.specialAbilities ? personality.specialAbilities.join(', ') : ""}
 
             Tags: ${data?.tags ? data.tags.join(', ') : ""}
         `.trim();
@@ -696,8 +693,8 @@ async function routes(fastify, options) {
           if (!userData) { return reply.status(404).send({ error: 'User data not found' }) }
           const isAdmin = await checkUserAdmin(fastify, userId);
           const chatDocument = await getChatDocument(request, db, chatId);
-          const chatDescription = chatDataToString(chatDocument)
-          const characterDescription = chatDocument ? (chatDocument.enhancedPrompt || chatDocument?.imageDescription || chatDocument.characterPrompt) : null;
+          const chatDescription = chatDataToString(chatDocument); // Use for text generation
+          const characterDescription = checkImageDescription(db, chatId, chatDocument); // Use for image generation
           const language = getLanguageName(userInfo.lang)
 
           const userMessages = userData.messages
@@ -716,6 +713,7 @@ async function routes(fastify, options) {
             let currentUserMessage = { role: 'user', content: lastUserMessage.content }
           if (lastUserMessage.name) currentUserMessage.name = lastUserMessage.name
           if (lastUserMessage.trigger_image_request) currentUserMessage.image_request = lastUserMessage.trigger_image_request
+          if (lastUserMessage.image_request) currentUserMessage.image_request = lastUserMessage.image_request
           if (lastUserMessage.nsfw) currentUserMessage.nsfw = lastUserMessage.nsfw
           if (lastUserMessage.promptId) currentUserMessage.promptId = lastUserMessage.promptId
       
@@ -725,9 +723,10 @@ async function routes(fastify, options) {
           if(currentUserMessage?.image_request && currentUserMessage?.promptId){
             customPromptData = await getPromptById(db,currentUserMessage.promptId);
           }
-          
+
           // Use conversation analysis to detect image requests if not explicitly set
-          if (currentUserMessage?.image_request != true && currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context') {
+          if (currentUserMessage?.image_request && !currentUserMessage?.promptId && currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context') {
+            console.log(`[/api/openai-chat-completion] Checking for image request in conversation analysis...`);    
             genImage = await checkImageRequest(userData.messages)
           }
       
@@ -783,9 +782,10 @@ async function routes(fastify, options) {
                     for (let i = 0; i < image_num; i++) {
                         fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'show' })
                     }
-                    genImagePromptFromChat(chatDocument, userData.messages, genImage, language)
+                    genImagePromptFromChat(chatDocument, characterDescription, userData.messages, genImage, language)
                         .then(async(promptData) => {
-                        let prompt = promptData.prompt.replace(/(\r\n|\n|\r)/gm, " ").trim()
+                        let prompt = promptData.prompt.replace(/(\r\n|\n|\r)/gm, " ").trim();
+                        console.log(`[/api/openai-chat-completion] Generated prompt: ${prompt}`);
                         processPromptToTags(db,prompt);
                         const imageType = genImage.nsfw ? 'nsfw' : 'sfw'
                         const aspectRatio = null
@@ -1170,9 +1170,7 @@ async function routes(fastify, options) {
         ];
     };
 
-    async function genImagePromptFromChat(chatDocument, messages, command, language) {
-        const characterDescription = chatDocument.enhancedPrompt || chatDocument?.imageDescription || chatDocument.characterPrompt;
-
+    async function genImagePromptFromChat(chatDocument, characterDescription, messages, command, language) {
         const lastMessages = messages
             .filter(m => m.content && m.role == 'user' && !m.content.startsWith('['))
             .slice(-1);

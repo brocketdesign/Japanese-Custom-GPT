@@ -588,7 +588,7 @@ async function routes(fastify, options) {
    // This route handles streaming chat completions from OpenAI for a given session ID.
 
     function chatDataToString(data) {
-        console.log(data);
+
         if(!data) return "";
         
         const system_prompt = data?.system_prompt;
@@ -701,7 +701,7 @@ async function routes(fastify, options) {
           const language = getLanguageName(userInfo.lang)
 
           const userMessages = userData.messages
-            .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system' && m.name !== 'context')
+            .filter(m => m.content && !m.content.startsWith('[Image]') && !m.imageId && !m.videoId && m.role !== 'system' && m.name !== 'context')
             .filter((m,i,a) => m.name !== 'master' || i === a.findLastIndex(x => x.name === 'master')) // Keep the last master message only
             .filter((m) => m.image_request != true )
             
@@ -817,7 +817,7 @@ async function routes(fastify, options) {
             ]
           }
           const customModel = (language === 'ja' || language === 'japanese') ? 'deepseek' : 'mistral';
-          console.log(messagesForCompletion)
+        
           console.log(`[/api/openai-chat-completion] current lang ${language}, customModel: ${customModel}`);
           generateCompletion(messagesForCompletion, 600, customModel, language).then(async (completion) => {
             if(completion){

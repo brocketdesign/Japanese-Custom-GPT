@@ -8,6 +8,7 @@ const { getUserMinImages, getAutoMergeFaceSetting } = require('../models/chat-to
 const { awardImageGenerationReward, awardImageMilestoneReward } = require('./user-points-utils');
 const slugify = require('slugify');
 const sharp = require('sharp');
+const { time } = require('console');
 const default_prompt = {
     sdxl: {
       sfw: {
@@ -1420,6 +1421,48 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
           console.error('Error updating original message with merge:', error.message);
         }
       };
+      
+      const addImageMessageToChat = async (userId, userChatId, imageUrl, imageId, prompt, title) => {
+        try {
+          // Push a new image message to the user's chat messages array
+          const userData = await userDataCollection.findOne({
+            userId: new ObjectId(userId),
+            _id: new ObjectId(userChatId),
+          });
+          if (!userData) {
+            throw new Error('User data not found');
+          }   
+          const imageMessage = {
+            role: "assistant",
+            content: title.en || title.ja || title.fr || prompt,
+            imageUrl,
+            imageId,
+            type: isMerged ? "mergeFace" : "image",
+            hidden: true,
+            prompt,
+            title,
+            timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }),
+          };
+          const imagePromptMessage = {
+            role: "assistant",
+            content: `I just sent you an image based on the prompt: "${prompt}".`,
+            type: "text",
+            hidden: true,
+            timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
+          };
+          // Add the new message to the chat
+          userData.messages.push(imageMessage);
+          userData.messages.push(imagePromptMessage);
+          // Update the user's chat with the new message
+          await userDataCollection.updateOne(
+            { userId: new ObjectId(userId), _id: new ObjectId(userChatId) },
+            { $set: { messages: userData.messages } }
+          );
+        } catch (error) {
+          console.error('Error adding image message to chat:', error.message);
+          
+        }
+      };
 
       const firstAvailableTitle = title.en || title.ja || title.fr || '';
       
@@ -1449,6 +1492,15 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
         }
 
         updateOriginalMessageWithMerge(imageMessage);
+      } else {
+        addImageMessageToChat(
+          userId, 
+          userChatId, 
+          imageUrl, 
+          imageId, 
+          prompt, 
+          title,
+        );
       }
 
       console.log('[saveImageToDB] Returning saved image data:', {

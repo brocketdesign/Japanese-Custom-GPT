@@ -1716,6 +1716,9 @@ opacity: 0.8;
 .text-purple, .text-primary{
     color: #6E20F4 !important;
 }
+.bg-purple, .bg-primary {
+    background-color: #6E20F4 !important;
+}
 .character-card-menu {
     width: 100%;
     padding: 10px 0;

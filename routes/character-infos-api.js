@@ -12,10 +12,17 @@ async function routes(fastify, options) {
             }
 
             const collectionChats = fastify.mongo.db.collection('chats');
-            const chat = await collectionChats.findOne({
+            let chat;
+            chat = await collectionChats.findOne({
                 _id: new ObjectId(chatId),
                 userId: new ObjectId(userId)
             });
+
+            if (!chat) {
+                chat = await collectionChats.findOne({
+                    _id: new ObjectId(chatId)
+                });
+            }
 
             if (!chat) {
                 return reply.status(404).send({ error: 'Character not found or access denied' });

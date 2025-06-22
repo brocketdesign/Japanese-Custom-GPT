@@ -58,19 +58,15 @@
             {{/if}}
 
             <button id="avatarMenuBtn" 
-                class="btn p-0 border-0 bg-transparent" 
-                type="button" data-bs-toggle="offcanvas" data-bs-target="#userMenuOffcanvas" aria-controls="userMenuOffcanvas">
+                class="btn p-0 border-0 bg-transparent {{#if (eq user.subscriptionStatus 'active')}} bg-purple {{/if}}" 
+                type="button" 
+                data-bs-toggle="offcanvas" 
+                data-bs-target="#userMenuOffcanvas" 
+                aria-controls="userMenuOffcanvas">
                 <div class="position-relative">
                     <img src="{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}" 
                         class="rounded-circle avatar" height="35px" alt="Avatar"
                         loading="lazy" />
-                    {{#if (eq user.subscriptionStatus 'active')}}
-                        <div class="premiumIndicator position-absolute top-0 start-0" style="font-size: 10px;">
-                            <span class="badge custom-gradient-bg">
-                                <i class="bi bi-gem"></i>
-                            </span>
-                        </div>
-                    {{/if}}
                 </div>
             </button>
         </div>

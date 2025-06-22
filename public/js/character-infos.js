@@ -52,10 +52,10 @@ $(document).ready(function() {
         // Character image
         if (chatData.chatImageUrl) {
             $('#charInfoImage').attr('src', chatData.chatImageUrl).show();
-            $('#charInfoImagePlaceholder').hide();
+            $('#charInfoImagePlaceholder').removeClass('d-flex').hide();
         } else {
             $('#charInfoImage').hide();
-            $('#charInfoImagePlaceholder').show();
+            $('#charInfoImagePlaceholder').addClass('d-flex').show();
         }
 
         // Basic information

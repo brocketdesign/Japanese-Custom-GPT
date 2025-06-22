@@ -24,8 +24,8 @@
 #userMenuOffcanvas {
     width: 300px;
     max-width: 85vw;
+    max-height: 90vh;
     z-index: 1055;
-    max-height: 100vh;
     display: flex;
     flex-direction: column;
     background: white;
@@ -44,7 +44,8 @@
 
 #userMenuOffcanvas.show {
     visibility: visible !important;
-    transform: translateX(25px) !important;
+    transform: translateX(0px) !important;
+    position: fixed;
 }
 
 #userMenuOffcanvas.showing {
@@ -184,7 +185,6 @@
     top: 70px !important;
     right: 5px !important;
     z-index: 1040 !important; /* Below offcanvas */
-    max-width: 200px;
 }
 
 /* Premium indicator positioning */
@@ -192,9 +192,10 @@
     z-index: 10;
 }
 
-/* Remove backdrop styles completely */
+/* Backdrop styling */
 .offcanvas-backdrop {
-    display: none !important;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1050;
 }
 
 /* Divider styling */

@@ -96,7 +96,7 @@
                                 <div class="points-history-header d-flex justify-content-between align-items-center">
                                     <span>{{userPointsTranslations.points.history}}</span>
                                     <button class="btn btn-sm btn-outline-primary refresh-points">
-                                        <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                                        <i class="bi bi-arrow-clockwise me-1"></i>{{translations.refresh}}
                                     </button>
                                 </div>
                                 <div class="points-history-list" style="max-height: 400px; overflow-y: auto;">
@@ -133,11 +133,8 @@
                 <div class="d-flex justify-content-between align-items-center w-100">
                     <small class="text-muted">
                         <i class="bi bi-info-circle me-1"></i>
-                        Points are updated in real-time
+                        {{userPointsTranslations.footer_info}}
                     </small>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x-lg me-1"></i>Close
-                    </button>
                 </div>
             </div>
         </div>

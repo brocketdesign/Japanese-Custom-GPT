@@ -2054,7 +2054,7 @@ window.resultImageSearch = async function (page = 1,query,style = 'anime', callb
                             data-id="${item._id}" 
                             onclick="toggleImageFavorite(this)"
                             >
-                                <i class="bi bi-heart" style="cursor: pointer;"></i>
+                                <i class="bi ${isLiked ? 'bi-heart-fill':'bi-heart'}" style="cursor: pointer;"></i>
                             </span>
                         </div>
                         `}
@@ -2216,7 +2216,7 @@ window.loadAllChatImages = function (page = 1, reload = false) {
                      data-id="${item._id}" 
                      onclick="toggleImageFavorite(this)" 
                      >
-                       <i class="bi bi-heart" style="cursor: pointer;"></i>
+                       <i class="bi ${isLiked ? 'bi-heart-fill':'bi-heart'}" style="cursor: pointer;"></i>
                      </span>
                    </div>`
             }
@@ -2367,7 +2367,7 @@ window.loadUserImages = function (userId, page = 1, reload = false) {
                      data-id="${item._id}" 
                      onclick="toggleImageFavorite(this)"
                      >
-                       <i class="bi bi-heart" style="cursor: pointer;"></i>
+                       <i class="bi ${isLiked ? 'bi-heart-fill':'bi-heart'}" style="cursor: pointer;"></i>
                      </span>
                    </div>`
             }
@@ -2898,7 +2898,7 @@ $(document).ready(function () {
                               data-id="${item._id}"
                               onclick="toggleImageFavorite(this)"
                             >
-                              <i class="bi bi-heart" style="cursor: pointer;"></i>
+                              <i class="bi ${isLiked ? 'bi-heart-fill':'bi-heart'}" style="cursor: pointer;"></i>
                             </span>
                           </div>
                         `
@@ -3026,7 +3026,7 @@ $(document).ready(function () {
                                 data-id="${item._id}"
                                 onclick="toggleImageFavorite(this)"
                               >
-                                <i class="bi bi-heart" style="cursor: pointer;"></i>
+                                <i class="bi ${isLiked ? 'bi-heart-fill':'bi-heart'}" style="cursor: pointer;"></i>
                               </span>
                             </div>
                           `

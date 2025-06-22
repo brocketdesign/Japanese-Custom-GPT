@@ -851,7 +851,7 @@ class UserPointsManager {
 
     // Determine icon and title based on source
     let mainIcon = '<i class="bi bi-heart-fill"></i>';
-    let titleText = '❤️ Like Reward!';
+    let titleText = this.translations.like_reward.title || '❤️ Like Reward!'; 
     
     if (source === 'image_milestone' || source === 'image_generation') {
       mainIcon = '<i class="bi bi-image-fill"></i>';
@@ -883,7 +883,7 @@ class UserPointsManager {
               </p>
               <div class="reward-points">
                 <span class="points-earned">+${points}</span>
-                <span class="points-label">${this.translations.points || 'points'}</span>
+                <span class="points-label">${this.translations.points.title || 'points'}</span>
               </div>
               ${totalLikes > 0 ? `<div class="reward-meta">${this.translations.total_likes || 'Total likes'}: ${totalLikes}</div>` : ''}
               ${totalImages > 0 ? `<div class="reward-meta">${this.translations.total_images || 'Total images'}: ${totalImages}</div>` : ''}

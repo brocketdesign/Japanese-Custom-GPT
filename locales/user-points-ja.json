@@ -1,4 +1,5 @@
 {
+  "footer_info": "ポイントはリアルタイムで更新されます",
   "claim_bonus": "デイリーボーナス受取",
   "bonus_already_claimed": "受取済み",
   "bonus_claimed": "ボーナス受取完了！",
@@ -6,6 +7,7 @@
   "days": "日",
   "day_streak": "日連続",
   "points": "ポイント",
+  "play_sound": "サウンド再生",
   "previous": "前へ",
   "next": "次へ",
   "loading": "読み込み中...",
@@ -44,6 +46,16 @@
   "streak_bonus_message": "{streak}日連続ボーナス！",
   "new_balance": "新しい残高",
   "streak_days": "{days}日連続！",
+  "milestone_achieved": "マイルストーン達成！",
+  "image_milestone_title": "画像生成マイルストーン！",
+  "image_generation_reward": "画像生成完了！+{points}ポイント",
+  "total_likes": "合計いいね数",
+  "total_images": "合計画像数",
+  "like_reward": {
+    "title": "いいね！報酬",
+    "message": "画像のいいねで{points}ポイント獲得！",
+    "notification": "画像にいいね！{points}ポイント獲得！"
+  },
   "points": {
     "title": "ポイント",
     "balance": "現在の残高",
@@ -79,12 +91,14 @@
     "actions": {
       "view_history": "履歴を見る",
       "claim_daily": "デイリーボーナスを受け取る",
-      "view_leaderboard": "ランキングを見る"
+      "view_leaderboard": "ランキングを見る",
+      "liked_an_image": "画像にいいねしました"
     },
     "messages": {
       "points_added": "ポイントが正常に追加されました",
       "points_removed": "ポイントが正常に減算されました",
       "daily_bonus_claimed": "デイリーボーナスを受け取りました！ +{points} ポイント",
+      "daily_bonus_already_claimed": "今日はすでにデイリーボーナスを受け取りました。",
       "streak_bonus": "連続ボーナス！{streak}日目",
       "insufficient_points": "この操作にはポイントが足りません",
       "error": "ポイント処理中にエラーが発生しました"
@@ -96,6 +110,40 @@
       "remove_points": "ポイントを減算",
       "reason": "理由",
       "amount": "金額"
+    },
+    "image_generation": {
+      "reward": "画像生成完了！+{points}ポイント",
+      "milestone_title": "画像生成マイルストーン！",
+      "milestone_message": "おめでとうございます！{totalImages}枚の画像を生成し、{milestone}マイルストーンに到達しました！",
+      "points_earned": "ポイント獲得！",
+      "points_spent": "ポイント消費！",
+      "milestone_rewards": {
+        "first_image": "初回画像生成！",
+        "fifth_image": "5枚目の画像生成！",
+        "tenth_image": "10枚目の画像生成！",
+        "twenty_fifth_image": "25枚目の画像生成！",
+        "fiftieth_image": "50枚目の画像生成！",
+        "hundredth_image": "100枚目の画像生成！",
+        "two_fifty_image": "250枚目の画像生成！",
+        "five_hundred_image": "500枚目の画像生成！",
+        "thousand_image": "1000枚目の画像生成！",
+        "creator_milestone": "画像クリエイター！"
+      }
+    },
+    "like_rewards": {
+      "milestone_title": "いいね！マイルストーン！",
+      "milestone_message": "おめでとうございます！{totalLikes}個のいいねをして、{milestone}マイルストーンに到達しました！",
+      "milestone_rewards": {
+        "first_like": "初回いいね！",
+        "fifth_like": "5回いいね！マイルストーン！",
+        "tenth_like": "10回いいね！マイルストーン！",
+        "twenty_fifth_like": "25回いいね！マイルストーン！",
+        "fiftieth_like": "50回いいね！マイルストーン！",
+        "hundredth_like": "100回いいね！マイルストーン！",
+        "two_fifty_like": "250回いいね！マイルストーン！",
+        "five_hundred_like": "500回いいね！マイルストーン！",
+        "thousand_like": "1000回いいね！マイルストーン！"
+      }
     }
   }
 }

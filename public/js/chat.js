@@ -708,7 +708,7 @@ function setupChatInterface(chat, character) {
 
             if (chatMessage.role === "user") {
                 const isStarter = chatMessage?.content?.startsWith("[Starter]") || chatMessage?.content?.startsWith("Invent a situation") || chatMessage?.content?.startsWith("Here is your character description");
-                const isHidden = chatMessage?.content?.startsWith("[Hidden]") || chatMessage?.name === 'master';
+                const isHidden = chatMessage?.hidden === true || chatMessage?.content?.startsWith("[Hidden]") || chatMessage?.name === 'master';
                 const image_request = chatMessage.image_request
                 if (!isStarter && !isHidden) {
                     messageHtml = `
@@ -875,7 +875,7 @@ function setupChatInterface(chat, character) {
                         displayedMessageIds.add(messageId);
                     }
                 } else {
-                    const isHidden = chatMessage.content.startsWith("[Hidden]") || chatMessage.hidden === true;
+                    const isHidden = chatMessage?.hidden === true || chatMessage.content.startsWith("[Hidden]") ;
                     if (chatMessage.content && !isHidden) {
                         let message = removeContentBetweenStars(chatMessage.content);
                         

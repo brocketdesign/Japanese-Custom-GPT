@@ -97,6 +97,8 @@ const chatHistorySidebar = fs.readFileSync('views/partials/chat-history-sidebar.
 handlebars.registerPartial('chat-history-sidebar', chatHistorySidebar);
 const dashboardModals = fs.readFileSync('views/partials/dashboard-modals.hbs', 'utf8');
 handlebars.registerPartial('dashboard-modals', dashboardModals);
+const translations = fs.readFileSync('views/partials/translations.hbs', 'utf8');
+handlebars.registerPartial('translations', translations);
 
 fastify.register(require('@fastify/view'), {
   engine: { handlebars: require('handlebars') },

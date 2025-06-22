@@ -197,10 +197,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Remove any existing show class on page load
         offcanvasElement.classList.remove('show');
         offcanvasElement.style.visibility = 'hidden';
+
+        // Enable body scroll when offcanvas is not shown
+        document.body.style.overflow = 'auto';
         
         // Initialize Bootstrap offcanvas without backdrop
         const bsOffcanvas = new bootstrap.Offcanvas(offcanvasElement, {
-            backdrop: false,
+            backdrop: true,
             keyboard: true,
             scroll: true
         });
@@ -214,6 +217,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if(navbarContainer) {
                 navbarContainer.style.right = '20px';
             }
+
+            // Disable body scroll when offcanvas is shown
+            document.body.style.overflow = 'hidden';
         });
         
         // Show avatar button when offcanvas hides
@@ -225,6 +231,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if(navbarContainer) {
                 navbarContainer.style.right = '-50vw';
             }
+
+            // Enable body scroll when offcanvas is hidden
+            document.body.style.overflow = 'auto';
         });
         
         // Close offcanvas when clicking menu items that have onclick handlers

@@ -114,18 +114,13 @@
 <script>
     window.API_URL = "{{apiurl}}";
     window.MODE = "{{mode}}";
+    window.lang = window.lang;
     window.user = {{{json user}}};
     window.userId = window.user._id;
     window.isAdmin = {{isAdmin}};
     window.imageId = null;
 </script>
-<script>
-    window.translations = {{{json translations}}};
-    window.lang = window.translations.lang;
-</script>
-<script>
-    window.clerkTranslations = {{{json clerkTranslations}}};
-</script>
+{{> translations}}
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -142,10 +137,7 @@
 <script src="/js/notifications.js"></script>
 <script src="/js/websocket.js"></script>
 <script src="/js/websocket-user-points.js"></script>
-<script
-  type="text/javascript"
-  src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.3.2/mdb.umd.min.js"
-></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.3.2/mdb.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 <script>
 

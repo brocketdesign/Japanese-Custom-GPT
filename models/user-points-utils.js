@@ -146,11 +146,15 @@ async function getUserPointsHistory(db, userId, limit = 50, skip = 0) {
  * @param {string} reason - Reason for setting points
  * @returns {Object} Updated user data
  */
-async function setUserPoints(db, userId, points, reason = 'Points set by admin') {
+async function setUserPoints(db, userId, points, reason, fastify = null) {
   if (points < 0) throw new Error('Points cannot be negative');
   
   const usersCollection = db.collection('users');
   const pointsHistoryCollection = db.collection('points_history');
+  
+  // Get user for translations
+  const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+  const userPointsTranslations = fastify ? fastify.getUserPointsTranslations(user?.lang || 'en') : {};
   
   // Get current points to calculate difference
   const currentPoints = await getUserPoints(db, userId);
@@ -161,7 +165,7 @@ async function setUserPoints(db, userId, points, reason = 'Points set by admin')
     userId: new ObjectId(userId),
     type: difference >= 0 ? 'credit' : 'debit',
     points: Math.abs(difference),
-    reason,
+    reason: reason || userPointsTranslations.admin_set_points || 'Points set by admin',
     source: 'admin',
     createdAt: new Date()
   };
@@ -213,9 +217,10 @@ async function checkUserPoints(db, userId, requiredPoints) {
  * @param {string|ObjectId} userId - User ID
  * @returns {Object} Bonus award result
  */
-async function awardDailyLoginBonus(db, userId) {
+async function awardDailyLoginBonus(db, userId, fastify = null) {
   const usersCollection = db.collection('users');
   const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+  const userPointsTranslations = fastify ? fastify.getUserPointsTranslations(user?.lang || 'en') : {};
   
   if (!user) throw new Error('User not found');
   
@@ -229,7 +234,7 @@ async function awardDailyLoginBonus(db, userId) {
   if (lastLoginDate && lastLoginDate.getTime() === today.getTime()) {
     return {
       success: false,
-      message: 'Daily bonus already claimed today',
+      message: userPointsTranslations.points?.messages?.daily_bonus_already_claimed || userPointsTranslations.bonus_already_claimed || 'Bonus already claimed today',
       nextBonus: new Date(today.getTime() + 24 * 60 * 60 * 1000)
     };
   }
@@ -245,7 +250,7 @@ async function awardDailyLoginBonus(db, userId) {
   const totalBonus = baseBonus + streakBonus;
   
   // Award points and update streak
-  const result = await addUserPoints(db, userId, totalBonus, `Daily login bonus (${currentStreak} day streak)`, 'daily_login');
+  const result = await addUserPoints(db, userId, totalBonus, userPointsTranslations.points?.sources?.daily_login || `Daily login bonus (${currentStreak} day streak)`, 'daily_login');
   
   // Update user's daily bonus info
   await usersCollection.updateOne(
@@ -313,20 +318,22 @@ async function awardLikeMilestoneReward(db, userId, fastify = null) {
   const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
   if (!user) throw new Error('User not found');
   
+  const userPointsTranslations = fastify ? fastify.getUserPointsTranslations(user.lang || 'en') : {};
+  
   // Count total likes by user
   const totalLikes = await imagesLikesCollection.countDocuments({ userId: new ObjectId(userId) });
   
   // Define milestone rewards (likes -> points)
   const milestones = {
-    1: { points: 5, message: 'First like!' },
-    5: { points: 10, message: '5 likes milestone!' },
-    10: { points: 15, message: '10 likes milestone!' },
-    25: { points: 25, message: '25 likes milestone!' },
-    50: { points: 50, message: '50 likes milestone!' },
-    100: { points: 100, message: '100 likes milestone!' },
-    250: { points: 150, message: '250 likes milestone!' },
-    500: { points: 250, message: '500 likes milestone!' },
-    1000: { points: 500, message: '1000 likes milestone!' }
+    1: { points: 5, message: userPointsTranslations.points?.like_rewards?.milestone_rewards?.first_like || 'First like!' },
+    5: { points: 10, message: userPointsTranslations.points?.like_rewards?.milestone_rewards?.fifth_like || '5 likes milestone!' },
+    10: { points: 15, message: userPointsTranslations.points?.like_rewards?.milestone_rewards?.tenth_like || '10 likes milestone!' },
+    25: { points: 25, message: userPointsTranslations.points?.like_rewards?.milestone_rewards?.twenty_fifth_like || '25 likes milestone!' },
+    50: { points: 50, message: userPointsTranslations.points?.like_rewards?.milestone_rewards?.fiftieth_like || '50 likes milestone!' },
+    100: { points: 100, message: userPointsTranslations.points?.like_rewards?.milestone_rewards?.hundredth_like || '100 likes milestone!' },
+    250: { points: 150, message: userPointsTranslations.points?.like_rewards?.milestone_rewards?.two_fifty_like || '250 likes milestone!' },
+    500: { points: 250, message: userPointsTranslations.points?.like_rewards?.milestone_rewards?.five_hundred_like || '500 likes milestone!' },
+    1000: { points: 500, message: userPointsTranslations.points?.like_rewards?.milestone_rewards?.thousand_like || '1000 likes milestone!' }
   };
   
   // Check if current like count hits a milestone
@@ -360,7 +367,7 @@ async function awardLikeMilestoneReward(db, userId, fastify = null) {
     db, 
     userId, 
     milestone.points, 
-    `Like milestone: ${milestone.message}`, 
+    userPointsTranslations.points?.like_rewards?.milestone_title || `Like milestone: ${milestone.message}`, 
     'like_milestone'
   );
   
@@ -408,13 +415,17 @@ async function awardLikeMilestoneReward(db, userId, fastify = null) {
  * @returns {Object} Reward result
  */
 async function awardLikeActionReward(db, userId, fastify = null) {
+  
+  const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+  const userPointsTranslations = fastify ? fastify.getUserPointsTranslations(user?.lang || 'en') : {};
+
   const basePoints = 1; // 1 point per like
   
   const result = await addUserPoints(
     db, 
     userId, 
     basePoints, 
-    'Liked an image', 
+    userPointsTranslations.points?.actions?.liked_an_image || 'Liked an image', 
     'like_action'
   );
   
@@ -424,7 +435,7 @@ async function awardLikeActionReward(db, userId, fastify = null) {
       await fastify.sendNotificationToUser(userId.toString(), 'likeRewardNotification', {
         userId: userId.toString(),
         points: basePoints,
-        reason: 'Liked an image',
+        reason: userPointsTranslations.points?.actions.liked_an_image || 'Liked an image',
         source: 'like_action',
         isMilestone: false
       });
@@ -461,21 +472,23 @@ async function awardImageMilestoneReward(db, userId, fastify = null) {
   const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
   if (!user) throw new Error('User not found');
   
+  const userPointsTranslations = fastify ? fastify.getUserPointsTranslations(user.lang || 'en') : {};
+  
   // Count total images generated by user
   const userGallery = await galleryCollection.findOne({ userId: new ObjectId(userId) });
   const totalImages = userGallery?.images?.length || 0;
   
   // Define milestone rewards (images -> points)
   const milestones = {
-    1: { points: 10, message: 'First image generated!' },
-    5: { points: 20, message: '5 images milestone!' },
-    10: { points: 30, message: '10 images milestone!' },
-    25: { points: 50, message: '25 images milestone!' },
-    50: { points: 75, message: '50 images milestone!' },
-    100: { points: 150, message: '100 images milestone!' },
-    250: { points: 250, message: '250 images milestone!' },
-    500: { points: 400, message: '500 images milestone!' },
-    1000: { points: 750, message: '1000 images milestone!' }
+    1: { points: 10, message: userPointsTranslations.points?.image_generation?.milestone_rewards?.first_image || 'First image generated!' },
+    5: { points: 20, message: userPointsTranslations.points?.image_generation?.milestone_rewards?.fifth_image || '5 images milestone!' },
+    10: { points: 30, message: userPointsTranslations.points?.image_generation?.milestone_rewards?.tenth_image || '10 images milestone!' },
+    25: { points: 50, message: userPointsTranslations.points?.image_generation?.milestone_rewards?.twenty_fifth_image || '25 images milestone!' },
+    50: { points: 75, message: userPointsTranslations.points?.image_generation?.milestone_rewards?.fiftieth_image || '50 images milestone!' },
+    100: { points: 150, message: userPointsTranslations.points?.image_generation?.milestone_rewards?.hundredth_image || '100 images milestone!' },
+    250: { points: 250, message: userPointsTranslations.points?.image_generation?.milestone_rewards?.two_fifty_image || '250 images milestone!' },
+    500: { points: 400, message: userPointsTranslations.points?.image_generation?.milestone_rewards?.five_hundred_image || '500 images milestone!' },
+    1000: { points: 750, message: userPointsTranslations.points?.image_generation?.milestone_rewards?.thousand_image || '1000 images milestone!' }
   };
   
   // Check if current image count hits a milestone
@@ -509,7 +522,7 @@ async function awardImageMilestoneReward(db, userId, fastify = null) {
     db, 
     userId, 
     milestone.points, 
-    `Image generation milestone: ${milestone.message}`, 
+    userPointsTranslations.points?.image_generation?.milestone_title || `Image generation milestone: ${milestone.message}`, 
     'image_milestone'
   );
   
@@ -557,13 +570,16 @@ async function awardImageMilestoneReward(db, userId, fastify = null) {
  * @returns {Object} Reward result
  */
 async function awardImageGenerationReward(db, userId, fastify = null) {
+  const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+  const userPointsTranslations = fastify ? fastify.getUserPointsTranslations(user?.lang || 'en') : {};
+  
   const basePoints = 2; // 2 points per image generated
   
   const result = await addUserPoints(
     db, 
     userId, 
     basePoints, 
-    'Generated an image', 
+    userPointsTranslations.points?.sources?.image || 'Generated an image', 
     'image_generation'
   );
   
@@ -573,7 +589,7 @@ async function awardImageGenerationReward(db, userId, fastify = null) {
       await fastify.sendNotificationToUser(userId.toString(), 'imageGenerationReward', {
         userId: userId.toString(),
         points: basePoints,
-        reason: 'Generated an image',
+        reason: userPointsTranslations.points?.sources?.image || 'Generated an image',
         source: 'image_generation',
         isMilestone: false
       });

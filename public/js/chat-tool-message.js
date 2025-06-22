@@ -135,6 +135,11 @@ window.handleMessageRegenerate = function(button) {
     $button.prop('disabled', true);
     $button.find('i').removeClass('bi-arrow-clockwise').addClass('bi-arrow-clockwise spinner-border spinner-border-sm');
     
+    // Remove the last message from UI
+    $('#chatContainer .message-container').last().fadeOut(300, function() {
+        $(this).remove();
+    });
+    
     $.ajax({
         url: '/api/message/regenerate',
         method: 'POST',
@@ -145,10 +150,6 @@ window.handleMessageRegenerate = function(button) {
         }),
         success: function(response) {
             if (response.success) {
-                // Remove the last message from UI
-                $('#chatContainer .message-container').last().fadeOut(300, function() {
-                    $(this).remove();
-                });
                 
                 // Trigger new completion
                 setTimeout(() => {

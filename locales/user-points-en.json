@@ -1,4 +1,5 @@
 {
+  "footer_info": "Points are updated in real-time",
   "claim_bonus": "Claim Daily Bonus",
   "bonus_already_claimed": "Already Claimed",
   "bonus_claimed": "Bonus Claimed!",
@@ -45,6 +46,16 @@
   "streak_bonus_message": "{streak} day streak bonus!",
   "new_balance": "New balance",
   "streak_days": "{days} days streak!",
+  "milestone_achieved": "Milestone Achieved!",
+  "image_milestone_title": "Image Generation Milestone!",
+  "image_generation_reward": "Image Generated! +{points} points",
+  "total_likes": "Total likes",
+  "total_images": "Total images",
+  "like_reward": {
+    "title": "Like Reward!",
+    "message": "You earned {points} points for liking an image!",
+    "notification": "You liked an image and earned {points} points!"
+  },
   "points": {
     "title": "Points",
     "balance": "Current Balance",
@@ -80,12 +91,14 @@
     "actions": {
       "view_history": "View History",
       "claim_daily": "Claim Daily Bonus",
-      "view_leaderboard": "View Leaderboard"
+      "view_leaderboard": "View Leaderboard",
+      "liked_an_image": "Liked an Image"
     },
     "messages": {
       "points_added": "Points added successfully",
       "points_removed": "Points removed successfully",
       "daily_bonus_claimed": "Daily bonus claimed! +{points} points",
+      "daily_bonus_already_claimed": "You have already claimed your daily bonus today.",
       "streak_bonus": "Streak bonus! Day {streak}",
       "insufficient_points": "You don't have enough points for this action",
       "error": "An error occurred while processing points"
@@ -106,10 +119,30 @@
       "points_spent": "Points spent!",
       "milestone_rewards": {
         "first_image": "First Image Generated!",
+        "fifth_image": "5 Images Generated!",
         "tenth_image": "10 Images Generated!",
+        "twenty_fifth_image": "25 Images Generated!",
         "fiftieth_image": "50 Images Generated!",
         "hundredth_image": "100 Images Generated!",
+        "two_fifty_image": "250 Images Generated!",
+        "five_hundred_image": "500 Images Generated!",
+        "thousand_image": "1000 Images Generated!",
         "creator_milestone": "Image Creator!"
+      }
+    },
+    "like_rewards": {
+      "milestone_title": "Like Milestone!",
+      "milestone_message": "Congratulations! You've liked {totalLikes} images and reached the {milestone} milestone!",
+      "milestone_rewards": {
+        "first_like": "First Like!",
+        "fifth_like": "5 Likes Milestone!",
+        "tenth_like": "10 Likes Milestone!",
+        "twenty_fifth_like": "25 Likes Milestone!",
+        "fiftieth_like": "50 Likes Milestone!",
+        "hundredth_like": "100 Likes Milestone!",
+        "two_fifty_like": "250 Likes Milestone!",
+        "five_hundred_like": "500 Likes Milestone!",
+        "thousand_like": "1000 Likes Milestone!"
       }
     }
   }

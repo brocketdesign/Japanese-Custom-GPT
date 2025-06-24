@@ -145,6 +145,18 @@
         "five_hundred_like": "500 Likes Milestone!",
         "thousand_like": "1000 Likes Milestone!"
       }
+    },
+    "deduction_reasons": {
+      "merge_faces": "Merge Faces Cost",
+      "character_creation": "Character Creation Cost",
+      "upscale_image": "Upscale Cost",
+      "gift": "Gift Cost",
+      "video_generation": "Video Generation Cost",
+      "image_generation": "Image Generation Cost",
+      "purchase": "Purchase Cost",
+      "admin_adjustment": "Admin Adjustment",
+      "system_error": "System Error Deduction",
+      "fraudulent_activity": "Fraudulent Activity Detected"
     }
   }
 }

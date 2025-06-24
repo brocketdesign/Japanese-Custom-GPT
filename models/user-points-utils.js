@@ -14,7 +14,7 @@ const { ObjectId } = require('mongodb');
  * @param {string} source - Source of the points (e.g., 'chat', 'image', 'daily_login')
  * @returns {Object} Updated user data and transaction record
  */
-async function addUserPoints(db, userId, points, reason = 'Points awarded', source = 'system') {
+async function addUserPoints(db, userId, points, reason = 'Points awarded', source = 'system', fastify = null) {
   if (points <= 0) throw new Error('Points must be positive');
   
   const usersCollection = db.collection('users');
@@ -45,6 +45,17 @@ async function addUserPoints(db, userId, points, reason = 'Points awarded', sour
   // Get updated user data
   const updatedUser = await usersCollection.findOne({ _id: new ObjectId(userId) });
   
+  // Send refresh notification
+  if (fastify && fastify.sendNotificationToUser) {
+    try {
+      await fastify.sendNotificationToUser(userId.toString(), 'refreshUserPoints', {
+        userId: userId.toString()
+      });
+    } catch (notificationError) {
+      console.error('Error sending refresh points notification:', notificationError);
+    }
+  }
+  
   return {
     success: userResult.modifiedCount > 0,
     user: updatedUser,
@@ -61,7 +72,7 @@ async function addUserPoints(db, userId, points, reason = 'Points awarded', sour
  * @param {string} source - Source of the deduction
  * @returns {Object} Updated user data and transaction record
  */
-async function removeUserPoints(db, userId, points, reason = 'Points deducted', source = 'system') {
+async function removeUserPoints(db, userId, points, reason = 'Points deducted', source = 'system', fastify = null) {
   if (points <= 0) throw new Error('Points must be positive');
   
   const usersCollection = db.collection('users');
@@ -100,6 +111,17 @@ async function removeUserPoints(db, userId, points, reason = 'Points deducted', 
   
   // Get updated user data
   const updatedUser = await usersCollection.findOne({ _id: new ObjectId(userId) });
+  
+  // Send refresh notification
+  if (fastify && fastify.sendNotificationToUser) {
+    try {
+      await fastify.sendNotificationToUser(userId.toString(), 'refreshUserPoints', {
+        userId: userId.toString()
+      });
+    } catch (notificationError) {
+      console.error('Error sending refresh points notification:', notificationError);
+    }
+  }
   
   return {
     success: userResult.modifiedCount > 0,
@@ -186,6 +208,17 @@ async function setUserPoints(db, userId, points, reason, fastify = null) {
   
   // Get updated user data
   const updatedUser = await usersCollection.findOne({ _id: new ObjectId(userId) });
+  
+  // Send refresh notification
+  if (fastify && fastify.sendNotificationToUser) {
+    try {
+      await fastify.sendNotificationToUser(userId.toString(), 'refreshUserPoints', {
+        userId: userId.toString()
+      });
+    } catch (notificationError) {
+      console.error('Error sending refresh points notification:', notificationError);
+    }
+  }
   
   return {
     success: userResult.modifiedCount > 0,

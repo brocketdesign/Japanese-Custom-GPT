@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="{{lang}}">
+<head>
+    {{> dashboard-header}}
+    <title>{{affiliationTranslations.bankingPageTitle}}</title>
+    <meta name="description" content="{{affiliationTranslations.bankingPageDescription}}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        .banking-card {
+            border: 1px solid #e0e6ed;
+            border-radius: 12px;
+            padding: 2rem;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .payment-method {
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        .payment-method:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+        }
+        .payment-method.default {
+            border-color: #28a745;
+            background-color: #f8fff9;
+        }
+        .stripe-element {
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 1rem;
+        }
+        .stripe-element.focused {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .loading-spinner {
+            display: none;
+        }
+        .earnings-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    {{> dashboard-nav}}
+
+    <div class="container py-5">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/affiliation">{{affiliationTranslations.dashboard}}</a></li>
+                        <li class="breadcrumb-item active">{{affiliationTranslations.bankingInfo}}</li>
+                    </ol>
+                </nav>
+                <h1 class="h2 mb-3">
+                    <i class="bi bi-bank text-primary"></i>
+                    {{affiliationTranslations.bankingInfo}}
+                </h1>
+                <p class="text-muted">{{affiliationTranslations.bankingDescription}}</p>
+            </div>
+        </div>
+
+        <!-- Earnings Summary -->
+        <div class="earnings-summary">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5 class="mb-1">{{affiliationTranslations.totalEarnings}}</h5>
+                    <h2 class="mb-0" id="totalEarnings">$0.00</h2>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="mb-1">{{affiliationTranslations.pendingPayment}}</h5>
+                    <h2 class="mb-0" id="pendingPayment">$0.00</h2>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="mb-1">{{affiliationTranslations.nextPayoutDate}}</h5>
+                    <h2 class="mb-0" id="nextPayoutDate">--</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Current Payment Methods -->
+            <div class="col-lg-8 mb-4">
+                <div class="banking-card">
+                    <h4 class="mb-4">
+                        <i class="bi bi-credit-card text-primary"></i>
+                        {{affiliationTranslations.paymentMethods}}
+                    </h4>
+                    
+                    <div id="paymentMethodsList">
+                        <div class="text-center py-4">
+                            <div class="loading-spinner spinner-border text-primary" role="status">
+                                <span class="visually-hidden">{{affiliationTranslations.loading}}</span>
+                            </div>
+                            <p class="text-muted mt-2">{{affiliationTranslations.loadingPaymentMethods}}</p>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-outline-primary" id="addPaymentMethodBtn">
+                        <i class="bi bi-plus-circle"></i>
+                        {{affiliationTranslations.addPaymentMethod}}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Add Payment Method Form -->
+            <div class="col-lg-4 mb-4">
+                <div class="banking-card">
+                    <h5 class="mb-3">{{affiliationTranslations.addBankAccount}}</h5>
+                    
+                    <form id="bankAccountForm">
+                        <div class="mb-3">
+                            <label class="form-label">{{affiliationTranslations.accountHolderName}}</label>
+                            <input type="text" class="form-control" id="accountHolderName" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">{{affiliationTranslations.country}}</label>
+                            <select class="form-select" id="country" required>
+                                <option value="">{{affiliationTranslations.selectCountry}}</option>
+                                <option value="US">United States</option>
+                                <option value="CA">Canada</option>
+                                <option value="GB">United Kingdom</option>
+                                <option value="AU">Australia</option>
+                                <option value="DE">Germany</option>
+                                <option value="FR">France</option>
+                                <option value="JP">Japan</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">{{affiliationTranslations.currency}}</label>
+                            <select class="form-select" id="currency" required>
+                                <option value="">{{affiliationTranslations.selectCurrency}}</option>
+                                <option value="usd">USD</option>
+                                <option value="cad">CAD</option>
+                                <option value="gbp">GBP</option>
+                                <option value="aud">AUD</option>
+                                <option value="eur">EUR</option>
+                                <option value="jpy">JPY</option>
+                            </select>
+                        </div>
+
+                        <!-- Stripe Bank Account Element -->
+                        <div class="mb-3">
+                            <label class="form-label">{{affiliationTranslations.bankAccount}}</label>
+                            <div id="bank-element" class="stripe-element">
+                                <!-- Stripe Elements will create form elements here -->
+                            </div>
+                            <div id="bank-errors" role="alert" class="text-danger small mt-1"></div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100" id="submitBankAccount">
+                            <span class="spinner-border spinner-border-sm d-none" id="bankSubmitSpinner"></span>
+                            {{affiliationTranslations.addBankAccount}}
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Payout Settings -->
+                <div class="banking-card mt-4">
+                    <h5 class="mb-3">{{affiliationTranslations.payoutSettings}}</h5>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{{affiliationTranslations.minimumPayout}}</label>
+                        <select class="form-select" id="minimumPayout">
+                            <option value="25">$25</option>
+                            <option value="50" selected>$50</option>
+                            <option value="100">$100</option>
+                            <option value="200">$200</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{affiliationTranslations.payoutFrequency}}</label>
+                        <select class="form-select" id="payoutFrequency">
+                            <option value="weekly">{{affiliationTranslations.weekly}}</option>
+                            <option value="monthly" selected>{{affiliationTranslations.monthly}}</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-outline-primary w-100" id="savePayoutSettings">
+                        {{affiliationTranslations.saveSettings}}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payout History -->
+        <div class="row">
+            <div class="col-12">
+                <div class="banking-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="mb-0">
+                            <i class="bi bi-clock-history text-primary"></i>
+                            {{affiliationTranslations.payoutHistory}}
+                        </h4>
+                        <button class="btn btn-outline-primary" id="refreshPayoutsBtn">
+                            <i class="bi bi-arrow-clockwise"></i>
+                            {{affiliationTranslations.refresh}}
+                        </button>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{{affiliationTranslations.date}}</th>
+                                    <th>{{affiliationTranslations.amount}}</th>
+                                    <th>{{affiliationTranslations.status}}</th>
+                                    <th>{{affiliationTranslations.method}}</th>
+                                    <th>{{affiliationTranslations.transactionId}}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="payoutHistoryTable">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        {{affiliationTranslations.noPayoutHistory}}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{> dashboard-footer}}
+    
+    <script>
+        // Make translations available to JavaScript
+        window.affiliationTranslations = {{{json affiliationTranslations}}};
+        window.stripePublishableKey = '{{stripePublishableKey}}';
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/affiliation-banking.js"></script>
+</body>
+</html>

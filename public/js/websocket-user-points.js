@@ -36,6 +36,10 @@ class WebSocketUserPointsHandler {
         this.handlePointsUpdated(data.notification);
         return true;
       
+      case 'refreshUserPoints':
+        this.handleRefreshUserPoints(data.notification);
+        return true;
+      
       default:
         return false;
     }
@@ -65,6 +69,11 @@ class WebSocketUserPointsHandler {
         milestoneMessage,
         totalLikes
       });
+      
+      // Refresh points display
+      if (window.refreshUserPoints) {
+        window.refreshUserPoints();
+      }
     }
   }
 
@@ -86,6 +95,11 @@ class WebSocketUserPointsHandler {
         currentStreak,
         newBalance
       });
+      
+      // Refresh points display
+      if (window.refreshUserPoints) {
+        window.refreshUserPoints();
+      }
     }
   }
 
@@ -114,6 +128,11 @@ class WebSocketUserPointsHandler {
       
       // Update points display
       window.userPointsManager.updatePointsDisplay();
+      
+      // Refresh points display
+      if (window.refreshUserPoints) {
+        window.refreshUserPoints();
+      }
     }
   }
 
@@ -146,6 +165,11 @@ class WebSocketUserPointsHandler {
         milestoneMessage,
         totalImages
       });
+      
+      // Refresh points display
+      if (window.refreshUserPoints) {
+        window.refreshUserPoints();
+      }
     }
   }
 
@@ -159,6 +183,11 @@ class WebSocketUserPointsHandler {
     if (userId === window.user._id && window.userPointsManager) {
       // Update the points display
       window.userPointsManager.updatePointsDisplay();
+      
+      // Refresh points display
+      if (window.refreshUserPoints) {
+        window.refreshUserPoints();
+      }
       
       // Show notification if there was a change
       if (pointsChange && pointsChange !== 0) {
@@ -175,6 +204,26 @@ class WebSocketUserPointsHandler {
             pointsChange > 0 ? 'success' : 'info'
           );
         }
+      }
+    }
+  }
+
+  /**
+   * Handle refresh user points notifications
+   */
+  handleRefreshUserPoints(notification) {
+    const { userId } = notification;
+    
+    // Only refresh for the current user
+    if (userId === window.user._id || !userId) { // Allow refresh for all users if no userId specified
+      // Refresh points display
+      if (window.refreshUserPoints) {
+        window.refreshUserPoints();
+      }
+      
+      // Also update via manager if available
+      if (window.userPointsManager) {
+        window.userPointsManager.updatePointsDisplay();
       }
     }
   }

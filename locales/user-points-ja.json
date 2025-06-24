@@ -144,6 +144,18 @@
         "five_hundred_like": "500回いいね！マイルストーン！",
         "thousand_like": "1000回いいね！マイルストーン！"
       }
+    },
+    "deduction_reasons": {
+      "merge_faces": "顔のマージ費用",
+      "character_creation": "キャラクター作成費用",
+      "upscale_image": "アップスケール費用",
+      "gift": "ギフト費用",
+      "video_generation": "動画生成費用",
+      "image_generation": "画像生成費用",
+      "purchase": "購入費用",
+      "admin_adjustment": "管理者調整",
+      "system_error": "システムエラーによる減算",
+      "fraudulent_activity": "不正行為の検出"
     }
   }
 }

@@ -5,6 +5,8 @@ const { processPromptToTags, saveChatImageToDB } = require('../models/tool')
 const { generateImg, getPromptById, getImageSeed, checkImageDescription, getTasks } = require('../models/imagen');
 const { createPrompt, moderateText } = require('../models/openai');
 const { upscaleImg } = require('../models/upscale-utils');
+const { removeUserPoints } = require('../models/user-points-utils');
+const { getUserMinImages } = require('../models/chat-tool-settings-utils')
 
 async function routes(fastify, options) {
 
@@ -14,6 +16,7 @@ async function routes(fastify, options) {
     let imageType = request.body.imageType
     const db = fastify.mongo.db;
     const translations = request.translations
+
     console.log(`[generate-img] Request received with userId: ${userId}, chatId: ${chatId}, promptId: ${promptId}, giftId: ${giftId}`);
     try {
       // Get fresh user data from database to check subscription
@@ -34,6 +37,22 @@ async function routes(fastify, options) {
       if(pending_taks.length > 10){
         fastify.sendNotificationToUser(userId, 'showNotification', { message:request.translations.too_many_pending_images , icon:'warning' })
         return reply.status(500).send({ error: 'You have too many pending images, please wait for them to finish' });
+      }
+    
+      // Add number of images to request
+      let image_num = chatCreation ? 4 : 1;
+      const userMinImage = await getUserMinImages(db, userId, chatId);
+      console.log(`[generate-img] userMinImage: ${userMinImage}, image_num: ${image_num}`);
+      image_num = Math.max(image_num || 1, userMinImage || 1); // Ensure at least 1 image is requested and respect user setting
+
+      // Charge points for image generation
+      const cost = 10 * image_num; // Define the cost of generating an image
+      console.log(`[generate-img] Cost for image generation: ${cost} points`);
+      try {
+        await removeUserPoints(db, userId, cost, translations.points?.deduction_reasons?.image_generation || 'Image generation', 'image_generation', fastify);
+      } catch (error) {
+        console.error('Error deducting points:', error);
+        return reply.status(500).send({ error: 'Error deducting points for image generation.' });
       }
 
       let newPrompt = prompt
@@ -111,7 +130,7 @@ async function routes(fastify, options) {
           chatId, 
           userChatId, 
           imageType, 
-          image_num: chatCreation ? 4 : 1, 
+          image_num, 
           image_base64, 
           chatCreation, 
           placeholderId, 
@@ -135,6 +154,17 @@ async function routes(fastify, options) {
     fastify.post('/novita/upscale-img', async (request, reply) => {
         try {
             const { userId, chatId, userChatId, originalImageId, image_base64, originalImageUrl, placeholderId, scale_factor, model_name } = request.body;
+            
+            const db = fastify.mongo.db;
+            const cost = 20; // Define the cost of generating an image
+            console.log(`[upscale-img] Cost for upscale image: ${cost} points`);
+            try {
+              await removeUserPoints(db, userId, cost, request.translations?.points?.deduction_reasons?.upscale_image || 'Upscale image', 'upscale_image', fastify);
+            } catch (error) {
+              console.error('Error deducting points:', error);
+              return reply.status(500).send({ error: request.translations?.points?.error_deducting_points || 'Error deducting points for upscale image.' });
+            }
+            
             // console.log('Upscale request received on backend:', request.body);
             const data = await upscaleImg({
                 userId,

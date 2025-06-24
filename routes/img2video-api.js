@@ -10,6 +10,7 @@ const {
     getUserVideoPrompt
 } = require('../models/chat-tool-settings-utils');
 const { generateCompletion } = require('../models/openai')
+const { removeUserPoints } = require('../models/user-points-utils');
 /**
  * Image to Video API Routes
  * @param {Object} fastify - Fastify instance
@@ -38,8 +39,19 @@ async function img2videoRoutes(fastify) {
                 return reply.status(400).send({ error: 'Missing required parameters' });
             }
 
-            // Check if a task with this placeholderId already exists
             const db = fastify.mongo.db;
+
+            // Charge points for video generation
+            const cost = 100; // Define the cost of generating an image
+            console.log(`[img2video] Cost for video generation: ${cost} points`);
+            try {
+                await removeUserPoints(db, userId, cost, translations.points?.deduction_reasons?.video_generation || 'Video generation', 'video_generation', fastify);
+            } catch (error) {
+                console.error('Error deducting points:', error);
+                return reply.status(500).send({ error: 'Error deducting points for video generation.' });
+            }
+
+            // Check if a task with this placeholderId already exists
             const existingPlaceholderTask = await db.collection('tasks').findOne({
                 placeholderId: placeholderId,
                 type: 'img2video',

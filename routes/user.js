@@ -934,7 +934,7 @@ async function routes(fastify, options) {
 
       const translations = request.translations;
       
-      return reply.renderWithGtm('/affiliation.hbs', {
+      return reply.renderWithGtm('/affiliation/dashboard.hbs', {
         title: 'Affiliate Program - Earn Money with Referrals',
         translations,
         mode: process.env.MODE,
@@ -943,6 +943,29 @@ async function routes(fastify, options) {
       });
     } catch (error) {
       console.error('Error rendering affiliate page:', error);
+      return reply.status(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Affiliate banking page route
+  fastify.get('/affiliation/banking', async (request, reply) => {
+    try {
+      if (!request.user || request.user.isTemporary) {
+        return reply.redirect('/login');
+      }
+
+      const translations = request.translations;
+      
+      return reply.renderWithGtm('/affiliation/banking.hbs', {
+        title: 'Banking Information - Affiliate Program',
+        translations,
+        mode: process.env.MODE,
+        apiurl: getApiUrl(request),
+        user: request.user,
+        stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY
+      });
+    } catch (error) {
+      console.error('Error rendering banking page:', error);
       return reply.status(500).send({ error: 'Internal server error' });
     }
   });

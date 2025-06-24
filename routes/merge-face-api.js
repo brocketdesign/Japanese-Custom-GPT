@@ -11,6 +11,7 @@ const {
   getFaceImageAsBase64
 } = require('../models/merge-face-utils');
 const { handleFileUpload } = require('../models/tool');
+const { removeUserPoints } = require('../models/user-points-utils');
 
 async function routes(fastify, options) {
 
@@ -149,6 +150,15 @@ async function routes(fastify, options) {
 
       const db = fastify.mongo.db;
       
+      const cost = 30; // Define the cost of generating an image
+      console.log(`[merge-face] Cost for merge face: ${cost} points`);
+      try {
+          await removeUserPoints(db, userId, cost, request.translations?.points?.deduction_reasons?.merge_face || 'Merge face', 'merge_face', fastify);
+      } catch (error) {
+          console.error('Error deducting points:', error);
+          return reply.status(500).send({ error: request.translations?.points?.error_deducting_points || 'Error deducting points for merge face.' });
+      }
+
       // Get the original image
       const galleryCollection = db.collection('gallery');
       const galleryDoc = await galleryCollection.findOne({

@@ -4,7 +4,7 @@ const { ObjectId } = require('mongodb');
 const axios = require('axios');
 const { createHash } = require('crypto');
 const { addNotification, saveChatImageToDB, getLanguageName, uploadToS3 } = require('../models/tool')
-const { getUserMinImages, getAutoMergeFaceSetting } = require('../models/chat-tool-settings-utils')
+const { getAutoMergeFaceSetting } = require('../models/chat-tool-settings-utils')
 const { awardImageGenerationReward, awardImageMilestoneReward } = require('./user-points-utils');
 const slugify = require('slugify');
 const sharp = require('sharp');
@@ -149,14 +149,6 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
         steps: regenerate ? params.steps + 10 : params.steps,
       };
     }
-    // Log imageModel
-    console.log(`[generateImg] Using imageModel: ${imageModel}, imageType: ${imageType}`);
-    // Log Prompt
-    console.log(`[generateImg] Using prompt: ${image_request.prompt}`);
-    // Add number of images to request
-    const userMinImage = await getUserMinImages(db, userId, chatId);
-    console.log(`[generateImg] userMinImage: ${userMinImage}, image_num: ${image_num}`);
-    image_num = Math.max(image_num || 1, userMinImage || 1); // Ensure at least 1 image is requested and respect user setting
 
     // Prepare params
     let requestData = { ...params, ...image_request, image_num };
@@ -182,7 +174,6 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     // Check if auto merge should be applied
     const autoMergeFaceEnabled = await getAutoMergeFaceSetting(db, userId.toString(), chatId.toString());
     const isPhotorealistic = chat && chat.imageStyle === 'photorealistic' || chat && chat.imageStyle !== 'anime';
-    console.log(`[generateImg] isPhotorealistic: ${isPhotorealistic}, chat.imageStyle: ${chat.imageStyle}`);
     
     // For character creation, use enableMergeFace setting if provided, otherwise use auto merge logic
     const shouldAutoMerge = chatCreation 

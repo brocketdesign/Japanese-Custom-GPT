@@ -144,6 +144,18 @@
         "five_hundred_like": "Objectif de 500 likes !",
         "thousand_like": "Objectif de 1000 likes !"
       }
+    },
+    "deduction_reasons": {
+      "merge_faces": "Coût de fusion des visages",
+      "character_creation": "Coût de création de personnage",
+      "upscale_image": "Coût de l'upscale",
+      "gift": "Coût du cadeau",
+      "video_generation": "Coût de génération de vidéo",
+      "image_generation": "Coût de génération d'image",
+      "purchase": "Coût d'achat",
+      "admin_adjustment": "Ajustement par l'administrateur",
+      "system_error": "Déduction pour erreur système",
+      "fraudulent_activity": "Activité frauduleuse détectée"
     }
   }
 }

@@ -101,7 +101,6 @@ async function routes(fastify, options) {
         // Award points for like action and check for milestones
         try {
           await Promise.all([
-            awardLikeActionReward(db, userId, fastify),
             awardLikeMilestoneReward(db, userId, fastify)
           ]);
         } catch (rewardError) {

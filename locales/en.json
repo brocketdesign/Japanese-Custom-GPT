@@ -1052,6 +1052,7 @@
     "cancelSubscription": "Cancel Subscription"
   },
   "avatar": {
+    "affiliation": "Affiliation",
     "editProfile": "Edit Profile",
     "subscription": "Subscription",
     "myPlan": "My Plan",

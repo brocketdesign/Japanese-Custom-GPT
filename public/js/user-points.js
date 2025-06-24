@@ -431,7 +431,7 @@ class UserPointsManager {
             </div>
             <div class="flex-shrink-0">
               <span class="fw-bold text-warning">${user.points || 0}</span>
-              <small class="text-muted d-block">${this.translations.points || 'points'}</small>
+              <small class="text-muted d-block">${this.translations.points.title || 'points'}</small>
             </div>
           </div>
         `;

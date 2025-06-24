@@ -7,6 +7,7 @@ const axios = require('axios');
 const { checkLimits, checkUserAdmin, getUserData, updateUserLang, listFiles, uploadToS3, getApiUrl } = require('../models/tool');
 const { moderateImage } = require('../models/openai');
 const { refreshAccessToken, addContactToCampaign } = require('../models/zohomail');
+const { trackConversion } = require('../models/affiliation-utils');
 
 async function routes(fastify, options) {
 
@@ -53,12 +54,25 @@ async function routes(fastify, options) {
       console.log(`[/user/clerk-auth] User found with clerkId ${clerkId}: ${!!user}`);
   
       if (!user) {
+        // Check for referrer from cookies or localStorage
+        const referrerSlug = request.cookies.referrer;
+        let referrerId = null;
+        
+        if (referrerSlug) {
+          try {
+            referrerId = await trackConversion(fastify.mongo.db, referrerSlug);
+            console.log(`[/user/clerk-auth] Referrer found: ${referrerSlug}, Referrer ID: ${referrerId}`);
+          } catch (error) {
+            console.error('[/user/clerk-auth] Error tracking referral:', error);
+          }
+        }
+
         // Create a new user with Clerk data
         user = {
           clerkId,
           createdAt: new Date(),
           coins: 100,
-          points: 100, // Initialize with starting points
+          points: 100,
           lang: request.lang,
           username: clerkUserData.username,
           nickname: clerkUserData.username,
@@ -66,11 +80,17 @@ async function routes(fastify, options) {
           lastName: clerkUserData.last_name,
           fullName: clerkUserData.full_name,
           email: clerkUserData.email_addresses[0]?.email_address,
-          subscriptionStatus: 'inactive', // Set default subscription status
+          subscriptionStatus: 'inactive',
+          ...(referrerId && { referrer: new ObjectId(referrerId) })
         };
         const result = await usersCollection.insertOne(user);
         user._id = result.insertedId;
         console.log(`New user created with clerkId ${clerkId} and _id ${user._id}`);
+
+        // Clear referrer cookie after successful registration
+        if (referrerSlug) {
+          reply.clearCookie('referrer');
+        }
       } else {
         // Check if database username matches Clerk username
         if (user.username !== clerkUserData.username || user.nickname !== clerkUserData.username) {
@@ -905,6 +925,27 @@ async function routes(fastify, options) {
     }
   });
     
+  // Affiliate page route
+  fastify.get('/affiliation', async (request, reply) => {
+    try {
+      if (!request.user || request.user.isTemporary) {
+        return reply.redirect('/login');
+      }
+
+      const translations = request.translations;
+      
+      return reply.renderWithGtm('/affiliation.hbs', {
+        title: 'Affiliate Program - Earn Money with Referrals',
+        translations,
+        mode: process.env.MODE,
+        apiurl: getApiUrl(request),
+        user: request.user,
+      });
+    } catch (error) {
+      console.error('Error rendering affiliate page:', error);
+      return reply.status(500).send({ error: 'Internal server error' });
+    }
+  });
 }
 
 module.exports = routes;

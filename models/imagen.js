@@ -151,6 +151,8 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     }
     // Log imageModel
     console.log(`[generateImg] Using imageModel: ${imageModel}, imageType: ${imageType}`);
+    // Log Prompt
+    console.log(`[generateImg] Using prompt: ${image_request.prompt}`);
     // Add number of images to request
     const userMinImage = await getUserMinImages(db, userId, chatId);
     console.log(`[generateImg] userMinImage: ${userMinImage}, image_num: ${image_num}`);
@@ -234,7 +236,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     if (!title) {
       const lang = getLanguageName(user.lang || 'en');
       const userLangTitle = await generatePromptTitle(requestData.prompt, lang);
-
+      console.log(`[generateImg] Generated title for language ${lang}:`, userLangTitle);
       // Create title object with just the user's language
       newTitle = {
         en: lang === 'english' ? userLangTitle : '',
@@ -262,6 +264,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     if(chat.slug){
       taskSlug = chat.slug + '-' + taskSlug;
     }
+    console.log(`[generateImg] Generated task slug: ${taskSlug}`);
     // Ensure slug is unique by appending random string if needed
     const existingTask = await db.collection('tasks').findOne({ slug: taskSlug });
     if (existingTask) {
@@ -1382,8 +1385,6 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       );
       
       try {
-        // Award base points for image generation
-        await awardImageGenerationReward(db, userId, fastify);
         // Check for image generation milestones
         await awardImageMilestoneReward(db, userId, fastify);
       } catch (error) {

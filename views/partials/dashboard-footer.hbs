@@ -114,7 +114,7 @@
 <script>
     window.API_URL = "{{apiurl}}";
     window.MODE = "{{mode}}";
-    window.lang = window.lang;
+    window.lang = "{{lang}}";
     window.user = {{{json user}}};
     window.userId = window.user._id;
     window.isAdmin = {{isAdmin}};
@@ -135,6 +135,7 @@
 <script src="/js/dashboard-infinite-scroll.js"></script>
 <script src="/js/stability.js"></script>
 <script src="/js/notifications.js"></script>
+<script src="/js/app.js"></script>
 <script src="/js/websocket.js"></script>
 <script src="/js/websocket-user-points.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.3.2/mdb.umd.min.js"></script>
@@ -528,298 +529,58 @@ window.showNotification = (message, type = 'info') => {
         return;
     }
 
-    const styleMap = {
-        success: { 
-            iconColor: 'text-success', 
-            icon: 'bi-check-circle-fill', 
-            barColorClass: 'bg-success',
-            bgGradient: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
-            shadowColor: 'rgba(40, 167, 69, 0.3)'
-        },
-        error: { 
-            iconColor: 'text-danger', 
-            icon: 'bi-exclamation-triangle-fill', 
-            barColorClass: 'bg-danger',
-            bgGradient: 'linear-gradient(135deg, #dc3545 0%, #fd7e14 100%)',
-            shadowColor: 'rgba(220, 53, 69, 0.3)'
-        },
-        warning: { 
-            iconColor: 'text-warning', 
-            icon: 'bi-exclamation-circle-fill', 
-            barColorClass: 'bg-warning',
-            bgGradient: 'linear-gradient(135deg, #ffc107 0%, #fd7e14 100%)',
-            shadowColor: 'rgba(255, 193, 7, 0.3)'
-        },
-        info: { 
-            iconColor: 'text-info', 
-            icon: 'bi-info-circle-fill', 
-            barColorClass: 'bg-info',
-            bgGradient: 'linear-gradient(135deg, #6E20F4 0%, #8240FF 100%)',
-            shadowColor: 'rgba(110, 32, 244, 0.3)'
-        },
+    const createToastContainer = () => {
+        const container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container position-fixed top-0 end-0 p-3';
+        container.style.zIndex = '1060';
+        document.body.appendChild(container);
+        return container;
     };
 
-    const { iconColor, icon, barColorClass, bgGradient, shadowColor } = styleMap[type] || styleMap.info;
-    const toastDelay = 5000;
-
-    // Ensure notification container exists and is styled
-    let container = document.getElementById('notification-container');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'notification-container';
-        document.body.appendChild(container);
-
-        // Inject modern custom styles
-        if (!document.getElementById('toast-custom-styles')) {
-            const styleSheet = document.createElement("style");
-            styleSheet.id = 'toast-custom-styles';
-            styleSheet.type = "text/css";
-            styleSheet.innerText = `
-                #notification-container {
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    z-index: 1060;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: flex-end;
-                    gap: 12px;
-                    width: auto;
-                    max-width: 90%;
-                    pointer-events: none;
-                }
-
-                .modern-toast {
-                    min-width: 320px;
-                    max-width: 420px;
-                    background: rgba(255, 255, 255, 0.95);
-                    backdrop-filter: blur(20px);
-                    border: 1px solid rgba(255, 255, 255, 0.2);
-                    border-radius: 16px;
-                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-                    transform: translateX(100%) scale(0.8);
-                    opacity: 0;
-                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                    will-change: transform, opacity;
-                    overflow: hidden;
-                    pointer-events: auto;
-                    position: relative;
-                }
-
-                .modern-toast.show {
-                    opacity: 1;
-                    transform: translateX(0) scale(1);
-                }
-
-                .modern-toast.hiding {
-                    opacity: 0;
-                    transform: translateX(100%) scale(0.8);
-                }
-
-                .modern-toast::before {
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    height: 4px;
-                    background: var(--toast-gradient);
-                    border-radius: 16px 16px 0 0;
-                }
-
-                .toast-content {
-                    padding: 16px 20px;
-                    display: flex;
-                    align-items: flex-start;
-                    gap: 12px;
-                }
-
-                .toast-icon-wrapper {
-                    flex-shrink: 0;
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 12px;
-                    background: var(--toast-gradient);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    animation: iconPulse 0.6s ease-out;
-                }
-
-                .toast-icon {
-                    font-size: 18px;
-                    color: white;
-                }
-
-                .toast-body {
-                    flex: 1;
-                    padding-top: 2px;
-                }
-
-                .toast-message {
-                    color: #2d3748;
-                    font-size: 14px;
-                    font-weight: 500;
-                    line-height: 1.4;
-                    margin: 0;
-                }
-
-                .toast-close {
-                    flex-shrink: 0;
-                    background: none;
-                    border: none;
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 8px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                    color: #718096;
-                    margin-top: -2px;
-                }
-
-                .toast-close:hover {
-                    background: rgba(0, 0, 0, 0.05);
-                    color: #2d3748;
-                    transform: scale(1.1);
-                }
-
-                .toast-progress-wrapper {
-                    position: absolute;
-                    bottom: 0;
-                    left: 0;
-                    right: 0;
-                    height: 3px;
-                    background: rgba(0, 0, 0, 0.05);
-                    overflow: hidden;
-                }
-
-                .toast-progress {
-                    height: 100%;
-                    background: var(--toast-gradient);
-                    width: 100%;
-                    transition: width linear;
-                    border-radius: 0 0 16px 16px;
-                }
-
-                @keyframes iconPulse {
-                    0% { transform: scale(0.8); opacity: 0; }
-                    50% { transform: scale(1.1); }
-                    100% { transform: scale(1); opacity: 1; }
-                }
-
-                @keyframes slideIn {
-                    0% { transform: translateX(100%) scale(0.8); opacity: 0; }
-                    100% { transform: translateX(0) scale(1); opacity: 1; }
-                }
-
-                @media (max-width: 768px) {
-                    #notification-container {
-                        top: 10px;
-                        right: 10px;
-                        left: 10px;
-                        align-items: center;
-                    }
-                    
-                    .modern-toast {
-                        min-width: auto;
-                        width: 100%;
-                        max-width: none;
-                        transform: translateY(-100%) scale(0.9);
-                    }
-                    
-                    .modern-toast.show {
-                        transform: translateY(0) scale(1);
-                    }
-                    
-                    .modern-toast.hiding {
-                        transform: translateY(-100%) scale(0.9);
-                    }
-                }
-            `;
-            document.head.appendChild(styleSheet);
-        }
-    }
-
-    // Create the modern toast element
-    const toastEl = document.createElement('div');
-    toastEl.className = 'modern-toast';
-    toastEl.style.setProperty('--toast-gradient', bgGradient);
-    toastEl.style.setProperty('--toast-shadow', shadowColor);
-
-    toastEl.innerHTML = `
-        <div class="toast-content">
-            <div class="toast-icon-wrapper">
-                <i class="bi ${icon} toast-icon"></i>
+    const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+    
+    const toastId = 'toast-' + Date.now();
+    const iconMap = {
+        success: 'check-circle-fill text-success',
+        error: 'exclamation-triangle-fill text-danger',
+        warning: 'exclamation-circle-fill text-warning',
+        info: 'info-circle-fill text-info'
+    };
+    
+    const headerMap = {
+        success: 'Success',
+        error: 'Error',
+        warning: 'Warning',
+        info: 'Info'
+    };
+    
+    const icon = iconMap[type] || iconMap.info;
+    const header = headerMap[type] || headerMap.info;
+    
+    const toastHTML = `
+        <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi bi-${icon} me-2"></i>
+                <strong class="me-auto">${header}</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
             </div>
             <div class="toast-body">
-                <div class="toast-message">${message}</div>
+                ${message}
             </div>
-            <button type="button" class="toast-close" data-dismiss="toast">
-                <i class="bi bi-x" style="font-size: 16px;"></i>
-            </button>
-        </div>
-        <div class="toast-progress-wrapper">
-            <div class="toast-progress"></div>
         </div>
     `;
-
-    // Add to container
-    container.appendChild(toastEl);
-
-    // Handle close button
-    const closeBtn = toastEl.querySelector('.toast-close');
-    closeBtn.addEventListener('click', () => {
-        hideToast();
+    
+    toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+    
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+    
+    // Remove toast element after it's hidden
+    toastElement.addEventListener('hidden.bs.toast', () => {
+        toastElement.remove();
     });
-
-    // Progress bar animation
-    const progressBar = toastEl.querySelector('.toast-progress');
-    let startTime = null;
-    let animationId = null;
-
-    function animateProgress(currentTime) {
-        if (!startTime) startTime = currentTime;
-        const elapsed = currentTime - startTime;
-        const progress = Math.max(0, 1 - (elapsed / toastDelay));
-        
-        progressBar.style.width = `${progress * 100}%`;
-        
-        if (progress > 0) {
-            animationId = requestAnimationFrame(animateProgress);
-        } else {
-            hideToast();
-        }
-    }
-
-    function hideToast() {
-        if (animationId) {
-            cancelAnimationFrame(animationId);
-        }
-        
-        toastEl.classList.add('hiding');
-        
-        setTimeout(() => {
-            if (toastEl.parentNode) {
-                toastEl.parentNode.removeChild(toastEl);
-            }
-        }, 400);
-    }
-
-    // Show the toast with animation
-    setTimeout(() => {
-        toastEl.classList.add('show');
-        animationId = requestAnimationFrame(animateProgress);
-    }, 50);
-
-    // Auto-hide after delay
-    setTimeout(() => {
-        if (toastEl.parentNode) {
-            hideToast();
-        }
-    }, toastDelay);
 };
 
 window.fetchUser = async function() {

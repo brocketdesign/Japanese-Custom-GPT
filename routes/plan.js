@@ -2,6 +2,7 @@ const { ObjectId } = require('mongodb');
 const qs = require('qs');
 const stripe = process.env.MODE == 'local' ? require('stripe')(process.env.STRIPE_SECRET_KEY_TEST) : require('stripe')(process.env.STRIPE_SECRET_KEY)
 const { getApiUrl } = require('../models/tool');
+const { addUserPoints } = require('../models/user-points-utils');
 
 async function routes(fastify, options) {
 
@@ -418,6 +419,38 @@ function getAmount(currency, billingCycle,month_count, lang) {
         );
         bonusCoins = 1000;
         console.log(`[plan/subscription-success] Added 1000 bonus coins for user ID: ${userFromDb._id}`);
+      }
+
+      // Reward the referrer using points system
+      if (userFromDb.referrer) {
+        const referrerId = userFromDb.referrer;
+        try {
+          // Get referrer's user data for translations
+          const referrerUser = await fastify.mongo.db.collection('users').findOne({ _id: new ObjectId(referrerId) });
+          const userPointsTranslations = fastify.getUserPointsTranslations(referrerUser?.lang || 'en');
+          
+          const referralReward = await addUserPoints(
+            fastify.mongo.db,
+            referrerId,
+            500, // Award 500 points to the referrer
+            userPointsTranslations.points?.sources?.referral || 'Referral subscription reward',
+            'referral'
+          );
+          
+          if (referralReward.success) {
+            console.log(`[plan/subscription-success] Awarded 500 points to referrer ${referrerId} for subscription referral`);
+          } else {
+            console.error(`[plan/subscription-success] Failed to award points to referrer ${referrerId}:`, referralReward.error);
+          }
+        } catch (referralError) {
+          console.error(`[plan/subscription-success] Error awarding referral points to ${referrerId}:`, referralError);
+          // Fallback to old coins system
+          await fastify.mongo.db.collection('users').updateOne(
+            { _id: new fastify.mongo.ObjectId(referrerId) },
+            { $inc: { coins: 500 } }
+          );
+          console.log(`[plan/subscription-success] Fallback: Awarded 500 coins to referrer ${referrerId}`);
+        }
       }
 
       console.log('[plan/subscription-success] Rendering payment-success.hbs for subscription.');

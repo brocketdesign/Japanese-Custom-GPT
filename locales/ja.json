@@ -1083,6 +1083,7 @@
     "cancelSubscription": "サブスクリプションをキャンセルする"
   },
   "avatar": {
+    "affiliation": "所属",
     "editProfile": "プロフィールを編集",
     "subscription": "サブスクリプション",
     "myPlan": "私のプラン",

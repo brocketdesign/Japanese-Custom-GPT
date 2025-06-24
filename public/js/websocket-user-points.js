@@ -104,7 +104,7 @@ class WebSocketUserPointsHandler {
     
     // Only show notification for the current user
     if (userId === window.user._id && window.userPointsManager) {
-      const rewardMessage = this.translations.image_generation_reward || 
+      const rewardMessage = this.translations.image_generation_reward.replace('{points}',points) || 
         `Image generated! +${points} points`;
       
       // Show a simple notification for regular image generation

@@ -175,6 +175,7 @@ fastify.register(require('./routes/system-prompt-api'));
 fastify.register(require('./routes/user-points-api'));
 fastify.register(require('./routes/character-infos-api'));
 fastify.register(require('./routes/sitemap-api')); // <-- add sitemap API routes
+fastify.register(require('./routes/affiliation-api')); // Add affiliation API routes
 
 fastify.get('/', async (request, reply) => {
   const db = fastify.mongo.db;
@@ -874,7 +875,6 @@ fastify.get('/search', async (request, reply) => {
     return reply.status(500).send({ error: 'Internal Server Error' });
   }
 });
-
 fastify.get('/about', async (request, reply) => {
   const db = fastify.mongo.db;
   

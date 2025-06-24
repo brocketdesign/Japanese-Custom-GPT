@@ -1924,7 +1924,6 @@ window.toggleChatNSFW = function(el) {
 }
 window.loadAllUserPosts = async function (page = 1) {
     const currentUser = user
-    console.log(currentUser)
     const currentUserId = currentUser._id;
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
     const isAdmin = await checkIfAdmin(currentUserId);    

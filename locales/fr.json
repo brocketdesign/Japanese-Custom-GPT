@@ -1032,6 +1032,7 @@
     "cancelSubscription": "Annuler l'abonnement"
   },
   "avatar": {
+    "affiliation": "Affiliation",
     "editProfile": "Modifier le profil",
     "subscription": "Abonnement",
     "myPlan": "Mon plan",

@@ -579,7 +579,7 @@ async function awardImageGenerationReward(db, userId, fastify = null) {
     db, 
     userId, 
     basePoints, 
-    userPointsTranslations.points?.sources?.image || 'Generated an image', 
+    userPointsTranslations.points?.sources?.image || 'Generated an image',  
     'image_generation'
   );
   

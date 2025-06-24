@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="{{lang}}">
+<head>
+    {{> dashboard-header}}
+    <title>{{affiliationTranslations.pageTitle}}</title>
+    <meta name="description" content="{{affiliationTranslations.pageDescription}}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        .gradient-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .stats-card {
+            transition: transform 0.2s ease-in-out;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        .avatar-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .referral-item {
+            transition: all 0.2s ease-in-out;
+        }
+        .referral-item:hover {
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .affiliate-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+    </style>
+</head>
+<body>
+    {{> dashboard-nav}}
+
+    <div class="container-fluid px-0">
+        <!-- Hero Section -->
+        <div class="affiliate-hero py-5">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h1 class="display-4 fw-bold mb-3">
+                            <i class="bi bi-cash-coin"></i> {{affiliationTranslations.heroTitle}}
+                        </h1>
+                        <p class="lead mb-4">
+                            {{affiliationTranslations.heroDescription}}
+                        </p>
+                        <div class="d-flex flex-wrap gap-3">
+                            <div class="feature-icon">
+                                <i class="bi bi-currency-dollar fs-3"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">{{affiliationTranslations.earnPerConversion}}</h5>
+                                <p class="mb-0 opacity-75">{{affiliationTranslations.earnDescription}}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 text-center">
+                        <div class="feature-icon mx-auto mb-3" style="width: 120px; height: 120px;">
+                            <i class="bi bi-people-fill" style="font-size: 3rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container py-5">
+            <!-- Dashboard Stats -->
+            <div class="row mb-5" id="dashboardContent">
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="card stats-card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <div class="text-primary mb-2">
+                                <i class="bi bi-mouse-fill fs-1"></i>
+                            </div>
+                            <h3 class="fw-bold mb-1" id="totalClicks">0</h3>
+                            <p class="text-muted mb-0">{{affiliationTranslations.totalClicks}}</p>
+                            <div class="progress mt-2" style="height: 4px;">
+                                <div class="progress-bar bg-primary" id="clicksProgress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="card stats-card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <div class="text-success mb-2">
+                                <i class="bi bi-person-check-fill fs-1"></i>
+                            </div>
+                            <h3 class="fw-bold mb-1" id="totalConversions">0</h3>
+                            <p class="text-muted mb-0">{{affiliationTranslations.conversions}}</p>
+                            <div class="progress mt-2" style="height: 4px;">
+                                <div class="progress-bar bg-success" id="conversionProgress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="card stats-card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <div class="text-info mb-2">
+                                <i class="bi bi-people fs-1"></i>
+                            </div>
+                            <h3 class="fw-bold mb-1">
+                                <span id="activeReferrals">0</span>/<span id="totalReferrals">0</span>
+                            </h3>
+                            <p class="text-muted mb-0">{{affiliationTranslations.activeReferrals}}</p>
+                            <small class="text-muted">{{affiliationTranslations.conversionRate}}: <span id="conversionRate">0%</span></small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="card stats-card h-100 border-0 shadow-sm gradient-card">
+                        <div class="card-body text-center">
+                            <div class="mb-2">
+                                <i class="bi bi-cash-stack fs-1"></i>
+                            </div>
+                            <h3 class="fw-bold mb-1" id="estimatedEarnings">$0</h3>
+                            <p class="mb-0 opacity-75">{{affiliationTranslations.estimatedEarnings}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Affiliate Link Management -->
+            <div class="row mb-5">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-0 py-4">
+                            <h4 class="mb-0">
+                                <i class="bi bi-link-45deg text-primary"></i>
+                                {{affiliationTranslations.yourAffiliateLink}}
+                            </h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-lg-6 mb-3">
+                                    <label for="affiliateSlug" class="form-label fw-semibold">{{affiliationTranslations.customSlug}}</label>
+                                    <div class="input-group">
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="affiliateSlug" 
+                                               placeholder="{{affiliationTranslations.enterCustomSlug}}"
+                                               maxlength="12">
+                                        <button class="btn btn-outline-secondary" 
+                                                type="button" 
+                                                id="generateSlugBtn"
+                                                title="{{affiliationTranslations.generateSlug}}">
+                                            <i class="bi bi-arrow-clockwise"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text">
+                                        {{affiliationTranslations.slugHelp}}
+                                    </div>
+                                </div>
+                                <div class="col-lg-6 mb-3">
+                                    <label for="affiliateLink" class="form-label fw-semibold">{{affiliationTranslations.generatedLink}}</label>
+                                    <div class="input-group">
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="affiliateLink" 
+                                               readonly
+                                               value="{{affiliationTranslations.noLinkGenerated}}">
+                                        <button class="btn btn-outline-primary" 
+                                                type="button" 
+                                                id="copyLinkBtn"
+                                                title="{{affiliationTranslations.copyToClipboard}}">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div id="linkStatus">
+                                    <span class="badge bg-warning">
+                                        <i class="bi bi-exclamation-circle"></i> {{affiliationTranslations.linkStatusNotCreated}}
+                                    </span>
+                                </div>
+                                <button class="btn btn-primary" id="saveAffiliateBtn">
+                                    <i class="bi bi-save"></i> {{affiliationTranslations.saveLink}}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- How it Works -->
+            <div class="row mb-5">
+                <div class="col-12">
+                    <h3 class="text-center mb-4">{{affiliationTranslations.howItWorks}}</h3>
+                    <div class="row">
+                        <div class="col-lg-3 col-md-6 mb-4">
+                            <div class="text-center">
+                                <div class="feature-icon bg-primary text-white mb-3">
+                                    <i class="bi bi-link fs-4"></i>
+                                </div>
+                                <h5>{{affiliationTranslations.step1Title}}</h5>
+                                <p class="text-muted">{{affiliationTranslations.step1Description}}</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-4">
+                            <div class="text-center">
+                                <div class="feature-icon bg-success text-white mb-3">
+                                    <i class="bi bi-share fs-4"></i>
+                                </div>
+                                <h5>{{affiliationTranslations.step2Title}}</h5>
+                                <p class="text-muted">{{affiliationTranslations.step2Description}}</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-4">
+                            <div class="text-center">
+                                <div class="feature-icon bg-info text-white mb-3">
+                                    <i class="bi bi-person-plus fs-4"></i>
+                                </div>
+                                <h5>{{affiliationTranslations.step3Title}}</h5>
+                                <p class="text-muted">{{affiliationTranslations.step3Description}}</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-4">
+                            <div class="text-center">
+                                <div class="feature-icon bg-warning text-white mb-3">
+                                    <i class="bi bi-cash-coin fs-4"></i>
+                                </div>
+                                <h5>{{affiliationTranslations.step4Title}}</h5>
+                                <p class="text-muted">{{affiliationTranslations.step4Description}}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referrals List -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-0 py-4 d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0">
+                                <i class="bi bi-people text-primary"></i>
+                                {{affiliationTranslations.yourReferrals}}
+                            </h4>
+                            <button class="btn btn-outline-primary" id="loadReferralsBtn">
+                                <i class="bi bi-arrow-clockwise"></i> {{affiliationTranslations.refresh}}
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="referralsList">
+                                <!-- Remove the initial spinner - let JavaScript handle loading -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{> dashboard-footer}}
+    
+    <script>
+        // Make translations available to JavaScript
+        window.affiliationTranslations = {{{json affiliationTranslations}}};
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/affiliation.js"></script>
+</body>
+</html>

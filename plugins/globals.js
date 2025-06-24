@@ -22,6 +22,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     const img2videoTranslationsCache = {}; // Add cache for img2video translations
     const mergeFaceTranslationsCache = {}; // Add cache for merge face translations
     const userPointsTranslationsCache = {}; // Add cache for user points translations
+    const affiliationTranslationsCache = {}; // Add cache for affiliation translations
 
     // Decorate Fastify with user, lang, and translations functions
     fastify.decorate('getUser', getUser);
@@ -32,6 +33,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorate('getImg2videoTranslations', getImg2videoTranslations); // Add img2video translations decorator
     fastify.decorate('getMergeFaceTranslations', getMergeFaceTranslations); // Add merge face translations decorator
     fastify.decorate('getUserPointsTranslations', getUserPointsTranslations); // Add user points translations decorator
+    fastify.decorate('getAffiliationTranslations', getAffiliationTranslations); // Add affiliation translations decorator
     
     // Attach `lang` and `user` dynamically
     Object.defineProperty(fastify, 'lang', {
@@ -54,6 +56,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorateRequest('img2videoTranslations', null); // Add img2video translations to request
     fastify.decorateRequest('mergeFaceTranslations', null); // Add merge face translations to request
     fastify.decorateRequest('userPointsTranslations', null); // Add user points translations to request
+    fastify.decorateRequest('affiliationTranslations', null); // Add affiliation translations to request
 
     // Pre-handler to set user, lang, and translations
     fastify.addHook('preHandler', async (request, reply) => {
@@ -66,6 +69,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         request.img2videoTranslations = getImg2videoTranslations(request.lang); // Load img2video translations
         request.mergeFaceTranslations = getMergeFaceTranslations(request.lang); // Load merge face translations
         request.userPointsTranslations = getUserPointsTranslations(request.lang); // Load user points translations
+        request.affiliationTranslations = getAffiliationTranslations(request.lang); // Load affiliation translations
         
         // Make translations available in Handlebars templates
         reply.locals = {
@@ -76,6 +80,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             img2videoTranslations: request.img2videoTranslations, // Make img2video translations available
             mergeFaceTranslations: request.mergeFaceTranslations, // Make merge face translations available
             userPointsTranslations: request.userPointsTranslations, // Make user points translations available
+            affiliationTranslations: request.affiliationTranslations, // Make affiliation translations available
             user: request.user, // Make user available
             isUserAdmin: request.isUserAdmin, // Make admin status available
             mode: process.env.MODE,
@@ -267,6 +272,26 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         return userPointsTranslationsCache[currentLang];
     }
 
+    /** Load AffiliationTranslations for a specific language (cached for performance) */
+    function getAffiliationTranslations(currentLang) {
+        if (!currentLang) currentLang = 'en';
+        
+        if (!affiliationTranslationsCache[currentLang]) {
+            const affiliationTranslationFile = path.join(__dirname, '..', 'locales', `affiliation_${currentLang}.json`);
+            if (fs.existsSync(affiliationTranslationFile)) {
+                try {
+                    affiliationTranslationsCache[currentLang] = JSON.parse(fs.readFileSync(affiliationTranslationFile, 'utf-8'));
+                } catch (e) {
+                    fastify.log.error(`Error reading affiliation translations for ${currentLang}:`, e);
+                    affiliationTranslationsCache[currentLang] = {};
+                }
+            } else {
+                affiliationTranslationsCache[currentLang] = {}; // Fallback to empty object if translation file is missing
+            }
+        }
+        return affiliationTranslationsCache[currentLang];
+    }
+
     /** Middleware: Set request language and user */
     async function setRequestLangAndUser(request, reply) {
         request.user = await fastify.getUser(request, reply);
@@ -277,6 +302,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         request.img2videoTranslations = fastify.getImg2videoTranslations(request.lang);
         request.mergeFaceTranslations = fastify.getMergeFaceTranslations(request.lang);
         request.userPointsTranslations = fastify.getUserPointsTranslations(request.lang);
+        request.affiliationTranslations = fastify.getAffiliationTranslations(request.lang);
         request.isAdmin = await checkUserAdmin(fastify, request.user._id) || false;
     }
 
@@ -293,6 +319,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             img2videoTranslations: request.img2videoTranslations, // Add img2video translations to locals
             mergeFaceTranslations: request.mergeFaceTranslations, // Add merge face translations to locals
             userPointsTranslations: request.userPointsTranslations, // Add user points translations to locals
+            affiliationTranslations: request.affiliationTranslations, // Add affiliation translations to locals
             lang: request.lang,
             user: request.user,
             isAdmin: request.isAdmin

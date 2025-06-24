@@ -86,7 +86,8 @@
       "admin": "Admin Action",
       "purchase": "Purchase",
       "bonus": "Bonus",
-      "achievement": "Achievement"
+      "achievement": "Achievement",
+      "referral": "Referral Reward"
     },
     "actions": {
       "view_history": "View History",

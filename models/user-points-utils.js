@@ -462,21 +462,6 @@ async function awardLikeActionReward(db, userId, fastify = null) {
     'like_action'
   );
   
-  // Send websocket notification for action reward
-  if (fastify && fastify.sendNotificationToUser) {
-    try {
-      await fastify.sendNotificationToUser(userId.toString(), 'likeRewardNotification', {
-        userId: userId.toString(),
-        points: basePoints,
-        reason: userPointsTranslations.points?.actions.liked_an_image || 'Liked an image',
-        source: 'like_action',
-        isMilestone: false
-      });
-    } catch (notificationError) {
-      console.error('Error sending like action reward notification:', notificationError);
-    }
-  }
-  
   return {
     success: true,
     pointsAwarded: basePoints,

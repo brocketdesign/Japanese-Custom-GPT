@@ -129,6 +129,60 @@ async function routes(fastify, options) {
     }
   });
 
+  // Update individual field (for inline editing)
+  fastify.patch('/api/gifts/:id/field', async (request, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+
+      const db = fastify.mongo.db;
+      const { id } = request.params;
+      const updateData = request.body;
+      
+      // Validate the field being updated
+      const allowedFields = ['title', 'description', 'prompt', 'cost'];
+      const fieldName = Object.keys(updateData)[0];
+      
+      if (!allowedFields.includes(fieldName)) {
+        return reply.status(400).send({ success: false, message: 'Invalid field name' });
+      }
+      
+      let fieldValue = updateData[fieldName];
+      
+      // Type conversion and validation
+      if (fieldName === 'cost') {
+        fieldValue = parseInt(fieldValue);
+        if (isNaN(fieldValue) || fieldValue < 0) {
+          return reply.status(400).send({ success: false, message: 'Invalid cost value' });
+        }
+      }
+      
+      const updatePayload = {
+        $set: {
+          [fieldName]: fieldValue,
+          updatedAt: new Date()
+        }
+      };
+      
+      const result = await db.collection('gifts').findOneAndUpdate(
+        { _id: new fastify.mongo.ObjectId(id) },
+        updatePayload,
+        { returnDocument: 'after' }
+      );
+      
+      if (!result.value) {
+        return reply.status(404).send({ success: false, message: 'Gift not found' });
+      }
+      
+      reply.send(result.value);
+    } catch (error) {
+      console.error('Error updating gift field:', error);
+      reply.status(500).send({ success: false, message: 'Error updating gift field' });
+    }
+  });
+
   // Delete Gift
   fastify.delete('/api/gifts/:id', async (request, reply) => {
     try {

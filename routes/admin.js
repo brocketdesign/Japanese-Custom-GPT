@@ -350,6 +350,7 @@ async function routes(fastify, options) {
         let promptText = '';
         let nsfw = false; // Default to false
         let gender = '';
+        let cost = 0; // Default cost to 0
         let imageUrl = '';
         
         // Calculate order for the new prompt
@@ -366,6 +367,8 @@ async function routes(fastify, options) {
             nsfw = true; // Checkbox was checked
           } else if (part.fieldname === 'gender') {
             gender = part.value;
+          } else if (part.fieldname === 'cost') {
+            cost = parseFloat(part.value) || 0;
           }
         }
         
@@ -378,6 +381,7 @@ async function routes(fastify, options) {
           prompt: promptText,
           nsfw,
           gender,
+          cost,
           image: imageUrl,
           order, // Add order field
           createdAt: new Date(),
@@ -443,6 +447,7 @@ async function routes(fastify, options) {
                     if (part.fieldname === 'title') updatePayload.$set.title = part.value;
                     if (part.fieldname === 'prompt') updatePayload.$set.prompt = part.value;
                     if (part.fieldname === 'gender') updatePayload.$set.gender = part.value;
+                    if (part.fieldname === 'cost') updatePayload.$set.cost = parseFloat(part.value) || 0;
                     if (part.fieldname === 'nsfw') nsfwFromPayload = true; // 'on' if checked
                 }
             }
@@ -465,6 +470,57 @@ async function routes(fastify, options) {
         } catch (error) {
             console.error('Error updating prompt:', error);
             reply.status(500).send({ success: false, message: 'Error updating prompt' });
+        }
+    });
+
+    // Update individual field (for inline editing)
+    fastify.patch('/api/prompts/:id/field', async (request, reply) => {
+        try {
+            const db = fastify.mongo.db;
+            const { id } = request.params;
+            const updateData = request.body;
+            
+            // Validate the field being updated
+            const allowedFields = ['title', 'prompt', 'cost', 'nsfw'];
+            const fieldName = Object.keys(updateData)[0];
+            
+            if (!allowedFields.includes(fieldName)) {
+                return reply.status(400).send({ success: false, message: 'Invalid field name' });
+            }
+            
+            let fieldValue = updateData[fieldName];
+            
+            // Type conversion and validation
+            if (fieldName === 'cost') {
+                fieldValue = parseFloat(fieldValue);
+                if (isNaN(fieldValue) || fieldValue < 0) {
+                    return reply.status(400).send({ success: false, message: 'Invalid cost value' });
+                }
+            } else if (fieldName === 'nsfw') {
+                fieldValue = Boolean(fieldValue);
+            }
+            
+            const updatePayload = {
+                $set: {
+                    [fieldName]: fieldValue,
+                    updatedAt: new Date()
+                }
+            };
+            
+            const result = await db.collection('prompts').findOneAndUpdate(
+                { _id: new fastify.mongo.ObjectId(id) },
+                updatePayload,
+                { returnDocument: 'after' }
+            );
+            
+            if (!result.value) {
+                return reply.status(404).send({ success: false, message: 'Prompt not found' });
+            }
+            
+            reply.send(result.value);
+        } catch (error) {
+            console.error('Error updating prompt field:', error);
+            reply.status(500).send({ success: false, message: 'Error updating prompt field' });
         }
     });
 

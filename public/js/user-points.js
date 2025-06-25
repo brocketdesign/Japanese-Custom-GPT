@@ -1008,10 +1008,10 @@ class UserPointsManager {
               </p>
               <div class="reward-points">
                 <span class="points-earned">+${pointsAwarded}</span>
-                <span class="points-label">${this.translations.points || 'points'}</span>
+                <span class="points-label">${this.translations.points.title || 'points'}</span>
               </div>
               <div class="reward-meta">
-                ${this.translations.new_balance || 'New balance'}: ${newBalance} ${this.translations.points || 'points'}
+                ${this.translations.new_balance || 'New balance'}: ${newBalance} ${this.translations.points.title || 'points'}
               </div>
               ${currentStreak > 1 ? `
                 <div class="streak-info">

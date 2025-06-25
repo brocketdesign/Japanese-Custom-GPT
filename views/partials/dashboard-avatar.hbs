@@ -58,16 +58,12 @@
             {{/if}}
 
             <button id="avatarMenuBtn" 
-                class="btn p-0 border-0 bg-transparent {{#if (eq user.subscriptionStatus 'active')}} bg-purple {{/if}}" 
+                class="btn p-0 border-0 bg-transparent avatar-bg {{#if (eq user.subscriptionStatus 'active')}} bg-purple {{/if}}" 
                 type="button" 
                 data-bs-toggle="offcanvas" 
                 data-bs-target="#userMenuOffcanvas" 
-                aria-controls="userMenuOffcanvas">
-                <div class="position-relative">
-                    <img src="{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}" 
-                        class="rounded-circle avatar" height="35px" alt="Avatar"
-                        loading="lazy" />
-                </div>
+                aria-controls="userMenuOffcanvas"
+                style="width: 35px; height: 45px; border-radius: 50%; background-size: cover; background-position: top; background-image: url('{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}');">
             </button>
         </div>
     {{/unless}}
@@ -204,6 +200,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Enable body scroll when offcanvas is not shown
         document.body.style.overflow = 'auto';
+        if(navbarContainer) {
+            navbarContainer.style.right = '-50vw';
+        }
+
         
         // Initialize Bootstrap offcanvas without backdrop
         const bsOffcanvas = new bootstrap.Offcanvas(offcanvasElement, {

@@ -58,6 +58,17 @@ async function routes(fastify, options) {
       let newPrompt = prompt
       if(customPrompt && promptId){
         const promptData = await getPromptById(db,promptId);
+
+        // Remove prompt cost from user points
+        const promptCost = promptData.cost || 0;
+        console.log(`[generate-img] Cost for prompt: ${promptCost} points`);
+        try {
+          await removeUserPoints(db, userId, promptCost, translations.points?.deduction_reasons?.custom_prompt || 'Prompt', 'prompt', fastify);
+        } catch (error) {
+          console.error('Error deducting points for prompt:', error);
+          return reply.status(500).send({ error: 'Error deducting points for prompt.' });
+        }
+
         savePromptIdtoChat(db, chatId, userChatId, promptId)
         .then((response) => {
           if(subscriptionStatus !== 'active'){
@@ -81,14 +92,21 @@ async function routes(fastify, options) {
             newPrompt = newPrompt.substring(0, 900);
           }
         }
-        console.log( '[generate-img] New prompt after processing:', newPrompt );
       } else if(giftId) {
         // New gift handling logic
         const giftData = await getGiftById(db, giftId);
         if (!giftData) {
           return reply.status(404).send({ error: 'Gift not found' });
         }
-        
+        // Remove gift cost from user points
+        const giftCost = giftData.cost || 0;
+        console.log(`[generate-img] Cost for gift: ${giftCost} points`);
+        try {
+          await removeUserPoints(db, userId, giftCost, translations.points?.deduction_reasons?.gift || 'Gift', 'gift', fastify);
+        } catch (error) {
+          console.error('Error deducting points for gift:', error);
+          return reply.status(500).send({ error: 'Error deducting points for gift.' });
+        }
         saveGiftIdToChat(db, chatId, userChatId, giftId)
         .then((response) => {
           if(subscriptionStatus !== 'active'){

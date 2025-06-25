@@ -147,6 +147,8 @@
       }
     },
     "deduction_reasons": {
+      "custom_prompt": "Custom Prompt Cost",
+      "text_to_speech": "Text-to-Speech Cost",
       "merge_faces": "Merge Faces Cost",
       "character_creation": "Character Creation Cost",
       "upscale_image": "Upscale Cost",

@@ -146,6 +146,8 @@
       }
     },
     "deduction_reasons": {
+      "custom_prompt": "Coût de la requête personnalisée",
+      "text_to_speech": "Coût de la synthèse vocale",
       "merge_faces": "Coût de fusion des visages",
       "character_creation": "Coût de création de personnage",
       "upscale_image": "Coût de l'upscale",

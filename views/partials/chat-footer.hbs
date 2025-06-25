@@ -145,7 +145,7 @@
                 <div id="personas-list" class="row mx-0 my-5">
                     <h4 class="text-center w-100 mt-2">{{translations.personas.selectPersona}}</h4>
                     <p class="text-center text-muted w-100">{{translations.personas.selectPersona_description}}</p>
-                    <div id="persona-activated-counter" class="text-center fw-bold my-2"></div>
+                    <div id="persona-activated-counter" class="d-none text-center fw-bold my-2"></div>
                     <div class="loading-spinner text-center mt-4">
                         <div class="spinner-border" role="status">
                             <span class="visually-hidden">Loading...</span>
@@ -162,17 +162,39 @@
                 <p class="text-center text-muted w-100">{{translations.selectPose_description}}</p>
                 <!-- Prompts will be dynamically generated here -->
                 {{#each promptData}}
-                    <div class="prompt-card col-6 col-sm-3 border-0 shadow-0 mb-1 position-relative inactive d-flex justify-content-center align-items-center"
+                    <div class="prompt-card col-6 col-sm-4 col-md-3 border-0 shadow-0 mb-3 position-relative d-flex justify-content-center align-items-center"
                         data-id="{{_id}}" 
                         data-nsfw="{{eq nsfw 'on'}}" 
-                        style="cursor:pointer; min-height: 200px;">
-                        <div class="image-container d-inline-flex align-items-center justify-content-center p-0 m-0 rounded border" style="background:transparent; padding:0; margin:0;">
-                            <img 
-                                src="/img/image-placeholder-1.gif"
-                                data-src="{{image}}" 
-                                class="lazy-image rounded"
-                                alt="{{title}}" 
-                                style="display:block; max-width:100%; max-height:200px; object-fit:contain;">
+                        style="cursor:pointer;">
+                        <div class="modern-prompt-container position-relative overflow-hidden">
+                            <div class="prompt-image-wrapper">
+                                <img 
+                                    src="/img/image-placeholder-1.gif"
+                                    data-src="{{image}}" 
+                                    class="lazy-image prompt-image"
+                                    alt="{{title}}" 
+                                    loading="lazy">
+                                <div class="prompt-overlay">
+                                    <div class="prompt-shine"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="prompt-info">
+                                <h6 class="prompt-title">{{title}}</h6>
+                                <div class="prompt-cost-badge">
+                                    {{#if cost}}
+                                        <i class="bi bi-coin prompt-coin-icon"></i>
+                                        <span class="cost-amount">{{cost}}</span>
+                                    {{else}}
+                                        <i class="bi bi-image-fill"></i>
+                                        <span class="free-label">Free</span>
+                                    {{/if}}
+                                </div>
+                            </div>
+                            
+                            <div class="prompt-selection-indicator">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </div>
                         </div>
                     </div>
                 {{/each}}
@@ -186,17 +208,39 @@
                 <p class="text-center text-muted w-100">{{translations.gifts.selectGift_description}}</p>
                 <!-- Gifts will be dynamically generated here -->
                 {{#each giftData}}
-                    <div class="gift-card col-6 col-sm-3 border-0 shadow-0 mb-1 position-relative inactive d-flex justify-content-center align-items-center"
+                    <div class="gift-card col-6 col-sm-4 col-md-3 border-0 shadow-0 mb-3 position-relative d-flex justify-content-center align-items-center"
                         data-id="{{_id}}" 
                         data-nsfw="{{eq nsfw 'on'}}" 
-                        style="cursor:pointer; min-height: 200px;">
-                        <div class="image-container d-inline-flex align-items-center justify-content-center p-0 m-0 rounded border" style="background:transparent; padding:0; margin:0;">
-                            <img 
-                                src="/img/image-placeholder-1.gif"
-                                data-src="{{image}}" 
-                                class="lazy-image rounded"
-                                alt="{{title}}" 
-                                style="display:block; max-width:100%; max-height:200px; object-fit:contain;">
+                        style="cursor:pointer;">
+                        <div class="modern-gift-container position-relative overflow-hidden">
+                            <div class="gift-image-wrapper">
+                                <img 
+                                    src="/img/image-placeholder-1.gif"
+                                    data-src="{{image}}" 
+                                    class="lazy-image gift-image"
+                                    alt="{{title}}" 
+                                    loading="lazy">
+                                <div class="gift-overlay">
+                                    <div class="gift-shine"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="gift-info">
+                                <h6 class="gift-title">{{title}}</h6>
+                                <div class="gift-cost-badge">
+                                    {{#if cost}}
+                                        <i class="bi bi-coin gift-coin-icon"></i>
+                                        <span class="cost-amount">{{cost}}</span>
+                                    {{else}}
+                                        <i class="bi bi-gift-fill"></i>
+                                        <span class="free-label">Free</span>
+                                    {{/if}}
+                                </div>
+                            </div>
+                            
+                            <div class="gift-selection-indicator">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </div>
                         </div>
                     </div>
                 {{/each}}

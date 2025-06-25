@@ -17,6 +17,23 @@
     .handle {
       cursor: grab;
     }
+    /* Inline editing styles */
+    .editable-cell {
+      cursor: text;
+      position: relative;
+    }
+    .editable-cell:hover {
+      background-color: #f9fafb;
+      outline: 1px dashed #d1d5db;
+    }
+    .editable-cell:focus {
+      outline: 2px solid #3b82f6;
+      background-color: #ffffff;
+    }
+    .saving-indicator {
+      opacity: 0.5;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body class="bg-gray-100">
@@ -271,10 +288,10 @@
         <tr data-id="${gift._id}" class="border-b border-gray-200 hover:bg-gray-100">
           <td class="py-3 px-4 text-left handle"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 inline-block mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg> ${gift.order !== undefined ? gift.order : 'N/A'}</td>
           <td class="py-3 px-4 text-left"><img src="${gift.image || '/img/placeholder-image-2.gif'}" alt="${gift.title}" class="w-20 h-20 object-cover rounded"></td>
-          <td class="py-3 px-4 text-left font-semibold">${gift.title}</td>
-          <td class="py-3 px-4 text-left truncate max-w-xs">${gift.description || ''}</td>
-          <td class="py-3 px-4 text-left max-w-xs">${gift.prompt || ''}</td>
-          <td class="py-3 px-4 text-left font-bold text-blue-600">${gift.cost || 0}</td>
+          <td class="py-3 px-4 text-left font-semibold editable-cell" contenteditable="true" data-field="title" data-id="${gift._id}">${gift.title}</td>
+          <td class="py-3 px-4 text-left editable-cell max-w-xs" contenteditable="true" data-field="description" data-id="${gift._id}" style="max-height: 60px; overflow-y: auto;">${gift.description || ''}</td>
+          <td class="py-3 px-4 text-left editable-cell max-w-xs" contenteditable="true" data-field="prompt" data-id="${gift._id}" style="max-height: 60px; overflow-y: auto;">${gift.prompt || ''}</td>
+          <td class="py-3 px-4 text-left font-bold text-blue-600 editable-cell" contenteditable="true" data-field="cost" data-id="${gift._id}" data-type="number">${gift.cost || 0}</td>
           <td class="py-3 px-4 text-center">
             <button class="preview-btn text-blue-500 hover:text-blue-700 mr-2" data-id="${gift._id}">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 inline-block"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
@@ -291,6 +308,89 @@
       tableBody.append(row);
     });
     attachActionListeners();
+    attachInlineEditListeners(); // Add inline editing listeners
+  }
+
+  // Add inline editing functionality
+  function attachInlineEditListeners() {
+    // Handle editable cell blur events for title, description, prompt, and cost
+    $(document).off('blur', '.editable-cell').on('blur', '.editable-cell', function() {
+      const $cell = $(this);
+      const field = $cell.data('field');
+      const id = $cell.data('id');
+      const type = $cell.data('type');
+      let value = $cell.text().trim();
+      
+      // Validate number fields
+      if (type === 'number') {
+        const numValue = parseInt(value);
+        if (isNaN(numValue) || numValue < 0) {
+          showNotification('Invalid cost value. Please enter a valid number.', 'error');
+          // Restore original value
+          const originalGift = currentGifts.find(g => g._id === id);
+          if (originalGift) {
+            $cell.text(originalGift[field] || 0);
+          }
+          return;
+        }
+        value = numValue;
+      }
+      
+      // Check if value actually changed
+      const originalGift = currentGifts.find(g => g._id === id);
+      if (originalGift && originalGift[field] === value) {
+        return; // No change, don't save
+      }
+      
+      saveGiftFieldUpdate(id, field, value, $cell);
+    });
+
+    // Prevent Enter key from creating new lines in single-line fields
+    $(document).off('keydown', '.editable-cell').on('keydown', '.editable-cell', function(e) {
+      const field = $(this).data('field');
+      if (field === 'title' || field === 'cost') {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          $(this).blur();
+        }
+      }
+    });
+  }
+
+  function saveGiftFieldUpdate(id, field, value, $element) {
+    // Show saving indicator
+    $element.addClass('saving-indicator');
+    
+    const data = {};
+    data[field] = value;
+    
+    $.ajax({
+      url: `/api/gifts/${id}/field`,
+      type: 'PATCH',
+      data: JSON.stringify(data),
+      contentType: 'application/json',
+      success: function(updatedGift) {
+        // Update the current gifts array
+        const index = currentGifts.findIndex(g => g._id === id);
+        if (index !== -1) {
+          currentGifts[index] = updatedGift;
+        }
+        
+        $element.removeClass('saving-indicator');
+        showNotification(`${field === 'description' ? 'Description' : field === 'prompt' ? 'Prompt' : field === 'cost' ? 'Cost' : 'Title'} updated successfully.`, 'success');
+      },
+      error: function() {
+        $element.removeClass('saving-indicator');
+        
+        // Restore original value on error
+        const originalGift = currentGifts.find(g => g._id === id);
+        if (originalGift) {
+          $element.text(originalGift[field] || '');
+        }
+        
+        showNotification(`Error updating ${field}.`, 'error');
+      }
+    });
   }
 
   function attachActionListeners() {

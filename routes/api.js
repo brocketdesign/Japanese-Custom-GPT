@@ -28,6 +28,7 @@ const {
     getVoiceSettings
 } = require('../models/chat-tool-settings-utils');
 const { getActiveSystemPrompt } = require('../models/system-prompt-utils');
+const { removeUserPoints } = require('../models/user-points-utils');
 
 const axios = require('axios');
 const OpenAI = require("openai");
@@ -991,6 +992,17 @@ async function routes(fastify, options) {
                     errno: 1,
                     message: "Message parameter is required."
                 });
+            }
+
+            const db = fastify.mongo.db;
+            // Charge points for text-to-speech generation
+            const cost = 3; // Define the cost of generating speech
+            console.log(`[text_to_speech] Cost for text-to-speech generation: ${cost} points`);
+            try {
+                await removeUserPoints(db, userId, cost, translations.points?.deduction_reasons?.text_to_speech || 'Text-to-speech generation', 'text_to_speech', fastify);
+            } catch (error) {
+                console.error('Error deducting points:', error);
+                return reply.status(500).send({ error: 'Error deducting points for text-to-speech generation.' });
             }
 
             let system_tone = '';

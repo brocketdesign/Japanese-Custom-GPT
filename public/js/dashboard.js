@@ -3604,4 +3604,3 @@ window.updatePromptActivatedCounter = function() {
       console.warn(`Image card with ID ${imageId} not found to update title.`);
     }
   }
-    

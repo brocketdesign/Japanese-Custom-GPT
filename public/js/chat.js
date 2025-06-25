@@ -439,8 +439,18 @@ $(document).ready(async function() {
 
     async function handleChatSuccess(data, fetch_reset, fetch_userId, userChatId) {
         $(document).find(`.chat-list.item[data-id="${chatId}"]`).addClass('active').siblings().removeClass('active');
-        isNew = (typeof fetch_reset !== 'undefined') ? fetch_reset : data.isNew;
-        if(isNew == null || isNew == undefined){ isNew = true; }
+       
+        // Handle fetch_reset and isNew logic robustly
+
+        isNew = (typeof fetch_reset === 'string' ? fetch_reset.toLowerCase() : fetch_reset) === true || 
+            (typeof fetch_reset === 'string' ? fetch_reset.toLowerCase() : fetch_reset) === 'true'
+            ? true
+            : (typeof fetch_reset === 'string' ? fetch_reset.toLowerCase() : fetch_reset) === false || 
+              (typeof fetch_reset === 'string' ? fetch_reset.toLowerCase() : fetch_reset) === 'false'
+            ? false
+            : typeof data.isNew !== 'undefined'
+            ? data.isNew
+            : true;
 
         if (!data.chat) {
             showDiscovery();
@@ -466,14 +476,6 @@ $(document).ready(async function() {
         if (window.initializeGiftPermissions) {
             window.initializeGiftPermissions(userChatId);
         }
-        
-        // Show the prompts only once per session/ per chatid
-        if (isNew && !sessionStorage.getItem(`promptsShown_${chatId}`)) {
-            sessionStorage.setItem(`promptsShown_${chatId}`, 'true');
-            setTimeout(() => {
-                showPrompts();
-            }, 1000);
-        } 
 
         $('.fullscreen-overlay').fadeOut(); 
 
@@ -659,13 +661,7 @@ function setupChatInterface(chat, character) {
                 sessionStorage.setItem('lastChatId', chatId);
                 sessionStorage.setItem('chatId', chatId);
                 
-                const personaCount = await PersonaModule.checkPersonaCount();
-                if(personaCount > 0){
-                    PersonaModule.showFloatingContainer();
-                }else{
-                    generateChatCompletion();
-                }
-
+                generateChatCompletion();
                 updateCurrentChat(chatId,userId);
 
                 updateParameters(chatId,userId,userChatId)

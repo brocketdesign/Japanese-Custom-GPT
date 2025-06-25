@@ -142,7 +142,7 @@ window.handleRegenSpin = function (imageId, spin) {
     } else {
         $(`.txt2img[data-id=${imageId}]`).removeClass('spin');
     }
-}
+};
 
 // Display and remove image loader with provided data-id
 window.displayOrRemoveImageLoader = function (imageId, action, imagePreview) {
@@ -170,7 +170,7 @@ window.displayOrRemoveImageLoader = function (imageId, action, imagePreview) {
         $('#chat-recommend').append(card);
         $('#chat-recommend').scrollLeft($('#chat-recommend')[0].scrollWidth);
     }
-}
+};
 
 const sentImageIds = new Set();
 window.generateImage = async function(data) {

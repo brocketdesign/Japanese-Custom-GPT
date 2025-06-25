@@ -1,6 +1,7 @@
 const { ObjectId } = require('mongodb');
 const { getVoiceConfig, generateSpeech, getAvailableVoices, validateApiKey, getEvenLabVoiceConfig } = require('../models/eventlab-utils');
 const { getVoiceSettings } = require('../models/chat-tool-settings-utils');
+const { removeUserPoints } = require('../models/user-points-utils');
 
 async function routes(fastify, options) {
     /**
@@ -21,6 +22,16 @@ async function routes(fastify, options) {
             if (userId) {
                 try {
                     const db = fastify.mongo.db;
+                    // Charge points for text-to-speech generation
+                    const cost = 3; // Define the cost of generating speech
+                    console.log(`[text_to_speech] Cost for text-to-speech generation: ${cost} points`);
+                    try {
+                        await removeUserPoints(db, userId, cost, translations.points?.deduction_reasons?.text_to_speech || 'Text-to-speech generation', 'text_to_speech', fastify);
+                    } catch (error) {
+                        console.error('Error deducting points:', error);
+                        return reply.status(500).send({ error: 'Error deducting points for text-to-speech generation.' });
+                    }
+                    
                     const userVoiceSettings = await getVoiceSettings(db, userId, chatId);
                     console.log('[eventlab text-to-speech] User voice settings:', userVoiceSettings);
                     

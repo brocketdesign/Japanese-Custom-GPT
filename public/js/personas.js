@@ -329,6 +329,7 @@ const PersonaModule = {
         }
     },
 
+  
     renderPersonas(personas) {
         const $list = $('#personas-list');
         $list.find('.loading-spinner').remove();
@@ -340,8 +341,11 @@ const PersonaModule = {
         if (!personas || personas.length === 0) {
             $list.append(`
                 <div class="no-personas text-center w-100 mt-4">
-                    <i class="bi bi-person-plus" style="font-size: 2rem;"></i>
-                    <p>${window.translations?.personas.noPersonas || 'ペルソナがありません'}</p>
+                    <div class="empty-state-icon">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                    <h5 class="empty-state-title">${window.translations?.personas.noPersonas || 'ペルソナがありません'}</h5>
+                    <p class="empty-state-description">${window.translations?.personas.noPersonasDescription || 'お気に入りのキャラクターをペルソナとして保存しましょう'}</p>
                 </div>
             `);
             return;
@@ -349,22 +353,40 @@ const PersonaModule = {
         
         personas.forEach(persona => {
             const personaHtml = `
-                <div class="persona-card col-6 col-sm-3 border-0 shadow-0 mb-1 position-relative inactive d-flex justify-content-center align-items-center"
+                <div class="persona-card col-6 col-sm-4 col-md-3 border-0 shadow-0 mb-3 position-relative d-flex justify-content-center align-items-center"
                     data-id="${persona._id}" 
                     data-name="${persona.name}" 
-                    style="cursor:pointer; min-height: 200px;">
-                    <button type="button" class="btn-close remove-persona position-absolute top-0 end-0 m-1" 
-                        data-id="${persona._id}" 
-                        aria-label="Remove" 
-                        style="z-index: 10; background-color: rgba(255,255,255,0.7); border-radius: 50%; padding: 0.25rem;"
-                        title="${window.translations?.personas?.removePersona || 'ペルソナを削除する'}">
-                    </button>
-                    <div class="image-container d-inline-flex align-items-center justify-content-center p-0 m-0 rounded border" style="background:transparent; padding:0; margin:0;">
-                        <img 
-                            src="${persona.chatImageUrl || '/img/default-avatar.png'}" 
-                            class="lazy-image rounded"
-                            alt="${persona.name}" 
-                            style="display:block; max-width:100%; max-height:200px; object-fit:contain;">
+                    style="cursor:pointer;">
+                    <div class="modern-persona-container position-relative overflow-hidden">
+                        <div class="persona-image-wrapper">
+                            <img 
+                                src="${persona.chatImageUrl || '/img/default-avatar.png'}" 
+                                class="lazy-image persona-image"
+                                alt="${persona.name}" 
+                                loading="lazy">
+                            <div class="persona-overlay">
+                                <div class="persona-shine"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="persona-info">
+                            <h6 class="persona-title">${persona.name}</h6>
+                            <div class="persona-status-badge">
+                                <i class="bi bi-person-check-fill"></i>
+                                <span class="status-label">Active</span>
+                            </div>
+                        </div>
+                        
+                        <div class="persona-selection-indicator">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        
+                        <button type="button" class="modern-remove-btn remove-persona" 
+                            data-id="${persona._id}" 
+                            aria-label="Remove" 
+                            title="${window.translations?.personas?.removePersona || 'ペルソナを削除する'}">
+                            <i class="bi bi-x"></i>
+                        </button>
                     </div>
                 </div>
             `;

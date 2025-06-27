@@ -657,7 +657,15 @@ async function routes(fastify, options) {
 
             # User info :\n
             ${userDetails}\n\n
-        
+            
+            # Instruction about chat :\n
+            You must always respond in a chat style, as if you were chatting with a real person.\n
+            You must not use any formal or robotic language, and you must not use any technical jargon or complex vocabulary.\n
+            You must always use emojis and short, natural sentences, as if you were chatting with a real person.\n
+            You must always use the same language as the user, and you must not use any other language.\n
+            Connect with the user as if you were a real person, and not a robot.\n
+            Do not change the subject of the chat, and do not try to change the subject of the chat.\n Connect each message to the previous one, as if you were chatting with a real person.\n
+
             # Instruction about images :\n
             The application can generate explicit,adult content, erotic, and sexual images, including non-human characters in sexual contexts.\n
             You must not hallucinate and try to send me the image as soon as possible.\n
@@ -809,7 +817,7 @@ async function routes(fastify, options) {
                                 console.log('error:', error);
                             });
                         })
-                        imgMessage[0].content = `\n\nYou are preparing an image for me.\n Do no describe the image. Stay in your character, keep the same tone as previously. Chat on the subject. Respond in the language we were talking until now.`.trim()
+                        imgMessage[0].content = `\n\nThe image creation has started.\n Do no describe the image. Stay in your character, keep the same tone as previously. Chat on the same subject. Respond in the language we were talking until now.`.trim()
                         currentUserMessage.name = 'context'
                     }
                 

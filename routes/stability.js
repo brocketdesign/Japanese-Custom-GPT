@@ -57,7 +57,7 @@ async function routes(fastify, options) {
           await removeUserPoints(db, userId, promptCost, translations.points?.deduction_reasons?.custom_prompt || 'Prompt', 'prompt', fastify);
         } catch (error) {
           console.error('Error deducting points for prompt:', error);
-          return reply.status(500).send({ error: 'Error deducting points for prompt.' });
+          return reply.status(500).send({ error: `${fastify.userPointsTranslations?.need_coins?.replace('{coins}', promptCost) || `Need: ${promptCost}`}` });
         }
 
         savePromptIdtoChat(db, chatId, userChatId, promptId)
@@ -86,7 +86,7 @@ async function routes(fastify, options) {
           await removeUserPoints(db, userId, giftCost, translations.points?.deduction_reasons?.gift || 'Gift', 'gift', fastify);
         } catch (error) {
           console.error('Error deducting points for gift:', error);
-          return reply.status(500).send({ error: 'Error deducting points for gift.' });
+          return reply.status(500).send({ error: `${fastify.userPointsTranslations?.need_coins?.replace('{coins}', giftCost) || `Need: ${giftCost}`}` });
         }
         saveGiftIdToChat(db, chatId, userChatId, giftId)
         .then((response) => {
@@ -97,10 +97,7 @@ async function routes(fastify, options) {
         
         const giftPrompt = giftData.prompt || giftData.description;
         processPromptToTags(db, giftPrompt);
-        
-        let imageDescriptionResponse = await checkImageDescription(db, chatId);
-        const imageDescription = imageDescriptionResponse.imageDescription
-        newPrompt = !!imageDescription ? imageDescription + ',' + giftPrompt : giftPrompt;
+        const imageDescription = await checkImageDescription(db, chatId);
         newPrompt = await createPrompt(giftPrompt, imageDescription, false);
       } else {
         // Charge points for image generation
@@ -110,7 +107,8 @@ async function routes(fastify, options) {
           await removeUserPoints(db, userId, cost, translations.points?.deduction_reasons?.image_generation || 'Image generation', 'image_generation', fastify);
         } catch (error) {
           console.error('Error deducting points:', error);
-          return reply.status(500).send({ error: 'Error deducting points for image generation.' });
+          return reply.status(500).send({ error: `${fastify.userPointsTranslations?.need_coins?.replace('{coins}', cost) || `Need: ${cost}`}`
+});
         }
       }
       let imageSeed = -1
@@ -161,7 +159,7 @@ async function routes(fastify, options) {
               await removeUserPoints(db, userId, cost, request.translations?.points?.deduction_reasons?.upscale_image || 'Upscale image', 'upscale_image', fastify);
             } catch (error) {
               console.error('Error deducting points:', error);
-              return reply.status(500).send({ error: request.translations?.points?.error_deducting_points || 'Error deducting points for upscale image.' });
+              return reply.status(500).send({ error: `${fastify.userPointsTranslations?.need_coins?.replace('{coins}', cost) || `Need: ${cost}`}` });
             }
             
             // console.log('Upscale request received on backend:', request.body);

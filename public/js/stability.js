@@ -11,13 +11,15 @@ setInterval(() => {
 window.novitaImageGeneration = async function(userId, chatId, userChatId, option = {}) {
     // Validate essential parameters
     if (!userId || !chatId || !userChatId) {
-        console.error('Missing essential parameters for image generation:', { userId, chatId, userChatId });
-        return;
+        const errorMsg = 'Missing essential parameters for image generation:';
+        console.error(errorMsg, { userId, chatId, userChatId });
+        throw new Error(errorMsg);
     }
     
     if (activeGenerations > MAX_CONCURRENT_GENERATIONS && user.role !== 'admin') {
-        showNotification(translations.image_generation_soft_limit.replace('%{interval}%',parseInt(RESET_INTERVAL)/1000), 'warning');
-        return;
+        const errorMsg = translations.image_generation_soft_limit.replace('%{interval}%',parseInt(RESET_INTERVAL)/1000);
+        showNotification(errorMsg, 'warning');
+        throw new Error(errorMsg);
     }
 
     try {
@@ -72,9 +74,15 @@ window.novitaImageGeneration = async function(userId, chatId, userChatId, option
         });
 
         const data = await response.json();
+        if(data.error) {
+            console.error('Error in Novita image generation:', data.error);
+            showNotification(data.error, 'error');
+            throw new Error(data.error);
+        }
         return data;
     } catch (error) {
         console.error('generateImageNovita Error:', error);
+        throw error;
     }
 };
 

@@ -1225,7 +1225,6 @@ async function checkImageDescription(db, chatId = null, chatRawData = null) {
     if (!chatData) {
       chatData = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
     }
-  
     const characterPrompt = chatData?.enhancedPrompt || chatData?.imageDescription || chatData?.characterPrompt || null;
     const characterDescriptionString = characterDescriptionToString(chatData);
     characterDescription = (characterPrompt ? ` ${characterPrompt}` : '') +' '+ (characterDescriptionString ? ` ${characterDescriptionString}` : '');

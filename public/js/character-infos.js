@@ -60,7 +60,8 @@ $(document).ready(function() {
 
         // Basic information
         $('#charInfoShortIntro').text(chatData.short_intro || 'No introduction provided');
-        $('#charInfoDescription').text(chatData.description || 'No description provided');
+        const characterDescription = chatData?.enhancedPrompt || chatData?.imageDescription || chatData?.characterPrompt || null;
+        $('#charInfoDescription').text(characterDescription || 'No description provided');
         $('#charInfoNsfw').text(chatData.nsfw ? 'Yes' : 'No');
         
         // Tags

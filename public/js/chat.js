@@ -205,8 +205,11 @@ $(document).ready(async function() {
 
     function updateParameters(newchatId, newuserId, userChatId){
 
-        if(chatId){ localStorage.setItem('chatId', chatId);}
+        if(chatId){ 
+            localStorage.setItem('chatId', chatId);
+            sessionStorage.setItem('chatId', chatId);}
         if(userChatId){
+            localStorage.setItem('userChatId', userChatId);
             sessionStorage.setItem('userChatId', userChatId);
             $('#chatContainer').attr('data-id',userChatId)
         }

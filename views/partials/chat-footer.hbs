@@ -128,7 +128,7 @@
 
         <div id="suggestionsContainer" class="shadow" style="position: absolute; bottom: -10px; width: 95%; margin: auto; max-height: 55vh; background: rgb(255, 255, 255); overflow-y: auto; left: 0; right: 0; z-index: 10; border-radius: 15px 15px 0 0; display: none;">
             <button id="close-suggestionsContainer" class="btn shadow-0 position-absolute top-0 end-0"><i class="bi bi-x"></i></button>
-            <div id="suggestionsList" class="row mx-0 my-5">
+            <div id="suggestionsList" class="row mx-2 my-5">
                 <h4 class="text-center w-100 mt-2">{{translations.toolbar.ideas}}</h4>
                 <p class="text-center text-muted w-100">{{translations.loading_suggestions}}</p>
                 <div class="loading-spinner text-center mt-4">
@@ -162,9 +162,11 @@
                 <p class="text-center text-muted w-100">{{translations.selectPose_description}}</p>
                 <!-- Prompts will be dynamically generated here -->
                 {{#each promptData}}
-                    <div class="prompt-card col-6 col-sm-4 col-md-3 border-0 shadow-0 mb-3 position-relative d-flex justify-content-center align-items-center"
+                    <div 
+                        class="prompt-card col-6 col-sm-4 col-md-3 border-0 shadow-0 mb-3 position-relative d-flex justify-content-center align-items-center"
                         data-id="{{_id}}" 
                         data-nsfw="{{eq nsfw 'on'}}" 
+                        data-cost="{{cost}}"
                         style="cursor:pointer;">
                         <div class="modern-prompt-container position-relative overflow-hidden">
                             <div class="prompt-image-wrapper">
@@ -180,7 +182,6 @@
                             </div>
                             
                             <div class="prompt-info">
-                                <h6 class="prompt-title">{{title}}</h6>
                                 <div class="prompt-cost-badge">
                                     {{#if cost}}
                                         <i class="bi bi-coin prompt-coin-icon"></i>
@@ -211,6 +212,7 @@
                     <div class="gift-card col-6 col-sm-4 col-md-3 border-0 shadow-0 mb-3 position-relative d-flex justify-content-center align-items-center"
                         data-id="{{_id}}" 
                         data-nsfw="{{eq nsfw 'on'}}" 
+                        data-cost="{{cost}}"
                         style="cursor:pointer;">
                         <div class="modern-gift-container position-relative overflow-hidden">
                             <div class="gift-image-wrapper">
@@ -415,7 +417,6 @@
         </div>
     </div>
 </div>
-
 
 <script>
 // Ensure toolbar scrolling works properly on mobile

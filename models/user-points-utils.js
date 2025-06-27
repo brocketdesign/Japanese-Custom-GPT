@@ -44,7 +44,7 @@ async function addUserPoints(db, userId, points, reason = 'Points awarded', sour
   
   // Get updated user data
   const updatedUser = await usersCollection.findOne({ _id: new ObjectId(userId) });
-  
+
   // Send refresh notification
   if (fastify && fastify.sendNotificationToUser) {
     try {
@@ -401,7 +401,8 @@ async function awardLikeMilestoneReward(db, userId, fastify = null) {
     userId, 
     milestone.points, 
     userPointsTranslations.points?.like_rewards?.milestone_title || `Like milestone: ${milestone.message}`, 
-    'like_milestone'
+    'like_milestone',
+    fastify
   );
   
   // Record milestone as granted
@@ -459,7 +460,8 @@ async function awardLikeActionReward(db, userId, fastify = null) {
     userId, 
     basePoints, 
     userPointsTranslations.points?.actions?.liked_an_image || 'Liked an image', 
-    'like_action'
+    'like_action',
+    fastify
   );
   
   return {
@@ -541,7 +543,8 @@ async function awardImageMilestoneReward(db, userId, fastify = null) {
     userId, 
     milestone.points, 
     userPointsTranslations.points?.image_generation?.milestone_title || `Image generation milestone: ${milestone.message}`, 
-    'image_milestone'
+    'image_milestone',
+    fastify
   );
   
   // Record milestone as granted
@@ -598,7 +601,8 @@ async function awardImageGenerationReward(db, userId, fastify = null) {
     userId, 
     basePoints, 
     userPointsTranslations.points?.sources?.image || 'Generated an image',  
-    'image_generation'
+    'image_generation',
+    fastify
   );
   
   // Send websocket notification for image generation reward

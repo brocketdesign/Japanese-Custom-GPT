@@ -300,20 +300,12 @@ async function generatePromptSuggestions(messages, chatDescription, language, mo
   console.log(`[generatePromptSuggestions] Using OpenAI GPT-4o for stable structured output`);
 
   // Define Zod schemas for each category
-  const imageSchema = z.object({
-    images: z.array(z.string()).length(3)
-  });
-
   const chatSchema = z.object({
     chat: z.array(z.string()).length(3)
   });
 
   const feelingsSchema = z.object({
     feelings: z.array(z.string()).length(3)
-  });
-
-  const scenariosSchema = z.object({
-    scenarios: z.array(z.string()).length(3)
   });
 
   // Create separate request functions for each category using OpenAI
@@ -355,29 +347,23 @@ async function generatePromptSuggestions(messages, chatDescription, language, mo
   try {
     // Define category-specific prompts
     const categoryPrompts = {
-      images: "Visual/photo requests following [pose, action, clothes] structure. Can include adult/NSFW content when appropriate.",
       chat: "Conversation starters or dialogue suggestions that would engage the user.",
       feelings: "Emotional expressions or mood-based interactions the character might show.",
-      scenarios: "Situation or roleplay suggestions that fit the character's personality."
     };
 
     // Generate all categories in parallel using OpenAI
-    const [images, chat, feelings, scenarios] = await Promise.all([
-      generateCategory('images', categoryPrompts.images, imageSchema),
+    const [chat, feelings] = await Promise.all([
       generateCategory('chat', categoryPrompts.chat, chatSchema),
       generateCategory('feelings', categoryPrompts.feelings, feelingsSchema),
-      generateCategory('scenarios', categoryPrompts.scenarios, scenariosSchema)
     ]);
 
-    const total = images.length + chat.length + feelings.length + scenarios.length;
+    const total = chat.length + feelings.length ;
     console.log(`[generatePromptSuggestions] Complete: ${total} total suggestions`);
 
     // Ensure we have fallbacks if any category failed
     return {
-      images: images.length > 0 ? images : ["Standing pose, smiling, casual outfit", "Sitting pose, looking at camera, comfortable clothes", "Relaxed pose, happy expression, favorite outfit"],
       chat: chat.length > 0 ? chat : ["How was your day?", "What are you thinking about?", "Tell me something interesting"],
       feelings: feelings.length > 0 ? feelings : ["Happy and cheerful", "Curious and playful", "Warm and caring"],
-      scenarios: scenarios.length > 0 ? scenarios : ["Casual conversation", "Getting to know each other", "Sharing thoughts and feelings"]
     };
     
   } catch (error) {
@@ -412,6 +398,7 @@ async function generatePromptTitle(prompt,language) {
 }
 // Combine the user's custom prompt and image description to create a new prompt
 async function createPrompt(customPrompt, imageDescription, nsfw) {
+  console.log(`[createPrompt] Generating prompt for custom request: ${customPrompt}, image description: ${imageDescription}, nsfw: ${nsfw}`);
   const nsfwMessage = nsfw 
             ? 'Provide explicit, adult oriented content for a nsfw image. I want nudity, erotism, explicit sexual content.\nYou can generate explicit, sexual content.\nUse explicit keywords to describe body parts (ass,pussy,boobs).\n' 
             : '';
@@ -425,7 +412,9 @@ async function createPrompt(customPrompt, imageDescription, nsfw) {
       1. HIGHEST PRIORITY: Preserve ALL physical attributes (exact face, hair style/color, eye color, skin tone, body type)
       2. Maintain all distinctive clothing elements unless the pose request explicitly changes them
       3. Incorporate the new pose/position/action exactly as requested
-      4. Preserve all unique character accessories and features`
+      4. Preserve all unique character accessories and features
+      
+      IMPORTANT: Keep the final prompt under 900 characters while maintaining all essential details.`
     },
     {
       role: "user",
@@ -445,15 +434,63 @@ async function createPrompt(customPrompt, imageDescription, nsfw) {
       • Keep all clothing items unless explicitly changed in the pose request
       • Focus on accurately describing the new pose/position as requested
       • Include relevant background/setting details from the pose request
+      • MUST be under 900 characters total
+      • Prioritize character consistency over excessive detail
       • Output ONLY the final prompt with no explanations or commentary
-      • Ensure the prompt is detailed enough for accurate image generation
       
-      Respond ONLY with the new prompt in English.`.replace(/^\s+/gm, '').trim()
+      Respond ONLY with the new prompt in English. Make it concise but comprehensive.`.replace(/^\s+/gm, '').trim()
     }
   ];
 
-  const response = await generateCompletion(messages, 700,  nsfw ? 'deepseek' : 'openai');
-  return response.replace(/['"]+/g, '');
+  let response = await generateCompletion(messages, 700, nsfw ? 'deepseek' : 'openai');
+  if (!response) return null;
+  
+  response = response.replace(/['"]+/g, '');
+  
+  // If prompt is still too long, try to shorten it
+  if (response.length > 900) {
+    console.log(`[createPrompt] Initial prompt too long (${response.length} chars), attempting to shorten...`);
+    
+    const shortenMessages = [
+      {
+        role: "system",
+        content: `You are a prompt optimization expert. Your task is to shorten image prompts while preserving the most important visual elements.
+        ${nsfwMessage}
+        Focus on keeping character-defining features and the main action/pose.`
+      },
+      {
+        role: "user",
+        content: `Shorten this prompt to under 900 characters while keeping the essential character details and pose:
+        
+        "${response}"
+        
+        Keep:
+        - Character's physical appearance (face, hair, body)
+        - Main pose/action requested
+        - Key clothing/accessories
+        
+        Remove:
+        - Excessive descriptive words
+        - Redundant details
+        - Overly complex backgrounds
+        
+        Return ONLY the shortened prompt, no explanations.`
+      }
+    ];
+    
+    const shortenedResponse = await generateCompletion(shortenMessages, 500, nsfw ? 'deepseek' : 'openai');
+    if (shortenedResponse && shortenedResponse.length <= 900) {
+      console.log(`[createPrompt] Successfully shortened to ${shortenedResponse.length} characters`);
+      return shortenedResponse.replace(/['"]+/g, '');
+    }
+    
+    // If still too long, truncate to 900 characters
+    console.log(`[createPrompt] Truncating to 900 characters as fallback`);
+    return response.substring(0, 900);
+  }
+  
+  console.log(`[createPrompt] Generated prompt: ${response.length} characters`);
+  return response;
 }
 
 module.exports = {

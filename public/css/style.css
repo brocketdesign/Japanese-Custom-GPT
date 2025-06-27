@@ -1993,12 +1993,13 @@ opacity: 0.8;
   box-shadow: 0 2px 8px rgba(0,123,255,0.08);
 }
 
-.prompt-card.inactive {
+.prompt-card.inactive, .gift-card.inactive {
   opacity: 0.5;
 }
-.prompt-card.inactive .custom-badge {
+.prompt-card.inactive .custom-badge, .gift-card.inactive .custom-badge {
   display: none;
 }
+
 .prompt-card.active {
   opacity: 1;
   pointer-events: auto;

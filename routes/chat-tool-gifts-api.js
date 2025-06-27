@@ -1,4 +1,5 @@
 const { checkUserAdmin, handleFileUpload } = require('../models/tool');
+const { getUserPoints } = require('../models/user-points-utils'); // Import getUserPoints
 
 async function routes(fastify, options) {
   
@@ -82,6 +83,43 @@ async function routes(fastify, options) {
     } catch (error) {
       console.error('Error fetching gift:', error);
       reply.status(500).send({ success: false, message: 'Error fetching gift' });
+    }
+  });
+  
+  // Get Gift Status for a specific user (avoids conflict with /:id)
+  fastify.get('/api/gifts/user-status/:userId', async (request, reply) => {
+    try {
+      const { userId } = request.params;
+      const db = fastify.mongo.db;
+
+      if (!fastify.mongo.ObjectId.isValid(userId)) {
+        return reply.status(400).send({ error: 'Invalid user ID' });
+      }
+
+      // Get user's current points balance
+      const userPoints = await getUserPoints(db, userId);
+      
+      // Get all available gifts
+      const allGifts = await db.collection('gifts').find({}).sort({order: 1, _id: -1}).toArray();
+
+      // Determine which gifts the user can afford
+      const giftsWithAccess = allGifts.map(gift => {
+        const cost = gift.cost || 0;
+        return {
+          _id: gift._id,
+          cost: cost,
+          canAfford: userPoints >= cost
+        };
+      });
+
+      reply.send({
+        userPoints: userPoints,
+        gifts: giftsWithAccess
+      });
+
+    } catch (error) {
+      console.error('Error fetching gifts status for user:', error);
+      reply.status(500).send({ success: false, message: 'Error fetching gifts status' });
     }
   });
   

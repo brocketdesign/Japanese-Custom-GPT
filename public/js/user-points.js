@@ -102,6 +102,11 @@ class UserPointsManager {
           $('.user-points-balance').removeClass('points-updated');
         }, 600);
 
+        // Update prompts
+        if (window.promptManager) {
+            window.promptManager.update(this.currentUser._id);
+        }
+
         // Update user object
         if (window.user) {
           window.user.points = data.points;

@@ -1,4 +1,7 @@
 {
+  "insufficient_coins": "You do not have enough coins",
+  "need_coins": "You need at least {coins} coins to perform this action",
+  "have_coins": "You currently have {coins} coins",
   "footer_info": "Points are updated in real-time",
   "claim_bonus": "Claim Daily Bonus",
   "bonus_already_claimed": "Already Claimed",

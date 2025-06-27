@@ -213,7 +213,6 @@ class WebSocketUserPointsHandler {
    */
   handleRefreshUserPoints(notification) {
     const { userId } = notification;
-    
     // Only refresh for the current user
     if (userId === window.user._id || !userId) { // Allow refresh for all users if no userId specified
       // Refresh points display

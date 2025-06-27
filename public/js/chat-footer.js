@@ -110,10 +110,6 @@ $(document).ready(function() {
             
             // Define category configuration with emojis and translations
             const categoryConfig = {
-                images: {
-                    emoji: '📸',
-                    title: translations.suggestions?.images || 'Images'
-                },
                 chat: {
                     emoji: '💬',
                     title: translations.suggestions?.chat || 'Chat'
@@ -121,10 +117,6 @@ $(document).ready(function() {
                 feelings: {
                     emoji: '💭',
                     title: translations.suggestions?.feelings || 'Feelings'
-                },
-                scenarios: {
-                    emoji: '🎭',
-                    title: translations.suggestions?.scenarios || 'Scenarios'
                 }
             };
             
@@ -160,7 +152,7 @@ $(document).ready(function() {
             
             // Add click handlers with removal and tracking
             $('.suggestion-card').on('click', function() {
-                const suggestion = $(this).data('suggestion');
+                const suggestion = $(this).find('.suggestion-text').text().trim();
                 const $card = $(this);
                 
                 // Add to used suggestions

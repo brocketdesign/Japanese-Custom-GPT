@@ -230,14 +230,16 @@ $(document).ready(async function() {
         sendMessage(customMessage, displayStatus, true);
     }
     window.sendMessage = function(customMessage, displayStatus = true, image_request = false) {
-
-        hidePrompts();
+        
+        if (window.promptManager) {
+            window.promptManager.hide();
+        }
+        
         $('#startButtonContained, #introChat').hide();
         $('#gen-ideas').removeClass('done');
         
     
         const cleanup = () => {
-            removePromptFromMessage();
             setTimeout(() => {
                 $('#userMessage').val('')
                     .attr('placeholder', window.translations.sendMessage);
@@ -262,87 +264,6 @@ $(document).ready(async function() {
     $(document).on('click','#unlock-result',function(){
         promptForEmail()
     })
-
-        // Function to initialize the custom prompt (deactivate the ones that are not in the userChat but the first one)
-        async function initializeCustomPrompts(userChatId) {
-            try {
-            // If user is not temporary and has subscription, activate all prompts
-            if (!isTemporary && subscriptionStatus) {
-                const $allPrompts = $('.prompt-card');
-                if ($allPrompts.length > 0) {
-                $allPrompts.addClass('active').removeClass('inactive');
-                }
-                updatePromptActivatedCounter();
-                return;
-            }
-
-            // Fetch the array of custom prompt IDs for this userChat
-            const res = await fetch(`/api/custom-prompts/${userChatId}`);
-            if (!res.ok) {
-                // Fallback: if fetch fails, try to activate the first prompt card if any
-                const $allPrompts = $('.prompt-card');
-                if ($allPrompts.length > 0) {
-                $allPrompts.removeClass('active').addClass('inactive');
-                $allPrompts.first().addClass('active').removeClass('inactive');
-                }
-                updatePromptActivatedCounter();
-                return;
-            }
-            const promptIds = await res.json(); // promptIds can be null or an array
-
-            const $customPrompts = $('.prompt-card');
-            if ($customPrompts.length === 0) {
-                updatePromptActivatedCounter();
-                return;
-            }
-
-            // Deactivate all prompts initially
-            $customPrompts.removeClass('active').addClass('inactive');
-
-            if (!promptIds || promptIds.length === 0) {
-                // Case 1: promptIds is empty or null
-                // Activate only the first card
-                $customPrompts.first().addClass('active').removeClass('inactive');
-            } else {
-                // Case 2: promptIds is not empty
-                let lastActivatedIndex = -1;
-
-                $customPrompts.each(function(index) {
-                const promptId = $(this).data('id');
-                if (promptIds.includes(promptId)) {
-                    $(this).addClass('active').removeClass('inactive');
-                    if (index > lastActivatedIndex) {
-                       lastActivatedIndex = index;
-                    }
-                }
-                });
-                
-                // After activating all prompts from promptIds, find the actual last one that was set to active
-                let maxIndexFromPromptIds = -1;
-                $customPrompts.each(function(index){
-                if(promptIds.includes($(this).data('id'))){
-                    if(index > maxIndexFromPromptIds){
-                    maxIndexFromPromptIds = index;
-                    }
-                }
-                });
-
-                // Activate the next card after the last one found in promptIds
-                if (maxIndexFromPromptIds !== -1 && maxIndexFromPromptIds + 1 < $customPrompts.length) {
-                $($customPrompts[maxIndexFromPromptIds + 1]).addClass('active').removeClass('inactive');
-                }
-            }
-            } catch (e) {
-            // Fallback in case of other errors: try to activate the first prompt card if any
-            const $allPromptsOnError = $('.prompt-card');
-            if ($allPromptsOnError.length > 0) {
-                $allPromptsOnError.removeClass('active').addClass('inactive');
-                $allPromptsOnError.first().addClass('active').removeClass('inactive');
-            }
-            }
-
-            updatePromptActivatedCounter();
-        }
 
     async function checkBackgroundTasks(chatId, userChatId) {
         try {
@@ -470,11 +391,15 @@ $(document).ready(async function() {
 
         updateParameters(chatId, fetch_userId, userChatId);
         showChat();
-        initializeCustomPrompts(userChatId)
 
-        // Add gift initialization
-        if (window.initializeGiftPermissions) {
-            window.initializeGiftPermissions(userChatId);
+        // Update custom prompts using the new PromptManager
+        if (window.promptManager && fetch_userId) {
+            window.promptManager.update(fetch_userId);
+        }
+
+        // Update gift permissions using the new GiftManager
+        if (window.giftManager && fetch_userId) {
+            window.giftManager.update(fetch_userId);
         }
 
         $('.fullscreen-overlay').fadeOut(); 
@@ -1564,84 +1489,8 @@ function setupChatInterface(chat, character) {
             callback();
         }
     };       
-    // Helper function to hide and show #promptContainer using the 'visible' class
-    function showPrompts() {
-        $('#promptContainer').hide().addClass('visible').slideDown('fast');
-        $('#suggestions').removeClass('d-flex').hide();
-    }
-    function hidePrompts() {
-        $('#promptContainer').removeClass('visible').slideUp('fast');
-        $('#suggestions').addClass('d-flex').show();
-        removePromptFromMessage();
-    }
 
-    // Click handler for #showPrompts
-    $(document).off('click', '#showPrompts').on('click', '#showPrompts', function() {
-        const $promptContainer = $('#promptContainer');
-        if ($promptContainer.hasClass('visible')) {
-            hidePrompts();
-        } else {
-            showPrompts();
-        }
-    });
-      
-    $('#close-promptContainer').on('click', function() {
-        hidePrompts();
-    });
-    $(document).off('click', '.prompt-card').on('click', '.prompt-card', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
 
-        if ($(this).hasClass('inactive')) {
-            if (isTemporary || !subscriptionStatus) {
-                loadPlanPage();
-            }
-            return;
-        }
-
-        if ($(this).hasClass('active')) {
-            $('.prompt-card').removeClass('selected');
-            $(this).addClass('selected');
-
-            var promptId = $(this).data('id');
-            var imageNsfw = $(this).data('nsfw') ? 'nsfw' : 'sfw';
-            const imagePreview = new URL($(this).find('img').attr('data-src') || $(this).find('img').attr('src'), window.location.origin).href;
-
-            sendPromptImageDirectly(promptId, imageNsfw, imagePreview);
-            hidePrompts();
-        }
-    });
-
-    function sendPromptImageDirectly(promptId, imageNsfw, imagePreview) {
-        const placeholderId = new Date().getTime() + "_" + promptId;
-        displayOrRemoveImageLoader(placeholderId, 'show', imagePreview);
-        novitaImageGeneration(userId, chatId, userChatId, { placeholderId, imageNsfw, promptId, customPrompt: true })
-            .then(data => {
-                if (data.error) displayOrRemoveImageLoader(placeholderId, 'remove');
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                displayOrRemoveImageLoader(placeholderId, 'remove');
-            });
-    }
-    // Add the prompt image to the #userMessage textarea and update the value
-    function addPromptToMessage(id, imageNsfw, imagePreview) {
-        const userMessage = $('#userMessage');
-        userMessage.css('background-image', `url(${imagePreview})`);
-        userMessage.addClass('prompt-image');
-        userMessage.attr('data-prompt-id', id);
-        userMessage.attr('data-nsfw', imageNsfw);
-        userMessage.attr('placeholder', translations.customPromptPlaceholder);
-    }
-
-    function removePromptFromMessage() {
-        const userMessage = $('#userMessage');
-        userMessage.css('background-image', 'none');
-        userMessage.removeClass('prompt-image');
-        userMessage.removeAttr('data-prompt-id');
-        userMessage.removeAttr('data-nsfw');
-        userMessage.attr('placeholder', translations.sendMessage); 
-    }
     
   // Fetch the user's IP address and generate a unique ID
     function appendHeadlineCharacterByCharacter($element, headline, callback) {

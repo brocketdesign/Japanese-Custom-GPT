@@ -45,15 +45,6 @@ async function routes(fastify, options) {
       console.log(`[generate-img] userMinImage: ${userMinImage}, image_num: ${image_num}`);
       image_num = Math.max(image_num || 1, userMinImage || 1); // Ensure at least 1 image is requested and respect user setting
 
-      // Charge points for image generation
-      const cost = 10 * image_num; // Define the cost of generating an image
-      console.log(`[generate-img] Cost for image generation: ${cost} points`);
-      try {
-        await removeUserPoints(db, userId, cost, translations.points?.deduction_reasons?.image_generation || 'Image generation', 'image_generation', fastify);
-      } catch (error) {
-        console.error('Error deducting points:', error);
-        return reply.status(500).send({ error: 'Error deducting points for image generation.' });
-      }
 
       let newPrompt = prompt
       if(customPrompt && promptId){
@@ -82,16 +73,6 @@ async function routes(fastify, options) {
         
         const imageDescription = await checkImageDescription(db, chatId);
         newPrompt = await createPrompt(customPrompt, imageDescription, nsfw);
-        // Prompt must be shorter than 900 characters
-        if (newPrompt.length > 900) {
-          console.log('[generate-img] Prompt is too long, shortening it...');
-          const shorterPrompt = await createPrompt(customPrompt, imageDescription, nsfw)
-          if(shorterPrompt){
-            newPrompt = shorterPrompt.substring(0, 900);
-          }else{
-            newPrompt = newPrompt.substring(0, 900);
-          }
-        }
       } else if(giftId) {
         // New gift handling logic
         const giftData = await getGiftById(db, giftId);
@@ -120,16 +101,16 @@ async function routes(fastify, options) {
         let imageDescriptionResponse = await checkImageDescription(db, chatId);
         const imageDescription = imageDescriptionResponse.imageDescription
         newPrompt = !!imageDescription ? imageDescription + ',' + giftPrompt : giftPrompt;
-        newPrompt = await createPrompt(giftPrompt, imageDescription, false); // Assuming gifts are SFW by default
-        // Prompt must be shorter than 900 characters
-        if (newPrompt.length > 900) {
-          console.log('[generate-img] Gift prompt is too long, shortening it...');
-          const shorterPrompt = await createPrompt(giftPrompt, imageDescription, false)
-          if(shorterPrompt){
-            newPrompt = shorterPrompt.substring(0, 900);
-          }else{
-            newPrompt = newPrompt.substring(0, 900);
-          }
+        newPrompt = await createPrompt(giftPrompt, imageDescription, false);
+      } else {
+        // Charge points for image generation
+        const cost = 10 * image_num; // Define the cost of generating an image
+        console.log(`[generate-img] Cost for image generation: ${cost} points`);
+        try {
+          await removeUserPoints(db, userId, cost, translations.points?.deduction_reasons?.image_generation || 'Image generation', 'image_generation', fastify);
+        } catch (error) {
+          console.error('Error deducting points:', error);
+          return reply.status(500).send({ error: 'Error deducting points for image generation.' });
         }
       }
       let imageSeed = -1

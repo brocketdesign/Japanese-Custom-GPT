@@ -3,7 +3,8 @@ const slugify = require('slugify');
 const {
     checkImageRequest, 
     generateCompletion,
-    generatePromptSuggestions
+    generatePromptSuggestions,
+    createPrompt
 } = require('../models/openai')
 const { 
     checkImageDescription,
@@ -28,7 +29,7 @@ const {
     getVoiceSettings
 } = require('../models/chat-tool-settings-utils');
 const { getActiveSystemPrompt } = require('../models/system-prompt-utils');
-const { removeUserPoints } = require('../models/user-points-utils');
+const { removeUserPoints, getUserPoints } = require('../models/user-points-utils');
 
 const axios = require('axios');
 const OpenAI = require("openai");
@@ -344,7 +345,7 @@ async function routes(fastify, options) {
       
     fastify.post('/api/chat/add-message', async (request, reply) => {
         const { chatId, userChatId, role, message, image_request } = request.body;
-        console.log('[/api/chat/add-message] Adding message to chat:', { chatId, userChatId, role, message });
+
         try {
             const collectionUserChat = fastify.mongo.db.collection('userChat');
             let userData = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(userChatId) });
@@ -695,7 +696,7 @@ async function routes(fastify, options) {
           const isAdmin = await checkUserAdmin(fastify, userId);
           const chatDocument = await getChatDocument(request, db, chatId);
           const chatDescription = chatDataToString(chatDocument); // Use for text generation
-          const characterDescription = checkImageDescription(db, chatId, chatDocument); // Use for image generation
+          const characterDescription = await checkImageDescription(db, chatId, chatDocument); // Use for image generation
           const language = getLanguageName(userInfo.lang)
 
           const userMessages = userData.messages
@@ -727,10 +728,21 @@ async function routes(fastify, options) {
 
           // Use conversation analysis to detect image requests if not explicitly set
           if (currentUserMessage?.image_request && !currentUserMessage?.promptId && currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context') {
-            console.log(`[/api/openai-chat-completion] Checking for image request in conversation analysis...`);    
-            genImage = await checkImageRequest(userData.messages)
+            //console.log(`[/api/openai-chat-completion] Checking for image request in conversation analysis...`);    
+            //genImage = await checkImageRequest(userData.messages)
+            genImage.image_request = true; // Set image request to true if detected
+            genImage.canAfford = true; // Assume user can afford image generation unless proven otherwise
+            genImage.image_num = 1; // Default to 1 image unless specified otherwise
+            // Charge points for image generation
+            const cost = 10; // Define the cost of generating an image
+            console.log(`[openai-chat-completion] Cost for image generation: ${cost} points`);
+            try {
+                await removeUserPoints(db, userId, cost, request.translations.points?.deduction_reasons?.image_generation || 'Image generation', 'image_generation', fastify);
+            } catch (error) {
+                genImage.canAfford = false; // Set to false if points deduction fails
+            }
           }
-      
+
           if(currentUserMessage?.image_request && currentUserMessage.promptId && customPromptData){
             genImage.nsfw = customPromptData.nsfw == 'on' ? true : false
             genImage.image_num = 1
@@ -770,42 +782,48 @@ async function routes(fastify, options) {
           if (genImage?.image_request) {
             currentUserMessage.image_request = true
             userData.messages[lastMsgIndex] = currentUserMessage
-            const all_tasks =  await getTasks(db,null, userId);
-            if(userInfo.subscriptionStatus == 'active' || (userInfo.subscriptionStatus !== 'active' && all_tasks.length < 5)){
-                const imageId = Math.random().toString(36).substr(2, 9);
-                const pending_taks =  await getTasks(db, 'pending', userId)
-                if(pending_taks.length > 5 && !isAdmin){
-                  fastify.sendNotificationToUser(userId, 'showNotification', { message:request.translations.too_many_pending_images , icon:'warning' });
-                }else{
-                    fastify.sendNotificationToUser(userId, 'addIconToLastUserMessage')
-      
-                    const image_num = Math.min(Math.max(genImage?.image_num || 1, 1), 8);
-                    for (let i = 0; i < image_num; i++) {
-                        fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'show' })
-                    }
-                    genImagePromptFromChat(chatDocument, characterDescription, userData.messages, genImage, language)
-                        .then(async(promptData) => {
-                        let prompt = promptData.prompt.replace(/(\r\n|\n|\r)/gm, " ").trim();
-                        console.log(`[/api/openai-chat-completion] Generated prompt: ${prompt}`);
-                        processPromptToTags(db,prompt);
+            if(genImage.canAfford) {
+                const all_tasks =  await getTasks(db,null, userId);
+                if(userInfo.subscriptionStatus == 'active' || (userInfo.subscriptionStatus !== 'active' && all_tasks.length < 5)){
+                    const imageId = Math.random().toString(36).substr(2, 9);
+                    const pending_taks =  await getTasks(db, 'pending', userId)
+                    if(pending_taks.length > 5 && !isAdmin){
+                    fastify.sendNotificationToUser(userId, 'showNotification', { message:request.translations.too_many_pending_images , icon:'warning' });
+                    }else{
+                        fastify.sendNotificationToUser(userId, 'addIconToLastUserMessage')
+        
+                        const image_num = Math.min(Math.max(genImage?.image_num || 1, 1), 8);
+                        for (let i = 0; i < image_num; i++) {
+                            fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'show' })
+                        }
                         const imageType = genImage.nsfw ? 'nsfw' : 'sfw'
-                        const aspectRatio = null
-                        generateImg({prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, chatCreation:false, placeholderId:imageId, translations:request.translations , fastify})
-                        .then((response) => {
-                        }).catch((error) => {
-                            console.log('error:', error);
-                        });
-                    })
-                    imgMessage[0].content = `\n\nYou are preparing an image for me.\n Do no describe the image. Stay in your character, keep the same tone as previously. Chat on the subject. Respond in the language we were talking until now.`.trim()
+                        createPrompt(lastUserMessage.content, characterDescription, imageType)
+                            .then(async(promptResponse) => {
+                            let prompt = promptResponse.replace(/(\r\n|\n|\r)/gm, " ").trim();
+                            console.log(`[/api/openai-chat-completion] Generated prompt: ${prompt}`);
+                            processPromptToTags(db,prompt);
+                            const aspectRatio = null
+                            generateImg({prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, chatCreation:false, placeholderId:imageId, translations:request.translations , fastify})
+                            .then((response) => {
+                            }).catch((error) => {
+                                console.log('error:', error);
+                            });
+                        })
+                        imgMessage[0].content = `\n\nYou are preparing an image for me.\n Do no describe the image. Stay in your character, keep the same tone as previously. Chat on the subject. Respond in the language we were talking until now.`.trim()
+                        currentUserMessage.name = 'context'
+                    }
+                
+                }else{
+                    genImage.image_request = false
+                    imgMessage[0].content = `\n\n I asked for an other image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premium in order to receive unlimited images, even hot images. Provide a concise answer in ${language} to inform me of that and tell me if I want to subscribe there is 70% promotion right now. Stay in your character, keep the same tone as previously.  Respond in the language we were talking until now.`.trim();
                     currentUserMessage.name = 'context'
                 }
-               
-            }else{
+            } else {
                 genImage.image_request = false
-                imgMessage[0].content = `\n\n I asked for an other image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premium in order to receive unlimited images, even hot images. Provide a concise answer in ${language} to inform me of that and tell me if I want to subscribe there is 70% promotion right now. Stay in your character, keep the same tone as previously.  Respond in the language we were talking until now.`.trim();
+                imgMessage[0].content = `\n\n I asked for an other image but I do not have enough points.\n Tell me that I need to earn more points by chatting with you or by subscribing to Lamix Premium in order to receive unlimited images, even hot images. Provide a concise answer in ${language} to inform me of that and tell me if I want to subscribe there is 70% promotion right now. Stay in your character, keep the same tone as previously.  Respond in the language we were talking until now.`.trim();
                 currentUserMessage.name = 'context'
             }
-      
+
             messagesForCompletion = [
               ...systemMsg,
               ...userMessages,
@@ -1094,117 +1112,6 @@ async function routes(fastify, options) {
             });
         }
     });
-
-    async function generateEnglishDescription(options) {
-        const { lastMessages, characterDescription, command, gender } = options;
-        // Convert lastMessages to a dialogue string
-        const dialogue = lastMessages
-        .map(msg => msg.content)
-        .join("\n")
-        .replace(/^\s+/gm, '').trim();
-
-        if(dialogue.trim() == ''){
-            console.log('Must provide a dialogue')
-            return
-        }
-        let imageInstructionMessage = generateImagePrompt({command, characterDescription, gender, dialogue});
-        imageInstructionMessage = sanitizeMessages(imageInstructionMessage)
-
-        const completionMessage = await generateCompletion(imageInstructionMessage, 600, 'mistral')
-
-        return completionMessage;
-    }
-
-    const generateImagePrompt = (options) => {
-        const { command, characterDescription, gender, dialogue } = options;
-        
-        const systemMessage = `
-        You are a ${command.nsfw ? 'NSFW' : 'SFW'} image prompt specialist. 
-        
-        Output rules:
-        1. Use ${command.nsfw ? 'explicit anatomical terms' : 'clinical descriptors'}
-        2. ${command.nsfw ? 'Include erotic elements' : 'Maintain professional tone'}
-        
-        Required format:
-         
-        1. Include the original character features (hair, eyes, skin, etc.). Omit any unnecessary details.
-
-        2. Focus on the new request (pose, attire, environment, etc.).
-        
-        ${command.nsfw ? `
-        3. Sexualized Body Specifications
-    
-            Frame Type: (petite/athletic/voluptuous/obese + muscle tone: toned/soft/ripped)
-            ${gender === 'female' ? `
-            Breasts: (cup size: AA-K + shape: teardrop/saggy/perky + areola diameter/cm + nipple: erect/flat/inverted)
-            Ass: (size: flat/bubble/jiggling + shape: heart/round/square + cleft depth)
-            Hips: (width cm/inches + hip-to-waist ratio)
-            Genitalia: (pubic hair: trimmed/bushy/bare + labia/clitoral visibility)` : 
-            gender === 'male' ? `
-            Chest: (muscle definition: defined/soft + hair: none/trimmed/hairy)
-            Ass: (size: flat/bubble/jiggling + shape: heart/round/square)
-            Genitalia: (pubic hair: trimmed/bushy/bare + girth/length/cut status)` : ''}
-        ` : `
-        3. Normal Body Specifications
-    
-            Body Type: (petite/athletic/voluptuous/obese + muscle tone: toned/soft/ripped)
-            ${gender === 'female' ? 'Breasts: (cup size: AA-K + shape: teardrop/saggy/perky)' : 
-            gender === 'male' ? 'Chest: (muscle definition: defined/soft)' : ''}
-        `}
-    
-        4. Aesthetic Enhancers
-    
-            Body Art: (tattoo locations/designs + piercings: nipples/genital/face)
-            Attire: (${command.nsfw ? 'nude/lingerie/bdsm gear' : 'professional/casual'} + material: lace/leather/see-through)
-            Environment: (bedroom/dungeon/outdoor + lighting: neon/candlelit/harsh)
-    
-        ${command.nsfw ? `
-        5. NSFW Context
-    
-            Pose: (missionary/doggy/bent over + explicit anatomical focus)
-            Fluids: (sweat/semen/lubricant presence + glistening details)
-            Fetish Elements: (bondage toys/gags/roleplay scenario descriptors)
-        ` : ''}
-    
-        ${command.customPose ? `Specific pose to represent : ${command.customPose}` : ''}
-    
-        Keep within 900 characters. 
-        Be specific and concise. Omit any unnecessary details.
-        Avoid annotations. 
-        Return a list of keywords.
-        `.replace(/^\s+/gm, '').trim();
-    
-        return [
-            { role: "system", content: systemMessage },
-            { role: "user", content: `Original character description: ${characterDescription}` },
-            { role: "user", content: `New request: ${dialogue}\n` },
-            { role: 'user', content: `Incorporate: ${command.customPose || 'standard pose'}`}
-        ];
-    };
-
-    async function genImagePromptFromChat(chatDocument, characterDescription, messages, command, language) {
-        const lastMessages = messages
-            .filter(m => m.content && m.role == 'user' && !m.content.startsWith('['))
-            .slice(-1);
-
-        if (lastMessages.length < 1) {
-            throw new Error('Insufficient messages');
-        }
-        
-        const englishDescription = await generateEnglishDescription({lastMessages, characterDescription, command, gender: chatDocument.gender});
-
-        function processString(input) { 
-            try {
-                return [...new Set(input.slice(0, 900).split(',').map(s => s.trim()))].join(', '); 
-            } catch (error) {
-                console.error('Error processing string:', error);
-                console.log({input})
-                return input;
-            }
-        }
-        finalDescription = processString(englishDescription);
-        return { prompt: finalDescription };
-    }
 
     fastify.post('/api/generate-completion', async (request, reply) => {
         const { systemPrompt, userMessage } = request.body;
@@ -2144,31 +2051,43 @@ async function routes(fastify, options) {
         }
     });
 
-    fastify.get('/api/custom-prompts/:userChatId', async (request, reply) => {
+    fastify.get('/api/custom-prompts/:userId', async (request, reply) => {
         try {
-            const { userChatId } = request.params;
+            const { userId } = request.params;
 
-            if (!userChatId || !ObjectId.isValid(userChatId)) {
-                console.log('[GET /api/custom-prompts/:userChatId] Invalid userChatId provided.');
-                return reply.status(400).send({ error: 'Invalid userChatId provided.' });
+            if (!fastify.mongo.ObjectId.isValid(userId)) {
+                return reply.status(400).send({ error: 'Invalid user ID format' });
             }
 
-            const collectionUserChat = fastify.mongo.db.collection('userChat');
-            const userChatDocument = await collectionUserChat.findOne(
-                { _id: new fastify.mongo.ObjectId(userChatId) },
-                { projection: { customPromptIds: 1 } }
-            );
+            // Use the imported getUserPoints utility function
+            const userPoints = await getUserPoints(fastify.mongo.db, userId);
 
-            if (!userChatDocument) {
-                console.log('[GET /api/custom-prompts/:userChatId] User chat not found.');
-                return reply.status(404).send({ error: 'User chat not found.' });
-            }
+            // Get all custom prompts from the database
+            const customPrompts = await fastify.mongo.db.collection('prompts')
+                .find({})
+                .sort({ order: 1 })
+                .toArray();
 
-            reply.send(userChatDocument.customPromptIds || []);
+            // Determine which prompts the user can afford
+            const promptsWithAccess = customPrompts.map(prompt => {
+                const cost = prompt.cost || 0; // Default cost to 0 if not set
+                const canAfford = userPoints >= cost;
+
+                return {
+                    promptId: prompt._id.toString(),
+                    cost: cost,
+                    canAfford: canAfford
+                };
+            });
+
+            return reply.send({
+                userPoints: userPoints,
+                prompts: promptsWithAccess
+            });
 
         } catch (error) {
-            console.error('[GET /api/custom-prompts/:userChatId] Error fetching custom prompts:', error);
-            reply.status(500).send({ error: 'Internal Server Error' });
+            console.error('Error fetching custom prompts:', error);
+            return reply.status(500).send({ error: 'Internal server error while fetching custom prompts' });
         }
     });
 }

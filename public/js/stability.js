@@ -9,6 +9,12 @@ setInterval(() => {
 
 // Generate Image using Novita
 window.novitaImageGeneration = async function(userId, chatId, userChatId, option = {}) {
+    // Validate essential parameters
+    if (!userId || !chatId || !userChatId) {
+        console.error('Missing essential parameters for image generation:', { userId, chatId, userChatId });
+        return;
+    }
+    
     if (activeGenerations > MAX_CONCURRENT_GENERATIONS && user.role !== 'admin') {
         showNotification(translations.image_generation_soft_limit.replace('%{interval}%',parseInt(RESET_INTERVAL)/1000), 'warning');
         return;

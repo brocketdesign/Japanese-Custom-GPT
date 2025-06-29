@@ -20,6 +20,7 @@ class UserPointsManager {
     this.updatePointsDisplay();
     this.checkDailyBonus();
     this.initializeAudioPool();
+    this.checkAndShowDailyRewardsCalendar();
   }
 
   /**
@@ -80,6 +81,19 @@ class UserPointsManager {
     // Initialize audio context on any user interaction
     $(document).one('click', async () => {
       await this.initAudioContext();
+    });
+
+    // Daily rewards calendar modal events
+    $(document).on('click', '.reward-day.today', (e) => {
+      const $day = $(e.currentTarget);
+      if ($day.hasClass('today') && !$day.hasClass('claimed')) {
+        $('#claimTodaysReward').trigger('click');
+      }
+    });
+    
+    // Change to bind the event only once per modal instance
+    $('#dailyRewardsModal').one('show.bs.modal', () => {
+      this.loadDailyRewardsCalendar();
     });
   }
 
@@ -874,7 +888,7 @@ class UserPointsManager {
             <div class="reward-icon-container">
               <i class="bi bi-star-fill reward-star star-1"></i>
               <i class="bi bi-star-fill reward-star star-2"></i>
-              <i class="bi bi-star-fill reward-star star-3"></i>
+              <i class="bi bi-star-fill reward-star-3"></i>
               <div class="reward-main-icon">
                 ${isMilestone ? '<i class="bi bi-trophy-fill"></i>' : mainIcon}
               </div>
@@ -1208,6 +1222,259 @@ class UserPointsManager {
     
     this.showSpecialRewardNotification(mockMilestoneData);
   }
+  /**
+   * Load and display daily rewards calendar
+   */
+  async loadDailyRewardsCalendar(showModal = true) {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/daily-rewards-calendar`);
+      const data = await response.json();
+      
+      if (data.success) {
+        this.renderDailyRewardsStreak(data.streak, data.user);
+        
+        // Show the modal only if requested
+        if (showModal) {
+          const modal = new bootstrap.Modal(document.getElementById('dailyRewardsModal'));
+          modal.show();
+        }
+      } else {
+        console.error('Failed to load daily rewards streak:', data.error);
+      }
+    } catch (error) {
+      console.error('Error loading daily rewards streak:', error);
+    }
+  }
+
+  /**
+   * Render the daily rewards streak visualization
+   */
+  renderDailyRewardsStreak(streak, user) {
+    const $grid = $('#rewardsCalendarGrid');
+    const $streakCount = $('.streak-count');
+    const $nextRewardAmount = $('.reward-amount');
+    const $todaysRewardSection = $('#todaysRewardSection');
+    const $todaysRewardAmount = $('#todaysRewardAmount');
+    const $todaysRewardBonus = $('#todaysRewardBonus');
+    
+    // Update streak display
+    $streakCount.text(user.currentStreak || 0);
+    
+    // Find current claimable reward
+    const currentReward = streak.days.find(r => r.canClaim);
+    const nextReward = streak.days.find(r => r.status === 'future') || streak.days[streak.days.length - 1];
+    
+    let nextRewardPoints = nextReward ? nextReward.points : 15;
+    $nextRewardAmount.text(nextRewardPoints);
+    
+    if (currentReward) {
+      // Show today's reward section
+      $todaysRewardAmount.text(currentReward.points);
+      
+      // Build bonus text
+      let bonusText = '';
+      if (currentReward.isWeeklyMilestone) {
+        bonusText += '🏆 Weekly Milestone! ';
+      }
+      if (currentReward.isFinalMilestone) {
+        bonusText += '👑 30-Day Champion! ';
+      }
+      if (user.currentStreak > 0) {
+        bonusText += `🔥 Day ${currentReward.day} streak!`;
+      }
+      
+      $todaysRewardBonus.text(bonusText);
+      $todaysRewardSection.show();
+    } else {
+      $todaysRewardSection.hide();
+    }
+    
+    // Render streak grid
+    let gridHtml = '';
+    
+    streak.days.forEach(day => {
+      let cardClass = 'streak-day';
+      let iconClass = 'bi bi-gift';
+      let iconColor = '#6c757d';
+      
+      if (day.status === 'completed') {
+        cardClass += ' completed';
+        iconClass = 'bi bi-check-circle-fill';
+        iconColor = '#28a745';
+      } else if (day.status === 'current' && day.canClaim) {
+        cardClass += ' current';
+        iconClass = 'bi bi-star-fill';
+        iconColor = '#ffd700';
+      } else if (day.status === 'future') {
+        cardClass += ' future';
+        iconClass = 'bi bi-gift';
+        iconColor = '#6c757d';
+      }
+      
+      // Add special indicators
+      let bonusIndicator = '';
+      if (day.isFinalMilestone) {
+        bonusIndicator = '<div class="streak-bonus-indicator final">👑</div>';
+      } else if (day.isWeeklyMilestone) {
+        bonusIndicator = '<div class="streak-bonus-indicator weekly">🏆</div>';
+      }
+      
+      gridHtml += `
+        <div class="${cardClass}" data-day="${day.day}" data-points="${day.points}">
+          ${bonusIndicator}
+          <div class="streak-day-number">${day.day}</div>
+          <i class="${iconClass} streak-icon" style="color: ${iconColor};"></i>
+          <div class="streak-points">+${day.points}<br><small>points</small></div>
+        </div>
+      `;
+    });
+    
+    $grid.html(gridHtml);
+    
+    // Bind claim event
+    this.bindDailyRewardClaimEvent();
+  }
+
+  /**
+   * Debug function to show daily rewards streak data
+   */
+  debugShowRewardsCalendar() {
+    if (!this.currentUser || this.currentUser.isTemporary) {
+      console.log('❌ No valid user found');
+      return;
+    }
+    
+    console.log('🔍 Debug: Loading daily rewards streak...');
+    
+    fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/daily-rewards-calendar`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          console.log('✅ Streak data loaded successfully');
+          console.log('🔥 Streak Info:', {
+            currentStreak: data.streak.currentStreak,
+            maxStreak: data.streak.maxStreak,
+            totalDays: data.streak.days.length
+          });
+          
+          console.log('👤 User Info:', {
+            currentStreak: data.user.currentStreak,
+            canClaimToday: data.user.canClaimToday,
+            lastBonus: data.user.lastBonus,
+            totalPoints: data.user.totalPoints
+          });
+          
+          console.log('📊 Streak Days (first 10):');
+          console.table(data.streak.days.slice(0, 10).map(day => ({
+            day: day.day,
+            points: day.points,
+            status: day.status,
+            canClaim: day.canClaim,
+            isMilestone: day.isMilestone,
+            isWeeklyMilestone: day.isWeeklyMilestone,
+            isFinalMilestone: day.isFinalMilestone
+          })));
+          
+          // Show current claimable reward
+          const currentReward = data.streak.days.find(r => r.canClaim);
+          if (currentReward) {
+            console.log('🌟 Current Claimable Reward:', currentReward);
+          } else {
+            console.log('⚠️ No current claimable reward found');
+          }
+          
+          // Force show the modal for testing
+          this.renderDailyRewardsStreak(data.streak, data.user);
+          const modal = new bootstrap.Modal(document.getElementById('dailyRewardsModal'));
+          modal.show();
+          
+        } else {
+          console.error('❌ Failed to load streak:', data.error);
+        }
+      })
+      .catch(error => {
+        console.error('❌ Error loading streak:', error);
+      });
+  }
+
+  /**
+   * Bind the claim today's reward event
+   */
+  bindDailyRewardClaimEvent() {
+    $('#claimTodaysReward').off('click').on('click', async (e) => {
+      const $btn = $(e.target);
+      const originalText = $btn.html();
+      
+      $btn.prop('disabled', true).html(`
+        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+        ${this.translations.claiming || 'Claiming...'}
+      `);
+      
+      try {
+        const today = new Date();
+        const response = await fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/claim-daily-reward`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            day: today.getDate(),
+            month: today.getMonth(),
+            year: today.getFullYear()
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showNotification(`Daily reward claimed! +${data.pointsAwarded} points`, 'success');
+          await this.updatePointsDisplay();
+          $('#todaysRewardSection').hide();
+          await this.showDailyBonusNotification({
+            pointsAwarded: data.pointsAwarded,
+            currentStreak: data.currentStreak,
+            newBalance: data.newBalance
+          });
+        } else {
+          showNotification(data.message || 'Failed to claim reward', 'error');
+          $btn.prop('disabled', false).html(originalText);
+        }
+      } catch (error) {
+        console.error('Error claiming daily reward:', error);
+        showNotification('Error claiming reward', 'error');
+        $btn.prop('disabled', false).html(originalText);
+      }
+    });
+  }
+
+  /**
+   * Check and show daily rewards calendar once per day
+   */
+  async checkAndShowDailyRewardsCalendar() {
+    if (!this.currentUser || this.currentUser.isTemporary) return;
+    
+    const lastCalendarShown = localStorage.getItem(`lastDailyRewardsShown_${this.currentUser._id}`);
+    const today = new Date().toISOString().split('T')[0];
+
+    // Only show once per day per user
+    if (lastCalendarShown !== today) {
+      try {
+        // Check if user can claim today's reward
+        const response = await fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/daily-bonus-status`);
+        const data = await response.json();
+
+        if (data.success && data.canClaim) {
+          // Show the calendar modal
+          setTimeout(() => {
+            this.loadDailyRewardsCalendar();
+          }, 2000); // Delay 2 seconds after page load
+          
+          // Mark as shown for today
+          localStorage.setItem(`lastDailyRewardsShown_${this.currentUser._id}`, today);
+        }
+      } catch (error) {
+        console.error('Error checking daily rewards calendar:', error);
+      }
+    }
+  }
 }
 
 // Initialize points manager when DOM is ready
@@ -1266,6 +1533,12 @@ window.debugSpecialReward = () => {
 window.debugMilestoneReward = () => {
   if (window.userPointsManager) {
     window.userPointsManager.debugShowMilestoneRewardNotification();
+  }
+};
+
+window.debugRewardsCalendar = () => {
+  if (window.userPointsManager) {
+    window.userPointsManager.debugShowRewardsCalendar();
   }
 };
 //[DEBUG] End of global debug helpers

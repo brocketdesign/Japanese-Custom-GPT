@@ -429,6 +429,215 @@ async function routes(fastify, options) {
     }
   });
 
+  // Get daily rewards calendar data
+  fastify.get('/api/user-points/:userId/daily-rewards-calendar', async (request, reply) => {
+    try {
+      const { userId } = request.params;
+
+      // Check if user can access this data
+      if (request.user._id.toString() !== userId && !await checkUserAdmin(fastify, request.user._id)) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+
+      const usersCollection = fastify.mongo.db.collection('users');
+      const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+
+      if (!user) {
+        return reply.status(404).send({ error: 'User not found' });
+      }
+
+      const today = new Date();
+      const lastBonus = user.lastDailyBonus ? new Date(user.lastDailyBonus) : null;
+      const lastBonusDate = lastBonus ? new Date(Date.UTC(lastBonus.getUTCFullYear(), lastBonus.getUTCMonth(), lastBonus.getUTCDate())) : null;
+      const todayDate = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+      
+      const currentStreak = user.loginStreak || 0;
+      const canClaimToday = !lastBonusDate || lastBonusDate.getTime() !== todayDate.getTime();
+
+      // Generate 30-day streak data
+      const streakDays = [];
+      for (let day = 1; day <= 30; day++) {
+        // Calculate reward amount for each streak day
+        const baseReward = 10;
+        const streakBonus = Math.min(day, 10);
+        const milestoneBonus = (day % 7 === 0) ? 15 : 0; // Weekly milestone
+        const superMilestoneBonus = (day === 30) ? 50 : 0; // 30-day milestone
+        const rewardAmount = baseReward + streakBonus + milestoneBonus + superMilestoneBonus;
+
+        // Determine status
+        let status = 'future'; // Default
+        let canClaim = false;
+        
+        if (day <= currentStreak) {
+          status = 'completed';
+        } else if (day === currentStreak + 1 && canClaimToday) {
+          status = 'current';
+          canClaim = true;
+        }
+
+        const isMilestone = (day % 7 === 0) || day === 30;
+
+        streakDays.push({
+          day,
+          points: rewardAmount,
+          status, // 'completed', 'current', 'future'
+          canClaim,
+          isMilestone,
+          isWeeklyMilestone: day % 7 === 0,
+          isFinalMilestone: day === 30
+        });
+      }
+
+      return reply.send({
+        success: true,
+        streak: {
+          days: streakDays,
+          currentStreak,
+          maxStreak: 30
+        },
+        user: {
+          currentStreak,
+          canClaimToday,
+          lastBonus: user.lastDailyBonus,
+          totalPoints: user.points || 0
+        }
+      });
+    } catch (error) {
+      console.error('Error getting daily rewards streak:', error);
+      return reply.status(500).send({ 
+        success: false, 
+        error: 'Failed to get streak data' 
+      });
+    }
+  });
+
+  // Claim daily reward from calendar
+  fastify.post('/api/user-points/:userId/claim-daily-reward', async (request, reply) => {
+    try {
+      const { userId } = request.params;
+      const { day, month, year } = request.body;
+
+      // Check if user can access this
+      if (request.user._id.toString() !== userId) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+
+      // Validate that it's today's reward being claimed using UTC
+      const today = new Date();
+      const currentDay = today.getUTCDate();
+      const currentMonth = today.getUTCMonth();
+      const currentYear = today.getUTCFullYear();
+
+      if (day !== currentDay || month !== currentMonth || year !== currentYear) {
+        return reply.status(400).send({ 
+          success: false, 
+          error: 'Can only claim today\'s reward' 
+        });
+      }
+
+      // Use existing daily bonus claim logic
+      const result = await awardDailyLoginBonus(fastify.mongo.db, userId, fastify);
+
+      if (result.success) {
+        // Send WebSocket notification to user
+        if (fastify.sendNotificationToUser) {
+          fastify.sendNotificationToUser(userId, 'dailyRewardClaimed', {
+            userId,
+            pointsAwarded: result.pointsAwarded,
+            currentStreak: result.currentStreak,
+            newBalance: result.user.points,
+            day: currentDay
+          });
+        }
+
+        return reply.send({
+          success: true,
+          message: 'Daily reward claimed successfully',
+          pointsAwarded: result.pointsAwarded,
+          currentStreak: result.currentStreak,
+          newBalance: result.user.points,
+          day: currentDay,
+          nextReward: result.nextBonus
+        });
+      } else {
+        return reply.send({
+          success: false,
+          message: result.message,
+          nextReward: result.nextBonus
+        });
+      }
+    } catch (error) {
+      console.error('Error claiming daily reward:', error);
+      return reply.status(500).send({ 
+        success: false, 
+        error: error.message || 'Failed to claim daily reward' 
+      });
+    }
+  });
+
+  // Get upcoming rewards preview
+  fastify.get('/api/user-points/:userId/upcoming-rewards', async (request, reply) => {
+    try {
+      const { userId } = request.params;
+      const days = parseInt(request.query.days) || 7; // Get next 7 days by default
+
+      // Check if user can access this data
+      if (request.user._id.toString() !== userId && !await checkUserAdmin(fastify, request.user._id)) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+
+      const usersCollection = fastify.mongo.db.collection('users');
+      const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+
+      if (!user) {
+        return reply.status(404).send({ error: 'User not found' });
+      }
+
+      const today = new Date();
+      const currentStreak = user.loginStreak || 0;
+      const upcomingRewards = [];
+
+      // Calculate upcoming rewards using UTC
+      for (let i = 1; i <= days; i++) {
+        const futureDate = new Date(today);
+        futureDate.setUTCDate(today.getUTCDate() + i);
+        
+        const day = futureDate.getUTCDate();
+        const potentialStreak = currentStreak + i;
+        
+        // Calculate reward amount
+        const baseReward = 10;
+        const streakBonus = Math.min(Math.floor(potentialStreak / 2), 10) * 2;
+        const milestoneBonus = (day % 7 === 0) ? 15 : 0;
+        const weekendBonus = (futureDate.getUTCDay() === 0 || futureDate.getUTCDay() === 6) ? 5 : 0;
+        const rewardAmount = baseReward + streakBonus + milestoneBonus + weekendBonus;
+
+        upcomingRewards.push({
+          date: futureDate.toISOString().split('T')[0],
+          day: day,
+          points: rewardAmount,
+          streak: potentialStreak,
+          isWeekend: futureDate.getUTCDay() === 0 || futureDate.getUTCDay() === 6,
+          isMilestone: day % 7 === 0,
+          daysFromNow: i
+        });
+      }
+
+      return reply.send({
+        success: true,
+        currentStreak,
+        upcomingRewards,
+        totalUpcomingPoints: upcomingRewards.reduce((sum, reward) => sum + reward.points, 0)
+      });
+    } catch (error) {
+      console.error('Error getting upcoming rewards:', error);
+      return reply.status(500).send({ 
+        success: false, 
+        error: 'Failed to get upcoming rewards' 
+      });
+    }
+  });
+
   // Get points leaderboard
   fastify.get('/api/user-points/leaderboard', async (request, reply) => {
     try {

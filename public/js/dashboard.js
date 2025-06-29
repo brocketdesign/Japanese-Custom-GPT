@@ -966,15 +966,15 @@ function createOverlay(img, imageUrl) {
         .on('click', function (e) {
 
           e.stopPropagation();
-            $(img).attr('src', imageUrl).removeClass('img-blur');
-            
-            const imageId = $(img).attr('data-id');
-            const $imageTools = $(document).find(`.image-tools[data-id="${imageId}"]`);
-            
-            overlay.hide().removeClass('d-flex');
-            
-            // Display the image tools
-            $imageTools.show();
+          $(img).attr('src', imageUrl).removeClass('img-blur');
+          $(img).closest('.assistant-image-box ').removeClass('isBlurred');
+          const imageId = $(img).attr('data-id');
+          const $imageTools = $(document).find(`.image-tools[data-id="${imageId}"]`);
+          
+          overlay.hide().removeClass('d-flex');
+          
+          // Display the image tools
+          $imageTools.show();
         });
 
     overlay.append(badge, buttonElement);

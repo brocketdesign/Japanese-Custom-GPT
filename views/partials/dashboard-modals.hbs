@@ -472,3 +472,192 @@
         </div>
     </div>
 </div>
+
+<!-- Daily Rewards Calendar Modal -->
+<div class="modal fade" id="dailyRewardsModal" tabindex="-1" aria-labelledby="dailyRewardsModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content mx-auto">
+            <div class="modal-header daily-rewards-header">
+                <div class="d-flex align-items-center">
+                    <div class="daily-rewards-icon me-3">
+                        <i class="bi bi-fire text-warning fs-2"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title mb-0" id="dailyRewardsModalLabel">
+                            {{#if userPointsTranslations.points.daily_rewards_streak}}
+                                {{userPointsTranslations.points.daily_rewards_streak}}
+                            {{else}}
+                                30-Day Streak Challenge
+                            {{/if}}
+                        </h4>
+                        <small class="text-secondary opacity-75">
+                            {{#if userPointsTranslations.points.streak_subtitle}}
+                                {{userPointsTranslations.points.streak_subtitle}}
+                            {{else}}
+                                Login daily to build your streak and unlock bigger rewards!
+                            {{/if}}
+                        </small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-dark" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Current Streak Display -->
+                <div class="current-streak-banner">
+                    <div class="container-fluid p-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div class="streak-info">
+                                    <div class="streak-flame">
+                                        <i class="bi bi-fire text-warning fs-1"></i>
+                                        <span class="streak-count">0</span>
+                                    </div>
+                                    <div class="streak-text">
+                                        <h5 class="mb-1">
+                                            {{#if userPointsTranslations.points.current_streak}}
+                                                {{userPointsTranslations.points.current_streak}}
+                                            {{else}}
+                                                Current Streak
+                                            {{/if}}
+                                        </h5>
+                                        <p class="mb-0 text-muted">
+                                            {{#if userPointsTranslations.points.keep_streak_going}}
+                                                {{userPointsTranslations.points.keep_streak_going}}
+                                            {{else}}
+                                                Keep your daily login streak going to reach 30 days!
+                                            {{/if}}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <div class="next-reward">
+                                    <small class="text-muted d-block">
+                                        {{#if userPointsTranslations.points.next_reward}}
+                                            {{userPointsTranslations.points.next_reward}}
+                                        {{else}}
+                                            Next Reward
+                                        {{/if}}
+                                    </small>
+                                    <div class="next-reward-preview">
+                                        <i class="bi bi-star-fill text-warning me-1"></i>
+                                        <span class="reward-amount">15</span>
+                                        {{#if userPointsTranslations.points.title}}
+                                            {{userPointsTranslations.points.title}}
+                                        {{else}}
+                                            points
+                                        {{/if}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Streak Progress Grid -->
+                <div class="streak-container">
+                    <div class="streak-header mb-4">
+                        <h5 class="text-center mb-3">
+                            <i class="bi bi-trophy me-2 text-primary"></i>
+                            {{#if userPointsTranslations.points.streak_progress}}
+                                {{userPointsTranslations.points.streak_progress}}
+                            {{else}}
+                                30-Day Streak Progress
+                            {{/if}}
+                        </h5>
+                        <p class="text-center text-muted small">
+                            {{#if userPointsTranslations.points.streak_description}}
+                                {{userPointsTranslations.points.streak_description}}
+                            {{else}}
+                                Complete daily logins to progress through the streak. Weekly milestones unlock bonus rewards!
+                            {{/if}}
+                        </p>
+                    </div>
+                    
+                    <div class="streak-grid" id="rewardsCalendarGrid">
+                        <!-- Grid will be populated by JavaScript -->
+                        <div class="text-center p-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div class="mt-2 text-muted">
+                                {{#if userPointsTranslations.points.loading_streak}}
+                                    {{userPointsTranslations.points.loading_streak}}
+                                {{else}}
+                                    Loading streak progress...
+                                {{/if}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today's Reward Section -->
+                <div class="todays-reward-section bg-light border-top" id="todaysRewardSection" style="display: none;">
+                    <div class="container-fluid p-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <div class="todays-reward-info">
+                                    <h6 class="mb-2">
+                                        <i class="bi bi-calendar-check text-success me-2"></i>
+                                        {{#if userPointsTranslations.points.todays_reward}}
+                                            {{userPointsTranslations.points.todays_reward}}
+                                        {{else}}
+                                            Today's Streak Reward
+                                        {{/if}}
+                                    </h6>
+                                    <div class="reward-details">
+                                        <span class="reward-points fs-5 fw-bold text-success">+<span id="todaysRewardAmount">10</span></span>
+                                        <span class="text-muted ms-2">
+                                            {{#if userPointsTranslations.points.title}}
+                                                {{userPointsTranslations.points.title}}
+                                            {{else}}
+                                                points
+                                            {{/if}}
+                                        </span>
+                                        <div class="reward-bonus-text text-muted small" id="todaysRewardBonus"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-md-end">
+                                <button class="btn btn-success btn-lg claim-todays-reward" id="claimTodaysReward">
+                                    <i class="bi bi-gift me-2"></i>
+                                    {{#if userPointsTranslations.points.claim_reward}}
+                                        {{userPointsTranslations.points.claim_reward}}
+                                    {{else}}
+                                        Claim Reward
+                                    {{/if}}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        {{#if userPointsTranslations.points.streak_reset_info}}
+                            {{userPointsTranslations.points.streak_reset_info}}
+                        {{else}}
+                            Missing a day will reset your streak. Reach 30 days for the ultimate reward!
+                        {{/if}}
+                    </small>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        {{#if userPointsTranslations.points.close}}
+                            {{userPointsTranslations.points.close}}
+                        {{else}}
+                            Close
+                        {{/if}}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Daily Rewards Calendar Modal -->
+<script>
+  // Remove any leftover Bootstrap modal backdrops when dailyRewardsModal is hidden
+  $('#dailyRewardsModal').on('hidden.bs.modal', function () {
+    $('.modal-backdrop').remove();
+  });
+</script>

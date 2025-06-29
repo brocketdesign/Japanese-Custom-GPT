@@ -237,40 +237,397 @@
   margin-right: 5px;
 }
 
-/* Responsive Design */
+/* Daily Rewards Calendar Modal Styles */
+.daily-rewards-header {
+  background: linear-gradient(135deg, #ff6b35 0%, #ff8e53 100%);
+  border: none;
+  padding: 20px 24px;
+}
+
+.daily-rewards-icon {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  padding: 15px;
+  backdrop-filter: blur(10px);
+}
+
+.current-streak-banner {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 1px solid #dee2e6;
+}
+
+.streak-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.streak-flame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.streak-flame i {
+  position: relative;
+  z-index: 1;
+}
+
+.streak-count {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.9);
+  color: #ff6b35;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Streak Container */
+.streak-container {
+  padding: 24px;
+  min-height: 400px;
+}
+
+.streak-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+/* Streak Grid */
+.streak-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 12px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* Streak Day Cards */
+.streak-day {
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 12px 8px;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.streak-day:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Streak Day States */
+.streak-day.completed {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  border-color: #28a745;
+  color: white;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.streak-day.current {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  border-color: #ffd700;
+  color: #333;
+  animation: pulseStreak 2s infinite;
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+}
+
+.streak-day.future {
+  background: #f8f9fa;
+  border-color: #dee2e6;
+  color: #6c757d;
+  opacity: 0.7;
+}
+
+/* Streak Day Content */
+.streak-day-number {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.streak-icon {
+  font-size: 1.5rem;
+  margin: 4px 0;
+}
+
+.streak-points {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.streak-points small {
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+/* Streak Bonus Indicators */
+.streak-bonus-indicator {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ff6b35;
+  color: white;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+}
+
+.streak-bonus-indicator.weekly {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #333;
+}
+
+.streak-bonus-indicator.final {
+  background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+  color: white;
+  width: 30px;
+  height: 30px;
+  font-size: 1rem;
+}
+
+/* Next Reward Display */
+.next-reward {
+  text-align: center;
+}
+
+.next-reward-preview {
+  background: rgba(255, 215, 0, 0.1);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 15px;
+  padding: 10px 15px;
+  display: inline-block;
+  margin-top: 5px;
+}
+
+.reward-amount {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #ffd700;
+}
+
+/* Today's Reward Section */
+.todays-reward-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, rgba(40, 167, 69, 0.05) 100%);
+  border-top: 3px solid #28a745;
+}
+
+.todays-reward-info h6 {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.reward-details {
+  margin: 15px 0;
+}
+
+.reward-points {
+  background: rgba(40, 167, 69, 0.1);
+  border-radius: 12px;
+  padding: 8px 16px;
+  display: inline-block;
+  margin-right: 10px;
+}
+
+.reward-bonus-text {
+  margin-top: 8px;
+  font-style: italic;
+}
+
+/* Claim Button */
+.claim-todays-reward {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+  transition: all 0.3s ease;
+  color: white;
+  min-height: 48px;
+  min-width: 140px;
+}
+
+.claim-todays-reward:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+  color: white;
+}
+
+.claim-todays-reward:disabled {
+  background: #6c757d;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Fix for modal scrolling issues */
+#dailyRewardsModal .modal-dialog {
+  height: calc(100% - 60px);
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
+
+#dailyRewardsModal .modal-content {
+  max-height: 100%;
+}
+
+#dailyRewardsModal .modal-body {
+  overflow-y: auto;
+  /* remove the scroll‐contain that snaps back */
+  overscroll-behavior: auto;
+  /* enable smooth/native touch scrolling on iOS/Chrome */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent content from jumping around during interactions */
+.streak-container {
+  min-height: 480px;
+  position: relative;
+}
+
+/* Prevent scroll jumping */
+.streak-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 12px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* Ensure the claim button doesn't cause layout shifts */
+.claim-todays-reward {
+  min-height: 48px;
+  min-width: 140px;
+}
+
+/* Animations */
+@keyframes pulseStreak {
+  0%, 100% {
+    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 30px rgba(255, 215, 0, 0.6);
+  }
+}
+
+@keyframes streakComplete {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.streak-day.completing {
+  animation: streakComplete 0.6s ease-out;
+}
+
+/* Responsive Design for Streak Grid */
 @media (max-width: 768px) {
-  .points-container {
-    padding: 15px;
-    margin-bottom: 15px;
+  .streak-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
   }
   
-  .points-balance h2 {
-    font-size: 2rem;
+  .streak-day {
+    padding: 8px 4px;
+    min-height: 80px;
   }
   
-  .daily-bonus-header {
+  .streak-day-number {
+    font-size: 1rem;
+  }
+  
+  .streak-icon {
+    font-size: 1.2rem;
+  }
+  
+  .streak-points {
+    font-size: 0.7rem;
+  }
+  
+  .streak-bonus-indicator {
+    width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+  }
+  
+  .streak-bonus-indicator.final {
+    width: 25px;
+    height: 25px;
+    font-size: 0.8rem;
+  }
+  
+  .streak-info {
     flex-direction: column;
-    gap: 10px;
+    text-align: center;
+    gap: 15px;
   }
   
-  .points-history-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+  .next-reward {
+    text-align: center !important;
+    margin-top: 15px;
+  }
+}
+
+@media (max-width: 576px) {
+  .streak-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
   }
   
-  .transaction-amount {
-    align-self: flex-end;
+  .streak-day {
+    padding: 6px 3px;
+    min-height: 70px;
   }
   
-  .leaderboard-item {
-    padding: 12px 15px;
+  .streak-day-number {
+    font-size: 0.9rem;
   }
   
-  .leaderboard-user {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 5px;
+  .streak-icon {
+    font-size: 1rem;
+  }
+  
+  .streak-points {
+    font-size: 0.65rem;
+  }
+  
+  .streak-container {
+    padding: 16px;
   }
 }
 
@@ -638,25 +995,4 @@
   25% { transform: scale(1.1) rotate(2deg); }
   50% { transform: scale(0.95) rotate(-1deg); }
   75% { transform: scale(1.05) rotate(1deg); }
-}
-
-/* Responsive Design for Notifications */
-@media (max-width: 480px) {
-  .reward-container {
-    padding: 30px 20px;
-    max-width: 350px;
-  }
-
-  .reward-title {
-    font-size: 1.5rem;
-  }
-
-  .points-earned {
-    font-size: 2rem;
-  }
-
-  .reward-main-icon,
-  .daily-bonus-calendar {
-    font-size: 2.5rem;
-  }
 }

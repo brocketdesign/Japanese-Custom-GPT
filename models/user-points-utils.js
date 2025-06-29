@@ -161,6 +161,85 @@ async function getUserPointsHistory(db, userId, limit = 50, skip = 0) {
 }
 
 /**
+ * Award daily login bonus to a user
+ * @param {Object} db - MongoDB database instance
+ * @param {string|ObjectId} userId - User ID
+ * @returns {Object} Result of the operation
+ */
+async function awardDailyLoginBonus(db, userId) {
+  const usersCollection = db.collection('users');
+  const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  // Use UTC for date calculations
+  const now = new Date();
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+
+  const lastBonus = user.lastDailyBonus ? new Date(user.lastDailyBonus) : null;
+  const lastBonusUTC = lastBonus ? new Date(Date.UTC(lastBonus.getUTCFullYear(), lastBonus.getUTCMonth(), lastBonus.getUTCDate())) : null;
+  
+  if (lastBonusUTC && lastBonusUTC.getTime() === today.getTime()) {
+    const nextBonus = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+    return {
+      success: false,
+      message: 'Daily bonus already claimed today',
+      nextBonus
+    };
+  }
+
+  const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+  let currentStreak = user.loginStreak || 0;
+
+  if (lastBonusUTC && lastBonusUTC.getTime() === yesterday.getTime()) {
+    currentStreak++;
+  } else {
+    currentStreak = 1; // Reset streak
+  }
+
+  // Calculate points - base 10 + streak bonus (1 point per day up to 10)
+  const basePoints = 10;
+  const streakBonus = Math.min(currentStreak, 10);
+  const pointsAwarded = basePoints + streakBonus;
+
+  const result = await addUserPoints(
+    db,
+    userId,
+    pointsAwarded,
+    `Daily Login Bonus (Day ${currentStreak})`,
+    'daily_bonus'
+  );
+
+  if (result.success) {
+    await usersCollection.updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $set: {
+          lastDailyBonus: new Date(),
+          loginStreak: currentStreak
+        }
+      }
+    );
+
+    const nextBonus = new Date(new Date().getTime() + 24 * 60 * 60 * 1000);
+    return {
+      success: true,
+      pointsAwarded,
+      currentStreak,
+      user: result.user,
+      nextBonus
+    };
+  } else {
+    return {
+      success: false,
+      message: 'Failed to award points'
+    };
+  }
+}
+
+/**
  * Set user points to a specific amount (admin function)
  * @param {Object} db - MongoDB database instance
  * @param {string|ObjectId} userId - User ID
@@ -241,67 +320,6 @@ async function checkUserPoints(db, userId, requiredPoints) {
     currentPoints,
     requiredPoints,
     shortfall: Math.max(0, requiredPoints - currentPoints)
-  };
-}
-
-/**
- * Award daily login bonus
- * @param {Object} db - MongoDB database instance
- * @param {string|ObjectId} userId - User ID
- * @returns {Object} Bonus award result
- */
-async function awardDailyLoginBonus(db, userId, fastify = null) {
-  const usersCollection = db.collection('users');
-  const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
-  const userPointsTranslations = fastify ? fastify.getUserPointsTranslations(user?.lang || 'en') : {};
-  
-  if (!user) throw new Error('User not found');
-  
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  const lastLogin = user.lastDailyBonus ? new Date(user.lastDailyBonus) : null;
-  const lastLoginDate = lastLogin ? new Date(lastLogin.getFullYear(), lastLogin.getMonth(), lastLogin.getDate()) : null;
-  
-  // Check if already claimed today
-  if (lastLoginDate && lastLoginDate.getTime() === today.getTime()) {
-    return {
-      success: false,
-      message: userPointsTranslations.points?.messages?.daily_bonus_already_claimed || userPointsTranslations.bonus_already_claimed || 'Bonus already claimed today',
-      nextBonus: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-    };
-  }
-  
-  // Calculate streak
-  const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
-  const isConsecutive = lastLoginDate && lastLoginDate.getTime() === yesterday.getTime();
-  const currentStreak = isConsecutive ? (user.loginStreak || 0) + 1 : 1;
-  
-  // Calculate bonus points (base 10 + streak bonus)
-  const baseBonus = 10;
-  const streakBonus = Math.min(currentStreak - 1, 10) * 2; // Max 20 bonus points
-  const totalBonus = baseBonus + streakBonus;
-  
-  // Award points and update streak
-  const result = await addUserPoints(db, userId, totalBonus, userPointsTranslations.points?.sources?.daily_login || `Daily login bonus (${currentStreak} day streak)`, 'daily_login');
-  
-  // Update user's daily bonus info
-  await usersCollection.updateOne(
-    { _id: new ObjectId(userId) },
-    {
-      $set: {
-        lastDailyBonus: new Date(),
-        loginStreak: currentStreak
-      }
-    }
-  );
-  
-  return {
-    success: true,
-    pointsAwarded: totalBonus,
-    currentStreak,
-    nextBonus: new Date(today.getTime() + 24 * 60 * 60 * 1000),
-    ...result
   };
 }
 
@@ -632,9 +650,9 @@ module.exports = {
   removeUserPoints,
   getUserPoints,
   getUserPointsHistory,
+  awardDailyLoginBonus,
   setUserPoints,
   checkUserPoints,
-  awardDailyLoginBonus,
   getPointsLeaderboard,
   // Like reward functions
   awardLikeMilestoneReward,

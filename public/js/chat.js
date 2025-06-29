@@ -1446,8 +1446,10 @@ function setupChatInterface(chat, character) {
                     blurImage(this);
                 });
             }
-            
-            displayImageThumb(imageUrl, origineUserChatId);
+
+            if (subscriptionStatus || !imageNsfw) {
+                displayImageThumb(imageUrl, origineUserChatId);
+            }
         } 
 
         else if (messageClass.startsWith('new-image-') && message instanceof HTMLElement) {

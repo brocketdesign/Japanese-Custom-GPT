@@ -17,6 +17,21 @@ $(document).ready(function() {
     }
   });
 
+  // NSFW toggle logic
+  const nsfwToggle = $('#nsfw-toggle');
+  // Initialize toggle state from session storage
+  const showNSFW = sessionStorage.getItem('showNSFW') === 'true';
+  nsfwToggle.prop('checked', showNSFW);
+
+  // Save toggle state to session storage on change
+  nsfwToggle.on('change', function() {
+    sessionStorage.setItem('showNSFW', $(this).is(':checked'));
+    console.log('NSFW preference saved to session:', $(this).is(':checked'));
+        
+    // Optionally reload the page or refresh content
+    //location.reload();
+  });
+
   // Set user info
   $('#profile #profileSection').attr('data-user-id', user._id);
 
@@ -72,6 +87,7 @@ $(document).ready(function() {
     formData.append('birthDay', $('#birthDay').val());
     formData.append('gender', $('#gender').val());
     formData.append('bio', $('#bio').val());
+    formData.append('showNSFW', $('#nsfw-toggle').is(':checked'));
 
     const profileImage = $('#profile #profileImageInput')[0].files[0];
     if (profileImage) {

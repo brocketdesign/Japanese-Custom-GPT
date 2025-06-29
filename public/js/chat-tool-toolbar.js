@@ -37,7 +37,7 @@ function getImageTools({chatId, imageId, isLiked = false, title, prompt = false,
             `${window.mergeFaceTranslations?.title || 'Merge Face'}`;
 
         return `
-            <div class="bg-white py-2 image-tools">
+            <div class="bg-white py-2 image-tools" data-id="${imageId}">
                 <div class="d-flex overflow-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
                     <style>
                         .image-tools .d-flex::-webkit-scrollbar { display: none; }

@@ -1038,6 +1038,8 @@
     "french": "French",
     "bio": "Bio",
     "saveUserInfo": "Save User Information",
+    "showNSFW": "Show NSFW Content",
+    "showNSFWDescription": "Enable to see content marked as Not Safe For Work (NSFW).",
     "oldPassword": "Old Password",
     "newPassword": "New Password",
     "confirmPassword": "Confirm Password",

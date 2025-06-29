@@ -213,7 +213,7 @@ async function renderImages(images, chatId) {
     const fragment = document.createDocumentFragment();
     
     images.forEach((item, index) => {
-        const isBlur = item?.nsfw && !subscriptionStatus;
+        const isBlur = shouldBlurNSFW(item, subscriptionStatus);
         const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
         
         // Add to loadedImages if not blurred and not already present

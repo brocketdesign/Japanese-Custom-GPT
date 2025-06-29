@@ -945,6 +945,7 @@ function setupChatInterface(chat, character) {
         });
     }
 
+
     function getImageUrlById(imageId, designStep, thumbnail, actions = null) {
         const placeholderImageUrl = '/img/placeholder-image-2.gif'; // Placeholder image URL
 
@@ -957,7 +958,7 @@ function setupChatInterface(chat, character) {
                     <div class="ms-3 position-relative">
                         <div 
                         onclick="showImagePreview(this)"
-                        class="ps-0 text-start assistant-image-box vertical-transition">
+                        class="ps-0 text-start assistant-image-box vertical-transition" style="position: relative;">
                             <img id="image-${imageId}" data-id="${imageId}" src="${placeholderImageUrl}" alt="Loading image...">
                             <div class="nsfw-badge-container badge" style="display:none;">NSFW</div>
                         </div>
@@ -974,43 +975,55 @@ function setupChatInterface(chat, character) {
                     if (response.imageUrl) {
                         // Update the placeholder image
                         displayImageThumb(response.imageUrl)
-                        $(`#image-${imageId}`).attr('src', response.imageUrl).fadeIn();
-                        // Update the alt text
-                        const title = response?.title?.[lang]?.trim() || '';
-                        $(`#image-${imageId}`).attr('alt', title).fadeIn();
-                        //update the image prompt
-                        $(`#image-${imageId}`).attr('data-prompt', response.imagePrompt);
-                        // Add tools or badges if applicable
-                        if (!response.isBlur) {
-                            if(!response.isUpscaled){
-                                const toolsHtml = getImageTools({
-                                    chatId, 
-                                    imageId, 
-                                    isLiked: response?.likedBy?.some(id => id.toString() === userId.toString()),
-                                    title: response?.title?.[lang], 
-                                    prompt: response.imagePrompt, 
-                                    nsfw: response.nsfw, 
-                                    imageUrl: response.imageUrl,
-                                    isMergeFace: response.isMergeFace,
-                                    actions
-                                });
-                                $(`#image-${imageId}`).closest('.assistant-image-box').after(toolsHtml);
-                                if(response.nsfw){
-                                    $(`#image-${imageId}`).closest('.assistant-image-box').find('.nsfw-badge-container').show();
-                                }
-                            }
-                        } else {
-                            const blurBadgeHtml = `
-                            <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
-                                <span type="button" class="badge bg-danger text-white" style="padding: 5px; border-radius: 5px;">
-                                    <i class="bi bi-lock"></i> 成人向け
-                                </span>
-                            </div>`;
-                            $(`#image-${imageId}`).closest('.assistant-image-box').append(blurBadgeHtml);
-                        }
-                        // Add blur effect if not subscribed
-                        if(!subscriptionStatus){
+                        
+                        // Apply NSFW logic
+                        const item = { nsfw: response.nsfw };
+                        const subscriptionStatus = user.subscriptionStatus === 'active';
+                        const isTemporary = !!user.isTemporary;
+                        
+                        const shouldBlur = shouldBlurNSFW(item, subscriptionStatus);
+                        const displayMode = getNSFWDisplayMode(item, subscriptionStatus);
+                        
+                        if (shouldBlur || displayMode !== 'show') {
+                            // Apply blur effect - set data-src and add blur class
+                            $(`#image-${imageId}`).attr('data-src', response.imageUrl);
+                            $(`#image-${imageId}`).addClass('img-blur');
                             $(`#image-${imageId}`).closest('.assistant-image-box').addClass('isBlurred');
+                            
+                            // Apply blur image processing
+                            blurImage($(`#image-${imageId}`)[0]);
+                            
+                        } else {
+                            // Image is safe to show - set src normally
+                            $(`#image-${imageId}`).attr('src', response.imageUrl).fadeIn();
+                            // Update the alt text
+                            const title = response?.title?.[lang]?.trim() || '';
+                            $(`#image-${imageId}`).attr('alt', title);
+                            //update the image prompt
+                            $(`#image-${imageId}`).attr('data-prompt', response.imagePrompt);
+                        }
+
+                        if (!response.isUpscaled) {
+                            const toolsHtml = getImageTools({
+                                chatId, 
+                                imageId, 
+                                isLiked: response?.likedBy?.some(id => id.toString() === userId.toString()),
+                                title: response?.title?.[lang], 
+                                prompt: response.imagePrompt, 
+                                nsfw: response.nsfw, 
+                                imageUrl: response.imageUrl,
+                                isMergeFace: response.isMergeFace,
+                                actions
+                            });
+                            $(`#image-${imageId}`).closest('.assistant-image-box').after(toolsHtml);
+
+                            if (shouldBlur || displayMode !== 'show') {
+                                $(`.image-tools[data-id="${imageId}"]`).hide();
+                            }
+                            
+                            if (response.nsfw) {
+                                $(`#image-${imageId}`).closest('.assistant-image-box').find('.nsfw-badge-container').show();
+                            }
                         }
                     } else {
                         console.error('No image URL returned');
@@ -1023,6 +1036,7 @@ function setupChatInterface(chat, character) {
             });
         });
     }
+
     function getVideoUrlById(videoId, designStep, thumbnail) {
         const placeholderVideoUrl = '/img/video-placeholder.gif'; // Placeholder video URL
 
@@ -1379,14 +1393,22 @@ function setupChatInterface(chat, character) {
     
         else if (messageClass === 'bot-image' && message instanceof HTMLElement) {
             const imageId = message.getAttribute('data-id');
-            const imageNsfw = false //message.getAttribute('data-nsfw') == 'true';
+            const imageNsfw = message.getAttribute('data-nsfw') == 'true';
             const title = message.getAttribute('alt');
             const prompt = message.getAttribute('data-prompt');
             const imageUrl = message.getAttribute('src');
             const isUpscaled = message.getAttribute('data-isUpscaled') == 'true'
             const isMergeFace = message.getAttribute('data-isMergeFace') == 'true'
 
-            if(!subscriptionStatus && imageNsfw){
+            // Create a mock item for NSFW checking
+            const item = { nsfw: imageNsfw };
+            const subscriptionStatus = user.subscriptionStatus === 'active';
+            
+            // Use the helper function to determine if content should be blurred
+            const shouldBlur = shouldBlurNSFW(item, subscriptionStatus);
+            const displayMode = getNSFWDisplayMode(item, subscriptionStatus);
+
+            if (shouldBlur) {
                 // Remove src attribute to prevent loading the image
                 message.removeAttribute('src');
                 // Set data-src attribute to generate the blurry image
@@ -1394,6 +1416,9 @@ function setupChatInterface(chat, character) {
                 // add class img-blur
                 message.classList.add('img-blur');
             }
+
+            let nsfwOverlay = '';
+            const isTemporary = !!user.isTemporary;
             
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
@@ -1401,17 +1426,28 @@ function setupChatInterface(chat, character) {
                     <div class="ms-3 position-relative">
                         <div 
                         onclick="showImagePreview(this)" 
-                        class="ps-0 text-start assistant-image-box vertical-transition ${!subscriptionStatus && imageNsfw ? 'isBlurred' : '' }" data-id="${imageId}">
+                        class="ps-0 text-start assistant-image-box vertical-transition ${shouldBlur ? 'isBlurred' : '' }" data-id="${imageId}" style="position: relative;">
                             ${message.outerHTML}
                             ${imageNsfw ? `<div class="nsfw-badge-container badge">NSFW</div>` : ''}
+                            ${nsfwOverlay}
                         </div>
                         ${!isUpscaled ? getImageTools({chatId, imageId, isLiked:false, title, prompt, nsfw: imageNsfw, imageUrl, isMergeFace}) : ''}
                     </div>
                 </div>      
             `).hide();
+
             messageContainer.append(messageElement);
             messageElement.addClass(animationClass).fadeIn();
-            displayImageThumb(imageUrl,origineUserChatId)
+            
+            // Apply blur effect if needed
+            if (shouldBlur || displayMode !== 'show') {
+                $(`.image-tools[data-id="${imageId}"]`).hide();
+                messageElement.find('.img-blur').each(function() {
+                    blurImage(this);
+                });
+            }
+            
+            displayImageThumb(imageUrl, origineUserChatId);
         } 
 
         else if (messageClass.startsWith('new-image-') && message instanceof HTMLElement) {

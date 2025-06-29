@@ -67,8 +67,8 @@
 
               <div class="row mb-3">
                 <div class="form-group mb-3 text-start">
-                    <label for="birthdate" class="form-label" style="font-size:12px">生年月日</label>
-                    <input id="birthdate" type="text" class="form-control" placeholder="生年月日を選択" autocomplete="off">
+                    <label for="birthdate" class="form-label" style="font-size:12px">{{translations.setting.birthdate}}</label>
+                    <input id="birthdate" type="text" class="form-control" placeholder="{{translations.userinfo.birthdatePlaceholder}}" autocomplete="off">
                     <input type="hidden" id="birthYear" name="birthYear">
                     <input type="hidden" id="birthMonth" name="birthMonth">
                     <input type="hidden" id="birthDay" name="birthDay">
@@ -90,13 +90,27 @@
                           <i class="bi bi-globe2"></i>
                       </button>
                       <ul class="dropdown-menu position-absolute dropdown-menu-end" aria-labelledby="languageDropdownMenu">
-                          <li><a class="dropdown-item language-select" href="#" data-lang="ja">日本語</a></li>
-                          <li><a class="dropdown-item language-select" href="#" data-lang="en">English</a></li>
-                          <li><a class="dropdown-item language-select" href="#" data-lang="fr">Français</a></li>
+                          <li><a class="dropdown-item language-select" href="#" data-lang="ja">{{translations.setting.japanese}}</a></li>
+                          <li><a class="dropdown-item language-select" href="#" data-lang="en">{{translations.setting.english}}</a></li>
+                          <li><a class="dropdown-item language-select" href="#" data-lang="fr">{{translations.setting.french}}</a></li>
                       </ul>
                   </div>
                 </div>
 
+              </div>
+
+              <!-- NSFW Toggle -->
+              <div class="mb-3">
+                <div class="d-flex align-items-center justify-content-between">
+                  <div>
+                    <label for="nsfw-toggle" class="form-check-label fw-bold">{{translations.setting.showNSFW}}</label>
+                    <div class="form-text" style="font-size: 12px;">{{translations.setting.showNSFWDescription}}</div>
+                  </div>
+                  <label class="settings-switch">
+                    <input type="checkbox" id="nsfw-toggle">
+                    <span class="settings-switch-slider"></span>
+                  </label>
+                </div>
               </div>
 
               <!-- Bio textarea -->

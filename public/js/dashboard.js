@@ -925,54 +925,86 @@ function handleImageSuccess(img, blob, imageUrl) {
 function createOverlay(img, imageUrl) {
   let overlay;
   const isTemporary = !!window.user?.isTemporary; // Access global user object
+  const subscriptionStatus = window.user?.subscriptionStatus === 'active';
+  const showNSFW = sessionStorage.getItem('showNSFW') === 'true';
 
   if (isTemporary) {
     overlay = $('<div></div>')
-      .addClass('gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')
-      .css({
-        background: 'rgba(0,0,0,0.55)',
-        zIndex: 2,
-        cursor: 'pointer' // Add cursor pointer to indicate it's clickable
-      })
-      .on('click', function() {
-        openLoginForm(); // Assuming openLoginForm is a globally available function
-      });
+        .addClass('gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')
+        .css({
+            background: 'rgba(0,0,0,0.55)',
+            zIndex: 2,
+            cursor: 'pointer'
+        })
+        .on('click', function() {
+            openLoginForm();
+        });
 
     const lockIcon = $('<i></i>').addClass('bi bi-lock-fill fs-3 text-light');
-    const loginText = $('<p></p>').addClass('mt-2 small text-light badge bg-secondary shadow ').text(window.translations?.login_to_view || 'Login to view'); // Use translations if available
+    const loginText = $('<p></p>').addClass('mt-2 small text-light badge bg-secondary shadow ').text(window.translations?.login_to_view || 'Login to view');
 
     overlay.append(lockIcon, loginText);
 
-  } else {
-    // Existing overlay logic for non-temporary users
+  } else if (subscriptionStatus && !showNSFW) {
+    // Subscribed user with showNSFW disabled - show removable overlay
     overlay = $('<div></div>')
-      .addClass('gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')
-      .css({
-        background: 'rgba(0,0,0,0.55)',
-        zIndex: 2
-      });
+        .addClass('gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')
+        .css({
+            background: 'rgba(0,0,0,0.55)',
+            zIndex: 2
+        });
 
     let badge = $('<span></span>')
-      .addClass('badge bg-danger mb-2')
-      .css('font-size', '1rem')
-      .html('<i class="bi bi-exclamation-triangle"></i> NSFW');
+        .addClass('badge bg-warning mb-2')
+        .css('font-size', '1rem')
+        .html('<i class="bi bi-eye-slash"></i> NSFW Hidden');
 
     let buttonElement = $('<button></button>')
-      .text(window.translations?.blurButton || '画像を見る')
-      .addClass('btn btn-sm btn-outline-light mt-3 animate__animated animate__pulse')
-      .css({ 'font-size': '14px', 'border-radius': '50px', cursor: 'pointer' })
-      .on('click', function (e) {
+        .text(window.translations?.showContent || 'Show Content')
+        .addClass('btn btn-sm btn-outline-light mt-3 animate__animated animate__pulse')
+        .css({ 'font-size': '14px', 'border-radius': '50px', cursor: 'pointer' })
+        .on('click', function (e) {
+
           e.stopPropagation();
-          loadPlanPage(); 
-          const parentDiv = $(img).parent();
-          $(img).attr('src', imageUrl);
-      });
+            $(img).attr('src', imageUrl).removeClass('img-blur');
+            
+            const imageId = $(img).attr('data-id');
+            const $imageTools = $(document).find(`.image-tools[data-id="${imageId}"]`);
+            
+            overlay.hide().removeClass('d-flex');
+            
+            // Display the image tools
+            $imageTools.show();
+        });
 
-    let textElement = $('<div></div>')
-      .addClass('fw-bold')
-      .css({ 'font-size': '12px', 'text-shadow': '0 0 5px black' });
+    overlay.append(badge, buttonElement);
 
-    overlay.append(badge, buttonElement, textElement);
+  } else {
+    console.log('Creating overlay for non-subscribed user or other cases');
+    // Non-subscribed user or other cases - existing blur logic
+    overlay = $('<div></div>')
+        .addClass('gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')
+        .css({
+            background: 'rgba(0,0,0,0.55)',
+            zIndex: 2
+        });
+
+    let badge = $('<span></span>')
+        .addClass('badge bg-danger mb-2')
+        .css('font-size', '1rem')
+        .html('<i class="bi bi-exclamation-triangle"></i> NSFW');
+
+    let buttonElement = $('<button></button>')
+        .text(window.translations?.blurButton || '画像を見る')
+        .addClass('btn btn-sm btn-outline-light mt-3 animate__animated animate__pulse')
+        .css({ 'font-size': '14px', 'border-radius': '50px', cursor: 'pointer' })
+        .on('click', function (e) {
+            e.stopPropagation();
+            loadPlanPage(); 
+            $(img).attr('src', imageUrl);
+        });
+
+    overlay.append(badge, buttonElement);
   }
 
   $(img)
@@ -2189,7 +2221,7 @@ window.loadAllChatImages = function (page = 1, reload = false) {
     let chatGalleryHtml = ''
   
     images.forEach((item) => {
-      const isBlur = item?.nsfw && !subscriptionStatus
+      const isBlur = shouldBlurNSFW(item, subscriptionStatus);
       const isLiked = item?.likedBy?.some((id) => id.toString() === currentUserId.toString())
 
       chatGalleryHtml += `
@@ -2838,7 +2870,7 @@ $(document).ready(function () {
                 // Display a maximum of 12 images per chat
                 if (index >= 12) return;
               // Check unlock logic (adapt to your own logic)
-              const isBlur = item.nsfw && !subscriptionStatus;
+              const isBlur = shouldBlurNSFW(item, subscriptionStatus);
               // Check if user has “liked” this image
               const isLiked = Array.isArray(item.likedBy)
                 ? item.likedBy.some(id => id.toString() === currentUserId.toString())
@@ -2971,7 +3003,7 @@ $(document).ready(function () {
               let additionalImagesHtml = '';
   
               data.images.forEach((item, index) => {
-                const isBlur = item.nsfw && !subscriptionStatus;
+                const isBlur = shouldBlurNSFW(item, subscriptionStatus);
                 const isLiked = Array.isArray(item.likedBy)
                   ? item.likedBy.some(id => id.toString() === currentUserId.toString())
                   : false;
@@ -3560,8 +3592,11 @@ window.openUserProfile = function() {
 
 window.handleClickRegisterOrPay = function(event = null , isTemporary) {
   if (event) event.preventDefault();
+  const subscribed = window.user && window.user.subscriptionStatus === 'active';
   if (isTemporary) {
       openLoginForm();
+  } else if (subscribed) {
+    return;
   } else {
       loadPlanPage();
   }
@@ -3577,30 +3612,77 @@ window.updatePromptActivatedCounter = function() {
   $('#prompt-activated-counter').html(`<span class="badge custom-gradient-bg">${activated}/${total}</>`);
 }
 
-    // Function to update the UI when a specific custom prompt is activated
-    // This is typically called via a WebSocket notification
-    window.updateCustomPrompt = function(promptId) { 
-      const $promptCard = $(`.prompt-card[data-id="${promptId}"]`);
-      if ($promptCard.length) {
-          // Find the next prompt-card after the current one
-          const $nextPrompt = $promptCard.next('.prompt-card');
-          if ($nextPrompt.length) {
-              $nextPrompt.addClass('active').removeClass('inactive');
-              showNotification(translations['promptCardActivated'], 'success');
-          } else {
-              console.warn(`No next prompt-card found after promptId ${promptId}.`);
-          }
-      } else {
-          console.warn(`Prompt card with ID ${promptId} not found to update active state.`);
-      }
-
-      updatePromptActivatedCounter();
-  };
-  window.updateImageTitle = function(imageId, localizedTitle) {
-    console.log(`[updateImageTitle] Updating image card with ID ${imageId} to title: ${localizedTitle}`);
-    if ($('#about_image').length) {
-      $('#about_image').text(localizedTitle);
+  // Function to update the UI when a specific custom prompt is activated
+  // This is typically called via a WebSocket notification
+  window.updateCustomPrompt = function(promptId) { 
+    const $promptCard = $(`.prompt-card[data-id="${promptId}"]`);
+    if ($promptCard.length) {
+        // Find the next prompt-card after the current one
+        const $nextPrompt = $promptCard.next('.prompt-card');
+        if ($nextPrompt.length) {
+            $nextPrompt.addClass('active').removeClass('inactive');
+            showNotification(translations['promptCardActivated'], 'success');
+        } else {
+            console.warn(`No next prompt-card found after promptId ${promptId}.`);
+        }
     } else {
-      console.warn(`Image card with ID ${imageId} not found to update title.`);
+        console.warn(`Prompt card with ID ${promptId} not found to update active state.`);
     }
+
+    updatePromptActivatedCounter();
+};
+
+window.updateImageTitle = function(imageId, localizedTitle) {
+  console.log(`[updateImageTitle] Updating image card with ID ${imageId} to title: ${localizedTitle}`);
+  if ($('#about_image').length) {
+    $('#about_image').text(localizedTitle);
+  } else {
+    console.warn(`Image card with ID ${imageId} not found to update title.`);
   }
+};
+// Helper function to determine NSFW display behavior
+window.shouldBlurNSFW = function(item, subscriptionStatus) {
+  if (!item?.nsfw) return false; // Not NSFW, don't blur
+  
+  const showNSFW = sessionStorage.getItem('showNSFW') === 'true';
+  
+  // If user has subscription, respect their showNSFW preference
+  if (subscriptionStatus) {
+    return !showNSFW; // Blur only if showNSFW is false
+  }
+  
+  // If no subscription, always blur NSFW content regardless of showNSFW setting
+  return true;
+};
+
+// Enhanced function to determine NSFW display behavior with overlay option
+window.getNSFWDisplayMode = function(item, subscriptionStatus) {
+  if (!item?.nsfw) return 'show'; // Not NSFW, show normally
+  
+  const showNSFW = sessionStorage.getItem('showNSFW') === 'true';
+  
+  if (subscriptionStatus) {
+    return showNSFW ? 'show' : 'overlay'; // Show with overlay if showNSFW is false
+  }
+  
+  return 'blur'; // No subscription, blur the content
+};
+
+window.showNSFWContent = function(buttonElement, imageUrl) {
+    const $button = $(buttonElement);
+    const $overlay = $button.closest('.gallery-nsfw-overlay');
+    const $imageContainer = $overlay.closest('.assistant-image-box');
+    const $image = $imageContainer.find('img');
+    const imageId = $image.attr('data-id');
+    const $imageTools = $(document).find(`.image-tools[data-id="${imageId}"]`);
+
+    // Set the original image source and remove blur
+    $image.attr('src', imageUrl).removeClass('img-blur');
+    $imageContainer.removeClass('isBlurred');
+    
+    // Remove the overlay with animation
+    $overlay.hide().removeClass('d-flex');
+
+    // Display the image tools
+    $imageTools.show();
+};

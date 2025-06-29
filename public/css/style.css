@@ -2493,3 +2493,55 @@ opacity: 0.8;
 .message-tools-controller .message-action-btn, .message-tools-controller .message-regenerate-btn {
   padding: 5px !important;
 }
+
+/* Settings Switch Styles */
+.settings-switch {
+    position: relative;
+    display: inline-block;
+    width: 65px;
+    height: 30px;
+}
+
+.settings-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.settings-switch-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 30px;
+}
+
+.settings-switch-slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.settings-switch input:checked + .settings-switch-slider {
+    background: linear-gradient(135deg, #6E20F4 0%, #8B4CF8 100%);
+    box-shadow: 0 4px 15px rgba(110, 32, 244, 0.2);
+}
+
+.settings-switch input:focus + .settings-switch-slider {
+    box-shadow: 0 0 1px #2196F3;
+}
+
+.settings-switch input:checked + .settings-switch-slider:before {
+    transform: translateX(35px);
+}

@@ -78,6 +78,7 @@ const details_description = z.object({
         background: z.string(),
         occupation: z.string(),
         specialAbilities: z.array(z.string()),
+        reference_character: z.string(),
     }),
 });
 
@@ -206,6 +207,7 @@ function extractDetailsFromPrompt(prompt, chatPurpose = '', gender ='female') {
             - Body characteristics based on gender
             - Style and fashion choices
             - Personality traits and background
+            - Reference character : Provide a reference character. It could be a real person, fictional character, or any other reference that fits the description.
             
             Provide creative data for unclear attributes.
             Respond with a properly formatted JSON object matching the details_description schema.`

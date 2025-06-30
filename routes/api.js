@@ -610,53 +610,35 @@ async function routes(fastify, options) {
             Likes: ${personality?.likes ? personality.likes.join(', ') : ""}
             Dislikes: ${personality?.dislikes ? personality.dislikes.join(', ') : ""}
             Special Abilities: ${personality?.specialAbilities ? personality.specialAbilities.join(', ') : ""}
+            Reference Character: Overall you act like ${personality?.reference_character || ""}. Similar tone, style, and behavior.
 
             Tags: ${data?.tags ? data.tags.join(', ') : ""}
         `.trim();
     }
-    
-    async function completionSystemContent(chatDocument, user, chatDescription, currentTimeInJapanese, language){
+    function userDetailsToString(user) {
+        let userDetails = '';
+        // Check if persona
+        if(user.imageModel){
+            // Prepare user details
+            userDetails = `My name is ${user.name}. I am a ${user.gender}. ${user.short_intro}`
+        } else {
+            // Prepare basic user details
+            userDetails = !user.isTemporary 
+            ? `Call me ${user.nickname}. ${user.gender ? `I am a ${user.gender}` : '' } ${user.birthDate 
+                ? `, my birthday is ${user.birthDate.year}/${user.birthDate.month}/${user.birthDate.day}` 
+                : ''}. ${user.bio ? user.bio : ''}`
+            : '';
+        }
+        return userDetails;
+    }
+    async function completionSystemContent(chatDocument, chatDescription, currentTimeInJapanese, language){
         try {
-            let userDetails = '';
-            // Check if persona
-            if(user.imageModel){
-                // Prepare user details
-                userDetails = `My name is ${user.name}. I am a ${user.gender}. ${user.short_intro}`
-            } else {
-                // Prepare basic user details
-                userDetails = !user.isTemporary 
-                ? `Call me ${user.nickname}. ${user.gender ? `I am a ${user.gender}` : '' } ${user.birthDate 
-                    ? `, my birthday is ${user.birthDate.year}/${user.birthDate.month}/${user.birthDate.day}` 
-                    : ''}. ${user.bio ? user.bio : ''}`
-                : '';
-            }
-
-            // [DEBUG] Disable temporary
-            if(false){
-                try {
-                    const activeSystemPrompt = await getActiveSystemPrompt(fastify.mongo.db);
-                    if (activeSystemPrompt) {
-                        return activeSystemPrompt
-                            .replace('{{character_name}}', chatDocument.name)
-                            .replace('{{character_description}}', chatDescription)
-                            .replace('{{user_details}}', userDetails)
-                            .replace('{{current_date}}', currentTimeInJapanese)
-                            .replace('{{language}}', language);
-                    }
-                } catch (error) {
-                    console.error('Error in getting active system prompt:', error);
-                }
-            }
-
             // Fall back to the old format
             return `
             You must act as a real character with feelings.\n\n
-            
-            # Character info :\n
-            ${chatDescription}\n\n
 
-            # User info :\n
-            ${userDetails}\n\n
+            # Here is how you describe yourself:\n
+            ${chatDescription}\n\n
             
             # Instruction about chat :\n
             You must always respond in a chat style, as if you were chatting with a real person.\n
@@ -771,7 +753,6 @@ async function routes(fastify, options) {
            userInfo_or_persona = personaInfo || userInfo
           let enhancedSystemContent = systemContent = await completionSystemContent(
             chatDocument,
-            userInfo_or_persona,
             chatDescription,
             getCurrentTimeInJapanese(),
             language
@@ -781,8 +762,11 @@ async function routes(fastify, options) {
         const userSettings = await getUserChatToolSettings(fastify.mongo.db, userId, chatId);
         enhancedSystemContent = await applyUserSettingsToPrompt(fastify.mongo.db, userId, chatId, systemContent);
         
+        const userDetails = userDetailsToString(userInfo_or_persona);
+
         const custom_relation = await userSettings.relationshipType || lastAssistantRelation || 'Casual';
-          const systemMsg = [{ role: 'system', content: enhancedSystemContent }]
+        const systemMsg = [{ role: 'system', content: enhancedSystemContent }]
+        systemMsg.push({ role: 'user', content: userDetails })
 
           let messagesForCompletion = []
           let imgMessage =  [{ role: 'user', name: 'master' }]
@@ -906,7 +890,7 @@ async function routes(fastify, options) {
     async function getChatDocument(request, db, chatId) {
         let chatdoc = await db.collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId)})
         // Check if chatdoc is updated to the new format
-        if(!chatdoc?.system_prompt){
+        if(!chatdoc?.system_prompt || !chatdoc?.details_description || !chatdoc?.details_description?.personality.reference_character) {
             console.log('Updating chat document to new format')
 
             const purpose = `Her name is, ${chatdoc.name}.\nShe looks like :${chatdoc.enhancedPrompt ? chatdoc.enhancedPrompt : chatdoc.characterPrompt}.\n\n${chatdoc.rule}`
@@ -919,7 +903,7 @@ async function routes(fastify, options) {
                 gender:chatdoc.gender,
                 nsfw:chatdoc.nsfw,
                 gender:chatdoc.gender,
-                purpose,
+                chatPurpose: purpose,
                 language
             });
             chatdoc = response.chatData

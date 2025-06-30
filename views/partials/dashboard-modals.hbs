@@ -656,8 +656,8 @@
 </div>
 <!-- End Daily Rewards Calendar Modal -->
 <script>
-  // Remove any leftover Bootstrap modal backdrops when dailyRewardsModal is hidden
-  $('#dailyRewardsModal').on('hidden.bs.modal', function () {
+  $('.modal').on('hidden.bs.modal', function () {
     $('.modal-backdrop').remove();
-  });
+    $('body').removeClass('modal-open').css('overflow', '');
+});
 </script>

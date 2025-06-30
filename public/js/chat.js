@@ -1327,7 +1327,7 @@ function setupChatInterface(chat, character) {
         const messageContainer = $(`#container-${uniqueId}`);
         if (messageContainer.length) {
             // Get the current message index (count of all messages in the chat)
-            const currentMessageIndex = $('#chatContainer .message-container').length - 1;
+            const currentMessageIndex = $('#chatContainer .assistant-chat-box').length - 1;
             
             // Check if this is the last message (should be true for new messages)
             const isLastMessage = true;
@@ -1341,7 +1341,6 @@ function setupChatInterface(chat, character) {
                 relativeContainer.append(toolsHtml);
             }
 
-            updateAllMessageTools();
         }
     }
 
@@ -1360,6 +1359,8 @@ function setupChatInterface(chat, character) {
             contentType: 'application/json',
             data: JSON.stringify({ userId, chatId, userChatId, isHidden, uniqueId }),
             success: function() {
+                // Remove all regenerate buttons from previous messages
+                $('#chatContainer .message-regenerate-btn').remove();
             },
             error: function() {
             console.error('Error: AJAX call failed');
@@ -1523,8 +1524,6 @@ function setupChatInterface(chat, character) {
                 messageElement.find('.assistant-chat-box').append(toolsHtml);
             }, 100);
         }
-    
-        updateAllMessageTools();
 
         if (typeof callback === 'function') {
             callback();

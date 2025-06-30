@@ -2,6 +2,9 @@
 function getMessageTools(messageIndex, actions = [], isLastMessage = false, isAssistantMessage = false) {
     if (!isAssistantMessage) return ''; // Only show tools for assistant messages
     
+    // Remove all regenerate buttons from previous messages
+    $('#chatContainer .message-regenerate-btn').remove();
+
     const hasLike = actions.some(action => action.type === 'like');
     const hasDislike = actions.some(action => action.type === 'dislike');
     
@@ -170,40 +173,6 @@ window.handleMessageRegenerate = function(button) {
     });
 };
 
-// Function to update all message tools to ensure only the last assistant message has regenerate button
-function updateAllMessageTools() {
-    $('.message-tools-controller').each(function() {
-        const $toolsController = $(this);
-        const messageIndex = $toolsController.data('message-index');
-        const $messageContainer = $toolsController.closest('.message-container');
-        const isAssistantMessage = $messageContainer.hasClass('assistant-message') || $messageContainer.find('.assistant-message').length > 0;
-        
-        if (isAssistantMessage) {
-            const $regenerateBtn = $toolsController.find('.message-regenerate-btn');
-            const isLastAssistantMessage = $messageContainer.is($('.message-container').filter(function() {
-                return $(this).hasClass('assistant-message') || $(this).find('.assistant-message').length > 0;
-            }).last());
-            
-            if (isLastAssistantMessage) {
-                // Show regenerate button for last assistant message
-                if ($regenerateBtn.length === 0) {
-                    const regenerateHtml = `
-                        <button class="btn btn-sm text-light message-regenerate-btn border-0 p-1" 
-                                data-message-index="${messageIndex}"
-                                title="${window.translations?.regenerate || 'Regenerate'}"
-                                style="background: none; font-size: 12px; line-height: 1;">
-                            <i class="bi bi-arrow-clockwise"></i>
-                        </button>`;
-                    $toolsController.find('.d-flex').append(regenerateHtml);
-                }
-            } else {
-                // Hide regenerate button for previous assistant messages
-                $regenerateBtn.remove();
-            }
-        }
-    });
-}
-
 // Event listeners
 $(document).ready(function() {
     // Handle like/dislike button clicks
@@ -226,4 +195,3 @@ $(document).ready(function() {
 
 // Make the function globally available
 window.getMessageTools = getMessageTools;
-window.updateAllMessageTools = updateAllMessageTools;

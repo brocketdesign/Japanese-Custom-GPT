@@ -58,7 +58,7 @@
                     data-id="{{image._id}}" 
                     onclick="toggleImageFavorite(this)"
                   >
-                    <i class="bi bi-heart me-2"></i>{{translations.like}}<span class="ct d-none">{{default image.likes 0}}</span>
+                    <i class="bi {{#if  (includesObjectId image.likedBy user._id) }}bi-heart-fill text-danger{{else}}bi-heart{{/if}} me-2"></i>{{translations.like}}<span class="ct d-none">{{default image.likes 0}}</span>
                   </button>
                 {{/if}}
                   <button class="btn btn-light shadow-0 share">

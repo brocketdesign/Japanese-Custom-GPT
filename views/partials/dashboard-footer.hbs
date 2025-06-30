@@ -103,6 +103,10 @@
                 <li class="nav-item m-1">
                   <a class="nav-link text-light" href="/tags" target="_blank">{{translations.tags}}</a>
                 </li>
+                <li class="nav-item m-1">
+                  <span class="text-light mx-2">|</span>
+                  <a class="nav-link text-light" href="/sitemap" target="_blank">{{translations.sitemap.title}}</a>
+                </li>
               </ul>
             </div>
           </div>
@@ -833,7 +837,7 @@ $(document).ready(function(){
                 
                 // Show a loading indicator
                 const $logoutButton = $(this);
-                $logoutButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>' + translations.avatar.logout_processing);
+                $logoutButton.prop('disabled', true);
                 
                 // Implement a forced timeout in case logout hangs
                 const logoutTimeout = setTimeout(function() {

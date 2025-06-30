@@ -257,23 +257,22 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedInde
                         <div type="button" onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary})">
                             <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" loading="lazy">
                         </div>
-                        <div class="position-absolute top-0 start-0 m-1" style="z-index:3;">
-                            <span class="badge bg-danger" style="font-size: 0.7rem; padding: 0.2em 0.4em;">NSFW</span>
-                        </div>
                     </div>` :
                     `<a href="/character/slug/${item.chatSlug}?imageSlug=${item.slug}" data-index="${loadedIndex}">
                         <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top" style="object-fit: cover;" loading="lazy">
                     </a>
-                    ${isAdmin ? 
+                    <div class="position-absolute top-0 start-0 m-1" style="z-index:3;">
+                        <span class="btn btn-light image-fav ${isLiked ? 'liked' : ''}" 
+                            data-id="${item._id}" data-chat-id="${chatId}" onclick="toggleImageFavorite(this)">
+                            <i class="bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}" style="cursor: pointer;"></i>
+                        </span>
+                    </div>
+                    ${isAdmin ? 1
                         `<div class="card-body p-2 row mx-0 px-0 align-items-center justify-content-between">
                             <button class="btn btn-light col-6 image-nsfw-toggle ${item?.nsfw ? 'nsfw' : 'sfw'}" 
                                 data-id="${item._id}" onclick="toggleImageNSFW(this)">
                                 <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
                             </button>
-                            <span class="btn btn-light float-end col-6 image-fav ${isLiked ? 'liked' : ''}" 
-                                data-id="${item._id}" onclick="toggleImageFavorite(this)">
-                                <i class="bi bi-heart" style="cursor: pointer;"></i>
-                            </span>
                         </div>` : ''
                     }`
                 }

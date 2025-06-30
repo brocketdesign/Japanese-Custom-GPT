@@ -150,6 +150,7 @@
       }
     },
     "deduction_reasons": {
+      "unlike_image": "Unlike Image Deduction",
       "custom_prompt": "Custom Prompt Cost",
       "text_to_speech": "Text-to-Speech Cost",
       "merge_faces": "Merge Faces Cost",

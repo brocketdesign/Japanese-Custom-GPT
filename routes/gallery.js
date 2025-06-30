@@ -1,7 +1,7 @@
 const { ObjectId } = require('mongodb');
 const { getLanguageName } = require('../models/tool');
 const { parse } = require('handlebars');
-const { awardLikeMilestoneReward, awardLikeActionReward } = require('../models/user-points-utils');
+const { removeUserPoints, awardLikeMilestoneReward, awardLikeActionReward } = require('../models/user-points-utils');
 
 async function routes(fastify, options) {
   fastify.post('/gallery/:imageId/like-toggle', async (request, reply) => { 
@@ -154,7 +154,16 @@ async function routes(fastify, options) {
               { $inc: { imageLikeCount: -1 } }
             );
           }
-          
+
+          const cost = 1; // Cost for unliking an image (removing 1 point)
+          console.log(`[gallery-like-toggle] Deducting ${cost} point for unliking image: ${imageId}`);
+          try {
+            await removeUserPoints(db, userId, cost, request.userPointsTranslations.points?.deduction_reasons?.unlike_image || 'Unlike image', 'unlike_image', fastify);
+          } catch (error) {
+            console.error('[gallery-like-toggle] Failed to deduct point for unlike:', error);
+            // Optionally handle if you want to revert the unlike action or notify the user
+          }
+
           if(userChatId && userChatId.trim() != ''){
             const userChatMessages = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(userChatId) });
             await findImageMessageandUpdateLikeAction(userChatId, userChatMessages, imageId, 'unlike');

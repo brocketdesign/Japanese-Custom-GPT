@@ -1423,6 +1423,7 @@
   "confirm_regenerate": "Êtes-vous sûr de vouloir régénérer ce message ?",
   "action_removed": "Action supprimée",
   "message_liked": "Message aimé",
+    "like_grant_points": "You have earned {point} point for your like",
   "message_disliked": "Message désapprouvé",
   "message_regenerating": "Régénération du message...",
   "error_updating_action": "Erreur lors de la mise à jour de l'action",

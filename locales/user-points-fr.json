@@ -146,6 +146,7 @@
       }
     },
     "deduction_reasons": {
+      "unlike_image": "Déduction pour unlike d'image",
       "custom_prompt": "Coût de la requête personnalisée",
       "text_to_speech": "Coût de la synthèse vocale",
       "merge_faces": "Coût de fusion des visages",

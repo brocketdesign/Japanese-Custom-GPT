@@ -648,12 +648,17 @@ window.toggleImageFavorite = function(el) {
 
   const $this = $(el);
   const userChatId = $(`#chatContainer`).is(':visible') ? $(`#chatContainer`).attr('data-id') : null;
+  const chatId = $this.data('chat-id') || null; // Get chat ID from data attribute or current chat container
   const imageId = $this.data('id');
   const isLiked = $this.find('i').hasClass('bi-heart-fill'); // Check if already liked
 
   const action = isLiked ? 'unlike' : 'like'; // Determine action
-  const likeIconClass = (isLiked || action) ? 'bi-heart-fill text-danger' : 'bi-heart';
+  const likeIconClass = (action == 'like') ? 'bi-heart-fill text-danger' : 'bi-heart';
   $this.find('i').removeClass('bi-heart bi-heart-fill').addClass(likeIconClass); // Toggle icon class
+
+  if(action === 'like') {
+    showNotification(window.translations?.like_grant_points.replace('{point}', '1') || 'Image liked!', 'success');
+  }
 
   $.ajax({
     url: `/gallery/${imageId}/like-toggle`, // Single endpoint
@@ -672,10 +677,17 @@ window.toggleImageFavorite = function(el) {
       } else {
         $this.find('.ct').text(parseInt($this.find('.ct').text()) - 1);
       }
+
       // delete the local storage item userImages_${userId}
       const userId = user._id;
       const cacheKey = `userImages_${userId}`;
       localStorage.removeItem(cacheKey);
+
+      if(chatId && chatId !== 'null') {
+        // delete the local storage item chatImages_${chatId}
+        const cacheKeyImages = `chatImages_${chatId}`
+        localStorage.removeItem(cacheKeyImages);
+      }
     },
     error: function() {
       
@@ -980,7 +992,6 @@ function createOverlay(img, imageUrl) {
     overlay.append(badge, buttonElement);
 
   } else {
-    console.log('Creating overlay for non-subscribed user or other cases');
     // Non-subscribed user or other cases - existing blur logic
     overlay = $('<div></div>')
         .addClass('gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')

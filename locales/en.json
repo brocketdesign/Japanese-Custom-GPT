@@ -43,6 +43,7 @@
   "confirm_regenerate": "Are you sure you want to regenerate this message?",
   "action_removed": "Action removed",
   "message_liked": "Message liked",
+  "like_grant_points": "You have earned {point} point for your like",
   "message_disliked": "Message disliked",
   "message_regenerating": "Regenerating message...",
   "error_updating_action": "Error updating action",

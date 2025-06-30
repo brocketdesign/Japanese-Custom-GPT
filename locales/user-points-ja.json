@@ -146,6 +146,7 @@
       }
     },
     "deduction_reasons": {
+      "unlike_image": "画像のいいね取り消しによる減算",
       "custom_prompt": "カスタムプロンプト費用",
       "text_to_speech": "テキスト読み上げ費用",
       "merge_faces": "顔のマージ費用",

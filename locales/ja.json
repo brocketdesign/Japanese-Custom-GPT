@@ -1474,6 +1474,7 @@
   "confirm_regenerate": "このメッセージを再生成してもよろしいですか？",
   "action_removed": "アクションが削除されました",
   "message_liked": "メッセージにいいねしました",
+  "like_grant_points": "いいねに対して {point} ポイントを獲得しました",
   "message_disliked": "メッセージをよくないしました",
   "message_regenerating": "メッセージを再生成中...",
   "error_updating_action": "アクションの更新エラー",

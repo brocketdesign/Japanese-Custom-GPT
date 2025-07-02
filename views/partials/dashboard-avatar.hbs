@@ -54,17 +54,8 @@
             {{/if}}
 
             {{#if (eq user.subscriptionStatus 'active')}}
-                <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-success text-white">{{translations.premium}}</span>
-                </div>
             {{else}}
-                <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-secondary text-white">{{translations.free}}</span>
-                </div>
-            {{/if}}
-            {{#if (eq user.subscriptionStatus 'active')}}
-            {{else}}
-            <div class="pt-0 pb-3 text-center onchat mt-2">
+            <div class="pt-0 pb-3 text-center onchat mt-2 onchat-off">
                 <button onclick="loadPlanPage()" class="btn d-flex justify-content-center align-items-center rounded-pill fw-bold custom-gradient-bg gap-2 px-2 py-1.5 text-sm text-white bg-white mx-auto" style="border: 1px solid #000;">
                     <div>
                         <span class="text-white">{{translations.upgrade}}</span>
@@ -74,8 +65,8 @@
             </div>
             {{/if}}
             <!-- Points Balance -->
-            <div class="d-flex align-items-center gap-2">
-                <span class="btn btn-warning text-white mb-2" style="font-size: 0.9rem;" data-bs-toggle="modal" data-bs-target="#userPointsModal">
+            <div class="d-flex align-items-center gap-2 onchat-off">
+                <span class="btn btn-warning text-white my-1" style="font-size: 0.9rem;" data-bs-toggle="modal" data-bs-target="#userPointsModal">
                     <i class="bi bi-coin"></i>
                     <span class="user-points-balance">0</span>
                 </span>

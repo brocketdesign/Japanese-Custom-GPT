@@ -1020,6 +1020,26 @@ fastify.get('/sitemap', async (request, reply) => {
   }
 });
 
+// Add robots.txt route before the existing routes
+fastify.get('/robots.txt', async (request, reply) => {
+  const baseUrl = process.env.MODE === 'local' ? 
+    `http://${ip.address()}:3000` : 
+    'https://chatlamix.com';
+    
+  const robotsTxt = `User-agent: *
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /settings/
+Disallow: /generate/
+Allow: /
+
+Sitemap: ${baseUrl}/sitemap.xml`;
+
+  reply.type('text/plain');
+  return reply.send(robotsTxt);
+});
+
 const start = async () => {
   try {
     const port = process.env.PORT || 3000;

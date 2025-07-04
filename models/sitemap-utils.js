@@ -68,16 +68,28 @@ const fetchTagsForSitemap = async (db) => {
  * @param {Object} db - MongoDB database instance
  */
 const cacheSitemapData = async (db) => {
-  console.log('[cacheSitemapData] Starting sitemap data caching...');
-  
   try {
-    const sitemapCacheCollection = db.collection('sitemapCache');
+    console.log('[cacheSitemapData] Starting sitemap data generation...');
     
-    // Fetch characters and tags in parallel
-    const [characters, tags] = await Promise.all([
-      fetchCharactersForSitemap(db),
-      fetchTagsForSitemap(db)
-    ]);
+    const chatsCollection = db.collection('chats');
+    const sitemapCacheCollection = db.collection('sitemap_cache');
+    
+    // Get all public characters with additional metadata
+    const characters = await chatsCollection.find({
+      visibility: 'public',
+      chatImageUrl: { $exists: true, $ne: null }
+    }, {
+      projection: {
+        name: 1,
+        slug: 1,
+        chatImageUrl: 1,
+        gender: 1,
+        imageStyle: 1,
+        language: 1,
+        createdAt: 1,
+        updatedAt: 1
+      }
+    }).toArray();
 
     // Group characters by language for better organization
     const charactersByLanguage = characters.reduce((acc, char) => {
@@ -87,24 +99,29 @@ const cacheSitemapData = async (db) => {
       return acc;
     }, {});
 
+    // Get top tags (limit to 500 for performance)
+    const topTags = await fetchTagsForSitemap(db);
+
     const sitemapData = {
-      type: 'sitemap',
       characters: charactersByLanguage,
-      tags,
+      tags: topTags,
       totalCharacters: characters.length,
-      totalTags: tags.length,
-      lastUpdated: new Date(),
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+      totalTags: topTags.length,
+      lastUpdated: new Date()
     };
 
-    // Replace existing cache
-    await sitemapCacheCollection.deleteMany({ type: 'sitemap' });
-    await sitemapCacheCollection.insertOne(sitemapData);
+    // Cache the sitemap data
+    await sitemapCacheCollection.replaceOne(
+      { _id: 'sitemap_data' },
+      { ...sitemapData, _id: 'sitemap_data' },
+      { upsert: true }
+    );
 
-    console.log(`[cacheSitemapData] Successfully cached ${characters.length} characters and ${tags.length} tags`);
+    console.log(`[cacheSitemapData] Generated sitemap with ${sitemapData.totalCharacters} characters and ${sitemapData.totalTags} tags`);
+    
     return sitemapData;
   } catch (error) {
-    console.error('[cacheSitemapData] Error caching sitemap data:', error);
+    console.error('[cacheSitemapData] Error:', error);
     throw error;
   }
 };

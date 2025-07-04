@@ -87,7 +87,7 @@ async function routes(fastify, options) {
 
       const baseUrl = process.env.MODE === 'local' ? 
         `http://${require('ip').address()}:3000` : 
-        'https://chatlamix.com';
+        'https://app.chatlamix.com';
 
       // Calculate number of pages needed (50,000 URLs per sitemap recommended)
       const urlsPerSitemap = 10000;
@@ -126,7 +126,7 @@ async function routes(fastify, options) {
     try {
       const baseUrl = process.env.MODE === 'local' ? 
         `http://${require('ip').address()}:3000` : 
-        'https://chatlamix.com';
+        'https://app.chatlamix.com';
 
       const staticPages = [
         { url: '', priority: '1.0', changefreq: 'daily' },
@@ -182,7 +182,7 @@ async function routes(fastify, options) {
 
       const baseUrl = process.env.MODE === 'local' ? 
         `http://${require('ip').address()}:3000` : 
-        'https://chatlamix.com';
+        'https://app.chatlamix.com';
 
       const urlsPerSitemap = 10000;
       const startIndex = (page - 1) * urlsPerSitemap;

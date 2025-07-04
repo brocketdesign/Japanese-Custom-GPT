@@ -140,10 +140,24 @@ const getCachedSitemapData = async (db) => {
       expiresAt: { $gt: new Date() }
     });
 
+    // If no cache found or cache expired, generate new cache
+    if (!cachedData) {
+      console.log('[getCachedSitemapData] No valid cache found, generating new sitemap data...');
+      const newSitemapData = await cacheSitemapData(db);
+      return newSitemapData;
+    }
+
     return cachedData;
   } catch (error) {
     console.error('[getCachedSitemapData] Error fetching cached sitemap data:', error);
-    return null;
+    // Fallback: try to generate new cache even if there's an error
+    try {
+      const fallbackData = await cacheSitemapData(db);
+      return fallbackData;
+    } catch (fallbackError) {
+      console.error('[getCachedSitemapData] Fallback cache generation failed:', fallbackError);
+      return null;
+    }
   }
 };
 

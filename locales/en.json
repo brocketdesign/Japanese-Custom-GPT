@@ -2,6 +2,8 @@
   "lang": "en",
   "browseByCategory": "Browse by Category",
   "scrollForMore": "Scroll for more characters",
+  "exploreRestriction": "Upgrade to explore NSFW characters",
+  "userRestriction": "Earn points to create mores images",
   "loadingMoreCharacters": "Loading more characters...",
   "cardMenuTitle": "Explore AI Characters",
   "cardMenuDescription": "Discover and interact with a variety of AI characters.",
@@ -448,7 +450,7 @@
   "createCharacterDescription": "Create your own character and start chatting with them!",
   "userProfile": "User Profile",
   "userProfileDescription": "See the images you liked and the characters created.",
-  "exploreDescription": "Explore the latest posts and characters created by other users.",
+  "exploreDescription": "Explore the latest characters & images",
   "signin": {
     "title": "Sign In - Redirecting",
     "heading": "Sign In Successful",

@@ -78,13 +78,16 @@ function setCachedCategories(categories) {
 function displayCategoryCards(categories) {
   let htmlContent = '';
   
-  categories.forEach(categoryData => {
+  categories.forEach((categoryData, index) => {
     const { category, icon, image } = categoryData;
+    const delay = (index * 0.1).toFixed(1); // Stagger animation by 0.1s for each card
     
     htmlContent += `
       <div class="col-6 col-md-4 col-lg-2 mb-4">
-        <div class="card category-card h-100 shadow border-0 overflow-hidden position-relative" 
+        <div class="card category-card h-100 shadow border-0 overflow-hidden position-relative animate__animated" 
              style="cursor: pointer; transition: all 0.3s ease; min-height: 280px;"
+             data-animate="animate__slideInUp"
+             data-delay="${delay}s"
              onclick="handleCategoryClick('${category}')">
           
           <!-- Background Image -->
@@ -115,6 +118,17 @@ function displayCategoryCards(categories) {
   });
   
   $('#category-cards-container').html(htmlContent);
+  
+  // Trigger animations with delays
+  $('.category-card').each(function() {
+    const $card = $(this);
+    const animationClass = $card.data('animate');
+    const delay = parseFloat($card.data('delay')) * 1000;
+    
+    setTimeout(() => {
+      $card.addClass(animationClass);
+    }, delay);
+  });
   
   // Add hover effects
   $('.category-card').hover(

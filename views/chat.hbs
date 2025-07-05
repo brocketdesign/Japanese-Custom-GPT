@@ -54,20 +54,20 @@
             <section id="chat-discovery" class="onchat-off mt-5 pt-3" style="display: block;">
 
                 <!-- Promo Section -->
-                <section class="is-free-user animate__animated m-3 p-3 bg-light" style="display: none; overflow-x: hidden;" data-animate="animate__fadeInLeft" data-delay="0.3s">
+                <section class="is-free-user animate__animated m-3 p-3" style="display: none; overflow-x: hidden;" data-animate="animate__fadeInLeft" data-delay="0.3s">
                     <div class="container text-center">
-                        <h2 class="pricing-title fw-bold animate__animated" data-animate="animate__fadeInLeft" style="animation-delay: 0.3s;">
+                        <h2 class="pricing-title fw-bold animate__animated" data-animate="animate__fadeInLeft" data-delay="0.3s">
                             <span class="u-font-manrope u-color-grad" style="font-size: 100%;">{{translations.promo.title}}</span>
                         </h2>
-                        <h3 class="fw-bold mb-1 px-3 animate__animated" data-animate="animate__fadeInLeft" style="animation-delay: 0.5s;">
+                        <h3 class="fw-bold mb-1 px-3 animate__animated" data-animate="animate__fadeInLeft" data-delay="0.5s">
                             {{translations.promo.subtitle}}
                         </h3>
-                        <h3 class="mb-3 px-3 u-font-manrope animate__animated animate__fadeInRight" data-animate="animate__fadeInRight" style="font-size: 1.5em; animation-delay: 0.7s;">
+                        <h3 class="mb-3 px-3 u-font-manrope animate__animated animate__fadeInRight" data-animate="animate__fadeInRight" data-delay="0.7s">
                             {{translations.promo.description}}
                         </h3>
                     </div>
-                    <div class="is-free-user sticky-bottom py-2 mx-auto text-center animate__animated" style="display:none; bottom:0; left:0; right:0;" data-animate="animate__fadeInLeft" style="animation-delay: 0.9s;">
-                        <a href="#" onclick="loadPlanPage()" class="m-2 btn border shadow-0 btn-secondary px-5 py-2 m-auto animate__animated" data-animate="animate__zoomIn" style="border-radius:40px; background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);">
+                    <div class="is-free-user sticky-bottom py-2 mx-auto text-center animate__animated" style="display:none; bottom:0; left:0; right:0;" data-animate="animate__fadeInLeft" data-delay="0.9s">
+                        <a href="#" onclick="loadPlanPage()" class="m-2 btn border shadow-0 bg-custom-gradient text-white px-5 py-2 m-auto animate__animated" data-animate="animate__zoomIn" style="border-radius:40px; background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);">
                             <i class="bi bi-plus me-2"></i>{{translations.promo.details}}
                         </a>
                     </div>
@@ -104,7 +104,7 @@
                             <h5 class="mb-2">{{translations.createCharacter}}</h5>
                             <p class="text-muted small mb-0">{{translations.createCharacterDescription}}</p>
                             <!-- Restrictions -->
-                            <div class="rounded-pill text-white fw-bold mt-2 is-free-user" style="background: linear-gradient(135deg, #FF5E7E, #FF8C40);" role="alert">
+                            <div class="rounded-pill text-white fw-bold mt-2 p-3 is-free-user" style="background: linear-gradient(135deg, #FF5E7E, #FF8C40);" role="alert">
                                 {{translations.createCharacterRestriction}}
                             </div>
                         </div>
@@ -119,6 +119,9 @@
                             </div>
                             <h5 class="mb-2">{{translations.explore}}</h5>
                             <p class="text-muted small mb-0">{{translations.exploreDescription}}</p>
+                            <div class="rounded-pill text-white fw-bold mt-2 p-3 is-free-user" style="background: linear-gradient(135deg, #FF5E7E, #FF8C40);" role="alert">
+                                {{translations.exploreRestriction}}
+                            </div>
                         </div>
                         
                         <!-- User Profile Card -->
@@ -131,6 +134,9 @@
                             </div>
                             <h5 class="mb-2">{{translations.userProfile}}</h5>
                             <p class="text-muted small mb-0">{{translations.userProfileDescription}}</p>
+                            <div class="rounded-pill text-white fw-bold mt-2 p-3 is-free-user" style="background: linear-gradient(135deg, #FF5E7E, #FF8C40);" role="alert">
+                                {{translations.userRestriction}}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -160,15 +166,6 @@
                     <!-- Sorting Tools: Premium/Free, Gender & NSFW Filters (Responsive) -->
                     <div class="sorting-tools mb-3">
                         <div class="row g-3 align-items-center">
-                            <!-- Premium/Free Toggle -->
-                            <div class="d-none col-12 col-md-auto d-flex align-items-center gap-2 justify-content-start justify-content-md-start">
-                                <span class="me-2 text-muted" style="font-size: 15px;">
-                                    {{translations.sort.premiumLabel}}
-                                </span>
-                                <button id="popular-chats-premium" class="btn btn-outline-secondary px-3 py-1 flex-shrink-0" style="border-radius: 30px; font-size: 14px;">
-                                    {{translations.sort.hidePremium}}
-                                </button>
-                            </div>
                             <!-- Gender Filter Buttons -->
                             <div class="d-none col-12 col-md d-flex align-items-center gap-2 flex-wrap justify-content-between justify-content-md-start">
                                 <span class="me-2 text-muted" style="font-size: 15px;">
@@ -188,19 +185,15 @@
                             </div>
                             <!-- Style Filter Buttons -->
                             <div class="col-12 d-flex justify-content-center gap-4">
-                                <button id="popular-chats-style-anime" class="btn d-flex flex-column align-items-center justify-content-center p-0 border-0 position-relative" style="border-radius: 20px; overflow: hidden; background: linear-gradient(145deg, #f8f9fa, #e9ecef); width: 120px; height: 160px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                                    <div class="position-relative w-100" style="height: 120px; overflow: hidden;">
-                                        <img src="/img/image-placeholder-anime.jpeg" alt="Anime" class="img-fluid position-absolute top-50 start-50 translate-middle" style="width: 100%; height: 140%; object-fit: cover; object-position: center top;">
-                                        <div class="position-absolute bottom-0 start-0 w-100" style="height: 30px; background: linear-gradient(transparent, rgba(0,0,0,0.6));"></div>
+                                <button id="popular-chats-style-anime" class="btn d-flex align-items-start justify-content-center p-3 border-0 position-relative text-white" style="border-radius: 20px; overflow: hidden; background-image: url('/img/image-placeholder-anime.jpeg'); background-size: cover; background-position: center; width: 160px; height: 160px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                                    <div class="position-absolute top-0 bottom-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 50%, rgba(0,0,0,0.6) 100%);">
+                                        <span class="fw-bold text-white position-relative" style="font-size: 14px; line-height: 1.2; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{{translations.sort.anime}}</span>
                                     </div>
-                                    <span class="fw-bold text-dark py-2 px-1 text-center" style="font-size: 14px; line-height: 1.2;">{{translations.sort.anime}}</span>
                                 </button>
-                                <button id="popular-chats-style-photorealistic" class="btn d-flex flex-column align-items-center justify-content-center p-0 border-0 position-relative" style="border-radius: 20px; overflow: hidden; background: linear-gradient(145deg, #f8f9fa, #e9ecef); width: 120px; height: 160px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                                    <div class="position-relative w-100" style="height: 120px; overflow: hidden;">
-                                        <img src="/img/image-placeholder-real.jpeg" alt="Photorealistic" class="img-fluid position-absolute top-50 start-50 translate-middle" style="width: 100%; height: 140%; object-fit: cover; object-position: center top;">
-                                        <div class="position-absolute bottom-0 start-0 w-100" style="height: 30px; background: linear-gradient(transparent, rgba(0,0,0,0.6));"></div>
+                                <button id="popular-chats-style-photorealistic" class="btn d-flex align-items-start justify-content-center p-3 border-0 position-relative text-white" style="border-radius: 20px; overflow: hidden; background-image: url('/img/image-placeholder-real.jpeg'); background-size: cover; background-position: center; width: 160px; height: 160px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                                    <div class="position-absolute top-0 bottom-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 50%, rgba(0,0,0,0.6) 100%);">
+                                        <span class="fw-bold text-white position-relative" style="font-size: 14px; line-height: 1.2; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{{translations.sort.photorealistic}}</span>
                                     </div>
-                                    <span class="fw-bold text-dark py-2 px-1 text-center" style="font-size: 14px; line-height: 1.2;">{{translations.sort.photorealistic}}</span>
                                 </button>
                             </div>
                         </div>

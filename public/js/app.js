@@ -76,3 +76,21 @@ window.addEventListener('DOMContentLoaded', () => {
 window.onload = () => {
     getReferrerAndSave();
 };
+
+  // Check sessionStorage first, then fall back to user preference, default to false
+  let showNSFW;
+  const sessionNSFW = sessionStorage.getItem('showNSFW');
+  
+  if (sessionNSFW !== null) {
+    // Use sessionStorage value if it exists
+    showNSFW = sessionNSFW === 'true';
+  } else if (user.showNSFW !== undefined) {
+    // Fall back to user's saved preference
+    showNSFW = user.showNSFW;
+    // Save to sessionStorage for consistency
+    sessionStorage.setItem('showNSFW', showNSFW.toString());
+  } else {
+    // Default to false if neither exists
+    showNSFW = false;
+    sessionStorage.setItem('showNSFW', 'false');
+  }

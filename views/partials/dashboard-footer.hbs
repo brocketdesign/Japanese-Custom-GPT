@@ -523,6 +523,7 @@ window.showDiscovery = function() {
 }
 
 
+
 window.showNotification = (message, type = 'info') => {
     if(!message || typeof message !== 'string' || message.trim() === '' || message == 'undefined') {
         console.warn('Invalid message for notification:', message);
@@ -532,8 +533,12 @@ window.showNotification = (message, type = 'info') => {
     const createToastContainer = () => {
         const container = document.createElement('div');
         container.id = 'toastContainer';
-        container.className = 'toast-container position-fixed top-0 end-0 p-3';
+        container.className = 'toast-container position-fixed top-0 start-50 translate-middle-x p-3';
         container.style.zIndex = '1060';
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.alignItems = 'center';
+        container.style.gap = '8px';
         document.body.appendChild(container);
         return container;
     };
@@ -542,47 +547,75 @@ window.showNotification = (message, type = 'info') => {
     
     const toastId = 'toast-' + Date.now();
     const iconMap = {
-        success: 'check-circle-fill text-success',
-        error: 'exclamation-triangle-fill text-danger',
-        warning: 'exclamation-circle-fill text-warning',
-        info: 'info-circle-fill text-info'
+        success: 'check-circle-fill text-white',
+        error: 'exclamation-triangle-fill text-white',
+        warning: 'exclamation-circle-fill text-white',
+        info: 'info-circle-fill text-white'
     };
     
-    const headerMap = {
-        success: 'Success',
-        error: 'Error',
-        warning: 'Warning',
-        info: 'Info'
+    const backgroundMap = {
+        success: 'bg-success',
+        error: 'bg-danger',
+        warning: 'bg-warning',
+        info: 'bg-info'
     };
     
     const icon = iconMap[type] || iconMap.info;
-    const header = headerMap[type] || headerMap.info;
+    const background = backgroundMap[type] || backgroundMap.info;
     
     const toastHTML = `
-        <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="toast-header">
-                <i class="bi bi-${icon} me-2"></i>
-                <strong class="me-auto">${header}</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-            </div>
-            <div class="toast-body">
-                ${message}
+        <div id="${toastId}" class="toast ${background} text-white border-0 rounded-pill px-4 py-2 shadow-lg" 
+             role="alert" aria-live="assertive" aria-atomic="true" 
+             style="min-width: 300px; max-width: 500px; transform: translateY(-20px); opacity: 0; transition: all 0.3s ease;">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-${icon} me-2"></i>
+                    <span>${message}</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white ms-3" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
         </div>
     `;
     
-    toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+    toastContainer.insertAdjacentHTML('afterbegin', toastHTML);
     
     const toastElement = document.getElementById(toastId);
-    const toast = new bootstrap.Toast(toastElement);
+    
+    // Animate existing toasts down with cascade effect
+    const existingToasts = toastContainer.querySelectorAll('.toast:not(#' + toastId + ')');
+    existingToasts.forEach((toast, index) => {
+        const currentTransform = toast.style.transform || 'translateY(0px)';
+        const currentY = parseInt(currentTransform.match(/translateY\(([^)]+)\)/)?.[1] || '0');
+        toast.style.transform = `translateY(${currentY + 60}px)`;
+        toast.style.opacity = Math.max(0.3, 1 - (index + 1) * 0.15);
+    });
+    
+    // Animate new toast in
+    requestAnimationFrame(() => {
+        toastElement.style.transform = 'translateY(0px)';
+        toastElement.style.opacity = '1';
+    });
+    
+    const toast = new bootstrap.Toast(toastElement, {
+        autohide: true,
+        delay: 4000
+    });
     toast.show();
     
     // Remove toast element after it's hidden
     toastElement.addEventListener('hidden.bs.toast', () => {
+        // Animate remaining toasts up
+        const remainingToasts = Array.from(toastContainer.querySelectorAll('.toast')).filter(t => t !== toastElement);
+        remainingToasts.forEach((toast, index) => {
+            const currentTransform = toast.style.transform || 'translateY(0px)';
+            const currentY = parseInt(currentTransform.match(/translateY\(([^)]+)\)/)?.[1] || '0');
+            toast.style.transform = `translateY(${Math.max(0, currentY - 60)}px)`;
+            toast.style.opacity = Math.max(0.3, 1 - index * 0.15);
+        });
+        
         toastElement.remove();
     });
 };
-
 window.fetchUser = async function() {
     try {
         const url = `${API_URL}/api/user`;

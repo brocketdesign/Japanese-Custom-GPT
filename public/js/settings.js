@@ -1,15 +1,29 @@
 $(document).ready(function() {
+  let dateFormat;
+  switch (window.lang) {
+    case 'ja':
+      dateFormat = "Y年m月d日";
+      break;
+    case 'fr':
+      dateFormat = "d/m/Y";
+      break;
+    case 'en':
+    default:
+      dateFormat = "Y-m-d";
+      break;
+  }
   // Initialize flatpickr for birthdate
   flatpickr("#birthdate", {
-    locale: "ja",
-    dateFormat: "Y年m月d日",
+    locale: window.lang,
+    dateFormat: dateFormat,
     maxDate: new Date(),
     defaultDate: new Date(new Date().setFullYear(new Date().getFullYear() - 18)),
     onChange: function(selectedDates, dateStr, instance) {
-      const dateParts = dateStr.match(/(\d{4})年(\d{2})月(\d{2})日/);
-      const birthYear = dateParts[1];
-      const birthMonth = dateParts[2];
-      const birthDay = dateParts[3];
+      if (!selectedDates.length) return;
+      const date = selectedDates[0];
+      const birthYear = date.getFullYear();
+      const birthMonth = String(date.getMonth() + 1).padStart(2, '0');
+      const birthDay = String(date.getDate()).padStart(2, '0');
 
       $('#birthYear').val(birthYear);
       $('#birthMonth').val(birthMonth);
@@ -19,8 +33,25 @@ $(document).ready(function() {
 
   // NSFW toggle logic
   const nsfwToggle = $('#nsfw-toggle');
-  // Initialize toggle state from session storage
-  const showNSFW = sessionStorage.getItem('showNSFW') === 'true';
+    
+  // Check sessionStorage first, then fall back to user preference, default to false
+  let showNSFW;
+  const sessionNSFW = sessionStorage.getItem('showNSFW');
+  
+  if (sessionNSFW !== null) {
+    // Use sessionStorage value if it exists
+    showNSFW = sessionNSFW === 'true';
+  } else if (user.showNSFW !== undefined) {
+    // Fall back to user's saved preference
+    showNSFW = user.showNSFW;
+    // Save to sessionStorage for consistency
+    sessionStorage.setItem('showNSFW', showNSFW.toString());
+  } else {
+    // Default to false if neither exists
+    showNSFW = false;
+    sessionStorage.setItem('showNSFW', 'false');
+  }
+
   nsfwToggle.prop('checked', showNSFW);
 
   // Save toggle state to session storage on change
@@ -43,7 +74,21 @@ $(document).ready(function() {
 
   // Set user birthdate field
   if(user.birthDate){
-    $('#birthdate').val(`${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日`);
+    // Format the birthdate according to the selected language's dateFormat
+    let formattedBirthDate;
+    switch (window.lang) {
+      case 'ja':
+      formattedBirthDate = `${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日`;
+      break;
+      case 'fr':
+      formattedBirthDate = `${user.birthDate.day}/${user.birthDate.month}/${user.birthDate.year}`;
+      break;
+      case 'en':
+      default:
+      formattedBirthDate = `${user.birthDate.year}-${String(user.birthDate.month).padStart(2, '0')}-${String(user.birthDate.day).padStart(2, '0')}`;
+      break;
+    }
+    $('#birthdate').val(formattedBirthDate);
   }
 
   // Set user gender
@@ -103,6 +148,8 @@ $(document).ready(function() {
       success: async function(response) {
         showNotification(translations.info_updated_successfully, 'success');
         user = await fetchUser();
+        // Update user object with new showNSFW preference
+        user.showNSFW = $('#nsfw-toggle').is(':checked');
       },
       error: function(jqXHR) {
         console.log(jqXHR.responseJSON.error)

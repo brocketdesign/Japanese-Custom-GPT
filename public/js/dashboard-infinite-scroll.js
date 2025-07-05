@@ -267,11 +267,14 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedInde
                             <i class="bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}" style="cursor: pointer;"></i>
                         </span>
                     </div>
-                    ${isAdmin ? 1
-                        `<div class="card-body p-2 row mx-0 px-0 align-items-center justify-content-between">
+                    ${isAdmin ? `
+                        <div class="card-body p-2 row mx-0 px-0 align-items-center justify-content-between">
                             <button class="btn btn-light col-6 image-nsfw-toggle ${item?.nsfw ? 'nsfw' : 'sfw'}" 
                                 data-id="${item._id}" onclick="toggleImageNSFW(this)">
                                 <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
+                            </button>
+                            <button class="btn btn-light col-6 update-chat-image" onclick="updateChatImage(this)" data-id="${chatId}" data-img="${item.imageUrl}" style="cursor: pointer; opacity:0.8;">
+                                <i class="bi bi-image"></i>
                             </button>
                         </div>` : ''
                     }`

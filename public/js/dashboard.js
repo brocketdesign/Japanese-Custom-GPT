@@ -183,12 +183,12 @@ window.displayLatestVideoChats = function(videoChatsData, targetGalleryId) {
                             <img src="${videoChat.chat.chatImageUrl}" alt="${videoChat.chat.name}" 
                                  class="rounded-circle me-2 border" width="30" height="30">
                             <div class="flex-grow-1">
-                                <h6 class="card-title mb-0 fw-semibold text-truncate small" title="${videoChat.chat.name}">
-                                    ${videoChat.chat.name}
-                                </h6>
-                                ${videoChat.user.nickname ? `
-                                    <small class="text-muted">@${videoChat.user.nickname}</small>
-                                ` : ''}
+                              <a href="/character/${videoChat.chatId}" class="text-muted small text-truncate" title="${videoChat.chat.name || videoChat.chat.chatName}">
+                                <h6 class="card-title mb-0 fw-semibold text-truncate" title="${videoChat.chat.name || videoChat.chat.chatName}">${videoChat.chat.name || videoChat.chat.chatName}</h6>
+                              </a>
+                              ${videoChat.user.nickname ? `
+                                  <small class="text-muted">@${videoChat.user.nickname}</small>
+                              ` : ''}
                             </div>
                         </div>
                     </div>
@@ -951,7 +951,13 @@ function createOverlay(img, imageUrl) {
   const isTemporary = !!window.user?.isTemporary; // Access global user object
   const subscriptionStatus = window.user?.subscriptionStatus === 'active';
   const showNSFW = sessionStorage.getItem('showNSFW') === 'true';
-
+  
+  // Check if the overlay already exists
+  if ($(img).next('.gallery-nsfw-overlay').length) {
+    // If it exists, remove it first
+    $(img).next('.gallery-nsfw-overlay').remove();
+  }
+  
   if (isTemporary) {
     overlay = $('<div></div>')
         .addClass('gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')
@@ -979,7 +985,7 @@ function createOverlay(img, imageUrl) {
         });
 
     let badge = $('<span></span>')
-        .addClass('badge bg-warning mb-2')
+        .addClass('badge bg-danger mb-2')
         .css('font-size', '1rem')
         .html('<i class="bi bi-eye-slash"></i> NSFW Hidden');
 
@@ -1730,7 +1736,9 @@ window.displayLatestChats = function (chatData, targetGalleryId, modal = false) 
             ${nsfwOverlay}
           </div>
           <div class="card-body p-2 d-flex flex-column">
-            <h6 class="card-title small fw-bold mb-1 text-truncate" style="font-size: 0.85rem;">${chat.name}</h6>
+            <a href="/character/${chat._id}" class="text-muted small text-truncate" title="${chat.name}">
+              <h6 class="card-title mb-0 fw-semibold text-truncate" title="${chat.name}">${chat.name}</h6>
+            </a>
           </div>
           <div class="position-absolute top-0 start-0 w-100 px-2 pt-2 d-flex justify-content-between align-items-center" style="z-index:3;">
             <div class="d-flex align-items-center gap-1">
@@ -1864,7 +1872,9 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                               onclick="${chat.premium ? `(window.user && window.user.subscriptionStatus === 'active' ? redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}') : loadPlanPage())` : `redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')`}">
                               <img src="${chat.chatImageUrl || '/img/avatar.png'}" alt="${chat.name || chat.chatName}" class="rounded-circle me-2 border" width="40" height="40">
                               <div>
-                                  <h5 class="card-title mb-0 fw-semibold text-truncate" title="${chat.name || chat.chatName}">${chat.name || chat.chatName}</h5>
+                                  <a href="/character/${chat._id}" class="text-muted small text-truncate" title="${chat.name || chat.chatName}">
+                                    <h5 class="card-title mb-0 fw-semibold text-truncate" title="${chat.name || chat.chatName}">${chat.name || chat.chatName}</h5>
+                                  </a>
                                   ${chat.nickname ? `<a href="/user/${chat.userId}" class="text-muted small user-link">@${chat.nickname}</a>` : ''}
                               </div>
                           </div>

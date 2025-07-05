@@ -747,7 +747,6 @@ function setupChatInterface(chat, character) {
                                         onclick="showImagePreview(this)"
                                         class="ps-0 text-start assistant-image-box vertical-transition">
                                             <img id="image-${imageId}" data-id="${imageId}" src="${chatMessage.imageUrl}" alt="${chatMessage.title || 'Merged Image'}" data-prompt="${chatMessage.prompt || 'Auto merged image'}">
-                                            <div class="nsfw-badge-container badge" style="display:none;">NSFW</div>
                                         </div>
                                     </div>
                                 </div>
@@ -960,7 +959,6 @@ function setupChatInterface(chat, character) {
                         onclick="showImagePreview(this)"
                         class="ps-0 text-start assistant-image-box vertical-transition" style="position: relative;">
                             <img id="image-${imageId}" data-id="${imageId}" src="${placeholderImageUrl}" alt="Loading image...">
-                            <div class="nsfw-badge-container badge" style="display:none;">NSFW</div>
                         </div>
                     </div>
                 </div>
@@ -1429,7 +1427,6 @@ function setupChatInterface(chat, character) {
                         onclick="showImagePreview(this)" 
                         class="ps-0 text-start assistant-image-box vertical-transition ${shouldBlur ? 'isBlurred' : '' }" data-id="${imageId}" style="position: relative;">
                             ${message.outerHTML}
-                            ${imageNsfw ? `<div class="nsfw-badge-container badge">NSFW</div>` : ''}
                             ${nsfwOverlay}
                         </div>
                         ${!isUpscaled ? getImageTools({chatId, imageId, isLiked:false, title, prompt, nsfw: imageNsfw, imageUrl, isMergeFace}) : ''}
@@ -1466,7 +1463,6 @@ function setupChatInterface(chat, character) {
                             onclick="showImagePreview(this)"
                             class="text-start assistant-image-box vertical-transition" data-id="${imageId}">
                             ${message.outerHTML}
-                            ${imageNsfw ? `<div class="nsfw-badge-container badge">NSFW</div>` : ''}
                         </div>
                         ${getImageTools({chatId, imageId, isLiked:false, title, prompt, nsfw: imageNsfw, imageUrl})}
                     </div>  
@@ -1475,28 +1471,6 @@ function setupChatInterface(chat, character) {
             $(`#${messageId}`).append(messageElement);
             messageElement.addClass(animationClass).fadeIn();
             displayImageThumb(imageUrl)
-        } 
-    
-        else if (messageClass === 'bot-image-nsfw'&& message instanceof HTMLElement) {
-            messageElement = $(`
-                <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass} unlock-nsfw" style="position: relative;">
-                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;" onclick="openCharacterInfoModal('${chatId}', event)">
-                    <div class="ms-3 position-relative">
-                        <div 
-                        onclick="showImagePreview(this)"
-                        class="text-start assistant-image-box vertical-transition">
-                            ${message.outerHTML}
-                        </div>
-                        <div class="badge-container position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
-                            <span type="button" class="badge bg-danger text-white" style="padding: 5px; border-radius: 5px;">
-                                <i class="bi bi-lock"></i> 成人向け
-                            </span>
-                        </div>
-                    </div>
-                </div>   
-            `).hide();
-            messageContainer.append(messageElement);
-            messageElement.addClass(animationClass).fadeIn();
         } 
     
         else if (messageClass === 'assistant' && typeof message === 'string' && message.trim() !== '') {

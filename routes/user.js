@@ -387,7 +387,9 @@ async function routes(fastify, options) {
       if (formData.gender) updateData.gender = formData.gender;
       if (formData.profileUrl) updateData.profileUrl = formData.profileUrl;
       if (formData.ageVerification) updateData.ageVerification = formData.ageVerification === 'true';
-
+      if (formData.showNSFW !== undefined) {
+        updateData.showNSFW = formData.showNSFW === 'true';
+      }
       if (Object.keys(updateData).length === 0) {
         return reply.status(400).send({ error: 'No data to update' });
       }

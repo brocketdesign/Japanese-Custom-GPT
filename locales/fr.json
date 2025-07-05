@@ -1,5 +1,9 @@
 {
   "lang": "fr",
+  "loadingMoreCharacters": "Chargement de plus de personnages...",
+  "cardMenuTitle": "Explorer les personnages IA",
+  "cardMenuDescription": "Découvrez et interagissez avec une variété de personnages IA.",
+  "createCharacterRestriction": "Passez à la version supérieure pour créer plus de personnages",
   "refresh": "Rafraîchir",
   "latestVideoChatsHeader": "Derniers chats vidéo",
   "upgrade": "Mettre à niveau",
@@ -356,6 +360,7 @@
   "why_chat_seo_text": "Vivez des conversations authentiques avec des personnages IA conçus pour offrir des expériences engageantes. Nos personnages IA utilisent des modèles de langage avancés et la génération d'images IA pour créer des interactions immersives adaptées à la personnalité unique de chaque personnage.",
   "how_to_chat_seo_text": "Commencez à discuter avec nos personnages IA en quelques étapes simples. Choisissez parmi une variété de personnalités et engagez des conversations enrichies par des capacités de génération d'images IA, créant ainsi une expérience de chat IA véritablement personnalisée.",
   "exploreCharacters": "Explorer les personnages",
+  "exploreCharactersDescription": "Découvrez une gamme diversifiée de personnages IA, chacun avec ses propres traits et personnalités uniques. Engagez des conversations et générez de nouvelles images et vidéos.",
   "followers": {
     "pageTitleFollowers": "Les abonnés de {{name}} - Lamix AI Compagnon",
     "pageTitleFollowing": "Utilisateurs suivis par {{name}} - Lamix AI Compagnon",
@@ -409,6 +414,8 @@
   "promptCardActivated": "Une nouvelle pose est disponible !",
   "photorealistic": "Photoréaliste",
   "sort": {
+    "anime": "Anime",
+    "photorealistic": "Photorealiste",
     "premiumLabel": "💎 Premium",
     "showPremium": "Afficher Premium",
     "hidePremium": "Masquer Premium",

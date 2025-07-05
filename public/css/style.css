@@ -2683,3 +2683,81 @@ opacity: 0.8;
     background-position: -200% 0;
   }
 }
+
+
+  /* Query Tags Styles */
+  .query-tags-scroll-container {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #ddd transparent;
+  }
+  
+  .query-tags-scroll-container::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  .query-tags-scroll-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  
+  .query-tags-scroll-container::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+  }
+  
+  .query-tags-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: #bbb;
+  }
+  
+  .query-tags-list {
+    padding: 10px 0;
+    white-space: nowrap;
+    gap: 8px;
+  }
+  
+  .query-tag {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border-radius: 25px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    color: #6c757d;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    user-select: none;
+  }
+  
+  .query-tag:hover {
+    background: #e9ecef;
+    color: #495057;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .query-tag.active {
+    background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+    color: white;
+    border-color: #8240FF;
+    box-shadow: 0 2px 8px rgba(130,64,255,0.3);
+  }
+  
+  .query-tag.active:hover {
+    background: linear-gradient(90.9deg, #C2A8FF 2.74%, #7230EF 102.92%);
+    transform: translateY(-1px);
+  }
+  
+  .query-tag-all {
+    background: #fff;
+    border: 2px solid #8240FF;
+    color: #8240FF;
+    font-weight: 600;
+  }
+  
+  .query-tag-all.active {
+    background: #8240FF;
+    color: white;
+  }

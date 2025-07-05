@@ -1,5 +1,9 @@
 {
   "lang": "ja",
+  "loadingMoreCharacters": "キャラクターをさらに読み込み中...",
+  "cardMenuTitle": "AIキャラクターを探索",
+  "cardMenuDescription": "さまざまなAIキャラクターを発見し、交流しましょう。",
+  "createCharacterRestriction": "さらにキャラクターを作成するにはアップグレードしてください",
   "refresh": "リフレッシュ",
   "latestVideoChatsHeader": "最新の動画チャット",
   "upgrade": "アップグレード",
@@ -395,6 +399,7 @@
     "followedByTextSuffix": "にフォローされています"
   },
   "exploreCharacters": "キャラクターを探索",
+  "exploreCharactersDescription": "多様なAIキャラクターを発見し、それぞれのユニークな特徴や個性を楽しんでください。会話を楽しみ、新しい画像や動画を生成しましょう。",
   "main_image_alt_text": "メイン画像",
   "profile_image_alt_text": "プロフィール画像",
   "meet_your_ai_companion": "あなたのAIコンパニオン：",
@@ -424,6 +429,8 @@
   "promptCardActivated": "新しいポーズが利用可能です！",
   "photorealistic": "フォトリアリスティック",
   "sort": {
+    "anime": "アニメ",
+    "photorealistic": "フォトリアリスティック",
     "premiumLabel": "💎 プレミアム",
     "showPremium": "プレミアムを表示",
     "hidePremium": "プレミアムを非表示",

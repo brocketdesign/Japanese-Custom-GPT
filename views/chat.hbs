@@ -85,8 +85,13 @@
                     </div>
                 </div>
                 
+                <!-- Card menu title & description -->
+                <div class="container text-center mb-2 animate__animated" data-animate="animate__fadeInLeft" data-delay="0.3s">
+                    <h2 class="fw-bold u-color-grad">{{translations.cardMenuTitle}}</h2>
+                    <p class="text-muted">{{translations.cardMenuDescription}}</p>
+                </div>
                 <!-- Card menu -->
-                <div class="card-menu-container my-3">
+                <div class="card-menu-container mb-3">
                     <div class="d-flex overflow-auto px-3 py-5" style="scrollbar-width: thin;justify-content: space-between;">
                         <!-- Create Character Card -->
                         <div class="character-create-card shadow-sm rounded p-3 text-center mx-2 flex-shrink-0" 
@@ -98,6 +103,10 @@
                             </div>
                             <h5 class="mb-2">{{translations.createCharacter}}</h5>
                             <p class="text-muted small mb-0">{{translations.createCharacterDescription}}</p>
+                            <!-- Restrictions -->
+                            <div class="rounded-pill text-white fw-bold mt-2 is-free-user" style="background: linear-gradient(135deg, #FF5E7E, #FF8C40);" role="alert">
+                                {{translations.createCharacterRestriction}}
+                            </div>
                         </div>
                         
                         <!-- Explore Characters Card -->
@@ -178,18 +187,21 @@
                                 </div>
                             </div>
                             <!-- Style Filter Buttons -->
-                            <div class="col-12 col-md-auto d-flex align-items-center gap-2 justify-content-start justify-content-md-start">
-                                <span class="me-2 text-muted" style="font-size: 15px;">
-                                    <i class="bi bi-palette"></i> {{translations.sort.styleLabel}}
-                                </span>
-                                <div class="d-flex flex-wrap gap-2">
-                                    <button id="popular-chats-style-anime" class="btn p-0 border-0" style="padding:0px !important;border-radius: 50%; width: 50px; height: 50px; overflow: hidden;" data-bs-toggle="tooltip" data-bs-placement="top" title="{{translations.sort.anime}}">
-                                        <img src="/img/image-placeholder-anime.jpeg" alt="Anime" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;">
-                                    </button>
-                                    <button id="popular-chats-style-photorealistic" class="btn p-0 border-0" style="padding:0px !important;border-radius: 50%; width: 50px; height: 50px; overflow: hidden;" data-bs-toggle="tooltip" data-bs-placement="top" title="{{translations.sort.photorealistic}}">
-                                        <img src="/img/image-placeholder-real.jpeg" alt="Photorealistic" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;">
-                                    </button>
-                                </div>
+                            <div class="col-12 d-flex justify-content-center gap-4">
+                                <button id="popular-chats-style-anime" class="btn d-flex flex-column align-items-center justify-content-center p-0 border-0 position-relative" style="border-radius: 20px; overflow: hidden; background: linear-gradient(145deg, #f8f9fa, #e9ecef); width: 120px; height: 160px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                                    <div class="position-relative w-100" style="height: 120px; overflow: hidden;">
+                                        <img src="/img/image-placeholder-anime.jpeg" alt="Anime" class="img-fluid position-absolute top-50 start-50 translate-middle" style="width: 100%; height: 140%; object-fit: cover; object-position: center top;">
+                                        <div class="position-absolute bottom-0 start-0 w-100" style="height: 30px; background: linear-gradient(transparent, rgba(0,0,0,0.6));"></div>
+                                    </div>
+                                    <span class="fw-bold text-dark py-2 px-1 text-center" style="font-size: 14px; line-height: 1.2;">{{translations.sort.anime}}</span>
+                                </button>
+                                <button id="popular-chats-style-photorealistic" class="btn d-flex flex-column align-items-center justify-content-center p-0 border-0 position-relative" style="border-radius: 20px; overflow: hidden; background: linear-gradient(145deg, #f8f9fa, #e9ecef); width: 120px; height: 160px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                                    <div class="position-relative w-100" style="height: 120px; overflow: hidden;">
+                                        <img src="/img/image-placeholder-real.jpeg" alt="Photorealistic" class="img-fluid position-absolute top-50 start-50 translate-middle" style="width: 100%; height: 140%; object-fit: cover; object-position: center top;">
+                                        <div class="position-absolute bottom-0 start-0 w-100" style="height: 30px; background: linear-gradient(transparent, rgba(0,0,0,0.6));"></div>
+                                    </div>
+                                    <span class="fw-bold text-dark py-2 px-1 text-center" style="font-size: 14px; line-height: 1.2;">{{translations.sort.photorealistic}}</span>
+                                </button>
                             </div>
                         </div>
                     </div>

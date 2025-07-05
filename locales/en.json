@@ -1,5 +1,11 @@
 {
   "lang": "en",
+  "browseByCategory": "Browse by Category",
+  "scrollForMore": "Scroll for more characters",
+  "loadingMoreCharacters": "Loading more characters...",
+  "cardMenuTitle": "Explore AI Characters",
+  "cardMenuDescription": "Discover and interact with a variety of AI characters.",
+  "createCharacterRestriction": "Upgrade to create more characters",
   "refresh": "Refresh",
   "system_prompt": {
     "title": "System Prompt Management",
@@ -419,9 +425,12 @@
   "why_chat_seo_text": "Experience authentic AI chat conversations with characters designed to deliver engaging experiences. Our AI characters use advanced language models and AI image generation to create immersive interactions tailored to each character's unique personality.",
   "how_to_chat_seo_text": "Start chatting with our AI characters in just a few simple steps. Choose from a variety of personalities and begin conversations enhanced with AI image generation capabilities, creating a truly personalized AI chat experience.",
   "exploreCharacters": "Explore Characters",
+  "exploreCharactersDescription": "Discover a diverse range of AI characters, each with their own unique traits and personalities. Engage in conversations and generate new images and videos.",
   "promptCardActivated": "A new prompt card is available!",
   "photorealistic": "Photorealistic",
   "sort": {
+    "anime": "Anime",
+    "photorealistic": "Photorealistic",
     "premiumLabel": "💎 Premium",
     "showPremium": "Show Premium",
     "hidePremium": "Hide Premium",

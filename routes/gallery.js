@@ -462,102 +462,119 @@ fastify.get('/chats/images/search', async (request, reply) => {
       reply.code(500).send('Internal Server Error');
     }
   });  
-  fastify.get('/chats/horizontal-gallery', async (request, reply) => {
-    try {
-      const db = fastify.mongo.db;
-      const chatsGalleryCollection = db.collection('gallery');
-      const chatsCollection = db.collection('chats');
-  
-      // Pagination parameters
-      const page = parseInt(request.query.page) || 1; // Default to page 1
-      const limit = parseInt(request.query.limit) || 10; // Default limit of 10
-      const skip = (page - 1) * limit;
-  
-      // Get the requested language
-      const language = getLanguageName(request.user?.lang);
-      const requestLang = request.lang; // Language inferred from the request
-  
-      // Fetch chat IDs that have images
-      const chatsWithImages = await chatsGalleryCollection
-        .aggregate([
-          { $match: { 'images.0': { $exists: true } } }, // Only chats with images
-          { $sort: { _id: -1 } }, // Sort by _id in descending order for latest first
-          { $project: { chatId: 1 } }
-        ])
-        .toArray();
-  
-      const chatIdsWithImages = chatsWithImages.map(c => c.chatId);
-  
-      // Fetch chat metadata for chat IDs with the language filter and pagination
-      const chats = await chatsCollection
-        .find({
-          _id: { $in: chatIdsWithImages },
-          $or: [
+fastify.get('/chats/horizontal-gallery', async (request, reply) => {
+  try {
+    const db = fastify.mongo.db;
+    const chatsGalleryCollection = db.collection('gallery');
+    const chatsCollection = db.collection('chats');
+
+    // Pagination parameters
+    const page = parseInt(request.query.page) || 1; // Default to page 1
+    const limit = parseInt(request.query.limit) || 10; // Default limit of 10
+    const skip = (page - 1) * limit;
+
+    // Search query parameter
+    const queryStr = request.query.query || '';
+    const queryWords = queryStr.split(' ').filter(word => word.replace(/[^\w\s]/gi, '').trim() !== '');
+
+    // Get the requested language
+    const language = getLanguageName(request.user?.lang);
+    const requestLang = request.lang; // Language inferred from the request
+
+    // Fetch chat IDs that have images
+    const chatsWithImages = await chatsGalleryCollection
+      .aggregate([
+        { $match: { 'images.0': { $exists: true } } }, // Only chats with images
+        { $sort: { _id: -1 } }, // Sort by _id in descending order for latest first
+        { $project: { chatId: 1 } }
+      ])
+      .toArray();
+
+    const chatIdsWithImages = chatsWithImages.map(c => c.chatId);
+
+    // Build search filter for chat metadata
+    let searchFilter = {
+      _id: { $in: chatIdsWithImages },
+      $or: [
         { language: language },
         { language: requestLang }
-          ]
-        })
-        .project({
-          _id: 1,
-          name: 1,
-          thumbnail: 1,
-          thumbnailUrl: 1,
-          language: 1,
-          description: 1,
-          first_message: 1,
-          slug: 1,
-        })
-        .sort({ _id: -1 }) // Sort by _id in descending order for latest first
-        .skip(skip)
-        .limit(limit)
-        .toArray();
-  
-      const totalChatsCount = await chatsCollection.countDocuments({
-        _id: { $in: chatIdsWithImages },
+      ]
+    };
+
+    // Add search functionality if query is provided
+    if (queryWords.length > 0) {
+      const searchConditions = queryWords.map(word => ({
         $or: [
-          { language: language },
-          { language: requestLang }
+          { name: { $regex: new RegExp(word, 'i') } },
+          { description: { $regex: new RegExp(word, 'i') } },
+          { first_message: { $regex: new RegExp(word, 'i') } },
+          { tags: { $regex: new RegExp(word, 'i') } },
+          { nickname: { $regex: new RegExp(word, 'i') } }
         ]
-      });
-  
-      const totalPages = Math.ceil(totalChatsCount / limit);
-  
-      // Fetch images for the filtered chats
-      const imagesByChat = await chatsGalleryCollection
-        .find({ chatId: { $in: chats.map(chat => chat._id) } })
-        .project({
-          chatId: 1,
-          images: 1,
-          imageCount: { $size: '$images' }
-        })
-        .toArray();
-  
-      // Merge chats with images
-      const result = chats.map(chat => {
-        const imageInfo = imagesByChat.find(image => image.chatId.equals(chat._id));
-        return {
-          ...chat,
-          images: imageInfo?.images || [],
-          imageCount: imageInfo?.imageCount || 0,
-          thumbnail: chat.thumbnail || chat.thumbnailUrl || '/img/default-thumbnail.png'
-        };
-      });
-  
-      // Send response with pagination metadata
-      reply.send({
-        chats: result,
-        page,
-        limit,
-        totalPages,
-        totalChatsCount,
-        message: 'Chats with images retrieved successfully.'
-      });
-    } catch (err) {
-      console.error(err);
-      reply.code(500).send({ error: 'Internal Server Error' });
+      }));
+
+      searchFilter.$and = searchConditions;
     }
-  });
-  
+
+    // Fetch chat metadata with search filter and pagination
+    const chats = await chatsCollection
+      .find(searchFilter)
+      .project({
+        _id: 1,
+        name: 1,
+        thumbnail: 1,
+        thumbnailUrl: 1,
+        language: 1,
+        description: 1,
+        first_message: 1,
+        slug: 1,
+        tags: 1,
+        nickname: 1
+      })
+      .sort({ _id: -1 }) // Sort by _id in descending order for latest first
+      .skip(skip)
+      .limit(limit)
+      .toArray();
+
+    const totalChatsCount = await chatsCollection.countDocuments(searchFilter);
+    const totalPages = Math.ceil(totalChatsCount / limit);
+
+    // Fetch images for the filtered chats
+    const imagesByChat = await chatsGalleryCollection
+      .find({ chatId: { $in: chats.map(chat => chat._id) } })
+      .project({
+        chatId: 1,
+        images: 1,
+        imageCount: { $size: '$images' }
+      })
+      .toArray();
+
+    // Merge chats with images
+    const result = chats.map(chat => {
+      const imageInfo = imagesByChat.find(image => image.chatId.equals(chat._id));
+      return {
+        ...chat,
+        images: imageInfo?.images || [],
+        imageCount: imageInfo?.imageCount || 0,
+        thumbnail: chat.thumbnail || chat.thumbnailUrl || '/img/default-thumbnail.png'
+      };
+    });
+
+    // Send response with pagination metadata
+    reply.send({
+      chats: result,
+      page,
+      limit,
+      totalPages,
+      totalChatsCount,
+      query: queryStr,
+      message: queryStr ? 'Search results retrieved successfully.' : 'Chats with images retrieved successfully.'
+    });
+  } catch (err) {
+    console.error(err);
+    reply.code(500).send({ error: 'Internal Server Error' });
+  }
+});
   fastify.get('/chat/:chatId/images', async (request, reply) => {
     const { chatId } = request.params;
     const page = parseInt(request.query.page) || 1;
@@ -898,6 +915,58 @@ fastify.get('/chats/images/search', async (request, reply) => {
     }
   });
 
+fastify.get('/api/query-tags', async (request, reply) => {
+    try {
+        const db = fastify.mongo.db;
+        const chatsCollection = db.collection('chats');
+        
+        // Get user language for filtering
+        const user = request.user;
+        const language = getLanguageName(user?.lang);
+        const requestLang = request.lang;
+        
+        // Aggregate tags from chats
+        const tagResults = await chatsCollection.aggregate([
+            {
+                $match: {
+                    $or: [
+                        { language: language },
+                        { language: requestLang }
+                    ],
+                    tags: { $exists: true, $not: { $size: 0 } }
+                }
+            },
+            { $unwind: '$tags' },
+            {
+                $group: {
+                    _id: '$tags',
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { count: -1 } },
+            { $limit: 20 }, // Limit to top 20 most popular tags
+            {
+                $project: {
+                    _id: 0,
+                    tag: '$_id',
+                    count: 1
+                }
+            }
+        ]).toArray();
+        
+        // Extract just the tag names
+        const tags = tagResults.map(result => result.tag).filter(tag => tag && tag.trim() !== '');
+        
+        reply.send({
+            tags: tags,
+            success: true
+        });
+        
+    } catch (err) {
+        console.error('Error in /api/query-tags:', err);
+        reply.code(500).send({ error: 'Internal Server Error' });
+    }
+});
 }
 
 module.exports = routes;

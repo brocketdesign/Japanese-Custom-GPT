@@ -2849,9 +2849,16 @@ function updateGrid(value) {
   });
 }
 
+// Global state for query management
+let currentActiveQuery = '';
+let availableQueryTags = [];
+
+
+// Initialize infinite scroll for chats with images
 $(document).ready(function () {
     let currentPage = 1;
     let isFetchingChats = false;
+    let hasMoreChats = true; // Track if more chats are available
   
     // Adjust these as needed
     const currentUser = window.user || {};
@@ -2868,21 +2875,91 @@ $(document).ready(function () {
         })
         .catch(err => console.error('Failed to check admin status:', err));
     }
-  
+
+    // Create loading spinner element
+    function createLoadingSpinner() {
+      return `
+        <div id="chats-loading-spinner" class="text-center my-4">
+          <div class="spinner-border text-purple" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <div class="mt-2 text-muted">${translations.loadingMoreCharacters}</div>
+        </div>
+      `;
+    }
+
+    // Create back to top button
+    function createBackToTopButton() {
+      return `
+        <div id="back-to-top-container" class="text-center my-4">
+          <button class="btn btn-outline-primary" onclick="scrollToTop()">
+            <i class="bi bi-arrow-up"></i> Back to Top
+          </button>
+        </div>
+      `;
+    }
+
+    // Show loading spinner
+    function showLoadingSpinner() {
+      // Remove existing spinner or back-to-top if present
+      $('#chats-loading-spinner, #back-to-top-container').remove();
+      
+      // Add spinner to the end of the container
+      $('#all-chats-container').append(createLoadingSpinner());
+
+    }
+
+    // Hide loading spinner
+    function hideLoadingSpinner() {
+      $('#chats-loading-spinner').remove();
+    }
+
+    // Show back to top button
+    function showBackToTopButton() {
+      // Remove existing spinner or back-to-top if present
+      $('#chats-loading-spinner, #back-to-top-container').remove();
+      
+      // Add back-to-top button
+      $('#all-chats-container').append(createBackToTopButton());
+    }
+    // Hide back to top button
+    function hideBackToTopButton() {
+      $(document).find('#back-to-top-container').remove();
+    }
+
     /**
      * Fetch Chats with Images (Vertical Infinite Scroll)
      */
-    function fetchChatsWithImages(page) {
-      if (isFetchingChats) return;
+    function fetchChatsWithImages(page, query = '') {
+      if (isFetchingChats || !hasMoreChats) return;
+      
       isFetchingChats = true;
-  
+      showLoadingSpinner();
+      hideBackToTopButton();
+      
       $.ajax({
-        url: `/chats/horizontal-gallery?page=${page}`,
+        url: `/chats/horizontal-gallery?page=${page}&query=${encodeURIComponent(query)}`,
         method: 'GET',
         xhrFields: {
             withCredentials: true
         },
         success: function (data) {
+          // Hide spinner on success
+          hideLoadingSpinner();
+          
+          // Check if we have more chats
+          if (!data.chats || data.chats.length === 0) {
+            hasMoreChats = false;
+            showBackToTopButton();
+            console.log('No more characters to load');
+            return;
+          }
+
+          // Check if this is the last page
+          if (data.totalPages && page >= data.totalPages) {
+            hasMoreChats = false;
+          }
+          
           let chatsHtml = '';
   
           data.chats.forEach(chat => {
@@ -2894,7 +2971,7 @@ $(document).ready(function () {
                 if (index >= 12) return;
               // Check unlock logic (adapt to your own logic)
               const isBlur = shouldBlurNSFW(item, subscriptionStatus);
-              // Check if user has “liked” this image
+              // Check if user has "liked" this image
               const isLiked = Array.isArray(item.likedBy)
                 ? item.likedBy.some(id => id.toString() === currentUserId.toString())
                 : false;
@@ -2979,8 +3056,6 @@ $(document).ready(function () {
           });
   
           // Append the generated HTML for all chats
-
-          
           $('#all-chats-container').append(chatsHtml);
   
           // Attach horizontal scrolling listeners
@@ -2996,16 +3071,29 @@ $(document).ready(function () {
           // Reset fetching flag and increment page
           isFetchingChats = false;
           currentPage++;
+
+            // Only show back to top if we've reached the end AND not currently loading
+          if (!hasMoreChats && !isFetchingChats) {
+            showBackToTopButton();
+          }
         },
         error: function (err) {
           console.error('Failed to load chats', err);
+          hideLoadingSpinner();
           isFetchingChats = false;
+          
+          // Show error message or back to top on error
+          $('#all-chats-container').append(`
+            <div class="text-center my-4 text-danger">
+              <i class="bi bi-exclamation-triangle"></i> Failed to load more characters
+            </div>
+          `);
         }
       });
     }
   
     /**
-     * Horizontal Infinite Scrolling for Each Chat’s Images
+     * Horizontal Infinite Scrolling for Each Chat's Images
      */
     function attachHorizontalScrollListeners() {
       $('.chat-images-horizontal').off('scroll').on('scroll', function () {
@@ -3111,15 +3199,111 @@ $(document).ready(function () {
      * Vertical Infinite Scroll for Chats
      */
     $(window).on('scroll', function () {
-      if ($(window).scrollTop() + $(window).height() >= $(document).height() - 50) {
+      // Changed from -50 to -200 to trigger loading earlier
+      if ($(window).scrollTop() + $(window).height() >= $(document).height() - 200) {
         fetchChatsWithImages(currentPage);
       }
     });
-  
+
     /**
      * Initial Load
      */
     fetchChatsWithImages(currentPage);
+
+    // Function to load and display query tags
+    window.loadQueryTags = async function() {
+        try {
+            const response = await fetch('/api/query-tags');
+            if (!response.ok) throw new Error('Failed to fetch query tags');
+            
+            const data = await response.json();
+            availableQueryTags = data.tags || [];
+            
+            displayQueryTags();
+        } catch (error) {
+            console.error('Error loading query tags:', error);
+            // Hide the query tags section if loading fails
+            $('.query-tags-section').hide();
+        }
+    };
+
+    // Function to display query tags
+    window.displayQueryTags = function() {
+        const queryTagsList = $('#query-tags-list');
+        
+        if (!availableQueryTags.length) {
+            $('.query-tags-section').hide();
+            return;
+        }
+        
+        let tagsHtml = '';
+        
+        // Add "All" tag first
+        tagsHtml += `
+            <div class="query-tag query-tag-all ${currentActiveQuery === '' ? 'active' : ''}" 
+                data-query="" 
+                onclick="setActiveQuery('')">
+                <i class="bi bi-grid me-1"></i>${translations.all || 'All'}
+            </div>
+        `;
+        
+        // Add other query tags
+        availableQueryTags.forEach(tag => {
+            const isActive = currentActiveQuery === tag;
+            tagsHtml += `
+                <div class="query-tag ${isActive ? 'active' : ''}" 
+                    data-query="${tag}" 
+                    onclick="setActiveQuery('${tag}')">
+                    #${tag}
+                </div>
+            `;
+        });
+        
+        queryTagsList.html(tagsHtml);
+    };
+
+    // Function to set active query and trigger search
+    window.setActiveQuery = function(query) {
+        // Update active state
+        currentActiveQuery = query;
+        
+        // Update UI
+        $('.query-tag').removeClass('active');
+        $(`.query-tag[data-query="${query}"]`).addClass('active');
+        
+        // Clear existing results
+        $('#all-chats-container').empty();
+        $('#all-chats-images-gallery').empty();
+        $('#all-chats-images-pagination-controls').empty();
+        
+        // Reset pagination state
+        if (typeof allChatsCurrentPage !== 'undefined') {
+            allChatsCurrentPage = 0;
+        }
+        if (typeof allChatsLoadingState !== 'undefined') {
+            allChatsLoadingState = false;
+        }
+        
+        // Trigger new search with query
+        if (query) {
+            // Search for chats with the query
+            fetchChatsWithImagesQuery(1, query);
+        } else {
+            // Load all chats (existing functionality)
+            if (typeof fetchChatsWithImages === 'function') {
+                fetchChatsWithImages(1, '');
+            }
+        }
+    };
+
+    // Enhanced function to fetch chats with query support
+    window.fetchChatsWithImagesQuery = function(page, query = '') {
+          fetchChatsWithImages(page, query);
+    };
+    // Load query tags if we're on the character exploration page
+    if ($('#all-chats-container').length > 0) {
+        loadQueryTags();
+    }
 });
   
 window.getLanguageName = function(langCode) {

@@ -52,18 +52,6 @@
                     <span class="badge bg-danger text-white">{{translations.admin}}</span>
                 </div>
             {{/if}}
-
-            {{#if (eq user.subscriptionStatus 'active')}}
-            {{else}}
-            <div class="pt-0 pb-3 text-center onchat mt-2 onchat-off">
-                <button onclick="loadPlanPage()" class="btn d-flex justify-content-center align-items-center rounded-pill fw-bold custom-gradient-bg gap-2 px-2 py-1.5 text-sm text-white bg-white mx-auto" style="border: 1px solid #000;">
-                    <div>
-                        <span class="text-white">{{translations.upgrade}}</span>
-                        <span id="countdown-timer-avatar" class="countdown-timer"></span>
-                    </div>
-                </button>
-            </div>
-            {{/if}}
             <!-- Points Balance -->
             <div class="d-flex align-items-center gap-2 onchat-off">
                 <span class="btn btn-warning text-white my-1" style="font-size: 0.9rem;" data-bs-toggle="modal" data-bs-target="#userPointsModal">
@@ -107,14 +95,7 @@
         </div>
         <div class="offcanvas-body px-3">
             <div class="list-group list-group-flush">
-                {{#if (eq user.subscriptionStatus 'active')}}{{else}}
-                    <a class="list-group-item list-group-item-action custom-gradient-bg text-white border-0 menu-item" href="#" onclick="loadPlanPage()">
-                        <i class="bi bi-layers me-3"></i> 
-                        <span>{{translations.avatar.subscription}}</span>
-                    </a>
-                {{/if}}
-                    
-                
+
                 <a class="list-group-item list-group-item-action border-0 menu-item" href="/user/{{user._id}}">
                     <i class="bi bi-person-circle me-3"></i>{{translations.avatar.profile}}
                 </a>

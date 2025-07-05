@@ -738,7 +738,166 @@ fastify.get('/chats/images/search', async (request, reply) => {
       reply.code(500).send('Internal Server Error');
     }
   });
-  
+
+  fastify.get('/categories/images', async (request, reply) => {
+    try {
+      const db = fastify.mongo.db;
+      const chatsGalleryCollection = db.collection('gallery');
+      const chatsCollection = db.collection('chats');
+
+      // Define 6 categories with their associated tags/keywords
+      const categories = [
+        { name: 'Maid', tags: ['maid', 'maid dress', 'maid outfit', 'maid costume'], icon: 'bi-person-dress' },
+        { name: 'Princess', tags: ['princess', 'zelda',], icon: 'bi-crown' },
+        { name: 'Fantasy', tags: ['forest elfe', 'forest elf', 'fantasy', 'magical'], icon: 'bi-emoji-smile' },
+        { name: 'Ninja', tags: ['ninja', 'shinobi', 'stealth', 'assassin'], icon: 'bi-person-dash' },
+        { name: 'Robot', tags: ['robot', 'android', 'cyborg', 'mecha'], icon: 'bi-robot' },
+        { name: 'Demon', tags: ['demon', 'devil', 'fiend', 'satanic'], icon: 'bi-emoji-angry' }
+      ];
+
+      const categoryResults = [];
+
+      // Get user language for filtering
+      const user = request.user;
+      const language = getLanguageName(user?.lang);
+      const requestLang = request.lang;
+
+      for (const category of categories) {
+        try {
+          // Create regex patterns for each tag
+          const tagRegexes = category.tags.map(tag => new RegExp(tag, 'i'));
+          
+          // Find images that match category tags and are SFW
+          const pipeline = [
+            { $unwind: '$images' },
+            {
+              $match: {
+                'images.imageUrl': { $exists: true, $ne: null },
+                'images.nsfw': { $ne: true }, // Only SFW content
+                $or: [
+                  { 'images.prompt': { $in: tagRegexes } },
+                  { 'images.style': { $in: category.tags } }
+                ]
+              }
+            },
+            {
+              $lookup: {
+                from: 'chats',
+                localField: 'chatId',
+                foreignField: '_id',
+                as: 'chat'
+              }
+            },
+            { $unwind: '$chat' },
+            {
+              $match: {
+                $or: [
+                  { 'chat.language': language },
+                  { 'chat.language': requestLang }
+                ],
+                'chat.nsfw': { $ne: true } // Only SFW chats
+              }
+            },
+            { $sample: { size: 1 } }, // Get random image
+            {
+              $project: {
+                image: '$images',
+                chatId: '$chatId',
+                chatName: '$chat.name',
+                chatSlug: '$chat.slug',
+                thumbnail: '$chat.thumbnail'
+              }
+            }
+          ];
+
+          const result = await chatsGalleryCollection.aggregate(pipeline).toArray();
+          
+          if (result.length > 0) {
+            const imageData = result[0];
+            categoryResults.push({
+              category: category.name,
+              icon: category.icon,
+              image: {
+                ...imageData.image,
+                chatId: imageData.chatId,
+                chatName: imageData.chatName,
+                chatSlug: imageData.chatSlug,
+                thumbnail: imageData.thumbnail || '/img/default-thumbnail.png'
+              }
+            });
+          } else {
+            // Fallback: get any SFW image if no tagged images found
+            const fallbackPipeline = [
+              { $unwind: '$images' },
+              {
+                $match: {
+                  'images.imageUrl': { $exists: true, $ne: null },
+                  'images.nsfw': { $ne: true }
+                }
+              },
+              {
+                $lookup: {
+                  from: 'chats',
+                  localField: 'chatId',
+                  foreignField: '_id',
+                  as: 'chat'
+                }
+              },
+              { $unwind: '$chat' },
+              {
+                $match: {
+                  $or: [
+                    { 'chat.language': language },
+                    { 'chat.language': requestLang }
+                  ],
+                  'chat.nsfw': { $ne: true }
+                }
+              },
+              { $sample: { size: 1 } },
+              {
+                $project: {
+                  image: '$images',
+                  chatId: '$chatId',
+                  chatName: '$chat.name',
+                  chatSlug: '$chat.slug',
+                  thumbnail: '$chat.thumbnail'
+                }
+              }
+            ];
+
+            const fallbackResult = await chatsGalleryCollection.aggregate(fallbackPipeline).toArray();
+            
+            if (fallbackResult.length > 0) {
+              const imageData = fallbackResult[0];
+              categoryResults.push({
+                category: category.name,
+                icon: category.icon,
+                image: {
+                  ...imageData.image,
+                  chatId: imageData.chatId,
+                  chatName: imageData.chatName,
+                  chatSlug: imageData.chatSlug,
+                  thumbnail: imageData.thumbnail || '/img/default-thumbnail.png'
+                }
+              });
+            }
+          }
+        } catch (categoryError) {
+          console.error(`Error fetching category ${category.name}:`, categoryError);
+        }
+      }
+
+      reply.send({
+        categories: categoryResults,
+        success: true
+      });
+
+    } catch (err) {
+      console.error('Error in /categories/images:', err);
+      reply.code(500).send('Internal Server Error');
+    }
+  });
+
 }
 
 module.exports = routes;

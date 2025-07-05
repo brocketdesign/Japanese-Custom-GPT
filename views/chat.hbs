@@ -52,26 +52,39 @@
             {{> chat-header}}
             </nav>
             <section id="chat-discovery" class="onchat-off mt-5 pt-3" style="display: block;">
-                <!-- Search form to /search?q={query} -->
-                <div class="container text-center">
-                    <h2 class="text-center text-secondary mb-4" style="font-size: 1rem;">{{translations.welcomeMessage}}</h2>
-                    <form id="search-form" action="/search" method="GET" class="mb-3">
-                        <div class="input-group input-group-lg justify-content-center" style="max-width: 500px; margin: 0 auto;">
-                            <span class="input-group-text bg-white border-0 rounded-start-pill shadow-sm px-3">
-                                <i class="bi bi-search text-secondary"></i>
-                            </span>
-                            <input 
-                                type="text" 
-                                name="q" 
-                                id="search-input" 
-                                class="form-control rounded-end-pill shadow-sm border-0" 
-                                placeholder="{{translations.searchPlaceholder}}" 
-                                aria-label="Search"
-                                style="background: #f8f9fa;font-size: 14px;"
-                            >
+
+                <!-- Promo Section -->
+                <section class="is-free-user animate__animated m-3 p-3 bg-light" style="display: none; overflow-x: hidden;" data-animate="animate__fadeInLeft" data-delay="0.3s">
+                    <div class="container text-center">
+                        <h2 class="pricing-title fw-bold animate__animated" data-animate="animate__fadeInLeft" style="animation-delay: 0.3s;">
+                            <span class="u-font-manrope u-color-grad" style="font-size: 100%;">{{translations.promo.title}}</span>
+                        </h2>
+                        <h3 class="fw-bold mb-1 px-3 animate__animated" data-animate="animate__fadeInLeft" style="animation-delay: 0.5s;">
+                            {{translations.promo.subtitle}}
+                        </h3>
+                        <h3 class="mb-3 px-3 u-font-manrope animate__animated animate__fadeInRight" data-animate="animate__fadeInRight" style="font-size: 1.5em; animation-delay: 0.7s;">
+                            {{translations.promo.description}}
+                        </h3>
+                    </div>
+                    <div class="is-free-user sticky-bottom py-2 mx-auto text-center animate__animated" style="display:none; bottom:0; left:0; right:0;" data-animate="animate__fadeInLeft" style="animation-delay: 0.9s;">
+                        <a href="#" onclick="loadPlanPage()" class="m-2 btn border shadow-0 btn-secondary px-5 py-2 m-auto animate__animated" data-animate="animate__zoomIn" style="border-radius:40px; background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);">
+                            <i class="bi bi-plus me-2"></i>{{translations.promo.details}}
+                        </a>
+                    </div>
+                </section>
+
+                <!-- Category cards -->
+                <div class="container-fluid mb-4">
+                    <div class="row" id="category-cards-container">
+                        <!-- Loading placeholder -->
+                        <div class="col-12 text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading categories...</span>
+                            </div>
                         </div>
-                    </form>
+                    </div>
                 </div>
+                
                 <!-- Card menu -->
                 <div class="card-menu-container my-3">
                     <div class="d-flex overflow-auto px-3 py-5" style="scrollbar-width: thin;justify-content: space-between;">
@@ -112,26 +125,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Promo Section -->
-                <section class="is-free-user animate__animated m-3 p-3 bg-light" style="display: none; overflow-x: hidden;" data-animate="animate__fadeInLeft" data-delay="0.3s">
-                    <div class="container text-center">
-                        <h2 class="pricing-title fw-bold animate__animated" data-animate="animate__fadeInLeft" style="animation-delay: 0.3s;">
-                            <span class="u-font-manrope u-color-grad" style="font-size: 100%;">{{translations.promo.title}}</span>
-                        </h2>
-                        <h3 class="fw-bold mb-1 px-3 animate__animated" data-animate="animate__fadeInLeft" style="animation-delay: 0.5s;">
-                            {{translations.promo.subtitle}}
-                        </h3>
-                        <h3 class="mb-3 px-3 u-font-manrope animate__animated animate__fadeInRight" data-animate="animate__fadeInRight" style="font-size: 1.5em; animation-delay: 0.7s;">
-                            {{translations.promo.description}}
-                        </h3>
-                    </div>
-                    <div class="is-free-user sticky-bottom py-2 mx-auto text-center animate__animated" style="display:none; bottom:0; left:0; right:0;" data-animate="animate__fadeInLeft" style="animation-delay: 0.9s;">
-                        <a href="#" onclick="loadPlanPage()" class="m-2 btn border shadow-0 btn-secondary px-5 py-2 m-auto animate__animated" data-animate="animate__zoomIn" style="border-radius:40px; background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);">
-                            <i class="bi bi-plus me-2"></i>{{translations.promo.details}}
-                        </a>
-                    </div>
-                </section>
 
                 <!-- Latest Chats Section -->
                 <div class="mx-4 my-4" id="latest-chats-section">
@@ -184,15 +177,6 @@
                                     </button>
                                 </div>
                             </div>
-                            <!-- NSFW Filter Button -->
-                            <div class="col-12 col-md-auto d-flex align-items-center gap-2 justify-content-start justify-content-md-start mb-2 mb-md-0">
-                                <span class="me-2 text-muted" style="font-size: 15px;">
-                                    <i class="bi bi-exclamation-triangle"></i> NSFW
-                                </span>
-                                <button id="popular-chats-nsfw" class="btn btn-outline-danger px-3 py-1 flex-shrink-0" style="border-radius: 30px; font-size: 14px;">
-                                    {{translations.sort.hideNSFW}}
-                                </button>
-                            </div>
                             <!-- Style Filter Buttons -->
                             <div class="col-12 col-md-auto d-flex align-items-center gap-2 justify-content-start justify-content-md-start">
                                 <span class="me-2 text-muted" style="font-size: 15px;">
@@ -226,6 +210,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/blueimp-md5@2.19.0/js/md5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script src="/js/dashboard-category.js"></script>
 <script src="/js/merge-face.js"></script>
 <script src="/js/txt2speech.js"></script>
 <script src="/js/chat-tool-toolbar.js"></script>

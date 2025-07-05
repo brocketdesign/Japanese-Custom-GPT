@@ -79,6 +79,12 @@ window.loadLatestVideoChats = async function(page = 1, reload = false) {
     let cache = getLatestVideoChatsCache();
     let data = cache && cache[page];
 
+    if(data && data.videoChats && data.videoChats.length === 0) {
+      $('#latest-video-chats-section').remove();
+      latestVideoChatsLoading = false;
+      return;
+    }
+
     if (data) {
         displayLatestVideoChats(data.videoChats, 'latest-video-chats-gallery');
         latestVideoChatsState = data.totalPages || 1;
@@ -94,8 +100,14 @@ window.loadLatestVideoChats = async function(page = 1, reload = false) {
             return;
         }
         data = await res.json();
-        setLatestVideoChatsCache(page, data);
 
+        if(data && data.videoChats && data.videoChats.length === 0) {
+          $('#latest-video-chats-section').remove();
+          latestVideoChatsLoading = false;
+          return;
+        }
+
+        setLatestVideoChatsCache(page, data);
         displayLatestVideoChats(data.videoChats, 'latest-video-chats-gallery');
         latestVideoChatsState = data.totalPages || 1;
 

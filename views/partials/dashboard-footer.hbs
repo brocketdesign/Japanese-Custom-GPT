@@ -1,18 +1,6 @@
 {{> dashboard-modals}}
 <div class="sticky-bottom" style="bottom:0; left:0; right:0;">
     {{> chat-footer promptData=promptData}}
-    {{#if (eq user.subscriptionStatus 'active')}}
-    {{else}}
-    <div class="text-center onchat-off" style="bottom:0;left:0;right:0;">
-        <button onclick="loadPlanPage()" class="btn d-flex justify-content-center align-items-center rounded-0 fw-bold custom-gradient-bg gap-2 px-2 py-3 fs-3 text-white bg-white mx-auto mb-1 w-100" style="border: 1px solid #000;">
-            <div>
-            {{translations.premium}}
-            <span class="text-rose-400 text-sm  text-danger">{{translations.discount}}</span>
-             <span id="countdown-timer-bottom" class="countdown-timer ms-2"></span>
-            </div>
-        </button>
-    </div>
-    {{/if}}
     <div class="py-2 bg-dark" style="bottom:0; left:0; right:0;">
         <div class="container-none">
             <div class="d-flex justify-content-evenly align-items-center w-100">
@@ -145,6 +133,12 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.3.2/mdb.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 
+<script>
+    if(MODE === 'local'){
+        document.querySelectorAll('.local-mode').forEach(el => {
+            el.style.display = 'inline-block';
+        });
+</script>
 <script>
 
 document.addEventListener('DOMContentLoaded', function() {

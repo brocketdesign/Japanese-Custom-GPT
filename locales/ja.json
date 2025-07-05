@@ -1,5 +1,9 @@
 {
   "lang": "ja",
+  "browseByCategory": "カテゴリで探す",
+  "scrollForMore": "さらにキャラクターを見るにはスクロールしてください",
+  "exploreRestriction": "NSFWキャラクターを探索するにはアップグレードしてください",
+  "userRestriction": "さらに画像を作成するにはポイントを獲得してください",
   "loadingMoreCharacters": "キャラクターをさらに読み込み中...",
   "cardMenuTitle": "AIキャラクターを探索",
   "cardMenuDescription": "さまざまなAIキャラクターを発見し、交流しましょう。",
@@ -450,16 +454,24 @@
   "exploreDescription": "他のユーザーが作成した最新の投稿やキャラクターを探索しましょう。",
   "signin": {
     "title": "サインイン - リダイレクト中",
-    "heading": "サインインに成功しました",
+    "heading": "サインイン成功",
     "message": "認証に成功しました",
     "loading": "読み込み中...",
-    "wait": "ダッシュボードにリダイレクトしています。しばらくお待ちください..."
+    "wait": "ダッシュボードへリダイレクトしています。しばらくお待ちください...",
+    "secure_auth": "セキュア認証を実行中...",
+    "verifying": "認証情報を確認中...",
+    "connecting": "サーバーに接続中...",
+    "almost_ready": "まもなく完了します...",
+    "take_moments": "数秒かかる場合があります"
   },
   "signout": {
     "title": "サインアウト",
-    "heading": "サインアウトが完了しました",
+    "heading": "サインアウト完了",
     "message": "アカウントからサインアウトしました。",
-    "goodbye": "ご利用ありがとうございました。良い一日をお過ごしください！"
+    "goodbye": "ご利用いただきありがとうございました。良い一日を！",
+    "return_home": "ホームに戻る",
+    "signin_again": "再度サインイン",
+    "secure_signout": "安全にサインアウトしました"
   },
   "admin_model_chats": {
     "title": "自動キャラクター",

@@ -1,3 +1,5 @@
+const subscriptionStatus = user.subscriptionStatus == 'active';
+
 // Function to get the referrer parameter from the URL and save it to local storage
 function getReferrerAndSave() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -94,3 +96,14 @@ window.onload = () => {
     showNSFW = false;
     sessionStorage.setItem('showNSFW', 'false');
   }
+
+if(MODE === 'local'){
+    document.querySelectorAll('.local-mode').forEach(el => {
+        el.style.display = 'inline-block';
+    });
+}
+if(subscriptionStatus){
+    document.querySelectorAll('.is-free-user').forEach(el => {
+        el.style.display = 'none';
+    });
+}

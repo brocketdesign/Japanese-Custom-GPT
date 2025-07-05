@@ -24,18 +24,19 @@
 
     <div id="intro" class="bg-image shadow-0" >
         <div class="row container align-items-center h-100 m-auto">
-            <div class="col-12 col-md-6 py-5">
+            <div class="col-12 col-md-6 pb-5">
+                <img class="d-sm-none" src="/img/lpbanner/{{#unless (eq translations.lang "en")}}2{{else}}{{bannerNumber}}{{/unless}}.png" style="width: 100%;">
                 <h1 class="mb-3 fw-bold u-color-grad text-start" id="headline-container">
                 </h1>
                 <div class="text-start animate__animated"  data-animate="animate__fadeIn" id="subheadline-container">
                     {{translations.lp.banner.[bannerNumber].subtitle}}
                 </div>
                 <div class="text-center d-flex flex-column justify-content-start align-items-start mt-3 animate__animated"  data-animate="animate__fadeIn">
-                    <a href="#" onclick="openLoginForm()" class="btn custom-gradient-bg text-white btn-lg m-2 px-5 py-3 mb-3 cta-button fw-bold" role="button" style="border-radius: 50px;">
+                    <a href="#" onclick="openLoginForm()" class="btn custom-gradient-bg text-white btn-lg m-2 px-5 py-3 cta-button fw-bold w-auto" role="button" style="border-radius: 50px;">
                         {{translations.lp.cta_button}}
                     </a>
                     <!-- Old login page link -->
-                    <a href="/login" class="local-mode btn btn-outline-secondary btn-sm ms-3 px-5 py-1 mb-3 cta-button fw-bold" role="button" style="display:none;border-radius: 50px;">
+                    <a href="/login" class="local-mode btn btn-outline-secondary btn-sm ms-3 px-5 py-1 mb-3 cta-button fw-bold w-auto" role="button" style="display:none;border-radius: 50px;">
                         {{translations.lp.old_login_page}}
                     </a>
                 </div>

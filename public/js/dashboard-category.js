@@ -80,12 +80,12 @@ function displayCategoryCards(categories) {
   
   categories.forEach((categoryData, index) => {
     const { category, icon, image } = categoryData;
-    const delay = (index * 0.1).toFixed(1); // Stagger animation by 0.1s for each card
-    
+    const delay = (index * 0.3).toFixed(1);
+
     htmlContent += `
       <div class="col-6 col-md-4 col-lg-2 mb-4">
         <div class="card category-card h-100 shadow border-0 overflow-hidden position-relative animate__animated" 
-             style="cursor: pointer; transition: all 0.3s ease; min-height: 280px;"
+             style="cursor: pointer; transition: all 0.3s ease; min-height: 280px;display:none;"
              data-animate="animate__slideInUp"
              data-delay="${delay}s"
              onclick="handleCategoryClick('${category}')">
@@ -126,6 +126,7 @@ function displayCategoryCards(categories) {
     const delay = parseFloat($card.data('delay')) * 1000;
     
     setTimeout(() => {
+      $card.show()
       $card.addClass(animationClass);
     }, delay);
   });

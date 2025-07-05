@@ -456,13 +456,21 @@
     "heading": "Sign In Successful",
     "message": "Your authentication was successful",
     "loading": "Loading...",
-    "wait": "Please wait while we redirect you to your dashboard..."
+    "wait": "Please wait while we redirect you to your dashboard...",
+    "secure_auth": "Secure authentication in progress...",
+    "verifying": "Verifying credentials...",
+    "connecting": "Connecting to server...",
+    "almost_ready": "Almost ready...",
+    "take_moments": "This may take a few moments"
   },
   "signout": {
     "title": "Sign Out",
     "heading": "Signed Out Successfully",
     "message": "You have been signed out of your account.",
-    "goodbye": "Thank you for using our service. Have a great day!"
+    "goodbye": "Thank you for using our service. Have a great day!",
+    "return_home": "Return to Home",
+    "signin_again": "Sign In Again",
+    "secure_signout": "You have been securely signed out"
   },
   "admin_model_chats": {
     "title": "Auto Character",

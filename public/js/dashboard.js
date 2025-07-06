@@ -2402,7 +2402,7 @@ window.loadUserImages = function (userId, page = 1, reload = false) {
     let html = ''
     images.forEach((item) => {
       const blurred =  item.nsfw && !subscriptionActive
-      const liked = item.likedBy?.some((id) => id.toString() === currentUserId.toString())
+      const isLiked = item.likedBy?.some((id) => id.toString() === currentUserId.toString())
       html += `
         <div class="col-6 col-md-3 col-lg-2 mb-2">
           <div class="card">
@@ -2427,7 +2427,7 @@ window.loadUserImages = function (userId, page = 1, reload = false) {
                        <i class="bi bi-chat-dots me-2"></i> ${translations.startChat}
                      </a>
                      <span 
-                     class="btn btn-light float-end image-fav ${liked ? 'liked' : ''}" 
+                     class="btn btn-light float-end image-fav ${isLiked ? 'liked' : ''}" 
                      data-id="${item._id}" 
                      onclick="toggleImageFavorite(this)"
                      >

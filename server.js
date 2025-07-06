@@ -983,12 +983,12 @@ fastify.get('/sitemap', async (request, reply) => {
     const { getCachedSitemapData } = require('./models/sitemap-utils');
     let { translations, lang, user } = request;
     
-    // Get cached sitemap data
+    // Get cached sitemap data (this will generate if not found)
     let sitemapData = await getCachedSitemapData(db);
     
-    // If no cached data, return empty template
+    // If still no cached data after generation attempt, provide fallback
     if (!sitemapData) {
-      console.log('[/sitemap] No cached data found, rendering empty template');
+      console.log('[/sitemap] No cached data available, using empty fallback');
       sitemapData = {
         characters: {},
         tags: [],

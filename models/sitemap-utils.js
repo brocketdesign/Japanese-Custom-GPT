@@ -72,8 +72,8 @@ const cacheSitemapData = async (db) => {
     console.log('[cacheSitemapData] Starting sitemap data generation...');
     
     const chatsCollection = db.collection('chats');
-    const sitemapCacheCollection = db.collection('sitemap_cache');
-    
+    const sitemapCacheCollection = db.collection('sitemapCache'); // Changed to match getCachedSitemapData
+
     // Get all public characters with additional metadata
     const characters = await chatsCollection.find({
       visibility: 'public',
@@ -102,18 +102,23 @@ const cacheSitemapData = async (db) => {
     // Get top tags (limit to 500 for performance)
     const topTags = await fetchTagsForSitemap(db);
 
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours from now
+
     const sitemapData = {
+      type: 'sitemap',
       characters: charactersByLanguage,
       tags: topTags,
       totalCharacters: characters.length,
       totalTags: topTags.length,
-      lastUpdated: new Date()
+      lastUpdated: now,
+      expiresAt: expiresAt
     };
 
-    // Cache the sitemap data
+    // Cache the sitemap data with proper structure
     await sitemapCacheCollection.replaceOne(
-      { _id: 'sitemap_data' },
-      { ...sitemapData, _id: 'sitemap_data' },
+      { type: 'sitemap' },
+      sitemapData,
       { upsert: true }
     );
 
@@ -147,6 +152,7 @@ const getCachedSitemapData = async (db) => {
       return newSitemapData;
     }
 
+    console.log(`[getCachedSitemapData] Using cached sitemap data from ${cachedData.lastUpdated}`);
     return cachedData;
   } catch (error) {
     console.error('[getCachedSitemapData] Error fetching cached sitemap data:', error);

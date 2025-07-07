@@ -1701,91 +1701,6 @@ window.displayLatestChats = function (chatData, targetGalleryId, modal = false) 
   const subscriptionStatus = currentUser.subscriptionStatus === 'active';
   const isTemporaryUser = !!currentUser?.isTemporary;
   displayChats(chatData, targetGalleryId, modal);
-  return
-  chatData.forEach(chat => {
-    const isOwner = chat.userId === currentUserId;
-    const isPremiumChat = false //chat.premium || false;
-    const isNSFW = false //chat.nsfw || false;
-    const genderClass = chat.gender ? `chat-gender-${chat.gender.toLowerCase()}` : '';
-    const styleClass = chat.imageStyle ? `chat-style-${chat.imageStyle.toLowerCase()}` : '';
-    let nsfwVisible = $.cookie('nsfw') === 'true';
-
-    // Using col-lg-3 col-xl-2 for potentially 5-6 cards per row on larger screens
-    let cardClass = `gallery-card col-6 col-sm-4 col-md-3 col-lg-3 col-xl-2 p-1 animate__animated animate__fadeIn ${genderClass} ${styleClass}`;
-    if (isPremiumChat) cardClass += ' premium-chat';
-    if (isNSFW) cardClass += ' nsfw-true';
-
-    let imageSrc = chat.chatImageUrl || chat.thumbnailUrl || '/img/logo.webp';
-    let nsfwOverlay = '';
-
-    // Simplified NSFW Overlay Logic - adapt to your full existing logic if more complex
-    if (isNSFW && !nsfwVisible) {
-      if (!isOwner && ((isTemporaryUser || !subscriptionStatus))) {
-         nsfwOverlay = `<div class="gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background: rgba(0,0,0,0.55); z-index: 2; backdrop-filter: blur(5px);" onclick="event.stopPropagation();">
-                  <span class="badge bg-danger mb-2" style="font-size: 0.9rem;"><i class="bi bi-exclamation-triangle"></i> NSFW</span>
-                  <button class="btn btn-sm btn-outline-light mt-2" onclick="event.stopPropagation(); handleClickRegisterOrPay(event, ${isTemporaryUser});" style="font-size: 12px; border-radius: 50px;">
-                    ${isTemporaryUser ? (window.translations?.register || 'Register to View') : (window.translations?.subscribe || 'Subscribe to View')}
-                  </button>
-                </div>`;
-      }
-    }
-    htmlContent += `
-      <div class="${cardClass}" data-id="${chat._id}" style="cursor:pointer;" onclick="redirectToChat('${chat._id}','${imageSrc}')">
-        <div class="card gallery-hover shadow-sm border-0 h-100 position-relative overflow-hidden">
-          <div class="gallery-image-wrapper" style="aspect-ratio: 4/5; background: #f8f9fa; position: relative;">
-            <img src="${imageSrc}" class="card-img-top gallery-img" alt="${chat.name}" style="height: 100%; width: 100%; object-fit: cover;">
-            ${nsfwOverlay}
-          </div>
-          <div class="card-body p-2 d-flex flex-column">
-            <a href="/character/${chat._id}" class="text-muted small text-truncate" title="${chat.name}">
-              <h6 class="card-title mb-0 fw-semibold text-truncate" title="${chat.name}">${chat.name}</h6>
-            </a>
-          </div>
-          <div class="position-absolute top-0 start-0 w-100 px-2 pt-2 d-flex justify-content-between align-items-center" style="z-index:3;">
-            <div class="d-flex align-items-center gap-1">
-              ${isOwner ? `
-                <span class="btn btn-light text-secondary shadow" style="font-size: 0.6rem !important; padding: 0.2em 0.4em !important;opacity:0.8;">
-                  <i class="bi bi-person-fill"></i>
-                </span>
-              ` : ''}
-              ${isPremiumChat ? `<span class="custom-gradient-bg badge bg-gradient-primary mb-1">${translations.premium}</span>` : ''}
-            </div>
-            <div class="d-flex align-items-center gap-1">
-              ${(isAdmin) ? `
-                <button class="btn btn-sm btn-outline-secondary border-0 ${chat.nsfw ? 'nsfw' : ''}" onclick="toggleChatNSFW(this); event.stopPropagation();" data-id="${chat._id}" title="NSFW Toggle" style="background: #00000050;color: white;padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
-                  ${chat.nsfw ? '<i class="bi bi-eye-slash-fill"></i>' : '<i class="bi bi-eye-fill"></i>'}
-                </button>
-                <button class="btn btn-sm btn-danger border-0 ms-1" data-id="${chat._id}" onclick="deleteChat(this); event.stopPropagation();" title="Delete Chat" style="padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
-                  <i class="bi bi-trash"></i>
-                </button>
-              ` : ''}
-            </div>
-          </div>
-          <div id="spinner-${chat._id}" class="loading-overlay position-absolute top-0 start-0 w-100 h-100 justify-content-center align-items-center" style="background: rgba(255,255,255,0.8); z-index: 1; display: none;">
-            <div class="spinner-border text-purple" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-    
-  });
-
-  const galleryElement = $(document).find(`#${targetGalleryId}`);
-  if (galleryElement.length) {
-    galleryElement.append(htmlContent);
-  } else {
-    console.warn(`Target gallery with ID #${targetGalleryId} not found.`);
-  }
-
-  // Apply filters if it's the popular chats gallery
-  if (targetGalleryId === 'chat-gallery') { // 'chat-gallery' is the ID for popular chats
-    if (typeof updateChatFilters === "function") {
-        updateChatFilters();
-    }
-  }
-  // You can add similar filter logic for latest chats if needed
 };
 
 window.displayChats = function (chatData, searchId = null, modal = false) {
@@ -1859,7 +1774,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                           ${(chat.tags || chat.chatTags || []).length ? `
                           <div class="mb-2" style="overflow-x: auto; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none;">
                             <div class="d-inline-flex gap-1" style="white-space: nowrap;">
-                              ${(chat.tags ? chat.tags : chat.chatTags).slice(0, 3).map(tag => `<a href="/search?q=${encodeURIComponent(tag)}" class="badge bg-light bg-opacity-75 text-dark border text-decoration-none" style="backdrop-filter: blur(4px);">#${tag}</a>`).join('')}
+                              ${(chat.tags ? chat.tags : chat.chatTags).slice(0, 3).map(tag => `<span onclick="event.stopPropagation(); handleCategoryClick('${tag}')" class="badge bg-light bg-opacity-75 text-dark border text-decoration-none" style="backdrop-filter: blur(4px);">#${tag}</span>`).join('')}
                             </div>
                           </div>
                           ` : ''}

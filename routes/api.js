@@ -783,8 +783,9 @@ async function routes(fastify, options) {
                     fastify.sendNotificationToUser(userId, 'showNotification', { message:request.translations.too_many_pending_images , icon:'warning' });
                     }else{
                         fastify.sendNotificationToUser(userId, 'addIconToLastUserMessage')
-        
-                        const image_num = Math.min(Math.max(genImage?.image_num || 1, 1), 8);
+
+                        const image_num = Math.min(Math.max(genImage?.image_num || 1, 1), 5); // Limit to 5 images
+                        console.log(`[/api/openai-chat-completion] Generating ${image_num} images for user ${userId} in chat ${chatId}`);
                         for (let i = 0; i < image_num; i++) {
                             fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'show' })
                         }
@@ -801,7 +802,7 @@ async function routes(fastify, options) {
                                 console.log('error:', error);
                             });
                         })
-                        imgMessage[0].content = `\n\nThe image creation has started.\n Do no describe the image. Stay in your character, keep the same tone as previously. Chat on the same subject. Respond in the language we were talking until now.`.trim()
+                        imgMessage[0].content = `\n\nYou are currently making the image I asked.\n What do you think about it ?`.trim()
                         currentUserMessage.name = 'context'
                     }
                 
@@ -995,8 +996,9 @@ async function routes(fastify, options) {
     
     fastify.post('/api/txt2speech', async (request, reply) => {
         try {
-            const { message, language, chatId, userId } = request.query;
-            
+            const { translations } = request;
+            const { message, language, chatId, userId } = request.body;
+
             if (!message) {
                 return reply.status(400).send({
                     errno: 1,
@@ -1634,12 +1636,13 @@ async function routes(fastify, options) {
                     },
                     {
                         $project: { // Project necessary fields
-                            _id: 1, name: 1, nsfw: 1, moderation: 1, chatImageUrl: 1, sampleImages: 1, tags: 1, imageStyle: 1, gender: 1, userId: 1, nickname: 1, profileUrl: 1, language: 1,
+                            _id: 1, name: 1, nsfw: 1, moderation: 1, chatImageUrl: 1, sampleImages: 1, first_message: 1, tags: 1, imageStyle: 1, gender: 1, userId: 1, nickname: 1, profileUrl: 1, language: 1,
                         }
                     }
                 ];
 
                 chats = await chatsCollection.aggregate(pipeline).toArray();
+                console.log(chats)
                 // Count total for pagination (only if fallback is used)
                 totalCount = await chatsCollection.countDocuments({ chatImageUrl: { $exists: true, $ne: '' }, name: { $exists: true, $ne: '' }, language });
                 totalPages = Math.ceil(totalCount / limit);
@@ -1975,10 +1978,12 @@ async function routes(fastify, options) {
             .project({
             modelId: 1,
             name: 1,
+            first_message: 1,
             chatImageUrl: 1,
             thumbnailUrl: 1,
             nsfw: 1,
             gender: 1,
+            tags: 1,
             imageStyle: 1,
             userId: 1,
             createdAt: 1
@@ -2002,10 +2007,12 @@ async function routes(fastify, options) {
             .project({
             modelId: 1,
             name: 1,
+            first_message: 1,
             chatImageUrl: 1,
             thumbnailUrl: 1,
             nsfw: 1,
             gender: 1,
+            tags: 1,
             imageStyle: 1,
             userId: 1,
             createdAt: 1
@@ -2024,6 +2031,8 @@ async function routes(fastify, options) {
             gender: chat.gender,
             imageStyle: chat.imageStyle,
             userId: chat.userId,
+            first_message: chat.first_message,
+            tags: chat.tags || [],
         }));
 
         // For pagination info, count total chats matching baseQuery

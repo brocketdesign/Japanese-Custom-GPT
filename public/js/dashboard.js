@@ -918,9 +918,9 @@ window.updateChatImage = function(el) {
 
     
 window.updateChatBackgroundImage = function(thumbnail) {
-  const currentImageUrl = $('#chat-container').css('background-image').replace(/url\(["']?|["']?\)$/g, '');
+  const currentImageUrl = $('#chat-wrapper').css('background-image').replace(/url\(["']?|["']?\)$/g, '');
   if (currentImageUrl !== thumbnail) {
-      $('#chat-container').css('background-image', `url(${thumbnail})`);
+     // $('#chat-wrapper').css('background-image', `url(${thumbnail})`);
   }
   resetPeopleChatCache(chatId);
 }
@@ -1700,7 +1700,8 @@ window.displayLatestChats = function (chatData, targetGalleryId, modal = false) 
   const currentUserId = currentUser._id;
   const subscriptionStatus = currentUser.subscriptionStatus === 'active';
   const isTemporaryUser = !!currentUser?.isTemporary;
-
+  displayChats(chatData, targetGalleryId, modal);
+  return
   chatData.forEach(chat => {
     const isOwner = chat.userId === currentUserId;
     const isPremiumChat = false //chat.premium || false;
@@ -1808,6 +1809,13 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
               .filter(img => img && img.imageUrl) // filter valid images
               .map(img => img.imageUrl);
           }
+          if (Array.isArray(chat.images) && chat.images.length > 0) {
+            sampleImages = sampleImages.concat(
+              chat.images
+                .filter(img => img && img.imageUrl) // filter valid images
+                .map(img => img.imageUrl)
+            );
+          }
           // Always include chatImageUrl if present
           if (chat.chatImageUrl) {
             sampleImages.push(chat.chatImageUrl);
@@ -1821,89 +1829,87 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
 
           // Pick a random sample image
           const randomSampleImage = sampleImages[Math.floor(Math.random() * sampleImages.length)];
+
           // --- End: Random sample image selection logic ---
           htmlContent += `
-              <div class="gallery-card ${searchId == 'top-free' ? 'col-6' : 'col-12'} col-sm-6 col-lg-3 mb-4 ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} ${chat.imageStyle ? 'chat-style-'+chat.imageStyle : ''} nsfw-${finalNsfwResult}">
-                  <div class="card shadow border-0 h-100 position-relative gallery-hover" style="overflow: hidden;">
+                  <div class="gallery-card col-6 col-sm-6 col-lg-3 mb-4 ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} ${chat.imageStyle ? 'chat-style-'+chat.imageStyle : ''} nsfw-${finalNsfwResult}">
+                    <div class="card shadow border-0 h-100 position-relative gallery-hover" style="overflow: hidden;">
                       <!-- Clickable image area -->
                       <div class="gallery-image-wrapper position-relative chat-card-clickable-area" style="aspect-ratio: 4/5; background: #f8f9fa; cursor: pointer;"
-                          onclick="${chat.premium ? `(window.user && window.user.subscriptionStatus === 'active' ? redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}') : loadPlanPage())` : `redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')`}">
-                          <img 
-                              src="${randomSampleImage}" 
-                              alt="${chat.name || chat.chatName}" 
-                              class="card-img-top gallery-img transition rounded-top"
-                              style="object-fit: cover; width: 100%; height: 100%; min-height: 220px;"
-                              loading="lazy"
-                          >
-                          ${finalNsfwResult && (window.user && window.user.subscriptionStatus !== 'active') ? `
-                          <div data-finalNsfwResult=${finalNsfwResult} class="gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background: rgba(0,0,0,0.55); z-index:2;">
-                              <span class="badge bg-danger mb-2" style="font-size: 1rem;"><i class="bi bi-exclamation-triangle"></i> NSFW</span>
-                          </div>
-                          ` : ''}
-                          
+                        onclick="${chat.premium ? `(window.user && window.user.subscriptionStatus === 'active' ? redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}') : loadPlanPage())` : `redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')`}">
+                        <img 
+                          src="${randomSampleImage}" 
+                          alt="${chat.name || chat.chatName}" 
+                          class="card-img-top gallery-img transition rounded-top"
+                          style="object-fit: cover; width: 100%; height: 100%; min-height: 220px;"
+                          loading="lazy"
+                        >
+                        <!-- Chat icon on top right -->
+                        <div class="position-absolute top-0 end-0 m-2 d-flex align-items-center gap-1" style="z-index: 3;">
+                          <span class="badge bg-light bg-opacity-75 text-dark border text-decoration-none" style="backdrop-filter: blur(4px);">
+                            <i class="bi bi-chat-dots-fill"></i>
+                          </span>
+                        </div>
+                        <!-- Gradient overlay for better text readability -->
+                        <div class="position-absolute bottom-0 start-0 w-100" style="height: 60%; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, transparent 100%); z-index: 1;"></div>
+                        
+                        <!-- Content container positioned at bottom -->
+                        <div class="position-absolute bottom-0 start-0 w-100 p-3" style="z-index: 2;">
+                          <!-- Tags on single line with horizontal scroll -->
                           ${(chat.tags || chat.chatTags || []).length ? `
-                          <div class="gallery-tags position-absolute bottom-0 start-0 w-100 px-2 pb-2 d-flex flex-wrap gap-1" style="z-index:3;">
-                              ${(chat.tags ? chat.tags : chat.chatTags).map(tag => `<a href="/search?q=${encodeURIComponent(tag)}" class="badge bg-light text-dark border text-decoration-none">#${tag}</a>`).join('')}
-                          </div>
-                          ` : ''}
-                          <div id="spinner-${chat.chatId || chat._id}" class="loading-overlay position-absolute top-0 start-0 w-100 h-100 justify-content-center align-items-center" style="background: rgba(255,255,255,0.8); z-index: 1; display: none;" id="spinner-${chat.chatId || chat._id}">
-                            <div class="spinner-border text-purple" role="status">
-                                <span class="visually-hidden">Loading...</span>
+                          <div class="mb-2" style="overflow-x: auto; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none;">
+                            <div class="d-inline-flex gap-1" style="white-space: nowrap;">
+                              ${(chat.tags ? chat.tags : chat.chatTags).slice(0, 3).map(tag => `<a href="/search?q=${encodeURIComponent(tag)}" class="badge bg-light bg-opacity-75 text-dark border text-decoration-none" style="backdrop-filter: blur(4px);">#${tag}</a>`).join('')}
                             </div>
                           </div>
-                      </div>
-                      
-                      <!-- Non-clickable controls that overlay the image -->
-                      <div class="position-absolute top-0 start-0 m-1" style="z-index:3;">
-                          ${isOwner ? `<button class="btn btn-sm btn-light rounded mb-1 mx-2" onclick="loadCharacterUpdatePage('${chat.chatId || chat._id}',event)"><i class="bi bi-pencil-square"></i></button>` : ''}
-                      </div>
-                      <div class="gallery-badges position-absolute top-0 end-0 m-2 d-flex flex-column align-items-end" style="z-index:3;">
-                          ${chat.premium ? `<span class="custom-gradient-bg badge bg-gradient-primary mb-1 mx-2"> ${translations.premium}</span>` : ''}
-                          <button class="save-as-persona btn btn-sm btn-light rounded mb-1 mx-2" data-id="${chat.chatId || chat._id}" title="Add to Persona">
-                              <i class="bi bi-person-plus"></i>
-                          </button>
-                          ${chat.imageCount ? `<span class="badge bg-dark mb-1 me-2 py-2 px-3"><i class="bi bi-images"></i> ${chat.imageCount}</span>` : ''}
-                          ${chat.messagesCount ? `<span class="badge bg-dark mb-1 me-2 py-2 px-3"><i class="bi bi-chat-dots"></i> ${chat.messagesCount}</span>` : ''}
+                          ` : ''}
+
+                          <!-- Character name -->
+                          <a href="/character/${chat._id}" class="text-decoration-none">
+                            <h5 class="card-title mb-1 fw-semibold text-truncate text-white" title="${chat.name || chat.chatName}" style="text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${chat.name || chat.chatName}</h5>
+                          </a>
+                          
+                          <!-- First message with smaller text -->
+                          <div class="text-white-50 small text-truncate" style="font-size: 0.75rem; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 0 1px 2px rgba(0,0,0,0.7);">
+                            ${chat.first_message || ''}
+                          </div>
+                        </div>
+
+                        <div id="spinner-${chat.chatId || chat._id}" class="loading-overlay position-absolute top-0 start-0 w-100 h-100 justify-content-center align-items-center" style="background: rgba(255,255,255,0.8); z-index: 3; display: none;">
+                        <div class="spinner-border text-purple" role="status">
+                          <span class="visually-hidden">Loading...</span>
+                        </div>
+                        </div>
                       </div>
                       
                       <!-- Card body (clickable for navigation) -->
-                      <div class="${searchId == 'top-free' ? 'd-none' : ''} card-body py-3 px-3 d-flex flex-column justify-content-between">
-                          <div class="d-flex align-items-center mb-2 chat-card-clickable-area" style="cursor: pointer;"
-                              onclick="${chat.premium ? `(window.user && window.user.subscriptionStatus === 'active' ? redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}') : loadPlanPage())` : `redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')`}">
-                              <img src="${chat.chatImageUrl || '/img/avatar.png'}" alt="${chat.name || chat.chatName}" class="rounded-circle me-2 border" width="40" height="40">
-                              <div>
-                                  <a href="/character/${chat._id}" class="text-muted small text-truncate" title="${chat.name || chat.chatName}">
-                                    <h5 class="card-title mb-0 fw-semibold text-truncate" title="${chat.name || chat.chatName}">${chat.name || chat.chatName}</h5>
-                                  </a>
-                                  ${chat.nickname ? `<a href="/user/${chat.userId}" class="text-muted small user-link">@${chat.nickname}</a>` : ''}
-                              </div>
-                          </div>
-                          
-                          <!-- Non-clickable button controls -->
-                          <div class="d-flex justify-content-between align-items-center mt-auto">
-                              <button class="btn btn-outline-primary btn-sm persona ${chat.premium ? 'border-warning' : ''}" data-id="${chat.chatId || chat._id}" title="Add to Persona">
-                                  <i class="far fa-user-circle"></i>
-                              </button>
-                              ${
-                              window.isAdmin
-                                  ? `<button 
-                                  class="btn btn-light ms-2 chat-nsfw-toggle ${finalNsfwResult ? 'nsfw' : 'sfw'}" 
-                                  data-id="${chat.chatId || chat._id}" 
-                                  onclick="toggleChatNSFW(this)">
-                                  <i class="bi ${finalNsfwResult ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
-                                  </button>
-                                  
-                                  <button class="btn btn-sm btn-danger border-0 ms-1" data-id="${chat._id}" onclick="deleteChat(this); event.stopPropagation();" title="Delete Chat" style="padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
-                                    <i class="bi bi-trash"></i>
-                                  </button>`
-                                  
-                                  : ''
-                              }
-                          </div>
+                      <div class="${searchId == 'top-free' ? 'd-none' : ''}  ${window.isAdmin ? 'admin' : 'd-none'} card-body py-3 px-3 d-flex flex-column justify-content-between">
+
+                        <!-- Non-clickable button controls -->
+                        <div class="d-flex justify-content-between align-items-center mt-auto">
+                          <button class="btn btn-outline-primary btn-sm persona ${chat.premium ? 'border-warning' : ''}" data-id="${chat.chatId || chat._id}" title="Add to Persona">
+                            <i class="far fa-user-circle"></i>
+                          </button>
+                          ${
+                          window.isAdmin
+                            ? `<button 
+                            class="btn btn-light ms-2 chat-nsfw-toggle ${finalNsfwResult ? 'nsfw' : 'sfw'}" 
+                            data-id="${chat.chatId || chat._id}" 
+                            onclick="toggleChatNSFW(this)">
+                            <i class="bi ${finalNsfwResult ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
+                            </button>
+                            
+                            <button class="btn btn-sm btn-danger border-0 ms-1" data-id="${chat._id}" onclick="deleteChat(this); event.stopPropagation();" title="Delete Chat" style="padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
+                            <i class="bi bi-trash"></i>
+                            </button>`
+                            
+                            : ''
+                          }
+                        </div>
                       </div>
+                    </div>
                   </div>
-              </div>
-          `;
+                `;
       }
   });
   // Prevent username links from triggering card click navigation
@@ -2866,9 +2872,9 @@ let availableQueryTags = [];
 
 // Initialize infinite scroll for chats with images
 $(document).ready(function () {
-    let currentPage = 1;
+    let currentPageMap = new Map(); // Track current page for each query
     let isFetchingChats = false;
-    let hasMoreChats = true; // Track if more chats are available
+    const hasMoreChatsMap = new Map(); // Track if more chats are available for each query
   
     // Adjust these as needed
     const currentUser = window.user || {};
@@ -2941,12 +2947,20 @@ $(document).ready(function () {
      * Fetch Chats with Images (Vertical Infinite Scroll)
      */
     function fetchChatsWithImages(page, query = '') {
+      if(query == '' && !window.location.pathname.includes('/character')) {
+        $('#all-chats-container').empty(); 
+        $('#all-chats-images-pagination-controls').empty();
+        $('#chat-gallery').show();
+        return
+      }
+      const hasMoreChats = hasMoreChatsMap.get(query) !== false;
       if (isFetchingChats || !hasMoreChats) return;
       
       isFetchingChats = true;
+      $('#chat-gallery').hide();
       showLoadingSpinner();
       hideBackToTopButton();
-      
+
       $.ajax({
         url: `/chats/horizontal-gallery?page=${page}&query=${encodeURIComponent(query)}`,
         method: 'GET',
@@ -2956,120 +2970,21 @@ $(document).ready(function () {
         success: function (data) {
           // Hide spinner on success
           hideLoadingSpinner();
-          
           // Check if we have more chats
           if (!data.chats || data.chats.length === 0) {
-            hasMoreChats = false;
+            hasMoreChatsMap.set(query, false);
             showBackToTopButton();
             console.log('No more characters to load');
             return;
           }
 
           // Check if this is the last page
-          if (data.totalPages && page >= data.totalPages) {
-            hasMoreChats = false;
+          if (data.totalPages && currentPageMap.get(query) >= data.totalPages) {
+            hasMoreChatsMap.set(query, false);
           }
+            
+          displayChats(data.chats, 'all-chats-container');
           
-          let chatsHtml = '';
-  
-          data.chats.forEach(chat => {
-            let chatImagesHtml = '';
-  
-            // Loop through images in each chat
-            chat.images.forEach((item, index) => {
-                // Display a maximum of 12 images per chat
-                if (index >= 12) return;
-              // Check unlock logic (adapt to your own logic)
-              const isBlur = shouldBlurNSFW(item, subscriptionStatus);
-              // Check if user has "liked" this image
-              const isLiked = Array.isArray(item.likedBy)
-                ? item.likedBy.some(id => id.toString() === currentUserId.toString())
-                : false;
-              
-              chatImagesHtml += `
-                <div class="horizontal-image-wrapper vertical-transition col-6 col-md-4 col-lg-2 mb-2 px-1">
-                  <div class="card shadow-0">
-                    ${
-                      isBlur
-                        ? `
-                          <!-- Blurred Image -->
-                          <div 
-                            type="button" 
-                            onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary})"
-                          >
-                            <img 
-                              data-src="${item.imageUrl}" 
-                              class="card-img-top img-blur" 
-                              style="object-fit: cover;"
-                            >
-                          </div>
-                        `
-                        : `
-                          <!-- Unblurred Image -->
-                          <a 
-                            href="/character/slug/${chat.slug}?imageSlug=${item.slug}" 
-                            class="text-muted text-decoration-none"
-                            data-index="${index}"
-                          >
-                            <img 
-                              src="${item.imageUrl}" 
-                              alt="${item.prompt}" 
-                              class="card-img-top"
-                            >
-                          </a>
-                          <!-- Admin/Like Controls -->
-                          <div class="${
-                            !isAdmin ? 'd-none' : ''
-                          } card-body p-2 d-flex align-items-center justify-content-between">
-                            <button 
-                              class="btn btn-light image-nsfw-toggle ${
-                                !isAdmin ? 'd-none' : ''
-                              } ${item.nsfw ? 'nsfw' : 'sfw'}" 
-                              data-id="${item._id}"
-                                onclick="toggleImageNSFW(this)"
-                            >
-                              <i class="bi ${
-                                item.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'
-                              }"></i> 
-                            </button>
-                            <span 
-                              class="btn btn-light float-end image-fav ${
-                                isLiked ? 'liked' : ''
-                              }" 
-                              data-id="${item._id}"
-                              onclick="toggleImageFavorite(this)"
-                            >
-                              <i class="bi ${isLiked ? 'bi-heart-fill':'bi-heart'}" style="cursor: pointer;"></i>
-                            </span>
-                          </div>
-                        `
-                    }
-                  </div>
-                </div>
-              `;
-            });
-  
-            // Wrap each chat with its title/description and horizontal scroll container
-            chatsHtml += `
-              <div class="chat-item mb-4">
-                <div class="d-flex justify-content-start align-items-center">
-                    <a href="/character/slug/${chat.slug}"><span style="font-size: 18px; font-weight: 700;">${chat.name}</span></a>
-                    <a href="/character/slug/${chat.slug}"><span class="badge custom-gradient-bg ms-2">${chat.imageCount}</span></a>
-                </div>
-                <p>${chat?.first_message || chat.description}</p>
-                <!-- Horizontal scrolling container -->
-                <div class="chat-images-horizontal row flex-nowrap" data-chat-id="${chat._id}" style="overflow-x:auto;">
-                  ${chatImagesHtml}
-                </div>
-              </div>
-            `;
-          });
-  
-          // Append the generated HTML for all chats
-          $('#all-chats-container').append(chatsHtml);
-  
-          // Attach horizontal scrolling listeners
-          attachHorizontalScrollListeners();
   
           // Apply blur if needed
           $(document)
@@ -3080,10 +2995,10 @@ $(document).ready(function () {
   
           // Reset fetching flag and increment page
           isFetchingChats = false;
-          currentPage++;
+          currentPageMap.set(query, (currentPageMap.get(query) || 1) + 1);
 
             // Only show back to top if we've reached the end AND not currently loading
-          if (!hasMoreChats && !isFetchingChats) {
+          if (!hasMoreChatsMap.get(query) && !isFetchingChats) {
             showBackToTopButton();
           }
         },
@@ -3208,17 +3123,19 @@ $(document).ready(function () {
     /**
      * Vertical Infinite Scroll for Chats
      */
-    $(window).on('scroll', function () {
+    $(window).off('scroll.fetchChats').on('scroll.fetchChats', function () {
       // Changed from -50 to -200 to trigger loading earlier
       if ($(window).scrollTop() + $(window).height() >= $(document).height() - 200) {
-        fetchChatsWithImages(currentPage);
+        fetchChatsWithImages(currentPageMap.get(currentActiveQuery) || 1, currentActiveQuery);
       }
     });
 
     /**
      * Initial Load
      */
-    fetchChatsWithImages(currentPage);
+    if (window.location.pathname.includes('/character')) {
+      fetchChatsWithImages(currentPageMap.get(currentActiveQuery) || 1, currentActiveQuery);
+    } 
 
     // Function to load and display query tags
     window.loadQueryTags = async function() {
@@ -3287,13 +3204,17 @@ $(document).ready(function () {
         $('#all-chats-images-pagination-controls').empty();
         
         // Reset pagination state
-        if (typeof allChatsCurrentPage !== 'undefined') {
-            allChatsCurrentPage = 0;
+        if (typeof currentPageMap !== 'undefined') {
+            currentPageMap.set(query, 0);
         }
         if (typeof allChatsLoadingState !== 'undefined') {
             allChatsLoadingState = false;
         }
-        
+
+        // Reset global flags
+        isFetchingChats = false;
+        hasMoreChatsMap.set(query, true); // Reset hasMoreChats for the new query
+
         // Trigger new search with query
         if (query) {
             // Search for chats with the query
@@ -3304,6 +3225,11 @@ $(document).ready(function () {
                 fetchChatsWithImages(1, '');
             }
         }
+
+
+      $('html, body').animate({
+          scrollTop: $('#all-chats-container').offset().top
+      }, 500);
     };
 
     // Enhanced function to fetch chats with query support

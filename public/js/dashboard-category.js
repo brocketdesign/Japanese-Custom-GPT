@@ -145,8 +145,7 @@ function displayCategoryCards(categories) {
 }
 
 window.handleCategoryClick = function(category) {
-  // Redirect to search with category
-  window.location.href = `/search?q=${encodeURIComponent(category.toLowerCase())}`;
+  setActiveQuery(category.toLowerCase());
 };
 
 // Load categories when document is ready

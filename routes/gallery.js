@@ -943,6 +943,7 @@ fastify.get('/api/query-tags', async (request, reply) => {
                     count: { $sum: 1 }
                 }
             },
+            { $sample: { size: 20 } },
             { $sort: { count: -1 } },
             { $limit: 20 }, // Limit to top 20 most popular tags
             {

@@ -406,6 +406,7 @@ $(document).ready(async function() {
         }
 
         $('.fullscreen-overlay').fadeOut(); 
+        $('#chat-list').fadeOut();
 
         resetSuggestionsAndHide();
     }
@@ -486,7 +487,10 @@ function setupChatInterface(chat, character) {
     }
     
 
-    function displayImageThumb(imageUrl,origineUserChatId = null){
+    function displayImageThumb(imageUrl, origineUserChatId = null, shouldBlur = false){
+        if(shouldBlur){
+            return;
+        }
         const messageContainer = $(`#chatContainer[data-id=${origineUserChatId}]`)
         if(origineUserChatId && messageContainer.length == 0){
             return
@@ -971,9 +975,7 @@ function setupChatInterface(chat, character) {
                 method: 'GET',
                 success: function(response) {
                     if (response.imageUrl) {
-                        // Update the placeholder image
-                        displayImageThumb(response.imageUrl)
-                        
+
                         // Apply NSFW logic
                         const item = { nsfw: response.nsfw };
                         const subscriptionStatus = user.subscriptionStatus === 'active';
@@ -981,6 +983,9 @@ function setupChatInterface(chat, character) {
                         
                         const shouldBlur = shouldBlurNSFW(item, subscriptionStatus);
                         const displayMode = getNSFWDisplayMode(item, subscriptionStatus);
+                        
+                        // Update the placeholder image
+                        displayImageThumb(response.imageUrl, null, shouldBlur);
                         
                         if (shouldBlur || displayMode !== 'show') {
                             // Apply blur effect - set data-src and add blur class
@@ -1446,7 +1451,7 @@ function setupChatInterface(chat, character) {
             }
 
             if (subscriptionStatus || !imageNsfw) {
-                displayImageThumb(imageUrl, origineUserChatId);
+                displayImageThumb(imageUrl, origineUserChatId, shouldBlur);
             }
         } 
 

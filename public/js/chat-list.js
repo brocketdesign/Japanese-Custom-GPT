@@ -29,6 +29,10 @@ function initializeCache() {
     }
 }
 
+initChatList = true;
+initializeCache();
+displayChatList(null, userId);
+
 // Reset cache
 function resetCache() {
     chatCache = {
@@ -53,13 +57,24 @@ function isCacheValid() {
     return (Date.now() - chatCache.lastUpdated) < fiveMinutes;
 }
 
+// if the  url is like '/chat/?list=true'
+if (window.location.pathname === '/chat/' && window.location.search === '?list=true') {
+
+    showDiscovery();
+    $('#chat-list').show();
+    $('.onchat-off, .onchat-on').hide();
+
+    displayChatList(null, userId);
+}
+
 // Event listener for menu chat buttons
-$(document).on('click','#menu-chat, .menu-chat-sm',function(){
-    if(!initChatList){
-        initChatList = true;
-        initializeCache();
-        displayChatList(null, userId);
-    }
+$(document).on('click','#toggle-chat-list',function(){
+
+    showDiscovery();
+    $('#chat-list').show();
+    $('.onchat-off, .onchat-on').hide();
+
+    displayChatList(null, userId);
 });
 
 // Delete chat function
@@ -98,7 +113,6 @@ function deleteChatHistoryHandler(selectedChatId) {
 // Main function to display chat list
 function displayChatList(reset, userId) {
     if ($('#chat-list').length === 0) return;
-    
     if (reset) {
         resetCache();
         $('#chat-list').empty();
@@ -333,8 +347,23 @@ function updateChatListDisplay(currentChat) {
 // Enhanced function to construct chat item HTML with ultra-compact design for 260px sidebar
 function constructChatItemHtml(chat, isActive) {
     const isOwner = chat.userId === userId;
-    const lastMessageTime = chat.updatedAt ? new Date(chat.updatedAt).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' }) : '';
-    
+    const lang = window.lang
+    let lastMessageTime
+    switch (lang) {
+        case 'ja':
+            lastMessageTime = chat.updatedAt ? new Date(chat.updatedAt).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' }) : '';
+            break;
+        case 'en':
+            lastMessageTime = chat.updatedAt ? new Date(chat.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+            break;
+        case 'fr':
+            lastMessageTime = chat.updatedAt ? new Date(chat.updatedAt).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' }) : '';
+            break;
+        default:
+            lastMessageTime = chat.updatedAt ? new Date(chat.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+            break;
+    }
+
     return `
         <div class="list-group-item list-group-item-action border-0 p-0 ${isActive ? 'active bg-primary bg-opacity-10' : ''} chat-list item user-chat chat-item-enhanced" 
             data-id="${chat._id}" style="position: relative;">
@@ -531,7 +560,7 @@ function handleChatListItemClick(el) {
     }
     
     $el.closest('.chat-list.item').addClass('active').siblings().removeClass('active');
-    $('#chat-container').css('background-image', `url(${chatImageUrl})`);
+    //$('#chat-wrapper').css('background-image', `url(${chatImageUrl})`);
     
     // Update global chatId variable before calling fetchChatData
     window.chatId = selectChatId;

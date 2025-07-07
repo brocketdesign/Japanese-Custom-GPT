@@ -861,6 +861,7 @@
   "unlockSuccess": "Déverrouillage réussi",
   "unlockError": "Erreur de déverrouillage",
   "createCharacter": "Créer un personnage",
+  "create": "Créer",
   "library": "Bibliothèque",
   "explore": "Explorer",
   "chatList": "Liste des discussions",
@@ -1078,7 +1079,8 @@
     "characters": "Personnages",
     "following": "Abonnements",
     "followers": "Abonnés",
-    "follow": "Suivre"
+    "follow": "Suivre",
+    "title": "Profil de %{nickname}"
   },
   "startChatting": "Commencer à discuter",
   "like": "J'aime",

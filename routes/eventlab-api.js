@@ -10,6 +10,7 @@ async function routes(fastify, options) {
      */
     fastify.post('/api/eventlab/text-to-speech', async (req, res) => {
         try {
+            const { translations } = req;
             const { text, userId, chatId, voiceName, language } = req.body;
             
             if (!text) {

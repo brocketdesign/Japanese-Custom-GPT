@@ -18,8 +18,14 @@
   overflow-x:hidden!important;
   padding:0;
   margin:0;
+  height:100vh;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* Internet Explorer and Edge */
   }
-  
+  body::-webkit-scrollbar {
+    display: none;
+  }
+
   .isAdmin,.local-mode {
   display:none
   }
@@ -1445,7 +1451,9 @@ opacity: 0.8;
   #chatContainer {
   height:100%;
   overflow-y:scroll;
-  overflow-x:hidden
+  overflow-x:hidden;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* Internet Explorer and Edge */
   }
   
   .fade-content {
@@ -1460,7 +1468,7 @@ opacity: 0.8;
   flex-direction:column;
   overflow-x:hidden;
   overflow-y: hidden;
-  height: 95vh;
+  height: 100vh;
   padding-top: 20vh;
   }
   

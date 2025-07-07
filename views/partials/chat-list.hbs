@@ -1,0 +1,25 @@
+
+    <div id="chat-list" class="container flex-grow-1 overflow-auto p-3 h-100vh mt-5" style="border-top: none;display:none;">
+        <!-- Professional Loading State -->
+        <div id="chat-list-spinner" class="chat-loading-state mx-auto text-center m-2 border border-light shadow-sm rounded" style="display: none;">
+            <div class="loading-card">
+                <div class="loading-header">
+                    <div class="loading-pulse-icon">
+                        <i class="bi bi-chat-dots"></i>
+                    </div>
+                    <div class="loading-text">
+                        <h6 class="mb-1 text-secondary" style="font-size: 0.8rem;">{{translations.loadingChats}}</h6>
+                        <small class="text-muted" style="font-size: 0.7rem;">{{translations.pleaseWait}}</small>
+                    </div>
+                </div>
+                <div class="loading-progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <div class="loading-dots-container">
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                </div>
+            </div>
+        </div>
+    </div>

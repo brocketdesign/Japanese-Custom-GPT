@@ -878,6 +878,7 @@
   "unlockSuccess": "Unlocked successfully",
   "unlockError": "Error unlocking",
   "createCharacter": "Create Character",
+  "create": "Create",
   "library": "Library",
   "explore": "Explore",
   "chatList": "Chat List",
@@ -1101,7 +1102,8 @@
     "characters": "Characters",
     "following": "Following",
     "followers": "Followers",
-    "follow": "Follow"
+    "follow": "Follow",
+    "title": "Profile"
   },
   "followers": {
     "pageTitleFollowers": "'s Followers - Lamix AI Companions",

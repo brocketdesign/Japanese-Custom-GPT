@@ -112,6 +112,13 @@ window.showNotification = (message, type = 'info') => {
                 z-index: 1070 !important;
                 box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
             }
+
+            /*Min width 80vw on mobile */
+            @media (max-width: 767.98px) {
+                .notification-toast {
+                    min-width: 80vw;
+                }
+            }
         `;
         document.head.appendChild(styleEl);
     }

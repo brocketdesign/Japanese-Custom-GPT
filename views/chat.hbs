@@ -13,7 +13,6 @@
         </div>
     </div>
     <div id="swup-none">
-        {{> chat-history-sidebar}}
         <div id="overlay" class="d-sm-none bg-dark" style="position: fixed; inset: 0; z-index: 1033; display: none; opacity: 0.4; overflow: hidden;"></div>
         <div class="content collapsed">
             <nav class="navbar navbar-expand-lg navbar-white bg-transparent fixed-top shadow-0 flex-column">
@@ -26,8 +25,6 @@
                             style="display: none;"
                             onclick="showDiscovery()"><i class="bi bi-arrow-left"></i></button>
 
-                            <button class="menu-chat-sm d-sm-none btn btn-dark"><i class="bi bi-list"></i></button>
-                            <button id="menu-chat" class="d-none d-sm-inline-block btn btn-dark"><i class="bi bi-list"></i></button>
                             <div id="chat-actions-dropdown" class="dropdown d-inline-block onchat-on" style="display: none;">
                                 <button class="btn btn-dark dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     <i class="bi bi-three-dots-vertical"></i>
@@ -51,8 +48,8 @@
                 </div>
             {{> chat-header}}
             </nav>
+            {{> chat-list}}
             <section id="chat-discovery" class="onchat-off mt-5 pt-3" style="display: block;">
-
                 <!-- Promo Section -->
                 <section class="is-free-user animate__animated m-3 p-3" style="display: none; overflow-x: hidden;" data-animate="animate__fadeInLeft" data-delay="0.3s">
                     <div class="container text-center">
@@ -73,25 +70,9 @@
                     </div>
                 </section>
 
-                <!-- Category cards -->
-                <div class="container-fluid mb-4">
-                    <div class="row" id="category-cards-container">
-                        <!-- Loading placeholder -->
-                        <div class="col-12 text-center">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading categories...</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 
-                <!-- Card menu title & description -->
-                <div class="container text-center mb-2 animate__animated" data-animate="animate__fadeInLeft" data-delay="0.3s">
-                    <h2 class="fw-bold u-color-grad">{{translations.cardMenuTitle}}</h2>
-                    <p class="text-muted">{{translations.cardMenuDescription}}</p>
-                </div>
                 <!-- Card menu -->
-                <div class="card-menu-container mb-3">
+                <div class="card-menu-container mb-3 px-0">
                     <div class="d-flex overflow-auto px-3 py-5" style="scrollbar-width: thin;justify-content: space-between;">
                         <!-- Create Character Card -->
                         <div class="character-create-card shadow-sm rounded p-3 text-center mx-2 flex-shrink-0" 
@@ -111,7 +92,8 @@
                         
                         <!-- Explore Characters Card -->
                         <div class="character-create-card shadow-sm rounded p-3 text-center mx-2 flex-shrink-0" 
-                             onclick="window.location.href='/character'"
+                             onclick="document.getElementById('latest-chats-gallery').scrollIntoView({ behavior: 'smooth' });"
+
                              style="cursor: pointer; transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.1); width: 220px;">
                             <div class="character-create-icon bg-light rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" 
                                  style="width: 80px; height: 80px; transition: all 0.3s ease;">
@@ -142,16 +124,16 @@
                 </div>
 
                 <!-- Latest Chats Section -->
-                <div class="mx-4 my-4" id="latest-chats-section">
-                    <h5 class="fw-bold mb-3">{{translations.latestChatsHeader}}
+                <div id="latest-chats-section">
+                    <h5 class="fw-bold mb-3 ms-4">{{translations.latestChatsHeader}}
                         <i class="bi bi-arrow-counterclockwise" onclick="loadLatestChats(1, true)" style="cursor: pointer;"></i>
                     </h5>
                     <div id="latest-chats-gallery" class="row latest-chats-gallery flex-nowrap overflow-auto mx-0" style="flex-wrap: nowrap; overflow-x: auto; white-space: nowrap;"></div>
                 </div>
 
                 <!-- Latest Video Chats Section -->
-                <div class="mx-4 my-4" id="latest-video-chats-section">
-                    <h5 class="fw-bold mb-3">{{translations.latestVideoChatsHeader}}
+                <div id="latest-video-chats-section">
+                    <h5 class="fw-bold mb-3 ms-4">{{translations.latestVideoChatsHeader}}
                         <i class="bi bi-arrow-counterclockwise" onclick="loadLatestVideoChats(1, true)" style="cursor: pointer;"></i>
                     </h5>
                     <div id="latest-video-chats-gallery" class="d-flex overflow-auto pb-3" style="gap: 15px; scroll-behavior: smooth;">
@@ -160,50 +142,91 @@
                     <div id="latest-video-chats-pagination-controls" class="text-center mt-3"></div>
                 </div>
 
-                <!-- Popular chat -->
-                <div class="mx-4 my-4" id="popular-chats-section">
-                    <h5 class="fw-bold mb-3">{{translations.popularChats}}</h5>
-                    <!-- Sorting Tools: Premium/Free, Gender & NSFW Filters (Responsive) -->
-                    <div class="sorting-tools mb-3">
-                        <div class="row g-3 align-items-center">
-                            <!-- Gender Filter Buttons -->
-                            <div class="d-none col-12 col-md d-flex align-items-center gap-2 flex-wrap justify-content-between justify-content-md-start">
-                                <span class="me-2 text-muted" style="font-size: 15px;">
-                                    <i class="bi bi-gender-ambiguous"></i> {{translations.sort.genderLabel}}
-                                </span>
-                                <div class="d-flex flex-wrap gap-2">
-                                    <button id="popular-chats-gender-female" class="btn btn-outline-primary px-3 py-1" style="border-radius: 30px; font-size: 14px;">
-                                        <i class="bi bi-gender-female me-1"></i>{{translations.sort.female}}
-                                    </button>
-                                    <button id="popular-chats-gender-male" class="btn btn-outline-info px-3 py-1" style="border-radius: 30px; font-size: 14px;">
-                                        <i class="bi bi-gender-male me-1"></i>{{translations.sort.male}}
-                                    </button>
-                                    <button id="popular-chats-gender-nonbinary" class="btn btn-outline-success px-3 py-1" style="border-radius: 30px; font-size: 14px;">
-                                        <i class="bi bi-gender-trans me-1"></i>{{translations.sort.nonBinary}}
-                                    </button>
-                                </div>
-                            </div>
-                            <!-- Style Filter Buttons -->
-                            <div class="col-12 d-flex justify-content-center gap-4">
-                                <button id="popular-chats-style-anime" class="btn d-flex align-items-start justify-content-center p-3 border-0 position-relative text-white" style="border-radius: 20px; overflow: hidden; background-image: url('/img/image-placeholder-anime.jpeg'); background-size: cover; background-position: center; width: 160px; height: 160px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                                    <div class="position-absolute top-0 bottom-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 50%, rgba(0,0,0,0.6) 100%);">
-                                        <span class="fw-bold text-white position-relative" style="font-size: 14px; line-height: 1.2; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{{translations.sort.anime}}</span>
-                                    </div>
+                <!-- Card menu title & description -->
+                <div class="container text-center mb-3 animate__animated" data-animate="animate__fadeInLeft" data-delay="0.3s">
+                    <h2 class="fw-bold u-color-grad">{{translations.cardMenuTitle}}</h2>
+                    <p class="text-muted">{{translations.exploreCharactersDescription}}</p>
+                </div>
+
+                <!-- Sorting Tools: Premium/Free, Gender & NSFW Filters (Responsive) -->
+                <div class="mx-4 sorting-tools mb-3">
+                    <div class="row g-3 align-items-center">
+
+                        <!-- [DISABLE] Gender Filter Buttons -->
+                        <div class="d-none col-12 col-md d-flex align-items-center gap-2 flex-wrap justify-content-between justify-content-md-start">
+                            <span class="me-2 text-muted" style="font-size: 15px;">
+                                <i class="bi bi-gender-ambiguous"></i> {{translations.sort.genderLabel}}
+                            </span>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button id="popular-chats-gender-female" class="btn btn-outline-primary px-3 py-1" style="border-radius: 30px; font-size: 14px;">
+                                    <i class="bi bi-gender-female me-1"></i>{{translations.sort.female}}
                                 </button>
-                                <button id="popular-chats-style-photorealistic" class="btn d-flex align-items-start justify-content-center p-3 border-0 position-relative text-white" style="border-radius: 20px; overflow: hidden; background-image: url('/img/image-placeholder-real.jpeg'); background-size: cover; background-position: center; width: 160px; height: 160px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                                    <div class="position-absolute top-0 bottom-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 50%, rgba(0,0,0,0.6) 100%);">
-                                        <span class="fw-bold text-white position-relative" style="font-size: 14px; line-height: 1.2; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{{translations.sort.photorealistic}}</span>
-                                    </div>
+                                <button id="popular-chats-gender-male" class="btn btn-outline-info px-3 py-1" style="border-radius: 30px; font-size: 14px;">
+                                    <i class="bi bi-gender-male me-1"></i>{{translations.sort.male}}
+                                </button>
+                                <button id="popular-chats-gender-nonbinary" class="btn btn-outline-success px-3 py-1" style="border-radius: 30px; font-size: 14px;">
+                                    <i class="bi bi-gender-trans me-1"></i>{{translations.sort.nonBinary}}
                                 </button>
                             </div>
                         </div>
+
+                        <!-- Style Filter Buttons -->
+                        <div class="col-12 d-flex justify-content-center gap-4">
+                            <button id="popular-chats-style-anime" class="btn d-flex align-items-start justify-content-center p-3 border-0 position-relative text-white" style="border-radius: 20px; overflow: hidden; background-image: url('/img/image-placeholder-anime.jpeg'); background-size: cover; background-position: center; width: 160px; height: 160px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                                <div class="position-absolute top-0 bottom-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 50%, rgba(0,0,0,0.6) 100%);">
+                                    <span class="fw-bold text-white position-relative" style="font-size: 14px; line-height: 1.2; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{{translations.sort.anime}}</span>
+                                </div>
+                            </button>
+                            <button id="popular-chats-style-photorealistic" class="btn d-flex align-items-start justify-content-center p-3 border-0 position-relative text-white" style="border-radius: 20px; overflow: hidden; background-image: url('/img/image-placeholder-real.jpeg'); background-size: cover; background-position: center; width: 160px; height: 160px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                                <div class="position-absolute top-0 bottom-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 50%, rgba(0,0,0,0.6) 100%);">
+                                    <span class="fw-bold text-white position-relative" style="font-size: 14px; line-height: 1.2; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{{translations.sort.photorealistic}}</span>
+                                </div>
+                            </button>
+                        </div>
+
+                        <!-- Category cards -->
+                        <div class="container-fluid mb-4">
+                            <div class="row" id="category-cards-container">
+                                <!-- Loading placeholder -->
+                                <div class="col-12 text-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading categories...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Query Tags Horizontal Scroll Section -->
+                        <div class="query-tags-section mb-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <h6 class="me-3 mb-0">{{translations.browseByCategory}}:</h6>
+                                <small class="text-muted">{{translations.scrollForMore}}</small>
+                            </div>
+                            <div class="query-tags-scroll-container">
+                                <div class="query-tags-list d-flex" id="query-tags-list">
+                                    <!-- Query tags will be populated here -->
+                                    <div class="spinner-border spinner-border-sm me-3" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+                </div>
+                <!-- Popular chats section -->
+                <div id="popular-chats-section">
+                    <div id="all-chats-container" class="row all-chats-gallery mx-0"></div>
+                    <div class="row mx-0" id="all-chats-images-gallery"></div>
+                    <div class="d-flex justify-content-center mt-4" id="all-chats-images-pagination-controls"></div>
+
                     <div id="chat-gallery" class="row popular-chats-gallery mx-0"></div>
-                    <div id="popular-chats-pagination-controls" class="my-3"></div>
+                    <div id="popular-chats-pagination-controls" class="my-3" style="opacity: 0;"></div>
                 </div>
             </section>
-            <div class="container chat-contain px-0 onchat-on">
-                <div id="chat-container" class="card shadow-0 border-0 rounded-0" style="background-position: top center;background-repeat: no-repeat;">
+            <div id="chat-wrapper" class="px-0 onchat-on" style="background-position: top center;background-repeat: no-repeat;background-size:cover;">
+                <!-- Chat Container Overlay -->
+                <div id="chat-container" class="container mx-auto shadow-0 border-0 rounded-0" style="border-radius:0 !important;">
+                    <div class="chat-overlay d-flex justify-content-center align-items-center w-100 h-100vh position-absolute top-0 start-0 bottom-0" id="chatOverlay" style="background-color: #ffffff!important;opacity: 0.85;"></div>
                     <div class="card-body text-center p-0 container" style="min-height:250px;overflow-y:hidden;display: flex;flex-direction: column;">
                         <div id="chatContainer" data-id="" class="pt-2 fade-content" style="padding-bottom: 180px !important;"></div>
                     </div>
@@ -215,11 +238,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/blueimp-md5@2.19.0/js/md5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-<script src="/js/dashboard-category.js"></script>
 <script src="/js/merge-face.js"></script>
 <script src="/js/txt2speech.js"></script>
+<script src="/js/dashboard-category.js"></script>
 <script src="/js/chat-tool-toolbar.js"></script>
-<script src="/js/chat-tool-history-sidebar.js"></script>
+<script src="/js/chat-list.js"></script>
 <script src="/js/chat-tool-prompts.js"></script>
 <script src="/js/chat-tool-gifts.js"></script>
 <script src="/js/chat-tool-settings.js"></script>
@@ -269,46 +292,9 @@ $(document).ready(function() {
         }
     });
 
-    // Initialize user preference from cookie
-    if (Cookies.get('sidebarState') === 'expanded') {
-        $('.sidebar').removeClass('hidden');
-        $('.content').removeClass('collapsed');
-        $('nav.navbar').addClass('move');
-        $('#overlay').show()
-    
-        if(userId){ 
-            displayChatList(null, userId) 
-        }
-    }
 
-    $('#menu-chat').on('click', function(){
 
-        $('.sidebar-history').addClass('hidden');
-        const sidebar = $('.sidebar');
-        const content = $('.content');
-        const navbar = $('nav.navbar');
-        const stickyBottom = $('.sticky-bottom')
-        if (sidebar.hasClass('hidden')) {
-            sidebar.removeClass('hidden');
-            content.removeClass('collapsed');
-            navbar.addClass('move');
-            stickyBottom.addClass('move');
-            $('#overlay').show()
-        } else {
-            sidebar.addClass('hidden');
-            content.addClass('collapsed');
-            navbar.removeClass('move');
-            stickyBottom.removeClass('move');
-            $('#overlay').hide()
-        }
-        
-        // Update the cookie based on the new state
-        if ($('.sidebar').hasClass('hidden')) {
-            Cookies.set('sidebarState', 'collapsed', { expires: 7 }); // Cookie expires in 7 days
-        } else {
-            Cookies.set('sidebarState', 'expanded', { expires: 7 });
-        }
-    });
+
 
     $(document).on('click','.history-chat', function(){
         const chatId = $(this).data('id')
@@ -316,37 +302,10 @@ $(document).ready(function() {
         if(chatId && userId){ 
             getUserChatHistory(chatId, userId) 
         }
-        $('.sidebar-history').toggleClass('hidden');
-        $('.sidebar').removeClass('hidden');
-        $('.content').removeClass('collapsed');
-        $('nav.navbar').addClass('move');
-        $('#overlay').show()
-        $('.content').toggleClass('noscroll');
     })
 
-    $('.menu-chat-sm').on('click', function(){
-        $('.sidebar').toggleClass('hidden');
-        $('#overlay').toggle()
-        $('.content').toggleClass('noscroll');
-    });
 
-    $('#overlay').on('click', function(){
-        $('#overlay').toggle()
-        $('.sidebar').toggleClass('hidden');
-        $('.sidebar-history').addClass('hidden');
-        $('.content').toggleClass('noscroll');
-        // Update the cookie based on the new state
-        if ($('.sidebar').hasClass('hidden')) {
-            Cookies.set('sidebarState', 'collapsed', { expires: 7 }); // Cookie expires in 7 days
-        } else {
-            Cookies.set('sidebarState', 'expanded', { expires: 7 });
-        }
-    });
 
-    $(document).on('click','.user-chat-content .dropdown-menu',function(){
-        $('#overlay').click()
-    })
-    
     window.showImagePreview = function(el) {
         if($(el).hasClass('isBlurred')){
             loadPlanPage();
@@ -743,6 +702,12 @@ $(document).on('click', '#popular-chats-style-anime, #popular-chats-style-photor
     $(this).addClass('active');
     logChatFilterStates('style filter');
     updateChatFilters();
+    $('#all-chats-container').empty();
+    $('#chat-gallery').show();
+    $('.query-tag-all').click();
+    $('html, body').animate({
+        scrollTop: $('#chat-gallery').offset().top
+    }, 500);
 });
 // Reset style filter
 $(document).on('click', '.sorting-tools .btn:not([id^="popular-chats-style-"])', function() {
@@ -751,9 +716,16 @@ $(document).on('click', '.sorting-tools .btn:not([id^="popular-chats-style-"])',
     $('.sorting-tools button').removeClass('active');
     logChatFilterStates('reset style filter');
     updateChatFilters();
+    $('#all-chats-container').empty();
+    $('#chat-gallery').show();
+    $('.query-tag-all').click();
+    $('html, body').animate({
+        scrollTop: $('#chat-gallery').offset().top
+    }, 500);
 });
 // Filtering logic
 function updateChatFilters() {
+      
     // Premium filter
     $('.popular-chats-gallery .gallery-card').each(function(index) {
         const isPremium = $(this).hasClass('premium-chat');

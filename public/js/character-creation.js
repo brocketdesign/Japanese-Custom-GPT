@@ -421,6 +421,9 @@
                 closeAllModals();
                 callFetchChatData(newchatId, userId);
             });
+
+            // Update chatCreationId globally
+            $(document).find('#imageContainer').attr('data-chat-creation-id', chatCreationId);
         }
 
         const prompt = characterPrompt = $('#characterPrompt').val().trim();
@@ -476,7 +479,7 @@
             // Use new comprehensive generation route
             const comprehensiveData = {
                 prompt,
-                gender,
+                gender: 'female', // Default
                 chatPurpose,
                 name,
                 imageType,
@@ -610,7 +613,7 @@
             }
         });
     }
-    window.generateCharacterImage = function(url, nsfw) {
+    window.generateCharacterImage = function(url, nsfw, receivedChatCreationId) {
         // Clear the container
         $('#generatedImage').remove();
         $('#imageGenerationDescription').hide();
@@ -641,7 +644,7 @@
         });
 
         colDiv.append(imgElement);
-        $('#imageContainer').append(colDiv);
+        $(document).find('#imageContainer[data-chat-creation-id="' + receivedChatCreationId + '"]').append(colDiv);
 
         $('.regenerateImages').show();
         $('#regenerateImagesButton').show();

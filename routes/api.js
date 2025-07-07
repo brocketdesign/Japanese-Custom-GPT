@@ -183,7 +183,7 @@ async function routes(fastify, options) {
             return reply.code(200).send({ message: 'Chat exists', chat: existingChat });
         } else {
           // Create a new chat if the current userId is not the chat userId
-          console.log('Creating new chat for user:', userId);
+          console.log('[api/check-chat] Creating new chat for user:', userId);
           const newChatId = new fastify.mongo.ObjectId();
           await chatsCollection.insertOne({
             _id: newChatId,
@@ -194,7 +194,7 @@ async function routes(fastify, options) {
           return reply.code(201).send({ message: 'New chat created', chatId: newChatId });
         }
         }
-        console.log('Creating new chat for user:', userId);
+        console.log('[api/check-chat] Creating new chat for user:', userId);
         await chatsCollection.insertOne({
         _id: chatId,
         userId,
@@ -898,6 +898,7 @@ async function routes(fastify, options) {
             const language = chatdoc.language
             const apiUrl = getApiUrl(request);        
             const response = await axios.post(apiUrl+'/api/generate-character-comprehensive', {
+                userId: request.user._id,
                 chatId,
                 name:chatdoc.name,
                 prompt:chatdoc.characterPrompt,

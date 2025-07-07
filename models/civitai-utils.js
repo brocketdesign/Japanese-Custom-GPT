@@ -259,6 +259,10 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
   try {
     console.log(`[createModelChat] Starting chat creation for model: ${model.model}`);
     
+    if(!user){
+      user = fastify?.user || null;
+    }
+
     // Validate promptData.prompt
     if (!promptData.prompt || promptData.prompt.trim() === '') {
         console.log('[createModelChat] Missing required fields');
@@ -274,6 +278,7 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
       // API call to the openai-chat-creation endpoint
       const apiUrl = process.env.MODE === 'local' ? 'http://localhost:3000' :  'https://app.chatlamix.com';
       const apiResponse = await axios.post(`${apiUrl}/api/generate-character-comprehensive`, {
+        userId: user ? user._id : null,
         prompt: promptData.prompt,
         language: language,
         system_generated: true,

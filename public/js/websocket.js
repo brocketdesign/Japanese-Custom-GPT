@@ -161,11 +161,11 @@ function initializeWebSocket(onConnectionResult = null) {
           }
           case 'characterImageGenerated':
             if ($('#imageContainer').length > 0) {
-              const { imageUrl, nsfw } = data.notification;
+              const { imageUrl, nsfw, chatId} = data.notification;
               if (window.hideImageSpinner) {
                 window.hideImageSpinner();
               }
-              generateCharacterImage(imageUrl,nsfw);
+              generateCharacterImage(imageUrl,nsfw, chatId);
             }
             break;
           case 'resetCharacterForm':

@@ -80,13 +80,16 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     const db = fastify.mongo.db;
 
     // Fetch the user
-    const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+    console.log(`[generateImg] Starting image generation for user: ${userId}, chat: ${chatId}, type: ${imageType}`);
+    let user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
     if (!user) {
-      throw new Error('User not found');
+      userId = await db.collection('chats').findOne({ _id: new ObjectId(chatId) }).then(chat => chat.userId);
+      user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+      console.log(`[generateImg] User not found, using chat userId: ${userId}`);
     }
-  
+    
     // Fetch user subscription status
-    const isSubscribed = user.subscriptionStatus === 'active';
+    const isSubscribed = user?.subscriptionStatus === 'active' || false;
   
     // Fetch imageVersion from chat or use default
     const chat = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
@@ -225,7 +228,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
 
     let newTitle = title;
     if (!title) {
-      const lang = getLanguageName(user.lang || 'en');
+      const lang = getLanguageName(user?.lang || 'en');
       const userLangTitle = await generatePromptTitle(requestData.prompt, lang);
       // Create title object with just the user's language
       newTitle = {
@@ -461,7 +464,7 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
       });
 
       if (chatCreation) {
-        fastify.sendNotificationToUser(userId, 'characterImageGenerated', { imageUrl, nsfw });
+        fastify.sendNotificationToUser(userId, 'characterImageGenerated', { imageUrl, nsfw, chatId });
         if (index === 0) {
           console.log('[handleTaskCompletion] Saving image as character thumbnail:', userId, imageUrl);
           await saveChatImageToDB(fastify.mongo.db, chatId, imageUrl);

@@ -233,7 +233,7 @@ async function routes(fastify, options) {
         try {
             const { prompt, gender, name, chatPurpose, language: requestLanguage, imageType, image_base64, enableMergeFace } = request.body;
             let chatId = request.body.chatId || request.query.chatId || request.params.chatId || null;
-            const userId = request.user._id;
+            const userId = request.body.userId || request.user._id;
             const language = requestLanguage || request.lang;
  
             console.log(`[API/generate-character-comprehensive] Input parameters - chatId: ${chatId || 'undefined'}, gender: ${gender || 'undefined'}, language: ${language}, prompt: ${prompt ? prompt.substring(0, 50) + '...' : 'undefined'}, name: ${name || 'undefined'}, hasImageBase64: ${!!image_base64}, enableMergeFace: ${!!enableMergeFace}`);
@@ -283,7 +283,6 @@ async function routes(fastify, options) {
             try {
                 extractedDetails = JSON.parse(detailsResponse.choices[0].message.content);
                 console.log('[API/generate-character-comprehensive] Successfully extracted details');
-                console.log('[API/generate-character-comprehensive] Extracted details:', extractedDetails);
                 fastify.sendNotificationToUser(userId, 'showNotification', { 
                     message: request.translations.newCharacter.character_analysis_complete, 
                     icon: 'success' 
@@ -320,12 +319,6 @@ async function routes(fastify, options) {
                 enhancedPrompt
             });
 
-            reply.send({
-                success: true,
-                chatId,
-                enhancedPrompt,
-                imageGenerationTriggered: true
-            });
 
             // Step 2.5: Trigger image generation immediately after enhanced prompt is available
             console.log('[API/generate-character-comprehensive] Step 2.5: Triggering image generation with enhanced prompt');
@@ -339,7 +332,10 @@ async function routes(fastify, options) {
                 
                 // Generate placeholder ID for tracking
                 const placeholderId = new fastify.mongo.ObjectId().toString();
-                
+
+                const debug_user = await fastify.mongo.db.collection('users').findOne({ _id: new ObjectId(userId) });
+                console.log(`[API/generate-character-comprehensive] Debug user found: ${debug_user}`);
+
                 // Trigger image generation asynchronously with enhanced prompt
                 generateImg({
                     prompt: enhancedPrompt,
@@ -392,6 +388,14 @@ async function routes(fastify, options) {
             fastify.sendNotificationToUser(userId, 'showNotification', { 
                 message: request.translations.newCharacter.chatData_complete, 
                 icon: 'success' 
+            });
+
+            reply.send({
+                success: true,
+                chatId,
+                chatData,
+                enhancedPrompt,
+                imageGenerationTriggered: true
             });
 
             // Step 4: Save to database

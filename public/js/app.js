@@ -63,21 +63,8 @@ function getCookie(name) {
 // Call this function on page load
 window.addEventListener('DOMContentLoaded', () => {
     getReferrerAndSave();
+    
 });
-
-// Legacy support
-window.onload = () => {
-    getReferrerAndSave();
-};
-// Call this function on page load
-window.addEventListener('DOMContentLoaded', () => {
-    getReferrerAndSave();
-});
-
-// Legacy support
-window.onload = () => {
-    getReferrerAndSave();
-};
 
   // Check sessionStorage first, then fall back to user preference, default to false
   let showNSFW;
@@ -105,5 +92,8 @@ if(MODE === 'local'){
 if(subscriptionStatus){
     document.querySelectorAll('.is-free-user').forEach(el => {
         el.style.display = 'none';
+    });
+    document.querySelectorAll('.is-subscriber').forEach(el => {
+        el.style.display = 'block';
     });
 }

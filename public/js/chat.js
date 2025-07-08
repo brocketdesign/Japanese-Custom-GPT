@@ -1666,56 +1666,6 @@ window.addMessageToChat = function(chatId, userChatId, option, callback) {
         }
     });
 }
-window.claimDailyBonus = function(callback) {
-    const today = new Date().toISOString().split('T')[0];
-
-    if ($.cookie('dailyBonusClaimed') === today) {
-        if (callback) callback(false);
-        return;
-    }
-
-    $.ajax({
-        url: '/user/daily-bonus-coins',
-        type: 'POST',
-        success: function(response) {
-            if (response.success) {
-                $.cookie('dailyBonusClaimed', today, { expires: 1 });
-                showNotification('100 コインがデイリーボーナスとして追加されました！', 'success');
-                if (callback) callback(true);
-            } else {
-                if (callback) callback(false);
-            }
-        },
-        error: function(xhr, status, error) {
-            if (callback) callback(false);
-        }
-    });
-};
-
-
-window.addCoinsToUser = function(coinsToAdd) {
-    $.ajax({
-        url: '/user/add-coins',
-        type: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({ coinsToAdd: coinsToAdd }),
-        success: function(response) {
-            if (response.success) {
-                showNotification(`${coinsToAdd} コインが正常に追加されました！`, 'success');
-            } else {
-                showNotification(`${coinsToAdd} コインの追加に失敗しました: ${response.error}`, 'error');
-            }
-        },
-        error: function(xhr, status, error) {
-            showNotification(`エラーが発生しました: ${error}`, 'error');
-        }
-    });
-};
-
-
-
-
-
 
 window.resetChatUrl = function() {
     var currentUrl = window.location.href;

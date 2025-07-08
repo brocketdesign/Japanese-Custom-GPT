@@ -6,6 +6,7 @@ const {
   getUserPointsHistory,
   setUserPoints,
   checkUserPoints,
+  awardFirstLoginBonus,
   awardDailyLoginBonus,
   getPointsLeaderboard
 } = require('../models/user-points-utils');
@@ -703,6 +704,104 @@ async function routes(fastify, options) {
       return reply.status(500).send({ 
         success: false, 
         error: 'Failed to get summary' 
+      });
+    }
+  });
+  // Claim first login bonus (subscriber only)
+  fastify.post('/api/user-points/:userId/first-login-bonus', async (request, reply) => {
+    try {
+      const { userId } = request.params;
+
+      // Check if user can access this
+      if (request.user._id.toString() !== userId) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+
+      const result = await awardFirstLoginBonus(fastify.mongo.db, userId, fastify);
+
+      if (result.success) {
+        // Send WebSocket notification to user
+        if (fastify.sendNotificationToUser) {
+          fastify.sendNotificationToUser(userId, 'firstLoginBonusClaimed', {
+            userId,
+            pointsAwarded: result.pointsAwarded,
+            newBalance: result.user.points,
+            message: result.message
+          });
+        }
+
+        return reply.send({
+          success: true,
+          message: result.message,
+          pointsAwarded: result.pointsAwarded,
+          newBalance: result.user.points
+        });
+      } else {
+        return reply.send({
+          success: false,
+          message: result.message,
+          reason: result.reason
+        });
+      }
+    } catch (error) {
+      console.error('Error claiming first login bonus:', error);
+      return reply.status(500).send({ 
+        success: false, 
+        error: error.message || 'Failed to claim first login bonus' 
+      });
+    }
+  });
+
+  // Get first login bonus status
+  fastify.get('/api/user-points/:userId/first-login-bonus-status', async (request, reply) => {
+    try {
+      const { userId } = request.params;
+
+      // Check if user can access this data
+      if (request.user._id.toString() !== userId && !await checkUserAdmin(fastify, request.user._id)) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+
+      const usersCollection = fastify.mongo.db.collection('users');
+      const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+
+      if (!user) {
+        return reply.status(404).send({ error: 'User not found' });
+      }
+
+      const isSubscribed = user.subscriptionStatus === 'active';
+      
+      if (!isSubscribed) {
+        return reply.send({
+          success: true,
+          canClaim: false,
+          isSubscribed: false,
+          message: 'User is not subscribed'
+        });
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const lastFirstLoginBonus = user.lastFirstLoginBonus ? new Date(user.lastFirstLoginBonus) : null;
+      const lastFirstLoginBonusDate = lastFirstLoginBonus ? 
+        new Date(lastFirstLoginBonus.getFullYear(), lastFirstLoginBonus.getMonth(), lastFirstLoginBonus.getDate()) : 
+        null;
+
+      const canClaim = !lastFirstLoginBonusDate || lastFirstLoginBonusDate.getTime() !== today.getTime();
+
+      return reply.send({
+        success: true,
+        canClaim,
+        isSubscribed: true,
+        lastFirstLoginBonus: user.lastFirstLoginBonus,
+        pointsAmount: 100
+      });
+    } catch (error) {
+      console.error('Error getting first login bonus status:', error);
+      return reply.status(500).send({ 
+        success: false, 
+        error: 'Failed to get first login bonus status' 
       });
     }
   });

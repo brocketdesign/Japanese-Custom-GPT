@@ -80,7 +80,6 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     const db = fastify.mongo.db;
 
     // Fetch the user
-    console.log(`[generateImg] Starting image generation for user: ${userId}, chat: ${chatId}, type: ${imageType}`);
     let user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
     if (!user) {
       userId = await db.collection('chats').findOne({ _id: new ObjectId(chatId) }).then(chat => chat.userId);
@@ -417,15 +416,7 @@ async function centerCropImage(base64Image, targetWidth, targetHeight) {
 // Handle task completion: send notifications and save images as needed
 async function handleTaskCompletion(taskStatus, fastify, options = {}) {
   const { chatCreation, translations, userId, chatId, placeholderId } = options;
-
-  console.log('[handleTaskCompletion] Starting task completion handling with options:', {
-    chatCreation,
-    userId,
-    chatId,
-    placeholderId,
-    hasTranslations: !!translations
-  });
-
+  
   // CRITICAL FIX: Always use the images from the current task result
   let images = [];
   
@@ -466,7 +457,6 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
       if (chatCreation) {
         fastify.sendNotificationToUser(userId, 'characterImageGenerated', { imageUrl, nsfw, chatId });
         if (index === 0) {
-          console.log('[handleTaskCompletion] Saving image as character thumbnail:', userId, imageUrl);
           await saveChatImageToDB(fastify.mongo.db, chatId, imageUrl);
         }
       } else {
@@ -1383,14 +1373,6 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       }
       
       if (!userChatId || !ObjectId.isValid(userChatId)) {
-        console.log('[saveImageToDB] Returning data for non-user chat:', {
-          imageId,
-          imageUrl,
-          prompt,
-          title,
-          nsfw,
-          isMerged
-        });
         return { 
           imageId, 
           imageUrl,
@@ -1544,15 +1526,6 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
           title,
         );
       }
-
-      console.log('[saveImageToDB] Returning saved image data:', {
-        imageId,
-        imageUrl,
-        prompt,
-        title,
-        nsfw,
-        isMerged: isMerged || false
-      });
 
       return { 
         imageId, 

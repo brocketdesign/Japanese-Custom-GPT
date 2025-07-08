@@ -210,15 +210,6 @@ const processBackgroundTasks = (fastify) => async () => {
         const userDoc = await db.collection('users').findOne({ _id: task.userId });
         const translations = fastify.getTranslations(userDoc.language || 'en');
         
-        console.log(`[processBackgroundTasks] Handling completion for task ${task.taskId}:`, {
-          userId: task.userId.toString(),
-          chatId: task.chatId.toString(),
-          placeholderId: task.placeholderId,
-          chatCreation: task.chatCreation,
-          hasImages: !!(taskStatus.result && taskStatus.result.images),
-          imageCount: taskStatus.result?.images?.length || 0
-        });
-        
         await handleTaskCompletion(
           { ...taskStatus, userId: task.userId, userChatId: task.userChatId },
           fastify,

@@ -161,6 +161,100 @@ async function getUserPointsHistory(db, userId, limit = 50, skip = 0) {
 }
 
 /**
+ * Award first login bonus for subscribed users (once per day)
+ * @param {Object} db - MongoDB database instance
+ * @param {string|ObjectId} userId - User ID
+ * @param {Object} fastify - Fastify instance for sending notifications
+ * @returns {Object} Result of the operation
+ */
+async function awardFirstLoginBonus(db, userId, fastify = null) {
+  const usersCollection = db.collection('users');
+  const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  // Check if user is subscribed
+  if (user.subscriptionStatus !== 'active') {
+    return {
+      success: false,
+      message: 'User is not subscribed',
+      reason: 'not_subscribed'
+    };
+  }
+
+  // Use UTC for date calculations
+  const now = new Date();
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+
+  const lastFirstLoginBonus = user.lastFirstLoginBonus ? new Date(user.lastFirstLoginBonus) : null;
+  const lastFirstLoginBonusUTC = lastFirstLoginBonus ? 
+    new Date(Date.UTC(lastFirstLoginBonus.getUTCFullYear(), lastFirstLoginBonus.getUTCMonth(), lastFirstLoginBonus.getUTCDate())) : 
+    null;
+  
+  // Check if first login bonus already claimed today
+  if (lastFirstLoginBonusUTC && lastFirstLoginBonusUTC.getTime() === today.getTime()) {
+    return {
+      success: false,
+      message: 'First login bonus already claimed today',
+      reason: 'already_claimed'
+    };
+  }
+
+  // Award 100 points for first login bonus
+  const pointsAwarded = 100;
+  const userPointsTranslations = fastify ? fastify.getUserPointsTranslations(user.lang || 'en') : {};
+  
+  const result = await addUserPoints(
+    db,
+    userId,
+    pointsAwarded,
+    userPointsTranslations.points?.sources?.first_login_bonus || 'First Login Bonus (Subscriber)',
+    'first_login_bonus',
+    fastify
+  );
+
+  if (result.success) {
+    // Update last first login bonus date
+    await usersCollection.updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $set: {
+          lastFirstLoginBonus: new Date()
+        }
+      }
+    );
+
+    // Send WebSocket notification
+    if (fastify && fastify.sendNotificationToUser) {
+      try {
+        await fastify.sendNotificationToUser(userId.toString(), 'firstLoginBonus', {
+          userId: userId.toString(),
+          pointsAwarded,
+          newBalance: result.user.points,
+          message: userPointsTranslations.points?.sources?.first_login_bonus || 'First Login Bonus (Subscriber)'
+        });
+      } catch (notificationError) {
+        console.error('Error sending first login bonus notification:', notificationError);
+      }
+    }
+
+    return {
+      success: true,
+      pointsAwarded,
+      user: result.user,
+      message: 'First login bonus awarded successfully'
+    };
+  } else {
+    return {
+      success: false,
+      message: 'Failed to award first login bonus'
+    };
+  }
+}
+
+/**
  * Award daily login bonus to a user
  * @param {Object} db - MongoDB database instance
  * @param {string|ObjectId} userId - User ID
@@ -650,6 +744,7 @@ module.exports = {
   removeUserPoints,
   getUserPoints,
   getUserPointsHistory,
+  awardFirstLoginBonus,
   awardDailyLoginBonus,
   setUserPoints,
   checkUserPoints,

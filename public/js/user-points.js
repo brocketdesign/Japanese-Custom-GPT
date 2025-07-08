@@ -19,6 +19,7 @@ class UserPointsManager {
     this.bindEvents();
     this.updatePointsDisplay();
     this.checkDailyBonus();
+    this.checkFirstLoginBonus();
     this.initializeAudioPool();
     this.checkAndShowDailyRewardsCalendar();
   }
@@ -51,6 +52,11 @@ class UserPointsManager {
     // Daily bonus button
     $(document).on('click', '.bonus-btn', (e) => {
       this.claimDailyBonus();
+    });
+
+    // First login bonus button
+    $(document).on('click', '.first-login-bonus-btn', (e) => {
+      this.claimFirstLoginBonus();
     });
 
     // Points history pagination
@@ -1475,17 +1481,230 @@ class UserPointsManager {
       }
     }
   }
+
+  /**
+   * Check if first login bonus is available
+   */
+  async checkFirstLoginBonus() {
+    if (!$('.first-login-bonus').length) return;
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/first-login-bonus-status`);
+      const data = await response.json();
+      
+      const $firstLoginBonusBtn = $('.first-login-bonus-btn');
+      const $firstLoginBonusSection = $('.first-login-bonus');
+      
+      if (data.isSubscribed && data.canClaim) {
+        $firstLoginBonusSection.show();
+        $firstLoginBonusBtn.prop('disabled', false)
+          .removeClass('bonus-claimed')
+          .text(this.translations.claim_first_login_bonus || 'Claim +100 Subscriber Bonus');
+      } else {
+        $firstLoginBonusSection.hide();
+      }
+    } catch (error) {
+      console.error('Error checking first login bonus:', error);
+    }
+  }
+
+  /**
+   * Claim first login bonus
+   */
+  async claimFirstLoginBonus() {
+    const $firstLoginBonusBtn = $('.first-login-bonus-btn');
+    const originalText = $firstLoginBonusBtn.text();
+    
+    $firstLoginBonusBtn.prop('disabled', true).text(this.translations.claiming || 'Claiming...');
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/first-login-bonus`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Show success notification
+        showNotification(
+          this.translations.first_login_bonus_claimed?.replace('{points}', data.pointsAwarded) || 
+          `Subscriber bonus claimed! +${data.pointsAwarded} points`,
+          'success'
+        );
+        
+        // Update points display
+        await this.updatePointsDisplay();
+        
+        // Hide the first login bonus section
+        $('.first-login-bonus').hide();
+        
+        // Show special subscriber bonus notification
+        await this.showFirstLoginBonusNotification({
+          pointsAwarded: data.pointsAwarded,
+          newBalance: data.newBalance
+        });
+      } else {
+        $firstLoginBonusBtn.prop('disabled', false).text(originalText);
+        if (data.reason !== 'already_claimed' && data.reason !== 'not_subscribed') {
+          showNotification(data.message || this.translations.failed_claim_first_login_bonus || 'Failed to claim subscriber bonus', 'error');
+        }
+      }
+    } catch (error) {
+      console.error('Error claiming first login bonus:', error);
+      $firstLoginBonusBtn.prop('disabled', false).text(originalText);
+      showNotification(this.translations.error_claiming_first_login_bonus || 'Error claiming subscriber bonus', 'error');
+    }
+  }
+
+  /**
+   * Show special first login bonus notification with animations
+   * @param {Object} bonusData - First login bonus information
+   */
+  async showFirstLoginBonusNotification(bonusData) {
+    const {
+      pointsAwarded,
+      newBalance
+    } = bonusData;
+
+    // Remove any existing first login bonus notifications
+    $('.first-login-bonus-notification').remove();
+
+    // Try to auto-play sound first
+    const soundPlayed = await this.autoPlayRewardSound('daily_bonus', false, false);
+
+    // Create the notification HTML with conditional play button
+    const notificationHtml = `
+      <div class="first-login-bonus-notification">
+        <div class="reward-backdrop"></div>
+        <div class="reward-container first-login-bonus-container">
+          <div class="reward-content">
+            <div class="reward-icon-container">
+              <i class="bi bi-star-fill reward-star star-1"></i>
+              <i class="bi bi-star-fill reward-star star-2"></i>
+              <i class="bi bi-star-fill reward-star star-3"></i>
+              <div class="reward-main-icon subscriber-crown">
+                <i class="bi bi-crown-fill"></i>
+              </div>
+            </div>
+            <div class="reward-text">
+              <h3 class="reward-title">
+                👑 ${this.translations.subscriber_bonus_title || 'Subscriber Bonus!'}
+              </h3>
+              <p class="reward-message">
+                ${this.translations.subscriber_welcome_message || 'Welcome back, premium member! Here\'s your daily subscriber bonus.'}
+              </p>
+              <div class="reward-points">
+                <span class="points-earned">+${pointsAwarded}</span>
+                <span class="points-label">${this.translations.points.title || 'points'}</span>
+              </div>
+              <div class="reward-meta">
+                ${this.translations.new_balance || 'New balance'}: ${newBalance} ${this.translations.points.title || 'points'}
+              </div>
+              <div class="subscriber-info">
+                <i class="bi bi-crown text-warning"></i>
+                ${this.translations.subscriber_perks || 'Enjoy exclusive subscriber benefits!'}
+              </div>
+              ${!soundPlayed ? `
+                <div class="reward-actions mt-3">
+                  <button class="btn btn-sm btn-outline-light play-bonus-sound">
+                    <i class="bi bi-volume-up"></i> ${this.translations.play_sound || 'Play Sound'}
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+            <div class="reward-particles">
+              <div class="particle particle-1"></div>
+              <div class="particle particle-2"></div>
+              <div class="particle particle-3"></div>
+              <div class="particle particle-4"></div>
+              <div class="particle particle-5"></div>
+              <div class="particle particle-6"></div>
+            </div>
+          </div>
+          <button class="reward-close-btn" onclick="window.userPointsManager.closeFirstLoginBonusNotification()">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+      </div>
+    `;
+
+    // Add to body
+    $('body').append(notificationHtml);
+
+    // Bind sound play event only if button exists
+    $('.play-bonus-sound').on('click', () => {
+      this.playDailyBonusSound(false);
+    });
+
+    // Trigger entrance animation
+    setTimeout(() => {
+      $('.first-login-bonus-notification').addClass('show');
+    }, 100);
+
+    // Auto-close after 5 seconds
+    setTimeout(() => {
+      this.closeFirstLoginBonusNotification();
+    }, 5000);
+
+    // Update points display
+    this.updatePointsDisplay();
+  }
+
+  /**
+   * Close the first login bonus notification
+   */
+  closeFirstLoginBonusNotification() {
+    const $notification = $('.first-login-bonus-notification');
+    if ($notification.length) {
+      $notification.addClass('hiding');
+      setTimeout(() => {
+        $notification.remove();
+      }, 300);
+    }
+  }
 }
 
-// Initialize points manager when DOM is ready
-$(document).ready(() => {
-  if (window.user && !window.user.isTemporary) {
-    window.userPointsManager = new UserPointsManager();
-  }
-});
+// Function to check and claim first login bonus for subscribers
+async function checkAndClaimFirstLoginBonus() {
+    // Only proceed if user is subscribed and not temporary
+    if (!subscriptionStatus || window.user.isTemporary) {
+        return;
+    }
+
+    // Check localStorage to see if we already attempted today
+    const today = new Date().toDateString();
+    const lastAttemptDate = localStorage.getItem('firstLoginBonusAttempt');
+    
+    // If we already attempted today, don't try again
+    if (lastAttemptDate === today) {
+        return;
+    }
+
+    // Use the existing UserPointsManager if available
+    if (userPointsManager) {
+        try {
+            await userPointsManager.claimFirstLoginBonus();
+            console.log('First login bonus claimed successfully via UserPointsManager.');
+            // Save attempt date regardless of success
+            localStorage.setItem('firstLoginBonusAttempt', today);
+        } catch (error) {
+            console.error('Error claiming first login bonus via UserPointsManager:', error);
+            localStorage.setItem('firstLoginBonusAttempt', today);
+        }
+    }
+}
 
 // Open the modal to get claim daily bonus, once the user is logged in and only once a day
 $(document).ready(() => {
+
+  if (window.user && !window.user.isTemporary) {
+    window.userPointsManager = new UserPointsManager();
+  }
+
   if (window.user && !window.user.isTemporary) {
     const lastBonusClaimed = localStorage.getItem('lastBonusClaimed');
     const today = new Date().toISOString().split('T')[0];
@@ -1495,6 +1714,11 @@ $(document).ready(() => {
       localStorage.setItem('lastBonusClaimed', today);
     }
   }
+
+  // Check for first login bonus after UserPointsManager is initialized
+  setTimeout(() => {
+      checkAndClaimFirstLoginBonus();
+  }, 2000); 
 });
 
 // Helper functions for easy access

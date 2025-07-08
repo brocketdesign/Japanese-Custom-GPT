@@ -1792,7 +1792,7 @@ async function routes(fastify, options) {
             
             const videosCollection = db.collection('videos');
             const chatsCollection = db.collection('chats');
-            
+
             // First, get the latest videos with their chat info
             const latestVideos = await videosCollection.aggregate([
                 {

@@ -265,10 +265,6 @@ async function routes(fastify, options) {
             }
             // Step 1: Extract details from prompt
             console.log('[API/generate-character-comprehensive] Step 1: Extracting details from prompt');
-            fastify.sendNotificationToUser(userId, 'showNotification', { 
-                message: request.translations.newCharacter.character_analysis_started, 
-                icon: 'info' 
-            });
 
             const detailsExtractionPayload = extractDetailsFromPrompt(prompt, chatPurpose, gender);
             const openai = new OpenAI();
@@ -297,19 +293,12 @@ async function routes(fastify, options) {
 
             // Step 2: Generate enhanced prompt
             console.log('[API/generate-character-comprehensive] Step 2: Generating enhanced prompt');
-            fastify.sendNotificationToUser(userId, 'showNotification', { 
-                message: request.translations.newCharacter.enhanced_prompt_generation_started, 
-                icon: 'info' 
-            });
 
             const systemPayload = createSystemPayload(prompt, gender, extractedDetails);
             const enhancedPrompt = await generateCompletion(systemPayload, 600, 'mistral');
             
             console.log('[API/generate-character-comprehensive] Enhanced prompt generated:', enhancedPrompt.substring(0, 100) + '...');
-            console.log('[API/generate-character-comprehensive] Enhanced prompt length:', enhancedPrompt.length);
-            if (enhancedPrompt.length > 1000) {
-                console.log('[API/generate-character-comprehensive] Enhanced prompt exceeds 1000 characters');
-            }
+
             fastify.sendNotificationToUser(userId, 'showNotification', { 
                 message: request.translations.newCharacter.enhancedPrompt_complete, 
                 icon: 'success' 
@@ -322,10 +311,6 @@ async function routes(fastify, options) {
 
             // Step 2.5: Trigger image generation immediately after enhanced prompt is available
             console.log('[API/generate-character-comprehensive] Step 2.5: Triggering image generation with enhanced prompt');
-            fastify.sendNotificationToUser(userId, 'showNotification', { 
-                message: request.translations.newCharacter.image_generation_started, 
-                icon: 'info' 
-            });
 
             try {
                 const { generateImg } = require('../models/imagen');
@@ -357,8 +342,6 @@ async function routes(fastify, options) {
                         icon: 'error' 
                     });
                 });
-
-                console.log(`[API/generate-character-comprehensive] Image generation triggered with placeholder ID: ${placeholderId}`);
                 
             } catch (imageError) {
                 console.error('[API/generate-character-comprehensive] Error triggering image generation:', imageError);
@@ -370,10 +353,6 @@ async function routes(fastify, options) {
 
             // Step 3: Generate character personality
             console.log('[API/generate-character-comprehensive] Step 3: Generating character personality');
-            fastify.sendNotificationToUser(userId, 'showNotification', { 
-                message: request.translations.newCharacter.personality_generation_started, 
-                icon: 'info' 
-            });
 
             const systemPayloadChat = createSystemPayloadChatRule(prompt, gender, name, extractedDetails, language);
             const personalityResponse = await openai.chat.completions.create({
@@ -400,11 +379,7 @@ async function routes(fastify, options) {
 
             // Step 4: Save to database
             console.log('[API/generate-character-comprehensive] Step 4: Saving to database');
-            fastify.sendNotificationToUser(userId, 'showNotification', { 
-                message: request.translations.newCharacter.saving_character_data, 
-                icon: 'info' 
-            });
-            
+
             // Prepare final data
             chatData.language = language;
             chatData.gender = gender;

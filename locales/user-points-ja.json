@@ -51,6 +51,13 @@
   "image_generation_reward": "画像生成完了！+{points}ポイント",
   "total_likes": "合計いいね数",
   "total_images": "合計画像数",
+  "claim_first_login_bonus": "サブスクボーナス+100を受け取る",
+  "first_login_bonus_claimed": "サブスクボーナス受取完了！+{points}ポイント",
+  "failed_claim_first_login_bonus": "サブスクボーナスの受取に失敗しました",
+  "error_claiming_first_login_bonus": "サブスクボーナス受取エラー",
+  "subscriber_bonus_title": "サブスクボーナス！",
+  "subscriber_welcome_message": "おかえりなさい、プレミアム会員様！本日のサブスクボーナスです。",
+  "subscriber_perks": "限定のサブスク特典をお楽しみください！",
   "like_reward": {
     "title": "いいね！報酬",
     "message": "画像のいいねで{points}ポイント獲得！",

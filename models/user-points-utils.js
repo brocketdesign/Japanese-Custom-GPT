@@ -175,6 +175,9 @@ async function awardFirstLoginBonus(db, userId, fastify = null) {
     throw new Error('User not found');
   }
 
+  // Get translations for the user's language
+  const userPointsTranslations = fastify ? fastify.getUserPointsTranslations(user.lang || 'en') : {};
+
   // Check if user is subscribed
   if (user.subscriptionStatus !== 'active') {
     return {
@@ -197,14 +200,13 @@ async function awardFirstLoginBonus(db, userId, fastify = null) {
   if (lastFirstLoginBonusUTC && lastFirstLoginBonusUTC.getTime() === today.getTime()) {
     return {
       success: false,
-      message: 'First login bonus already claimed today',
+      message: userPointsTranslations.first_login_bonus_already_claimed || 'First login bonus already claimed today',
       reason: 'already_claimed'
     };
   }
 
   // Award 100 points for first login bonus
   const pointsAwarded = 100;
-  const userPointsTranslations = fastify ? fastify.getUserPointsTranslations(user.lang || 'en') : {};
   
   const result = await addUserPoints(
     db,
@@ -233,7 +235,9 @@ async function awardFirstLoginBonus(db, userId, fastify = null) {
           userId: userId.toString(),
           pointsAwarded,
           newBalance: result.user.points,
-          message: userPointsTranslations.points?.sources?.first_login_bonus || 'First Login Bonus (Subscriber)'
+          message: userPointsTranslations.points?.sources?.first_login_bonus || 'First Login Bonus (Subscriber)',
+          title: userPointsTranslations.subscriber_bonus_title || 'Subscriber Bonus!',
+          welcomeMessage: userPointsTranslations.subscriber_welcome_message || 'Welcome back, premium member! Here\'s your daily subscriber bonus.'
         });
       } catch (notificationError) {
         console.error('Error sending first login bonus notification:', notificationError);
@@ -244,12 +248,12 @@ async function awardFirstLoginBonus(db, userId, fastify = null) {
       success: true,
       pointsAwarded,
       user: result.user,
-      message: 'First login bonus awarded successfully'
+      message: userPointsTranslations.first_login_bonus_claimed?.replace('{points}', pointsAwarded) || `Subscriber bonus claimed! +${pointsAwarded} points`
     };
   } else {
     return {
       success: false,
-      message: 'Failed to award first login bonus'
+      message: userPointsTranslations.failed_claim_first_login_bonus || 'Failed to award first login bonus'
     };
   }
 }

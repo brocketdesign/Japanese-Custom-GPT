@@ -13,11 +13,30 @@ function getImageTools({chatId, imageId, isLiked = false, title, prompt = false,
         const likeAction = actions?.find(action => action.type === 'like');
         const mergeFaceAction = actions?.find(action => action.type === 'merge_face');
         
-        // Determine icon classes based on actions
-        const videoIconClass = hasVideoAction ? 'bi-play-circle-fill text-success' : 'bi-play-circle';
-        const upscaleIconClass = hasUpscaleAction ? 'bi-badge-hd-fill text-success' : 'bi-badge-hd';
-        const likeIconClass = (isLiked || hasLikeAction) ? 'bi-heart-fill text-danger' : 'bi-heart';
-        const mergeFaceIconClass = hasMergeFaceAction ? 'bi-person-fill-check text-success' : 'bi-person-plus';
+        // Determine icon classes and labels based on actions
+        const likeIcon = (isLiked || hasLikeAction) ? 'bi-heart-fill' : 'bi-heart';
+        const likeLabel = (isLiked || hasLikeAction) ? 
+            (window.translations?.image_tools?.liked || 'Liked') : 
+            (window.translations?.image_tools?.like || 'Like');
+        const likeBadgeClass = (isLiked || hasLikeAction) ? 'badge bg-danger text-white' : 'badge bg-white text-secondary';
+
+        const upscaleIcon = hasUpscaleAction ? 'bi-badge-hd-fill' : 'bi-badge-hd';
+        const upscaleLabel = hasUpscaleAction ? 
+            (window.translations?.image_tools?.upscaled || 'Upscaled') : 
+            (window.translations?.image_tools?.upscale || 'Upscale');
+        const upscaleBadgeClass = hasUpscaleAction ? 'badge bg-success text-white' : 'badge bg-white text-secondary';
+
+        const videoIcon = hasVideoAction ? 'bi-play-circle-fill' : 'bi-play-circle';
+        const videoLabel = hasVideoAction ? 
+            (window.translations?.image_tools?.video_generated || 'Video Generated') : 
+            (window.translations?.image_tools?.video || 'Video');
+        const videoBadgeClass = hasVideoAction ? 'badge bg-success text-white' : 'badge bg-white text-secondary';
+
+        const mergeFaceIcon = hasMergeFaceAction ? 'bi-person-fill-check' : 'bi-person-plus';
+        const mergeFaceLabel = hasMergeFaceAction ? 
+            (window.translations?.image_tools?.face_merged || 'Face Merged') : 
+            (window.translations?.image_tools?.merge_face || 'Merge Face');
+        const mergeFaceBadgeClass = hasMergeFaceAction ? 'badge bg-success text-white' : 'badge bg-white text-secondary';
         
         // Determine if buttons should be disabled
         const videoDisabled = hasVideoAction ? 'style="opacity:0.5; pointer-events:none;"' : '';
@@ -37,71 +56,98 @@ function getImageTools({chatId, imageId, isLiked = false, title, prompt = false,
             `${window.mergeFaceTranslations?.title || 'Merge Face'}`;
 
         return `
-            <div class="bg-white py-2 image-tools" data-id="${imageId}">
-                <div class="d-flex overflow-auto" style="scrollbar-width: none; -ms-overflow-style: none;">
+            <div class="bg-light py-2 image-tools" data-id="${imageId}">
+                <div class="d-flex  gap-2 overflow-auto px-2" style="scrollbar-width: none; -ms-overflow-style: none;">
                     <style>
                         .image-tools .d-flex::-webkit-scrollbar { display: none; }
+                        .image-tool-badge {
+                            font-size: 10px;
+                            padding: 4px 8px;
+                            border-radius: 12px;
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+                            white-space: nowrap;
+                        }
+                        .image-tool-badge:hover {
+                            transform: scale(1.05);
+                        }
+                        .image-tool-badge i {
+                            margin-right: 4px;
+                        }
                     </style>
-                    <span class="badge bg-white text-secondary image-fav flex-shrink-0 me-2" data-id="${imageId}"
-                    onclick="toggleImageFavorite(this)" 
-                    style="cursor: pointer; opacity:0.8;">
-                        <i class="bi ${likeIconClass}"></i>
+                    
+                    <span class="${likeBadgeClass} image-tool-badge image-fav" 
+                          data-id="${imageId}"
+                          onclick="toggleImageFavorite(this)">
+                        <i class="bi ${likeIcon}"></i>${likeLabel}
                     </span>
-                    <span class="badge bg-white text-secondary txt2img regen-img flex-shrink-0 me-2" 
-                    onclick="${subscriptionStatus ? 'regenImage(this)' : 'loadPlanPage()'}" 
-                    data-prompt="${prompt}" 
-                    data-nsfw="${nsfw}" 
-                    data-id="${imageId}" 
-                    style="cursor: pointer; opacity:0.8;">
-                        <i class="bi bi-arrow-clockwise"></i>
+                    
+                    <span class="badge bg-white text-secondary image-tool-badge txt2img regen-img" 
+                          onclick="${subscriptionStatus ? 'regenImage(this)' : 'loadPlanPage()'}" 
+                          data-prompt="${prompt}" 
+                          data-nsfw="${nsfw}" 
+                          data-id="${imageId}">
+                        <i class="bi bi-arrow-clockwise"></i>${window.translations?.image_tools?.regenerate || 'Regenerate'}
                     </span>
-                    <span class="badge bg-white text-secondary upscale-img flex-shrink-0 me-2" 
-                    onclick="${!hasUpscaleAction && subscriptionStatus ? `upscaleImage('${imageId}', '${imageUrl}', '${chatId}', '${userChatId}')` : hasUpscaleAction ? '' : 'loadPlanPage()'}" 
-                    data-id="${imageId}" 
-                    data-url="${imageUrl}"
-                    ${upscaleDisabled}
-                    title="${upscaleTooltip}">
-                        <i class="bi ${upscaleIconClass}"></i>
+                    
+                    <span class="${upscaleBadgeClass} image-tool-badge upscale-img" 
+                          onclick="${!hasUpscaleAction && subscriptionStatus ? `upscaleImage('${imageId}', '${imageUrl}', '${chatId}', '${userChatId}')` : hasUpscaleAction ? '' : 'loadPlanPage()'}" 
+                          data-id="${imageId}" 
+                          data-url="${imageUrl}"
+                          ${upscaleDisabled}
+                          title="${upscaleTooltip}">
+                        <i class="bi ${upscaleIcon}"></i>${upscaleLabel}
                     </span>
-                    <span class="${nsfw ? 'd-none' : ''} badge bg-white text-secondary img2video-btn flex-shrink-0 me-2" 
-                    onclick="${!hasVideoAction && subscriptionStatus ? `generateVideoFromImage('${imageId}', '${chatId}', '${userChatId}')` : hasVideoAction ? '' : 'loadPlanPage()'}" 
-                    data-id="${imageId}" 
-                    data-chat-id="${chatId}"
-                    ${videoDisabled}
-                    title="${videoTooltip}">
-                        <i class="bi ${videoIconClass}"></i>
+                    
+                    <span class="${nsfw ? 'd-none' : ''} ${videoBadgeClass} image-tool-badge img2video-btn" 
+                          onclick="${!hasVideoAction && subscriptionStatus ? `generateVideoFromImage('${imageId}', '${chatId}', '${userChatId}')` : hasVideoAction ? '' : 'loadPlanPage()'}" 
+                          data-id="${imageId}" 
+                          data-chat-id="${chatId}"
+                          ${videoDisabled}
+                          title="${videoTooltip}">
+                        <i class="bi ${videoIcon}"></i>${videoLabel}
                     </span>
-                    <span class="badge bg-white text-secondary merge-face-btn flex-shrink-0 me-2" 
-                    onclick="${subscriptionStatus ? `openMergeFaceModal('${imageId}', '${imageUrl}', '${chatId}', '${userChatId}')` : 'loadPlanPage()'}" 
-                    data-id="${imageId}" 
-                    data-url="${imageUrl}"
-                    data-chat-id="${chatId}"
-                    title="${mergeFaceTooltip}">
-                        <i class="bi ${mergeFaceIconClass}"></i>
+                    
+                    <span class="${mergeFaceBadgeClass} image-tool-badge merge-face-btn" 
+                          onclick="${subscriptionStatus ? `openMergeFaceModal('${imageId}', '${imageUrl}', '${chatId}', '${userChatId}')` : 'loadPlanPage()'}" 
+                          data-id="${imageId}" 
+                          data-url="${imageUrl}"
+                          data-chat-id="${chatId}"
+                          title="${mergeFaceTooltip}">
+                        <i class="bi ${mergeFaceIcon}"></i>${mergeFaceLabel}
                     </span>
+                    
                     ${window.isAdmin ? `
-                    <span type="button" class="badge bg-white text-secondary flex-shrink-0 me-2" data-bs-toggle="modal" data-bs-target="#modal-${imageId}">
-                        <i class="bi bi-info-circle"></i>
+                    <span class="badge bg-white text-secondary image-tool-badge" 
+                          data-bs-toggle="modal" 
+                          data-bs-target="#modal-${imageId}">
+                        <i class="bi bi-info-circle"></i>${window.translations?.image_tools?.info || 'Info'}
                     </span>` : ''}
-                    <span class="badge bg-white text-secondary share d-none flex-shrink-0 me-2"
-                            data-title="${title}"
-                            data-url="${imageUrl}"
-                            style="cursor: pointer; opacity:0.8;"
-                            onclick="openShareModal(this)">
-                        <i class="bi bi-box-arrow-up"></i>
+                    
+                    <span class="badge bg-white text-secondary image-tool-badge share d-none"
+                          data-title="${title}"
+                          data-url="${imageUrl}"
+                          onclick="openShareModal(this)">
+                        <i class="bi bi-box-arrow-up"></i>${window.translations?.image_tools?.share || 'Share'}
                     </span>
-                    <span class="badge bg-white text-secondary download-image flex-shrink-0 me-2" style="cursor: pointer; opacity:0.8;"
-                        data-src="${imageUrl}"
-                        data-title="${title}"
-                        data-id="${imageId}"
-                        onclick="downloadImage(this)">
-                        <i class="bi bi-download"></i></a>
+                    
+                    <span class="badge bg-white text-secondary image-tool-badge download-image" 
+                          data-src="${imageUrl}"
+                          data-title="${title}"
+                          data-id="${imageId}"
+                          onclick="downloadImage(this)">
+                        <i class="bi bi-download"></i>${window.translations?.image_tools?.download || 'Download'}
                     </span>
+                    
                     ${window.isAdmin ? `
-                    <span class="badge bg-white text-secondary update-chat-image flex-shrink-0 me-2" onclick="${subscriptionStatus ? 'updateChatImage(this)' : 'loadPlanPage()'}" data-id="${chatId}" data-img="${imageUrl}" style="cursor: pointer; opacity:0.8;">
-                        <i class="bi bi-image"></i>
+                    <span class="badge bg-white text-secondary image-tool-badge update-chat-image" 
+                          onclick="${subscriptionStatus ? 'updateChatImage(this)' : 'loadPlanPage()'}" 
+                          data-id="${chatId}" 
+                          data-img="${imageUrl}">
+                        <i class="bi bi-image"></i>${window.translations?.image_tools?.update_image || 'Update Image'}
                     </span>` : ''}
                 </div>
+                
                 ${actions && actions.length > 0 ? `
                 <div class="actions-info text-muted px-3 py-1" style="font-size: 11px;">
                     ${actions.map(action => {

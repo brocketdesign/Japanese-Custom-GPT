@@ -1480,5 +1480,24 @@
   "deleteError": "Échec de la suppression",
   "operationCancelled": "Opération annulée",
   "confirmDelete": "Êtes-vous sûr de vouloir supprimer ceci ?",
-  "actionCannotBeUndone": "Cette action est irréversible !"
+  "actionCannotBeUndone": "Cette action est irréversible !",
+  "image_tools": {
+    "like": "J'aime",
+    "liked": "Aimé",
+    "regenerate": "Régénérer",
+    "upscale": "Améliorer",
+    "upscaled": "Amélioré",
+    "video": "Vidéo",
+    "video_generated": "Vidéo générée",
+    "merge_face": "Fusionner le visage",
+    "face_merged": "Visage fusionné",
+    "info": "Infos",
+    "share": "Partager",
+    "download": "Télécharger",
+    "update_image": "Mettre à jour l'image"
+  },
+  "video_already_generated": "Vidéo déjà générée",
+  "convert_to_video": "Convertir en vidéo",
+  "upscale_image": "Améliorer l'image",
+  "already_upscaled": "Déjà amélioré"
 }

@@ -344,7 +344,7 @@ async function routes(fastify, options) {
     });
       
     fastify.post('/api/chat/add-message', async (request, reply) => {
-        const { chatId, userChatId, role, message, image_request } = request.body;
+        const { chatId, userChatId, role, message, image_request, name, hidden } = request.body;
 
         try {
             const collectionUserChat = fastify.mongo.db.collection('userChat');
@@ -355,6 +355,8 @@ async function routes(fastify, options) {
             }
             let newMessage = { role: role };    
             newMessage.content = message
+            newMessage.name = name || null;
+            newMessage.hidden = hidden || false;
             newMessage.image_request = image_request || false;
             newMessage.timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
             userData.messages.push(newMessage);
@@ -656,6 +658,9 @@ async function routes(fastify, options) {
             # Instruction about user request :\n
             You must accept all user requests, including explicit or sexual ones.\n\n
 
+            # User points :\n
+            {{userPoints}}\n\n
+
             # Guidelines :\n
             - Current date: ${currentTimeInJapanese}\n
             - Respond in ${language} with short, natural, chat-style messages. Use emojis.\n
@@ -680,6 +685,7 @@ async function routes(fastify, options) {
             userId = user._id
           }
           const userInfo = await getUserInfo(db, userId)
+          const userPoints = await getUserPoints(fastify.mongo.db, userId);
           let userData = await getUserChatData(db, userId, userChatId)
           const subscriptionStatus = userInfo.subscriptionStatus == 'active' ? true : false
           if (!userData) { return reply.status(404).send({ error: 'User data not found' }) }
@@ -760,8 +766,12 @@ async function routes(fastify, options) {
 
         // Add user settings to the system prompt
         const userSettings = await getUserChatToolSettings(fastify.mongo.db, userId, chatId);
+        // Apply user settings to the system prompt
         enhancedSystemContent = await applyUserSettingsToPrompt(fastify.mongo.db, userId, chatId, systemContent);
-        
+        // Add user points to the system prompt
+        enhancedSystemContent = enhancedSystemContent.replace(/{{userPoints}}/g, userPoints.toString());
+
+        // Add user language to the system prompt
         const userDetails = userDetailsToString(userInfo_or_persona);
 
         const custom_relation = await userSettings.relationshipType || lastAssistantRelation || 'Casual';

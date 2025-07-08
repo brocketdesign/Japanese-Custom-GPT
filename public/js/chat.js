@@ -35,10 +35,22 @@ window.onPersonaAdded = function(personaObj) {
         id: personaObj.id,
         chatImageUrl: personaObj.chatImageUrl
     };
-    if (isNew) {
+    isNew = !isNew;
+    
+    // Add a new message to the chat container
+    addMessageToChat(chatId, userChatId, {
+        role: 'user',
+        message: `I updated my Persona to "${persona.name}".`,
+        name: 'persona',
+        hidden: true
+    }, function(error, res) {
+
         generateChatCompletion();
-        isNew = false;
-    }
+
+        if (error) {
+            console.error('Error adding persona message:', error);
+        }
+    });
 };
 // On close of the persona module check if the chat is new
 window.onPersonaModuleClose = function() {
@@ -1642,7 +1654,7 @@ window.enableToggleDropdown = function(el) {
 }
   
 window.addMessageToChat = function(chatId, userChatId, option, callback) {
-    const { message, role, image_request } = option;
+    const { message, role, name, hidden, image_request } = option;
     $.ajax({
         url: '/api/chat/add-message',
         type: 'POST',
@@ -1651,6 +1663,8 @@ window.addMessageToChat = function(chatId, userChatId, option, callback) {
             chatId: chatId,
             userChatId: userChatId,
             role: role,
+            name: name || null,
+            hidden: hidden || false,
             message: message,
             image_request: image_request || null
         }),

@@ -1476,5 +1476,24 @@
     "popularTags": "Popular Tags",
     "searchTags": "Search tags...",
     "lastUpdated": "Last updated"
-  }
+  },
+  "image_tools": {
+    "like": "Like",
+    "liked": "Liked",
+    "regenerate": "Regenerate",
+    "upscale": "Upscale",
+    "upscaled": "Upscaled",
+    "video": "Video",
+    "video_generated": "Video Generated",
+    "merge_face": "Merge Face",
+    "face_merged": "Face Merged",
+    "info": "Info",
+    "share": "Share",
+    "download": "Download",
+    "update_image": "Update Image"
+  },
+  "video_already_generated": "Video already generated",
+  "convert_to_video": "Convert to Video",
+  "upscale_image": "Upscale Image",
+  "already_upscaled": "Already upscaled"
 }

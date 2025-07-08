@@ -1525,5 +1525,24 @@
   "deleteError": "削除に失敗しました",
   "operationCancelled": "操作がキャンセルされました",
   "confirmDelete": "本当に削除しますか？",
-  "actionCannotBeUndone": "この操作は元に戻せません！"
+  "actionCannotBeUndone": "この操作は元に戻せません！",
+  "image_tools": {
+    "like": "いいね",
+    "liked": "いいね済み",
+    "regenerate": "再生成",
+    "upscale": "高解像度化",
+    "upscaled": "高解像度化済み",
+    "video": "動画",
+    "video_generated": "動画生成済み",
+    "merge_face": "顔を合成",
+    "face_merged": "顔を合成済み",
+    "info": "情報",
+    "share": "共有",
+    "download": "ダウンロード",
+    "update_image": "画像を更新"
+  },
+  "video_already_generated": "すでに動画が生成されています",
+  "convert_to_video": "動画に変換",
+  "upscale_image": "画像を高解像度化",
+  "already_upscaled": "すでに高解像度化されています"
 }

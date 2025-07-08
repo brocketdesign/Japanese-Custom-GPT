@@ -26,7 +26,8 @@ const {
 const {
     getUserChatToolSettings,
     applyUserSettingsToPrompt,
-    getVoiceSettings
+    getVoiceSettings,
+    getUserMinImages
 } = require('../models/chat-tool-settings-utils');
 const { getActiveSystemPrompt } = require('../models/system-prompt-utils');
 const { removeUserPoints, getUserPoints } = require('../models/user-points-utils');
@@ -746,6 +747,10 @@ async function routes(fastify, options) {
             genImage.promptId = currentUserMessage.promptId
             genImage.customPose = customPromptData.prompt
           }
+
+          // Update user minimum image
+          const userMinImage = await getUserMinImages(db, userId, chatId);
+          genImage.image_num = Math.max(genImage.image_num || 1, userMinImage || 1);
 
           // Enhance & update system content with conversation analysis
           // Check for user persona in the chat document

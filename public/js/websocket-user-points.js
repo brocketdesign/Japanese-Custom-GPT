@@ -24,6 +24,10 @@ class WebSocketUserPointsHandler {
         this.handleDailyBonusClaimed(data.notification);
         return true;
       
+      case 'firstLoginBonusClaimed':
+        this.handleFirstLoginBonusClaimed(data.notification);
+        return true;
+      
       case 'imageGenerationReward':
         this.handleImageGenerationReward(data.notification);
         return true;
@@ -223,6 +227,32 @@ class WebSocketUserPointsHandler {
       // Also update via manager if available
       if (window.userPointsManager) {
         window.userPointsManager.updatePointsDisplay();
+      }
+    }
+  }
+
+  /**
+   * Handle first login bonus claimed notifications
+   */
+  handleFirstLoginBonusClaimed(notification) {
+    const { 
+      userId, 
+      pointsAwarded, 
+      newBalance,
+      message
+    } = notification;
+    
+    // Only show notification for the current user
+    if (userId === window.user._id && window.userPointsManager) {
+      window.userPointsManager.showFirstLoginBonusNotification({
+        pointsAwarded,
+        newBalance,
+        message
+      });
+      
+      // Refresh points display
+      if (window.refreshUserPoints) {
+        window.refreshUserPoints();
       }
     }
   }

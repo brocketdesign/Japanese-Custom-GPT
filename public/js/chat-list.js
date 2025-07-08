@@ -291,7 +291,6 @@ function hideNavbarChatActions() {
 // Function to update current chat in the list
 function updateCurrentChat(chatId, userId) {
     if(!chatId) {
-        console.log('No chatId provided');
         hideNavbarChatActions();
         return;
     }

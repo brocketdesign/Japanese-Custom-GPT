@@ -614,9 +614,14 @@
         });
     }
     window.generateCharacterImage = function(url, nsfw, receivedChatCreationId) {
+        const $imageContainer = $(document).find('#imageContainer[data-chat-creation-id="' + receivedChatCreationId + '"]');
+        if (!$imageContainer.length) {
+            console.error('Image container not found for chat creation ID:', receivedChatCreationId);
+            return;
+        }
         // Clear the container
-        $('#generatedImage').remove();
-        $('#imageGenerationDescription').hide();
+        $imageContainer.find('#generatedImage').remove();
+        $imageContainer.find('#imageGenerationDescription').hide();
 
         // For each image URL, create an image element and append to the container
         const colDiv = $('<div>').addClass('col-12 mb-3');
@@ -644,7 +649,7 @@
         });
 
         colDiv.append(imgElement);
-        $(document).find('#imageContainer[data-chat-creation-id="' + receivedChatCreationId + '"]').append(colDiv);
+        $imageContainer.append(colDiv);
 
         $('.regenerateImages').show();
         $('#regenerateImagesButton').show();

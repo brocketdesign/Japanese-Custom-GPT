@@ -10,9 +10,9 @@ setInterval(() => {
 // Generate Image using Novita
 window.novitaImageGeneration = async function(userId, chatId, userChatId, option = {}) {
     // Validate essential parameters
-    if (!userId || !chatId || !userChatId) {
+    if (!userId || !chatId ) {
         const errorMsg = 'Missing essential parameters for image generation:';
-        console.error(errorMsg, { userId, chatId, userChatId });
+        console.error(errorMsg, { userId, chatId });
         throw new Error(errorMsg);
     }
     

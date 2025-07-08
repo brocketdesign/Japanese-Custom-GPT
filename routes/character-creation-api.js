@@ -364,11 +364,6 @@ async function routes(fastify, options) {
             let chatData = JSON.parse(personalityResponse.choices[0].message.content);
             console.log('[API/generate-character-comprehensive] Character personality generated');
             
-            fastify.sendNotificationToUser(userId, 'showNotification', { 
-                message: request.translations.newCharacter.chatData_complete, 
-                icon: 'success' 
-            });
-
             reply.send({
                 success: true,
                 chatId,

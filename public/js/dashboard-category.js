@@ -99,7 +99,7 @@ function displayCategoryCards(categories) {
           
           <!-- Light Overlay -->
           <div class="position-absolute top-0 start-0 w-100 h-100" 
-               style="background: linear-gradient(rgba(255, 255, 255, 0.2) 66.39%, rgba(119, 48, 248, 0.29411764705882354) 80.25%, rgba(130, 64, 255, 0.61));">
+               style="background: linear-gradient(rgba(255, 255, 255, 0) 63.03%, rgba(119, 48, 248, 0.3) 80.25%, rgba(130, 64, 255, 0.61));">
           </div>
           
           <!-- Content -->
@@ -135,11 +135,11 @@ function displayCategoryCards(categories) {
   $('.category-card').hover(
     function() {
       $(this).css('transform', 'translateY(-8px) scale(1.03)');
-      $(this).find('.position-absolute:nth-child(2)').css('background', 'linear-gradient(rgba(255, 255, 255, 0.2) 66.39%, rgba(119, 48, 248, 0.4) 80.25%, rgba(130, 64, 255, 0.8))');
+      $(this).find('.position-absolute:nth-child(2)').css('background', 'linear-gradient(rgba(255, 255, 255, 0) 66.39%, rgba(119, 48, 248, 0.4) 80.25%, rgba(130, 64, 255, 0.8))');
     },
     function() {
       $(this).css('transform', 'translateY(0) scale(1)');
-      $(this).find('.position-absolute:nth-child(2)').css('background', 'linear-gradient(rgba(255, 255, 255, 0.2) 66.39%, rgba(119, 48, 248, 0.3) 80.25%, rgba(130, 64, 255, 0.61))');
+      $(this).find('.position-absolute:nth-child(2)').css('background', 'linear-gradient(rgba(255, 255, 255, 0) 66.39%, rgba(119, 48, 248, 0.3) 80.25%, rgba(130, 64, 255, 0.61))');
     }
   );
 }

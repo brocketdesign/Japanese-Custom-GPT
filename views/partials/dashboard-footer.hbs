@@ -1,7 +1,7 @@
 {{> dashboard-modals}}
 <div class="sticky-bottom" style="bottom:5px; left:0; right:0;">
     {{> chat-footer promptData=promptData}}
-    <div class="py-1 bg-dark mx-2 shadow-sm rounded-pill" style="bottom:0; left:0; right:0;opacity: 0.85;font-size: 12px;">
+    <div id="footer-toolbar" class="py-1 bg-dark mx-2 shadow-sm rounded-pill" style="bottom:0; left:0; right:0;opacity: 0.85;font-size: 12px;">
         <div class="container-none">
             <div class="d-flex justify-content-evenly align-items-center w-100">
             <a id="toggle-chat-list" class="text-white flex-fill text-center" href="#" onclick="toggleChatList()">
@@ -16,12 +16,12 @@
                 <i class="bi bi-plus-square fs-6"></i>
                 <div class="small">{{translations.create}}</div>
             </a>
-            <a class="text-white flex-fill text-center" {{#if user.isTemporary}} onclick="openLoginForm()"{{else}} href="/user/{{user._id}}"{{/if}}>
-                <div class="p-1 rounded-circle p-0 shadow-0 d-inline-block">
-                <img src="{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}" class="rounded-circle avatar" height="35" width="35" alt="Avatar" loading="lazy" />
-                </div>
-                <div class="small">{{translations.profile.title}}</div>
+            
+            <a class="text-white flex-fill text-center" href="#" onclick="loadSettingsPage()">
+                <i class="bi bi-gear fs-6"></i>
+                <div class="small">{{translations.avatar.settings}}</div>
             </a>
+                
             </div>
         </div>
     </div>
@@ -534,6 +534,7 @@ window.showDiscovery = function() {
         hideNavbarChatActions();
     }
     
+    $('#footer-toolbar').fadeIn();
     window.postMessage('resizeIframe', '*');
 }
 window.fetchUser = async function() {

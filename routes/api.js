@@ -460,9 +460,9 @@ async function routes(fastify, options) {
         }
     });
     
-    fastify.get('/api/chat-list/:id', async (request, reply) => {
+    fastify.get('/api/chat-list/:userId', async (request, reply) => {
         try {
-            const userId = request.user._id;
+            const userId = request.params.userId || request.user._id;
             const page = request.query.page ? parseInt(request.query.page) : 1;
             const limit = request.query.limit ? parseInt(request.query.limit) : 10;
     
@@ -478,7 +478,7 @@ async function routes(fastify, options) {
             // Fetch chatIds from userChat collection
             const userChats = await userChatCollection.find({
                 userId: new fastify.mongo.ObjectId(userId)
-            }).sort({ updatedAt: -1 }).toArray();
+            }).sort({ _id: -1 }).toArray();
     
             const chatIds = userChats.map(userChat => new fastify.mongo.ObjectId(userChat.chatId));
     
@@ -491,7 +491,7 @@ async function routes(fastify, options) {
             const chats = await chatsCollection.find({
                 _id: { $in: chatIds },
                 name: { $exists: true }
-            }).sort({ updatedAt: -1 })
+            }).sort({ _id: -1 })
             .skip((page - 1) * limit)
             .limit(limit)
             .toArray();

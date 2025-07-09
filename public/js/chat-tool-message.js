@@ -94,8 +94,6 @@ window.handleMessageAction = function(button, action) {
                 const message = actionToSend === 'remove' ? 
                     (window.translations?.action_removed || 'Action removed') :
                     (window.translations?.[`message_${action}d`] || `Message ${action}d`);
-                    
-                showNotification(message, 'success');
             }
         },
         error: function(xhr) {

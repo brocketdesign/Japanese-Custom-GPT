@@ -1160,6 +1160,12 @@
   "next": "Next",
   "prev": "Previous",
   "newCharacter": {
+    "character_analysis_complete": "Character analysis completed successfully!",
+    "character_analysis_error": "Error during character analysis. Please try again.",
+    "enhancedPrompt_complete": "Enhanced prompt generated successfully!",
+    "image_generation_error": "Image generation failed. Please try again.",
+    "character_generation_complete": "Character generation completed successfully!",
+    "character_generation_error": "Character generation failed. Please try again.",
     "navigateToImageButton": "Navigate to Image Generation",
     "regenerating_images": "Regenerating images...",
     "regeneration_error": "An error occurred while regenerating the image.",
@@ -1322,10 +1328,7 @@
     "backgroundProcessing_title": "Background processing",
     "backgroundProcessing_message": "Your image generation task will continue in the background and you will be notified once it's complete.",
     "character_analysis_started": "Analyzing character description...",
-    "character_analysis_complete": "Character analysis complete",
-    "character_analysis_error": "Error analyzing character description",
     "character_image_generation_started": "Character image generation started",
-    "enhancedPrompt_complete": "Enhanced prompt generated",
     "chatData_complete": "Chat info is complete",
     "debridedChatData_complete": "Uncensored chat info generated",
     "enhanced_prompt_generation_started": "Generating enhanced prompt...",
@@ -1333,8 +1336,6 @@
     "debrided_generation_started": "Enhancing character personality...",
     "debrided_generation_error": "Personality enhancement completed with warnings",
     "saving_character_data": "Saving character data...",
-    "character_generation_complete": "Character creation completed successfully!",
-    "character_generation_error": "Character generation failed. Please try again.",
     "comprehensive_generation_started": "Starting comprehensive character generation..."
   },
   "previous_page": "Previous",
@@ -1495,5 +1496,13 @@
   "video_already_generated": "Video already generated",
   "convert_to_video": "Convert to Video",
   "upscale_image": "Upscale Image",
-  "already_upscaled": "Already upscaled"
+  "already_upscaled": "Already upscaled",
+  "categories": {
+    "maid": "Maid",
+    "princess": "Princess", 
+    "fantasy": "Fantasy",
+    "ninja": "Ninja",
+    "robot": "Robot",
+    "demon": "Demon"
+  }
 }

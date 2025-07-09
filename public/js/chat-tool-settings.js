@@ -14,9 +14,15 @@ class ChatToolSettings {
         this.isLoading = false;
         this.userId = window.userId || window.user?.id;
         this.evenLabVoices = [];
+        this.translations = window.chatToolSettingsTranslations || {};
         
         this.init();
         this.loadSettings();
+    }
+
+    // Add translation method
+    t(key, fallback = key) {
+        return this.translations[key] || fallback;
     }
 
     init() {
@@ -239,9 +245,9 @@ class ChatToolSettings {
         grid.innerHTML = `
             <div class="voice-error text-center text-muted">
                 <i class="bi bi-exclamation-triangle"></i>
-                <div>Failed to load EvenLab voices</div>
+                <div>${this.t('failedToLoadEvenLabVoices')}</div>
                 <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="window.chatToolSettings.loadEvenLabVoices()">
-                    Retry
+                    ${this.t('retry')}
                 </button>
             </div>
         `;
@@ -321,8 +327,8 @@ class ChatToolSettings {
             
             // Show success feedback with chat-specific info
             const successMessage = data.isChatSpecific ? 
-                'Chat-specific settings saved!' : 
-                'Global settings saved!';
+                this.t('chatSpecificSettingsSaved') : 
+                this.t('globalSettingsSaved');
             this.showSaveSuccess(successMessage);
             
             // Apply settings to the application
@@ -385,14 +391,14 @@ class ChatToolSettings {
             const isCurrentlyInChat = chatId && chatId !== 'null' && chatId !== 'undefined';
             
             const result = await Swal.fire({
-                title: 'Reset Settings?',
+                title: this.t('resetSettingsTitle'),
                 text: isCurrentlyInChat ? 
-                    'This will reset your settings for this chat to default values.' :
-                    'This will reset all your chat tool settings to default values.',
+                    this.t('resetChatSettingsText') :
+                    this.t('resetGlobalSettingsText'),
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonText: 'Reset',
-                cancelButtonText: 'Cancel',
+                confirmButtonText: this.t('reset'),
+                cancelButtonText: this.t('cancel'),
                 confirmButtonColor: '#dc3545'
             });
 
@@ -425,7 +431,7 @@ class ChatToolSettings {
 
         } catch (error) {
             console.error('Error resetting settings:', error);
-            this.showSaveError(error.message);
+            this.showSaveError(this.t('errorResettingSettings'));
         } finally {
             this.isLoading = false;
         }
@@ -514,20 +520,21 @@ class ChatToolSettings {
     showSavingState() {
         const saveBtn = document.getElementById('settings-save-btn');
         if (saveBtn) {
-            saveBtn.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i> Saving...';
+            saveBtn.innerHTML = `<i class="bi bi-arrow-clockwise spin"></i> ${this.t('saving')}`;
             saveBtn.disabled = true;
         }
     }
 
-    showSaveSuccess(message = 'Settings Saved!') {
+    showSaveSuccess(message = null) {
         const saveBtn = document.getElementById('settings-save-btn');
         if (saveBtn) {
-            saveBtn.innerHTML = `<i class="bi bi-check-circle-fill"></i> ${message}`;
+            const successMessage = message || this.t('settingsSaved');
+            saveBtn.innerHTML = `<i class="bi bi-check-circle-fill"></i> ${successMessage}`;
             saveBtn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
             saveBtn.disabled = false;
             
             setTimeout(() => {
-                saveBtn.innerHTML = '<i class="bi bi-gear-fill"></i> Save Settings';
+                saveBtn.innerHTML = `<i class="bi bi-gear-fill"></i> ${this.t('saveSettings')}`;
                 saveBtn.style.background = 'linear-gradient(135deg, #6E20F4 0%, #8B4CF8 100%)';
             }, 2000);
         }
@@ -537,7 +544,7 @@ class ChatToolSettings {
         const resetBtn = document.getElementById('settings-reset-btn');
         if (resetBtn) {
             const originalText = resetBtn.innerHTML;
-            resetBtn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Reset Complete!';
+            resetBtn.innerHTML = `<i class="bi bi-check-circle-fill"></i> ${this.t('resetComplete')}`;
             resetBtn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
             
             setTimeout(() => {
@@ -547,24 +554,25 @@ class ChatToolSettings {
         }
     }
 
-    showSaveError(message = 'Failed to save settings') {
+    showSaveError(message = null) {
         const saveBtn = document.getElementById('settings-save-btn');
         if (saveBtn) {
-            saveBtn.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Error Saving';
+            const errorMessage = message || this.t('errorSavingSettings');
+            saveBtn.innerHTML = `<i class="bi bi-exclamation-triangle"></i> ${this.t('errorSaving')}`;
             saveBtn.style.background = 'linear-gradient(135deg, #dc3545 0%, #e74c3c 100%)';
             saveBtn.disabled = false;
             
             setTimeout(() => {
-                saveBtn.innerHTML = '<i class="bi bi-gear-fill"></i> Save Settings';
+                saveBtn.innerHTML = `<i class="bi bi-gear-fill"></i> ${this.t('saveSettings')}`;
                 saveBtn.style.background = 'linear-gradient(135deg, #6E20F4 0%, #8B4CF8 100%)';
             }, 3000);
         }
 
         // Show error notification if available
         if (window.showNotification) {
-            window.showNotification(message, 'error');
+            window.showNotification(errorMessage, 'error');
         } else {
-            console.error('Settings error:', message);
+            console.error('Settings error:', errorMessage);
         }
     }
 

@@ -1,4 +1,5 @@
 const { ObjectId } = require('mongodb');
+const { addUserPoints } = require('../models/user-points-utils');
 
 async function routes(fastify, options) {
   // Like/Dislike message endpoint
@@ -57,6 +58,37 @@ async function routes(fastify, options) {
         { _id: new fastify.mongo.ObjectId(userChatId) },
         { $set: { [`messages.${messageIdx}.actions`]: message.actions } }
       );
+
+      // Add 1 point for feedback actions and send a notification
+      if (action !== 'remove') {
+        const user = await fastify.mongo.db.collection('users').findOne({ _id: userId });
+        const userPointsTranslations = fastify.getUserPointsTranslations ? fastify.getUserPointsTranslations(user?.lang || 'en') : {};
+        
+        await addUserPoints(
+          db,
+          userId,
+          1,
+          userPointsTranslations.points?.actions?.chat_feedback || 'Provided feedback on message',
+          'chat_feedback',
+          fastify
+        );
+
+        // Send notification to user about earning points
+        if (fastify.sendNotificationToUser) {
+          const pointsMessage = userPointsTranslations.feedback_grant_points?.replace('{points}', '1') || 'You have earned 1 point for your feedback';
+          
+          try {
+            fastify.sendNotificationToUser(userId,
+              'showNotification',
+              {
+                message: pointsMessage,
+                icon: 'success'
+              });
+          } catch (notificationError) {
+            console.error('Failed to send points notification:', notificationError);
+          }
+        }
+      }
 
       reply.send({ 
         success: true, 

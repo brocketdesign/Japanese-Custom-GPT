@@ -1,4 +1,5 @@
 {
+  "feedback_grant_points": "Retour d'information accordé {points} points",
   "footer_info": "Les points sont mis à jour en temps réel",
   "claim_bonus": "Réclamer le bonus quotidien",
   "bonus_already_claimed": "Déjà réclamé",
@@ -83,6 +84,18 @@
     "awarded": "Attribué",
     "deducted": "Déduit",
     "insufficient": "Points insuffisants",
+    "daily_rewards_streak": "Défi de série de 30 jours",
+    "streak_subtitle": "Connectez-vous chaque jour pour augmenter votre série et débloquer de plus grandes récompenses !",
+    "current_streak": "Série actuelle",
+    "keep_streak_going": "Continuez votre série de connexions quotidiennes pour atteindre 30 jours !",
+    "next_reward": "Prochaine récompense",
+    "streak_progress": "Progression de la série de 30 jours",
+    "streak_description": "Connectez-vous chaque jour pour progresser dans la série. Les étapes hebdomadaires débloquent des récompenses bonus !",
+    "loading_streak": "Chargement de la progression de la série...",
+    "todays_reward": "Récompense du jour",
+    "claim_reward": "Réclamer la récompense",
+    "streak_reset_info": "Manquer un jour réinitialisera votre série. Atteignez 30 jours pour la récompense ultime !",
+    "close": "Close",
     "transaction_types": {
       "credit": "Gagné",
       "debit": "Dépensé"
@@ -95,9 +108,12 @@
       "admin": "Action administrateur",
       "purchase": "Achat",
       "bonus": "Bonus",
-      "achievement": "Succès"
+      "achievement": "Succès",
+      "referral": "Récompense de parrainage",
+      "chat_feedback": "Retour d'information sur le chat"
     },
     "actions": {
+      "chat_feedback": "Retour d'information sur le message",
       "view_history": "Voir l'historique",
       "claim_daily": "Réclamer le bonus quotidien",
       "view_leaderboard": "Voir le classement",
@@ -169,5 +185,10 @@
       "system_error": "Déduction pour erreur système",
       "fraudulent_activity": "Activité frauduleuse détectée"
     }
+  },
+  "subscriber_bonus": {
+    "title": "Bonus d'abonnement disponible !",
+    "description": "Réclamez votre bonus quotidien de +100 points pour les abonnés",
+    "claim_button": "Réclamer +100 points d'abonnement"
   }
 }

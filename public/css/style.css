@@ -2769,3 +2769,7 @@ opacity: 0.8;
     background: #8240FF;
     color: white;
   }
+
+  #footer-toolbar a{
+    text-decoration: none !important;
+  }

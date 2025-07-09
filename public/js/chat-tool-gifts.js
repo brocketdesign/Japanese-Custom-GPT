@@ -115,6 +115,22 @@ class GiftManager {
         const chatId = sessionStorage.getItem('chatId') || window.chatId;
         const userChatId = sessionStorage.getItem('userChatId') || window.userChatId;
 
+        // Add a new message to the chat container for sending a gift
+        addMessageToChat(chatId, userChatId, {
+            role: 'user',
+            message: `🎁 I sent a gift to you! Wait for it!`,
+            name: 'gift',
+            hidden: true
+        }, function(error, res) {
+
+            generateChatCompletion();
+
+            if (error) {
+            console.error('Error adding gift message:', error);
+            }
+        });
+
+        // Generate the gift image
         novitaImageGeneration(window.user._id, chatId, userChatId, {
             placeholderId,
             giftId: giftId,

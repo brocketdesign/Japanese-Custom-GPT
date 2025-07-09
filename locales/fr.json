@@ -1088,6 +1088,12 @@
   "next": "Suivant",
   "prev": "Précédent",
   "newCharacter": {
+    "character_analysis_complete": "Analyse du personnage terminée avec succès !",
+    "character_analysis_error": "Erreur lors de l'analyse du personnage. Veuillez réessayer.",
+    "enhancedPrompt_complete": "Invite améliorée générée avec succès !",
+    "image_generation_error": "Échec de la génération de l'image. Veuillez réessayer.",
+    "character_generation_complete": "Création du personnage terminée avec succès !",
+    "character_generation_error": "Échec de la création du personnage. Veuillez réessayer.",
     "navigateToImageButton": "Aller à la génération d'images",
     "regenerating_images": "Régénération des images...",
     "regeneration_error": "Une erreur s'est produite lors de la régénération de l'image.",
@@ -1250,10 +1256,7 @@
     "backgroundProcessing_title": "Traitement en arrière-plan",
     "backgroundProcessing_message": "Votre tâche de génération d'image se poursuivra en arrière-plan et vous serez notifié une fois qu'elle sera terminée.",
     "character_analysis_started": "Analyse de la description du personnage en cours...",
-    "character_analysis_complete": "Analyse du personnage terminée",
-    "character_analysis_error": "Erreur lors de l'analyse de la description du personnage",
     "character_image_generation_started": "Génération de l'image du personnage démarrée",
-    "enhancedPrompt_complete": "Invite améliorée générée",
     "chatData_complete": "Les informations de chat sont complètes",
     "debridedChatData_complete": "Informations de chat non censurées générées",
     "enhanced_prompt_generation_started": "Génération de l'invite améliorée en cours...",
@@ -1261,8 +1264,6 @@
     "debrided_generation_started": "Amélioration de la personnalité du personnage en cours...",
     "debrided_generation_error": "Amélioration de la personnalité terminée avec des avertissements",
     "saving_character_data": "Enregistrement des données du personnage...",
-    "character_generation_complete": "Création du personnage terminée avec succès !",
-    "character_generation_error": "La création du personnage a échoué. Veuillez réessayer.",
     "comprehensive_generation_started": "Démarrage de la génération complète du personnage..."
   },
   "imageGenerationForm": "Formulaire de génération d'image",
@@ -1499,5 +1500,13 @@
   "video_already_generated": "Vidéo déjà générée",
   "convert_to_video": "Convertir en vidéo",
   "upscale_image": "Améliorer l'image",
-  "already_upscaled": "Déjà amélioré"
+  "already_upscaled": "Déjà amélioré",
+  "categories": {
+    "maid": "Servante",
+    "princess": "Princesse",
+    "fantasy": "Fantaisie",
+    "ninja": "Ninja",
+    "robot": "Robot",
+    "demon": "Démon"
+  }
 }

@@ -762,14 +762,48 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
       const chatsGalleryCollection = db.collection('gallery');
       const chatsCollection = db.collection('chats');
 
+      // Get translations for categories
+      const translations = request.translations || {};
+      const categoryTranslations = translations.categories || {};
+
       // Define 6 categories with their associated tags/keywords
       const categories = [
-        { name: 'Maid', tags: ['maid', 'maid dress', 'maid outfit', 'maid costume'], icon: 'bi-person-dress' },
-        { name: 'Princess', tags: ['princess', 'zelda',], icon: 'bi-crown' },
-        { name: 'Fantasy', tags: ['forest elfe', 'forest elf', 'fantasy', 'magical'], icon: 'bi-emoji-smile' },
-        { name: 'Ninja', tags: ['ninja', 'shinobi', 'stealth', 'assassin'], icon: 'bi-person-dash' },
-        { name: 'Robot', tags: ['robot', 'android', 'cyborg', 'mecha'], icon: 'bi-robot' },
-        { name: 'Demon', tags: ['demon', 'devil', 'fiend', 'satanic'], icon: 'bi-emoji-angry' }
+        { 
+          nameKey: 'maid',
+          name: categoryTranslations.maid || 'Maid', 
+          tags: ['maid', 'maid dress', 'maid outfit', 'maid costume'], 
+          icon: 'bi-bucket' 
+        },
+        { 
+          nameKey: 'princess',
+          name: categoryTranslations.princess || 'Princess', 
+          tags: ['princess', 'zelda'], 
+          icon: 'bi-gem' 
+        },
+        { 
+          nameKey: 'fantasy',
+          name: categoryTranslations.fantasy || 'Fantasy', 
+          tags: ['forest elfe', 'forest elf', 'fantasy', 'magical'], 
+          icon: 'bi-emoji-smile' 
+        },
+        { 
+          nameKey: 'ninja',
+          name: categoryTranslations.ninja || 'Ninja', 
+          tags: ['ninja', 'shinobi', 'stealth', 'assassin'], 
+          icon: 'bi-person-dash' 
+        },
+        { 
+          nameKey: 'robot',
+          name: categoryTranslations.robot || 'Robot', 
+          tags: ['robot', 'android', 'cyborg', 'mecha'], 
+          icon: 'bi-robot' 
+        },
+        { 
+          nameKey: 'demon',
+          name: categoryTranslations.demon || 'Demon', 
+          tags: ['demon', 'devil', 'fiend', 'satanic'], 
+          icon: 'bi-emoji-angry' 
+        }
       ];
 
       const categoryResults = [];

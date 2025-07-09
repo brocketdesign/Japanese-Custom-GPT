@@ -1139,6 +1139,12 @@
   "next": "次へ",
   "prev": "前へ",
   "newCharacter": {
+    "character_analysis_complete": "キャラクター分析が完了しました！",
+    "character_analysis_error": "キャラクター分析中にエラーが発生しました。再試行してください。",
+    "enhancedPrompt_complete": "強化プロンプトが正常に生成されました！",
+    "image_generation_error": "画像生成に失敗しました。再試行してください。",
+    "character_generation_complete": "キャラクター生成が正常に完了しました！",
+    "character_generation_error": "キャラクター生成に失敗しました。再試行してください。",
     "navigateToImageButton": "画像生成に移動",
     "regenerating_images": "画像を再生成中...",
     "regeneration_error": "画像の再生成中にエラーが発生しました。",
@@ -1301,10 +1307,7 @@
     "backgroundProcessing_title": "バックグラウンド処理",
     "backgroundProcessing_message": "画像生成タスクはバックグラウンドで継続され、完了すると通知されます。",
     "character_analysis_started": "キャラクターの説明を分析しています...",
-    "character_analysis_complete": "キャラクター分析が完了しました",
-    "character_analysis_error": "キャラクターの説明の分析中にエラーが発生しました",
     "character_image_generation_started": "キャラクター画像の生成を開始しました",
-    "enhancedPrompt_complete": "強化されたプロンプトが生成されました",
     "chatData_complete": "チャット情報が完了しました",
     "debridedChatData_complete": "検閲なしのチャット情報が生成されました",
     "enhanced_prompt_generation_started": "強化されたプロンプトを生成しています...",
@@ -1312,8 +1315,6 @@
     "debrided_generation_started": "キャラクターの性格を強化しています...",
     "debrided_generation_error": "性格の強化が警告付きで完了しました",
     "saving_character_data": "キャラクターデータを保存しています...",
-    "character_generation_complete": "キャラクター作成が正常に完了しました！",
-    "character_generation_error": "キャラクター生成に失敗しました。再試行してください。",
     "comprehensive_generation_started": "包括的なキャラクター生成を開始しています..."
   },
   "imageGenerationForm": "画像生成フォーム",
@@ -1544,5 +1545,13 @@
   "video_already_generated": "すでに動画が生成されています",
   "convert_to_video": "動画に変換",
   "upscale_image": "画像を高解像度化",
-  "already_upscaled": "すでに高解像度化されています"
+  "already_upscaled": "すでに高解像度化されています",
+  "categories": {
+    "maid": "メイド",
+    "princess": "プリンセス",
+    "fantasy": "ファンタジー",
+    "ninja": "忍者",
+    "robot": "ロボット",
+    "demon": "悪魔"
+  }
 }

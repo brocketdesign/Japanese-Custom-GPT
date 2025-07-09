@@ -419,6 +419,7 @@ $(document).ready(async function() {
 
         $('.fullscreen-overlay').fadeOut(); 
         $('#chat-list').fadeOut();
+        $('#footer-toolbar').fadeOut();
 
         resetSuggestionsAndHide();
     }

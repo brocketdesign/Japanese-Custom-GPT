@@ -31,7 +31,7 @@ function initializeCache() {
 
 initChatList = true;
 initializeCache();
-displayChatList(null, userId);
+displayChatList(true, userId);
 
 // Reset cache
 function resetCache() {

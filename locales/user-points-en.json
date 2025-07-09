@@ -1,4 +1,5 @@
 {
+  "feedback_grant_points": "Feedback granted {points} points",
   "insufficient_coins": "You do not have enough coins",
   "need_coins": "You need at least {coins} coins to perform this action",
   "have_coins": "You currently have {coins} coins",
@@ -86,6 +87,18 @@
     "awarded": "Awarded",
     "deducted": "Deducted",
     "insufficient": "Insufficient points",
+    "daily_rewards_streak": "30-Day Streak Challenge",
+    "streak_subtitle": "Login daily to build your streak and unlock bigger rewards!",
+    "current_streak": "Current Streak",
+    "keep_streak_going": "Keep your daily login streak going to reach 30 days!",
+    "next_reward": "Next Reward",
+    "streak_progress": "30-Day Streak Progress",
+    "streak_description": "Complete daily logins to progress through the streak. Weekly milestones unlock bonus rewards!",
+    "loading_streak": "Loading streak progress...",
+    "todays_reward": "Today's Streak Reward",
+    "claim_reward": "Claim Reward",
+    "streak_reset_info": "Missing a day will reset your streak. Reach 30 days for the ultimate reward!",
+    "close": "Close",
     "transaction_types": {
       "credit": "Earned",
       "debit": "Spent"
@@ -99,9 +112,11 @@
       "purchase": "Purchase",
       "bonus": "Bonus",
       "achievement": "Achievement",
-      "referral": "Referral Reward"
+      "referral": "Referral Reward",
+      "chat_feedback": "Chat feedback"
     },
     "actions": {
+      "chat_feedback": "Provided feedback on message",
       "view_history": "View History",
       "claim_daily": "Claim Daily Bonus",
       "view_leaderboard": "View Leaderboard",
@@ -173,5 +188,10 @@
       "system_error": "System Error Deduction",
       "fraudulent_activity": "Fraudulent Activity Detected"
     }
+  },
+  "subscriber_bonus": {
+    "title": "Subscriber Bonus Available!",
+    "description": "Claim your daily +100 points subscriber bonus",
+    "claim_button": "Claim +100 Subscriber Bonus"
   }
 }

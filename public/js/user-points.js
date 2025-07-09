@@ -1330,7 +1330,7 @@ class UserPointsManager {
           ${bonusIndicator}
           <div class="streak-day-number">${day.day}</div>
           <i class="${iconClass} streak-icon" style="color: ${iconColor};"></i>
-          <div class="streak-points">+${day.points}<br><small>points</small></div>
+          <div class="streak-points">+${day.points}<br><small>${this.translations.points.title}</small></div>
         </div>
       `;
     });

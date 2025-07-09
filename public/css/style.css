@@ -2773,3 +2773,41 @@ opacity: 0.8;
   #footer-toolbar a{
     text-decoration: none !important;
   }
+
+.benefits-scroll-wrapper::-webkit-scrollbar {
+    display: none;
+}
+
+.benefit-card .card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.benefit-card .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+}
+
+.benefit-icon {
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.benefit-highlight .badge {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@media (max-width: 768px) {
+    .benefit-card {
+        min-width: 250px !important;
+        max-width: 280px !important;
+    }
+}

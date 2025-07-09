@@ -53,7 +53,7 @@
                 </div>
             {{/if}}
             <!-- Points Balance -->
-            <div class="d-flex align-items-center gap-2 mt-2">
+            <div id="userPointsContainer" class="d-flex align-items-center gap-2 mt-2">
                 <span class="btn btn-warning text-white my-1" style="font-size: 0.9rem;" data-bs-toggle="modal" data-bs-target="#userPointsModal">
                     <i class="bi bi-coin"></i>
                     <span class="user-points-balance">0</span>
@@ -186,6 +186,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const avatarMenuContainer = document.getElementById('avatarMenuContainer');
     const avatarBtn = document.getElementById('avatarMenuBtn');
+    const userPointsContainer = document.getElementById('userPointsContainer');
     const offcanvasElement = document.getElementById('userMenuOffcanvas');
     const menuItems = document.querySelectorAll('.menu-item');
     const navbarContainer = document.getElementById('navbarNav');
@@ -212,15 +213,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Hide avatar button when offcanvas shows
         offcanvasElement.addEventListener('show.bs.offcanvas', function() {
             if (avatarMenuContainer) {
-                avatarMenuContainer.style.opacity = '0';
-                avatarMenuContainer.style.visibility = 'hidden';
+                avatarMenuContainer.style.opacity = '1';
+                avatarMenuContainer.style.visibility = 'visible';
             }
             if(navbarContainer) {
                 navbarContainer.style.right = '20px';
             }
 
-            // Disable body scroll when offcanvas is shown
-            document.body.style.overflow = 'hidden';
         });
         
         // Show avatar button when offcanvas hides

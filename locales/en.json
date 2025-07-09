@@ -446,7 +446,7 @@
   "tagList": "Tag List",
   "topFreeChats": "Top Free Chats",
   "popularChats": "Popular Chats",
-  "latestChatsHeader": "Latest Chats",
+  "latestChatsHeader": "Latest Characters",
   "createCharacterDescription": "Create your own character and start chatting with them!",
   "userProfile": "User Profile",
   "userProfileDescription": "See the images you liked and the characters created.",
@@ -1504,5 +1504,29 @@
     "ninja": "Ninja",
     "robot": "Robot",
     "demon": "Demon"
+  },
+  "freeUserBenefits": {
+    "title": "Free User Benefits",
+    "benefit1": {
+      "title": "5 Free Images Daily",
+      "description": "Generate up to 5 AI images every day at no cost"
+    },
+    "benefit2": {
+      "title": "Daily Login Bonus",
+      "description": "Earn bonus points just by logging in each day"
+    },
+    "benefit3": {
+      "title": "Unlimited Chat",
+      "description": "Chat with AI characters without any message limits"
+    },
+    "benefit4": {
+      "title": "Create Characters",
+      "description": "Design and create your own custom AI characters"
+    },
+    "perDay": "per day",
+    "daily": "Daily",
+    "unlimited": "Unlimited",
+    "createCharacter": "1 Character",
+    "scrollHint": "Scroll to see more benefits"
   }
 }

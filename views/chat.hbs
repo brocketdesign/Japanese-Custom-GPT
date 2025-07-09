@@ -50,25 +50,112 @@
             </nav>
             {{> chat-list}}
             <section id="chat-discovery" class="onchat-off mt-5 pt-3" style="display: block;">
-                <!-- Promo Section -->
-                <section class="is-free-user animate__animated m-3 p-3" style="display: none; overflow-x: hidden;" data-animate="animate__fadeInLeft" data-delay="0.3s">
-                    <div class="container text-center">
-                        <h2 class="pricing-title fw-bold animate__animated" data-animate="animate__fadeInLeft" data-delay="0.3s">
-                            <span class="u-font-manrope u-color-grad" style="font-size: 100%;">{{translations.promo.title}}</span>
-                        </h2>
-                        <h3 class="fw-bold mb-1 px-3 animate__animated" data-animate="animate__fadeInLeft" data-delay="0.5s">
-                            {{translations.promo.subtitle}}
-                        </h3>
-                        <h3 class="mb-3 px-3 u-font-manrope animate__animated animate__fadeInRight" data-animate="animate__fadeInRight" data-delay="0.7s">
-                            {{translations.promo.description}}
-                        </h3>
-                    </div>
-                    <div class="is-free-user sticky-bottom py-2 mx-auto text-center animate__animated" style="display:none; bottom:0; left:0; right:0;" data-animate="animate__fadeInLeft" data-delay="0.9s">
-                        <a href="#" onclick="loadPlanPage()" class="m-2 btn border shadow-0 bg-custom-gradient text-white px-5 py-2 m-auto animate__animated" data-animate="animate__zoomIn" style="border-radius:40px; background: linear-gradient(90.9deg, rgba(110, 32, 244, 0.5) 2.74%, #6E20F4 102.92%);">
-                            <i class="bi bi-plus me-2"></i>{{translations.promo.details}}
-                        </a>
+
+                <!-- Card menu title & description -->
+                <section class="animate__animated m-3 p-3" style="overflow-x: hidden;" data-animate="animate__fadeInLeft" data-delay="0.3s">
+                    <div class="container text-center mb-3 animate__animated" data-animate="animate__fadeInLeft" data-delay="0.3s">
+                        <h2 class="fw-bold u-color-grad">{{translations.promo.title}}</h2>
+                        <p class="text-muted">{{translations.exploreCharactersDescription}}</p>
                     </div>
                 </section>
+
+                <!-- Free user benefits - Professional horizontal scroll design with animations -->
+                <div class="container-fluid mb-4 is-free-user animate__animated" data-animate="animate__fadeInUp" data-delay="0.5s" style="display: none;">
+                    <!-- Section Header -->
+                    <div class="text-center mb-4 animate__animated" data-animate="animate__fadeInDown" data-delay="0.6s">
+                        <div class="d-inline-flex align-items-center px-4 py-2 rounded-pill text-white fw-bold animate__animated" 
+                            data-animate="animate__pulse" data-delay="0.8s"
+                            style="background: linear-gradient(135deg, #FF5E7E, #FF8C40); box-shadow: 0 4px 15px rgba(255, 94, 126, 0.3);">
+                            <i class="bi bi-star-fill me-2"></i>
+                            {{translations.freeUserBenefits.title}}
+                        </div>
+                        <p class="text-muted mt-2 mb-0 animate__animated" data-animate="animate__fadeIn" data-delay="0.9s">{{translations.freeUserBenefits.subtitle}}</p>
+                    </div>
+
+                    <!-- Horizontal Scrolling Benefits -->
+                    <div class="benefits-scroll-container position-relative animate__animated dflex justify-content-center d-flex" data-animate="animate__fadeInLeft" data-delay="1.0s">
+                        <div class="benefits-scroll-wrapper d-flex gap-3 pb-3" style="overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth; scrollbar-width: none; -ms-overflow-style: none;">
+                            <!-- Benefit 1 -->
+                            <div class="benefit-card flex-shrink-0 animate__animated" data-animate="animate__slideInLeft" data-delay="1.1s" style="min-width: 280px; max-width: 320px;">
+                                <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden" 
+                                    style="transition: all 0.3s ease; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                    <div class="card-body text-center text-white p-4">
+                                        <div class="benefit-icon mb-3 animate__animated" data-animate="animate__bounceIn" data-delay="1.3s">
+                                            <div class="rounded-circle bg-white bg-opacity-20 d-inline-flex align-items-center justify-content-center" 
+                                                style="width: 60px; height: 60px;">
+                                                <i class="bi bi-images fs-3 text-dark"></i>
+                                            </div>
+                                        </div>
+                                        <h5 class="card-title fw-bold mb-2 animate__animated" data-animate="animate__fadeInUp" data-delay="1.4s">{{translations.freeUserBenefits.benefit1.title}}</h5>
+                                        <p class="card-text text-white-50 mb-3 animate__animated" data-animate="animate__fadeInUp" data-delay="1.5s">{{translations.freeUserBenefits.benefit1.description}}</p>
+                                        <div class="benefit-highlight animate__animated" data-animate="animate__zoomIn" data-delay="1.6s">
+                                            <span class="badge bg-white text-dark px-3 py-2 rounded-pill fw-bold">5 {{translations.freeUserBenefits.perDay}}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Benefit 2 -->
+                            <div class="benefit-card flex-shrink-0 animate__animated" data-animate="animate__slideInUp" data-delay="1.2s" style="min-width: 280px; max-width: 320px;">
+                                <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden" 
+                                    style="transition: all 0.3s ease; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                                    <div class="card-body text-center text-white p-4">
+                                        <div class="benefit-icon mb-3 animate__animated" data-animate="animate__bounceIn" data-delay="1.4s">
+                                            <div class="rounded-circle bg-white bg-opacity-20 d-inline-flex align-items-center justify-content-center" 
+                                                style="width: 60px; height: 60px;">
+                                                <i class="bi bi-gift fs-3 text-dark"></i>
+                                            </div>
+                                        </div>
+                                        <h5 class="card-title fw-bold mb-2 animate__animated" data-animate="animate__fadeInUp" data-delay="1.5s">{{translations.freeUserBenefits.benefit2.title}}</h5>
+                                        <p class="card-text text-white-50 mb-3 animate__animated" data-animate="animate__fadeInUp" data-delay="1.6s">{{translations.freeUserBenefits.benefit2.description}}</p>
+                                        <div class="benefit-highlight animate__animated" data-animate="animate__zoomIn" data-delay="1.7s">
+                                            <span class="badge bg-white text-dark px-3 py-2 rounded-pill fw-bold">{{translations.freeUserBenefits.daily}}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Benefit 3 -->
+                            <div class="benefit-card flex-shrink-0 animate__animated" data-animate="animate__slideInRight" data-delay="1.3s" style="min-width: 280px; max-width: 320px;">
+                                <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden" 
+                                    style="transition: all 0.3s ease; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                    <div class="card-body text-center text-white p-4">
+                                        <div class="benefit-icon mb-3 animate__animated" data-animate="animate__bounceIn" data-delay="1.5s">
+                                            <div class="rounded-circle bg-white bg-opacity-20 d-inline-flex align-items-center justify-content-center" 
+                                                style="width: 60px; height: 60px;">
+                                                <i class="bi bi-chat-dots fs-3 text-dark"></i>
+                                            </div>
+                                        </div>
+                                        <h5 class="card-title fw-bold mb-2 animate__animated" data-animate="animate__fadeInUp" data-delay="1.6s">{{translations.freeUserBenefits.benefit3.title}}</h5>
+                                        <p class="card-text text-white-50 mb-3 animate__animated" data-animate="animate__fadeInUp" data-delay="1.7s">{{translations.freeUserBenefits.benefit3.description}}</p>
+                                        <div class="benefit-highlight animate__animated" data-animate="animate__zoomIn" data-delay="1.8s">
+                                            <span class="badge bg-white text-dark px-3 py-2 rounded-pill fw-bold">∞ {{translations.freeUserBenefits.unlimited}}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Benefit 4 create a new character -->
+                            <div class="benefit-card flex-shrink-0 animate__animated" data-animate="animate__slideInLeft" data-delay="1.4s" style="min-width: 280px; max-width: 320px;">
+                                <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden" 
+                                    style="transition: all 0.3s ease; background: linear-gradient(135deg, #ffafbd 0%, #ffc3a0 100%);">
+                                    <div class="card-body text-center text-white p-4">
+                                        <div class="benefit-icon mb-3 animate__animated" data-animate="animate__bounceIn" data-delay="1.6s">
+                                            <div class="rounded-circle bg-white bg-opacity-20 d-inline-flex align-items-center justify-content-center" 
+                                                style="width: 60px; height: 60px;">
+                                                <i class="bi bi-person-plus fs-3 text-dark"></i>
+                                            </div>
+                                        </div>
+                                        <h5 class="card-title fw-bold mb-2 animate__animated" data-animate="animate__fadeInUp" data-delay="1.7s">{{translations.freeUserBenefits.benefit4.title}}</h5>  
+                                        <p class="card-text text-white-50 mb-3 animate__animated" data-animate="animate__fadeInUp" data-delay="1.8s">{{translations.freeUserBenefits.benefit4.description}}</p>
+                                        <div class="benefit-highlight animate__animated" data-animate="animate__zoomIn" data-delay="1.9s">
+                                            <span class="badge bg-white text-dark px-3 py-2 rounded-pill fw-bold">{{translations.freeUserBenefits.createCharacter}}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 
                 <!-- Card menu -->
@@ -85,7 +172,7 @@
                             <h5 class="mb-2">{{translations.createCharacter}}</h5>
                             <p class="text-muted small mb-0">{{translations.createCharacterDescription}}</p>
                             <!-- Restrictions -->
-                            <div class="rounded-pill text-white fw-bold mt-2 p-3 is-free-user" style="background: linear-gradient(135deg, #FF5E7E, #FF8C40);" role="alert">
+                            <div class="rounded-pill text-white fw-bold mt-2 p-3 is-free-user" style="font-size: 12px; background: linear-gradient(135deg, #FF5E7E, #FF8C40);" role="alert">
                                 {{translations.createCharacterRestriction}}
                             </div>
                         </div>
@@ -101,7 +188,7 @@
                             </div>
                             <h5 class="mb-2">{{translations.explore}}</h5>
                             <p class="text-muted small mb-0">{{translations.exploreDescription}}</p>
-                            <div class="rounded-pill text-white fw-bold mt-2 p-3 is-free-user" style="background: linear-gradient(135deg, #FF5E7E, #FF8C40);" role="alert">
+                            <div class="rounded-pill text-white fw-bold mt-2 p-3 is-free-user" style="font-size: 12px; background: linear-gradient(135deg, #FF5E7E, #FF8C40);" role="alert">
                                 {{translations.exploreRestriction}}
                             </div>
                         </div>
@@ -116,7 +203,7 @@
                             </div>
                             <h5 class="mb-2">{{translations.userProfile}}</h5>
                             <p class="text-muted small mb-0">{{translations.userProfileDescription}}</p>
-                            <div class="rounded-pill text-white fw-bold mt-2 p-3 is-free-user" style="background: linear-gradient(135deg, #FF5E7E, #FF8C40);" role="alert">
+                            <div class="rounded-pill text-white fw-bold mt-2 p-3 is-free-user" style="font-size: 12px; background: linear-gradient(135deg, #FF5E7E, #FF8C40);" role="alert">
                                 {{translations.userRestriction}}
                             </div>
                         </div>
@@ -140,12 +227,6 @@
                         <!-- Video chats will be loaded here -->
                     </div>
                     <div id="latest-video-chats-pagination-controls" class="text-center mt-3"></div>
-                </div>
-
-                <!-- Card menu title & description -->
-                <div class="container text-center mb-3 animate__animated" data-animate="animate__fadeInLeft" data-delay="0.3s">
-                    <h2 class="fw-bold u-color-grad">{{translations.cardMenuTitle}}</h2>
-                    <p class="text-muted">{{translations.exploreCharactersDescription}}</p>
                 </div>
 
                 <!-- Sorting Tools: Premium/Free, Gender & NSFW Filters (Responsive) -->

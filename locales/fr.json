@@ -432,7 +432,7 @@
   },
   "tagList": "Liste des tags",
   "popularChats": "Populaires",
-  "latestChatsHeader": "Nouveaux",
+  "latestChatsHeader": "Nouveaux Personnages",
   "createCharacterDescription": "Créez votre propre personnage et commencez à discuter avec lui !",
   "userProfile": "Profil utilisateur",
   "userProfileDescription": "Voir les images que vous avez aimées et les personnages créés.",
@@ -1508,5 +1508,29 @@
     "ninja": "Ninja",
     "robot": "Robot",
     "demon": "Démon"
+  },
+  "freeUserBenefits": {
+    "title": "Avantages Utilisateur Gratuit",
+    "benefit1": {
+      "title": "5 images gratuites par jour",
+      "description": "Générez jusqu'à 5 images IA chaque jour gratuitement"
+    },
+    "benefit2": {
+      "title": "Bonus de connexion quotidienne",
+      "description": "Gagnez des points bonus simplement en vous connectant chaque jour"
+    },
+    "benefit3": {
+      "title": "Chat illimité",
+      "description": "Discutez avec des personnages IA sans aucune limite de messages"
+    },
+    "benefit4": {
+      "title": "Créer des personnages",
+      "description": "Concevez et créez vos propres personnages IA personnalisés"
+    },
+    "perDay": "par jour",
+    "daily": "Quotidien",
+    "unlimited": "Illimité",
+    "createCharacter": "1 personnage",
+    "scrollHint": "Faites défiler pour voir plus d'avantages"
   }
 }

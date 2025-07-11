@@ -134,7 +134,7 @@ window.handleMessageRegenerate = function(button) {
     
     // Disable button and show loading
     $button.prop('disabled', true);
-    $button.find('i').removeClass('bi-arrow-clockwise').addClass('bi-arrow-clockwise spinner-border spinner-border-sm');
+    $button.find('i').addClass('spin');
     
     // Remove the last message from UI
     $('#chatContainer .message-container').last().fadeOut(300, function() {

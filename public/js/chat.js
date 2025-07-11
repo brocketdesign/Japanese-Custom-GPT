@@ -1577,13 +1577,13 @@ window.handleChatReset = function(el) {
 };
 
 window.regenImage = function(el){
-    if($(el).hasClass('spin')){
+    const button_ico = $(el).find('i');
+    if(button_ico.hasClass('spin')){
         showNotification(window.translations.image_generation_processing,'warning')
         return
     }
-    const button = $(el)
-    button.addClass('spin')
-
+    button_ico.addClass('spin')
+    
     const imageNsfw = $(el).attr('data-nsfw') == 'true' ? 'nsfw' : 'sfw'
     const imagePrompt = $(el).data('prompt')
     const placeholderId = $(el).data('id')
@@ -1594,13 +1594,13 @@ window.regenImage = function(el){
         .then(data => {
             if(data.error){
                 displayOrRemoveImageLoader(placeholderId, 'remove');
-                button.removeClass('spin');
+                button_ico.removeClass('spin');
             }
         })
         .catch((error) => {
             console.error('Error:', error);
             displayOrRemoveImageLoader(placeholderId, 'remove');
-            button.removeClass('spin');
+            button_ico.removeClass('spin');
         });
     }
 };

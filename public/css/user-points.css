@@ -239,7 +239,7 @@
 
 /* Daily Rewards Calendar Modal Styles */
 .daily-rewards-header {
-  background: linear-gradient(135deg, #ff6b35 0%, #ff8e53 100%);
+  background: linear-gradient(to bottom right, #ffffff, #ceadff);
   border: none;
   padding: 20px 24px;
 }

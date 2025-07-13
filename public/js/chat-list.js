@@ -57,16 +57,6 @@ function isCacheValid() {
     return (Date.now() - chatCache.lastUpdated) < fiveMinutes;
 }
 
-// if the  url is like '/chat/?list=true'
-if (window.location.pathname === '/chat/' && window.location.search === '?list=true') {
-
-    showDiscovery();
-    $('#chat-list').show();
-    $('.onchat-off, .onchat-on').hide();
-
-    displayChatList(null, userId);
-}
-
 // Event listener for menu chat buttons
 $(document).on('click','#toggle-chat-list',function(){
 
@@ -76,6 +66,13 @@ $(document).on('click','#toggle-chat-list',function(){
 
     displayChatList(null, userId);
 });
+
+// if the  url is like '/chat/?list=true'
+if (window.location.pathname === '/chat/' && window.location.search === '?list=true') {
+    setTimeout(() => {
+        $('#toggle-chat-list').click()
+    }, 500);
+}
 
 // Delete chat function
 function deleteChatHandler(chatId) {

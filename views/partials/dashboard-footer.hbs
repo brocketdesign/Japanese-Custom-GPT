@@ -8,10 +8,6 @@
                 <i class="bi bi-chat-left-text fs-6"></i>
                 <div class="small">{{translations.chatList}}</div>
             </a>
-            <a class="text-white flex-fill text-center" href="#" onclick="document.getElementById('popular-chats-section').scrollIntoView({ behavior: 'smooth' });">
-                <i class="bi bi-globe fs-6"></i>
-                <div class="small">{{translations.explore}}</div>
-            </a>
             <a class="text-white flex-fill text-center" href="#" {{#if user.isTemporary}} onclick="openLoginForm()"{{else}} onclick="loadCharacterCreationPage()"{{/if}}>
                 <i class="bi bi-plus-square fs-6"></i>
                 <div class="small">{{translations.create}}</div>
@@ -527,7 +523,9 @@ window.showDiscovery = function() {
     $('.new-chat').each(function(){
         $(this).hide()
     })
-    resetChatUrl();
+    if (typeof resetChatUrl === 'function') {
+        resetChatUrl();
+    }
 
     // Hide navbar chat actions when in discovery mode
     if (typeof hideNavbarChatActions === 'function') {

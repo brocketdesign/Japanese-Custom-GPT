@@ -119,12 +119,9 @@
                     <i class="bi bi-plus-circle me-3"></i>{{translations.avatar.createCharacter}}
                 </a>
 
-                {{#if (eq user.subscriptionStatus 'active')}}
-                    <a class="list-group-item list-group-item-action border-0 menu-item" href="/affiliation">
-                        <i class="bi bi-link me-3"></i>{{translations.avatar.affiliation}}
-                    </a>
-                {{else}}
-                {{/if}}
+                <a class="list-group-item list-group-item-action border-0 menu-item" href="/affiliation">
+                    <i class="bi bi-link me-3"></i>{{translations.avatar.affiliation}}
+                </a>
 
                 {{#if isAdmin}}
                     <hr class="my-2">

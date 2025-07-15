@@ -1543,6 +1543,7 @@ async function routes(fastify, options) {
     // --- New: Popular Chats Route ---
     fastify.get('/api/popular-chats', async (request, reply) => {
         try {
+            const reloadCache = request.query.reloadCache === 'true'; // Check if cache reload is requested
             const page = Math.max(1, parseInt(request.query.page, 10) || 1); // Default to page 1
             const limit = 100; // Keep this consistent with caching logic
             const skip = (page - 1) * limit;
@@ -1561,7 +1562,7 @@ async function routes(fastify, options) {
             let usingCache = false;
 
             // Check if the requested page is within the cached range
-            if (page <= pagesToCache) {
+            if (page <= pagesToCache && !reloadCache) {
                 // Try fetching from cache first, filtering by language
                 const cacheQuery = { language: language }; // Filter cache by language
                 totalCount = await cacheCollection.countDocuments(cacheQuery);
@@ -1659,7 +1660,6 @@ async function routes(fastify, options) {
                 ];
 
                 chats = await chatsCollection.aggregate(pipeline).toArray();
-                console.log(chats)
                 // Count total for pagination (only if fallback is used)
                 totalCount = await chatsCollection.countDocuments({ chatImageUrl: { $exists: true, $ne: '' }, name: { $exists: true, $ne: '' }, language });
                 totalPages = Math.ceil(totalCount / limit);

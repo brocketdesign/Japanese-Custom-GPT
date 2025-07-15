@@ -1570,7 +1570,6 @@ window.generateChatsPagination = function (totalPages, option = {}) {
 
   updateChatPaginationControls(totalPages, searchId)
 }
-
 // If we skip the server call due to cache
 function generateChatsPaginationFromCache(option = {}) {
   const { imageStyle, imageModel, query = '', userId = '' } = option

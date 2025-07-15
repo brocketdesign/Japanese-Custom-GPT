@@ -282,6 +282,9 @@
                             <div class="d-flex align-items-center mb-2">
                                 <h6 class="me-3 mb-0">{{translations.browseByCategory}}:</h6>
                                 <small class="text-muted">{{translations.scrollForMore}}</small>
+                                <span type="button" id="reset-popular-chat-cache" class="ms-2" title="Reset People Chat Cache">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </span>
                             </div>
                             <div class="query-tags-scroll-container">
                                 <div class="query-tags-list d-flex" id="query-tags-list">
@@ -551,7 +554,7 @@ $(document).ready(function() {
 
         try {
             // console.log(`Fetching popular chats page ${page} from API`);
-            const res = await fetch(`/api/popular-chats?page=${page}`); // Ensure this API endpoint exists
+            const res = await fetch(`/api/popular-chats?page=${page}&reloadCache=${reload}`);
             if (!res.ok) {
                 $('#popular-chats-pagination-controls').html('<div class="text-center text-danger my-3">Failed to load popular chats.</div>');
                 popularChatsLoading = false;
@@ -580,6 +583,14 @@ $(document).ready(function() {
         popularChatsLoading = false;
     }
 
+    // Reset popular chats cache button 
+    $('#reset-popular-chat-cache').on('click', function() {
+        sessionStorage.removeItem(POPULAR_CHATS_CACHE_KEY);
+        sessionStorage.removeItem(POPULAR_CHATS_CACHE_TIME_KEY);
+        popularChatsPage = 1;
+        $('#chat-gallery').empty();
+        loadPopularChats(1, true);
+    });
     // Initial load (always loads page 1)
     loadPopularChats();
 

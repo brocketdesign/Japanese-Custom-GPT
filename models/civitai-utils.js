@@ -335,7 +335,7 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
           },
           fastify
         };
-        
+        console.log(`[civitai/createModelChat] Generating character image with config:`, imageConfig);
         generateImg(imageConfig);
       } catch (error) {
         console.log('[civitai/createModelChat] Error generating character image:', error);

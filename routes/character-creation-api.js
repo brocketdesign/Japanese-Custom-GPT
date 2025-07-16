@@ -20,7 +20,7 @@ const details_description = z.object({
     // Physical Appearance - Core Features
     appearance: z.object({
         age: z.string(),
-        gender: z.enum(['male', 'female', 'non-binary']),
+        gender: z.enum(['male', 'female']),
         ethnicity: z.string(),
         height: z.string(),
         weight: z.string(),
@@ -231,7 +231,8 @@ async function routes(fastify, options) {
         console.log('[API/generate-character-comprehensive] Starting comprehensive character generation');
         
         try {
-            const { prompt, gender, name, chatPurpose, language: requestLanguage, imageType, image_base64, enableMergeFace } = request.body;
+            const { prompt, name, chatPurpose, language: requestLanguage, imageType, image_base64, enableMergeFace } = request.body;
+            let gender = request.body.gender || null;
             let chatId = request.body.chatId || request.query.chatId || request.params.chatId || null;
             const userId = request.body.userId || request.user._id;
             const language = requestLanguage || request.lang;
@@ -278,6 +279,7 @@ async function routes(fastify, options) {
             let extractedDetails = null;
             try {
                 extractedDetails = JSON.parse(detailsResponse.choices[0].message.content);
+                gender = extractedDetails.appearance.gender || gender;
                 console.log('[API/generate-character-comprehensive] Successfully extracted details');
                 fastify.sendNotificationToUser(userId, 'showNotification', { 
                     message: request.translations.newCharacter.character_analysis_complete, 
@@ -318,10 +320,8 @@ async function routes(fastify, options) {
                 // Generate placeholder ID for tracking
                 const placeholderId = new fastify.mongo.ObjectId().toString();
 
-                const debug_user = await fastify.mongo.db.collection('users').findOne({ _id: new ObjectId(userId) });
-                console.log(`[API/generate-character-comprehensive] Debug user found: ${debug_user}`);
-
                 // Trigger image generation asynchronously with enhanced prompt
+                console.log(`[API/generate-character-comprehensive] Generating image with enhanced prompt: ${enhancedPrompt.substring(0, 50)}...`);
                 generateImg({
                     prompt: enhancedPrompt,
                     userId: userId,

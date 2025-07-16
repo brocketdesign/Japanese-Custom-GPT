@@ -427,7 +427,7 @@
         }
 
         const prompt = characterPrompt = $('#characterPrompt').val().trim();
-        const gender = $('#gender').val();
+        const gender = 'female' || $('#gender').val();
         const name = $('#chatName').val().trim();
         const chatPurpose = $('#chatPurpose').val().trim();
         let modelId = $('#modelId').val();
@@ -479,7 +479,7 @@
             // Use new comprehensive generation route
             const comprehensiveData = {
                 prompt,
-                gender: 'female', // Default
+                gender,
                 chatPurpose,
                 name,
                 imageType,

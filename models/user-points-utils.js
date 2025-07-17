@@ -569,8 +569,8 @@ async function awardLikeActionReward(db, userId, fastify = null) {
   const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
   const userPointsTranslations = fastify ? fastify.getUserPointsTranslations(user?.lang || 'en') : {};
 
-  const basePoints = 1; // 1 point per like
-  
+  const basePoints = 5; // 5 points per like
+
   const result = await addUserPoints(
     db, 
     userId, 

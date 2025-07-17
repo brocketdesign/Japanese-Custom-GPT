@@ -669,7 +669,7 @@ window.toggleImageFavorite = function(el) {
   $this.find('i').removeClass('bi-heart bi-heart-fill').addClass(likeIconClass); // Toggle icon class
 
   if(action === 'like') {
-    showNotification(window.translations?.like_grant_points.replace('{point}', '1') || 'Image liked!', 'success');
+    showNotification(window.translations?.like_grant_points.replace('{point}', '5') || 'Image liked!', 'success');
   }
 
   $.ajax({

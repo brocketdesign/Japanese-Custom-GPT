@@ -155,7 +155,7 @@ async function routes(fastify, options) {
             );
           }
 
-          const cost = 1; // Cost for unliking an image (removing 1 point)
+          const cost = 5; // Cost for unliking an image (removing 5 points)
           console.log(`[gallery-like-toggle] Deducting ${cost} point for unliking image: ${imageId}`);
           try {
             await removeUserPoints(db, userId, cost, request.userPointsTranslations.points?.deduction_reasons?.unlike_image || 'Unlike image', 'unlike_image', fastify);

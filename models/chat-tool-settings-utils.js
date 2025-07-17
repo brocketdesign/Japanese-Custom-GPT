@@ -90,6 +90,8 @@ async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt) {
         };
         
         if (relationshipInstructions[settings.relationshipType]) {
+            console.log(`[applyUserSettingsToPrompt] Enhancing prompt with relationship context: ${settings.relationshipType}`);
+            console.log(`[applyUserSettingsToPrompt] Relationship instructions:`, relationshipInstructions[settings.relationshipType]);
             enhancedPrompt += `\nRelationship Context: ${relationshipInstructions[settings.relationshipType]}`;
         }
         

@@ -1406,7 +1406,122 @@
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
 }
+  
+  #sendMessage,#chatInput .load {
+  border-left:0!important;
+  box-shadow:none
+  }
+  
+ #chatInput {
+  position:absolute;
+  bottom:0;
+  width:100%;
+  right:0;
+  left:0;
+  z-index:1000;
+  padding:10px
+  }
+  
+  #sendMessage,#chatInput .load {
+  border-left:0!important;
+  box-shadow:none
+  }
+  body.keyboard-open #chatInput {
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+  
+#chatContainer {
+  height: 100%;
+  overflow-y: scroll !important; /* Ensure scroll is always enabled */
+  overflow-x: hidden;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer and Edge */
+  /* Remove any properties that might interfere with scrolling */
+  touch-action: pan-y; /* Allow vertical scrolling on touch devices */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+#userMessage {
+  background-color:#f5f5f5;
+  height:50px;
+  font-size:14px;
+  padding-left:20px;
+  resize:none;
+  max-height:100px;
+  }
+  
+  #userMessage:focus {
+  outline:none;
+  box-shadow:none
+  }
+  
+  #userMessage:focus {
+  outline:none;
+  box-shadow:none
+  }
 
+  #userMessage.prompt-image {
+    background-size: 45px;
+    background-position: left;
+    background-repeat: no-repeat;
+    padding-left: 50px;
+  }
+/* Enhanced mobile keyboard handling - replace existing mobile styles */
+@media screen and (max-width: 768px) {
+    #chatInput {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        z-index: 1050 !important; /* Higher z-index */
+        padding: 10px 15px !important;
+        /* Ensure it stays above keyboard */
+        padding-bottom: max(env('safe-area-inset-bottom'), 10px) !important;
+    }
+    
+    /* Ensure the input field is visible */
+    #userMessage {
+        font-size: 16px !important; /* Prevents zoom on iOS */
+        min-height: 44px !important; /* iOS touch target size */
+        background-color: #ffffff !important;
+        border: 1px solid #dee2e6 !important;
+        border-radius: 8px !important;
+        z-index: 1051 !important;
+        position: relative !important;
+    }
+    
+    /* Ensure the toolbar wrapper doesn't cover the input */
+    .chat-toolbar-wrapper {
+        z-index: 1049 !important;
+        position: relative !important;
+    }
+    
+    /* Make sure any overlays don't interfere */
+    #suggestionsContainer,
+    #personas-container,
+    #promptContainer,
+    #giftsOverlay {
+        z-index: 1048 !important;
+    }
+}
+
+/* iOS specific fixes */
+@supports (-webkit-touch-callout: none) {
+    @media screen and (max-width: 768px) {
+        #chatInput {
+            /* iOS Safari specific positioning */
+            position: -webkit-sticky !important;
+            position: sticky !important;
+            bottom: 0 !important;
+        }
+        
+        /* Prevent any white divs from covering input */
+        body * {
+            -webkit-overflow-scrolling: touch;
+        }
+    }
+}
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .prompt-image-wrapper {

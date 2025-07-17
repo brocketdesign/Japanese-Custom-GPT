@@ -181,12 +181,10 @@ $(document).ready(async function() {
     }
     
     $('textarea').each(function() {
-        //resizeTextarea(this);
         $(this).on('input change keypress', function(e) {
             if (e.type === 'keypress' && e.which !== 13) {
                 return;
             }
-            resizeTextarea(this);
         });
     });
     
@@ -204,16 +202,6 @@ $(document).ready(async function() {
             sendMessage();
         }
     });     
-
-    $('#userMessage').on('click', function() {
-        resizeTextarea(this);
-    });
-
-    window.resizeTextarea = function(element){
-        return
-        element.style.height = 'auto';
-        element.style.height = (element.scrollHeight) + 'px';  
-    }
 
     function updateParameters(newchatId, newuserId, userChatId){
 
@@ -258,7 +246,6 @@ $(document).ready(async function() {
             setTimeout(() => {
                 $('#userMessage').val('')
                     .attr('placeholder', window.translations.sendMessage);
-                resizeTextarea($('#userMessage')[0]);
             }, 500);
         };
     
@@ -444,11 +431,8 @@ function setupChatInterface(chat, character) {
     }
     updateChatBackgroundImage(thumbnail);
     $('#chat-title').text(chatName);
-    if(user.lang == 'ja'){
-        $('#userMessage').attr('placeholder', `${chatName}${window.translations.sendMessageTo}`);
-    }else{
-        $('#userMessage').attr('placeholder', `${window.translations.sendMessageTo}${chatName}`);
-    }
+    $('#userMessage').attr('placeholder', `${window.translations.sendMessage}`);
+
     const albumLink = $(`<a href="#" onclick="openCharacterModal('${chat._id}',event)"></a>`);
     albumLink.attr('data-bs-toggle', 'tooltip');
     albumLink.attr('title', `${window.translations.album || 'アルバム'}`);
@@ -1376,7 +1360,9 @@ function setupChatInterface(chat, character) {
             data: JSON.stringify({ userId, chatId, userChatId, isHidden, uniqueId }),
             success: function() {
                 // Remove all regenerate buttons from previous messages
-                $('#chatContainer .message-regenerate-btn').remove();
+                $('#chatContainer .message-regenerate-btn').fadeOut(300, function() {
+                    $(this).remove();
+                });
             },
             error: function() {
             console.error('Error: AJAX call failed');

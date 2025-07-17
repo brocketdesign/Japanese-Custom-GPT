@@ -297,24 +297,50 @@ $(document).ready(function() {
         });
 
 
+        // Scroll to last message when focusing on userMessage
+        $('#userMessage').on('focus', function() {
+            const chatContainer = $('#chatContainer');
+            // Scroll to the bottom of the chat container
+            chatContainer[0].scrollTo({
+                top: chatContainer[0].scrollHeight,
+                behavior: 'smooth'
+            });
+        });
+
         // iOS Safari keyboard fix
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         if (isIOS) {
+            let viewportHeight = window.innerHeight;
+            
             // Focus event - when keyboard appears
             $('#userMessage').on('focus', function() {
-                // Save the current scroll position
-                window.scrollPosition = window.pageYOffset;
                 // Add a class to fix the body height
                 $('body').addClass('keyboard-open');
+                viewportHeight = window.innerHeight;
             });
 
             // Blur event - when keyboard disappears
             $('#userMessage').on('blur', function() {
                 // Remove the fixed height class
                 $('body').removeClass('keyboard-open');
-                // Restore scroll position
-                setTimeout(function() {
-                    window.scrollTo(0, window.scrollPosition || 0);
+                
+                // Reset chat input positioning
+                $('#chatInput').css({
+                    'position': '',
+                    'top': '',
+                    'bottom': '',
+                    'z-index': '',
+                    'background-color': '',
+                    'border-radius': '',
+                    'padding': '',
+                    'box-shadow': '',
+                    'margin': ''
+                });
+                
+                // Force viewport recalculation
+                setTimeout(() => {
+                    window.scrollTo(0, 0);
+                    document.body.scrollTop = 0;
                 }, 100);
             });
 
@@ -322,22 +348,17 @@ $(document).ready(function() {
             $('head').append(`
                 <style>
                     body.keyboard-open {
-                        height: 100%;
+                        height: 100vh;
                         position: fixed;
-                        overflow: hidden;
                         width: 100%;
-                    }
-                    
-                    /* Make sure chat container doesn't get hidden behind keyboard */
-                    body.keyboard-open #chat-container {
-                        height: calc(100% - 60px) !important;
+                        overflow: hidden;
                     }
                     
                     /* Ensure the chat input stays visible above the keyboard */
                     body.keyboard-open #chatInput {
                         position: fixed;
                         bottom: auto;
-                        top: 50%; /* Position in the middle of the screen */
+                        top: 50%;
                         z-index: 1050;
                         background-color: rgba(252, 250, 255, 0.95);
                         border-radius: 20px;
@@ -348,26 +369,30 @@ $(document).ready(function() {
                 </style>
             `);
             
-            
             // Add keyboard detection and repositioning
-            let viewportHeight = window.innerHeight;
             window.addEventListener('resize', function() {
                 // If height is smaller, keyboard is likely visible
-                if (window.innerHeight < viewportHeight && $('.keyboard-open').length) {
+                if (window.innerHeight < viewportHeight && $('body').hasClass('keyboard-open')) {
                     // Calculate approximate keyboard height
                     const keyboardHeight = viewportHeight - window.innerHeight;
                     // Position the input above the keyboard with some padding
                     $('#chatInput').css({
                         'top': `calc(100% - ${keyboardHeight + 120}px)`
                     });
-                } else {
+                } else if (window.innerHeight >= viewportHeight && !$('body').hasClass('keyboard-open')) {
+                    // Keyboard disappeared, reset everything
                     viewportHeight = window.innerHeight;
-                    // Reset when keyboard is hidden
-                    if (!$('.keyboard-open').length) {
-                        $('#chatInput').css({
-                            'top': 'auto'
-                        });
-                    }
+                    $('#chatInput').css({
+                        'position': '',
+                        'top': '',
+                        'bottom': '',
+                        'z-index': '',
+                        'background-color': '',
+                        'border-radius': '',
+                        'padding': '',
+                        'box-shadow': '',
+                        'margin': ''
+                    });
                 }
             });
         }

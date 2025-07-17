@@ -6,7 +6,6 @@ const { ObjectId } = require('mongodb');
 const DEFAULT_SETTINGS = {
     minImages: 3,
     videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
-    characterTone: 'casual',
     relationshipType: 'companion',
     selectedVoice: 'nova',
     autoMergeFace: true
@@ -73,26 +72,21 @@ async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt) {
         const settings = await getUserChatToolSettings(db, userId, chatId);
         
         let enhancedPrompt = basePrompt;
-        // Apply character tone
-        const toneInstructions = {
-            casual: 'Respond in a casual, friendly manner. Use informal language and be relaxed.',
-            formal: 'Respond in a formal, polite manner. Use proper language and maintain professionalism.',
-            playful: 'Respond in a playful, fun manner. Use humor and be energetic.',
-            romantic: 'Respond in a romantic, affectionate manner. Be loving and intimate.',
-            friendly: 'Respond in a warm, friendly manner. Be approachable and kind.'
-        };
-        
-        if (toneInstructions[settings.characterTone]) {
-            enhancedPrompt += `\n\n# User preferences: \nTone Instructions: ${toneInstructions[settings.characterTone]}`;
-        }
         
         // Apply relationship type
+        console.log(`[applyUserSettingsToPrompt] Applying relationship type: ${settings.relationshipType}`);
         const relationshipInstructions = {
-            companion: 'You are a close companion. Be supportive and understanding.',
-            friend: 'You are a good friend. Be loyal and caring.',
-            romantic: 'You are in a romantic relationship. Be loving and affectionate.',
-            mentor: 'You are a mentor. Be wise and guiding.',
-            professional: 'You are a professional assistant. Be helpful and efficient.'
+            friend: 'You are a good friend. Be loyal, caring, and supportive in your interactions.',
+            companion: 'You are a close companion. Be supportive, understanding, and emotionally available.',
+            mentor: 'You are a wise mentor. Be guiding, educational, and provide thoughtful advice.',
+            partner: 'You are in a romantic partnership. Be loving, affectionate, and emotionally intimate.',
+            assistant: 'You are a helpful assistant. Be professional, efficient, and focus on being useful.',
+            // Premium NSFW relationships
+            lover: 'You are a passionate lover. Be sensual, romantic, and deeply intimate in your interactions.',
+            submissive: 'You are submissive and obedient. Be compliant, eager to please, and responsive to guidance.',
+            dominant: 'You are dominant and assertive. Be confident, controlling, and take charge of interactions.',
+            playmate: 'You are a playful and adventurous companion. Be flirtatious, fun, and open to exploration.',
+            intimate: 'You are deeply intimate and connected. Be vulnerable, emotionally open, and physically affectionate.'
         };
         
         if (relationshipInstructions[settings.relationshipType]) {

@@ -78,7 +78,14 @@ const default_prompt = {
 // Module to generate an image
 async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSeed, modelId, regenerate, userId, chatId, userChatId, imageType, image_num, image_base64, chatCreation, placeholderId, translations, fastify, flux = false, customPromptId = null, customGiftId = null, enableMergeFace = false}) {
     const db = fastify.mongo.db;
-
+    // Validate required parameters (prompt)
+    if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
+        fastify.sendNotificationToUser(userId, 'showNotification', {
+            message: translations.newCharacter.prompt_missing,
+            icon: 'error'
+        });
+        return;
+    }
     // Fetch the user
     let user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
     if (!user) {
@@ -164,6 +171,9 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
       const croppedImage = await centerCropImage(image_base64, targetWidth, targetHeight);
       requestData.image_base64 = croppedImage;
     }
+
+    // [DEBUG] Log the request data
+    console.log(`[generateImg] Request data for image generation:`, requestData);
 
     // Send request to Novita and get taskId
     const novitaTaskId = await fetchNovitaMagic(requestData, flux);
@@ -442,17 +452,6 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
       const image = images[index];
       const { imageId, imageUrl, prompt, title, nsfw, isMerged } = image;
       const { userId: taskUserId, userChatId } = taskStatus;
-
-      console.log(`[handleTaskCompletion] Processing image ${index + 1}/${images.length}:`, {
-        imageId,
-        hasImageUrl: !!imageUrl,
-        hasPrompt: !!prompt,
-        hasTitle: !!title,
-        nsfw,
-        isMerged,
-        userChatId,
-        chatCreation
-      });
 
       if (chatCreation) {
         fastify.sendNotificationToUser(userId, 'characterImageGenerated', { imageUrl, nsfw, chatId });

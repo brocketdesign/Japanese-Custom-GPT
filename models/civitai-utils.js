@@ -277,13 +277,19 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
     try {
       // API call to the openai-chat-creation endpoint
       const apiUrl = process.env.MODE === 'local' ? 'http://localhost:3000' :  'https://app.chatlamix.com';
-      const apiResponse = await axios.post(`${apiUrl}/api/generate-character-comprehensive`, {
+      const civitaiRequest = {
         userId: user ? user._id : null,
         prompt: promptData.prompt,
+        negativePrompt: promptData.negativePrompt || null,
         language: language,
         system_generated: true,
         nsfw: nsfw,
-      });
+        enableEnhancedPrompt: false,
+      }
+      // [DEBUG] Log the request data
+      console.log(`[civitai/createModelChat] Request data:`, civitaiRequest);
+      
+      const apiResponse = await axios.post(`${apiUrl}/api/generate-character-comprehensive`, civitaiRequest);
 
       const chatData = apiResponse.data.chatData;
       const chatId = apiResponse.data.chatId;
@@ -292,6 +298,7 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
         throw new Error('[civitai/createModelChat] Invalid character data received from API');
       }
       console.log('[civitai/createModelChat] Full character data received from API:', chatData.name);
+      console.log(`[civitai/createModelChat] Chat ID: ${chatId}`);
       try {
         // Update the chatdData with systemGenerated true
         const result = await fastify.mongo.db.collection('chats').updateOne(
@@ -311,34 +318,6 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
         }
       } catch (error) {
         console.error('[civitai/createModelChat] Error updating chat with systemGenerated flag:', error);
-      }
-      try {
-        const imageType = nsfw == 'true' ? 'nsfw' : 'sfw';
-        const imageConfig = {
-          title: chatData.name,
-          prompt: chatData.characterPrompt || promptData.enhancedPrompt,
-          negativePrompt: promptData.negativePrompt,
-          aspectRatio: "portrait",
-          userId: user ? user._id : null,
-          chatId: chatId,
-          userChatId: null,
-          imageType: imageType,
-          image_num: 4, // Generate 2 images for system-generated chats
-          chatCreation: true,
-          placeholderId: chatId.toString(),
-          translations: {
-            newCharacter: {
-              imageCompletionDone_title: 'Character Image Generated',
-              imageCompletionDone_message: 'The character image has been generated successfully.',
-              errorInitiatingImageGeneration: 'Failed to generate character image.'
-            }
-          },
-          fastify
-        };
-        console.log(`[civitai/createModelChat] Generating character image with config:`, imageConfig);
-        generateImg(imageConfig);
-      } catch (error) {
-        console.log('[civitai/createModelChat] Error generating character image:', error);
       }
 
       return { ...chatData, _id: chatId, slug: chatData.slug };

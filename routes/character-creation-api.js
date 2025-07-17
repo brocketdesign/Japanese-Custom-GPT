@@ -231,7 +231,7 @@ async function routes(fastify, options) {
         console.log('[API/generate-character-comprehensive] Starting comprehensive character generation');
         
         try {
-            const { prompt, name, chatPurpose, language: requestLanguage, imageType, image_base64, enableMergeFace } = request.body;
+            const { prompt, negativePrompt = null, name, chatPurpose, language: requestLanguage, imageType, image_base64, enableMergeFace, enableEnhancedPrompt = true } = request.body;
             let gender = request.body.gender || null;
             let chatId = request.body.chatId || request.query.chatId || request.params.chatId || null;
             const userId = request.body.userId || request.user._id;
@@ -246,7 +246,6 @@ async function routes(fastify, options) {
             }
 
             if(!chatId || !ObjectId.isValid(chatId)) {
-                console.log('[API/generate-character-comprehensive] Invalid chatId');
                 const apiUrl = getApiUrl(request);   
                 const checkChat = async (chatCreationId) => {
                     try {
@@ -262,7 +261,7 @@ async function routes(fastify, options) {
                     }
                 };
                 chatId = await checkChat(chatId);
-                console.log(`[API/generate-character-comprehensive] Validated chatId: ${chatId}`);
+                console.log(`[API/generate-character-comprehensive] New chatId created: ${chatId}`);
             }
             // Step 1: Extract details from prompt
             console.log('[API/generate-character-comprehensive] Step 1: Extracting details from prompt');
@@ -294,22 +293,30 @@ async function routes(fastify, options) {
             }
 
             // Step 2: Generate enhanced prompt
-            console.log('[API/generate-character-comprehensive] Step 2: Generating enhanced prompt');
+            let enhancedPrompt = prompt || null;
+            if(enableEnhancedPrompt){
+                console.log('[API/generate-character-comprehensive] Step 2: Generating enhanced prompt');
 
-            const systemPayload = createSystemPayload(prompt, gender, extractedDetails);
-            const enhancedPrompt = await generateCompletion(systemPayload, 600, 'mistral');
-            
-            console.log('[API/generate-character-comprehensive] Enhanced prompt generated:', enhancedPrompt.substring(0, 100) + '...');
+                const systemPayload = createSystemPayload(prompt, gender, extractedDetails);
+                enhancedPrompt = await generateCompletion(systemPayload, 600, 'mistral');
+                
+                console.log('[API/generate-character-comprehensive] Enhanced prompt generated:', enhancedPrompt.substring(0, 100) + '...');
 
-            fastify.sendNotificationToUser(userId, 'showNotification', { 
-                message: request.translations.newCharacter.enhancedPrompt_complete, 
-                icon: 'success' 
-            });
-            
-            fastify.sendNotificationToUser(userId, 'updateEnhancedPrompt', {
-                enhancedPrompt
-            });
-
+                fastify.sendNotificationToUser(userId, 'showNotification', { 
+                    message: request.translations.newCharacter.enhancedPrompt_complete, 
+                    icon: 'success' 
+                });
+                
+                fastify.sendNotificationToUser(userId, 'updateEnhancedPrompt', {
+                    enhancedPrompt
+                });
+            } else {
+                console.log('[API/generate-character-comprehensive] Step 2: Skipping enhanced prompt generation');
+                fastify.sendNotificationToUser(userId, 'showNotification', {
+                    message: request.translations.newCharacter.enhancedPrompt_skipped,
+                    icon: 'info'
+                });
+            }
 
             // Step 2.5: Trigger image generation immediately after enhanced prompt is available
             console.log('[API/generate-character-comprehensive] Step 2.5: Triggering image generation with enhanced prompt');
@@ -324,6 +331,7 @@ async function routes(fastify, options) {
                 console.log(`[API/generate-character-comprehensive] Generating image with enhanced prompt: ${enhancedPrompt.substring(0, 50)}...`);
                 generateImg({
                     prompt: enhancedPrompt,
+                    negativePrompt: negativePrompt || null,
                     userId: userId,
                     chatId: chatId,
                     userChatId: null,

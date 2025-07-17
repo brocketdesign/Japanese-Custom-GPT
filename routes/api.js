@@ -264,6 +264,7 @@ async function routes(fastify, options) {
           if (result.modifiedCount === 1) {
             reply.send({ success: true });
           } else {
+            console.error('Chat not found or not updated:', chatId);
             reply.status(404).send({ error: 'Chat not found or not updated' });
           }
         } catch (error) {

@@ -1660,7 +1660,11 @@ window.displaySimilarChats = function (chatData, targetGalleryIdParam) {
                     ` : ''}
                     ${isPremiumChat ? `<span class="custom-gradient-bg badge bg-gradient-primary mb-1"> ${translations.premium}</span>` : ''}
                     ${(isAdmin) ? `
-                    <button class="btn btn-sm btn-outline-secondary border-0 ${chat.nsfw ? 'nsfw' : ''}" onclick="toggleChatNSFW(this); event.stopPropagation();" data-id="${chat._id}" style="background: #00000050;color: white;padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
+                    <button 
+                    class="btn btn-sm btn-outline-secondary border-0 ${chat.nsfw ? 'nsfw' : ''}" 
+                    onclick="toggleChatNSFW(this); event.stopPropagation();" 
+                    data-id="${chat._id}" 
+                    style="background: #00000050;color: white;padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
                         ${chat.nsfw ? '<i class="bi bi-eye-slash-fill"></i>' : '<i class="bi bi-eye-fill"></i>'}
                     </button>
                     <button class="btn btn-sm btn-danger border-0 ms-1" data-id="${chat._id}" onclick="deleteChat(this); event.stopPropagation();" title="Delete Chat" style="padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
@@ -1893,9 +1897,9 @@ window.toggleChatNSFW = function(el) {
     success: function () {
       // Show success notification in Japanese
       if (nsfwStatus) {
-        showNotification('NSFWに設定されました！', 'success');
+        showNotification(window.translations.setNsfw, 'success');
       } else {
-        showNotification('NSFW設定が解除されました！', 'success');
+        showNotification(window.translations.unsetNsfw, 'success');
       }
     },
     error: function () {
@@ -1903,7 +1907,7 @@ window.toggleChatNSFW = function(el) {
       $this.html(isNSFW 
         ? '<i class="bi bi-eye-fill"></i>' 
         : '<i class="bi bi-eye-slash-fill"></i>'); // Revert the icon as well
-      showNotification('リクエストに失敗しました。', 'error');
+      showNotification(window.translations.errorOccurred, 'error');
     }
   });
 }

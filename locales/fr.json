@@ -1,5 +1,7 @@
 {
   "lang": "fr",
+  "setNsfw": "Définir comme NSFW",
+  "unsetNsfw": "Définir comme non NSFW",
   "browseByCategory": "Parcourir par catégorie",
   "scrollForMore": "Faites défiler pour plus de personnages",
   "exploreRestriction": "Passez à la version supérieure pour explorer les personnages NSFW",
@@ -55,7 +57,12 @@
       "companion": "Compagnon",
       "mentor": "Mentor",
       "partner": "Partenaire",
-      "assistant": "Assistant"
+      "assistant": "Assistant",
+      "lover": "Amant",
+      "submissive": "Soumis",
+      "dominant": "Dominant",
+      "playmate": "Camarade de jeu",
+      "intimate": "Intime"
     },
     "voices": {
       "nova": {
@@ -1088,6 +1095,8 @@
   "next": "Suivant",
   "prev": "Précédent",
   "newCharacter": {
+    "prompt_missing": "Veuillez fournir une invite pour générer l'image.",
+    "enhancedPrompt_skipped": "Invite améliorée sautée. Vous pouvez toujours la générer plus tard.",
     "character_analysis_complete": "Analyse du personnage terminée avec succès !",
     "character_analysis_error": "Erreur lors de l'analyse du personnage. Veuillez réessayer.",
     "enhancedPrompt_complete": "Invite améliorée générée avec succès !",

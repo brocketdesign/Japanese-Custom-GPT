@@ -1,5 +1,7 @@
 {
   "lang": "ja",
+  "setNsfw": "NSFWに設定",
+  "unsetNsfw": "NSFWから解除",
   "browseByCategory": "カテゴリで探す",
   "scrollForMore": "さらにキャラクターを見るにはスクロールしてください",
   "exploreRestriction": "NSFWキャラクターを探索するにはアップグレードしてください",
@@ -55,7 +57,12 @@
       "companion": "仲間",
       "mentor": "メンター",
       "partner": "パートナー",
-      "assistant": "アシスタント"
+      "assistant": "アシスタント",
+      "lover": "恋人",
+      "submissive": "従順",
+      "dominant": "支配的",
+      "playmate": "遊び仲間",
+      "intimate": "親密"
     },
     "voices": {
       "nova": {
@@ -1139,6 +1146,8 @@
   "next": "次へ",
   "prev": "前へ",
   "newCharacter": {
+    "prompt_missing": "プロンプトが必要です",
+    "enhancedPrompt_skipped":  "強化プロンプトをスキップしました。",
     "character_analysis_complete": "キャラクター分析が完了しました！",
     "character_analysis_error": "キャラクター分析中にエラーが発生しました。再試行してください。",
     "enhancedPrompt_complete": "強化プロンプトが正常に生成されました！",

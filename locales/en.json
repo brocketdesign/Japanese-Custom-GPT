@@ -1,5 +1,7 @@
 {
   "lang": "en",
+  "setNsfw": "Set as NSFW",
+  "unsetNsfw": "Unset NSFW",
   "browseByCategory": "Browse by Category",
   "scrollForMore": "Scroll for more characters",
   "exploreRestriction": "Upgrade to explore NSFW characters",
@@ -106,7 +108,12 @@
       "companion": "Companion",
       "mentor": "Mentor",
       "partner": "Partner",
-      "assistant": "Assistant"
+      "assistant": "Assistant",
+      "lover": "Lover",
+      "submissive": "Submissive",
+      "dominant": "Dominant",
+      "playmate": "Playmate",
+      "intimate": "Intimate"
     },
     "voices": {
       "Thandiwe": {
@@ -1160,6 +1167,8 @@
   "next": "Next",
   "prev": "Previous",
   "newCharacter": {
+    "prompt_missing": "Please enter a prompt for the character.",
+    "enhancedPrompt_skipped": "Enhanced prompt generation skipped.",
     "character_analysis_complete": "Character analysis completed successfully!",
     "character_analysis_error": "Error during character analysis. Please try again.",
     "enhancedPrompt_complete": "Enhanced prompt generated successfully!",

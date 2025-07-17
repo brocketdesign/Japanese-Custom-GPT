@@ -3,7 +3,6 @@ class ChatToolSettings {
         this.settings = {
             minImages: 3,
             videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
-            characterTone: 'casual',
             relationshipType: 'companion',
             selectedVoice: 'nova',
             voiceProvider: 'openai',
@@ -65,11 +64,6 @@ class ChatToolSettings {
             resetBtn.addEventListener('click', () => this.resetSettings());
         }
 
-        // Tone selection
-        document.querySelectorAll('.settings-tone-option').forEach(option => {
-            option.addEventListener('click', () => this.selectTone(option));
-        });
-
         // Voice selection
         document.querySelectorAll('.settings-voice-option').forEach(option => {
             option.addEventListener('click', () => this.selectVoice(option));
@@ -79,6 +73,13 @@ class ChatToolSettings {
         document.addEventListener('click', (e) => {
             if (e.target.closest('.settings-evenlab-voice-option')) {
                 this.selectEvenLabVoice(e.target.closest('.settings-evenlab-voice-option'));
+            }
+        });
+
+        // Relationship tone selection - Use event delegation
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.settings-tone-option')) {
+                this.selectRelationshipTone(e.target.closest('.settings-tone-option'));
             }
         });
 
@@ -154,19 +155,6 @@ class ChatToolSettings {
         }
     }
 
-    selectTone(selectedOption) {
-        // Remove selected class from all tone options
-        document.querySelectorAll('.settings-tone-option').forEach(option => {
-            option.classList.remove('selected');
-        });
-        
-        // Add selected class to clicked option
-        selectedOption.classList.add('selected');
-        
-        // Update settings
-        this.settings.characterTone = selectedOption.dataset.tone;
-    }
-
     selectVoice(selectedOption) {
         // Remove selected class from all voice options
         document.querySelectorAll('.settings-voice-option').forEach(option => {
@@ -195,6 +183,41 @@ class ChatToolSettings {
         console.log('EvenLab voice selected:', this.settings.evenLabVoice);
     }
 
+    selectRelationshipTone(selectedOption) {
+        // Check if this is a premium relationship and user is not premium
+        const isPremiumRelationship = selectedOption.classList.contains('premium-relationship');
+        const isNSFW = selectedOption.dataset.nsfw === 'true';
+        
+        if (isPremiumRelationship || isNSFW) {
+            // Check user subscription status
+            const user = window.user || {};
+            const subscriptionStatus = user.subscriptionStatus === 'active';
+            
+            if (!subscriptionStatus) {
+                // Launch plan page for non-premium users
+                if (typeof loadPlanPage === 'function') {
+                    loadPlanPage();
+                } else {
+                    // Fallback redirect
+                    window.location.href = '/plan';
+                }
+                return;
+            }
+        }
+        
+        // Remove selected class from all relationship tone options
+        document.querySelectorAll('.settings-tone-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked option
+        selectedOption.classList.add('selected');
+        
+        // Update settings
+        this.settings.relationshipType = selectedOption.dataset.relationship;
+        
+        console.log('Relationship tone selected:', this.settings.relationshipType);
+    }
 
     async loadEvenLabVoices() {
         try {
@@ -464,11 +487,6 @@ class ChatToolSettings {
             videoPrompt.value = this.settings.videoPrompt;
         }
 
-        // Update tone selection
-        document.querySelectorAll('.settings-tone-option').forEach(option => {
-            option.classList.toggle('selected', option.dataset.tone === this.settings.characterTone);
-        });
-
         // Update voice selection
         document.querySelectorAll('.settings-voice-option').forEach(option => {
             option.classList.toggle('selected', option.dataset.voice === this.settings.selectedVoice);
@@ -477,6 +495,29 @@ class ChatToolSettings {
         // Update EvenLab voice selection
         document.querySelectorAll('.settings-evenlab-voice-option').forEach(option => {
             option.classList.toggle('selected', option.dataset.voice === this.settings.evenLabVoice);
+        });
+
+        // Update relationship tone selection with premium check
+        const user = window.user || {};
+        const subscriptionStatus = user.subscriptionStatus === 'active';
+        
+        document.querySelectorAll('.settings-tone-option').forEach(option => {
+            const isSelected = option.dataset.relationship === this.settings.relationshipType;
+            const isPremiumRelationship = option.classList.contains('premium-relationship');
+            
+            // Apply selection state
+            option.classList.toggle('selected', isSelected);
+            
+            // Disable premium relationships for non-premium users
+            if (isPremiumRelationship && !subscriptionStatus) {
+                option.classList.add('disabled');
+                option.style.opacity = '0.5';
+                option.style.cursor = 'pointer'; // Keep cursor pointer to trigger upgrade
+            } else {
+                option.classList.remove('disabled');
+                option.style.opacity = '1';
+                option.style.cursor = 'pointer';
+            }
         });
 
         // Update voice provider switch
@@ -583,10 +624,6 @@ class ChatToolSettings {
 
     getVideoPrompt() {
         return this.settings.videoPrompt;
-    }
-
-    getCharacterTone() {
-        return this.settings.characterTone;
     }
 
     getRelationshipType() {

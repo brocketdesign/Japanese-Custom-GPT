@@ -308,47 +308,53 @@
                               placeholder="{{translations.settings.videoPromptPlaceholder}}">{{translations.settings.defaultVideoPromptText}}</textarea>
                 </div>
             </div>
-
-            <!-- Tone & Relationship Settings -->
+            <!-- Relationship Settings (New Design) -->
             <div class="settings-section">
                 <div class="settings-section-title">
                     <i class="bi bi-heart"></i>
-                    {{translations.settings.characterTone}}
+                    {{translations.settings.relationshipType}}
                 </div>
                 <div class="settings-field">
-                    <label class="settings-label">{{translations.settings.characterToneLabel}}</label>
+                    <label class="settings-label">{{translations.settings.relationshipTypeLabel}}</label>
                     <div class="settings-tone-grid">
-                        <div class="settings-tone-option" data-tone="friendly">
-                            😊 {{translations.settings.tones.friendly}}
+                        <div class="settings-tone-option" data-relationship="friend">
+                            😊 {{translations.settings.relationships.friend}}
                         </div>
-                        <div class="settings-tone-option selected" data-tone="casual">
-                            😎 {{translations.settings.tones.casual}}
+                        <div class="settings-tone-option selected" data-relationship="companion">
+                            😎 {{translations.settings.relationships.companion}}
                         </div>
-                        <div class="settings-tone-option" data-tone="professional">
-                            💼 {{translations.settings.tones.professional}}
+                        <div class="settings-tone-option" data-relationship="mentor">
+                            💼 {{translations.settings.relationships.mentor}}
                         </div>
-                        <div class="settings-tone-option" data-tone="playful">
-                            😜 {{translations.settings.tones.playful}}
+                        <div class="settings-tone-option" data-relationship="partner">
+                            ❤️ {{translations.settings.relationships.partner}}
                         </div>
-                        <div class="settings-tone-option" data-tone="romantic">
-                            ❤️ {{translations.settings.tones.romantic}}
+                        <div class="settings-tone-option" data-relationship="assistant">
+                            🤖 {{translations.settings.relationships.assistant}}
                         </div>
-                        <div class="settings-tone-option" data-tone="mysterious">
-                            🌙 {{translations.settings.tones.mysterious}}
+                        
+                        <!-- Premium NSFW Relationships -->
+                        <div class="settings-tone-option premium-relationship" data-relationship="lover" data-nsfw="true">
+                            💋 {{translations.settings.relationships.lover}}
+                            <i class="bi bi-crown-fill premium-icon"></i>
+                        </div>
+                        <div class="settings-tone-option premium-relationship" data-relationship="submissive" data-nsfw="true">
+                            🔒 {{translations.settings.relationships.submissive}}
+                            <i class="bi bi-crown-fill premium-icon"></i>
+                        </div>
+                        <div class="settings-tone-option premium-relationship" data-relationship="dominant" data-nsfw="true">
+                            ⚡ {{translations.settings.relationships.dominant}}
+                            <i class="bi bi-crown-fill premium-icon"></i>
+                        </div>
+                        <div class="settings-tone-option premium-relationship" data-relationship="playmate" data-nsfw="true">
+                            🎭 {{translations.settings.relationships.playmate}}
+                            <i class="bi bi-crown-fill premium-icon"></i>
+                        </div>
+                        <div class="settings-tone-option premium-relationship" data-relationship="intimate" data-nsfw="true">
+                            🌹 {{translations.settings.relationships.intimate}}
+                            <i class="bi bi-crown-fill premium-icon"></i>
                         </div>
                     </div>
-                </div>
-                <div class="settings-field">
-                    <label class="settings-label" for="relationship-select">
-                        {{translations.settings.relationshipType}}
-                    </label>
-                    <select id="relationship-select" class="settings-select">
-                        <option value="friend">{{translations.settings.relationships.friend}}</option>
-                        <option value="companion" selected>{{translations.settings.relationships.companion}}</option>
-                        <option value="mentor">{{translations.settings.relationships.mentor}}</option>
-                        <option value="partner">{{translations.settings.relationships.partner}}</option>
-                        <option value="assistant">{{translations.settings.relationships.assistant}}</option>
-                    </select>
                 </div>
             </div>
 

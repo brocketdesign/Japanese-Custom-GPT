@@ -1,6 +1,6 @@
 {
   "lang": "ja",
-  "chat_goal_completed": "チャット目標が達成されました",
+  "chat_goal_completed": "チャット目標が達成されました, {{points}} ポイントを獲得しました！",
   "setNsfw": "NSFWに設定",
   "unsetNsfw": "NSFWから解除",
   "browseByCategory": "カテゴリで探す",

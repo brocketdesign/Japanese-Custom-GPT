@@ -809,10 +809,10 @@ async function routes(fastify, options) {
                     { $inc: { completionCount: 1 } },
                     { upsert: true }
                 );
-                // Send notification to user
-                fastify.sendNotificationToUser(userId, 'showNotification', { message: request.translations.chat_goal_completed, icon: 'success' });
                 // Reward user points based on the goal difficulty
                 const rewardPoints = chatGoal.difficulty === 'easy' ? 100 : chatGoal.difficulty === 'medium' ? 200 : 300;
+                // Send notification to user
+                fastify.sendNotificationToUser(userId, 'showNotification', { message: request.translations.chat_goal_completed.replace('{{points}}', rewardPoints), icon: 'success' });
                 await addUserPoints(db, userId, rewardPoints, request?.userPointsTranslations.points?.reward_reasons?.goal_completion || 'Goal completion reward', 'goal_completion', fastify);
                 console.log(`[/api/openai-chat-completion] User rewarded ${rewardPoints} points for goal completion`);
                 // Generate new goal

@@ -696,9 +696,7 @@ window.toggleImageFavorite = function(el) {
       localStorage.removeItem(cacheKey);
 
       if(chatId && chatId !== 'null') {
-        // delete the local storage item chatImages_${chatId}
-        const cacheKeyImages = `chatImages_${chatId}`
-        localStorage.removeItem(cacheKeyImages);
+        clearChatImageCache(chatId);
       }
     },
     error: function() {

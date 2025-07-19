@@ -57,7 +57,6 @@ function saveCacheToStorage(chatId, pages, currentPage, totalPages) {
 window.loadChatImages = function(chatId, page = 1, reload = false, isModal = false) {
     const manager = window.chatImageManager;
     const cacheKey = `chat_${chatId}`;
-    
     // Initialize chat state if not exists
     if (!manager.cache.has(cacheKey)) {
         manager.cache.set(cacheKey, new Map());

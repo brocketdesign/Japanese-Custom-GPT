@@ -220,7 +220,6 @@ $(document).ready(function() {
         // Toggle text input view
         $('#text-input-toggle').on('click', function() {
             showToolContentView('toolbar-text-input');
-            resizeTextarea($('#userMessage')[0]);
         });
         
         // Handle back buttons for all tool content views

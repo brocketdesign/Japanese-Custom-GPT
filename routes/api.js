@@ -892,9 +892,10 @@ async function routes(fastify, options) {
                             fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'show' })
                         }
                         const imageType = genImage.nsfw ? 'nsfw' : 'sfw'
+                        let prompt = '';
                         createPrompt(lastUserMessage.content, characterDescription, imageType)
                             .then(async(promptResponse) => {
-                            let prompt = promptResponse.replace(/(\r\n|\n|\r)/gm, " ").trim();
+                            prompt = promptResponse.replace(/(\r\n|\n|\r)/gm, " ").trim();
                             console.log(`[/api/openai-chat-completion] Generated prompt: ${prompt}`);
                             processPromptToTags(db,prompt);
                             const aspectRatio = null
@@ -904,7 +905,7 @@ async function routes(fastify, options) {
                                 console.log('error:', error);
                             });
                         })
-                        imgMessage[0].content = `\n\nI activated the image generation feature for my last message.\n The image will be generated shortly.`.trim()
+                        imgMessage[0].content = `\n\nI activated the image generation feature for this prompt : ${prompt}.\n The image will be generated shortly.`.trim()
                         currentUserMessage.name = 'context'
                     }
                 

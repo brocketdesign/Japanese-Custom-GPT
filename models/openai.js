@@ -498,8 +498,8 @@ const chatGoalSchema = z.object({
   goal_type: z.enum(['relationship', 'activity', 'image request']),
   goal_description: z.string(),
   completion_condition: z.string(),
-  target_phrase: z.string().optional().nullable(),
-  user_action_required: z.string().optional(),
+  target_phrase: z.string().nullable(),
+  user_action_required: z.string().nullable(),
   difficulty: z.enum(['easy', 'medium', 'hard']),
   estimated_messages: z.number().min(1).max(20),
 });
@@ -562,7 +562,7 @@ Consider the character's personality, background, and interests when creating th
   } catch (error) {
     console.log('Chat goal generation error:', error);
     return chatGoalSchema.partial().parse({
-      goal_type: 'conversation',
+      goal_type: 'relationship',
       goal_description: 'Have a friendly conversation',
       completion_condition: 'Exchange at least 3 meaningful messages',
       difficulty: 'easy',

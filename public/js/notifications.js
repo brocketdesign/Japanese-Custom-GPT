@@ -62,7 +62,7 @@ window.showNotification = (message, type = 'info') => {
                 flex-direction: column;
                 align-items: flex-end;
                 padding: 10px;
-                gap: 8px;
+                gap: 4px;
                 max-width: 380px;
             }
             
@@ -127,7 +127,7 @@ window.showNotification = (message, type = 'info') => {
 
     // Calculate the stacking offset
     const existingToasts = toastContainer.querySelectorAll('.notification-toast');
-    const stackOffset = existingToasts.length * 10; // Adjust the multiplier for desired spacing
+    const stackOffset = existingToasts.length * 5; // Reduced from 10 to 5 for closer spacing
 
     // Apply initial animation and stacking offset
     toastElement.style.transform = `translateY(${stackOffset + 20}px)`;
@@ -137,8 +137,8 @@ window.showNotification = (message, type = 'info') => {
         toastElement.style.opacity = 1;
     }, 50);
 
-    // Limit the number of visible notifications (keep max 5)
-    if (existingToasts.length >= 5) {
+    // Limit the number of visible notifications (keep max 2)
+    if (existingToasts.length >= 2) {
         const oldestToast = existingToasts[0];
         oldestToast.classList.add('hiding');
         setTimeout(() => {
@@ -187,7 +187,7 @@ window.showNotification = (message, type = 'info') => {
     function adjustStacking(container) {
         const toasts = container.querySelectorAll('.notification-toast:not(.hiding)');
         toasts.forEach((toast, index) => {
-            const newOffset = index * 10;
+            const newOffset = index * 5; // Reduced from 10 to 5 for closer spacing
             toast.style.transform = `translateY(${newOffset}px)`;
         });
     }

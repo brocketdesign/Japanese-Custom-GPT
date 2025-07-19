@@ -188,7 +188,8 @@ window.displayOrRemoveImageLoader = function (imageId, action, imagePreview) {
 
 const sentImageIds = new Set();
 window.generateImage = async function(data) {
-    
+    console.log('[generateImage] Last chat ID:', sessionStorage.getItem('lastChatId'));
+    console.log(`[generateImage] Data received:`, data);
     // Validate essential data
     if (!data || !data.userChatId || (!data.imageUrl && !data.url)) {
         console.error('[generateImage] Missing essential data:', {

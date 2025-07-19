@@ -103,6 +103,9 @@
       "credit": "Earned",
       "debit": "Spent"
     },
+    "reward_reasons": {
+      "goal_completion": "Goal Completion"
+    },
     "sources": {
       "system": "System",
       "chat": "Chat Activity",

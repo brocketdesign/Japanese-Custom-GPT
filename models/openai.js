@@ -493,6 +493,134 @@ async function createPrompt(customPrompt, imageDescription, nsfw) {
   return response;
 }
 
+// Define the schema for chat goal generation
+const chatGoalSchema = z.object({
+  goal_type: z.enum(['conversation', 'relationship', 'activity', 'request']),
+  goal_description: z.string(),
+  completion_condition: z.string(),
+  target_phrase: z.string().optional(),
+  user_action_required: z.string().optional(),
+  difficulty: z.enum(['easy', 'medium', 'hard']),
+  estimated_messages: z.number().min(1).max(20),
+});
+
+// Function to generate chat goals based on character and persona
+const generateChatGoal = async (chatDescription, personaInfo = null, language = 'en') => {
+  try {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    
+    const personaContext = personaInfo ? 
+      `\nUser Persona: ${personaInfo.name} - ${personaInfo.short_intro || 'No description available'}` : '';
+    
+    const systemPrompt = `You are a chat goal generator that creates engaging conversation objectives for AI character interactions.
+    
+    Generate a specific, achievable goal for the conversation based on the character description and user context.
+    Goals should be:
+    - Engaging and fun
+    - Appropriate for the character's personality
+    - Achievable within a reasonable number of messages
+    - Clear in their completion criteria
+    
+    Goal types:
+    - conversation: General chat topics or discussions
+    - relationship: Building rapport, getting closer, learning about each other
+    - activity: Doing something together (games, roleplay, etc.)
+    - request: User needs to ask for something specific
+    
+    Respond in ${language}.`;
+
+    const userPrompt = `Character Description:
+${chatDescription}${personaContext}
+
+Generate a chat goal that would be interesting and engaging for this character interaction.
+Consider the character's personality, background, and interests when creating the goal.`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      response_format: zodResponseFormat(chatGoalSchema, "chat_goal"),
+      max_tokens: 600,
+      temperature: 0.8,
+      top_p: 0.9,
+    });
+
+    const goal = JSON.parse(response.choices[0].message.content);
+    return goal;
+
+  } catch (error) {
+    console.log('Chat goal generation error:', error);
+    return chatGoalSchema.partial().parse({
+      goal_type: 'conversation',
+      goal_description: 'Have a friendly conversation',
+      completion_condition: 'Exchange at least 3 meaningful messages',
+      difficulty: 'easy',
+      estimated_messages: 5
+    });
+  }
+};
+
+// Function to check if a goal is achieved
+const checkGoalCompletion = async (goal, messages, language = 'en') => {
+  if (!goal || !messages || messages.length === 0) {
+    return { completed: false, confidence: 0 };
+  }
+
+  try {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    
+    // Get recent conversation messages (last 10)
+    const recentMessages = messages
+      .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system')
+      .slice(-10)
+      .map(m => `${m.role}: ${m.content}`)
+      .join('\n');
+
+    const systemPrompt = `You are a goal completion analyzer. Determine if the conversation goal has been achieved based on the messages.
+    
+    Return a JSON object with:
+    - completed: boolean (true if goal is achieved)
+    - confidence: number (0-100, how confident you are)
+    - reason: string (brief explanation)`;
+
+    const userPrompt = `Goal: ${goal.goal_description}
+Completion Condition: ${goal.completion_condition}
+${goal.target_phrase ? `Target Phrase: ${goal.target_phrase}` : ''}
+${goal.user_action_required ? `Required User Action: ${goal.user_action_required}` : ''}
+
+Recent Conversation:
+${recentMessages}
+
+Has this goal been completed?`;
+
+    const completionSchema = z.object({
+      completed: z.boolean(),
+      confidence: z.number().min(0).max(100),
+      reason: z.string()
+    });
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      response_format: zodResponseFormat(completionSchema, "goal_completion"),
+      max_tokens: 300,
+      temperature: 0.3,
+    });
+
+    const result = JSON.parse(response.choices[0].message.content);
+    return result;
+
+  } catch (error) {
+    console.log('Goal completion check error:', error);
+    return { completed: false, confidence: 0, reason: 'Error checking completion' };
+  }
+};
+
 module.exports = {
     generateCompletion,
     checkImageRequest,
@@ -502,4 +630,6 @@ module.exports = {
     moderateImage,
     createPrompt,
     generatePromptSuggestions,
+    generateChatGoal,
+    checkGoalCompletion,
 }

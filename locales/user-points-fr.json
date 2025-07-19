@@ -100,6 +100,9 @@
       "credit": "Gagné",
       "debit": "Dépensé"
     },
+    "reward_reasons": {
+      "goal_completion": "Achèvement de l'objectif"
+    },
     "sources": {
       "system": "Système",
       "chat": "Activité de chat",

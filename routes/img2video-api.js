@@ -270,11 +270,9 @@ async function img2videoRoutes(fastify) {
      * Get background video tasks for a specific user chat
      */
     fastify.get('/api/background-video-tasks/:userChatId', async (request, reply) => {
-        console.log('[img2video] GET /api/background-video-tasks/:userChatId called');
         try {
             const { userChatId } = request.params;
             const userId = request?.user?._id;
-            console.log(`[img2video] Fetching background tasks for userChatId: ${userChatId}, userId: ${userId}`);
 
             if (!userId) {
                 console.warn('[img2video] Unauthorized access attempt');
@@ -303,12 +301,10 @@ async function img2videoRoutes(fastify) {
      * Get user's generated videos
      */
     fastify.get('/api/user-videos/:userId', async (request, reply) => {
-        console.log('[img2video] GET /api/user-videos/:userId called');
         try {
             const { userId: targetUserId } = request.params;
             const currentUserId = request?.user?._id;
             const { page = 1, limit = 20 } = request.query;
-            console.log(`[img2video] Fetching videos for userId: ${targetUserId}, requested by: ${currentUserId}, page: ${page}, limit: ${limit}`);
 
             if (!currentUserId) {
                 console.warn('[img2video] Unauthorized access attempt');

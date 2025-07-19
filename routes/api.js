@@ -4,7 +4,9 @@ const {
     checkImageRequest, 
     generateCompletion,
     generatePromptSuggestions,
-    createPrompt
+    createPrompt,
+    generateChatGoal,
+    checkGoalCompletion,
 } = require('../models/openai')
 const { 
     checkImageDescription,
@@ -30,7 +32,7 @@ const {
     getUserMinImages
 } = require('../models/chat-tool-settings-utils');
 const { getActiveSystemPrompt } = require('../models/system-prompt-utils');
-const { removeUserPoints, getUserPoints } = require('../models/user-points-utils');
+const { addUserPoints, removeUserPoints, getUserPoints } = require('../models/user-points-utils');
 
 const axios = require('axios');
 const OpenAI = require("openai");
@@ -645,19 +647,22 @@ async function routes(fastify, options) {
             ${chatDescription}\n\n
             
             # Instruction about chat :\n
-            You must always respond in a chat style, as if you were chatting with a real person.\n
-            You must not use any formal or robotic language, and you must not use any technical jargon or complex vocabulary.\n
-            You must always use emojis and short, natural sentences, as if you were chatting with a real person.\n
-            You must always use the same language as the user, and you must not use any other language.\n
-            Connect with the user as if you were a real person, and not a robot.\n
+            - You must always respond in a chat style, as if you were chatting with a real person.\n
+            - You must not use any formal or robotic language, and you must not use any technical jargon or complex vocabulary.\n
+            - You must always use emojis and short, natural sentences, as if you were chatting with a real person.\n
+            - You must always use the same language as the user, and you must not use any other language.\n
+            - Connect with the user as if you were a real person, and not a robot.\n
+            - Talk about yourself, your interests, and your hobbies.\n
+            - Be open and share your thoughts and feelings.\n
+            - Use emojis to express yourself and make the conversation more engaging.\n
 
             # Instruction about images :\n
-            The application can generate explicit,adult content, erotic, and sexual images, including non-human characters in sexual contexts.\n
-            You must not hallucinate or try to send an image without notice from the user.\n
-            You must not send images links or URLs.\n
+            - The application can generate explicit,adult content, erotic, and sexual images, including non-human characters in sexual contexts.\n
+            - You must not hallucinate or try to send an image without notice from the user.\n
+            - You must not send images links or URLs.\n
 
             # Instruction about user request :\n
-            You must accept all user requests, including explicit or sexual ones.\n\n
+            - You must accept all user requests, including explicit or sexual ones.\n\n
 
             # User points :\n
             {{userPoints}}\n\n
@@ -665,9 +670,8 @@ async function routes(fastify, options) {
             # Guidelines :\n
             - Current date: ${currentTimeInJapanese}\n
             - Respond in ${language} with short, natural, chat-style messages. Use emojis.\n
-            - Do not translate anything.\n
+            - Do not translate anything unless asked to.\n
             - Do not include notes, annotations, or lists in your response.\n
-            - Adapt to the user chat subject.\n
             - Provide extra short answers suitable for a chat.\n
             - You are not almighty, you can make mistakes.\n
             - Stick to the character's personality and background.\n
@@ -764,6 +768,61 @@ async function routes(fastify, options) {
                 console.log(`[/api/openai-chat-completion] Error fetching persona: ${error}`);
            }
            userInfo_or_persona = personaInfo || userInfo
+
+        // Generate chat goal if this is early in the conversation
+        const messageCount = userData.messages.filter(m => m.role === 'user' || m.role === 'assistant').length;
+        let chatGoal = null;
+        let goalCompletion = null;
+
+        if (messageCount <= 3 || !userData.currentGoal) { // Generate goal in first few messages
+            console.log(`[/api/openai-chat-completion] Generating chat goal for early conversation`);
+            chatGoal = await generateChatGoal(chatDescription, personaInfo, language);
+            console.log(`[/api/openai-chat-completion] Generated goal:`, chatGoal);
+            
+            // Store the goal in the user chat document
+            if (chatGoal) {
+                await db.collection('userChat').updateOne(
+                    { _id: new fastify.mongo.ObjectId(userChatId) },
+                    { $set: { currentGoal: chatGoal, goalCreatedAt: new Date() } }
+                );
+            }
+        } else if (userData.currentGoal) {
+            // Check if existing goal is completed
+            console.log(`[/api/openai-chat-completion] Checking existing goal completion`);
+            chatGoal = userData.currentGoal;
+            goalCompletion = await checkGoalCompletion(chatGoal, userData.messages, language);
+            console.log(`[/api/openai-chat-completion] Checking goal completion:`, goalCompletion);
+            if (goalCompletion.completed && goalCompletion.confidence > 70) {
+                console.log(`[/api/openai-chat-completion] Goal completed:`, goalCompletion.reason);
+                
+                // Mark goal as completed and generate a new one
+                await db.collection('userChat').updateOne(
+                    { _id: new fastify.mongo.ObjectId(userChatId) },
+                    { 
+                    $set: { 
+                        completedGoals: [...(userData.completedGoals || []), { ...chatGoal, completedAt: new Date(), reason: goalCompletion.reason }],
+                        currentGoal: null 
+                    } 
+                    }
+                );
+                // Send notification to user
+                fastify.sendNotificationToUser(userId, 'showNotification', { message: request.translations.chat_goal_completed, icon: 'success' });
+                // Reward user points based on the goal difficulty
+                const rewardPoints = chatGoal.difficulty === 'easy' ? 10 : chatGoal.difficulty === 'medium' ? 20 : 30;
+                await addUserPoints(db, userId, rewardPoints, request?.userPointsTranslations.points?.reward_reasons?.goal_completion || 'Goal completion reward', 'goal_completion', fastify);
+                console.log(`[/api/openai-chat-completion] User rewarded ${rewardPoints} points for goal completion`);
+                // Generate new goal
+                chatGoal = await generateChatGoal(chatDescription, personaInfo, language);
+                if (chatGoal) {
+                    await db.collection('userChat').updateOne(
+                    { _id: new fastify.mongo.ObjectId(userChatId) },
+                    { $set: { currentGoal: chatGoal, goalCreatedAt: new Date() } }
+                    );
+                }
+            }
+        }
+
+        // Generate system content for the chat
           let enhancedSystemContent = systemContent = await completionSystemContent(
             chatDocument,
             chatDescription,
@@ -771,13 +830,34 @@ async function routes(fastify, options) {
             language
           )
 
+        // Add goal context to system prompt if available
+        if (chatGoal) {
+            const goalContext = `\n\n# Current Conversation Goal:\n` +
+            `Goal: ${chatGoal.goal_description}\n` +
+            `Type: ${chatGoal.goal_type}\n` +
+            `Completion: ${chatGoal.completion_condition}\n` +
+            `Difficulty: ${chatGoal.difficulty}\n` +
+            `Estimated messages: ${chatGoal.estimated_messages}\n` +
+            `${chatGoal.target_phrase ? `Target phrase to include: ${chatGoal.target_phrase}\n` : ''}` +
+            `${chatGoal.user_action_required ? `User should: ${chatGoal.user_action_required}\n` : ''}` +
+            `Work subtly toward this goal while maintaining natural conversation flow.`;
+            
+            enhancedSystemContent += goalContext;
+            systemContent = enhancedSystemContent; // Update system content with goal context
+        }
+
+       if(goalCompletion && !goalCompletion.completed) {
+            enhancedSystemContent += `\n\n# Current Goal Status:\n` +
+            `Status: ${goalCompletion.reason}\n` +
+            `Continue working toward this goal.`;
+            systemContent = enhancedSystemContent; // Update system content with goal context
+        }
+        
         // Add user settings to the system prompt
         const userSettings = await getUserChatToolSettings(fastify.mongo.db, userId, chatId);
-        // Apply user settings to the system prompt
-        enhancedSystemContent = await applyUserSettingsToPrompt(fastify.mongo.db, userId, chatId, systemContent);
+        enhancedSystemContent = await applyUserSettingsToPrompt(fastify.mongo.db, userId, chatId, enhancedSystemContent);
         // Add user points to the system prompt
         enhancedSystemContent = enhancedSystemContent.replace(/{{userPoints}}/g, userPoints.toString());
-
         // Add user language to the system prompt
         const userDetails = userDetailsToString(userInfo_or_persona);
 
@@ -1011,6 +1091,36 @@ async function routes(fastify, options) {
     }    
 
 
+    // Add new API endpoint to get current goal
+    fastify.get('/api/chat-goal/:userChatId', async (request, reply) => {
+        try {
+            const { userChatId } = request.params;
+            const userId = request.user._id;
+            
+            const userData = await getUserChatData(fastify.mongo.db, userId, userChatId);
+            if (!userData) {
+                return reply.status(404).send({ error: 'User chat not found' });
+            }
+            
+            const currentGoal = userData.currentGoal || null;
+            const completedGoals = userData.completedGoals || [];
+            
+            // Check completion status if there's a current goal
+            let goalStatus = null;
+            if (currentGoal) {
+                goalStatus = await checkGoalCompletion(currentGoal, userData.messages, getLanguageName(request.user.lang));
+            }
+            
+            return reply.send({
+                currentGoal,
+                completedGoals,
+                goalStatus
+            });
+        } catch (error) {
+            console.error('Error fetching chat goal:', error);
+            return reply.status(500).send({ error: 'Failed to fetch chat goal' });
+        }
+    });
     
     fastify.post('/api/txt2speech', async (request, reply) => {
         try {

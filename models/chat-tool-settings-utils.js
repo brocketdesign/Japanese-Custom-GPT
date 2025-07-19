@@ -74,7 +74,6 @@ async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt) {
         let enhancedPrompt = basePrompt;
         
         // Apply relationship type
-        console.log(`[applyUserSettingsToPrompt] Applying relationship type: ${settings.relationshipType}`);
         const relationshipInstructions = {
             friend: 'You are a good friend. Be loyal, caring, and supportive in your interactions.',
             companion: 'You are a close companion. Be supportive, understanding, and emotionally available.',
@@ -90,8 +89,6 @@ async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt) {
         };
         
         if (relationshipInstructions[settings.relationshipType]) {
-            console.log(`[applyUserSettingsToPrompt] Enhancing prompt with relationship context: ${settings.relationshipType}`);
-            console.log(`[applyUserSettingsToPrompt] Relationship instructions:`, relationshipInstructions[settings.relationshipType]);
             enhancedPrompt += `\nRelationship Context: ${relationshipInstructions[settings.relationshipType]}`;
         }
         

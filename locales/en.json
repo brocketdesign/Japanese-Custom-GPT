@@ -1,5 +1,6 @@
 {
   "lang": "en",
+  "chat_goal_completed": "Chat goal completed",
   "setNsfw": "Set as NSFW",
   "unsetNsfw": "Unset NSFW",
   "browseByCategory": "Browse by Category",

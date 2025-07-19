@@ -1,5 +1,6 @@
 {
   "lang": "ja",
+  "chat_goal_completed": "チャット目標が達成されました",
   "setNsfw": "NSFWに設定",
   "unsetNsfw": "NSFWから解除",
   "browseByCategory": "カテゴリで探す",

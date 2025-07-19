@@ -233,7 +233,6 @@ const processBackgroundTasks = (fastify) => async () => {
  * @param {Object} fastify - Fastify instance
  */
 const processBackgroundVideoTasks = (fastify) => async () => {
-  console.log('[processBackgroundVideoTasks] Starting background video task processing...');
   const db = fastify.mongo.db;
 
     // Add this check at the beginning
@@ -248,10 +247,8 @@ const processBackgroundVideoTasks = (fastify) => async () => {
       status: { $in: ['pending', 'processing', 'background'] }
     }).toArray();
     
-    console.log(`[processBackgroundVideoTasks] Found ${backgroundVideoTasks.length} video tasks to process...`);
     
     if (!backgroundVideoTasks.length) {
-      console.log('[processBackgroundVideoTasks] No background video tasks found, skipping...');
       return;
     }
     

@@ -98,6 +98,9 @@
       "credit": "獲得",
       "debit": "消費"
     },
+    "reward_reasons": {
+      "goal_completion": "目標達成"
+    },
     "sources": {
       "system": "システム",
       "chat": "チャット活動",

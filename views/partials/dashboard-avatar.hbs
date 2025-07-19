@@ -109,6 +109,7 @@
                     <i class="bi bi-chat me-3"></i>{{translations.chatList}}
                 </a>
                 
+                
                 <div class="d-none">
                     <a class="list-group-item list-group-item-action border-0 menu-item" href="/chat/list/{{user._id}}">
                         <i class="bi bi-people me-3"></i>{{translations.avatar.characters}}
@@ -131,6 +132,10 @@
                     
                     <a class="list-group-item list-group-item-action border-0 menu-item" href="/admin/users">
                         <i class="bi bi-people me-3"></i>{{translations.admin.users}}
+                    </a>
+                    
+                    <a class="list-group-item list-group-item-action border-0 menu-item" href="#" data-bs-toggle="modal" data-bs-target="#analyticsModal">
+                        <i class="bi bi-bar-chart me-3"></i>{{translations.analytics_title}}
                     </a>
                     
                     <a class="list-group-item list-group-item-action border-0 menu-item" href="/admin/prompts">

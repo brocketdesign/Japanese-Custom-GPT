@@ -1,7 +1,7 @@
 const { ObjectId } = require('mongodb');
 const { getLanguageName } = require('../models/tool');
-const { parse } = require('handlebars');
 const { removeUserPoints, awardLikeMilestoneReward, awardLikeActionReward } = require('../models/user-points-utils');
+
 
 async function routes(fastify, options) {
   fastify.post('/gallery/:imageId/like-toggle', async (request, reply) => { 

@@ -174,8 +174,9 @@ fastify.register(require('./routes/chat-tool-message-api'));
 fastify.register(require('./routes/system-prompt-api'));
 fastify.register(require('./routes/user-points-api'));
 fastify.register(require('./routes/character-infos-api'));
-fastify.register(require('./routes/sitemap-api')); // <-- add sitemap API routes
-fastify.register(require('./routes/affiliation-api')); // Add affiliation API routes
+fastify.register(require('./routes/sitemap-api'));
+fastify.register(require('./routes/affiliation-api'));
+fastify.register(require('./routes/user-analytics-api'));
 
 fastify.get('/', async (request, reply) => {
   const db = fastify.mongo.db;

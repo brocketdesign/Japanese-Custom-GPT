@@ -12,6 +12,7 @@
   "cardMenuDescription": "Discover and interact with a variety of AI characters.",
   "createCharacterRestriction": "Upgrade to create more characters",
   "refresh": "Refresh",
+  "analytics_title": "Analytics Dashboard",
   "system_prompt": {
     "title": "System Prompt Management",
     "list_title": "System Prompts",

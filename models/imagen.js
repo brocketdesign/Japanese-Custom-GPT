@@ -453,6 +453,13 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
       const { imageId, imageUrl, prompt, title, nsfw, isMerged } = image;
       const { userId: taskUserId, userChatId } = taskStatus;
 
+      // Increment image generation count in the collection images_generated
+      await fastify.mongo.db.collection('images_generated').updateOne(
+        { userId: new ObjectId(taskUserId), chatId: chatId ? new ObjectId(chatId) : null, imageId: new ObjectId(imageId) },
+        { $inc: { generationCount: 1 } },
+        { upsert: true }
+      );
+      
       if (chatCreation) {
         fastify.sendNotificationToUser(userId, 'characterImageGenerated', { imageUrl, nsfw, chatId });
         if (index === 0) {

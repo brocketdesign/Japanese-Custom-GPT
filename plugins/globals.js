@@ -22,6 +22,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     const img2videoTranslationsCache = {}; // Add cache for img2video translations
     const mergeFaceTranslationsCache = {}; // Add cache for merge face translations
     const userPointsTranslationsCache = {}; // Add cache for user points translations
+    const userAnalyticsTranslationsCache = {}; // Add cache for user analytics translations
     const affiliationTranslationsCache = {}; // Add cache for affiliation translations
     const chatToolSettingsTranslationsCache = {}; // Add cache for chat tool settings translations
 
@@ -34,6 +35,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorate('getImg2videoTranslations', getImg2videoTranslations); // Add img2video translations decorator
     fastify.decorate('getMergeFaceTranslations', getMergeFaceTranslations); // Add merge face translations decorator
     fastify.decorate('getUserPointsTranslations', getUserPointsTranslations); // Add user points translations decorator
+    fastify.decorate('getUserAnalyticsTranslations', getUserAnalyticsTranslations); // Add user analytics translations decorator
     fastify.decorate('getAffiliationTranslations', getAffiliationTranslations); // Add affiliation translations decorator
     fastify.decorate('getChatToolSettingsTranslations', getChatToolSettingsTranslations); // Add chat tool settings translations decorator
     
@@ -58,6 +60,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorateRequest('img2videoTranslations', null); // Add img2video translations to request
     fastify.decorateRequest('mergeFaceTranslations', null); // Add merge face translations to request
     fastify.decorateRequest('userPointsTranslations', null); // Add user points translations to request
+    fastify.decorateRequest('userAnalyticsTranslations', null); // Add user analytics translations to request
     fastify.decorateRequest('affiliationTranslations', null); // Add affiliation translations to request
     fastify.decorateRequest('chatToolSettingsTranslations', null); // Add chat tool settings translations to request
 
@@ -72,6 +75,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         request.img2videoTranslations = getImg2videoTranslations(request.lang); // Load img2video translations
         request.mergeFaceTranslations = getMergeFaceTranslations(request.lang); // Load merge face translations
         request.userPointsTranslations = getUserPointsTranslations(request.lang); // Load user points translations
+        request.userAnalyticsTranslations = getUserAnalyticsTranslations(request.lang); // Load user analytics translations
         request.affiliationTranslations = getAffiliationTranslations(request.lang); // Load affiliation translations
         request.chatToolSettingsTranslations = getChatToolSettingsTranslations(request.lang); // Load chat tool settings translations
         
@@ -84,6 +88,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             img2videoTranslations: request.img2videoTranslations, // Make img2video translations available
             mergeFaceTranslations: request.mergeFaceTranslations, // Make merge face translations available
             userPointsTranslations: request.userPointsTranslations, // Make user points translations available
+            userAnalyticsTranslations: request.userAnalyticsTranslations, // Make user analytics translations available
             affiliationTranslations: request.affiliationTranslations, // Make affiliation translations available
             chatToolSettingsTranslations: request.chatToolSettingsTranslations, // Make chat tool settings translations available
             user: request.user, // Make user available
@@ -277,6 +282,31 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         return userPointsTranslationsCache[currentLang];
     }
 
+    /** Load UserAnalyticsTranslations for a specific language (cached for performance) */
+    function getUserAnalyticsTranslations(currentLang) {
+        if (!currentLang) currentLang = 'en';
+        
+        if (!userAnalyticsTranslationsCache[currentLang]) {
+            const userAnalyticsTranslationFile = path.join(__dirname, '..', 'locales', `user-analytics-${currentLang}.js`);
+            if (fs.existsSync(userAnalyticsTranslationFile)) {
+                try {
+                    // Use require to import the JavaScript file
+                    const translationModule = require(userAnalyticsTranslationFile);
+                    // The translation should be available on the global object set by the file
+                    userAnalyticsTranslationsCache[currentLang] = global.userAnalyticsTranslations || {};
+                    // Clear the global after caching to avoid conflicts
+                    delete global.userAnalyticsTranslations;
+                } catch (e) {
+                    fastify.log.error(`Error reading user analytics translations for ${currentLang}:`, e);
+                    userAnalyticsTranslationsCache[currentLang] = {};
+                }
+            } else {
+                userAnalyticsTranslationsCache[currentLang] = {}; // Fallback to empty object if translation file is missing
+            }
+        }
+        return userAnalyticsTranslationsCache[currentLang];
+    }
+
     /** Load AffiliationTranslations for a specific language (cached for performance) */
     function getAffiliationTranslations(currentLang) {
         if (!currentLang) currentLang = 'en';
@@ -327,6 +357,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         request.img2videoTranslations = fastify.getImg2videoTranslations(request.lang);
         request.mergeFaceTranslations = fastify.getMergeFaceTranslations(request.lang);
         request.userPointsTranslations = fastify.getUserPointsTranslations(request.lang);
+        request.userAnalyticsTranslations = fastify.getUserAnalyticsTranslations(request.lang);
         request.affiliationTranslations = fastify.getAffiliationTranslations(request.lang);
         request.chatToolSettingsTranslations = fastify.getChatToolSettingsTranslations(request.lang);
         request.isAdmin = await checkUserAdmin(fastify, request.user._id) || false;
@@ -345,6 +376,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             img2videoTranslations: request.img2videoTranslations, // Add img2video translations to locals
             mergeFaceTranslations: request.mergeFaceTranslations, // Add merge face translations to locals
             userPointsTranslations: request.userPointsTranslations, // Add user points translations to locals
+            userAnalyticsTranslations: request.userAnalyticsTranslations, // Add user analytics translations to locals
             affiliationTranslations: request.affiliationTranslations, // Add affiliation translations to locals
             chatToolSettingsTranslations: request.chatToolSettingsTranslations, // Add chat tool settings translations to locals
             lang: request.lang,

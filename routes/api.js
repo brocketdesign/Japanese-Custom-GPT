@@ -803,6 +803,12 @@ async function routes(fastify, options) {
                     } 
                     }
                 );
+                // Increment goal completion count
+                await db.collection('chat_goal').updateOne(
+                    { userId: new fastify.mongo.ObjectId(userId), chatId: new fastify.mongo.ObjectId(chatId) },
+                    { $inc: { completionCount: 1 } },
+                    { upsert: true }
+                );
                 // Send notification to user
                 fastify.sendNotificationToUser(userId, 'showNotification', { message: request.translations.chat_goal_completed, icon: 'success' });
                 // Reward user points based on the goal difficulty
@@ -897,7 +903,7 @@ async function routes(fastify, options) {
                                 console.log('error:', error);
                             });
                         })
-                        imgMessage[0].content = `\n\nYou are currently making the image I asked.\n What do you think about it ?`.trim()
+                        imgMessage[0].content = `\n\nI activated the image generation feature for my last message.\n The image will be generated shortly.`.trim()
                         currentUserMessage.name = 'context'
                     }
                 

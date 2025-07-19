@@ -26,6 +26,7 @@
   "retry": "再試行",
   "loadMore": "さらに読み込む",
   "close": "閉じる",
+  "analytics_title": "分析ダッシュボード",
   "settings": {
     "saveSettings": "設定を保存",
     "title": "設定",

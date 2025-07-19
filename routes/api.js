@@ -817,6 +817,7 @@ async function routes(fastify, options) {
                 console.log(`[/api/openai-chat-completion] User rewarded ${rewardPoints} points for goal completion`);
                 // Generate new goal
                 chatGoal = await generateChatGoal(chatDescription, personaInfo, language);
+                console.log(`[/api/openai-chat-completion] Generated new goal:`, chatGoal);
                 if (chatGoal) {
                     await db.collection('userChat').updateOne(
                     { _id: new fastify.mongo.ObjectId(userChatId) },

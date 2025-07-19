@@ -190,7 +190,7 @@ const sentImageIds = new Set();
 window.generateImage = async function(data) {
     
     // Validate essential data
-    if (!data || !data.userChatId || !data.imageUrl && !data.url) {
+    if (!data || !data.userChatId || (!data.imageUrl && !data.url)) {
         console.error('[generateImage] Missing essential data:', {
             hasData: !!data,
             hasUserChatId: !!(data && data.userChatId),

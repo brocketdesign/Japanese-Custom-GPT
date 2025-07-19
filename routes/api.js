@@ -693,6 +693,7 @@ async function routes(fastify, options) {
           }
           const userInfo = await getUserInfo(db, userId)
           const userPoints = await getUserPoints(fastify.mongo.db, userId);
+          const userSettings = await getUserChatToolSettings(fastify.mongo.db, userId, chatId);
           let userData = await getUserChatData(db, userId, userChatId)
           const subscriptionStatus = userInfo.subscriptionStatus == 'active' ? true : false
           if (!userData) { return reply.status(404).send({ error: 'User data not found' }) }
@@ -775,8 +776,7 @@ async function routes(fastify, options) {
         let goalCompletion = null;
 
         if (messageCount <= 3 || !userData.currentGoal) { // Generate goal in first few messages
-            console.log(`[/api/openai-chat-completion] Generating chat goal for early conversation`);
-            chatGoal = await generateChatGoal(chatDescription, personaInfo, language);
+            chatGoal = await generateChatGoal(chatDescription, personaInfo, userSettings, language);
             console.log(`[/api/openai-chat-completion] Generated goal:`, chatGoal);
             
             // Store the goal in the user chat document
@@ -788,10 +788,8 @@ async function routes(fastify, options) {
             }
         } else if (userData.currentGoal) {
             // Check if existing goal is completed
-            console.log(`[/api/openai-chat-completion] Checking existing goal completion`);
             chatGoal = userData.currentGoal;
             goalCompletion = await checkGoalCompletion(chatGoal, userData.messages, language);
-            console.log(`[/api/openai-chat-completion] Checking goal completion:`, goalCompletion);
             if (goalCompletion.completed && goalCompletion.confidence > 70) {
                 console.log(`[/api/openai-chat-completion] Goal completed:`, goalCompletion.reason);
                 
@@ -830,6 +828,9 @@ async function routes(fastify, options) {
             language
           )
 
+        // Add user settings to the system prompt
+        enhancedSystemContent = await applyUserSettingsToPrompt(fastify.mongo.db, userId, chatId, enhancedSystemContent);
+        
         // Add goal context to system prompt if available
         if (chatGoal) {
             const goalContext = `\n\n# Current Conversation Goal:\n` +
@@ -853,9 +854,6 @@ async function routes(fastify, options) {
             systemContent = enhancedSystemContent; // Update system content with goal context
         }
         
-        // Add user settings to the system prompt
-        const userSettings = await getUserChatToolSettings(fastify.mongo.db, userId, chatId);
-        enhancedSystemContent = await applyUserSettingsToPrompt(fastify.mongo.db, userId, chatId, enhancedSystemContent);
         // Add user points to the system prompt
         enhancedSystemContent = enhancedSystemContent.replace(/{{userPoints}}/g, userPoints.toString());
         // Add user language to the system prompt

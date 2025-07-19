@@ -495,23 +495,27 @@ async function createPrompt(customPrompt, imageDescription, nsfw) {
 
 // Define the schema for chat goal generation
 const chatGoalSchema = z.object({
-  goal_type: z.enum(['conversation', 'relationship', 'activity', 'request']),
+  goal_type: z.enum(['relationship', 'activity', 'image request']),
   goal_description: z.string(),
   completion_condition: z.string(),
-  target_phrase: z.string().optional(),
+  target_phrase: z.string().optional().nullable(),
   user_action_required: z.string().optional(),
   difficulty: z.enum(['easy', 'medium', 'hard']),
   estimated_messages: z.number().min(1).max(20),
 });
 
 // Function to generate chat goals based on character and persona
-const generateChatGoal = async (chatDescription, personaInfo = null, language = 'en') => {
+const generateChatGoal = async (chatDescription, personaInfo = null, userSettings = null, language = 'en') => {
   try {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     
     const personaContext = personaInfo ? 
       `\nUser Persona: ${personaInfo.name} - ${personaInfo.short_intro || 'No description available'}` : '';
     
+    // Randomly select a goal type from the available types
+    const goalTypes = ['relationship', 'activity', 'image request'];
+    const randomIndex = Math.floor(Math.random() * goalTypes.length);
+    const selectedGoalType = goalTypes[randomIndex];
     const systemPrompt = `You are a chat goal generator that creates engaging conversation objectives for AI character interactions.
     
     Generate a specific, achievable goal for the conversation based on the character description and user context.
@@ -521,11 +525,16 @@ const generateChatGoal = async (chatDescription, personaInfo = null, language = 
     - Achievable within a reasonable number of messages
     - Clear in their completion criteria
     
-    Goal types:
-    - conversation: General chat topics or discussions
+    Goal type for this request: ${selectedGoalType}
+    Other possible goal types:
     - relationship: Building rapport, getting closer, learning about each other
     - activity: Doing something together (games, roleplay, etc.)
-    - request: User needs to ask for something specific
+    - image request: User needs to ask for a specific image
+
+    Use the character description and persona context to tailor the goal.
+
+    # User Relationship Context :
+    - relationship: ${userSettings?.relationshipType || 'default'}
     
     Respond in ${language}.`;
 

@@ -192,7 +192,6 @@ const processBackgroundTasks = (fastify) => async () => {
   const db = fastify.mongo.db;
   const tasksCollection = db.collection('tasks');
   const backgroundTasks = await tasksCollection.find({ status: 'background' }).toArray();
-  console.log(`[processBackgroundTasks] Found ${backgroundTasks.length} background tasks to process...`);
   if (!backgroundTasks.length) return;
   console.log(`[processBackgroundTasks] Processing ${backgroundTasks.length} background tasks...`);
   for (const task of backgroundTasks) {

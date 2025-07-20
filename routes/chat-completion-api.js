@@ -233,7 +233,7 @@ async function routes(fastify, options) {
                     const assistantImageRequest = await checkImageRequest(newAssistantMessage.content,lastUserMessage.content);
                     console.log(`[/api/openai-chat-completion] Image request detected:`, assistantImageRequest);
                     if (assistantImageRequest && assistantImageRequest.image_request) {
-                        lastUserMessage.content += newAssistantMessage.content;
+                        lastUserMessage.content += ' ' + newAssistantMessage.content;
 
                         handleImageGeneration(
                             db, assistantImageRequest, lastUserMessage, assistantImageRequest, userData,

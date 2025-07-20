@@ -25,5 +25,7 @@
     "resetChatSettingsText": "Cela réinitialisera vos paramètres de ce chat aux valeurs par défaut.",
     "resetGlobalSettingsText": "Cela réinitialisera tous les paramètres de votre outil de chat aux valeurs par défaut.",
     "failedToLoadEvenLabVoices": "Échec du chargement des voix EvenLab",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "minImagesPremiumFeature": "Abonnement requis pour plus d'images",
+    "autoMergeFacePremiumFeature": "Abonnement requis pour la fusion automatique des visages"
 }

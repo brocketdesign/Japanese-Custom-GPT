@@ -113,6 +113,24 @@ class ChatToolSettings {
         const autoMergeFaceSwitch = document.getElementById('auto-merge-face-switch');
         if (autoMergeFaceSwitch) {
             autoMergeFaceSwitch.addEventListener('change', (e) => {
+                const user = window.user || {};
+                const subscriptionStatus = user.subscriptionStatus === 'active';
+                
+                // Check if user is trying to enable auto merge face without subscription
+                if (!subscriptionStatus && e.target.checked) {
+                    // Reset to false and show upgrade popup
+                    e.target.checked = false;
+                    this.settings.autoMergeFace = false;
+                    
+                    // Show plan page for upgrade
+                    if (typeof loadPlanPage === 'function') {
+                        loadPlanPage();
+                    } else {
+                        window.location.href = '/plan';
+                    }
+                    return;
+                }
+                
                 this.settings.autoMergeFace = e.target.checked;
             });
         }
@@ -121,14 +139,134 @@ class ChatToolSettings {
     setupRangeSliders() {
         const minImagesRange = document.getElementById('min-images-range');
         const minImagesValue = document.getElementById('min-images-value');
+        const autoMergeFaceSwitch = document.getElementById('auto-merge-face-switch');
+        const user = window.user || {};
+        const subscriptionStatus = user.subscriptionStatus === 'active';
 
         if (minImagesRange && minImagesValue) {
+            // Set initial value based on subscription status
+            if (!subscriptionStatus) {
+                // Auto-correct non-premium users who have minImages > 1
+                if (this.settings.minImages > 1) {
+                    console.log('Non-premium user detected with minImages > 1, correcting to 1');
+                    this.settings.minImages = 1;
+                }
+
+                // Non-premium users are limited to 1 image
+                this.settings.minImages = 1;
+                minImagesRange.value = 1;
+                minImagesValue.textContent = 1;
+                minImagesRange.disabled = true;
+                minImagesRange.style.opacity = '0.6';
+                
+                // Add premium indicator
+                const rangeContainer = document.querySelector('.settings-field');
+                if (!rangeContainer.querySelector('.premium-feature-indicator')) {
+                    const premiumIndicator = document.createElement('small');
+                    premiumIndicator.className = 'premium-feature-indicator text-muted d-block mt-1';
+                    premiumIndicator.innerHTML = '<i class="bi bi-star-fill text-warning"></i> ' + (this.t('minImagesPremiumFeature') || 'Premium feature required for more images');
+                    rangeContainer.appendChild(premiumIndicator);
+                }
+
+                // Save corrected settings after UI is set up
+                this.autoSaveCorrection();
+            } else {
+                // Premium users can use any value
+                minImagesRange.disabled = false;
+                minImagesRange.style.opacity = '1';
+            }
+
             minImagesRange.addEventListener('input', (e) => {
-                const value = e.target.value;
+                const value = parseInt(e.target.value);
+                
+                // Check if user is trying to set value > 1 without subscription
+                if (!subscriptionStatus && value > 1) {
+                    // Reset to 1 and show upgrade popup
+                    e.target.value = 1;
+                    minImagesValue.textContent = 1;
+                    this.settings.minImages = 1;
+                    
+                    // Show plan page for upgrade
+                    if (typeof loadPlanPage === 'function') {
+                        loadPlanPage();
+                    } else {
+                        window.location.href = '/plan';
+                    }
+                    return;
+                }
+                
+                // Update value for premium users or when value is 1
                 minImagesValue.textContent = value;
-                this.settings.minImages = parseInt(value);
+                this.settings.minImages = value;
             });
         }
+
+        // Handle Auto Merge Face premium restriction
+        if (autoMergeFaceSwitch) {
+            if (!subscriptionStatus) {
+                // Auto-correct non-premium users who have autoMergeFace enabled
+                if (this.settings.autoMergeFace) {
+                    console.log('Non-premium user detected with autoMergeFace enabled, correcting to false');
+                    this.settings.autoMergeFace = false;
+                }
+
+                // Non-premium users cannot use auto merge face
+                this.settings.autoMergeFace = false;
+                autoMergeFaceSwitch.checked = false;
+                autoMergeFaceSwitch.disabled = true;
+                autoMergeFaceSwitch.style.opacity = '0.6';
+                
+                // Add premium indicator - converted to plain JS
+                const labelDescription = document.querySelector('.settings-switch-description');
+                if (labelDescription && !labelDescription.querySelector('.premium-feature-indicator')) {
+                    const premiumIndicator = document.createElement('small');
+                    premiumIndicator.className = 'premium-feature-indicator text-muted d-block mt-1';
+                    premiumIndicator.innerHTML = '<i class="bi bi-star-fill text-warning"></i> ' + (this.t('autoMergeFacePremiumFeature') || 'Premium feature required for auto merge face');
+                    labelDescription.appendChild(premiumIndicator);
+                }
+
+                // Save corrected settings after UI is set up
+                this.autoSaveCorrection();
+            } else {
+                // Premium users can use auto merge face
+                autoMergeFaceSwitch.disabled = false;
+                autoMergeFaceSwitch.style.opacity = '1';
+            }
+        }
+    }
+
+    // Add new method to automatically save corrected settings
+    autoSaveCorrection() {
+        if (!this.userId) return;
+
+        // Save the corrected settings silently in the background
+        const requestBody = { 
+            settings: this.settings,
+            autoCorrection: true // Flag to indicate this is an automatic correction
+        };
+
+        // Include chatId if available
+        const chatId = sessionStorage.getItem('lastChatId') || sessionStorage.getItem('chatId');
+        if (chatId && chatId !== 'null' && chatId !== 'undefined') {
+            requestBody.chatId = chatId;
+        }
+
+        fetch(`/api/chat-tool-settings/${this.userId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Non-premium user settings auto-corrected and saved');
+            }
+        })
+        .catch(error => {
+            console.error('Error auto-correcting settings:', error);
+        });
     }
 
     openModal() {
@@ -473,12 +611,37 @@ class ChatToolSettings {
     }
 
     applySettingsToUI() {
+        const user = window.user || {};
+        const subscriptionStatus = user.subscriptionStatus === 'active';
+        
+        // Auto-correct minImages for non-premium users before applying to UI
+        if (!subscriptionStatus && this.settings.minImages > 1) {
+            console.log('Auto-correcting minImages for non-premium user');
+            this.settings.minImages = 1;
+            this.autoSaveCorrection();
+        }
+
+        // Auto-correct autoMergeFace for non-premium users before applying to UI
+        if (!subscriptionStatus && this.settings.autoMergeFace) {
+            console.log('Auto-correcting autoMergeFace for non-premium user');
+            this.settings.autoMergeFace = false;
+            this.autoSaveCorrection();
+        }
+
         // Update range slider
         const minImagesRange = document.getElementById('min-images-range');
         const minImagesValue = document.getElementById('min-images-value');
+        console.log('Applying settings to UI:', this.settings);
+        console.log('Min images setting:', this.settings.minImages);
         if (minImagesRange && minImagesValue) {
             minImagesRange.value = this.settings.minImages;
             minImagesValue.textContent = this.settings.minImages;
+            
+            // Ensure non-premium users can't have values > 1
+            if (!subscriptionStatus) {
+                minImagesRange.disabled = true;
+                minImagesRange.style.opacity = '0.6';
+            }
         }
 
         // Update video prompt
@@ -498,9 +661,6 @@ class ChatToolSettings {
         });
 
         // Update relationship tone selection with premium check
-        const user = window.user || {};
-        const subscriptionStatus = user.subscriptionStatus === 'active';
-        
         document.querySelectorAll('.settings-tone-option').forEach(option => {
             const isSelected = option.dataset.relationship === this.settings.relationshipType;
             const isPremiumRelationship = option.classList.contains('premium-relationship');
@@ -538,6 +698,16 @@ class ChatToolSettings {
         const autoMergeFaceSwitch = document.getElementById('auto-merge-face-switch');
         if (autoMergeFaceSwitch) {
             autoMergeFaceSwitch.checked = this.settings.autoMergeFace !== undefined ? this.settings.autoMergeFace : true;
+            
+            // Ensure non-premium users can't enable auto merge face
+            if (!subscriptionStatus) {
+                autoMergeFaceSwitch.checked = false;
+                autoMergeFaceSwitch.disabled = true;
+                autoMergeFaceSwitch.style.opacity = '0.6';
+            } else {
+                autoMergeFaceSwitch.disabled = false;
+                autoMergeFaceSwitch.style.opacity = '1';
+            }
         }
     }
 
@@ -667,7 +837,28 @@ class ChatToolSettings {
         return this.settings;
     }
 
-    
+    // Add method to check and correct all non-premium users (can be called from admin panel)
+    async correctAllNonPremiumUsers() {
+        if (!this.userId) return;
+
+        try {
+            const response = await fetch('/api/chat-tool-settings/correct-non-premium', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log(`Corrected ${data.correctedCount} non-premium users`);
+                showNotification(`Corrected ${data.correctedCount} non-premium users' settings`, 'success');
+            }
+        } catch (error) {
+            console.error('Error correcting non-premium users:', error);
+        }
+    }
 }
 
 // Initialize when DOM is loaded

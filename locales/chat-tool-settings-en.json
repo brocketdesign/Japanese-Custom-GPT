@@ -25,5 +25,7 @@
     "resetChatSettingsText": "This will reset your settings for this chat to default values.",
     "resetGlobalSettingsText": "This will reset all your chat tool settings to default values.",
     "failedToLoadEvenLabVoices": "Failed to load EvenLab voices",
-    "retry": "Retry"
+    "retry": "Retry",
+    "minImagesPremiumFeature": "Premium feature required for more images",
+    "autoMergeFacePremiumFeature": "Premium feature required for auto merge face"
 }

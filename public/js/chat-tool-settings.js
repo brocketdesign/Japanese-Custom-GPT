@@ -148,7 +148,6 @@ class ChatToolSettings {
             if (!subscriptionStatus) {
                 // Auto-correct non-premium users who have minImages > 1
                 if (this.settings.minImages > 1) {
-                    console.log('Non-premium user detected with minImages > 1, correcting to 1');
                     this.settings.minImages = 1;
                 }
 
@@ -206,7 +205,6 @@ class ChatToolSettings {
             if (!subscriptionStatus) {
                 // Auto-correct non-premium users who have autoMergeFace enabled
                 if (this.settings.autoMergeFace) {
-                    console.log('Non-premium user detected with autoMergeFace enabled, correcting to false');
                     this.settings.autoMergeFace = false;
                 }
 
@@ -261,7 +259,7 @@ class ChatToolSettings {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                console.log('Non-premium user settings auto-corrected and saved');
+                ///console.log('Non-premium user settings auto-corrected and saved');
             }
         })
         .catch(error => {
@@ -616,14 +614,12 @@ class ChatToolSettings {
         
         // Auto-correct minImages for non-premium users before applying to UI
         if (!subscriptionStatus && this.settings.minImages > 1) {
-            console.log('Auto-correcting minImages for non-premium user');
             this.settings.minImages = 1;
             this.autoSaveCorrection();
         }
 
         // Auto-correct autoMergeFace for non-premium users before applying to UI
         if (!subscriptionStatus && this.settings.autoMergeFace) {
-            console.log('Auto-correcting autoMergeFace for non-premium user');
             this.settings.autoMergeFace = false;
             this.autoSaveCorrection();
         }
@@ -631,8 +627,6 @@ class ChatToolSettings {
         // Update range slider
         const minImagesRange = document.getElementById('min-images-range');
         const minImagesValue = document.getElementById('min-images-value');
-        console.log('Applying settings to UI:', this.settings);
-        console.log('Min images setting:', this.settings.minImages);
         if (minImagesRange && minImagesValue) {
             minImagesRange.value = this.settings.minImages;
             minImagesValue.textContent = this.settings.minImages;

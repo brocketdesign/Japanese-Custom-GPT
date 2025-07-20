@@ -1,5 +1,6 @@
 {
   "lang": "en",
+  "image_leaderboard_title": "Image Leaderboard",
   "chat_goal_completed": "Chat goal completed, received {{points}} points!",
   "setNsfw": "Set as NSFW",
   "unsetNsfw": "Unset NSFW",

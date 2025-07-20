@@ -1,5 +1,6 @@
 {
   "lang": "ja",
+  "image_leaderboard_title": "画像リーダーボード",
   "chat_goal_completed": "チャット目標が達成されました, {{points}} ポイントを獲得しました！",
   "setNsfw": "NSFWに設定",
   "unsetNsfw": "NSFWから解除",
@@ -1099,6 +1100,8 @@
     "french": "Français",
     "bio": "自己紹介",
     "saveUserInfo": "ユーザー情報を保存",
+    "showNSFW": "NSFWコンテンツを表示",
+    "showNSFWDescription": "NSFW（成人向け）コンテンツを表示するには有効にしてください。",
     "oldPassword": "古いパスワード",
     "newPassword": "新しいパスワード",
     "confirmPassword": "パスワードの確認",

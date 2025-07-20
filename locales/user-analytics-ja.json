@@ -107,5 +107,19 @@
   "excellent": "優秀",
   "good": "良好",
   "average": "平均",
-  "needs_improvement": "改善が必要"
+  "needs_improvement": "改善が必要",
+  "image_leaderboard_title": "画像生成ランキング",
+  "your_images": "あなたの画像",
+  "top_image_creators": "トップ画像クリエイター",
+  "leaderboard_footer_info": "ランキングは生成画像の総数に基づいています",
+  "loading_leaderboard": "ランキングを読み込み中...",
+  "error_loading_leaderboard": "ランキングの読み込みエラー",
+  "no_leaderboard": "ランキングデータがありません",
+  "no_users_leaderboard": "まだランキングにユーザーがいません",
+  "anonymous": "匿名",
+  "overview": "概要",
+  "title": "ユーザー分析",
+  "footer_info": "分析データはリアルタイムで更新されます",
+  "joined": "参加日",
+  "unique_images": "ユニーク画像数"
 }

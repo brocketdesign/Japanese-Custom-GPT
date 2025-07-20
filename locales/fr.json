@@ -1,5 +1,6 @@
 {
   "lang": "fr",
+  "image_leaderboard_title": "Classement des images",
   "chat_goal_completed": "Objectif de chat atteint, reçu {{points}} points !",
   "setNsfw": "Définir comme NSFW",
   "unsetNsfw": "Définir comme non NSFW",
@@ -1048,6 +1049,8 @@
     "french": "Français",
     "bio": "Biographie",
     "saveUserInfo": "Enregistrer les informations utilisateur",
+    "showNSFW": "Afficher le contenu NSFW",
+    "showNSFWDescription": "Activer pour voir le contenu marqué comme Non Securisé pour le Travail (NSFW).",
     "oldPassword": "Ancien mot de passe",
     "newPassword": "Nouveau mot de passe",
     "confirmPassword": "Confirmer le mot de passe",

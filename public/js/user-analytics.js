@@ -195,44 +195,50 @@ class UserAnalyticsManager {
   }
 
   /**
-   * Load analytics for modal display
+   * Load and display image generation leaderboard
    */
-  async loadModalAnalytics() {
-    const $analyticsContainer = $('.analytics-modal-content');
-    if (!$analyticsContainer.length) return;
+  async loadImageGenerationLeaderboard() {
+    const $leaderboardContainer = $('.analytics-leaderboard-list');
+    if (!$leaderboardContainer.length) return;
 
-    $analyticsContainer.html(`
+    $leaderboardContainer.html(`
       <div class="text-center p-4">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">${this.translations.loading || 'Loading...'}</span>
         </div>
-        <div class="mt-2 text-muted">${this.translations.loading_analytics || 'Loading analytics...'}</div>
+        <div class="mt-2 text-muted">${this.translations.loading_leaderboard || 'Loading leaderboard...'}</div>
       </div>
     `);
 
     try {
-      const analytics = await this.getComprehensiveAnalytics(this.currentUser._id);
+      const response = await fetch(`${this.baseUrl}/user/analytics/leaderboard/images`, {
+        method: 'GET',
+        credentials: 'include'
+      });
       
-      if (analytics.success) {
-        this.renderModalAnalytics(analytics);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.leaderboard) {
+        this.renderImageGenerationLeaderboard(data.leaderboard);
       } else {
-        $analyticsContainer.html(`
-          <div class="text-center p-4 text-danger">
-            <i class="bi bi-exclamation-circle fs-1"></i>
-            <div class="mt-2">${this.translations.error_loading_analytics || 'Error loading analytics'}</div>
-            <button class="btn btn-sm btn-outline-primary mt-2 refresh-analytics">
-              <i class="bi bi-arrow-clockwise me-1"></i>${this.translations.try_again || 'Try Again'}
-            </button>
+        $leaderboardContainer.html(`
+          <div class="text-center p-4 text-muted">
+            <i class="bi bi-image fs-1 opacity-50"></i>
+            <div class="mt-2">${this.translations.no_leaderboard || 'No leaderboard data available'}</div>
           </div>
         `);
       }
     } catch (error) {
-      console.error('Error loading modal analytics:', error);
-      $analyticsContainer.html(`
+      console.error('Error loading image generation leaderboard:', error);
+      $leaderboardContainer.html(`
         <div class="text-center p-4 text-danger">
           <i class="bi bi-exclamation-circle fs-1"></i>
-          <div class="mt-2">${this.translations.error_loading_analytics || 'Error loading analytics'}</div>
-          <button class="btn btn-sm btn-outline-primary mt-2 refresh-analytics">
+          <div class="mt-2">${this.translations.error_loading_leaderboard || 'Error loading leaderboard'}</div>
+          <button class="btn btn-sm btn-outline-primary mt-2" onclick="window.userAnalyticsManager.loadImageGenerationLeaderboard()">
             <i class="bi bi-arrow-clockwise me-1"></i>${this.translations.try_again || 'Try Again'}
           </button>
         </div>
@@ -241,122 +247,69 @@ class UserAnalyticsManager {
   }
 
   /**
-   * Render analytics in modal
+   * Render image generation leaderboard
    */
-  renderModalAnalytics(analytics) {
-    const $container = $('.analytics-modal-content');
-    const { imageGeneration, likes } = analytics;
+  renderImageGenerationLeaderboard(leaderboard) {
+    const $container = $('.analytics-leaderboard-list');
+    let html = '';
     
-    let html = `
-      <div class="row">
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-header">
-              <h5 class="card-title mb-0">
-                <i class="bi bi-image me-2"></i>${this.translations.image_generation || 'Image Generation'}
-              </h5>
-            </div>
-            <div class="card-body">
-    `;
-    
-    if (imageGeneration && imageGeneration.total) {
-      html += `
-        <div class="row text-center">
-          <div class="col-6">
-            <div class="border-end">
-              <h4 class="text-primary">${imageGeneration.total.totalImages || 0}</h4>
-              <small class="text-muted">${this.translations.total_images || 'Total Images'}</small>
-            </div>
-          </div>
-          <div class="col-6">
-            <h4 class="text-success">${imageGeneration.total.thisMonth || 0}</h4>
-            <small class="text-muted">${this.translations.this_month || 'This Month'}</small>
-          </div>
-        </div>
-        <hr>
-        <div class="small text-muted">
-          <div><strong>${this.translations.favorite_chat || 'Favorite Chat'}:</strong> ${imageGeneration.total.favoriteChat || 'N/A'}</div>
-          <div><strong>${this.translations.this_week || 'This Week'}:</strong> ${imageGeneration.total.thisWeek || 0}</div>
+    if (!leaderboard || leaderboard.length === 0) {
+      html = `
+        <div class="text-center p-4 text-muted">
+          <i class="bi bi-image fs-1 opacity-50"></i>
+          <div class="mt-2">${this.translations.no_users_leaderboard || 'No users on leaderboard yet'}</div>
         </div>
       `;
     } else {
-      html += `<p class="text-muted">${this.translations.no_image_data || 'No image generation data available'}</p>`;
-    }
-    
-    html += `
+      leaderboard.forEach((user, index) => {
+        const rank = index + 1;
+        let rankBadge = `<span class="badge bg-secondary">#${rank}</span>`;
+        
+        if (rank === 1) {
+          rankBadge = `<span class="badge" style="background: linear-gradient(135deg, #ffd700, #ffed4e);"><i class="bi bi-trophy-fill text-white"></i> #${rank}</span>`;
+        } else if (rank === 2) {
+          rankBadge = `<span class="badge" style="background: linear-gradient(135deg, #c0c0c0, #e8e8e8);"><i class="bi bi-award-fill text-white"></i> #${rank}</span>`;
+        } else if (rank === 3) {
+          rankBadge = `<span class="badge" style="background: linear-gradient(135deg, #cd7f32, #d4af37);"><i class="bi bi-award text-white"></i> #${rank}</span>`;
+        }
+        
+        const avatar = user.profileUrl || '/img/avatar.png';
+        const isCurrentUser = user._id === this.currentUser._id;
+        const joinedDate = user.joinedDate ? new Date(user.joinedDate).toLocaleDateString() : 'Unknown';
+        
+        html += `
+          <div class="d-flex align-items-center p-3 border-bottom ${isCurrentUser ? 'bg-light' : ''}">
+            <div class="flex-shrink-0 me-3">
+              ${rankBadge}
+            </div>
+            <div class="flex-shrink-0 me-3">
+              <img src="${avatar}" alt="${user.nickname}" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
+            </div>
+            <div class="flex-grow-1">
+              <div class="fw-semibold ${isCurrentUser ? 'text-primary' : ''}">${user.nickname || this.translations.anonymous || 'Anonymous'}</div>
+              <small class="text-muted">
+                <i class="bi bi-calendar3 me-1"></i>${this.translations.joined || 'Joined'} ${joinedDate}
+                ${user.totalEntries ? ` • ${user.totalEntries} ${this.translations.unique_images || 'unique images'}` : ''}
+              </small>
+            </div>
+            <div class="flex-shrink-0 text-end">
+              <span class="fw-bold text-primary fs-5">${user.totalImages || 0}</span>
+              <small class="text-muted d-block">${this.translations.images_generated || 'images generated'}</small>
             </div>
           </div>
-        </div>
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-header">
-              <h5 class="card-title mb-0">
-                <i class="bi bi-heart me-2"></i>${this.translations.likes_received || 'Likes Received'}
-              </h5>
-            </div>
-            <div class="card-body">
-    `;
-    
-    if (likes && likes.total) {
-      html += `
-        <div class="row text-center">
-          <div class="col-6">
-            <div class="border-end">
-              <h4 class="text-danger">${likes.total.totalLikes || 0}</h4>
-              <small class="text-muted">${this.translations.total_likes || 'Total Likes'}</small>
-            </div>
-          </div>
-          <div class="col-6">
-            <h4 class="text-warning">${likes.total.thisMonth || 0}</h4>
-            <small class="text-muted">${this.translations.this_month || 'This Month'}</small>
-          </div>
-        </div>
-        <hr>
-        <div class="small text-muted">
-          <div><strong>${this.translations.most_liked || 'Most Liked'}:</strong> ${likes.total.mostLikedImage || 'N/A'}</div>
-          <div><strong>${this.translations.this_week || 'This Week'}:</strong> ${likes.total.thisWeek || 0}</div>
-        </div>
-      `;
-    } else {
-      html += `<p class="text-muted">${this.translations.no_like_data || 'No like data available'}</p>`;
-    }
-    
-    html += `
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    // Add debug section if user is admin or in development
-    if (this.currentUser.role === 'admin' || window.location.hostname === 'localhost') {
-      html += `
-        <div class="mt-3">
-          <div class="card border-secondary">
-            <div class="card-header bg-secondary text-white">
-              <h6 class="card-title mb-0">
-                <i class="bi bi-bug me-2"></i>Debug Analytics
-              </h6>
-            </div>
-            <div class="card-body">
-              <div class="btn-group" role="group">
-                <button class="btn btn-sm btn-outline-secondary debug-image-analytics">
-                  <i class="bi bi-image me-1"></i>Debug Images
-                </button>
-                <button class="btn btn-sm btn-outline-secondary debug-like-analytics">
-                  <i class="bi bi-heart me-1"></i>Debug Likes
-                </button>
-                <button class="btn btn-sm btn-outline-secondary debug-all-analytics">
-                  <i class="bi bi-bug me-1"></i>Debug All
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
+        `;
+      });
     }
     
     $container.html(html);
+  }
+
+  /**
+   * Load analytics for modal display
+   */
+  async loadModalAnalytics() {
+    // Load the image generation leaderboard instead of overview
+    await this.loadImageGenerationLeaderboard();
   }
 
   /**

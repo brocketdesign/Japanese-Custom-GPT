@@ -107,5 +107,19 @@
   "excellent": "Excellent",
   "good": "Bon",
   "average": "Moyen",
-  "needs_improvement": "Doit être amélioré"
+  "needs_improvement": "Doit être amélioré",
+  "image_leaderboard_title": "Classement de génération d'images",
+  "your_images": "Vos images",
+  "top_image_creators": "Meilleurs créateurs d'images",
+  "leaderboard_footer_info": "Classement basé sur le nombre total d'images générées",
+  "loading_leaderboard": "Chargement du classement...",
+  "error_loading_leaderboard": "Erreur lors du chargement du classement",
+  "no_leaderboard": "Aucune donnée de classement disponible",
+  "no_users_leaderboard": "Aucun utilisateur dans le classement pour le moment",
+  "anonymous": "Anonyme",
+  "overview": "Aperçu",
+  "title": "Analyses utilisateur",
+  "footer_info": "Les données d'analyse sont mises à jour en temps réel",
+  "joined": "Inscrit le",
+  "unique_images": "Images uniques"
 }

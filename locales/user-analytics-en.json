@@ -107,5 +107,19 @@
   "excellent": "Excellent",
   "good": "Good",
   "average": "Average",
-  "needs_improvement": "Needs Improvement"
+  "needs_improvement": "Needs Improvement",
+  "image_leaderboard_title": "Image Generation Leaderboard",
+  "your_images": "Your Images",
+  "top_image_creators": "Top Image Creators",
+  "leaderboard_footer_info": "Rankings based on total images generated",
+  "loading_leaderboard": "Loading leaderboard...",
+  "error_loading_leaderboard": "Error loading leaderboard",
+  "no_leaderboard": "No leaderboard data available",
+  "no_users_leaderboard": "No users on leaderboard yet",
+  "anonymous": "Anonymous",
+  "overview": "Overview",
+  "title": "User Analytics",
+  "footer_info": "Analytics data updates in real-time",
+  "joined": "Joined",
+  "unique_images": "Unique Images"
 }

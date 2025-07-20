@@ -5,6 +5,7 @@ const fastifyPlugin = require('fastify-plugin');
 const { ObjectId } = require('mongodb');
 const  { checkUserAdmin, getApiUrl } = require('../models/tool');
 const ip = require('ip');
+const { user } = require('@elevenlabs/elevenlabs-js/api');
 
 
 
@@ -78,7 +79,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         request.userAnalyticsTranslations = getUserAnalyticsTranslations(request.lang); // Load user analytics translations
         request.affiliationTranslations = getAffiliationTranslations(request.lang); // Load affiliation translations
         request.chatToolSettingsTranslations = getChatToolSettingsTranslations(request.lang); // Load chat tool settings translations
-        
+   
         // Make translations available in Handlebars templates
         reply.locals = {
             lang: request.lang,
@@ -287,15 +288,10 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         if (!currentLang) currentLang = 'en';
         
         if (!userAnalyticsTranslationsCache[currentLang]) {
-            const userAnalyticsTranslationFile = path.join(__dirname, '..', 'locales', `user-analytics-${currentLang}.js`);
+            const userAnalyticsTranslationFile = path.join(__dirname, '..', 'locales', `user-analytics-${currentLang}.json`);
             if (fs.existsSync(userAnalyticsTranslationFile)) {
                 try {
-                    // Use require to import the JavaScript file
-                    const translationModule = require(userAnalyticsTranslationFile);
-                    // The translation should be available on the global object set by the file
-                    userAnalyticsTranslationsCache[currentLang] = global.userAnalyticsTranslations || {};
-                    // Clear the global after caching to avoid conflicts
-                    delete global.userAnalyticsTranslations;
+                    userAnalyticsTranslationsCache[currentLang] = JSON.parse(fs.readFileSync(userAnalyticsTranslationFile, 'utf-8'));
                 } catch (e) {
                     fastify.log.error(`Error reading user analytics translations for ${currentLang}:`, e);
                     userAnalyticsTranslationsCache[currentLang] = {};

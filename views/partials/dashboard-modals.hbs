@@ -676,11 +676,11 @@
         <div class="modal-content mx-auto">
             <div class="modal-header bg-gradient text-white" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
                 <h5 class="modal-title d-flex align-items-center" id="analyticsModalLabel">
-                    <i class="bi bi-bar-chart-fill me-2"></i>
-                    {{#if userAnalyticsTranslations.title}}
-                        {{userAnalyticsTranslations.title}}
+                    <i class="bi bi-trophy-fill me-2"></i>
+                    {{#if userAnalyticsTranslations.image_leaderboard_title}}
+                        {{userAnalyticsTranslations.image_leaderboard_title}}
                     {{else}}
-                        User Analytics
+                        Image Generation Leaderboard
                     {{/if}}
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -695,25 +695,10 @@
                                     <i class="bi bi-image text-primary fs-1 mb-2"></i>
                                     <h4 class="mb-1 total-images-generated">0</h4>
                                     <small class="text-muted">
-                                        {{#if userAnalyticsTranslations.total_images}}
-                                            {{userAnalyticsTranslations.total_images}}
+                                        {{#if userAnalyticsTranslations.your_images}}
+                                            {{userAnalyticsTranslations.your_images}}
                                         {{else}}
-                                            Total Images
-                                        {{/if}}
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card analytics-widget border-0 shadow-sm">
-                                <div class="card-body text-center">
-                                    <i class="bi bi-heart-fill text-danger fs-1 mb-2"></i>
-                                    <h4 class="mb-1 total-likes-received">0</h4>
-                                    <small class="text-muted">
-                                        {{#if userAnalyticsTranslations.total_likes}}
-                                            {{userAnalyticsTranslations.total_likes}}
-                                        {{else}}
-                                            Total Likes
+                                            Your Images
                                         {{/if}}
                                     </small>
                                 </div>
@@ -749,94 +734,53 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="col-md-3">
+                            <div class="card analytics-widget border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-chat-dots text-warning fs-1 mb-2"></i>
+                                    <h4 class="mb-1 favorite-chat">-</h4>
+                                    <small class="text-muted">
+                                        {{#if userAnalyticsTranslations.favorite_chat}}
+                                            {{userAnalyticsTranslations.favorite_chat}}
+                                        {{else}}
+                                            Favorite Chat
+                                        {{/if}}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Analytics Content Tabs -->
+                <!-- Image Generation Leaderboard -->
                 <div class="container-fluid p-3">
-                    <ul class="nav nav-tabs border-0" id="analyticsTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active fw-semibold" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview-pane" type="button" role="tab">
-                                <i class="bi bi-graph-up me-2"></i>
-                                {{#if userAnalyticsTranslations.overview}}
-                                    {{userAnalyticsTranslations.overview}}
-                                {{else}}
-                                    Overview
-                                {{/if}}
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link fw-semibold" id="images-tab" data-bs-toggle="tab" data-bs-target="#images-pane" type="button" role="tab">
-                                <i class="bi bi-image me-2"></i>
-                                {{#if userAnalyticsTranslations.images}}
-                                    {{userAnalyticsTranslations.images}}
-                                {{else}}
-                                    Images
-                                {{/if}}
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link fw-semibold" id="likes-tab" data-bs-toggle="tab" data-bs-target="#likes-pane" type="button" role="tab">
-                                <i class="bi bi-heart me-2"></i>
-                                {{#if userAnalyticsTranslations.likes}}
-                                    {{userAnalyticsTranslations.likes}}
-                                {{else}}
-                                    Likes
-                                {{/if}}
-                            </button>
-                        </li>
-                    </ul>
-
-                    <div class="tab-content mt-3" id="analyticsTabContent">
-                        <!-- Overview Tab -->
-                        <div class="tab-pane fade show active" id="overview-pane" role="tabpanel">
-                            <div class="analytics-modal-content bg-white rounded shadow-sm p-4">
-                                <div class="text-center p-4">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                    <div class="mt-2 text-muted">Loading analytics...</div>
-                                </div>
+                    <div class="bg-white rounded shadow-sm">
+                        <div class="leaderboard-header d-flex justify-content-between align-items-center p-3 border-bottom">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-trophy-fill me-2 text-warning fs-4"></i>
+                                <h6 class="mb-0">
+                                    {{#if userAnalyticsTranslations.top_image_creators}}
+                                        {{userAnalyticsTranslations.top_image_creators}}
+                                    {{else}}
+                                        Top Image Creators
+                                    {{/if}}
+                                </h6>
                             </div>
+                            <button class="btn btn-sm btn-outline-primary refresh-analytics">
+                                <i class="bi bi-arrow-clockwise me-1"></i>
+                                {{#if translations.refresh}}
+                                    {{translations.refresh}}
+                                {{else}}
+                                    Refresh
+                                {{/if}}
+                            </button>
                         </div>
-
-                        <!-- Images Tab -->
-                        <div class="tab-pane fade" id="images-pane" role="tabpanel">
-                            <div class="bg-white rounded shadow-sm p-4">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h6 class="mb-0">
-                                        <i class="bi bi-image me-2"></i>Image Generation Analytics
-                                    </h6>
-                                    <button class="btn btn-sm btn-outline-primary refresh-analytics">
-                                        <i class="bi bi-arrow-clockwise me-1"></i>Refresh
-                                    </button>
+                        <div class="analytics-leaderboard-list" style="max-height: 500px; overflow-y: auto;">
+                            <div class="text-center p-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
                                 </div>
-                                <div class="analytics-images-content">
-                                    <div class="text-center p-4 text-muted">
-                                        <i class="bi bi-image fs-1"></i>
-                                        <div class="mt-2">Image analytics will be displayed here</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Likes Tab -->
-                        <div class="tab-pane fade" id="likes-pane" role="tabpanel">
-                            <div class="bg-white rounded shadow-sm p-4">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h6 class="mb-0">
-                                        <i class="bi bi-heart me-2"></i>Likes Analytics
-                                    </h6>
-                                    <button class="btn btn-sm btn-outline-primary refresh-analytics">
-                                        <i class="bi bi-arrow-clockwise me-1"></i>Refresh
-                                    </button>
-                                </div>
-                                <div class="analytics-likes-content">
-                                    <div class="text-center p-4 text-muted">
-                                        <i class="bi bi-heart fs-1"></i>
-                                        <div class="mt-2">Likes analytics will be displayed here</div>
-                                    </div>
-                                </div>
+                                <div class="mt-2 text-muted">Loading leaderboard...</div>
                             </div>
                         </div>
                     </div>
@@ -846,10 +790,10 @@
                 <div class="d-flex justify-content-between align-items-center w-100">
                     <small class="text-muted">
                         <i class="bi bi-info-circle me-1"></i>
-                        {{#if userAnalyticsTranslations.footer_info}}
-                            {{userAnalyticsTranslations.footer_info}}
+                        {{#if userAnalyticsTranslations.leaderboard_footer_info}}
+                            {{userAnalyticsTranslations.leaderboard_footer_info}}
                         {{else}}
-                            Analytics data updates in real-time
+                            Rankings based on total images generated
                         {{/if}}
                     </small>
                     <div class="d-flex gap-2">

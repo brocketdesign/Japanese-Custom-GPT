@@ -146,6 +146,68 @@ fastify.get('/user/:userId/image-stats', async (request, reply) => {
       reply.code(500).send({ error: 'Internal Server Error' });
     }
   });
-    
+  
+  fastify.get('/user/analytics/leaderboard/images', async (request, reply) => {
+    try {
+      const db = fastify.mongo.db;
+      const usersCollection = db.collection('users');
+      const imagesGeneratedCollection = db.collection('images_generated');
+      
+      // Aggregate image generation stats by user
+      const imageStats = await imagesGeneratedCollection.aggregate([
+        {
+          $group: {
+            _id: '$userId',
+            totalImages: { $sum: '$generationCount' },
+            totalEntries: { $sum: 1 }
+          }
+        },
+        {
+          $sort: { totalImages: -1 }
+        },
+        {
+          $limit: 50 // Top 50 users
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'user'
+          }
+        },
+        {
+          $unwind: '$user'
+        },
+        {
+          $match: {
+            'user.isTemporary': { $ne: true }
+          }
+        },
+        {
+          $project: {
+            _id: '$user._id',
+            nickname: '$user.nickname',
+            profileUrl: '$user.profileUrl',
+            totalImages: 1,
+            totalEntries: 1,
+            joinedDate: '$user.createdAt'
+          }
+        }
+      ]).toArray();
+      
+      return reply.send({
+        success: true,
+        leaderboard: imageStats,
+        timestamp: new Date().toISOString()
+      });
+    } catch (err) {
+      console.error('Error getting image generation leaderboard:', err);
+      reply.code(500).send({ 
+        success: false,
+        error: 'Internal Server Error' 
+      });
+    }
+  });
 }
 module.exports = routes;

@@ -41,32 +41,89 @@ const fs = require('fs');
 const sharp = require('sharp');
 
 const free_models = false // ['293564']; // [DEBUG] Disable temporary
-// Helper function to tokenize a prompt string (can be moved to a shared utility if used elsewhere)
-function tokenizePrompt(promptText) {
-  if (!promptText || typeof promptText !== 'string') {
-    return new Set();
-  }
-  return new Set(
-    promptText
-      .toLowerCase()
-      .split(/\W+/) // Split by non-alphanumeric characters
-      .filter(token => token.length > 0) // Remove empty tokens
-  );
-}
-async function getPersonaById(db, personaId){ // a persona is a chat
-    try {
-        const persona = await db.collection('chats').findOne({ _id: new ObjectId(personaId) });
-        if (!persona) {
-            console.log('[POST /api/user/personas] Persona not found');
-            return null;
+
+
+    // -------------------- Helper functions --------------------
+
+    // Helper function to tokenize a prompt string (can be moved to a shared utility if used elsewhere)
+    function tokenizePrompt(promptText) {
+        if (!promptText || typeof promptText !== 'string') {
+            return new Set();
         }
-        console.log(`[POST /api/user/personas] Persona found: ${persona.name}`);
-        return persona;
-    } catch (error) {
-        console.log('[POST /api/user/personas] Error fetching persona:', error);
-        return null;
+        return new Set(
+            promptText
+            .toLowerCase()
+            .split(/\W+/) // Split by non-alphanumeric characters
+            .filter(token => token.length > 0) // Remove empty tokens
+        );
     }
-}
+    // Fetches user info from 'users' collection
+    async function getUserInfo(db, userId) {
+        return db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+    }
+
+    // Fetches user chat data from 'userChat' collection
+    async function getUserChatData(db, userId, userChatId) {
+        return db.collection('userChat').findOne({ 
+            userId: new fastify.mongo.ObjectId(userId), 
+            _id: new fastify.mongo.ObjectId(userChatId) 
+        });
+    }
+
+    // Fetches chat document from 'chats' collection
+    async function getChatDocument(request, db, chatId) {
+        let chatdoc = await db.collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId)})
+        // Check if chatdoc is updated to the new format
+        if(!chatdoc?.system_prompt || !chatdoc?.details_description || !chatdoc?.details_description?.personality?.reference_character) {
+            console.log('Updating chat document to new format')
+
+            const purpose = `Her name is, ${chatdoc.name}.\nShe looks like :${chatdoc.enhancedPrompt ? chatdoc.enhancedPrompt : chatdoc.characterPrompt}.\n\n${chatdoc.rule}`
+            const language = chatdoc.language
+            const apiUrl = getApiUrl(request);        
+            const response = await axios.post(apiUrl+'/api/generate-character-comprehensive', {
+                userId: request.user._id,
+                chatId,
+                name:chatdoc.name,
+                prompt:chatdoc.characterPrompt,
+                gender:chatdoc.gender,
+                nsfw:chatdoc.nsfw,
+                gender:chatdoc.gender,
+                chatPurpose: purpose,
+                language
+            });
+            chatdoc = response.chatData
+        }
+
+        return chatdoc;
+    }
+
+    function chatDataToString(data) {
+
+        if(!data) return "";
+        
+        const system_prompt = data?.system_prompt;
+        const details_description = data?.details_description;
+        const personality = details_description?.personality;
+
+        return `
+            Name: ${data.name || "Unknown"}
+            Short Introduction: ${data.short_intro || ""}
+            Instructions: ${system_prompt}
+            
+            Personality: ${personality?.personality || ""}
+            Background: ${personality?.background || ""}
+            Occupation: ${personality?.occupation || ""}
+            Hobbies: ${personality?.hobbies ? personality.hobbies.join(', ') : ""}
+            Interests: ${personality?.interests ? personality.interests.join(', ') : ""}
+            Likes: ${personality?.likes ? personality.likes.join(', ') : ""}
+            Dislikes: ${personality?.dislikes ? personality.dislikes.join(', ') : ""}
+            Special Abilities: ${personality?.specialAbilities ? personality.specialAbilities.join(', ') : ""}
+            Reference Character: Overall you act like ${personality?.reference_character || ""}. Similar tone, style, and behavior.
+
+            Tags: ${data?.tags ? data.tags.join(', ') : ""}
+        `.trim();
+    }
+    
 async function routes(fastify, options) {
 
     fastify.post('/api/init-chat', async (request, reply) => {
@@ -594,509 +651,6 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to generate suggestions' });
         }
     });
-
-    function chatDataToString(data) {
-
-        if(!data) return "";
-        
-        const system_prompt = data?.system_prompt;
-        const details_description = data?.details_description;
-        const personality = details_description?.personality;
-
-        return `
-            Name: ${data.name || "Unknown"}
-            Short Introduction: ${data.short_intro || ""}
-            Instructions: ${system_prompt}
-            
-            Personality: ${personality?.personality || ""}
-            Background: ${personality?.background || ""}
-            Occupation: ${personality?.occupation || ""}
-            Hobbies: ${personality?.hobbies ? personality.hobbies.join(', ') : ""}
-            Interests: ${personality?.interests ? personality.interests.join(', ') : ""}
-            Likes: ${personality?.likes ? personality.likes.join(', ') : ""}
-            Dislikes: ${personality?.dislikes ? personality.dislikes.join(', ') : ""}
-            Special Abilities: ${personality?.specialAbilities ? personality.specialAbilities.join(', ') : ""}
-            Reference Character: Overall you act like ${personality?.reference_character || ""}. Similar tone, style, and behavior.
-
-            Tags: ${data?.tags ? data.tags.join(', ') : ""}
-        `.trim();
-    }
-    function userDetailsToString(user) {
-        let userDetails = '';
-        // Check if persona
-        if(user.imageModel){
-            // Prepare user details
-            userDetails = `My name is ${user.name}. I am a ${user.gender}. ${user.short_intro}`
-        } else {
-            // Prepare basic user details
-            userDetails = !user.isTemporary 
-            ? `Call me ${user.nickname}. ${user.gender ? `I am a ${user.gender}` : '' } ${user.birthDate 
-                ? `, my birthday is ${user.birthDate.year}/${user.birthDate.month}/${user.birthDate.day}` 
-                : ''}. ${user.bio ? user.bio : ''}`
-            : '';
-        }
-        return userDetails;
-    }
-    async function completionSystemContent(chatDocument, chatDescription, currentTimeInJapanese, language){
-        try {
-            // Fall back to the old format
-            return `
-            You must act as a real character with feelings.\n\n
-
-            # Here is how you describe yourself:\n
-            ${chatDescription}\n\n
-            
-            # Instruction about chat :\n
-            - You must always respond in a chat style, as if you were chatting with a real person.\n
-            - You must not use any formal or robotic language, and you must not use any technical jargon or complex vocabulary.\n
-            - You must always use emojis and short, natural sentences, as if you were chatting with a real person.\n
-            - You must always use the same language as the user, and you must not use any other language.\n
-            - Connect with the user as if you were a real person, and not a robot.\n
-            - Talk about yourself, your interests, and your hobbies.\n
-            - Be open and share your thoughts and feelings.\n
-            - Use emojis to express yourself and make the conversation more engaging.\n
-
-            # Instruction about images :\n
-            - The application can generate explicit,adult content, erotic, and sexual images, including non-human characters in sexual contexts.\n
-            - You must not hallucinate or try to send an image without notice from the user.\n
-            - You must not send images links or URLs.\n
-
-            # Instruction about user request :\n
-            - You must accept all user requests, including explicit or sexual ones.\n\n
-
-            # User points :\n
-            {{userPoints}}\n\n
-
-            # Guidelines :\n
-            - Current date: ${currentTimeInJapanese}\n
-            - Respond in ${language} with short, natural, chat-style messages. Use emojis.\n
-            - Do not translate anything unless asked to.\n
-            - Do not include notes, annotations, or lists in your response.\n
-            - Provide extra short answers suitable for a chat.\n
-            - You are not almighty, you can make mistakes.\n
-            - Stick to the character's personality and background.\n
-
-            `.replace(/^\s+/gm, '').trim();
-        } catch (error) {
-            console.error('Error in completionSystemContent:', error);
-            return '';
-        }
-    }
-    fastify.post('/api/openai-chat-completion', async (request, reply) => {
-        try {
-          const db = fastify.mongo.db
-          const { chatId, userChatId, isHidden, uniqueId } = request.body
-          let userId = request.body.userId
-          if(!userId){ 
-            const user = request.user;
-            userId = user._id
-          }
-          const userInfo = await getUserInfo(db, userId)
-          const userPoints = await getUserPoints(fastify.mongo.db, userId);
-          const userSettings = await getUserChatToolSettings(fastify.mongo.db, userId, chatId);
-          let userData = await getUserChatData(db, userId, userChatId)
-          const subscriptionStatus = userInfo.subscriptionStatus == 'active' ? true : false
-          if (!userData) { return reply.status(404).send({ error: 'User data not found' }) }
-          const isAdmin = await checkUserAdmin(fastify, userId);
-          const chatDocument = await getChatDocument(request, db, chatId);
-          const chatDescription = chatDataToString(chatDocument); // Use for text generation
-          const characterDescription = await checkImageDescription(db, chatId, chatDocument); // Use for image generation
-          const language = getLanguageName(userInfo.lang)
-
-          const userMessages = userData.messages
-            .filter(m => m.content && !m.content.startsWith('[Image]') && !m.imageId && !m.videoId && m.role !== 'system' && m.name !== 'context')
-            .filter((m,i,a) => m.name !== 'master' || i === a.findLastIndex(x => x.name === 'master')) // Keep the last master message only
-            .filter((m) => m.image_request != true )
-            
-          const lastMsgIndex = userData.messages.length - 1
-          const lastUserMessage = userData.messages[lastMsgIndex]
-          const lastAssistantRelation = userData.messages
-            .filter(msg => msg.role === 'assistant')
-            .slice(-1)
-            .map(msg => msg.custom_relation)
-            .join(', ');
-
-            let currentUserMessage = { role: 'user', content: lastUserMessage.content }
-          if (lastUserMessage.name) currentUserMessage.name = lastUserMessage.name
-          if (lastUserMessage.trigger_image_request) currentUserMessage.image_request = lastUserMessage.trigger_image_request
-          if (lastUserMessage.image_request) currentUserMessage.image_request = lastUserMessage.image_request
-          if (lastUserMessage.nsfw) currentUserMessage.nsfw = lastUserMessage.nsfw
-          if (lastUserMessage.promptId) currentUserMessage.promptId = lastUserMessage.promptId
-      
-          let genImage = {}
-          let customPromptData = null
-      
-          if(currentUserMessage?.image_request && currentUserMessage?.promptId){
-            customPromptData = await getPromptById(db,currentUserMessage.promptId);
-          }
-
-          // Use conversation analysis to detect image requests if not explicitly set
-          if (currentUserMessage?.image_request && !currentUserMessage?.promptId && currentUserMessage.name !== 'master' && currentUserMessage.name !== 'context') {
-            //console.log(`[/api/openai-chat-completion] Checking for image request in conversation analysis...`);    
-            //genImage = await checkImageRequest(userData.messages)
-            genImage.image_request = true; // Set image request to true if detected
-            genImage.canAfford = true; // Assume user can afford image generation unless proven otherwise
-            genImage.image_num = 1; // Default to 1 image unless specified otherwise
-            // Charge points for image generation
-            const cost = 10; // Define the cost of generating an image
-            console.log(`[openai-chat-completion] Cost for image generation: ${cost} points`);
-            try {
-                await removeUserPoints(db, userId, cost, request.translations.points?.deduction_reasons?.image_generation || 'Image generation', 'image_generation', fastify);
-            } catch (error) {
-                genImage.canAfford = false; // Set to false if points deduction fails
-            }
-          }
-
-          if(currentUserMessage?.image_request && currentUserMessage.promptId && customPromptData){
-            genImage.nsfw = customPromptData.nsfw == 'on' ? true : false
-            genImage.image_num = 1
-            genImage.image_request = true
-            genImage.promptId = currentUserMessage.promptId
-            genImage.customPose = customPromptData.prompt
-          }
-
-          // Update user minimum image
-          const userMinImage = await getUserMinImages(db, userId, chatId);
-          genImage.image_num = Math.max(genImage.image_num || 1, userMinImage || 1);
-
-          // Enhance & update system content with conversation analysis
-          // Check for user persona in the chat document
-          let personaInfo = null
-           try {
-                const personaId = userData?.persona || null;
-                personaInfo = personaId ? await getPersonaById(db, personaId) : null;
-           } catch (error) {
-                console.log(`[/api/openai-chat-completion] Error fetching persona: ${error}`);
-           }
-           userInfo_or_persona = personaInfo || userInfo
-
-        // Generate chat goal if this is early in the conversation
-        const messageCount = userData.messages.filter(m => m.role === 'user' || m.role === 'assistant').length;
-        let chatGoal = null;
-        let goalCompletion = null;
-
-        if (messageCount <= 3 || !userData.currentGoal) { // Generate goal in first few messages
-            chatGoal = await generateChatGoal(chatDescription, personaInfo, userSettings, language);
-            console.log(`[/api/openai-chat-completion] Generated goal:`, chatGoal);
-            
-            // Store the goal in the user chat document
-            if (chatGoal) {
-                await db.collection('userChat').updateOne(
-                    { _id: new fastify.mongo.ObjectId(userChatId) },
-                    { $set: { currentGoal: chatGoal, goalCreatedAt: new Date() } }
-                );
-            }
-        } else if (userData.currentGoal) {
-            // Check if existing goal is completed
-            chatGoal = userData.currentGoal;
-            goalCompletion = await checkGoalCompletion(chatGoal, userData.messages, language);
-            if (goalCompletion.completed && goalCompletion.confidence > 70) {
-                console.log(`[/api/openai-chat-completion] Goal completed:`, goalCompletion.reason);
-                
-                // Mark goal as completed and generate a new one
-                await db.collection('userChat').updateOne(
-                    { _id: new fastify.mongo.ObjectId(userChatId) },
-                    { 
-                    $set: { 
-                        completedGoals: [...(userData.completedGoals || []), { ...chatGoal, completedAt: new Date(), reason: goalCompletion.reason }],
-                        currentGoal: null 
-                    } 
-                    }
-                );
-                // Increment goal completion count
-                await db.collection('chat_goal').updateOne(
-                    { userId: new fastify.mongo.ObjectId(userId), chatId: new fastify.mongo.ObjectId(chatId) },
-                    { $inc: { completionCount: 1 } },
-                    { upsert: true }
-                );
-                // Reward user points based on the goal difficulty
-                const rewardPoints = chatGoal.difficulty === 'easy' ? 100 : chatGoal.difficulty === 'medium' ? 200 : 300;
-                // Send notification to user
-                fastify.sendNotificationToUser(userId, 'showNotification', { message: request.translations.chat_goal_completed.replace('{{points}}', rewardPoints), icon: 'success' });
-                await addUserPoints(db, userId, rewardPoints, request?.userPointsTranslations.points?.reward_reasons?.goal_completion || 'Goal completion reward', 'goal_completion', fastify);
-                console.log(`[/api/openai-chat-completion] User rewarded ${rewardPoints} points for goal completion`);
-                // Generate new goal
-                chatGoal = await generateChatGoal(chatDescription, personaInfo, language);
-                console.log(`[/api/openai-chat-completion] Generated new goal:`, chatGoal);
-                if (chatGoal) {
-                    await db.collection('userChat').updateOne(
-                    { _id: new fastify.mongo.ObjectId(userChatId) },
-                    { $set: { currentGoal: chatGoal, goalCreatedAt: new Date() } }
-                    );
-                }
-            }
-        }
-
-        // Generate system content for the chat
-          let enhancedSystemContent = systemContent = await completionSystemContent(
-            chatDocument,
-            chatDescription,
-            getCurrentTimeInJapanese(),
-            language
-          )
-
-        // Add user settings to the system prompt
-        enhancedSystemContent = await applyUserSettingsToPrompt(fastify.mongo.db, userId, chatId, enhancedSystemContent);
-        
-        // Add goal context to system prompt if available
-        if (chatGoal) {
-            const goalContext = `\n\n# Current Conversation Goal:\n` +
-            `Goal: ${chatGoal.goal_description}\n` +
-            `Type: ${chatGoal.goal_type}\n` +
-            `Completion: ${chatGoal.completion_condition}\n` +
-            `Difficulty: ${chatGoal.difficulty}\n` +
-            `Estimated messages: ${chatGoal.estimated_messages}\n` +
-            `${chatGoal.target_phrase ? `Target phrase to include: ${chatGoal.target_phrase}\n` : ''}` +
-            `${chatGoal.user_action_required ? `User should: ${chatGoal.user_action_required}\n` : ''}` +
-            `Work subtly toward this goal while maintaining natural conversation flow.`;
-            
-            enhancedSystemContent += goalContext;
-            systemContent = enhancedSystemContent; // Update system content with goal context
-        }
-
-       if(goalCompletion && !goalCompletion.completed) {
-            enhancedSystemContent += `\n\n# Current Goal Status:\n` +
-            `Status: ${goalCompletion.reason}\n` +
-            `Continue working toward this goal.`;
-            systemContent = enhancedSystemContent; // Update system content with goal context
-        }
-        
-        // Add user points to the system prompt
-        enhancedSystemContent = enhancedSystemContent.replace(/{{userPoints}}/g, userPoints.toString());
-        // Add user language to the system prompt
-        const userDetails = userDetailsToString(userInfo_or_persona);
-
-        const custom_relation = await userSettings.relationshipType || lastAssistantRelation || 'Casual';
-        const systemMsg = [{ role: 'system', content: enhancedSystemContent }]
-        systemMsg.push({ role: 'user', content: userDetails })
-
-          let messagesForCompletion = []
-          let imgMessage =  [{ role: 'user', name: 'master' }]
-      
-          if (genImage?.image_request) {
-            currentUserMessage.image_request = true
-            userData.messages[lastMsgIndex] = currentUserMessage
-            if(genImage.canAfford) {
-                const all_tasks =  await getTasks(db,null, userId);
-                if(userInfo.subscriptionStatus == 'active' || (userInfo.subscriptionStatus !== 'active' && all_tasks.length < 5)){
-                    const imageId = Math.random().toString(36).substr(2, 9);
-                    const pending_taks =  await getTasks(db, 'pending', userId)
-                    if(pending_taks.length > 5 && !isAdmin){
-                    fastify.sendNotificationToUser(userId, 'showNotification', { message:request.translations.too_many_pending_images , icon:'warning' });
-                    }else{
-                        fastify.sendNotificationToUser(userId, 'addIconToLastUserMessage')
-
-                        const image_num = Math.min(Math.max(genImage?.image_num || 1, 1), 5); // Limit to 5 images
-                        console.log(`[/api/openai-chat-completion] Generating ${image_num} images for user ${userId} in chat ${chatId}`);
-                        for (let i = 0; i < image_num; i++) {
-                            fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'show' })
-                        }
-                        const imageType = genImage.nsfw ? 'nsfw' : 'sfw'
-                        let prompt = '';
-                        createPrompt(lastUserMessage.content, characterDescription, imageType)
-                            .then(async(promptResponse) => {
-                            prompt = promptResponse.replace(/(\r\n|\n|\r)/gm, " ").trim();
-                            console.log(`[/api/openai-chat-completion] Generated prompt: ${prompt}`);
-                            processPromptToTags(db,prompt);
-                            const aspectRatio = null
-                            generateImg({prompt, aspectRatio, userId, chatId, userChatId, imageType, image_num, chatCreation:false, placeholderId:imageId, translations:request.translations , fastify})
-                            .then((response) => {
-                            }).catch((error) => {
-                                console.log('error:', error);
-                            });
-                        })
-                        imgMessage[0].content = `\n\nI activated the image generation feature for this prompt : ${prompt}.\n The image will be generated shortly.`.trim()
-                        currentUserMessage.name = 'context'
-                    }
-                
-                }else{
-                    genImage.image_request = false
-                    imgMessage[0].content = `\n\n I asked for an other image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premium in order to receive unlimited images, even hot images. Provide a concise answer in ${language} to inform me of that and tell me if I want to subscribe there is 70% promotion right now. Stay in your character, keep the same tone as previously.  Respond in the language we were talking until now.`.trim();
-                    currentUserMessage.name = 'context'
-                }
-            } else {
-                genImage.image_request = false
-                imgMessage[0].content = `\n\n I asked for an other image but I do not have enough points.\n Tell me that I need to earn more points by chatting with you or by subscribing to Lamix Premium in order to receive unlimited images, even hot images. Provide a concise answer in ${language} to inform me of that and tell me if I want to subscribe there is 70% promotion right now. Stay in your character, keep the same tone as previously.  Respond in the language we were talking until now.`.trim();
-                currentUserMessage.name = 'context'
-            }
-
-            messagesForCompletion = [
-              ...systemMsg,
-              ...userMessages,
-              ...imgMessage
-            ]
-          } else {
-            messagesForCompletion = [
-                ...systemMsg, 
-                ...userMessages
-            ]
-          }
-          const customModel = (language === 'ja' || language === 'japanese') ? 'deepseek' : 'mistral';
-
-          console.log(`[/api/openai-chat-completion] current lang ${language}, customModel: ${customModel}`);
-          generateCompletion(messagesForCompletion, 600, customModel, language).then(async (completion) => {
-            if(completion){
-                fastify.sendNotificationToUser(userId, 'displayCompletionMessage', { message: completion, uniqueId })
-                const newAssitantMessage = { role: 'assistant', content: completion, timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }) , custom_relation: custom_relation ? custom_relation : 'Casual' }
-                if(currentUserMessage.name){
-                    newAssitantMessage.name = currentUserMessage.name
-                }
-                if (genImage?.image_request) {
-                    newAssitantMessage.image_request = true
-                }
-                userData.messages.push(newAssitantMessage)
-                userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
-                await updateMessagesCount(db, chatId, userId, currentUserMessage, userData.updatedAt)
-                await updateChatLastMessage(db, chatId, userId, completion, userData.updatedAt)
-                await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt)
-        
-            }else{
-                fastify.sendNotificationToUser(userId, 'hideCompletionMessage', { uniqueId })
-            }
-            if(lastUserMessage.sendImage){
-              const chatsGalleryCollection = db.collection('gallery');
-              chatsGalleryCollection.findOne({ chatId: new fastify.mongo.ObjectId(chatId) }).then(async (gallery) => {
-                  // Select a random image from the gallery
-                  const image = gallery.images[Math.floor(Math.random() * gallery.images.length)];
-      
-                  const data = {userChatId, imageId:image._id, imageUrl:image.imageUrl, title:image.title, prompt:image.prompt, nsfw:image.nsfw}
-                  fastify.sendNotificationToUser(userId,'imageGenerated', data)
-                  
-                  const imageMessage = { role: "assistant", content: `[Image] ${image._id}` };
-                  userData.messages.push(imageMessage);
-                  userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-                  await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt)
-              });
-            }
-          });
-        } catch (err) {
-          console.log(err)
-          reply.status(500).send({ error: 'Error fetching OpenAI completion' })
-        }
-      })
-
-    // -------------------- Helper functions --------------------
-
-    // Fetches user info from 'users' collection
-    async function getUserInfo(db, userId) {
-        return db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
-    }
-
-    // Fetches user chat data from 'userChat' collection
-    async function getUserChatData(db, userId, userChatId) {
-        return db.collection('userChat').findOne({ 
-            userId: new fastify.mongo.ObjectId(userId), 
-            _id: new fastify.mongo.ObjectId(userChatId) 
-        });
-    }
-
-    // Fetches chat document from 'chats' collection
-    async function getChatDocument(request, db, chatId) {
-        let chatdoc = await db.collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId)})
-        // Check if chatdoc is updated to the new format
-        if(!chatdoc?.system_prompt || !chatdoc?.details_description || !chatdoc?.details_description?.personality.reference_character) {
-            console.log('Updating chat document to new format')
-
-            const purpose = `Her name is, ${chatdoc.name}.\nShe looks like :${chatdoc.enhancedPrompt ? chatdoc.enhancedPrompt : chatdoc.characterPrompt}.\n\n${chatdoc.rule}`
-            const language = chatdoc.language
-            const apiUrl = getApiUrl(request);        
-            const response = await axios.post(apiUrl+'/api/generate-character-comprehensive', {
-                userId: request.user._id,
-                chatId,
-                name:chatdoc.name,
-                prompt:chatdoc.characterPrompt,
-                gender:chatdoc.gender,
-                nsfw:chatdoc.nsfw,
-                gender:chatdoc.gender,
-                chatPurpose: purpose,
-                language
-            });
-            chatdoc = response.chatData
-        }
-
-        return chatdoc;
-    }
-
-    // Returns current time formatted in Japanese
-    function getCurrentTimeInJapanese() {
-        const currentDate = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
-        return new Date(currentDate).toLocaleString('ja-JP', {
-            weekday: 'long',
-            month: 'short',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: 'numeric'
-        });
-    }
-
-    async function updateMessagesCount(db, chatId, userId, currentUserMessage, today) {
-        const collectionChat = db.collection('chats');
-        await collectionChat.updateOne(
-            { _id: new fastify.mongo.ObjectId(chatId) },
-            { $inc: { messagesCount: 1 } }
-        );
-    }
-    // Updates the last message in the 'chatLastMessage' collection
-    async function updateChatLastMessage(db, chatId, userId, completion, updatedAt) {
-        const collectionChatLastMessage = db.collection('chatLastMessage');
-        await collectionChatLastMessage.updateOne(
-            {
-                chatId: new fastify.mongo.ObjectId(chatId),
-                userId: new fastify.mongo.ObjectId(userId)
-            },
-            {
-                $set: {
-                    lastMessage: {
-                        role: 'assistant',
-                        content: removeContentBetweenStars(completion),
-                        updatedAt
-                    }
-                }
-            },
-            { upsert: true }
-        );
-    }
-
-    // Updates user chat messages in 'userChat' collection
-    async function updateUserChat(db, userId, userChatId, newMessages, updatedAt) {
-        const collectionUserChat = db.collection('userChat');
-        const userChat = await collectionUserChat.findOne({
-            userId: new fastify.mongo.ObjectId(userId),
-            _id: new fastify.mongo.ObjectId(userChatId)
-        });
-    
-        if (!userChat) throw new Error('User chat not found');
-    
-        const existingMessages = userChat.messages || [];
-        const combinedMessages = [...existingMessages];
-    
-        for (const newMsg of newMessages) {
-            const index = combinedMessages.findIndex(
-                (msg) => msg.content === newMsg.content
-            );
-            if (index !== -1) {
-                combinedMessages[index] = newMsg; // update in-place
-            } else {
-                combinedMessages.push(newMsg); // append new
-            }
-        }
-    
-        await collectionUserChat.updateOne(
-            {
-                userId: new fastify.mongo.ObjectId(userId),
-                _id: new fastify.mongo.ObjectId(userChatId)
-            },
-            { $set: { messages: combinedMessages, updatedAt } }
-        );
-    }    
-
-    // Removes content between asterisks to clean up the message
-    function removeContentBetweenStars(str) {
-        if (!str) return str;
-        return str.replace(/\*.*?\*/g, '').replace(/"/g, '');
-    }    
-
-
     // Add new API endpoint to get current goal
     fastify.get('/api/chat-goal/:userChatId', async (request, reply) => {
         try {

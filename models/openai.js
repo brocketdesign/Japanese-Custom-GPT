@@ -135,33 +135,27 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
 
 // Define the schema for the response format
 const formatSchema = z.object({
-  nsfw: z.boolean(),
   image_request: z.boolean(),
-  image_num: z.number(),
+  reason: z.string()
 });
-const checkImageRequest = async (messages) => {
+const checkImageRequest = async (lastAssistantMessage,lastUserMessage) => {
 
   try {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  
-    const lastUserMessagesContent = messages
-      .filter(msg => msg?.role === 'user' && !msg?.content?.startsWith('[Image]'))
-      .slice(-1)
-      .map(msg => msg?.content)
-      .join(', ');
 
-    if (!lastUserMessagesContent) return {};
+    if (!lastAssistantMessage && !lastUserMessage) return {};
 
     const commandPrompt = `
-      You are a helpful assistant designed to evaluate whether the user's message is related to visual content, physical content or if you cannot fulfill the request. Analyze the conversation for the following: 
-    1. **nsfw**: true if explicit nudity is involved (naked top, pussy, ass hole), otherwise false (underwear, bikini, mini skirt). 
-    2. **image_request**: true if the user's message is an explicit request for image, comething visual, otherwise false. ex: 'ちんぽ舐めて' is a physical request. 'Show me your pussy' is an image request. 
-    3. **image_num**: The number of images requested (minimum 1 maximum 8).
+      You are a helpful assistant designed to evaluate whether the assistant's response is trying to generate an image. \n
+      1. **image_request**: true if the message is an explicit request for image generation, false otherwise.
+      2. **reason**: you explain why it is an image request or not.
     `;
     const analysisPrompt = `
-    Analyze the following request considering ALL aspects:
-    "${lastUserMessagesContent}"
-    Format response using JSON object with the following keys: nsfw, image_request, image_num.
+    Analyze the following request considering ALL aspects:\n\n
+    "User: ${lastUserMessage}"\n
+    "Assistant: ${lastAssistantMessage}"\n\n
+    Is the assistant trying to send an image following the user message ?
+    Format response using JSON object with the following keys: image_request, reason.
     `;
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',

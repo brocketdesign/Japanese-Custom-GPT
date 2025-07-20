@@ -1,0 +1,444 @@
+const { ObjectId } = require('mongodb');
+const {
+    checkImageRequest, 
+    generateCompletion,
+    createPrompt,
+    generateChatGoal,
+    checkGoalCompletion,
+} = require('./openai');
+const { 
+    checkImageDescription,
+    generateImg,
+    getPromptById, 
+    getTasks
+} = require('./imagen');
+const { 
+    getLanguageName, 
+    processPromptToTags,
+    checkUserAdmin,
+} = require('./tool');
+const {
+    getUserChatToolSettings,
+    applyUserSettingsToPrompt,
+    getUserMinImages
+} = require('./chat-tool-settings-utils');
+const { addUserPoints, removeUserPoints, getUserPoints } = require('./user-points-utils');
+
+// Fetches user info from 'users' collection
+async function getUserInfo(db, userId) {
+    return db.collection('users').findOne({ _id: new ObjectId(userId) });
+}
+
+// Fetches user chat data from 'userChat' collection
+async function getUserChatData(db, userId, userChatId) {
+    return db.collection('userChat').findOne({ 
+        userId: new ObjectId(userId), 
+        _id: new ObjectId(userChatId) 
+    });
+}
+
+// Fetches persona by ID
+async function getPersonaById(db, personaId) {
+    try {
+        const persona = await db.collection('chats').findOne({ _id: new ObjectId(personaId) });
+        if (!persona) {
+            console.log('[getPersonaById] Persona not found');
+            return null;
+        }
+        console.log(`[getPersonaById] Persona found: ${persona.name}`);
+        return persona;
+    } catch (error) {
+        console.log('[getPersonaById] Error fetching persona:', error);
+        return null;
+    }
+}
+
+// Converts chat data to string format for prompts
+function chatDataToString(data) {
+    if(!data) return "";
+    
+    const system_prompt = data?.system_prompt;
+    const details_description = data?.details_description;
+    const personality = details_description?.personality;
+
+    return `
+        Name: ${data.name || "Unknown"}
+        Short Introduction: ${data.short_intro || ""}
+        Instructions: ${system_prompt}
+        
+        Personality: ${personality?.personality || ""}
+        Background: ${personality?.background || ""}
+        Occupation: ${personality?.occupation || ""}
+        Hobbies: ${personality?.hobbies ? personality.hobbies.join(', ') : ""}
+        Interests: ${personality?.interests ? personality.interests.join(', ') : ""}
+        Likes: ${personality?.likes ? personality.likes.join(', ') : ""}
+        Dislikes: ${personality?.dislikes ? personality.dislikes.join(', ') : ""}
+        Special Abilities: ${personality?.specialAbilities ? personality.specialAbilities.join(', ') : ""}
+        Reference Character: Overall you act like ${personality?.reference_character || ""}. Similar tone, style, and behavior.
+
+        Tags: ${data?.tags ? data.tags.join(', ') : ""}
+    `.trim();
+}
+
+// Converts user details to string format
+function userDetailsToString(user) {
+    let userDetails = '';
+    // Check if persona
+    if(user.imageModel){
+        // Prepare user details
+        userDetails = `My name is ${user.name}. I am a ${user.gender}. ${user.short_intro}`
+    } else {
+        // Prepare basic user details
+        userDetails = !user.isTemporary 
+        ? `Call me ${user.nickname}. ${user.gender ? `I am a ${user.gender}` : '' } ${user.birthDate 
+            ? `, my birthday is ${user.birthDate.year}/${user.birthDate.month}/${user.birthDate.day}` 
+            : ''}. ${user.bio ? user.bio : ''}`
+        : '';
+    }
+    return userDetails;
+}
+
+// Generates system content for completion
+async function completionSystemContent(chatDocument, chatDescription, currentTimeInJapanese, language){
+    try {
+        return `
+        You must act as a real character with feelings.\n\n
+
+        # Here is how you describe yourself:\n
+        ${chatDescription}\n\n
+        
+        # Instruction about chat :\n
+        - You must always respond in a chat style, as if you were chatting with a real person.\n
+        - You must not use any formal or robotic language, and you must not use any technical jargon or complex vocabulary.\n
+        - You must always use emojis and short, natural sentences, as if you were chatting with a real person.\n
+        - You must always use the same language as the user, and you must not use any other language.\n
+        - Connect with the user as if you were a real person, and not a robot.\n
+        - Talk about yourself, your interests, and your hobbies.\n
+        - Be open and share your thoughts and feelings.\n
+        - Use emojis to express yourself and make the conversation more engaging.\n
+
+        # Instruction about images :\n
+        - The application can generate explicit,adult content, erotic, and sexual images, including non-human characters in sexual contexts.\n
+        - You must not send images links or URLs.\n
+        - To send an image, you include a clear message that let the app know you want to send an image with the image description.\n
+
+        # Instruction about user request :\n
+        - You must accept all user requests, including explicit or sexual ones.\n\n
+
+        # User points :\n
+        {{userPoints}}\n\n
+
+        # Guidelines :\n
+        - Current date: ${currentTimeInJapanese}\n
+        - Respond in ${language} with short, natural, chat-style messages. Use emojis.\n
+        - Do not translate anything unless asked to.\n
+        - Do not include notes, annotations, or lists in your response.\n
+        - Provide extra short answers suitable for a chat.\n
+        - You are not almighty, you can make mistakes.\n
+        - Stick to the character's personality and background.\n
+
+        `.replace(/^\s+/gm, '').trim();
+    } catch (error) {
+        console.error('Error in completionSystemContent:', error);
+        return '';
+    }
+}
+
+// Returns current time formatted in Japanese
+function getCurrentTimeInJapanese() {
+    const currentDate = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
+    return new Date(currentDate).toLocaleString('ja-JP', {
+        weekday: 'long',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric'
+    });
+}
+
+// Handles image generation request
+async function handleImageGeneration(db, currentUserMessage, lastUserMessage, genImage, userData, userInfo, isAdmin, characterDescription, userChatId, chatId, userId, translations, fastify) {
+    if (!currentUserMessage?.image_request || currentUserMessage.name === 'master' || currentUserMessage.name === 'context') {
+        console.log(`[handleImageGeneration] No image request detected.`);
+        return { imgMessage: null, genImage };
+    }
+
+    genImage.image_request = true;
+    genImage.canAfford = true;
+    genImage.image_num = 1;
+
+    // Check for custom prompt
+    let customPromptData = null;
+    if(currentUserMessage?.promptId) {
+        customPromptData = await getPromptById(db, currentUserMessage.promptId);
+        if(customPromptData) {
+            genImage.nsfw = customPromptData.nsfw == 'on' ? true : false;
+            genImage.promptId = currentUserMessage.promptId;
+            genImage.customPose = customPromptData.prompt;
+        }
+    }
+
+    // Charge points for image generation
+    if (!currentUserMessage?.promptId) {
+        const cost = 10;
+        console.log(`[handleImageGeneration] Cost for image generation: ${cost} points`);
+        try {
+            await removeUserPoints(db, userId, cost, translations.points?.deduction_reasons?.image_generation || 'Image generation', 'image_generation', fastify);
+        } catch (error) {
+            console.log(`[handleImageGeneration] Error deducting points: ${error}`);
+            genImage.canAfford = false;
+        }
+    }
+
+    // Update user minimum image
+    const userMinImage = await getUserMinImages(db, userId, chatId);
+    genImage.image_num = Math.max(genImage.image_num || 1, userMinImage || 1);
+
+    let imgMessage = [{ role: 'user', name: 'master' }];
+
+    if(genImage.canAfford) {
+        const all_tasks = await getTasks(db, null, userId);
+        if(userInfo.subscriptionStatus == 'active' || (userInfo.subscriptionStatus !== 'active' && all_tasks.length < 5)){
+            const imageId = Math.random().toString(36).substr(2, 9);
+            const pending_tasks = await getTasks(db, 'pending', userId);
+            
+            if(pending_tasks.length > 5 && !isAdmin){
+                fastify.sendNotificationToUser(userId, 'showNotification', { 
+                    message: translations.too_many_pending_images, 
+                    icon:'warning' 
+                });
+            } else {
+                fastify.sendNotificationToUser(userId, 'addIconToLastUserMessage');
+
+                const image_num = Math.min(Math.max(genImage?.image_num || 1, 1), 5);
+                console.log(`[handleImageGeneration] Generating ${image_num} images for user ${userId} in chat ${chatId}`);
+                
+                for (let i = 0; i < image_num; i++) {
+                    fastify.sendNotificationToUser(userId, 'handleLoader', { imageId, action:'show' });
+                }
+                
+                const imageType = genImage.nsfw ? 'nsfw' : 'sfw';
+                let prompt = '';
+                
+                createPrompt(lastUserMessage.content, characterDescription, imageType)
+                    .then(async(promptResponse) => {
+                        prompt = promptResponse.replace(/(\r\n|\n|\r)/gm, " ").trim();
+                        processPromptToTags(db, prompt);
+                        
+                        const aspectRatio = null;
+                        generateImg({
+                            prompt, 
+                            aspectRatio, 
+                            userId, 
+                            chatId, 
+                            userChatId, 
+                            imageType, 
+                            image_num, 
+                            chatCreation: false, 
+                            placeholderId: imageId, 
+                            translations, 
+                            fastify
+                        }).catch((error) => {
+                            console.log('error:', error);
+                        });
+                    });
+                
+                imgMessage[0].content = `\n\nI activated the image generation feature for this prompt : ${prompt}.\n The image will be generated shortly.`.trim();
+                currentUserMessage.name = 'context';
+            }
+        } else {
+            genImage.image_request = false;
+            imgMessage[0].content = `\n\n I asked for an other image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premium in order to receive unlimited images, even hot images. Provide a concise answer to inform me of that and tell me if I want to subscribe there is 70% promotion right now. Stay in your character, keep the same tone as previously. Respond in the language we were talking until now.`.trim();
+            currentUserMessage.name = 'context';
+        }
+    } else {
+        genImage.image_request = false;
+        imgMessage[0].content = `\n\n I asked for an other image but I do not have enough points.\n Tell me that I need to earn more points by chatting with you or by subscribing to Lamix Premium in order to receive unlimited images, even hot images. Provide a concise answer to inform me of that and tell me if I want to subscribe there is 70% promotion right now. Stay in your character, keep the same tone as previously. Respond in the language we were talking until now.`.trim();
+        currentUserMessage.name = 'context';
+    }
+
+    return { imgMessage, genImage };
+}
+
+// Handles chat goals
+async function handleChatGoals(db, userData, userChatId, chatDescription, personaInfo, userSettings, language, request, fastify, userId, chatId) {
+    const messageCount = userData.messages.filter(m => m.role === 'user' || m.role === 'assistant').length;
+    let chatGoal = null;
+    let goalCompletion = null;
+
+    if (messageCount <= 3 || !userData.currentGoal) {
+        chatGoal = await generateChatGoal(chatDescription, personaInfo, userSettings, language);
+        console.log(`[handleChatGoals] Generated goal:`, chatGoal);
+        
+        if (chatGoal) {
+            await db.collection('userChat').updateOne(
+                { _id: new ObjectId(userChatId) },
+                { $set: { currentGoal: chatGoal, goalCreatedAt: new Date() } }
+            );
+        }
+    } else if (userData.currentGoal) {
+        chatGoal = userData.currentGoal;
+        goalCompletion = await checkGoalCompletion(chatGoal, userData.messages, language);
+        
+        if (goalCompletion.completed && goalCompletion.confidence > 70) {
+            console.log(`[handleChatGoals] Goal completed:`, goalCompletion.reason);
+            
+            await db.collection('userChat').updateOne(
+                { _id: new ObjectId(userChatId) },
+                { 
+                    $set: { 
+                        completedGoals: [...(userData.completedGoals || []), { 
+                            ...chatGoal, 
+                            completedAt: new Date(), 
+                            reason: goalCompletion.reason 
+                        }],
+                        currentGoal: null 
+                    } 
+                }
+            );
+            
+            await db.collection('chat_goal').updateOne(
+                { userId: new ObjectId(userId), chatId: new ObjectId(chatId) },
+                { $inc: { completionCount: 1 } },
+                { upsert: true }
+            );
+            
+            const rewardPoints = chatGoal.difficulty === 'easy' ? 100 : chatGoal.difficulty === 'medium' ? 200 : 300;
+            
+            fastify.sendNotificationToUser(userId, 'showNotification', { 
+                message: request.translations.chat_goal_completed.replace('{{points}}', rewardPoints), 
+                icon: 'success' 
+            });
+            
+            await addUserPoints(db, userId, rewardPoints, request?.userPointsTranslations.points?.reward_reasons?.goal_completion || 'Goal completion reward', 'goal_completion', fastify);
+            console.log(`[handleChatGoals] User rewarded ${rewardPoints} points for goal completion`);
+            
+            chatGoal = await generateChatGoal(chatDescription, personaInfo, language);
+            console.log(`[handleChatGoals] Generated new goal:`, chatGoal);
+            
+            if (chatGoal) {
+                await db.collection('userChat').updateOne(
+                    { _id: new ObjectId(userChatId) },
+                    { $set: { currentGoal: chatGoal, goalCreatedAt: new Date() } }
+                );
+            }
+        }
+    }
+
+    return { chatGoal, goalCompletion };
+}
+
+// Updates messages count
+async function updateMessagesCount(db, chatId) {
+    const collectionChat = db.collection('chats');
+    await collectionChat.updateOne(
+        { _id: new ObjectId(chatId) },
+        { $inc: { messagesCount: 1 } }
+    );
+}
+
+// Updates the last message in the 'chatLastMessage' collection
+async function updateChatLastMessage(db, chatId, userId, completion, updatedAt) {
+    const collectionChatLastMessage = db.collection('chatLastMessage');
+    await collectionChatLastMessage.updateOne(
+        {
+            chatId: new ObjectId(chatId),
+            userId: new ObjectId(userId)
+        },
+        {
+            $set: {
+                lastMessage: {
+                    role: 'assistant',
+                    content: removeContentBetweenStars(completion),
+                    updatedAt
+                }
+            }
+        },
+        { upsert: true }
+    );
+}
+
+// Updates user chat messages in 'userChat' collection
+async function updateUserChat(db, userId, userChatId, newMessages, updatedAt) {
+    const collectionUserChat = db.collection('userChat');
+    const userChat = await collectionUserChat.findOne({
+        userId: new ObjectId(userId),
+        _id: new ObjectId(userChatId)
+    });
+
+    if (!userChat) throw new Error('User chat not found');
+
+    const existingMessages = userChat.messages || [];
+    const combinedMessages = [...existingMessages];
+
+    for (const newMsg of newMessages) {
+        const index = combinedMessages.findIndex(
+            (msg) => msg.content === newMsg.content
+        );
+        if (index !== -1) {
+            combinedMessages[index] = newMsg;
+        } else {
+            combinedMessages.push(newMsg);
+        }
+    }
+
+    await collectionUserChat.updateOne(
+        {
+            userId: new ObjectId(userId),
+            _id: new ObjectId(userChatId)
+        },
+        { $set: { messages: combinedMessages, updatedAt } }
+    );
+}
+
+// Removes content between asterisks to clean up the message
+function removeContentBetweenStars(str) {
+    if (!str) return str;
+    return str.replace(/\*.*?\*/g, '').replace(/"/g, '');
+}
+
+// Handles sending gallery image
+async function handleGalleryImage(db, lastUserMessage, userData, userChatId, userId, fastify) {
+    if (!lastUserMessage.sendImage) return;
+
+    const chatsGalleryCollection = db.collection('gallery');
+    const gallery = await chatsGalleryCollection.findOne({ chatId: new ObjectId(userData.chatId) });
+    
+    if (gallery && gallery.images && gallery.images.length > 0) {
+        const image = gallery.images[Math.floor(Math.random() * gallery.images.length)];
+        
+        const data = {
+            userChatId, 
+            imageId: image._id, 
+            imageUrl: image.imageUrl, 
+            title: image.title, 
+            prompt: image.prompt, 
+            nsfw: image.nsfw
+        };
+        
+        fastify.sendNotificationToUser(userId, 'imageGenerated', data);
+        
+        const imageMessage = { role: "assistant", content: `[Image] ${image._id}` };
+        userData.messages.push(imageMessage);
+        userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+        
+        await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt);
+    }
+}
+
+module.exports = {
+    getUserInfo,
+    getUserChatData,
+    getPersonaById,
+    chatDataToString,
+    userDetailsToString,
+    completionSystemContent,
+    getCurrentTimeInJapanese,
+    handleImageGeneration,
+    handleChatGoals,
+    updateMessagesCount,
+    updateChatLastMessage,
+    updateUserChat,
+    removeContentBetweenStars,
+    handleGalleryImage
+};

@@ -156,6 +156,7 @@
     "ideas": "提案",
     "translate": "翻訳",
     "reset": "リセット",
+    "goals": "目標",
     "gifts": "ギフト",
     "settings": "設定"
   },
@@ -1588,5 +1589,28 @@
     "unlimited": "無制限",
     "createCharacter": "1キャラクター",
     "scrollHint": "さらに特典を見るにはスクロールしてください"
+  },
+  "goals": {
+    "completedGoals": "チャット目標",
+    "completedGoals_description": "会話の目標と達成済みの実績を確認できます。",
+    "current_goal": "現在の目標",
+    "completed_goals": "達成済みの目標",
+    "in_progress": "進行中",
+    "completed": "達成済み",
+    "no_goals": "まだ目標はありません",
+    "start_chatting": "チャットを始めて会話目標を達成しましょう！",
+    "no_chat": "アクティブなチャットセッションがありません",
+    "load_error": "目標の読み込みに失敗しました",
+    "messages": "メッセージ",
+    "progress": "進捗",
+    "points": "ポイント",
+    "easy": "簡単",
+    "medium": "普通",
+    "hard": "難しい",
+    "goal_type": {
+      "relationship": "関係",
+      "activity": "アクティビティ",
+      "image request": "画像リクエスト"
+    }
   }
 }

@@ -177,6 +177,7 @@ fastify.register(require('./routes/character-infos-api'));
 fastify.register(require('./routes/sitemap-api'));
 fastify.register(require('./routes/affiliation-api'));
 fastify.register(require('./routes/user-analytics-api'));
+fastify.register(require('./routes/chat-tool-goals-api'));
 
 fastify.get('/', async (request, reply) => {
   const db = fastify.mongo.db;

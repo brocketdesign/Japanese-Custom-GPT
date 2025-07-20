@@ -1178,12 +1178,22 @@ async function routes(fastify, options) {
             // Clear message from any special tags and emojis and remove text between square brackets or stars
             const sanitizedMessage = message.replace(/(\[.*?\]|\*.*?\*)/g, '').replace(/[\uD83C-\uDBFF\uDC00-\uDFFF]/g, '').trim();
             
-            const mp3 = await openai.audio.speech.create({
-                model: "gpt-4o-mini-tts",
-                voice: voiceConfig.voice || "sage",
-                input: sanitizedMessage,
-                instructions:system_tone
-            });
+            let mp3;
+            try {
+                mp3 = await openai.audio.speech.create({
+                    model: "gpt-4o-mini-tts",
+                    voice: voiceConfig.voice || "sage",
+                    input: sanitizedMessage,
+                    instructions: system_tone
+                });
+            } catch (error) {
+                console.error('Error generating speech with OpenAI:', error);
+                return reply.status(500).send({
+                    errno: 4,
+                    message: "Error generating speech with OpenAI.",
+                    details: error.message
+                });
+            }
         
             const buffer = Buffer.from(await mp3.arrayBuffer());
             const filename = `speech-${Date.now()}.mp3`;

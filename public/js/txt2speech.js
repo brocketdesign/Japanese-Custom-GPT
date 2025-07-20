@@ -101,7 +101,7 @@ function initAudio($el, message) {
 
     requestAudioPermission().then(async isAllowed => {
         if (!isAllowed) {
-            return $el.html('再生がキャンセルされました');
+            return $el.html('►');
         }
         
         // Check if audio is already cached
@@ -121,6 +121,8 @@ function initAudio($el, message) {
                 playAudio($el, audio, audioUrl, message);
             } catch (error) {
                 console.error('Error generating audio:', error);
+                // Reset UI to original state to allow retry
+                $el.html('►');
                 // Fallback to original voice URL method if EvenLab fails
                 try {
                     const fallbackUrl = await getVoiceUrl(message);
@@ -135,14 +137,18 @@ function initAudio($el, message) {
                         const audio = getAvailableAudio();
                         playAudio($el, audio, audioUrl, message);
                     } else {
-                        $el.html('エラーが発生しました');
+                        $el.html('►');
                     }
                 } catch (fallbackError) {
                     console.error('Fallback audio generation failed:', fallbackError);
-                    $el.html('エラーが発生しました');
+                    $el.html('►');
                 }
             }
         }
+    }).catch(error => {
+        // Catch any unhandled promise rejections from requestAudioPermission
+        console.error('Error in requestAudioPermission or audio initialization:', error);
+        $el.html('►');
     });
 }
 
@@ -208,8 +214,14 @@ async function generateTextToSpeech(message) {
                 throw new Error(`OpenAI API error! status: ${response.status}`);
             }
 
-            const audioBlob = await response.blob();
-            return URL.createObjectURL(audioBlob);
+
+            // OpenAI API returns JSON with audio_url field pointing to a file
+            const result = await response.json();
+            if (result.errno === 0 && result.data && result.data.audio_url) {
+                return result.data.audio_url; // Return the file path directly
+            } else {
+                throw new Error('Invalid response from OpenAI API: ' + JSON.stringify(result));
+            }
         }
         
     } catch (error) {
@@ -293,19 +305,46 @@ function playAudio($el, audio, audioUrl, message) {
         return;
     }
     
+    // Log for debugging
+    console.log('[playAudio] Setting audio source:', audioUrl);
+    
     // Otherwise, set up and play
-    if (audio.src !== audioUrl) audio.src = audioUrl;
+    if (audio.src !== audioUrl) {
+        audio.src = audioUrl;
+        
+        // Wait for the audio to be ready before playing
+        audio.addEventListener('canplaythrough', () => {
+            console.log('[playAudio] Audio ready to play');
+        }, { once: true });
+    }
     
     audio.muted = false;
-    audio.play();
+    
+    // Handle audio play errors with more detailed logging
+    audio.play().catch(error => {
+        console.error('Error playing audio:', error);
+        console.error('Audio source:', audio.src);
+        console.error('Audio readyState:', audio.readyState);
+        console.error('Audio networkState:', audio.networkState);
+        $el.html('►');
+        return;
+    });
     
     audio.onloadedmetadata = () => {
         const duration = audio.duration;
+        console.log('[playAudio] Audio metadata loaded, duration:', duration);
         $el.attr('data-audio-duration', duration)
         .html(`❚❚ ${Math.round(duration)}"`);
         
         // Store which element is controlling this audio
         audio.controlElement = $el;
+    }
+    
+    audio.onerror = (event) => {
+        console.error('Audio error occurred:', event);
+        console.error('Audio error details:', audio.error);
+        console.error('Audio source at error:', audio.src);
+        $el.html('►');
     }
     
     audio.onended = () => {

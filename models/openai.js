@@ -602,7 +602,8 @@ ${goal.user_action_required ? `Required User Action: ${goal.user_action_required
 Recent Conversation:
 ${recentMessages}
 
-Has this goal been completed?`;
+Has this goal been completed?
+Respond in ${language}`;
 
     const completionSchema = z.object({
       completed: z.boolean(),

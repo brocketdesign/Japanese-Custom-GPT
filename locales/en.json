@@ -208,6 +208,7 @@
     "translate": "Translate",
     "reset": "Reset",
     "gifts": "Gifts",
+    "goals": "Goals",
     "settings": "Settings"
   },
   "download_success": "Download Successful",
@@ -1539,5 +1540,28 @@
     "unlimited": "Unlimited",
     "createCharacter": "1 Character",
     "scrollHint": "Scroll to see more benefits"
+  },
+  "goals": {
+    "completedGoals": "Chat Goals",
+    "completedGoals_description": "View your conversation objectives and completed achievements.",
+    "current_goal": "Current Goal",
+    "completed_goals": "Completed Goals", 
+    "in_progress": "In Progress",
+    "completed": "Completed",
+    "no_goals": "No goals yet",
+    "start_chatting": "Start chatting to generate conversation goals!",
+    "no_chat": "No active chat session",
+    "load_error": "Failed to load goals",
+    "messages": "messages",
+    "progress": "progress",
+    "points": "points",
+    "easy": "Easy",
+    "medium": "Medium",
+    "hard": "Hard",
+    "goal_type": {
+      "relationship": "Relationship",
+      "activity": "Activity",
+      "image request": "Image Request"
+    }
   }
 }

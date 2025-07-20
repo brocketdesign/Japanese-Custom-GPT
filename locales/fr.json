@@ -156,6 +156,7 @@
     "ideas": "Idées",
     "translate": "Traduire",
     "reset": "Réinitialiser",
+    "goals": "Objectifs",
     "gifts": "Cadeaux",
     "settings": "Paramètres"
   },
@@ -1543,5 +1544,28 @@
     "unlimited": "Illimité",
     "createCharacter": "1 personnage",
     "scrollHint": "Faites défiler pour voir plus d'avantages"
+  },
+  "goals": {
+    "completedGoals": "Objectifs de chat",
+    "completedGoals_description": "Consultez vos objectifs de conversation et vos succès accomplis.",
+    "current_goal": "Objectif actuel",
+    "completed_goals": "Objectifs terminés",
+    "in_progress": "En cours",
+    "completed": "Terminé",
+    "no_goals": "Aucun objectif pour le moment",
+    "start_chatting": "Commencez à discuter pour générer des objectifs de conversation !",
+    "no_chat": "Aucune session de chat active",
+    "load_error": "Échec du chargement des objectifs",
+    "messages": "messages",
+    "progress": "progrès",
+    "points": "points",
+    "easy": "Facile",
+    "medium": "Moyen",
+    "hard": "Difficile",
+    "goal_type": {
+      "relationship": "Relation",
+      "activity": "Activité",
+      "image request": "Demande d'image"
+    }
   }
 }

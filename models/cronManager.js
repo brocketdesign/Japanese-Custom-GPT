@@ -59,7 +59,6 @@ const configureCronJob = (jobName, schedule, enabled, task) => {
  * @param {Object} fastify - Fastify instance
  */
 const cleanupExpiredAudioFiles = (fastify) => async () => {
-  console.log('[cleanupExpiredAudioFiles] Checking for expired audio files...');
   const db = fastify.mongo.db;
   const cleanupCollection = db.collection('audioFileCleanup');
   
@@ -68,9 +67,7 @@ const cleanupExpiredAudioFiles = (fastify) => async () => {
     const expiredFiles = await cleanupCollection.find({
       expiresAt: { $lt: new Date() }
     }).toArray();
-    
-    console.log(`[cleanupExpiredAudioFiles] Found ${expiredFiles.length} expired audio files`);
-    
+        
     // Delete each expired file
     for (const fileRecord of expiredFiles) {
       try {

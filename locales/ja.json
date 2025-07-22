@@ -1,5 +1,13 @@
 {
   "lang": "ja",
+  "follow": {
+    "following": "フォロー中",
+    "followed": "フォローしました！",
+    "follow": "フォロー",
+    "unfollowed": "フォロー解除しました！",
+    "requestFailed": "リクエストに失敗しました。"
+  },
+  "requestFailed": "リクエストに失敗しました",
   "image_leaderboard_title": "画像リーダーボード",
   "chat_goal_completed": "チャット目標が達成されました, {{points}} ポイントを獲得しました！",
   "setNsfw": "NSFWに設定",

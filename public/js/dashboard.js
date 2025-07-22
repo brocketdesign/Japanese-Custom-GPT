@@ -682,7 +682,6 @@ window.toggleImageFavorite = function(el) {
       let userId = user._id;
       if($('#profileSection').length) {
         userId = $('#profileSection').data('user-id');
-        console.log('User ID from profile section:', userId);
       }
 
       if(chatId && chatId !== 'null') {
@@ -842,23 +841,23 @@ window.toggleFollow = function(el) {
   $.ajax({
     url: `/user/${userId}/follow-toggle`, // Single endpoint for both follow/unfollow
     method: 'POST',
-        xhrFields: {
-            withCredentials: true
-        },
+    xhrFields: {
+      withCredentials: true
+    },
     data: { action: action }, // Send action (follow/unfollow) in the request body
     success: function () {
-      // Update the button text
+      // Update the button text using window.translations.follow object
       if (action) {
-        $this.find('.user-follow').text('フォロー中');
-        showNotification('フォローしました！', 'success');
+      $this.find('.user-follow').text(window.translations?.follow?.following || 'Following');
+      showNotification(window.translations?.follow?.followed || 'Followed!', 'success');
       } else {
-        $this.find('.user-follow').text('フォロー');
-        showNotification('フォローを解除しました！', 'success');
+      $this.find('.user-follow').text(window.translations?.follow?.follow || 'Follow');
+      showNotification(window.translations?.follow?.unfollowed || 'Unfollowed!', 'success');
       }
     },
     error: function () {
       $this.toggleClass('following'); // Revert the state on error
-      showNotification('リクエストに失敗しました。', 'error');
+      showNotification(window.translations?.follow?.requestFailed || 'Request failed.', 'error');
     }
   });
 }

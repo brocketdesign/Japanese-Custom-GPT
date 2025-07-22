@@ -1,5 +1,13 @@
 {
   "lang": "en",
+  "follow": {
+    "following": "Following",
+    "followed": "Followed!",
+    "follow": "Follow",
+    "unfollowed": "Unfollowed!",
+    "requestFailed": "Request failed."
+  },
+  "requestFailed": "Request failed",
   "image_leaderboard_title": "Image Leaderboard",
   "chat_goal_completed": "Chat goal completed, received {{points}} points!",
   "setNsfw": "Set as NSFW",

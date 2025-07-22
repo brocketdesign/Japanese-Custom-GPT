@@ -1,5 +1,13 @@
 {
   "lang": "fr",
+  "follow": {
+    "following": "Abonné",
+    "followed": "Abonné !",
+    "follow": "Suivre",
+    "unfollowed": "Désabonné !",
+    "requestFailed": "La requête a échoué."
+  },
+  "requestFailed": "La requête a échoué",
   "image_leaderboard_title": "Classement des images",
   "chat_goal_completed": "Objectif de chat atteint, reçu {{points}} points !",
   "setNsfw": "Définir comme NSFW",

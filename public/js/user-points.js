@@ -1613,7 +1613,7 @@ class UserPointsManager {
         '🎨 ' + (this.translations.image_milestone_title || 'Image Generation Milestone!') :
         '🖼️ ' + (this.translations.image_generation_reward?.replace('{points}', points) || 'Image Generated!');
     }
-Z
+
     // Create the notification HTML with conditional play button
     const notificationHtml = `
       <div class="special-reward-notification">

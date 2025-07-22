@@ -243,7 +243,7 @@ async function routes(fastify, options) {
       // Total liked images by user
       const totalLikedCount = await imagesLikesCollection.countDocuments({ userId });
       const totalPages = Math.ceil(totalLikedCount / limit);
-  
+
       return reply.send({
         images: imagesWithChatData,
         page,

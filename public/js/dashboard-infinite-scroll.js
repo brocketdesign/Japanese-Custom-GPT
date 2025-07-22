@@ -1,4 +1,4 @@
-// Global state management for chat images
+// Global state management for chat images and user images
 if (typeof chatImageManager === 'undefined') {
     window.chatImageManager = {
         cache: new Map(),
@@ -11,10 +11,10 @@ if (typeof chatImageManager === 'undefined') {
 }
 
 /**
- * Load cache from localStorage for a specific chat
+ * Load cache from localStorage for a specific key
  */
-function loadCacheFromStorage(chatId) {
-    const cacheKey = `chatImages_${chatId}`;
+function loadCacheFromStorage(cacheId) {
+    const cacheKey = `images_${cacheId}`;
     try {
         const stored = localStorage.getItem(cacheKey);
         if (stored) {
@@ -29,10 +29,10 @@ function loadCacheFromStorage(chatId) {
 }
 
 /**
- * Save cache to localStorage for a specific chat
+ * Save cache to localStorage for a specific key
  */
-function saveCacheToStorage(chatId, pages, currentPage, totalPages) {
-    const cacheKey = `chatImages_${chatId}`;
+function saveCacheToStorage(cacheId, pages, currentPage, totalPages) {
+    const cacheKey = `images_${cacheId}`;
     try {
         const data = {
             pages: Object.fromEntries(pages),
@@ -55,9 +55,36 @@ function saveCacheToStorage(chatId, pages, currentPage, totalPages) {
  * @returns {Promise}
  */
 window.loadChatImages = function(chatId, page = 1, reload = false, isModal = false) {
-    const manager = window.chatImageManager;
-    const cacheKey = `chat_${chatId}`;
-    // Initialize chat state if not exists
+    return loadImages('chat', chatId, page, reload, isModal, `/chat/${chatId}/images`);
+};
+
+/**
+ * Main function to load user liked images with infinite scroll
+ * @param {string} userId - The user ID
+ * @param {number} page - Page number to load
+ * @param {boolean} reload - Whether to reload from cache
+ * @param {boolean} isModal - Whether loading in modal context
+ * @returns {Promise}
+ */
+window.loadUserImages = function(userId, page = 1, reload = false, isModal = false) {
+    return loadImages('user', userId, page, reload, isModal, `/user/${userId}/liked-images`);
+};
+
+/**
+ * Generic function to load images with infinite scroll
+ * @param {string} type - Type of images ('chat' or 'user')
+ * @param {string} id - The ID (chatId or userId)
+ * @param {number} page - Page number to load
+ * @param {boolean} reload - Whether to reload from cache
+ * @param {boolean} isModal - Whether loading in modal context
+ * @param {string} endpoint - API endpoint to fetch from
+ * @returns {Promise}
+ */
+function loadImages(type, id, page = 1, reload = false, isModal = false, endpoint) {
+    const manager =  window.chatImageManager;
+    const cacheKey = `${type}_${id}`;
+    
+    // Initialize state if not exists
     if (!manager.cache.has(cacheKey)) {
         manager.cache.set(cacheKey, new Map());
         manager.loadingStates.set(cacheKey, false);
@@ -65,7 +92,7 @@ window.loadChatImages = function(chatId, page = 1, reload = false, isModal = fal
         manager.totalPages.set(cacheKey, Infinity);
         
         // Load from localStorage if available
-        const storedCache = loadCacheFromStorage(chatId);
+        const storedCache = loadCacheFromStorage(cacheKey);
         if (storedCache && storedCache.pages) {
             const cacheMap = manager.cache.get(cacheKey);
             Object.entries(storedCache.pages).forEach(([pageNum, images]) => {
@@ -80,11 +107,11 @@ window.loadChatImages = function(chatId, page = 1, reload = false, isModal = fal
         try {
             // Handle reload scenario
             if (reload) {
-                const hasCache = await handleReload(chatId, cacheKey);
+                const hasCache = await handleReload(id, cacheKey, type);
                 
                 // If we have cache, don't fetch from server unless specifically requested
                 if (hasCache && page === 1) {
-                    setupInfiniteScroll(chatId, isModal);
+                    setupInfiniteScroll(id, isModal, type);
                     resolve();
                     return;
                 }
@@ -93,9 +120,9 @@ window.loadChatImages = function(chatId, page = 1, reload = false, isModal = fal
             // Check if page is already cached and not reloading
             if (manager.cache.get(cacheKey).has(page) && !reload) {
                 const cachedImages = manager.cache.get(cacheKey).get(page);
-                await renderImages(cachedImages, chatId);
+                await renderImages(cachedImages, id, type);
                 manager.currentPages.set(cacheKey, Math.max(manager.currentPages.get(cacheKey), page));
-                setupInfiniteScroll(chatId, isModal);
+                setupInfiniteScroll(id, isModal, type);
                 resolve();
                 return;
             }
@@ -113,27 +140,28 @@ window.loadChatImages = function(chatId, page = 1, reload = false, isModal = fal
             }
             
             // Fetch from server
-            await fetchImagesFromServer(chatId, page, cacheKey, isModal);
+            await fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type);
             resolve();
             
         } catch (error) {
-            console.error(`[loadChatImages] ERROR:`, error);
+            console.error(`[loadImages] ERROR:`, error);
             manager.loadingStates.set(cacheKey, false);
             reject(error);
         }
     });
-};
+}
 
 /**
  * Handle reload scenario by rendering all cached pages
  */
-async function handleReload(chatId, cacheKey) {
+async function handleReload(id, cacheKey, type) {
     const manager = window.chatImageManager;
     const cache = manager.cache.get(cacheKey);
     const cachedPages = Array.from(cache.keys()).sort((a, b) => a - b);
     
     // Clear existing content
-    $('#chat-images-gallery').empty();
+    const gallerySelector = type === 'chat' ? '#chat-images-gallery' : '#user-images-gallery';
+    $(gallerySelector).empty();
     window.loadedImages = [];
     
     // If we have cached pages, render them
@@ -141,7 +169,7 @@ async function handleReload(chatId, cacheKey) {
         // Render all cached pages in order
         for (const pageNum of cachedPages) {
             const images = cache.get(pageNum);
-            await renderImages(images, chatId);
+            await renderImages(images, id, type);
         }
         
         manager.currentPages.set(cacheKey, Math.max(...cachedPages, 0));
@@ -154,17 +182,17 @@ async function handleReload(chatId, cacheKey) {
 /**
  * Fetch images from server and handle caching
  */
-async function fetchImagesFromServer(chatId, page, cacheKey, isModal) {
+async function fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type) {
     const manager = window.chatImageManager;
     
     manager.loadingStates.set(cacheKey, true);
     
     // Show loading indicator
-    showLoadingIndicator(true);
+    showLoadingIndicator(true, type);
     
     try {
         const response = await $.ajax({
-            url: `/chat/${chatId}/images?page=${page}`,
+            url: `${endpoint}?page=${page}`,
             method: 'GET',
             xhrFields: { withCredentials: true },
             timeout: 10000 // 10 second timeout
@@ -177,28 +205,28 @@ async function fetchImagesFromServer(chatId, page, cacheKey, isModal) {
         
         // Save to localStorage
         saveCacheToStorage(
-            chatId,
+            cacheKey,
             manager.cache.get(cacheKey),
             manager.currentPages.get(cacheKey),
             manager.totalPages.get(cacheKey)
         );
         
         // Render images
-        await renderImages(response.images || [], chatId);
+        await renderImages(response.images || [], id, type);
         
         // Setup infinite scroll
-        setupInfiniteScroll(chatId, isModal);
+        setupInfiniteScroll(id, isModal, type);
         
     } finally {
         manager.loadingStates.set(cacheKey, false);
-        showLoadingIndicator(false);
+        showLoadingIndicator(false, type);
     }
 }
 
 /**
  * Render images to the gallery with consistent grid layout
  */
-async function renderImages(images, chatId) {
+async function renderImages(images, id, type) {
     if (!images || images.length === 0) {
         return;
     }
@@ -221,7 +249,7 @@ async function renderImages(images, chatId) {
         }
         
         const loadedIndex = window.loadedImages.length - 1;
-        const cardHtml = createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedIndex, chatId);
+        const cardHtml = createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedIndex, id, type);
         
         // Create DOM element
         const tempDiv = document.createElement('div');
@@ -232,7 +260,8 @@ async function renderImages(images, chatId) {
     });
     
     // Append all cards at once for better performance
-    const gallery = document.getElementById('chat-images-gallery');
+    const gallerySelector = type === 'chat' ? '#chat-images-gallery' : '#user-images-gallery';
+    const gallery = document.querySelector(gallerySelector);
     if (gallery) {
         gallery.appendChild(fragment);
         
@@ -247,7 +276,10 @@ async function renderImages(images, chatId) {
 /**
  * Create HTML for individual image card
  */
-function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedIndex, chatId) {
+function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedIndex, id, type) {
+    const chatId = type === 'chat' ? id : item.chatId;
+    const linkUrl = item.chatSlug ? `/character/slug/${item.chatSlug}?imageSlug=${item.slug}` : `/character/${chatId}`;
+    
     return `
         <div class="col-6 col-md-3 col-lg-2 mb-2" data-image-id="${item._id}">
             <div class="card shadow-0">
@@ -257,7 +289,7 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedInde
                             <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" loading="lazy">
                         </div>
                     </div>` :
-                    `<a href="/character/slug/${item.chatSlug}?imageSlug=${item.slug}" data-index="${loadedIndex}">
+                    `<a href="${linkUrl}" data-index="${loadedIndex}">
                         <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top" style="object-fit: cover;" loading="lazy">
                     </a>
                     <div class="position-absolute top-0 start-0 m-1" style="z-index:3;">
@@ -272,9 +304,11 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedInde
                                 data-id="${item._id}" onclick="toggleImageNSFW(this)">
                                 <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
                             </button>
-                            <button class="btn btn-light col-6 update-chat-image" onclick="updateChatImage(this)" data-id="${chatId}" data-img="${item.imageUrl}" style="cursor: pointer; opacity:0.8;">
-                                <i class="bi bi-image"></i>
-                            </button>
+                            ${type === 'chat' ? `
+                                <button class="btn btn-light col-6 update-chat-image" onclick="updateChatImage(this)" data-id="${chatId}" data-img="${item.imageUrl}" style="cursor: pointer; opacity:0.8;">
+                                    <i class="bi bi-image"></i>
+                                </button>
+                            ` : ''}
                         </div>` : ''
                     }`
                 }
@@ -286,9 +320,9 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedInde
 /**
  * Setup infinite scroll with optimized event handling
  */
-function setupInfiniteScroll(chatId, isModal = false) {
+function setupInfiniteScroll(id, isModal = false, type = 'chat') {
     const manager = window.chatImageManager;
-    const scrollKey = `${chatId}_${isModal ? 'modal' : 'page'}`;
+    const scrollKey = `${id}_${isModal ? 'modal' : 'page'}_${type}`;
     
     // Prevent duplicate scroll handlers
     if (manager.initialized.has(scrollKey)) {
@@ -296,12 +330,12 @@ function setupInfiniteScroll(chatId, isModal = false) {
     }
     
     const scrollContainer = isModal ? $('#characterModal .modal-body') : $(window);
-    const cacheKey = `chat_${chatId}`;
+    const cacheKey = `${type}_${id}`;
     
     // Use namespaced events to avoid conflicts with other scroll handlers
-    const eventName = `scroll.chatImages_${chatId}_${isModal ? 'modal' : 'page'}`;
+    const eventName = `scroll.${type}Images_${id}_${isModal ? 'modal' : 'page'}`;
     
-    // Remove any existing scroll handlers for this specific chat
+    // Remove any existing scroll handlers for this specific context
     scrollContainer.off(eventName);
     
     // Throttled scroll handler for better performance
@@ -309,7 +343,7 @@ function setupInfiniteScroll(chatId, isModal = false) {
     const scrollHandler = function() {
         clearTimeout(scrollTimeout);
         scrollTimeout = setTimeout(() => {
-            handleScroll(chatId, isModal, cacheKey);
+            handleScroll(id, isModal, cacheKey, type);
         }, 100); // 100ms throttle
     };
     
@@ -321,7 +355,7 @@ function setupInfiniteScroll(chatId, isModal = false) {
 /**
  * Handle scroll events and trigger loading when needed
  */
-function handleScroll(chatId, isModal, cacheKey) {
+function handleScroll(id, isModal, cacheKey, type) {
     const manager = window.chatImageManager;
     
     // Skip if already loading
@@ -349,7 +383,8 @@ function handleScroll(chatId, isModal, cacheKey) {
     if (scrollPercentage >= 0.85) {
         const nextPage = currentPage + 1;
         
-        loadChatImages(chatId, nextPage, false, isModal)
+        const loadFunction = type === 'chat' ? loadChatImages : loadUserImages;
+        loadFunction(id, nextPage, false, isModal)
             .catch(error => {
                 console.error(`[handleScroll] Failed to load page ${nextPage}:`, error);
             });
@@ -382,8 +417,9 @@ function handleBlurredImages() {
 /**
  * Show/hide loading indicator
  */
-function showLoadingIndicator(show) {
-    const controlsContainer = $('#chat-images-pagination-controls');
+function showLoadingIndicator(show, type = 'chat') {
+    const controlsSelector = type === 'chat' ? '#chat-images-pagination-controls' : '#images-pagination-controls';
+    const controlsContainer = $(controlsSelector);
     
     if (show) {
         controlsContainer.html('<div class="text-center py-3"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>');
@@ -396,11 +432,11 @@ function showLoadingIndicator(show) {
 }
 
 /**
- * Clear cache for a specific chat
+ * Clear cache for a specific item
  */
-window.clearChatImageCache = function(chatId) {
+window.clearImageCache = function(type, id) {
     const manager = window.chatImageManager;
-    const cacheKey = `chat_${chatId}`;
+    const cacheKey = `${type}_${id}`;
     
     // Clear cache
     manager.cache.delete(cacheKey);
@@ -409,26 +445,40 @@ window.clearChatImageCache = function(chatId) {
     manager.totalPages.delete(cacheKey);
     
     // Remove scroll handlers
-    const scrollKeys = Array.from(manager.initialized).filter(key => key.startsWith(chatId));
+    const scrollKeys = Array.from(manager.initialized).filter(key => key.includes(id));
     scrollKeys.forEach(key => {
         manager.initialized.delete(key);
         manager.scrollHandlers.delete(key);
     });
     
     // Clear localStorage cache as well
-    const localCacheKey = `chatImages_${chatId}`;
+    const localCacheKey = `images_${cacheKey}`;
     localStorage.removeItem(localCacheKey);
+};
+
+/**
+ * Clear cache for a specific chat (backward compatibility)
+ */
+window.clearChatImageCache = function(chatId) {
+    clearImageCache('chat', chatId);
+};
+
+/**
+ * Clear cache for a specific user
+ */
+window.clearUserImageCache = function(userId) {
+    clearImageCache('user', userId);
 };
 
 /**
  * Get cache statistics for debugging
  */
-window.getChatImageCacheStats = function(chatId) {
+window.getImageCacheStats = function(type, id) {
     const manager = window.chatImageManager;
-    const cacheKey = `chat_${chatId}`;
+    const cacheKey = `${type}_${id}`;
     
     if (!manager.cache.has(cacheKey)) {
-        return { error: 'Chat not found in cache' };
+        return { error: `${type} not found in cache` };
     }
     
     const cache = manager.cache.get(cacheKey);
@@ -436,11 +486,26 @@ window.getChatImageCacheStats = function(chatId) {
     const totalImages = Array.from(cache.values()).reduce((sum, images) => sum + images.length, 0);
     
     return {
-        chatId,
+        type,
+        id,
         cachedPages,
         totalImages,
         currentPage: manager.currentPages.get(cacheKey),
         totalPages: manager.totalPages.get(cacheKey),
         isLoading: manager.loadingStates.get(cacheKey)
     };
+};
+
+/**
+ * Get cache statistics for chat (backward compatibility)
+ */
+window.getChatImageCacheStats = function(chatId) {
+    return getImageCacheStats('chat', chatId);
+};
+
+/**
+ * Get cache statistics for user
+ */
+window.getUserImageCacheStats = function(userId) {
+    return getImageCacheStats('user', userId);
 };

@@ -9,18 +9,6 @@ if (typeof allChatsLoadingState === 'undefined') allChatsLoadingState = false
 if (typeof allChatsCurrentPage === 'undefined') allChatsCurrentPage = 0
 if (typeof allChatsImagesCache === 'undefined') allChatsImagesCache = {}
 
-//loadChatImages
-if (typeof chatLoadingStates === 'undefined') chatLoadingStates = {}
-if (typeof chatCurrentPageMap === 'undefined') chatCurrentPageMap = {}
-if (typeof chatImagesCache === 'undefined') chatImagesCache = {}
-if (typeof loadedImages === 'undefined') loadedImages = []
-
-// loadUserImages
-if (typeof loadingStates === 'undefined') loadingStates = {};
-if (typeof currentPageMap === 'undefined') currentPageMap = {};
-if (typeof userImagesCache === 'undefined') userImagesCache = {}; // To store fetched images per page
-
-
 // displayPeopleChat
 if (typeof peopleChatCache === 'undefined') peopleChatCache = {}
 if (typeof peopleChatLoadingState === 'undefined') peopleChatLoadingState = {}
@@ -691,12 +679,19 @@ window.toggleImageFavorite = function(el) {
       }
 
       // delete the local storage item userImages_${userId}
-      const userId = user._id;
-      const cacheKey = `userImages_${userId}`;
-      localStorage.removeItem(cacheKey);
+      let userId = user._id;
+      if($('#profileSection').length) {
+        userId = $('#profileSection').data('user-id');
+        console.log('User ID from profile section:', userId);
+      }
 
       if(chatId && chatId !== 'null') {
         clearChatImageCache(chatId);
+      }
+      if(userId && userId !== 'null') {
+        clearUserImageCache(userId);
+        const cacheKey = `userImages_${userId}`;
+        localStorage.removeItem(cacheKey);
       }
     },
     error: function() {
@@ -2215,154 +2210,6 @@ window.loadAllChatImages = function (page = 1, reload = false) {
     $(document).find('.img-blur').each(function () {
       blurImage(this)
     })
-  }
-// Load user images with cache + infinite scroll
-window.loadUserImages = function (userId, page = 1, reload = false) {
-    return new Promise((resolve, reject) => {
-      const cacheKey = `userImages_${userId}`
-      let cacheData = JSON.parse(localStorage.getItem(cacheKey) || '{}')
-      if (!cacheData.pages) cacheData.pages = {}
-      userImagesCache[userId] = cacheData.pages
-  
-      let cachedPages = Object.keys(userImagesCache[userId]).map(Number)
-      let maxCachedPage = cachedPages.length ? Math.max(...cachedPages) : 0
-  
-      // If reload => render all cached pages in ascending order, update currentPageMap
-      if (reload) {
-        cachedPages.sort((a, b) => a - b).forEach((p) => {
-          appendImages(userImagesCache[userId][p])
-        })
-        currentPageMap[userId] = maxCachedPage
-        // Optionally refresh the last cached page from the server:
-        if (maxCachedPage > 0) page = maxCachedPage + 1
-      }
-  
-      // If the page is already in cache and we're NOT reloading => skip server call
-      if (userImagesCache[userId][page] && !reload) {
-        appendImages(userImagesCache[userId][page])
-        currentPageMap[userId] = page
-        generateImagePaginationFromCache(userId) // update spinner/back-to-top if needed
-        return resolve()
-      }
-  
-      // Otherwise, fetch from server
-      $.ajax({
-        url: `/user/${userId}/liked-images?page=${page}`,
-        method: 'GET',
-        xhrFields: {
-            withCredentials: true
-        },
-        success: (data) => {
-          appendImages(data.images)
-  
-          // Store in cache
-          userImagesCache[userId][data.page] = data.images
-          cacheData.pages = userImagesCache[userId]
-          localStorage.setItem(cacheKey, JSON.stringify(cacheData))
-  
-          // Update currentPageMap, then pagination
-          currentPageMap[userId] = data.page
-          generateImagePagination(data.totalPages, userId)
-          resolve()
-        },
-        error: (err) => {
-          reject(err)
-        },
-      })
-    })
-  }
-  
-  window.generateImagePagination = function (totalPages, userId) {
-    if (!loadingStates[userId]) loadingStates[userId] = false
-    if (!currentPageMap[userId]) currentPageMap[userId] = 0
-  
-    // Use namespaced event to avoid conflicts
-    const eventName = `scroll.imagePagination_${userId}`;
-    $(window).off(eventName).on(eventName, () => {
-      // If near bottom & still have pages left
-      if (
-        !loadingStates[userId] &&
-        currentPageMap[userId] < totalPages &&
-        $(window).scrollTop() + $(window).height() >= $(document).height() - 100
-      ) {
-        loadingStates[userId] = true
-        loadUserImages(userId, currentPageMap[userId] + 1, false)
-          .then(() => {
-            loadingStates[userId] = false
-          })
-          .catch((e) => {
-            loadingStates[userId] = false
-          })
-      }
-    })
-  
-    updatePaginationControls(totalPages, userId)
-  }
-  
-  // If we skip a server call by using cache only, just refresh the pagination controls
-  function generateImagePaginationFromCache(userId) {
-    let totalPages = 9999 // or figure out from somewhere else if needed
-    updatePaginationControls(totalPages, userId)
-  }
-  
-  // Common function to update spinner/back-to-top
-  function updatePaginationControls(totalPages, userId) {
-    if (currentPageMap[userId] >= totalPages) {
-    } else {
-      $('#images-pagination-controls').html(
-        '<div class="text-center"><div class="spinner-border" role="status"></div></div>'
-      )
-    }
-  }
-  
-  // Append images to gallery
-  function appendImages(images) {
-    const currentUserId = user._id
-    const subscriptionActive = user.subscriptionStatus === 'active'
-    const isTemp = !!user.isTemporary
-  
-    let html = ''
-    images.forEach((item) => {
-      const blurred =  item.nsfw && !subscriptionActive
-      const isLiked = item.likedBy?.some((id) => id.toString() === currentUserId.toString())
-      html += `
-        <div class="col-6 col-md-3 col-lg-2 mb-2">
-          <div class="card">
-            <div class="d-flex align-items-center p-2">
-              <a href="/character/slug/${item.chatSlug}?imageSlug=${item.slug}">
-                <img src="${item.thumbnail}" alt="" class="rounded-circle me-2" width="40" height="40">
-              </a>
-              <a href="/character/slug/${item.chatSlug}?imageSlug=${item.slug}" class="text-decoration-none text-dark">
-                <strong>${item.chatName}</strong>
-              </a>
-            </div>
-            ${
-              blurred
-                ? `<div type="button" onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary})">
-                     <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
-                   </div>`
-                : `<a href="/character/slug/${item.chatSlug}?imageSlug=${item.slug}" class="text-muted text-decoration-none">
-                     <img data-src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top lazy-image" loading="lazy">
-                   </a>
-                   <div class="d-none card-body p-2 d-flex align-items-center justify-content-between">
-                     <a href="/chat/${item.chatId}?imageId=${item._id}" class="btn btn-outline-secondary">
-                       <i class="bi bi-chat-dots me-2"></i> ${translations.startChat}
-                     </a>
-                     <span 
-                     class="btn btn-light float-end image-fav ${isLiked ? 'liked' : ''}" 
-                     data-id="${item._id}" 
-                     onclick="toggleImageFavorite(this)"
-                     >
-                       <i class="bi ${isLiked ? 'bi-heart-fill':'bi-heart'}" style="cursor: pointer;"></i>
-                     </span>
-                   </div>`
-            }
-          </div>
-        </div>
-      `
-    })
-    $('#user-images-gallery').append(html)
-    $('.img-blur').each((_, el) => blurImage(el))
   }
 window.loadUserPosts = async function (userId, page = 1, like = false) {
     const currentUser = user

@@ -4,7 +4,7 @@
     {{> footer-toolbar translations=translations user=user userPointsTranslations=userPointsTranslations}}
 </div>
 <footer class="site-footer onchat-off bg-dark text-light py-5 mt-5">
-  <div class="container">
+  <div class="px-5 pb-3 bg-dark">
     <!-- Main Footer Content -->
     <div class="row g-4 mb-4">
       <!-- Contact Section -->
@@ -548,6 +548,16 @@ window.hideDiscovery = function() {
         'visibility': ''
     }); 
 }
+    $('.onchat-on').each(function() {
+        if ($(this).css('display') === 'flex') {
+            $(this).attr('data-display-flex', 'true');
+        }
+    });
+    $('.onchat-off').each(function() {
+        if ($(this).css('display') === 'flex') {
+            $(this).attr('data-display-flex', 'true');
+        }
+    });
 window.showDiscovery = function() {
     if (!window.location.pathname.includes('/chat/')) {
         window.location.href = '/chat/';
@@ -555,12 +565,20 @@ window.showDiscovery = function() {
     $('.fullscreen-overlay').fadeOut(); 
     $('body').css('overflow', 'visible');
     
+
     $('.onchat-on').hide()
     $('.onchat-on').addClass('d-none').css({
         'opacity': 0,
         'pointer-events': 'none',
         'visibility': 'hidden'
-    });    
+    });   
+
+    // Restore display:flex if previously set
+    $('.onchat-off').each(function() {
+        if ($(this).attr('data-display-flex')) {
+            $(this).css('display', 'flex');
+        }
+    });
     $('.onchat-off').show()
     $('.onchat-off').removeClass('d-none').css({
         'opacity': '',

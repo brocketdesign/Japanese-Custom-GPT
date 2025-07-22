@@ -2197,7 +2197,7 @@ opacity: 0.8;
   height: 70px;
   border-radius: 50%;
   padding: 10px 30px;
-  background: rgba(110, 32, 244, 0.4); 
+  background: rgba(110, 32, 244, 0.7);
   text-decoration: none;
   position: relative;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
@@ -2714,7 +2714,7 @@ opacity: 0.8;
     background: #8240FF;
     color: white;
   }
-  
+
 /* Site Footer Styles */
   .site-footer {
     background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);

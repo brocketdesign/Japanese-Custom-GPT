@@ -5,11 +5,15 @@
 <body>
     <!-- Fullscreen overlay with loading spinner -->
     <div class="fullscreen-overlay justify-content-center align-items-center" id="loadingOverlay">
-        <div style="position: relative; display: inline-block;"> <!-- Wrapper for logo and spinner -->
+        <div style="position: relative; display: flex; justify-content: center; align-items: center;"> <!-- Wrapper for logo and spinner -->
             <div class="loading-circle shadow" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
-            <img src="/img/logo.png" alt="Logo" class="logo" style="width: 100px; height: auto; display: block;">
+            <div style="z-index: 10;">
+                <div class="brand-logo rounded-circle bg-white" style="width: 100px; height: 100px;background: white;">
+                    <i class="bi bi-chat-heart-fill" style="font-size: 3em; color: #b58afe;"></i>
+                </div>
+            </div>
         </div>
     </div>
     <div id="swup-none">
@@ -21,12 +25,12 @@
                         <div style="position: absolute;left: 20px;top: 10px;">
 
                             <button 
-                            class="btn btn-dark onchat-on" 
+                            class="btn shadow-0 onchat-on" 
                             style="display: none;"
                             onclick="showDiscovery()"><i class="bi bi-arrow-left"></i></button>
 
                             <div id="chat-actions-dropdown" class="dropdown d-inline-block onchat-on" style="display: none;">
-                                <button class="btn btn-dark dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <button class="btn shadow-0 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     <i class="bi bi-three-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu shadow border-0">
@@ -34,8 +38,10 @@
                                 </ul>
                             </div>
                         </div>
-                        <div class="d-flex flex-row" style="cursor:pointer" onclick="showDiscovery()">
-                            <img src="/img/logo.webp" alt="" class="mx-3" width="40px">
+                        <div class="d-flex flex-row " style="cursor: pointer; min-height: 40px;" onclick="showDiscovery()">
+                            <div class="brand-logo me-3 onchat-off">
+                                <i class="bi bi-chat-heart-fill text-white fs-3"></i>
+                            </div>
                         </div>  
                         <div>
                             <div class="navbar-collapse" id="navbarNav" style="position: absolute;right: -50vw;top: 10px;">
@@ -65,7 +71,7 @@
                     <div class="text-center mb-4 animate__animated" data-animate="animate__fadeInDown" data-delay="0.6s">
                         <div class="d-inline-flex align-items-center px-4 py-2 rounded-pill text-white fw-bold animate__animated" 
                             data-animate="animate__pulse" data-delay="0.8s"
-                            style="background: linear-gradient(135deg, #FF5E7E, #FF8C40); box-shadow: 0 4px 15px rgba(255, 94, 126, 0.3);">
+                            style="background: color(srgb 0.489 0.223 0.9696); box-shadow: 0 4px 15px rgba(255, 94, 126, 0.3);">
                             <i class="bi bi-star-fill me-2"></i>
                             {{translations.freeUserBenefits.title}}
                         </div>
@@ -159,7 +165,7 @@
 
                 
                 <!-- Card menu -->
-                <div class="card-menu-container mb-3 px-0">
+                <div class="is-premium card-menu-container mb-3 px-0" style="display: none;">
                     <div class="d-flex overflow-auto px-3 py-5" style="scrollbar-width: thin;justify-content: space-between;">
                         <!-- Create Character Card -->
                         <div class="character-create-card shadow-sm rounded p-3 text-center mx-2 flex-shrink-0" 
@@ -172,7 +178,7 @@
                             <h5 class="mb-2">{{translations.createCharacter}}</h5>
                             <p class="text-muted small mb-0">{{translations.createCharacterDescription}}</p>
                             <!-- Restrictions -->
-                            <div class="rounded-pill text-white fw-bold mt-2 p-3 is-free-user" style="font-size: 12px; background: linear-gradient(135deg, #FF5E7E, #FF8C40);" role="alert">
+                            <div class="rounded-pill text-white fw-bold mt-2 p-3 is-free-user" style="font-size: 12px; background: color(srgb 0.489 0.223 0.9696);" role="alert">
                                 {{translations.createCharacterRestriction}}
                             </div>
                         </div>
@@ -188,7 +194,7 @@
                             </div>
                             <h5 class="mb-2">{{translations.explore}}</h5>
                             <p class="text-muted small mb-0">{{translations.exploreDescription}}</p>
-                            <div class="rounded-pill text-white fw-bold mt-2 p-3 is-free-user" style="font-size: 12px; background: linear-gradient(135deg, #FF5E7E, #FF8C40);" role="alert">
+                            <div class="rounded-pill text-white fw-bold mt-2 p-3 is-free-user" style="font-size: 12px; background: color(srgb 0.489 0.223 0.9696);;" role="alert">
                                 {{translations.exploreRestriction}}
                             </div>
                         </div>
@@ -203,7 +209,7 @@
                             </div>
                             <h5 class="mb-2">{{translations.userProfile}}</h5>
                             <p class="text-muted small mb-0">{{translations.userProfileDescription}}</p>
-                            <div class="rounded-pill text-white fw-bold mt-2 p-3 is-free-user" style="font-size: 12px; background: linear-gradient(135deg, #FF5E7E, #FF8C40);" role="alert">
+                            <div class="rounded-pill text-white fw-bold mt-2 p-3 is-free-user" style="font-size: 12px; background: color(srgb 0.489 0.223 0.9696);" role="alert">
                                 {{translations.userRestriction}}
                             </div>
                         </div>

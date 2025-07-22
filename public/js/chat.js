@@ -1683,6 +1683,12 @@ window.showChat = function() {
         'pointer-events': 'none',
         'visibility': 'hidden'
     });    
+
+    $('.onchat-on').each(function() {
+        if ($(this).attr('data-display-flex')) {
+            $(this).css('display', 'flex');
+        }
+    });
     $('.onchat-on').show()
     $('.onchat-on').removeClass('d-none').css({
         'opacity': '',

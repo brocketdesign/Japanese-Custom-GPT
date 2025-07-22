@@ -96,4 +96,7 @@ if(subscriptionStatus){
     document.querySelectorAll('.is-subscriber').forEach(el => {
         el.style.display = 'block';
     });
+    document.querySelectorAll('.is-premium').forEach(el => {
+        el.style.display = 'block';
+    });
 }

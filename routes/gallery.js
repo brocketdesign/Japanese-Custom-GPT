@@ -375,6 +375,7 @@ fastify.get('/chats/images/search', async (request, reply) => {
         chatName: chat.name,
         chatImageUrl: chat.chatImageUrl || '/img/default-thumbnail.png',
         chatTags: chat.tags || [],
+        chatSlug: chat.slug || '',
         messagesCount: chat.messagesCount || 0,
         first_message: chat.first_message || '',
         description: chat.description || '',

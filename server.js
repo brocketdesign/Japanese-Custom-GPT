@@ -854,7 +854,7 @@ fastify.get('/search', async (request, reply) => {
       console.warn(`[SEARCH] Tags fetch failed with status: ${tagsRes.status}`);
     } 
     const tags = tagsData.tags || [];
-
+console.log(processedImageResults[0])
     return reply.renderWithGtm('search.hbs', {
       title: seoTitle,
       imageResults: processedImageResults,
@@ -1036,6 +1036,7 @@ Disallow: /admin/
 Disallow: /dashboard/
 Disallow: /settings/
 Disallow: /generate/
+Disallow: /search
 Allow: /
 
 Sitemap: ${baseUrl}/sitemap.xml`;

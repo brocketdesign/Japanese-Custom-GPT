@@ -44,6 +44,20 @@ module.exports = function registerHelpers() {
     return (arg1 !== arg2) ? options.fn(this) : options.inverse(this);
   });
 
+  handlebars.registerHelper('lookupOrFirst', function(obj, key) {
+    if (obj && obj[key]) {
+      return obj[key];
+    }
+    if (obj && typeof obj === 'object') {
+      for (const k in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, k) && obj[k]) {
+          return obj[k];
+        }
+      }
+    }
+    return '';
+  });
+
   handlebars.registerHelper('getPaymentAmount', function(product_id) {
     switch (product_id) {
       case 'com.cryptoinfojapan.aidate.monthly':

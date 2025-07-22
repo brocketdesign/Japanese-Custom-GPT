@@ -81,24 +81,24 @@ fastify.register(require('@fastify/static'), {
 });
 
 // Create partials for Handlebars
-const dashboardHeader = fs.readFileSync('views/partials/dashboard-header.hbs', 'utf8');
-handlebars.registerPartial('dashboard-header', dashboardHeader);
-const dashboardNav = fs.readFileSync('views/partials/dashboard-nav.hbs', 'utf8');
-handlebars.registerPartial('dashboard-nav', dashboardNav);
-const dashboardFooter = fs.readFileSync('views/partials/dashboard-footer.hbs', 'utf8');
-handlebars.registerPartial('dashboard-footer', dashboardFooter);
-const dashboardAvatar = fs.readFileSync('views/partials/dashboard-avatar.hbs', 'utf8');
-handlebars.registerPartial('dashboard-avatar', dashboardAvatar);
-const chatHeader = fs.readFileSync('views/partials/chat-header.hbs', 'utf8');
-handlebars.registerPartial('chat-header', chatHeader);
-const chatFooter = fs.readFileSync('views/partials/chat-footer.hbs', 'utf8'); 
-handlebars.registerPartial('chat-footer', chatFooter);
-const chatList = fs.readFileSync('views/partials/chat-list.hbs', 'utf8');
-handlebars.registerPartial('chat-list', chatList);
-const dashboardModals = fs.readFileSync('views/partials/dashboard-modals.hbs', 'utf8');
-handlebars.registerPartial('dashboard-modals', dashboardModals);
-const translations = fs.readFileSync('views/partials/translations.hbs', 'utf8');
-handlebars.registerPartial('translations', translations);
+const partials = [
+  'dashboard-header',
+  'dashboard-nav',
+  'dashboard-footer',
+  'dashboard-avatar',
+  'chat-header',
+  'chat-footer',
+  'chat-list',
+  'dashboard-modals',
+  'translations',
+  'footer-toolbar'
+];
+
+partials.forEach(partial => {
+  const partialPath = path.join(__dirname, 'views', 'partials', `${partial}.hbs`);
+  const partialContent = fs.readFileSync(partialPath, 'utf8');
+  handlebars.registerPartial(partial, partialContent);
+});
 
 fastify.register(require('@fastify/view'), {
   engine: { handlebars: require('handlebars') },

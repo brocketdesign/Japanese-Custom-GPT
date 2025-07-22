@@ -152,6 +152,7 @@ fastify.get('/user/:userId/image-stats', async (request, reply) => {
       const db = fastify.mongo.db;
       const usersCollection = db.collection('users');
       const imagesGeneratedCollection = db.collection('images_generated');
+      const limit = Math.min(parseInt(request.query.limit) || 10, 50); // Default 10, max 50
       
       // Aggregate image generation stats by user
       const imageStats = await imagesGeneratedCollection.aggregate([
@@ -166,7 +167,7 @@ fastify.get('/user/:userId/image-stats', async (request, reply) => {
           $sort: { totalImages: -1 }
         },
         {
-          $limit: 50 // Top 50 users
+          $limit: limit
         },
         {
           $lookup: {

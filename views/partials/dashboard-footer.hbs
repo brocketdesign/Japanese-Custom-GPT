@@ -1,101 +1,149 @@
 {{> dashboard-modals}}
 <div class="sticky-bottom" style="bottom:5px; left:0; right:0;">
     {{> chat-footer promptData=promptData}}
-    <div id="footer-toolbar" class="py-1 bg-dark mx-2 shadow-sm rounded-pill" style="bottom:0; left:0; right:0;opacity: 0.85;font-size: 12px;">
-        <div class="container-none">
-            <div class="d-flex justify-content-evenly align-items-center w-100">
-            <a id="toggle-chat-list" class="text-white flex-fill text-center" href="#" onclick="toggleChatList()">
-                <i class="bi bi-chat-left-text fs-6"></i>
-                <div class="small">{{translations.chatList}}</div>
-            </a>
-            <a class="text-white flex-fill text-center" href="#" {{#if user.isTemporary}} onclick="openLoginForm()"{{else}} onclick="loadCharacterCreationPage()"{{/if}}>
-                <i class="bi bi-plus-square fs-6"></i>
-                <div class="small">{{translations.create}}</div>
-            </a>
-            
-            <a class="text-white flex-fill text-center" href="#" onclick="loadSettingsPage()">
-                <i class="bi bi-gear fs-6"></i>
-                <div class="small">{{translations.avatar.settings}}</div>
-            </a>
-                
-            </div>
-        </div>
-    </div>
+    {{> footer-toolbar translations=translations user=user userPointsTranslations=userPointsTranslations}}
 </div>
-
-<footer class="l-footer p-footer bg-dark text-light text-center onchat-off">
-  <div class="bg-dark py-5">
-    <div class="row mb-4 mx-0">
-      <div class="col-12">
-        <div class="social-section">
-          <p class="text-light mb-2">{{translations.contactUs}}</p>
-          <div class="d-flex justify-content-center">
-            <a href="https://x.com/3goH4EQPR994998" target="_blank" class="btn btn-light rounded-circle mx-2 twitter-link">
+<footer class="site-footer bg-dark text-light py-5 mt-5">
+  <div class="container">
+    <!-- Main Footer Content -->
+    <div class="row g-4 mb-4">
+      <!-- Contact Section -->
+      <div class="col-lg-4 col-md-6">
+        <div class="footer-section">
+          <h5 class="footer-heading text-white mb-3 d-flex align-items-center">
+            <i class="bi bi-envelope-heart me-2 text-primary"></i>
+            {{translations.contactUs}}
+          </h5>
+          <p class="text-muted mb-3">
+            {{#if translations.contactDescription}}
+              {{translations.contactDescription}}
+            {{else}}
+              Connect with us on social media for updates and support.
+            {{/if}}
+          </p>
+          <div class="social-links d-flex gap-3">
+            <a href="https://x.com/3goH4EQPR994998" target="_blank" class="social-link" title="Twitter">
               <i class="bi bi-twitter"></i>
             </a>
-            <a href="https://www.instagram.com/animemuseai/" target="_blank" class="btn btn-light rounded-circle mx-2">
+            <a href="https://www.instagram.com/animemuseai/" target="_blank" class="social-link" title="Instagram">
               <i class="bi bi-instagram"></i>
             </a>
           </div>
         </div>
       </div>
+
+      <!-- Quick Links Section -->
+      <div class="col-lg-4 col-md-6">
+        <div class="footer-section">
+          <h5 class="footer-heading text-white mb-3 d-flex align-items-center">
+            <i class="bi bi-link-45deg me-2 text-primary"></i>
+            {{#if translations.quickLinks}}
+              {{translations.quickLinks}}
+            {{else}}
+              Quick Links
+            {{/if}}
+          </h5>
+          <ul class="footer-nav list-unstyled">
+            <li class="mb-2">
+              <a href="/character" class="footer-link">
+                <i class="bi bi-people me-2"></i>{{translations.characters}}
+              </a>
+            </li>
+            <li class="mb-2">
+              <a href="/search" class="footer-link">
+                <i class="bi bi-search me-2"></i>{{translations.search}}
+              </a>
+            </li>
+            <li class="mb-2">
+              <a href="/tags" class="footer-link">
+                <i class="bi bi-tags me-2"></i>{{translations.tags}}
+              </a>
+            </li>
+            <li class="mb-2">
+              <a href="https://blog.chatlamix.com/%e3%83%96%e3%83%ad%e3%82%b0/" target="_blank" class="footer-link">
+                <i class="bi bi-journal-text me-2"></i>{{translations.blog}}
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Legal & Support Section -->
+      <div class="col-lg-4 col-md-12">
+        <div class="footer-section">
+          <h5 class="footer-heading text-white mb-3 d-flex align-items-center">
+            <i class="bi bi-shield-check me-2 text-primary"></i>
+            {{#if translations.legal}}
+              {{translations.legal}}
+            {{else}}
+              Legal & Support
+            {{/if}}
+          </h5>
+          <ul class="footer-nav list-unstyled">
+            <li class="mb-2">
+              <a href="https://blog.chatlamix.com/usage-policy/" target="_blank" class="footer-link">
+                <i class="bi bi-file-text me-2"></i>{{translations.termsOfUse}}
+              </a>
+            </li>
+            <li class="mb-2">
+              <a href="https://blog.chatlamix.com/privacy-policy/" target="_blank" class="footer-link">
+                <i class="bi bi-shield-lock me-2"></i>{{translations.privacyPolicy}}
+              </a>
+            </li>
+            <li class="mb-2">
+              <a href="/sitemap" class="footer-link">
+                <i class="bi bi-diagram-3 me-2"></i>{{translations.sitemap.title}}
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
-    <div class="row mx-0">
-      <div class="col-12">
-        <nav class="navbar navbar-expand-lg navbar-dark shadow-0">
-          <div class="container-fluid">
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
-              <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse justify-content-center" id="navbarContent">
-              <ul class="navbar-nav d-flex flex-wrap border">
-                <li class="nav-item m-1 d-none">
-                  <a class="nav-link text-light" href="/about" target="_blank">{{translations.aboutService}}</a>
-                </li>
-                <li class="nav-item m-1 d-none">
-                  <span class="text-light mx-2">|</span>
-                </li>
-                <li class="nav-item m-1">
-                  <a class="nav-link text-light" href="https://blog.chatlamix.com/usage-policy/" target="_blank">{{translations.termsOfUse}}</a>
-                </li>
-                <li class="nav-item m-1">
-                  <span class="text-light mx-2">|</span>
-                </li>
-                <li class="nav-item m-1">
-                  <a class="nav-link text-light" href="https://blog.chatlamix.com/privacy-policy/" target="_blank">{{translations.privacyPolicy}}</a>
-                </li>
-                <li class="nav-item m-1">
-                  <span class="text-light mx-2">|</span>
-                </li>
-                <li class="nav-item m-1">
-                  <a class="nav-link text-light" href="https://blog.chatlamix.com/%e3%83%96%e3%83%ad%e3%82%b0/" target="_blank">{{translations.blog}}</a>
-                </li>
-                <li class="nav-item m-1">
-                  <span class="text-light mx-2">|</span>
-                </li>
-                <li class="nav-item m-1">
-                  <a class="nav-link text-light" href="/character" target="_blank">{{translations.characters}}</a>
-                </li>
-                <li class="nav-item m-1">
-                  <span class="text-light mx-2">|</span>
-                </li>
-                <li class="nav-item m-1">
-                  <a class="nav-link text-light" href="/search" target="_blank">{{translations.search}}</a>
-                </li>
-                <li class="nav-item m-1">
-                  <span class="text-light mx-2">|</span>
-                </li>
-                <li class="nav-item m-1">
-                  <a class="nav-link text-light" href="/tags" target="_blank">{{translations.tags}}</a>
-                </li>
-                <li class="nav-item m-1">
-                  <span class="text-light mx-2">|</span>
-                  <a class="nav-link text-light" href="/sitemap" target="_blank">{{translations.sitemap.title}}</a>
-                </li>
-              </ul>
+
+    <!-- Footer Bottom -->
+    <div class="footer-bottom pt-4 border-top border-secondary">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <div class="d-flex align-items-center">
+            <div class="brand-logo me-3">
+              <i class="bi bi-chat-heart-fill text-white fs-3"></i>
+            </div>
+            <div>
+              <p class="mb-0 text-white fw-bold">Chatlamix</p>
+              <small class="text-muted">
+                {{#if translations.brandTagline}}
+                  {{translations.brandTagline}}
+                {{else}}
+                  Connect. Create. Experience.
+                {{/if}}
+              </small>
             </div>
           </div>
-        </nav>
+        </div>
+        <div class="col-md-6 text-md-end mt-3 mt-md-0">
+          <p class="copyright-text mb-0 text-muted">
+            <i class="bi bi-c-circle me-1"></i>
+            2024 Chatlamix. 
+            {{#if translations.allRightsReserved}}
+              {{translations.allRightsReserved}}
+            {{else}}
+              All Rights Reserved.
+            {{/if}}
+          </p>
+          <small class="text-muted">
+            {{#if translations.madeWithLove}}
+              {{translations.madeWithLove}}
+            {{else}}
+              Made with
+            {{/if}}
+            <i class="bi bi-heart-fill text-danger"></i>
+            {{#if translations.forYou}}
+              {{translations.forYou}}
+            {{else}}
+              for you
+            {{/if}}
+          </small>
+        </div>
       </div>
     </div>
   </div>
@@ -833,9 +881,7 @@ window.loadCharacterUpdateModal = function(chatId) {
 </script>
 
 <script>
-    // ...existing code...
-
-/**
+    /**
  * Debug function to showcase all notification styles
  * Call from console: debugNotifications()
  */
@@ -912,115 +958,6 @@ window.debugNotifications = function() {
     console.log('Types tested: success, error, warning, info, special rewards, milestone, daily bonus');
     
     return 'Debug notifications started! Check the top-right corner of your screen.';
-};
-
-/**
- * Debug function to test notification positioning and stacking
- */
-window.debugNotificationStacking = function() {
-    console.log('🔧 Testing notification stacking...');
-    
-    // Show 5 notifications rapidly to test stacking
-    for (let i = 1; i <= 5; i++) {
-        setTimeout(() => {
-            window.showNotification(
-                `Stacking test notification #${i} - This tests how multiple notifications appear together`,
-                i % 2 === 0 ? 'success' : 'info'
-            );
-        }, i * 200);
-    }
-    
-    return 'Stacking test started! 5 notifications will appear rapidly.';
-};
-
-/**
- * Debug function to test notification with different message lengths
- */
-window.debugNotificationLengths = function() {
-    console.log('🔧 Testing notification message lengths...');
-    
-    const messages = [
-        'Short',
-        'Medium length notification message',
-        'This is a longer notification message that should test how the notification handles text wrapping and longer content',
-        'Very very very very very very very very very very very very very very very very very very long message to test extreme cases',
-        'Message with\nline breaks\nand special characters: !@#$%^&*()_+-=[]{}|;:\'",.<>?/~`'
-    ];
-    
-    messages.forEach((message, index) => {
-        setTimeout(() => {
-            const types = ['success', 'error', 'warning', 'info'];
-            window.showNotification(message, types[index % types.length]);
-        }, index * 1500);
-    });
-    
-    return 'Length test started! Different message lengths will be tested.';
-};
-
-/**
- * Debug function to test notification responsiveness
- */
-window.debugNotificationResponsive = function() {
-    console.log('🔧 Testing notification responsiveness...');
-    console.log('Resize your browser window to see how notifications adapt');
-    
-    window.showNotification(
-        'Responsive test: Resize your browser window to see how this notification adapts to different screen sizes',
-        'info'
-    );
-    
-    setTimeout(() => {
-        window.showNotification(
-            'Mobile test: This notification tests mobile responsiveness and positioning',
-            'warning'
-        );
-    }, 1000);
-    
-    return 'Responsive test started! Resize your browser window to test.';
-};
-
-/**
- * Debug function to clear all notifications
- */
-window.debugClearNotifications = function() {
-    const container = document.getElementById('notification-container');
-    if (container) {
-        container.innerHTML = '';
-        console.log('✅ All notifications cleared');
-        return 'All notifications cleared!';
-    } else {
-        console.log('ℹ️ No notification container found');
-        return 'No notifications to clear.';
-    }
-};
-
-/**
- * Show debug help in console
- */
-window.debugNotificationsHelp = function() {
-    console.log(`
-🔧 NOTIFICATION DEBUG FUNCTIONS:
-
-Basic Functions:
-• debugNotifications() - Test all notification types
-• debugNotificationStacking() - Test multiple notifications
-• debugNotificationLengths() - Test different message lengths
-• debugNotificationResponsive() - Test responsive behavior
-• debugClearNotifications() - Clear all notifications
-
-Points System (if available):
-• debugDailyBonus() - Show daily bonus notification
-• debugSpecialReward() - Show special reward notification
-• debugMilestoneReward() - Show milestone reward notification
-
-Manual Testing:
-• showNotification('Your message', 'type') - Show custom notification
-  Types: 'success', 'error', 'warning', 'info'
-
-Example:
-showNotification('Custom test message', 'success')
-    `);
-    return 'Debug help displayed in console!';
 };
 
 // Auto-show help on page load for developers

@@ -443,7 +443,10 @@ class UserPointsManager {
         const isCurrentUser = user._id === this.currentUser._id;
         
         html += `
-          <div class="d-flex align-items-center p-3 border-bottom ${isCurrentUser ? 'bg-light' : ''}">
+          <div class="d-flex align-items-center p-3 border-bottom ${isCurrentUser ? 'bg-light' : ''} leaderboard-row" 
+               style="cursor: pointer; transition: background-color 0.2s ease;" 
+               data-user-id="${user._id}"
+               onclick="window.open('/user/${user._id}', '_blank')">
             <div class="flex-shrink-0 me-3">
               ${rankBadge}
             </div>
@@ -464,6 +467,278 @@ class UserPointsManager {
     }
     
     $container.html(html);
+    
+    // Add hover effects
+    this.addLeaderboardHoverEffects();
+  }
+
+  /**
+   * Render pagination controls
+   */
+  renderPagination(pagination) {
+    let html = '<nav class="points-history-pagination mt-3"><ul class="pagination justify-content-center">';
+    
+    // Previous button
+    html += `<li class="page-item ${pagination.currentPage === 1 ? 'disabled' : ''}">
+      <a class="page-link" href="#" data-page="${pagination.currentPage - 1}">${this.translations.previous || 'Previous'}</a>
+    </li>`;
+    
+    // Page numbers
+    for (let i = 1; i <= pagination.totalPages; i++) {
+      if (i === pagination.currentPage || 
+          Math.abs(i - pagination.currentPage) <= 2 || 
+          i === 1 || 
+          i === pagination.totalPages) {
+        html += `<li class="page-item ${i === pagination.currentPage ? 'active' : ''}">
+          <a class="page-link" href="#" data-page="${i}">${i}</a>
+        </li>`;
+      } else if (Math.abs(i - pagination.currentPage) === 3) {
+        html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+      }
+    }
+    
+    // Next button
+    html += `<li class="page-item ${pagination.currentPage === pagination.totalPages ? 'disabled' : ''}">
+      <a class="page-link" href="#" data-page="${pagination.currentPage + 1}">${this.translations.next || 'Next'}</a>
+    </li>`;
+    
+    html += '</ul></nav>';
+    return html;
+  }
+
+  /**
+   * Load and display leaderboard
+   */
+  async loadLeaderboard() {
+    const $leaderboardContainer = $('.leaderboard-list');
+    if (!$leaderboardContainer.length) return;
+
+    $leaderboardContainer.html(`
+      <div class="text-center p-4">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">${this.translations.loading || 'Loading...'}</span>
+        </div>
+        <div class="mt-2 text-muted">${this.translations.loading_leaderboard || 'Loading leaderboard...'}</div>
+      </div>
+    `);
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/user-points/leaderboard`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.leaderboard) {
+        this.renderLeaderboard(data.leaderboard);
+      } else {
+        $leaderboardContainer.html(`
+          <div class="text-center p-4 text-muted">
+            <i class="bi bi-trophy fs-1 opacity-50"></i>
+            <div class="mt-2">${this.translations.no_leaderboard || 'No leaderboard data available'}</div>
+          </div>
+        `);
+      }
+    } catch (error) {
+      console.error('Error loading leaderboard:', error);
+      $leaderboardContainer.html(`
+        <div class="text-center p-4 text-danger">
+          <i class="bi bi-exclamation-circle fs-1"></i>
+          <div class="mt-2">${this.translations.error_loading_leaderboard || 'Error loading leaderboard'}</div>
+          <button class="btn btn-sm btn-outline-primary mt-2" onclick="window.userPointsManager.loadLeaderboard()">
+            <i class="bi bi-arrow-clockwise me-1"></i>${this.translations.try_again || 'Try Again'}
+          </button>
+        </div>
+      `);
+    }
+  }
+
+  /**
+   * Render leaderboard
+   */
+  renderLeaderboard(leaderboard) {
+    const $container = $('.leaderboard-list');
+    let html = '';
+    
+    if (!leaderboard || leaderboard.length === 0) {
+      html = `
+        <div class="text-center p-4 text-muted">
+          <i class="bi bi-trophy fs-1 opacity-50"></i>
+          <div class="mt-2">${this.translations.no_users_leaderboard || 'No users on leaderboard yet'}</div>
+        </div>
+      `;
+    } else {
+      leaderboard.forEach((user, index) => {
+        const rank = index + 1;
+        let rankBadge = `<span class="badge bg-secondary">#${rank}</span>`;
+        
+        if (rank === 1) {
+          rankBadge = `<span class="badge" style="background: linear-gradient(135deg, #ffd700, #ffed4e);"><i class="bi bi-trophy-fill text-white"></i> #${rank}</span>`;
+        } else if (rank === 2) {
+          rankBadge = `<span class="badge" style="background: linear-gradient(135deg, #c0c0c0, #e8e8e8);"><i class="bi bi-award-fill text-white"></i> #${rank}</span>`;
+        } else if (rank === 3) {
+          rankBadge = `<span class="badge" style="background: linear-gradient(135deg, #cd7f32, #d4af37);"><i class="bi bi-award text-white"></i> #${rank}</span>`;
+        }
+        
+        const avatar = user.profileUrl || '/img/avatar.png';
+        const isCurrentUser = user._id === this.currentUser._id;
+        
+        html += `
+          <div class="d-flex align-items-center p-3 border-bottom ${isCurrentUser ? 'bg-light' : ''} leaderboard-row" 
+               style="cursor: pointer; transition: background-color 0.2s ease;" 
+               data-user-id="${user._id}"
+               onclick="window.open('/user/${user._id}', '_blank')">
+            <div class="flex-shrink-0 me-3">
+              ${rankBadge}
+            </div>
+            <div class="flex-shrink-0 me-3">
+              <img src="${avatar}" alt="${user.nickname}" class="rounded-circle" width="40" height="40">
+            </div>
+            <div class="flex-grow-1">
+              <div class="fw-semibold ${isCurrentUser ? 'text-primary' : ''}">${user.nickname || this.translations.anonymous || 'Anonymous'}</div>
+              ${user.loginStreak ? `<small class="text-muted"><i class="bi bi-fire"></i> ${user.loginStreak} ${this.translations.day_streak || 'day streak'}</small>` : ''}
+            </div>
+            <div class="flex-shrink-0">
+              <span class="fw-bold text-warning">${user.points || 0}</span>
+              <small class="text-muted d-block">${this.translations.points.title || 'points'}</small>
+            </div>
+          </div>
+        `;
+      });
+    }
+    
+    $container.html(html);
+    
+    // Add hover effects
+    this.addLeaderboardHoverEffects();
+  }
+
+  /**
+   * Render leaderboard in a specific container (for combined modal)
+   */
+  renderLeaderboardInContainer(leaderboard, $container) {
+    let html = '';
+    
+    if (!leaderboard || leaderboard.length === 0) {
+      html = `
+        <div class="text-center p-3 text-muted">
+          <i class="bi bi-star fs-4 opacity-50"></i>
+          <div class="mt-1 small">${this.translations.no_users_leaderboard || 'No users found'}</div>
+        </div>
+      `;
+    } else {
+      leaderboard.forEach((user, index) => {
+        const rank = index + 1;
+        let rankBadge = `<span class="badge bg-secondary fs-7">#${rank}</span>`;
+        
+        if (rank === 1) {
+          rankBadge = `<span class="badge" style="background: linear-gradient(135deg, #ffd700, #ffed4e);"><i class="bi bi-trophy-fill text-white"></i></span>`;
+        } else if (rank === 2) {
+          rankBadge = `<span class="badge" style="background: linear-gradient(135deg, #c0c0c0, #e8e8e8);"><i class="bi bi-award-fill text-white"></i></span>`;
+        } else if (rank === 3) {
+          rankBadge = `<span class="badge" style="background: linear-gradient(135deg, #cd7f32, #d4af37);"><i class="bi bi-award text-white"></i></span>`;
+        }
+        
+        const avatar = user.profileUrl || '/img/avatar.png';
+        const isCurrentUser = user._id === this.currentUser._id;
+        
+        html += `
+          <div class="d-flex align-items-center p-2 border-bottom ${isCurrentUser ? 'bg-light' : ''} leaderboard-row" 
+               style="min-height: 60px; cursor: pointer; transition: background-color 0.2s ease;" 
+               data-user-id="${user._id}"
+               onclick="window.open('/user/${user._id}', '_blank')">
+            <div class="flex-shrink-0 me-2">
+              ${rankBadge}
+            </div>
+            <div class="flex-shrink-0 me-2">
+              <img src="${avatar}" alt="${user.nickname}" class="rounded-circle" width="32" height="32" style="object-fit: cover;">
+            </div>
+            <div class="flex-grow-1 min-w-0">
+              <div class="fw-semibold text-truncate ${isCurrentUser ? 'text-primary' : ''}" style="font-size: 0.9rem;">${user.nickname || this.translations.anonymous || 'Anonymous'}</div>
+              ${user.loginStreak ? `<small class="text-muted"><i class="bi bi-fire"></i> ${user.loginStreak} days</small>` : ''}
+            </div>
+            <div class="flex-shrink-0 text-end">
+              <span class="fw-bold text-warning" style="font-size: 0.9rem;">${user.points || 0}</span>
+              <small class="text-muted d-block" style="font-size: 0.75rem;">${this.translations.points_title || 'points'}</small>
+            </div>
+          </div>
+        `;
+      });
+    }
+    
+    $container.html(html);
+    
+    // Add hover effects
+    this.addLeaderboardHoverEffects();
+  }
+
+  /**
+   * Load leaderboard for combined modal
+   */
+  async loadLeaderboardForModal() {
+    return this.loadPointsLeaderboardForModal();
+  }
+
+  /**
+   * Load points leaderboard for the combined modal
+   */
+  async loadPointsLeaderboardForModal() {
+    const $container = $('#points-leaderboard-container');
+    
+    if (!$container.length) {
+      console.error('Points leaderboard container not found');
+      return;
+    }
+    
+    $container.html(`
+      <div class="text-center p-3">
+        <div class="spinner-border spinner-border-sm text-primary" role="status">
+          <span class="visually-hidden">${this.translations.loading || 'Loading...'}</span>
+        </div>
+      </div>
+    `);
+
+    try {
+      console.log('UserPointsManager: Loading points leaderboard...');
+      const response = await fetch(`${this.baseUrl}/api/user-points/leaderboard?limit=10`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('UserPointsManager: Points leaderboard data:', data);
+      
+      if (data.success && data.leaderboard && data.leaderboard.length > 0) {
+        this.renderLeaderboardInContainer(data.leaderboard, $container);
+      } else {
+        $container.html(`
+          <div class="text-center p-3 text-muted">
+            <i class="bi bi-star fs-4 opacity-50"></i>
+            <div class="mt-1 small">${this.translations.no_leaderboard || 'No data available'}</div>
+          </div>
+        `);
+      }
+    } catch (error) {
+      console.error('UserPointsManager: Error loading points leaderboard:', error);
+      $container.html(`
+        <div class="text-center p-3 text-danger">
+          <i class="bi bi-exclamation-circle fs-4"></i>
+          <div class="mt-1 small">${this.translations.error_loading_leaderboard || 'Error loading data'}</div>
+          <button class="btn btn-sm btn-outline-primary mt-2" onclick="window.userPointsManager.loadPointsLeaderboardForModal()">
+            <i class="bi bi-arrow-clockwise me-1"></i>${this.translations.try_again || 'Try Again'}
+          </button>
+        </div>
+      `);
+    }
   }
 
   /**
@@ -854,6 +1129,460 @@ class UserPointsManager {
   }
 
   /**
+   * Check if first login bonus is available
+   */
+  async checkFirstLoginBonus() {
+    if (!$('.first-login-bonus').length) return;
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/first-login-bonus-status`);
+      const data = await response.json();
+      
+      const $firstLoginBonusBtn = $('.first-login-bonus-btn');
+      const $firstLoginBonusSection = $('.first-login-bonus');
+      
+      if (data.isSubscribed && data.canClaim) {
+        $firstLoginBonusSection.show();
+        $firstLoginBonusBtn.prop('disabled', false)
+          .removeClass('bonus-claimed')
+          .text(this.translations.claim_first_login_bonus || 'Claim +100 Subscriber Bonus');
+      } else {
+        $firstLoginBonusSection.hide();
+      }
+    } catch (error) {
+      console.error('Error checking first login bonus:', error);
+    }
+  }
+
+  /**
+   * Claim first login bonus
+   */
+  async claimFirstLoginBonus() {
+    const $firstLoginBonusBtn = $('.first-login-bonus-btn');
+    const originalText = $firstLoginBonusBtn.text();
+    
+    $firstLoginBonusBtn.prop('disabled', true).text(this.translations.claiming || 'Claiming...');
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/first-login-bonus`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Show success notification
+        showNotification(
+          this.translations.first_login_bonus_claimed?.replace('{points}', data.pointsAwarded) || 
+          `Subscriber bonus claimed! +${data.pointsAwarded} points`,
+          'success'
+        );
+        
+        // Update points display
+        await this.updatePointsDisplay();
+        
+        // Hide the first login bonus section
+        $('.first-login-bonus').hide();
+        
+        // Show special subscriber bonus notification
+        await this.showFirstLoginBonusNotification({
+          pointsAwarded: data.pointsAwarded,
+          newBalance: data.newBalance
+        });
+      } else {
+        $firstLoginBonusBtn.prop('disabled', false).text(originalText);
+        if (data.reason !== 'already_claimed' && data.reason !== 'not_subscribed') {
+          showNotification(data.message || this.translations.failed_claim_first_login_bonus || 'Failed to claim subscriber bonus', 'error');
+        }
+      }
+    } catch (error) {
+      console.error('Error claiming first login bonus:', error);
+      $firstLoginBonusBtn.prop('disabled', false).text(originalText);
+      showNotification(this.translations.error_claiming_first_login_bonus || 'Error claiming subscriber bonus', 'error');
+    }
+  }
+
+  /**
+   * Show special first login bonus notification with animations
+   * @param {Object} bonusData - First login bonus information
+   */
+  async showFirstLoginBonusNotification(bonusData) {
+    const {
+      pointsAwarded,
+      newBalance
+    } = bonusData;
+
+    // Remove any existing first login bonus notifications
+    $('.first-login-bonus-notification').remove();
+
+    // Try to auto-play sound first
+    const soundPlayed = await this.autoPlayRewardSound('daily_bonus', false, false);
+
+    // Create the notification HTML with conditional play button
+    const notificationHtml = `
+      <div class="first-login-bonus-notification">
+        <div class="reward-backdrop"></div>
+        <div class="reward-container first-login-bonus-container">
+          <div class="reward-content">
+            <div class="reward-icon-container">
+              <i class="bi bi-star-fill reward-star star-1"></i>
+              <i class="bi bi-star-fill reward-star star-2"></i>
+              <i class="bi bi-star-fill reward-star star-3"></i>
+              <div class="reward-main-icon subscriber-crown">
+                <i class="bi bi-crown-fill"></i>
+              </div>
+            </div>
+            <div class="reward-text">
+              <h3 class="reward-title">
+                👑 ${this.translations.subscriber_bonus_title || 'Subscriber Bonus!'}
+              </h3>
+              <p class="reward-message">
+                ${this.translations.subscriber_welcome_message || 'Welcome back, premium member! Here\'s your daily subscriber bonus.'}
+              </p>
+              <div class="reward-points">
+                <span class="points-earned">+${pointsAwarded}</span>
+                <span class="points-label">${this.translations.points.title || 'points'}</span>
+              </div>
+              <div class="reward-meta">
+                ${this.translations.new_balance || 'New balance'}: ${newBalance} ${this.translations.points.title || 'points'}
+              </div>
+              <div class="subscriber-info">
+                <i class="bi bi-crown text-warning"></i>
+                ${this.translations.subscriber_perks || 'Enjoy exclusive subscriber benefits!'}
+              </div>
+              ${!soundPlayed ? `
+                <div class="reward-actions mt-3">
+                  <button class="btn btn-sm btn-outline-light play-bonus-sound">
+                    <i class="bi bi-volume-up"></i> ${this.translations.play_sound || 'Play Sound'}
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+            <div class="reward-particles">
+              <div class="particle particle-1"></div>
+              <div class="particle particle-2"></div>
+              <div class="particle particle-3"></div>
+              <div class="particle particle-4"></div>
+              <div class="particle particle-5"></div>
+              <div class="particle particle-6"></div>
+            </div>
+          </div>
+          <button class="reward-close-btn" onclick="window.userPointsManager.closeFirstLoginBonusNotification()">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+      </div>
+    `;
+
+    // Add to body
+    $('body').append(notificationHtml);
+
+    // Bind sound play event only if button exists
+    $('.play-bonus-sound').on('click', () => {
+      this.playDailyBonusSound(false);
+    });
+
+    // Trigger entrance animation
+    setTimeout(() => {
+      $('.first-login-bonus-notification').addClass('show');
+    }, 100);
+
+    // Auto-close after 5 seconds
+    setTimeout(() => {
+      this.closeFirstLoginBonusNotification();
+    }, 5000);
+
+    // Update points display
+    this.updatePointsDisplay();
+  }
+
+  /**
+   * Close the first login bonus notification
+   */
+  closeFirstLoginBonusNotification() {
+    const $notification = $('.first-login-bonus-notification');
+    if ($notification.length) {
+      $notification.addClass('hiding');
+      setTimeout(() => {
+        $notification.remove();
+      }, 300);
+    }
+  }
+
+  /**
+   * Load and display daily rewards calendar
+   */
+  async loadDailyRewardsCalendar(showModal = true) {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/daily-rewards-calendar`);
+      const data = await response.json();
+      
+      if (data.success) {
+        this.renderDailyRewardsStreak(data.streak, data.user);
+        
+        // Show the modal only if requested
+        if (showModal) {
+          const modal = new bootstrap.Modal(document.getElementById('dailyRewardsModal'));
+          modal.show();
+        }
+      } else {
+        console.error('Failed to load daily rewards streak:', data.error);
+      }
+    } catch (error) {
+      console.error('Error loading daily rewards streak:', error);
+    }
+  }
+
+  /**
+   * Render the daily rewards streak visualization
+   */
+  renderDailyRewardsStreak(streak, user) {
+    const $grid = $('#rewardsCalendarGrid');
+    const $streakCount = $('.streak-count');
+    const $nextRewardAmount = $('.reward-amount');
+    const $todaysRewardSection = $('#todaysRewardSection');
+    const $todaysRewardAmount = $('#todaysRewardAmount');
+    const $todaysRewardBonus = $('#todaysRewardBonus');
+    
+    // Update streak display
+    $streakCount.text(user.currentStreak || 0);
+    
+    // Find current claimable reward
+    const currentReward = streak.days.find(r => r.canClaim);
+    const nextReward = streak.days.find(r => r.status === 'future') || streak.days[streak.days.length - 1];
+    
+    let nextRewardPoints = nextReward ? nextReward.points : 15;
+    $nextRewardAmount.text(nextRewardPoints);
+    
+    if (currentReward) {
+      // Show today's reward section
+      $todaysRewardAmount.text(currentReward.points);
+      
+      // Build bonus text
+      let bonusText = '';
+      if (currentReward.isWeeklyMilestone) {
+        bonusText += '🏆 Weekly Milestone! ';
+      }
+      if (currentReward.isFinalMilestone) {
+        bonusText += '👑 30-Day Champion! ';
+      }
+      if (user.currentStreak > 0) {
+        bonusText += `🔥 Day ${currentReward.day} streak!`;
+      }
+      
+      $todaysRewardBonus.text(bonusText);
+      $todaysRewardSection.show();
+    } else {
+      $todaysRewardSection.hide();
+    }
+    
+    // Render streak grid
+    let gridHtml = '';
+    
+    streak.days.forEach(day => {
+      let cardClass = 'streak-day';
+      let iconClass = 'bi bi-gift';
+      let iconColor = '#6c757d';
+      
+      if (day.status === 'completed') {
+        cardClass += ' completed';
+        iconClass = 'bi bi-check-circle-fill';
+        iconColor = '#28a745';
+      } else if (day.status === 'current' && day.canClaim) {
+        cardClass += ' current';
+        iconClass = 'bi bi-star-fill';
+        iconColor = '#ffd700';
+      } else if (day.status === 'future') {
+        cardClass += ' future';
+        iconClass = 'bi bi-gift';
+        iconColor = '#6c757d';
+      }
+      
+      // Add special indicators
+      let bonusIndicator = '';
+      if (day.isFinalMilestone) {
+        bonusIndicator = '<div class="streak-bonus-indicator final">👑</div>';
+      } else if (day.isWeeklyMilestone) {
+        bonusIndicator = '<div class="streak-bonus-indicator weekly">🏆</div>';
+      }
+      
+      gridHtml += `
+        <div class="${cardClass}" data-day="${day.day}" data-points="${day.points}">
+          ${bonusIndicator}
+          <div class="streak-day-number">${day.day}</div>
+          <i class="${iconClass} streak-icon" style="color: ${iconColor};"></i>
+          <div class="streak-points">+${day.points}<br><small>${this.translations.points.title}</small></div>
+        </div>
+      `;
+    });
+    
+    $grid.html(gridHtml);
+    
+    // Bind claim event
+    this.bindDailyRewardClaimEvent();
+  }
+
+  /**
+   * Debug function to show daily rewards streak data
+   */
+  debugShowRewardsCalendar() {
+    if (!this.currentUser || this.currentUser.isTemporary) {
+      console.log('❌ No valid user found');
+      return;
+    }
+    
+    console.log('🔍 Debug: Loading daily rewards streak...');
+    
+    fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/daily-rewards-calendar`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          console.log('✅ Streak data loaded successfully');
+          console.log('🔥 Streak Info:', {
+            currentStreak: data.streak.currentStreak,
+            maxStreak: data.streak.maxStreak,
+            totalDays: data.streak.days.length
+          });
+          
+          console.log('👤 User Info:', {
+            currentStreak: data.user.currentStreak,
+            canClaimToday: data.user.canClaimToday,
+            lastBonus: data.user.lastBonus,
+            totalPoints: data.user.totalPoints
+          });
+          
+          console.log('📊 Streak Days (first 10):');
+          console.table(data.streak.days.slice(0, 10).map(day => ({
+            day: day.day,
+            points: day.points,
+            status: day.status,
+            canClaim: day.canClaim,
+            isMilestone: day.isMilestone,
+            isWeeklyMilestone: day.isWeeklyMilestone,
+            isFinalMilestone: day.isFinalMilestone
+          })));
+          
+          // Show current claimable reward
+          const currentReward = data.streak.days.find(r => r.canClaim);
+          if (currentReward) {
+            console.log('🌟 Current Claimable Reward:', currentReward);
+          } else {
+            console.log('⚠️ No current claimable reward found');
+          }
+          
+          // Force show the modal for testing
+          this.renderDailyRewardsStreak(data.streak, data.user);
+          const modal = new bootstrap.Modal(document.getElementById('dailyRewardsModal'));
+          modal.show();
+          
+        } else {
+          console.error('❌ Failed to load streak:', data.error);
+        }
+      })
+      .catch(error => {
+        console.error('❌ Error loading streak:', error);
+      });
+  }
+
+  /**
+   * Bind the claim today's reward event
+   */
+  bindDailyRewardClaimEvent() {
+    $('#claimTodaysReward').off('click').on('click', async (e) => {
+      const $btn = $(e.target);
+      const originalText = $btn.html();
+      
+      $btn.prop('disabled', true).html(`
+        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+        ${this.translations.claiming || 'Claiming...'}
+      `);
+      
+      try {
+        const today = new Date();
+        const response = await fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/claim-daily-reward`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            day: today.getDate(),
+            month: today.getMonth(),
+            year: today.getFullYear()
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showNotification(`Daily reward claimed! +${data.pointsAwarded} points`, 'success');
+          await this.updatePointsDisplay();
+          $('#todaysRewardSection').hide();
+          await this.showDailyBonusNotification({
+            pointsAwarded: data.pointsAwarded,
+            currentStreak: data.currentStreak,
+            newBalance: data.newBalance
+          });
+        } else {
+          showNotification(data.message || 'Failed to claim reward', 'error');
+          $btn.prop('disabled', false).html(originalText);
+        }
+      } catch (error) {
+        console.error('Error claiming daily reward:', error);
+        showNotification('Error claiming reward', 'error');
+        $btn.prop('disabled', false).html(originalText);
+      }
+    });
+  }
+
+  /**
+   * Check and show daily rewards calendar once per day
+   */
+  async checkAndShowDailyRewardsCalendar() {
+    if (!this.currentUser || this.currentUser.isTemporary) return;
+    
+    const lastCalendarShown = localStorage.getItem(`lastDailyRewardsShown_${this.currentUser._id}`);
+    const today = new Date().toISOString().split('T')[0];
+
+    // Only show once per day per user
+    if (lastCalendarShown !== today) {
+      try {
+        // Check if user can claim today's reward
+        const response = await fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/daily-bonus-status`);
+        const data = await response.json();
+
+        if (data.success && data.canClaim) {
+          // Show the calendar modal
+          setTimeout(() => {
+            this.loadDailyRewardsCalendar();
+          }, 2000); // Delay 2 seconds after page load
+          
+          // Mark as shown for today
+          localStorage.setItem(`lastDailyRewardsShown_${this.currentUser._id}`, today);
+        }
+      } catch (error) {
+        console.error('Error checking daily rewards calendar:', error);
+      }
+    }
+  }
+
+  /**
+   * Add hover effects to leaderboard rows
+   */
+  addLeaderboardHoverEffects() {
+    $('.leaderboard-row').off('mouseenter mouseleave').on({
+      mouseenter: function() {
+        $(this).css('background-color', 'rgba(0, 123, 255, 0.1)');
+      },
+      mouseleave: function() {
+        if (!$(this).hasClass('bg-light')) {
+          $(this).css('background-color', '');
+        }
+      }
+    });
+  }
+  /**
    * Show special point reward notification with animations
    * @param {Object} rewardData - Reward information
    */
@@ -884,7 +1613,7 @@ class UserPointsManager {
         '🎨 ' + (this.translations.image_milestone_title || 'Image Generation Milestone!') :
         '🖼️ ' + (this.translations.image_generation_reward?.replace('{points}', points) || 'Image Generated!');
     }
-
+Z
     // Create the notification HTML with conditional play button
     const notificationHtml = `
       <div class="special-reward-notification">
@@ -1227,444 +1956,6 @@ class UserPointsManager {
     };
     
     this.showSpecialRewardNotification(mockMilestoneData);
-  }
-  /**
-   * Load and display daily rewards calendar
-   */
-  async loadDailyRewardsCalendar(showModal = true) {
-    try {
-      const response = await fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/daily-rewards-calendar`);
-      const data = await response.json();
-      
-      if (data.success) {
-        this.renderDailyRewardsStreak(data.streak, data.user);
-        
-        // Show the modal only if requested
-        if (showModal) {
-          const modal = new bootstrap.Modal(document.getElementById('dailyRewardsModal'));
-          modal.show();
-        }
-      } else {
-        console.error('Failed to load daily rewards streak:', data.error);
-      }
-    } catch (error) {
-      console.error('Error loading daily rewards streak:', error);
-    }
-  }
-
-  /**
-   * Render the daily rewards streak visualization
-   */
-  renderDailyRewardsStreak(streak, user) {
-    const $grid = $('#rewardsCalendarGrid');
-    const $streakCount = $('.streak-count');
-    const $nextRewardAmount = $('.reward-amount');
-    const $todaysRewardSection = $('#todaysRewardSection');
-    const $todaysRewardAmount = $('#todaysRewardAmount');
-    const $todaysRewardBonus = $('#todaysRewardBonus');
-    
-    // Update streak display
-    $streakCount.text(user.currentStreak || 0);
-    
-    // Find current claimable reward
-    const currentReward = streak.days.find(r => r.canClaim);
-    const nextReward = streak.days.find(r => r.status === 'future') || streak.days[streak.days.length - 1];
-    
-    let nextRewardPoints = nextReward ? nextReward.points : 15;
-    $nextRewardAmount.text(nextRewardPoints);
-    
-    if (currentReward) {
-      // Show today's reward section
-      $todaysRewardAmount.text(currentReward.points);
-      
-      // Build bonus text
-      let bonusText = '';
-      if (currentReward.isWeeklyMilestone) {
-        bonusText += '🏆 Weekly Milestone! ';
-      }
-      if (currentReward.isFinalMilestone) {
-        bonusText += '👑 30-Day Champion! ';
-      }
-      if (user.currentStreak > 0) {
-        bonusText += `🔥 Day ${currentReward.day} streak!`;
-      }
-      
-      $todaysRewardBonus.text(bonusText);
-      $todaysRewardSection.show();
-    } else {
-      $todaysRewardSection.hide();
-    }
-    
-    // Render streak grid
-    let gridHtml = '';
-    
-    streak.days.forEach(day => {
-      let cardClass = 'streak-day';
-      let iconClass = 'bi bi-gift';
-      let iconColor = '#6c757d';
-      
-      if (day.status === 'completed') {
-        cardClass += ' completed';
-        iconClass = 'bi bi-check-circle-fill';
-        iconColor = '#28a745';
-      } else if (day.status === 'current' && day.canClaim) {
-        cardClass += ' current';
-        iconClass = 'bi bi-star-fill';
-        iconColor = '#ffd700';
-      } else if (day.status === 'future') {
-        cardClass += ' future';
-        iconClass = 'bi bi-gift';
-        iconColor = '#6c757d';
-      }
-      
-      // Add special indicators
-      let bonusIndicator = '';
-      if (day.isFinalMilestone) {
-        bonusIndicator = '<div class="streak-bonus-indicator final">👑</div>';
-      } else if (day.isWeeklyMilestone) {
-        bonusIndicator = '<div class="streak-bonus-indicator weekly">🏆</div>';
-      }
-      
-      gridHtml += `
-        <div class="${cardClass}" data-day="${day.day}" data-points="${day.points}">
-          ${bonusIndicator}
-          <div class="streak-day-number">${day.day}</div>
-          <i class="${iconClass} streak-icon" style="color: ${iconColor};"></i>
-          <div class="streak-points">+${day.points}<br><small>${this.translations.points.title}</small></div>
-        </div>
-      `;
-    });
-    
-    $grid.html(gridHtml);
-    
-    // Bind claim event
-    this.bindDailyRewardClaimEvent();
-  }
-
-  /**
-   * Debug function to show daily rewards streak data
-   */
-  debugShowRewardsCalendar() {
-    if (!this.currentUser || this.currentUser.isTemporary) {
-      console.log('❌ No valid user found');
-      return;
-    }
-    
-    console.log('🔍 Debug: Loading daily rewards streak...');
-    
-    fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/daily-rewards-calendar`)
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          console.log('✅ Streak data loaded successfully');
-          console.log('🔥 Streak Info:', {
-            currentStreak: data.streak.currentStreak,
-            maxStreak: data.streak.maxStreak,
-            totalDays: data.streak.days.length
-          });
-          
-          console.log('👤 User Info:', {
-            currentStreak: data.user.currentStreak,
-            canClaimToday: data.user.canClaimToday,
-            lastBonus: data.user.lastBonus,
-            totalPoints: data.user.totalPoints
-          });
-          
-          console.log('📊 Streak Days (first 10):');
-          console.table(data.streak.days.slice(0, 10).map(day => ({
-            day: day.day,
-            points: day.points,
-            status: day.status,
-            canClaim: day.canClaim,
-            isMilestone: day.isMilestone,
-            isWeeklyMilestone: day.isWeeklyMilestone,
-            isFinalMilestone: day.isFinalMilestone
-          })));
-          
-          // Show current claimable reward
-          const currentReward = data.streak.days.find(r => r.canClaim);
-          if (currentReward) {
-            console.log('🌟 Current Claimable Reward:', currentReward);
-          } else {
-            console.log('⚠️ No current claimable reward found');
-          }
-          
-          // Force show the modal for testing
-          this.renderDailyRewardsStreak(data.streak, data.user);
-          const modal = new bootstrap.Modal(document.getElementById('dailyRewardsModal'));
-          modal.show();
-          
-        } else {
-          console.error('❌ Failed to load streak:', data.error);
-        }
-      })
-      .catch(error => {
-        console.error('❌ Error loading streak:', error);
-      });
-  }
-
-  /**
-   * Bind the claim today's reward event
-   */
-  bindDailyRewardClaimEvent() {
-    $('#claimTodaysReward').off('click').on('click', async (e) => {
-      const $btn = $(e.target);
-      const originalText = $btn.html();
-      
-      $btn.prop('disabled', true).html(`
-        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-        ${this.translations.claiming || 'Claiming...'}
-      `);
-      
-      try {
-        const today = new Date();
-        const response = await fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/claim-daily-reward`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            day: today.getDate(),
-            month: today.getMonth(),
-            year: today.getFullYear()
-          })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-          showNotification(`Daily reward claimed! +${data.pointsAwarded} points`, 'success');
-          await this.updatePointsDisplay();
-          $('#todaysRewardSection').hide();
-          await this.showDailyBonusNotification({
-            pointsAwarded: data.pointsAwarded,
-            currentStreak: data.currentStreak,
-            newBalance: data.newBalance
-          });
-        } else {
-          showNotification(data.message || 'Failed to claim reward', 'error');
-          $btn.prop('disabled', false).html(originalText);
-        }
-      } catch (error) {
-        console.error('Error claiming daily reward:', error);
-        showNotification('Error claiming reward', 'error');
-        $btn.prop('disabled', false).html(originalText);
-      }
-    });
-  }
-
-  /**
-   * Check and show daily rewards calendar once per day
-   */
-  async checkAndShowDailyRewardsCalendar() {
-    if (!this.currentUser || this.currentUser.isTemporary) return;
-    
-    const lastCalendarShown = localStorage.getItem(`lastDailyRewardsShown_${this.currentUser._id}`);
-    const today = new Date().toISOString().split('T')[0];
-
-    // Only show once per day per user
-    if (lastCalendarShown !== today) {
-      try {
-        // Check if user can claim today's reward
-        const response = await fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/daily-bonus-status`);
-        const data = await response.json();
-
-        if (data.success && data.canClaim) {
-          // Show the calendar modal
-          setTimeout(() => {
-            this.loadDailyRewardsCalendar();
-          }, 2000); // Delay 2 seconds after page load
-          
-          // Mark as shown for today
-          localStorage.setItem(`lastDailyRewardsShown_${this.currentUser._id}`, today);
-        }
-      } catch (error) {
-        console.error('Error checking daily rewards calendar:', error);
-      }
-    }
-  }
-
-  /**
-   * Check if first login bonus is available
-   */
-  async checkFirstLoginBonus() {
-    if (!$('.first-login-bonus').length) return;
-
-    try {
-      const response = await fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/first-login-bonus-status`);
-      const data = await response.json();
-      
-      const $firstLoginBonusBtn = $('.first-login-bonus-btn');
-      const $firstLoginBonusSection = $('.first-login-bonus');
-      
-      if (data.isSubscribed && data.canClaim) {
-        $firstLoginBonusSection.show();
-        $firstLoginBonusBtn.prop('disabled', false)
-          .removeClass('bonus-claimed')
-          .text(this.translations.claim_first_login_bonus || 'Claim +100 Subscriber Bonus');
-      } else {
-        $firstLoginBonusSection.hide();
-      }
-    } catch (error) {
-      console.error('Error checking first login bonus:', error);
-    }
-  }
-
-  /**
-   * Claim first login bonus
-   */
-  async claimFirstLoginBonus() {
-    const $firstLoginBonusBtn = $('.first-login-bonus-btn');
-    const originalText = $firstLoginBonusBtn.text();
-    
-    $firstLoginBonusBtn.prop('disabled', true).text(this.translations.claiming || 'Claiming...');
-
-    try {
-      const response = await fetch(`${this.baseUrl}/api/user-points/${this.currentUser._id}/first-login-bonus`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({})
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        // Show success notification
-        showNotification(
-          this.translations.first_login_bonus_claimed?.replace('{points}', data.pointsAwarded) || 
-          `Subscriber bonus claimed! +${data.pointsAwarded} points`,
-          'success'
-        );
-        
-        // Update points display
-        await this.updatePointsDisplay();
-        
-        // Hide the first login bonus section
-        $('.first-login-bonus').hide();
-        
-        // Show special subscriber bonus notification
-        await this.showFirstLoginBonusNotification({
-          pointsAwarded: data.pointsAwarded,
-          newBalance: data.newBalance
-        });
-      } else {
-        $firstLoginBonusBtn.prop('disabled', false).text(originalText);
-        if (data.reason !== 'already_claimed' && data.reason !== 'not_subscribed') {
-          showNotification(data.message || this.translations.failed_claim_first_login_bonus || 'Failed to claim subscriber bonus', 'error');
-        }
-      }
-    } catch (error) {
-      console.error('Error claiming first login bonus:', error);
-      $firstLoginBonusBtn.prop('disabled', false).text(originalText);
-      showNotification(this.translations.error_claiming_first_login_bonus || 'Error claiming subscriber bonus', 'error');
-    }
-  }
-
-  /**
-   * Show special first login bonus notification with animations
-   * @param {Object} bonusData - First login bonus information
-   */
-  async showFirstLoginBonusNotification(bonusData) {
-    const {
-      pointsAwarded,
-      newBalance
-    } = bonusData;
-
-    // Remove any existing first login bonus notifications
-    $('.first-login-bonus-notification').remove();
-
-    // Try to auto-play sound first
-    const soundPlayed = await this.autoPlayRewardSound('daily_bonus', false, false);
-
-    // Create the notification HTML with conditional play button
-    const notificationHtml = `
-      <div class="first-login-bonus-notification">
-        <div class="reward-backdrop"></div>
-        <div class="reward-container first-login-bonus-container">
-          <div class="reward-content">
-            <div class="reward-icon-container">
-              <i class="bi bi-star-fill reward-star star-1"></i>
-              <i class="bi bi-star-fill reward-star star-2"></i>
-              <i class="bi bi-star-fill reward-star star-3"></i>
-              <div class="reward-main-icon subscriber-crown">
-                <i class="bi bi-crown-fill"></i>
-              </div>
-            </div>
-            <div class="reward-text">
-              <h3 class="reward-title">
-                👑 ${this.translations.subscriber_bonus_title || 'Subscriber Bonus!'}
-              </h3>
-              <p class="reward-message">
-                ${this.translations.subscriber_welcome_message || 'Welcome back, premium member! Here\'s your daily subscriber bonus.'}
-              </p>
-              <div class="reward-points">
-                <span class="points-earned">+${pointsAwarded}</span>
-                <span class="points-label">${this.translations.points.title || 'points'}</span>
-              </div>
-              <div class="reward-meta">
-                ${this.translations.new_balance || 'New balance'}: ${newBalance} ${this.translations.points.title || 'points'}
-              </div>
-              <div class="subscriber-info">
-                <i class="bi bi-crown text-warning"></i>
-                ${this.translations.subscriber_perks || 'Enjoy exclusive subscriber benefits!'}
-              </div>
-              ${!soundPlayed ? `
-                <div class="reward-actions mt-3">
-                  <button class="btn btn-sm btn-outline-light play-bonus-sound">
-                    <i class="bi bi-volume-up"></i> ${this.translations.play_sound || 'Play Sound'}
-                  </button>
-                </div>
-              ` : ''}
-            </div>
-            <div class="reward-particles">
-              <div class="particle particle-1"></div>
-              <div class="particle particle-2"></div>
-              <div class="particle particle-3"></div>
-              <div class="particle particle-4"></div>
-              <div class="particle particle-5"></div>
-              <div class="particle particle-6"></div>
-            </div>
-          </div>
-          <button class="reward-close-btn" onclick="window.userPointsManager.closeFirstLoginBonusNotification()">
-            <i class="bi bi-x"></i>
-          </button>
-        </div>
-      </div>
-    `;
-
-    // Add to body
-    $('body').append(notificationHtml);
-
-    // Bind sound play event only if button exists
-    $('.play-bonus-sound').on('click', () => {
-      this.playDailyBonusSound(false);
-    });
-
-    // Trigger entrance animation
-    setTimeout(() => {
-      $('.first-login-bonus-notification').addClass('show');
-    }, 100);
-
-    // Auto-close after 5 seconds
-    setTimeout(() => {
-      this.closeFirstLoginBonusNotification();
-    }, 5000);
-
-    // Update points display
-    this.updatePointsDisplay();
-  }
-
-  /**
-   * Close the first login bonus notification
-   */
-  closeFirstLoginBonusNotification() {
-    const $notification = $('.first-login-bonus-notification');
-    if ($notification.length) {
-      $notification.addClass('hiding');
-      setTimeout(() => {
-        $notification.remove();
-      }, 300);
-    }
   }
 }
 

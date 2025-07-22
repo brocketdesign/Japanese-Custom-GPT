@@ -86,7 +86,7 @@
                     <h6 class="mb-0">{{user.username}}</h6>
                     {{#if (eq user.subscriptionStatus 'active')}}
                         <small class="text-muted">
-                            <i class="bi bi-gem text-warning"></i> Premium
+                            <i class="bi bi-gem text-warning"></i> {{translations.avatar.premium}}
                         </small>
                     {{/if}}
                 </div>
@@ -95,6 +95,13 @@
         </div>
         <div class="offcanvas-body px-3 mb-2">
             <div class="list-group list-group-flush">
+
+                {{#if (eq user.subscriptionStatus 'active')}}
+                {{else}}
+                    <a class="list-group-item list-group-item-action text-white border-0 menu-item" style="background: linear-gradient(to bottom right, #cdb3fb, #6e20f4);" href="#" onclick="loadPlanPage()">
+                        <i class="bi bi-gem me-3"></i>{{translations.avatar.premium}}
+                    </a>
+                {{/if}}
 
                 <a class="list-group-item list-group-item-action border-0 menu-item" href="/user/{{user._id}}">
                     <i class="bi bi-person-circle me-3"></i>{{translations.avatar.profile}}

@@ -1120,6 +1120,7 @@
     "editProfile": "プロフィールを編集",
     "subscription": "サブスクリプション",
     "myPlan": "私のプラン",
+    "premium":"プレミアム",
     "profile": "プロフィール",
     "characters": "キャラクター",
     "createCharacter": "キャラクター作成",
@@ -1615,5 +1616,23 @@
       "activity": "アクティビティ",
       "image request": "画像リクエスト"
     }
-  }
+  },
+  "leaderboards_title": "リーダーボード",
+  "leaderboard_short": "リーダーボード",
+  "most_creative_users": "最もクリエイティブなユーザー",
+  "most_active_users": "最もアクティブなユーザー",
+  "leaderboard_footer_info": "ランキングは定期的に更新され、現在のユーザー活動を反映しています",
+  "leaderboard_refreshed": "リーダーボードが正常に更新されました",
+  "anonymous": "匿名ユーザー",
+  "joined": "参加日",
+  "unique_images": "ユニーク画像数",
+  "images_generated": "生成画像数",
+  "points_title": "ポイント",
+  "day_streak": "連続日数",
+  "no_leaderboard": "リーダーボードデータがありません",
+  "no_users_leaderboard": "リーダーボードにユーザーが見つかりません",
+  "error_loading_leaderboard": "リーダーボードの読み込みエラー",
+  "try_again": "再試行",
+  "loading_leaderboard": "リーダーボードを読み込み中...",
+  "analytics_refreshed": "分析データが正常に更新されました"
 }

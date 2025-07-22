@@ -1090,6 +1090,7 @@
     "editProfile": "Edit Profile",
     "subscription": "Subscription",
     "myPlan": "My Plan",
+    "premium": "Premium",
     "profile": "Profile",
     "characters": "Characters",
     "createCharacter": "Create Character",
@@ -1564,5 +1565,23 @@
       "activity": "Activity",
       "image request": "Image Request"
     }
-  }
+  },
+   "leaderboards_title": "Leaderboards",
+    "leaderboard_short": "Leaderboard",
+    "most_creative_users": "The most creative users",
+    "most_active_users": "The most active users",
+    "leaderboard_footer_info": "Rankings are updated periodically and reflect current user activity",
+    "leaderboard_refreshed": "Leaderboard refreshed successfully",
+    "anonymous": "Anonymous User",
+    "joined": "Joined",
+    "unique_images": "unique images",
+    "images_generated": "images generated",
+    "points_title": "points",
+    "day_streak": "day streak",
+    "no_leaderboard": "No leaderboard data available",
+    "no_users_leaderboard": "No users found on leaderboard",
+    "error_loading_leaderboard": "Error loading leaderboard data",
+    "try_again": "Try Again",
+    "loading_leaderboard": "Loading leaderboard...",
+    "analytics_refreshed": "Analytics refreshed"
 }

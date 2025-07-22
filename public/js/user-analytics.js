@@ -45,6 +45,27 @@ class UserAnalyticsManager {
     $(document).on('click', '.debug-all-analytics', (e) => {
       this.debugAllAnalytics();
     });
+
+    // Bind sound play event only if button exists
+    $('.play-bonus-sound').on('click', () => {
+      this.playDailyBonusSound(false);
+    });
+
+    // Combined leaderboard modal events
+    $(document).on('show.bs.modal', '#leaderboardModal', () => {
+      this.loadCombinedLeaderboards();
+    });
+
+    // Refresh leaderboards buttons
+    $(document).on('click', '.refresh-leaderboards', (e) => {
+      const type = $(e.target).data('type') || $(e.target).closest('.refresh-leaderboards').data('type');
+      this.refreshLeaderboards(type);
+    });
+
+    // Trigger entrance animation
+    $(document).on('shown.bs.modal', '#leaderboardModal', () => {
+      this.animateLeaderboardEntrance();
+    });
   }
 
   /**
@@ -278,7 +299,10 @@ class UserAnalyticsManager {
         const joinedDate = user.joinedDate ? new Date(user.joinedDate).toLocaleDateString() : 'Unknown';
         
         html += `
-          <div class="d-flex align-items-center p-3 border-bottom ${isCurrentUser ? 'bg-light' : ''}">
+          <div class="d-flex align-items-center p-3 border-bottom ${isCurrentUser ? 'bg-light' : ''} leaderboard-row" 
+               style="cursor: pointer; transition: background-color 0.2s ease;" 
+               data-user-id="${user._id}"
+               onclick="window.open('/user/${user._id}', '_blank')">
             <div class="flex-shrink-0 me-3">
               ${rankBadge}
             </div>
@@ -302,6 +326,9 @@ class UserAnalyticsManager {
     }
     
     $container.html(html);
+    
+    // Add hover effects
+    this.addLeaderboardHoverEffects();
   }
 
   /**
@@ -475,6 +502,266 @@ class UserAnalyticsManager {
       console.error('Error debugging all analytics:', error);
       showNotification('Error debugging analytics', 'error');
     }
+  }
+
+  /**
+   * Load image generation leaderboard for the combined modal
+   */
+  async loadImageGenerationLeaderboardForModal() {
+    const $container = $('#image-leaderboard-container');
+    
+    if (!$container.length) {
+      console.error('Image leaderboard container not found');
+      return;
+    }
+
+    $container.html(`
+      <div class="text-center p-3">
+        <div class="spinner-border spinner-border-sm text-primary" role="status">
+          <span class="visually-hidden">${this.translations.loading || 'Loading...'}</span>
+        </div>
+      </div>
+    `);
+
+    try {
+      console.log('Loading image leaderboard...');
+      const response = await fetch(`${this.baseUrl}/user/analytics/leaderboard/images?limit=10`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Image leaderboard data:', data);
+      
+      if (data.success && data.leaderboard && data.leaderboard.length > 0) {
+        this.renderLeaderboardInContainer(data.leaderboard, $container, 'images');
+      } else {
+        $container.html(`
+          <div class="text-center p-3 text-muted">
+            <i class="bi bi-image fs-4 opacity-50"></i>
+            <div class="mt-1 small">${this.translations.no_leaderboard || 'No data available'}</div>
+          </div>
+        `);
+      }
+    } catch (error) {
+      console.error('Error loading image leaderboard:', error);
+      $container.html(`
+        <div class="text-center p-3 text-danger">
+          <i class="bi bi-exclamation-circle fs-4"></i>
+          <div class="mt-1 small">${this.translations.error_loading_leaderboard || 'Error loading data'}</div>
+          <button class="btn btn-sm btn-outline-primary mt-2" onclick="window.userAnalyticsManager.loadImageGenerationLeaderboardForModal()">
+            <i class="bi bi-arrow-clockwise me-1"></i>${this.translations.try_again || 'Try Again'}
+          </button>
+        </div>
+      `);
+    }
+  }
+
+  /**
+   * Load points leaderboard for the combined modal
+   */
+  async loadPointsLeaderboardForModal() {
+    const $container = $('#points-leaderboard-container');
+    
+    if (!$container.length) {
+      console.error('Points leaderboard container not found');
+      return;
+    }
+
+    $container.html(`
+      <div class="text-center p-3">
+        <div class="spinner-border spinner-border-sm text-primary" role="status">
+          <span class="visually-hidden">${this.translations.loading || 'Loading...'}</span>
+        </div>
+      </div>
+    `);
+
+    try {
+      console.log('Loading points leaderboard...');
+      const response = await fetch(`${this.baseUrl}/api/user-points/leaderboard?limit=10`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Points leaderboard data:', data);
+      
+      if (data.success && data.leaderboard && data.leaderboard.length > 0) {
+        this.renderLeaderboardInContainer(data.leaderboard, $container, 'points');
+      } else {
+        $container.html(`
+          <div class="text-center p-3 text-muted">
+            <i class="bi bi-star fs-4 opacity-50"></i>
+            <div class="mt-1 small">${this.translations.no_leaderboard || 'No data available'}</div>
+          </div>
+        `);
+      }
+    } catch (error) {
+      console.error('Error loading points leaderboard:', error);
+      $container.html(`
+        <div class="text-center p-3 text-danger">
+          <i class="bi bi-exclamation-circle fs-4"></i>
+          <div class="mt-1 small">${this.translations.error_loading_leaderboard || 'Error loading data'}</div>
+          <button class="btn btn-sm btn-outline-primary mt-2" onclick="window.userAnalyticsManager.loadPointsLeaderboardForModal()">
+            <i class="bi bi-arrow-clockwise me-1"></i>${this.translations.try_again || 'Try Again'}
+          </button>
+        </div>
+      `);
+    }
+  }
+
+  /**
+   * Load combined leaderboards for the modal
+   */
+  async loadCombinedLeaderboards() {
+    console.log('Loading combined leaderboards...');
+    
+    // Check if containers exist
+    if (!$('#image-leaderboard-container').length || !$('#points-leaderboard-container').length) {
+      console.error('Leaderboard containers not found in DOM');
+      return;
+    }
+
+    // Load both leaderboards simultaneously
+    try {
+      await Promise.all([
+        this.loadImageGenerationLeaderboardForModal(),
+        this.loadPointsLeaderboardForModal()
+      ]);
+      console.log('Combined leaderboards loaded successfully');
+    } catch (error) {
+      console.error('Error loading combined leaderboards:', error);
+    }
+  }
+
+  /**
+   * Render leaderboard in a specific container
+   */
+  renderLeaderboardInContainer(leaderboard, $container, type) {
+    let html = '';
+    
+    if (!leaderboard || leaderboard.length === 0) {
+      html = `
+        <div class="text-center p-3 text-muted">
+          <i class="bi bi-${type === 'images' ? 'image' : 'star'} fs-4 opacity-50"></i>
+          <div class="mt-1 small">${this.translations.no_users_leaderboard || 'No users found'}</div>
+        </div>
+      `;
+    } else {
+      leaderboard.forEach((user, index) => {
+        const rank = index + 1;
+        let rankBadge = `<span class="badge bg-secondary fs-7">#${rank}</span>`;
+        
+        if (rank === 1) {
+          rankBadge = `<span class="badge" style="background: linear-gradient(135deg, #ffd700, #ffed4e);"><i class="bi bi-trophy-fill text-white"></i></span>`;
+        } else if (rank === 2) {
+          rankBadge = `<span class="badge" style="background: linear-gradient(135deg, #c0c0c0, #e8e8e8);"><i class="bi bi-award-fill text-white"></i></span>`;
+        } else if (rank === 3) {
+          rankBadge = `<span class="badge" style="background: linear-gradient(135deg, #cd7f32, #d4af37);"><i class="bi bi-award text-white"></i></span>`;
+        }
+        
+        const avatar = user.profileUrl || '/img/avatar.png';
+        const isCurrentUser = user._id === this.currentUser._id;
+        
+        let valueDisplay, valueLabel;
+        if (type === 'images') {
+          valueDisplay = user.totalImages || 0;
+          valueLabel = this.translations.images_generated || 'images';
+        } else {
+          valueDisplay = user.points || 0;
+          valueLabel = this.translations.points_title || 'points';
+        }
+        
+        html += `
+          <div class="d-flex align-items-center p-2 border-bottom ${isCurrentUser ? 'bg-light' : ''} leaderboard-row" 
+               style="min-height: 60px; cursor: pointer; transition: background-color 0.2s ease;" 
+               data-user-id="${user._id}"
+               onclick="window.open('/user/${user._id}', '_blank')">
+            <div class="flex-shrink-0 me-2">
+              ${rankBadge}
+            </div>
+            <div class="flex-shrink-0 me-2">
+              <img src="${avatar}" alt="${user.nickname}" class="rounded-circle" width="32" height="32" style="object-fit: cover;">
+            </div>
+            <div class="flex-grow-1 min-w-0">
+              <div class="fw-semibold text-truncate ${isCurrentUser ? 'text-primary' : ''}" style="font-size: 0.9rem;">${user.nickname || this.translations.anonymous || 'Anonymous'}</div>
+              ${type === 'images' && user.totalEntries ? `<small class="text-muted">${user.totalEntries} unique</small>` : ''}
+              ${type === 'points' && user.loginStreak ? `<small class="text-muted"><i class="bi bi-fire"></i> ${user.loginStreak} days</small>` : ''}
+            </div>
+            <div class="flex-shrink-0 text-end">
+              <span class="fw-bold ${type === 'images' ? 'text-primary' : 'text-warning'}" style="font-size: 0.9rem;">${valueDisplay}</span>
+              <small class="text-muted d-block" style="font-size: 0.75rem;">${valueLabel}</small>
+            </div>
+          </div>
+        `;
+      });
+    }
+    
+    $container.html(html);
+    
+    // Add hover effects
+    this.addLeaderboardHoverEffects();
+  }
+
+  /**
+   * Add hover effects to leaderboard rows
+   */
+  addLeaderboardHoverEffects() {
+    $('.leaderboard-row').hover(
+      function() {
+        $(this).css('background-color', 'rgba(0, 123, 255, 0.1)');
+      },
+      function() {
+        if (!$(this).hasClass('bg-light')) {
+          $(this).css('background-color', '');
+        }
+      }
+    );
+  }
+
+  /**
+   * Refresh specific leaderboard
+   */
+  async refreshLeaderboards(type) {
+    if (type === 'image') {
+      await this.loadImageGenerationLeaderboardForModal();
+    } else if (type === 'points') {
+      await this.loadPointsLeaderboardForModal();
+    } else {
+      // Refresh both
+      await this.loadCombinedLeaderboards();
+    }
+    
+    showNotification(this.translations.leaderboard_refreshed || 'Leaderboard refreshed', 'success');
+  }
+
+  /**
+   * Animate leaderboard entrance for visual appeal
+   */
+  animateLeaderboardEntrance() {
+    $('.leaderboard-section').each((index, element) => {
+      const $element = $(element);
+      $element.css({
+        'opacity': '0',
+        'transform': 'translateY(20px)',
+        'transition': 'all 0.4s ease-out'
+      });
+      
+      setTimeout(() => {
+        $element.css({
+          'opacity': '1',
+          'transform': 'translateY(0)'
+        });
+      }, index * 200);
+    });
   }
 
   /**

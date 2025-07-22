@@ -683,7 +683,7 @@
                         Image Generation Leaderboard
                     {{/if}}
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-dark" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0">
                 <!-- Analytics Summary Cards -->
@@ -817,9 +817,97 @@
 </div>
 <!-- End User Analytics Modal -->
 
+<!-- Combined Leaderboard Modal -->
+<div class="modal fade" id="leaderboardModal" tabindex="-1" aria-labelledby="leaderboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content mx-auto">
+            <div class="modal-header bg-gradient text-white" style="background: linear-gradient(135deg, #6f42c1 0%, #4a148c 100%);">
+                <h5 class="modal-title d-flex align-items-center" id="leaderboardModalLabel">
+                    <i class="bi bi-trophy-fill me-2"></i>
+                    {{#if translations.leaderboards_title}}{{translations.leaderboards_title}}{{else}}Leaderboards{{/if}}
+                </h5>
+                <button type="button" class="btn-close btn-close-dark" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Image Generation Leaderboard -->
+                <div class="leaderboard-section mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <h6 class="mb-0">
+                                <i class="bi bi-image text-primary me-2"></i>
+                                {{#if userAnalyticsTranslations.top_image_creators}}{{userAnalyticsTranslations.top_image_creators}}{{else}}Top Image Creators{{/if}}
+                            </h6>
+                            <small class="text-muted">
+                                {{#if translations.most_creative_users}}{{translations.most_creative_users}}{{else}}The most creative users.{{/if}}
+                            </small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary refresh-leaderboards" data-type="image">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                    <div class="leaderboard-list" id="image-leaderboard-container">
+                        <div class="text-center p-3"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- User Points Leaderboard -->
+                <div class="leaderboard-section">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <h6 class="mb-0">
+                                <i class="bi bi-star-fill text-warning me-2"></i>
+                                {{#if userPointsTranslations.points.top_earners}}{{userPointsTranslations.points.top_earners}}{{else}}Top Point Earners{{/if}}
+                            </h6>
+                            <small class="text-muted">
+                                {{#if translations.most_active_users}}{{translations.most_active_users}}{{else}}The most active users.{{/if}}
+                            </small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary refresh-leaderboards" data-type="points">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                    <div class="leaderboard-list" id="points-leaderboard-container">
+                        <div class="text-center p-3"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <small class="text-muted fst-italic">
+                    <i class="bi bi-info-circle me-1"></i>
+                    {{#if translations.leaderboard_footer_info}}{{translations.leaderboard_footer_info}}{{else}}Rankings are updated periodically.{{/if}}
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Combined Leaderboard Modal -->
+
 <script>
   $('.modal').on('hidden.bs.modal', function () {
     $('.modal-backdrop').remove();
     $('body').removeClass('modal-open').css('overflow', '');
-});
+  });
+
+  // Initialize leaderboard modal events
+  $(document).ready(function() {
+    // Combined leaderboard modal events
+    $('#leaderboardModal').on('show.bs.modal', function() {
+      console.log('Leaderboard modal opening...');
+      if (window.userAnalyticsManager) {
+        window.userAnalyticsManager.loadCombinedLeaderboards();
+      }
+    });
+
+    // Refresh leaderboards buttons
+    $(document).on('click', '.refresh-leaderboards', function(e) {
+      e.preventDefault();
+      const type = $(this).data('type');
+      console.log('Refreshing leaderboard type:', type);
+      if (window.userAnalyticsManager) {
+        window.userAnalyticsManager.refreshLeaderboards(type);
+      }
+    });
+  });
 </script>

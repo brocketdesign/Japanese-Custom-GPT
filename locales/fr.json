@@ -1069,6 +1069,7 @@
     "editProfile": "Modifier le profil",
     "subscription": "Abonnement",
     "myPlan": "Mon plan",
+    "premium": "Premium",
     "profile": "Profil",
     "characters": "Personnages",
     "createCharacter": "Créer un personnage",
@@ -1570,5 +1571,23 @@
       "activity": "Activité",
       "image request": "Demande d'image"
     }
-  }
+  },
+  "leaderboards_title": "Classements",
+  "leaderboard_short": "Classement",
+  "most_creative_users": "Les utilisateurs les plus créatifs",
+  "most_active_users": "Les utilisateurs les plus actifs",
+  "leaderboard_footer_info": "Les classements sont mis à jour périodiquement et reflètent l'activité actuelle des utilisateurs",
+  "leaderboard_refreshed": "Classement actualisé avec succès",
+  "anonymous": "Utilisateur anonyme",
+  "joined": "Inscrit",
+  "unique_images": "images uniques",
+  "images_generated": "images générées",
+  "points_title": "points",
+  "day_streak": "série de jours",
+  "no_leaderboard": "Aucune donnée de classement disponible",
+  "no_users_leaderboard": "Aucun utilisateur trouvé dans le classement",
+  "error_loading_leaderboard": "Erreur lors du chargement des données du classement",
+  "try_again": "Réessayer",
+  "loading_leaderboard": "Chargement du classement...",
+  "analytics_refreshed": "Analyse actualisée avec succès"
 }

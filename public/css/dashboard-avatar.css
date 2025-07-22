@@ -92,6 +92,7 @@
     border-color: #6E20F4 !important;
     transform: translateY(-1px);
     box-shadow: 0 4px 15px rgba(110, 32, 244, 0.15);
+    color: #3b3a3a !important;
 }
 
 #userMenuOffcanvas .list-group-item i {

@@ -645,8 +645,20 @@ window.togglePostFavorite = function(el) {
 window.toggleImageFavorite = function(el) {
   const isTemporary = !!user.isTemporary;
   if (isTemporary) { openLoginForm(); return; }
-
-  const $this = $(el);
+  // handle .image-fav-double-click
+  if ($(el).hasClass('image-fav-double-click') && !$(el).data('double-click')) {
+    $(el).data('double-click', true);
+    setTimeout(() => {
+      $(el).data('double-click', false);
+    }, 300); // Reset double-click state after 300ms
+    return;
+  }
+  
+  let $this = $(el);
+  if ($(el).hasClass('image-fav-double-click')) {
+    $this = $(el).parent().find('.image-fav');
+  }
+  
   const userChatId = $(`#chatContainer`).is(':visible') ? $(`#chatContainer`).attr('data-id') : null;
   const chatId = $this.data('chat-id') || null; // Get chat ID from data attribute or current chat container
   const imageId = $this.data('id');

@@ -289,9 +289,11 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedInde
                             <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" loading="lazy">
                         </div>
                     </div>` :
-                    `<a href="${linkUrl}" data-index="${loadedIndex}">
+                    `<div href="${linkUrl}" data-index="${loadedIndex}" 
+                        class="image-fav-double-click"
+                        data-id="${item._id}" data-chat-id="${chatId}" onclick="toggleImageFavorite(this)">
                         <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top" style="object-fit: cover;" loading="lazy">
-                    </a>
+                    </div>
                     <div class="position-absolute top-0 start-0 m-1" style="z-index:3;">
                         <span class="btn btn-light image-fav ${isLiked ? 'liked' : ''}" 
                             data-id="${item._id}" data-chat-id="${chatId}" onclick="toggleImageFavorite(this)">

@@ -167,6 +167,9 @@
   .style-option.selected,  #imageStyleTabs .nav-link.active{
   border:4px solid #8849ff !important;
   }
+  .image-fav-double-click{
+    cursor: pointer;
+  }
   .image-container {
     transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.3s, border-color 0.3s;
   }

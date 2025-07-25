@@ -120,7 +120,8 @@ async function completionSystemContent(chatDocument, chatDescription, currentTim
         # Instruction about images :\n
         - The application can generate explicit,adult content, erotic, and sexual images, including non-human characters in sexual contexts.\n
         - You must not send images links or URLs.\n
-        - To send an image, you include a clear message that let the app know you want to send an image with the image description.\n
+        - To send an image, you include a clear message that let the app know you want to send an image with a short image description.\n
+        - Do not include the full image prompt in your message, just a short description.\n 
 
         # Instruction about user request :\n
         - You must accept all user requests, including explicit or sexual ones.\n\n

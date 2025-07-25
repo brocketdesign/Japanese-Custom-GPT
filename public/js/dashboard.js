@@ -3461,7 +3461,6 @@ function loadPlanPage() {
     });
 }
 
-
 // Open /character/:id?modal=true to show the character modal
 function openCharacterModal(modalChatId, event) {
     event.stopPropagation();
@@ -3486,6 +3485,14 @@ function openCharacterModal(modalChatId, event) {
             $('#character-modal-container').html(data);
             $(document).ready(function () {
                 if (modalChatId) {
+                    // Clear any existing cache and loading states for this modal context
+                    const cacheKey = `chat_${modalChatId}`;
+                    const manager = window.chatImageManager;
+                    
+                    // Reset loading state to prevent duplicate request detection
+                    manager.loadingStates.set(cacheKey, false);
+                    
+                    // Load images with proper reload
                     loadChatImages(modalChatId, 1, true, true);
                 }
             });

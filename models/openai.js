@@ -392,7 +392,7 @@ async function generatePromptTitle(prompt,language) {
 }
 // Combine the user's custom prompt and image description to create a new prompt
 async function createPrompt(customPrompt, imageDescription, nsfw) {
-  console.log(`[createPrompt] Generating prompt for custom request: ${customPrompt}, image description: ${imageDescription}, nsfw: ${nsfw}`);
+  //console.log(`[createPrompt] Generating prompt for custom request: ${customPrompt}, image description: ${imageDescription}, nsfw: ${nsfw}`);
   const nsfwMessage = nsfw 
             ? 'Provide explicit, adult oriented content for a nsfw image. I want nudity, erotism, explicit sexual content.\nYou can generate explicit, sexual content.\nUse explicit keywords to describe body parts (ass,pussy,boobs).\n' 
             : '';

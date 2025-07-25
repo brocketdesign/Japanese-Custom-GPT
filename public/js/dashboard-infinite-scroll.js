@@ -72,16 +72,9 @@ window.loadUserImages = function(userId, page = 1, reload = false, isModal = fal
 
 /**
  * Generic function to load images with infinite scroll
- * @param {string} type - Type of images ('chat' or 'user')
- * @param {string} id - The ID (chatId or userId)
- * @param {number} page - Page number to load
- * @param {boolean} reload - Whether to reload from cache
- * @param {boolean} isModal - Whether loading in modal context
- * @param {string} endpoint - API endpoint to fetch from
- * @returns {Promise}
  */
 function loadImages(type, id, page = 1, reload = false, isModal = false, endpoint) {
-    const manager =  window.chatImageManager;
+    const manager = window.chatImageManager;
     const cacheKey = `${type}_${id}`;
     
     // Initialize state if not exists
@@ -109,11 +102,19 @@ function loadImages(type, id, page = 1, reload = false, isModal = false, endpoin
             if (reload) {
                 const hasCache = await handleReload(id, cacheKey, type);
                 
-                // If we have cache, don't fetch from server unless specifically requested
+                // Fix: Always setup infinite scroll after reload, regardless of cache
+                setupInfiniteScroll(id, isModal, type);
+                
+                // Fix: If we have cache and we're requesting page 1, don't fetch from server
                 if (hasCache && page === 1) {
-                    setupInfiniteScroll(id, isModal, type);
+                    console.log(`[loadImages] Reload completed with cache for ${cacheKey}, page ${page}`);
                     resolve();
                     return;
+                }
+                
+                // Fix: If no cache but reload is true, reset state properly
+                if (!hasCache) {
+                    manager.currentPages.set(cacheKey, 0);
                 }
             }
             
@@ -129,22 +130,32 @@ function loadImages(type, id, page = 1, reload = false, isModal = false, endpoin
             
             // Prevent duplicate requests
             if (manager.loadingStates.get(cacheKey)) {
+                console.log(`[loadImages] Already loading ${cacheKey}, skipping duplicate request for page ${page}`);
                 resolve();
                 return;
             }
             
             // Check if we've reached the end
             if (page > manager.totalPages.get(cacheKey)) {
+                console.log(`[loadImages] Page ${page} exceeds total pages ${manager.totalPages.get(cacheKey)} for ${cacheKey}`);
+                resolve();
+                return;
+            }
+            
+            // Fix: Additional check for reload scenario - if we're reloading page 1 and it's already cached
+            if (reload && page === 1 && manager.cache.get(cacheKey).has(1)) {
+                console.log(`[loadImages] Reload page 1 already handled by cache for ${cacheKey}`);
                 resolve();
                 return;
             }
             
             // Fetch from server
+            console.log(`[loadImages] Fetching page ${page} from server for ${cacheKey}`);
             await fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type);
             resolve();
             
         } catch (error) {
-            console.error(`[loadImages] ERROR:`, error);
+            console.error(`[loadImages] ERROR for ${cacheKey}:`, error);
             manager.loadingStates.set(cacheKey, false);
             reject(error);
         }
@@ -172,10 +183,20 @@ async function handleReload(id, cacheKey, type) {
             await renderImages(images, id, type);
         }
         
-        manager.currentPages.set(cacheKey, Math.max(...cachedPages, 0));
+        // Fix: Properly set the current page to the maximum cached page
+        const maxCachedPage = Math.max(...cachedPages);
+        manager.currentPages.set(cacheKey, maxCachedPage);
+        
+        // Fix: If we have page 1 cached, mark it as loaded to prevent duplicate requests
+        if (cachedPages.includes(1)) {
+            console.log(`[handleReload] Page 1 already cached for ${cacheKey}, preventing duplicate request`);
+        }
+        
         return true; // Indicate we have cache
     }
     
+    // Fix: If no cache, ensure current page is set to 0
+    manager.currentPages.set(cacheKey, 0);
     return false; // No cache available
 }
 

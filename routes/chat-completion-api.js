@@ -60,6 +60,147 @@ async function getChatDocument(request, db, chatId) {
 
     return chatdoc;
 }
+// Helper function to transform user messages for completion
+function transformUserMessages(messages, translations = {}) {
+    const transformedMessages = [];
+    
+    for (let i = 0; i < messages.length; i++) {
+        const message = messages[i];
+        
+        // Skip system messages and context messages
+        if (message.role === 'system' || message.name === 'context') {
+            continue;
+        }
+        
+        // Skip messages with image requests (they're handled separately)
+        if (message.image_request === true) {
+            continue;
+        }
+        
+        // Handle image messages
+        if (message.type === 'image' && message.imageUrl) {
+            let imageContent = translations?.sent_image || 'I sent you an image.';
+
+            imageContent += message.content ? ` ${message.content}` : '';
+            if (message.prompt) {
+                imageContent += `[*This is for context only* Image prompt : " ${message.prompt} " *Do not include the full image prompt in future message. Only a short description.* ]`;
+            }
+            
+            const imageMessage = {
+                role: message.role,
+                content: imageContent
+            };
+            
+            if (message.name) imageMessage.name = message.name;
+            if (message.timestamp) imageMessage.timestamp = message.timestamp;
+            if (message.custom_relation) imageMessage.custom_relation = message.custom_relation;
+            
+            transformedMessages.push(imageMessage);
+            
+            // Check for actions (like) and add user response
+            if (message.actions && message.actions.length > 0) {
+                const likeAction = message.actions.find(action => action.type === 'like');
+                if (likeAction) {
+                    const likeMessage = {
+                        role: 'user',
+                        content: translations.image_liked || '👍 I liked this image',
+                        timestamp: likeAction.date || new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
+                    };
+                    
+                    transformedMessages.push(likeMessage);
+                }
+            }
+            continue;
+        }
+        
+        // Handle video messages
+        if (message.type === 'video' && message.videoUrl) {
+            let videoContent = `[Video] ${message.videoId}`;
+            if (message.description) {
+                videoContent += ` - ${message.description}`;
+            }
+            
+            const videoMessage = {
+                role: message.role,
+                content: videoContent
+            };
+            
+            if (message.name) videoMessage.name = message.name;
+            if (message.timestamp) videoMessage.timestamp = message.timestamp;
+            if (message.custom_relation) videoMessage.custom_relation = message.custom_relation;
+            
+            transformedMessages.push(videoMessage);
+            
+            // Check for actions on video
+            if (message.actions && message.actions.length > 0) {
+                const likeAction = message.actions.find(action => action.type === 'like');
+                if (likeAction) {
+                    const likeMessage = {
+                        role: 'user',
+                        content: translations.video_liked || '👍 I liked this video',
+                        timestamp: likeAction.date || new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
+                    };
+                    
+                    transformedMessages.push(likeMessage);
+                }
+            }
+            continue;
+        }
+        
+        // Handle regular text messages
+        if (message.content && !message.content.startsWith('[Image]') && !message.content.startsWith('[Video]') && !message.imageId && !message.videoId) {
+            const textMessage = {
+                role: message.role,
+                content: message.content
+            };
+            
+            if (message.name) textMessage.name = message.name;
+            if (message.timestamp) textMessage.timestamp = message.timestamp;
+            if (message.custom_relation) textMessage.custom_relation = message.custom_relation;
+            if (message.nsfw) textMessage.nsfw = message.nsfw;
+            if (message.promptId) textMessage.promptId = message.promptId;
+            
+            transformedMessages.push(textMessage);
+            
+            // Handle actions on text messages (for both assistant and user messages)
+            if (message.actions && message.actions.length > 0) {
+                const likeAction = message.actions.find(action => action.type === 'like');
+                const dislikeAction = message.actions.find(action => action.type === 'dislike');
+                
+                if (likeAction) {
+                    const feedbackMessage = {
+                        role: 'user',
+                        content: message.role === 'assistant' 
+                            ? (translations.message_liked || '👍 I liked your response')
+                            : (translations.message_liked || '👍 I liked this message'),
+                        timestamp: likeAction.date || new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
+                    };
+                    
+                    transformedMessages.push(feedbackMessage);
+                } else if (dislikeAction) {
+                    const feedbackMessage = {
+                        role: 'user',
+                        content: message.role === 'assistant' 
+                            ? (translations.message_disliked || '👎 I didn\'t like your response')
+                            : (translations.message_disliked || '👎 I didn\'t like this message'),
+                        timestamp: dislikeAction.date || new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
+                    };
+                    
+                    transformedMessages.push(feedbackMessage);
+                }
+            }
+            
+            continue;
+        }
+    }
+    
+    // Ensure only the last 'master' message is kept
+    const filteredMessages = transformedMessages.filter((m, i, a) => 
+        m.name !== 'master' || i === a.findLastIndex(x => x.name === 'master')
+    );
+    
+    return filteredMessages;
+}
 
 async function routes(fastify, options) {
     fastify.post('/api/openai-chat-completion', async (request, reply) => {
@@ -89,13 +230,8 @@ async function routes(fastify, options) {
             const chatDescription = chatDataToString(chatDocument);
             const characterDescription = await checkImageDescription(db, chatId, chatDocument);
             const language = getLanguageName(userInfo.lang);
-
-            // Filter and prepare user messages
-            const userMessages = userData.messages
-                .filter(m => m.content && !m.content.startsWith('[Image]') && !m.imageId && !m.videoId && m.role !== 'system' && m.name !== 'context')
-                .filter((m,i,a) => m.name !== 'master' || i === a.findLastIndex(x => x.name === 'master'))
-                .filter((m) => m.image_request != true);
-                
+            
+            // Get the last message and related info
             const lastMsgIndex = userData.messages.length - 1;
             const lastUserMessage = userData.messages[lastMsgIndex];
             const lastAssistantRelation = userData.messages
@@ -104,19 +240,14 @@ async function routes(fastify, options) {
                 .map(msg => msg.custom_relation)
                 .join(', ');
 
-            // Prepare current user message
-            let currentUserMessage = { role: 'user', content: lastUserMessage.content };
-            if (lastUserMessage.name) currentUserMessage.name = lastUserMessage.name;
-            if (lastUserMessage.trigger_image_request) currentUserMessage.image_request = lastUserMessage.trigger_image_request;
-            if (lastUserMessage.image_request) currentUserMessage.image_request = lastUserMessage.image_request;
-            if (lastUserMessage.nsfw) currentUserMessage.nsfw = lastUserMessage.nsfw;
-            if (lastUserMessage.promptId) currentUserMessage.promptId = lastUserMessage.promptId;
-
             let genImage = {};
 
-            // Handle image generation
+            // Transform messages for completion (excluding the last message which we handle separately)
+            const userMessages = transformUserMessages(userData.messages, request.translations);
+            
+            // Handle image generation with the last message
             const imageGenResult = await handleImageGeneration(
-                db, currentUserMessage, lastUserMessage, genImage, userData, 
+                db, lastUserMessage, lastUserMessage, genImage, userData, 
                 userInfo, isAdmin, characterDescription, userChatId, chatId, 
                 userId, request.translations, fastify
             );
@@ -186,8 +317,10 @@ async function routes(fastify, options) {
             let messagesForCompletion = [];
             
             if (genImage?.image_request) {
-                currentUserMessage.image_request = true;
-                userData.messages[lastMsgIndex] = currentUserMessage;
+                // Mark the last message as having an image request
+                lastUserMessage.image_request = true;
+                userData.messages[lastMsgIndex] = lastUserMessage;
+                
                 messagesForCompletion = [
                     ...systemMsg,
                     ...userMessages,
@@ -202,8 +335,7 @@ async function routes(fastify, options) {
 
             // Generate completion
             const customModel = (language === 'ja' || language === 'japanese') ? 'deepseek' : 'mistral';
-            console.log(`[/api/openai-chat-completion] current lang ${language}, customModel: ${customModel}`);
-            
+            console.log(`[/api/openai-chat-completion] messagesForCompletion:`, messagesForCompletion);
             generateCompletion(messagesForCompletion, 600, customModel, language).then(async (completion) => {
                 if (completion) {
                     fastify.sendNotificationToUser(userId, 'displayCompletionMessage', { message: completion, uniqueId });
@@ -215,8 +347,8 @@ async function routes(fastify, options) {
                         custom_relation: custom_relation ? custom_relation : 'Casual' 
                     };
                     
-                    if (currentUserMessage.name) {
-                        newAssistantMessage.name = currentUserMessage.name;
+                    if (lastUserMessage.name) {
+                        newAssistantMessage.name = lastUserMessage.name;
                     }
                     if (genImage?.image_request) {
                         newAssistantMessage.image_request = true;
@@ -230,7 +362,7 @@ async function routes(fastify, options) {
                     await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt);
 
                     // Check if the assistant's new message was an image request
-                    const assistantImageRequest = await checkImageRequest(newAssistantMessage.content,lastUserMessage.content);
+                    const assistantImageRequest = await checkImageRequest(newAssistantMessage.content, lastUserMessage.content);
                     console.log(`[/api/openai-chat-completion] Image request detected:`, assistantImageRequest);
                     if (assistantImageRequest && assistantImageRequest.image_request) {
                         lastUserMessage.content += ' ' + newAssistantMessage.content;
@@ -239,7 +371,6 @@ async function routes(fastify, options) {
                             db, assistantImageRequest, lastUserMessage, assistantImageRequest, userData,
                             userInfo, isAdmin, characterDescription, userChatId, chatId, userId, request.translations, fastify
                         );
-                        
                     }
                 } else {
                     fastify.sendNotificationToUser(userId, 'hideCompletionMessage', { uniqueId });

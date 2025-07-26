@@ -66,23 +66,22 @@ window.addEventListener('DOMContentLoaded', () => {
     
 });
 
-  // Check sessionStorage first, then fall back to user preference, default to false
-  let showNSFW;
-  const sessionNSFW = sessionStorage.getItem('showNSFW');
-  
-  if (sessionNSFW !== null) {
-    // Use sessionStorage value if it exists
-    showNSFW = sessionNSFW === 'true';
-  } else if (user.showNSFW !== undefined) {
-    // Fall back to user's saved preference
+let showNSFW;
+
+// Always prioritize user.showNSFW if defined
+if (typeof user.showNSFW !== 'undefined') {
     showNSFW = user.showNSFW;
-    // Save to sessionStorage for consistency
     sessionStorage.setItem('showNSFW', showNSFW.toString());
-  } else {
-    // Default to false if neither exists
-    showNSFW = false;
-    sessionStorage.setItem('showNSFW', 'false');
-  }
+} else {
+    // Fall back to sessionStorage value if user.showNSFW is not defined
+    const sessionNSFW = sessionStorage.getItem('showNSFW');
+    if (sessionNSFW !== null) {
+        showNSFW = sessionNSFW === 'true';
+    } else {
+        showNSFW = false;
+        sessionStorage.setItem('showNSFW', 'false');
+    }
+}
 
 if(MODE === 'local'){
     document.querySelectorAll('.local-mode').forEach(el => {

@@ -1,5 +1,5 @@
 // Function to get message tools HTML
-function getMessageTools(messageIndex, actions = [], isLastMessage = false, isAssistantMessage = false) {
+function getMessageTools(messageIndex, actions = [], isLastMessage = false, isAssistantMessage = false, messageData = {}) {
     if (!isAssistantMessage) return ''; // Only show tools for assistant messages
     
     // Remove all regenerate buttons from previous messages
@@ -28,6 +28,9 @@ function getMessageTools(messageIndex, actions = [], isLastMessage = false, isAs
     let toolsHtml = `
         <div class="message-tools-controller position-absolute shadow-sm" 
              data-message-index="${messageIndex}"
+             data-message-id="${messageData._id || ''}"
+             data-message-content="${encodeURIComponent(messageData.content || '')}"
+             data-message-timestamp="${messageData.timestamp || ''}"
              style="bottom: -15px; right: 0px; z-index: 10;">
             <div class="d-flex bg-dark rounded-pill px-2 py-1" style="gap: 5px;">
                 <button class="btn btn-sm text-light message-action-btn border-0 p-1" 
@@ -65,14 +68,18 @@ function getMessageTools(messageIndex, actions = [], isLastMessage = false, isAs
 
 // Function to handle message action (like/dislike)
 window.handleMessageAction = function(button, action) {
-    const messageIndex = $(button).data('message-index');
     const $button = $(button);
     const $messageTools = $button.closest('.message-tools-controller');
     const $likeBtn = $messageTools.find('[data-action="like"]');
     const $dislikeBtn = $messageTools.find('[data-action="dislike"]');
     
+    // Get message identifiers from data attributes
+    const messageId = $messageTools.data('message-id');
+    const messageContent = decodeURIComponent($messageTools.data('message-content') || '');
+    const messageTimestamp = $messageTools.data('message-timestamp');
+    
     // Determine if we're removing the action (if it's already active)
-    const isCurrentlyActive = $button.find('i').hasClass(action === 'like' ? 'text-light' : 'text-light');
+    const isCurrentlyActive = $button.find('i').hasClass(action === 'like' ? 'bi-hand-thumbs-up-fill' : 'bi-hand-thumbs-down-fill');
     const actionToSend = isCurrentlyActive ? 'remove' : action;
     
     // Disable buttons during request
@@ -80,12 +87,15 @@ window.handleMessageAction = function(button, action) {
     $dislikeBtn.prop('disabled', true);
     
     $.ajax({
-        url: `/api/message/${messageIndex}/action`,
+        url: `/api/message/action`,
         method: 'POST',
         contentType: 'application/json',
         data: JSON.stringify({
             action: actionToSend,
-            userChatId: userChatId
+            userChatId: userChatId,
+            messageId: messageId,
+            messageContent: messageContent,
+            messageTimestamp: messageTimestamp
         }),
         success: function(response) {
             if (response.success) {
@@ -94,6 +104,7 @@ window.handleMessageAction = function(button, action) {
                 const message = actionToSend === 'remove' ? 
                     (window.translations?.action_removed || 'Action removed') :
                     (window.translations?.[`message_${action}d`] || `Message ${action}d`);
+                
             }
         },
         error: function(xhr) {

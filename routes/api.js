@@ -58,12 +58,12 @@ const free_models = false // ['293564']; // [DEBUG] Disable temporary
         );
     }
     // Fetches user info from 'users' collection
-    async function getUserInfo(db, userId) {
+    async function getUserInfo(db, userId, fastify) {
         return db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
     }
 
     // Fetches user chat data from 'userChat' collection
-    async function getUserChatData(db, userId, userChatId) {
+    async function getUserChatData(db, userId, userChatId, fastify) {
         return db.collection('userChat').findOne({ 
             userId: new fastify.mongo.ObjectId(userId), 
             _id: new fastify.mongo.ObjectId(userChatId) 
@@ -71,7 +71,7 @@ const free_models = false // ['293564']; // [DEBUG] Disable temporary
     }
 
     // Fetches chat document from 'chats' collection
-    async function getChatDocument(request, db, chatId) {
+    async function getChatDocument(request, db, chatId, fastify) {
         let chatdoc = await db.collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId)})
         // Check if chatdoc is updated to the new format
         if(!chatdoc?.system_prompt || !chatdoc?.details_description || !chatdoc?.details_description?.personality?.reference_character) {
@@ -620,11 +620,11 @@ async function routes(fastify, options) {
             const userId = user._id;
             
             // Fetch user information
-            const userInfo = await getUserInfo(db, userId);
+            const userInfo = await getUserInfo(db, userId, fastify);
             const subscriptionStatus = userInfo.subscriptionStatus === 'active';
             
             // Fetch the user chat data
-            const userData = await getUserChatData(db, userId, userChatId);
+            const userData = await getUserChatData(db, userId, userChatId, fastify);
             
             if (!userData) {
                 return reply.status(404).send({ error: 'User chat not found' });
@@ -632,7 +632,7 @@ async function routes(fastify, options) {
             
             // Get chat document for character description
             const chatId = userData.chatId;
-            const chatDocument = await getChatDocument(request, db, chatId);
+            const chatDocument = await getChatDocument(request, db, chatId, fastify);
             const chatDescription = chatDataToString(chatDocument);
             
             // Get user language preference
@@ -657,7 +657,7 @@ async function routes(fastify, options) {
             const { userChatId } = request.params;
             const userId = request.user._id;
             
-            const userData = await getUserChatData(fastify.mongo.db, userId, userChatId);
+            const userData = await getUserChatData(fastify.mongo.db, userId, userChatId, fastify);
             if (!userData) {
                 return reply.status(404).send({ error: 'User chat not found' });
             }

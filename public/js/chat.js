@@ -817,7 +817,7 @@ function setupChatInterface(chat, character) {
                                     </div>
                                     <div id="message-${designStep}" class="p-3 ms-3 text-start assistant-chat-box position-relative">
                                         ${marked.parse(chatMessage.content)}
-                                        ${getMessageTools(i, messageActions, isLastMessage, true)}
+                                        ${getMessageTools(i, messageActions, isLastMessage, true, chatMessage)}
                                     </div>
                                 </div>
                             </div>
@@ -1331,10 +1331,18 @@ function setupChatInterface(chat, character) {
             
             // Check if this is the last message (should be true for new messages)
             const isLastMessage = true;
+        
+            // Create message data object for tools
+            const messageData = {
+                _id: null, // Will be set when message is saved to DB
+                content: markdownContent,
+                timestamp: Date.now(),
+                role: 'assistant'
+            };
             
             // Add message tools
-            const toolsHtml = getMessageTools(currentMessageIndex, [], isLastMessage, true);
-            
+            const toolsHtml = getMessageTools(currentMessageIndex, [], isLastMessage, true, messageData);
+
             // Find the position-relative container and add tools to it
             const relativeContainer = messageContainer.find('.position-relative').last();
             if (relativeContainer.length && !relativeContainer.find('.message-tools-controller').length) {
@@ -1494,13 +1502,6 @@ function setupChatInterface(chat, character) {
             `).hide();
             messageContainer.append(messageElement);
             messageElement.show().addClass(animationClass);
-            
-            // Add message tools immediately for non-streaming messages
-            setTimeout(() => {
-                const currentMessageIndex = $('#chatContainer .message-container').length - 1;
-                const toolsHtml = getMessageTools(currentMessageIndex, [], true, true);
-                messageElement.find('.assistant-chat-box').append(toolsHtml);
-            }, 100);
         }
 
         if (typeof callback === 'function') {

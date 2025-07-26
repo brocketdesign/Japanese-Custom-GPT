@@ -161,7 +161,7 @@ function transformUserMessages(messages, translations = {}) {
             if (message.promptId) textMessage.promptId = message.promptId;
             
             transformedMessages.push(textMessage);
-            
+
             // Handle actions on text messages (for both assistant and user messages)
             if (message.actions && message.actions.length > 0) {
                 const likeAction = message.actions.find(action => action.type === 'like');

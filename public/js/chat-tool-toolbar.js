@@ -18,7 +18,7 @@ function getImageTools({chatId, imageId, isLiked = false, title, prompt = false,
         const likeLabel = (isLiked || hasLikeAction) ? 
             (window.translations?.image_tools?.liked || 'Liked') : 
             (window.translations?.image_tools?.like || 'Like');
-        const likeBadgeClass = (isLiked || hasLikeAction) ? 'text-danger' : 'text-white';
+        const likeBadgeClass = (isLiked || hasLikeAction) ? 'text-danger' : '';
 
         const upscaleIcon = hasUpscaleAction ? 'bi-badge-hd-fill' : 'bi-badge-hd';
         const upscaleLabel = hasUpscaleAction ? 

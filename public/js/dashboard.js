@@ -749,8 +749,8 @@ window.toggleImageFavorite = function(el) {
           $modalLikeBtn.removeClass('bi-heart bi-heart-fill text-danger').addClass(revertIconClass);
         }
       }
-      
-      showNotification('リクエストに失敗しました。', 'error');
+
+      showNotification(window.translations?.requestFailed || 'Request failed', 'error');
     }
   });
 };

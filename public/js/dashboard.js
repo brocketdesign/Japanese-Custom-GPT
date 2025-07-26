@@ -666,7 +666,23 @@ window.toggleImageFavorite = function(el) {
 
   const action = isLiked ? 'unlike' : 'like'; // Determine action
   const likeIconClass = (action == 'like') ? 'bi-heart-fill text-danger' : 'bi-heart';
+  
+  // Update the clicked element immediately
   $this.find('i').removeClass('bi-heart bi-heart-fill').addClass(likeIconClass); // Toggle icon class
+
+  // Update ALL instances of this image across the page (including toolbar and other locations)
+  $(`.image-fav[data-id="${imageId}"]`).each(function() {
+    $(this).find('i').removeClass('bi-heart bi-heart-fill text-danger').addClass(likeIconClass);
+  });
+
+  // Update the preview modal like button if it exists and matches this image
+  if (window.previewImages) {
+    const currentPreviewImage = window.previewImages[window.imageSwiper?.activeIndex || 0];
+    if (currentPreviewImage && currentPreviewImage.id === imageId) {
+      const $modalLikeBtn = $('.image-like-btn i');
+      $modalLikeBtn.removeClass('bi-heart bi-heart-fill text-danger').addClass(likeIconClass);
+    }
+  }
 
   if(action === 'like') {
     showNotification(window.translations?.like_grant_points.replace('{point}', '5') || 'Image liked!', 'success');
@@ -675,9 +691,9 @@ window.toggleImageFavorite = function(el) {
   $.ajax({
     url: `/gallery/${imageId}/like-toggle`, // Single endpoint
     method: 'POST',
-        xhrFields: {
-            withCredentials: true
-        },
+    xhrFields: {
+        withCredentials: true
+    },
     data: { 
       action, 
       userChatId 
@@ -685,9 +701,17 @@ window.toggleImageFavorite = function(el) {
     success: function() {
       
       if (action === 'like') {
-        $this.find('.ct').text(parseInt($this.find('.ct').text()) + 1);
+        // Update like count for all instances
+        $(`.image-fav[data-id="${imageId}"] .ct`).each(function() {
+          const currentCount = parseInt($(this).text()) || 0;
+          $(this).text(currentCount + 1);
+        });
       } else {
-        $this.find('.ct').text(parseInt($this.find('.ct').text()) - 1);
+        // Update like count for all instances
+        $(`.image-fav[data-id="${imageId}"] .ct`).each(function() {
+          const currentCount = parseInt($(this).text()) || 0;
+          $(this).text(Math.max(0, currentCount - 1));
+        });
       }
 
       // delete the local storage item userImages_${userId}
@@ -706,7 +730,27 @@ window.toggleImageFavorite = function(el) {
       }
     },
     error: function() {
+      // Revert all changes on error
+      const revertIconClass = (action == 'like') ? 'bi-heart' : 'bi-heart-fill text-danger';
       
+      // Revert the clicked element
+      $this.find('i').removeClass('bi-heart bi-heart-fill text-danger').addClass(revertIconClass);
+      
+      // Revert ALL instances of this image
+      $(`.image-fav[data-id="${imageId}"]`).each(function() {
+        $(this).find('i').removeClass('bi-heart bi-heart-fill text-danger').addClass(revertIconClass);
+      });
+      
+      // Revert the preview modal like button if it exists and matches this image
+      if (window.previewImages) {
+        const currentPreviewImage = window.previewImages[window.imageSwiper?.activeIndex || 0];
+        if (currentPreviewImage && currentPreviewImage.id === imageId) {
+          const $modalLikeBtn = $('.image-like-btn i');
+          $modalLikeBtn.removeClass('bi-heart bi-heart-fill text-danger').addClass(revertIconClass);
+        }
+      }
+      
+      showNotification('リクエストに失敗しました。', 'error');
     }
   });
 };

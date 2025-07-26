@@ -2997,3 +2997,239 @@ opacity: 0.8;
         max-width: 280px !important;
     }
 }
+
+/* Enhanced Swiper Styles */
+.image-preview-swiper {
+    --swiper-theme-color: #ffffff;
+    --swiper-navigation-size: 24px;
+}
+
+.image-preview-swiper .swiper-slide {
+    text-align: center;
+    font-size: 18px;
+    background: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.image-preview-swiper .swiper-zoom-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Navigation buttons */
+.image-preview-swiper .swiper-button-next,
+.image-preview-swiper .swiper-button-prev {
+    width: 50px;
+    height: 50px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    color: white !important;
+    transition: all 0.3s ease;
+}
+
+.image-preview-swiper .swiper-button-next:hover,
+.image-preview-swiper .swiper-button-prev:hover {
+    background: rgba(0, 0, 0, 0.8);
+    transform: scale(1.1);
+}
+
+/* Pagination */
+.image-preview-swiper .swiper-pagination-bullet {
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 1;
+    transition: all 0.3s ease;
+}
+
+.image-preview-swiper .swiper-pagination-bullet-active {
+    background: white;
+    transform: scale(1.2);
+}
+
+/* Like button styles - TOP LEFT */
+.image-like-overlay .image-like-btn {
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.image-like-overlay .image-like-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Like button ripple effect */
+.like-ripple {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(220, 53, 69, 0.3);
+    transform: translate(-50%, -50%);
+    animation: ripple 0.6s ease-out;
+}
+
+@keyframes ripple {
+    to {
+        width: 100px;
+        height: 100px;
+        opacity: 0;
+    }
+}
+
+/* Info overlay styles - BOTTOM CENTER */
+.image-info-overlay .image-info-container {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.image-prompt-container {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.image-prompt-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.image-prompt-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.image-prompt-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+}
+
+.image-prompt-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Floating heart animation */
+.floating-heart {
+    animation: floatUp 1.2s ease-out forwards;
+}
+
+@keyframes floatUp {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5) rotate(-30deg);
+    }
+    50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.2) rotate(0deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -70%) scale(1) rotate(30deg);
+    }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .image-preview-swiper .swiper-button-next,
+    .image-preview-swiper .swiper-button-prev {
+        width: 40px;
+        height: 40px;
+        margin-top: -20px;
+    }
+    
+    .image-preview-swiper .swiper-button-next {
+        right: 10px;
+    }
+    
+    .image-preview-swiper .swiper-button-prev {
+        left: 10px;
+    }
+    
+    .image-like-overlay {
+        top: 50px;
+        left: 10px;
+    }
+    
+    .image-like-overlay .image-like-btn {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .image-info-overlay .image-info-container {
+        margin: 0 10px;
+        padding: 12px;
+        font-size: 14px;
+    }
+    
+    .image-title {
+        font-size: 16px !important;
+    }
+    
+    .image-prompt {
+        font-size: 13px !important;
+    }
+    
+    .image-prompt-container {
+        max-height: 50px !important;
+    }
+    
+    .swiper-pagination {
+        bottom: 120px !important;
+    }
+}
+
+/* Touch feedback */
+.swiper-slide img {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+/* Zoom cursor - only for pinch gestures */
+.swiper-zoom-container {
+    cursor: grab;
+}
+
+.swiper-zoom-container:active {
+    cursor: grabbing;
+}
+
+.swiper-zoom-container.swiper-zoom-container-zoomed {
+    cursor: move;
+}
+
+/* Disable text selection in modal */
+#imagePreviewModal * {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+/* Enhanced heart beat animation */
+@keyframes heartBeat {
+    0% {
+        transform: scale(1);
+    }
+    14% {
+        transform: scale(1.3);
+    }
+    28% {
+        transform: scale(1);
+    }
+    42% {
+        transform: scale(1.3);
+    }
+    70% {
+        transform: scale(1);
+    }
+}
+
+.animate__heartBeat {
+    animation: heartBeat 1s ease-in-out;
+}

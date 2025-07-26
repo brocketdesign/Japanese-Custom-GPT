@@ -182,6 +182,7 @@
   },
   "personas": {
     "noPersonas": "Aucune persona trouvée",
+    "noPersonasDescription": "Vous n'avez pas encore ajouté de personas.",
     "selectPersona": "Sélectionner une persona",
     "selectPersona_description": "Choisissez une persona pour discuter comme si vous étiez elle.",
     "characterIdNotFound": "ID du personnage introuvable",

@@ -18,7 +18,7 @@ function getImageTools({chatId, imageId, isLiked = false, title, prompt = false,
         const likeLabel = (isLiked || hasLikeAction) ? 
             (window.translations?.image_tools?.liked || 'Liked') : 
             (window.translations?.image_tools?.like || 'Like');
-        const likeBadgeClass = (isLiked || hasLikeAction) ? 'badge bg-danger text-white' : 'badge bg-white text-secondary';
+        const likeBadgeClass = (isLiked || hasLikeAction) ? 'text-danger' : 'text-white';
 
         const upscaleIcon = hasUpscaleAction ? 'bi-badge-hd-fill' : 'bi-badge-hd';
         const upscaleLabel = hasUpscaleAction ? 
@@ -75,11 +75,11 @@ function getImageTools({chatId, imageId, isLiked = false, title, prompt = false,
                             margin-right: 4px;
                         }
                     </style>
-                    
-                    <span class="${likeBadgeClass} image-tool-badge image-fav" 
+
+                    <span class="badge bg-white text-secondary image-tool-badge image-fav" 
                           data-id="${imageId}"
                           onclick="toggleImageFavorite(this)">
-                        <i class="bi ${likeIcon}"></i>${likeLabel}
+                        <i class="bi ${likeIcon} ${likeBadgeClass}"></i>${likeLabel}
                     </span>
                     
                     <span class="badge bg-white text-secondary image-tool-badge txt2img regen-img" 

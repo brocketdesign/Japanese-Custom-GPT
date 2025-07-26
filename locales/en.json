@@ -232,6 +232,7 @@
   },
   "personas": {
     "noPersonas": "No personas available",
+    "noPersonasDescription": "You have not added any personas yet.",
     "selectPersona": "Select a persona",
     "selectPersona_description": "Choose a persona to chat as if you were them.",
     "characterIdNotFound": "Character ID not found",

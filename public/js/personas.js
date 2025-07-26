@@ -112,8 +112,8 @@ const PersonaModule = {
         }, (response) => {
             if (response.success) {
                 const message = isAdding 
-                    ? (window.translations?.personas?.personaAdded || 'ペルソナが追加されました')
-                    : (window.translations?.personas?.personaRemoved || 'ペルソナが削除されました');
+                    ? (window.translations?.personas?.personaAdded || 'Persona added successfully')
+                    : (window.translations?.personas?.personaRemoved || 'Persona removed successfully');
                 showNotification(message, 'success');
                 
                 // Update user.personas in memory
@@ -143,7 +143,7 @@ const PersonaModule = {
                                 $list.append(`
                                     <div class="no-personas text-center w-100 mt-4">
                                         <i class="bi bi-person-plus" style="font-size: 2rem;"></i>
-                                        <p>${window.translations.personas.noPersonas || 'ペルソナがありません'}</p>
+                                        <p>${window.translations.personas.noPersonas || 'No personas available'}</p>
                                     </div>
                                 `);
                             }

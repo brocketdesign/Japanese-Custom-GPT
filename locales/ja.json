@@ -182,6 +182,7 @@
   },
   "personas": {
     "noPersonas": "ペルソナはありません",
+    "noPersonasDescription": "まだペルソナを追加していません。",
     "selectPersona": "ペルソナを選択",
     "selectPersona_description": "チャットで使用するペルソナを選択してください。",
     "characterIdNotFound": "キャラクターIDが見つかりませんでした",

@@ -467,9 +467,25 @@ function setupChatInterface(chat, character) {
 
         displayChat(userChat.messages, persona, function(){
             setTimeout(() => {
-                $('#chatContainer').animate({
-                    scrollTop: $('#chatContainer').prop("scrollHeight") + 500
-                }, 500);
+                const $chatContainer = $('#chatContainer');
+                if ($chatContainer.length) {
+                    // Wait for content to be rendered by checking if scrollHeight > 0
+                    const checkAndScroll = () => {
+                        const scrollHeight = $chatContainer.prop("scrollHeight");
+                        const containerHeight = $chatContainer.height();
+                        
+                        if (scrollHeight > 0 && scrollHeight > containerHeight) {
+                            $chatContainer.animate({
+                                scrollTop: scrollHeight
+                            }, 500);
+                        } else if (scrollHeight === 0) {
+                            // Retry after a short delay if content isn't ready
+                            setTimeout(checkAndScroll, 100);
+                        }
+                    };
+                    
+                    checkAndScroll();
+                }
             }, 1000);
         });
 

@@ -142,7 +142,7 @@ function createSystemPayloadChatRule(purpose, gender, name, details, language) {
 }
 
 // Enhanced image prompt generation with structured details
-function createSystemPayload(prompt, gender, details) {
+function createSystemPayload(prompt, gender, details, imageType) {
     const detailsString = flattenDetailsForPrompt(details);
     
     return [
@@ -157,6 +157,7 @@ function createSystemPayload(prompt, gender, details) {
             - Optimize for high-quality, detailed character generation
             - Maintain consistency with provided character details
             - NO complete sentences, only relevant keywords
+            ${imageType === 'nsfw' ? '- Include explicit content descriptors for a NSFW result' : '- Make sure the prompt is suitable for a general audience'}
             
             Respond with the enhanced prompt only in English.
             
@@ -295,9 +296,9 @@ async function routes(fastify, options) {
             // Step 2: Generate enhanced prompt
             let enhancedPrompt = prompt || null;
             if(enableEnhancedPrompt){
-                console.log('[API/generate-character-comprehensive] Step 2: Generating enhanced prompt');
+                console.log(`[API/generate-character-comprehensive] Step 2: Generating ${imageType} enhanced prompt`);
 
-                const systemPayload = createSystemPayload(prompt, gender, extractedDetails);
+                const systemPayload = createSystemPayload(prompt, gender, extractedDetails, imageType);
                 enhancedPrompt = await generateCompletion(systemPayload, 600, 'mistral');
                 
                 console.log('[API/generate-character-comprehensive] Enhanced prompt generated:', enhancedPrompt.substring(0, 100) + '...');

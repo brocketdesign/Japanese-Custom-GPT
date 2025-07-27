@@ -36,9 +36,6 @@ fastify.register(require('@fastify/cookie'), {
   parseOptions: {},
 });
 
-// Load global plugins
-const fastifyPluginGlobals = require('./plugins/globals');
-fastify.register(fastifyPluginGlobals);
 
 // Wait for the database connection to be established 
 fastify.ready(async () => { 
@@ -49,10 +46,9 @@ fastify.ready(async () => {
       console.log(obj.result.n + " document(s) deleted");
     }
   });
-  
+
   // Initialize configured cron jobs
   await initializeCronJobs(fastify);
-
 });
 
 // Every 3 cron jobs for cleanup and maintenance
@@ -145,41 +141,21 @@ fastify.register(fastifyMultipart, {
   },
 });
 
-const websocketPlugin = require('@fastify/websocket');
 const slugify = require('slugify');
-fastify.register(websocketPlugin);
-fastify.register(require('./plugins/websocket'));
-
 fastify.register(require('fastify-sse'));
 fastify.register(require('@fastify/formbody'));
-fastify.register(require('./routes/api'));
-fastify.register(require('./routes/character-creation-api'));
-fastify.register(require('./routes/character-update-api'));
-fastify.register(require('./routes/personas-api'));
-fastify.register(require('./routes/stability'));
-fastify.register(require('./routes/img2video-api'));
-fastify.register(require('./routes/plan'));
-fastify.register(require('./routes/user'));
-fastify.register(require('./routes/admin'));
-fastify.register(require('./routes/civitai-api'));
-fastify.register(require('./routes/post'));
-fastify.register(require('./routes/notifications'));
-fastify.register(require('./routes/gallery'));
-fastify.register(require('./routes/zohomail'));
-fastify.register(require('./routes/chat-tool-gifts-api'));
-fastify.register(require('./routes/chat-tool-settings-api'));
-fastify.register(require('./routes/eventlab-api'));
-fastify.register(require('./routes/merge-face-api'));
-fastify.register(require('./routes/chat-tool-message-api'));
-fastify.register(require('./routes/system-prompt-api'));
-fastify.register(require('./routes/user-points-api'));
-fastify.register(require('./routes/character-infos-api'));
-fastify.register(require('./routes/sitemap-api'));
-fastify.register(require('./routes/affiliation-api'));
-fastify.register(require('./routes/user-analytics-api'));
-fastify.register(require('./routes/chat-tool-goals-api'));
-fastify.register(require('./routes/chat-completion-api'));
 
+// Register WebSocket plugin BEFORE loading other plugins that depend on it
+const websocketPlugin = require('@fastify/websocket');
+fastify.register(websocketPlugin);
+fastify.register(require('./plugins/websocket')); // Add this line
+
+// Load global plugins
+const fastifyPluginGlobals = require('./plugins/globals');
+fastify.register(fastifyPluginGlobals);
+
+// Register all routes from the routes plugin
+fastify.register(require('./plugins/routes'));
 
 fastify.get('/', async (request, reply) => {
   const db = fastify.mongo.db;

@@ -530,7 +530,6 @@ const cacheSitemapDataTask = (fastify) => async () => {
     console.error('[cacheSitemapDataTask] Error caching sitemap data:', err);
   }
 };
-
 /**
  * Initialize cron jobs from database settings
  * 
@@ -540,7 +539,7 @@ const initializeCronJobs = async (fastify) => {
   try {
     const db = fastify.mongo.db;
     const settingsCollection = db.collection('systemSettings');
-    
+     
     // Initialize model chat generation cron job
     let modelChatCronSettings = await settingsCollection.findOne({ type: 'modelChatCron' });
     

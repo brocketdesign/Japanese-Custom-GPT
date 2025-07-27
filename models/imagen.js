@@ -13,8 +13,8 @@ const default_prompt = {
     sdxl: {
       sfw: {
         sampler_name: "Euler a",
-        prompt: `score_9, score_8_up, masterpiece, best quality, (ultra-detailed), (perfect hands:0.1), (sfw), uncensored, `,
-        negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, nipple, topless, nsfw, naked, nude, sex, worst quality, low quality,young,child,dick,bad quality,worst quality,worst detail,sketch`,
+        prompt: `score_9, score_8_up, masterpiece, best quality, (ultra-detailed), (perfect hands:0.1), (sfw), `,
+        negative_prompt: `nipple, topless, nsfw, naked, nude, sex,young,child,dick`,
         width: 1024,
         height: 1360,
         seed: -1,
@@ -22,8 +22,8 @@ const default_prompt = {
       },
       nsfw: {
         sampler_name: "Euler a",
-        prompt: `score_9, score_8_up, masterpiece, best quality, (ultra-detailed), (perfect hands:0.1),`,
-        negative_prompt: `score_6, score_5, blurry, signature, username, watermark, jpeg artifacts, normal quality, worst quality, low quality, missing fingers, extra digits, fewer digits, bad eye, worst quality, low quality,child,bad quality,worst quality,worst detail,sketch`,
+        prompt: `score_9, score_8_up, masterpiece, best quality, (ultra-detailed), (perfect hands:0.1), nsfw, uncensored, explicit,`,
+        negative_prompt: `child,censored`,
         width: 1024,
         height: 1360,
         seed: -1,
@@ -103,16 +103,27 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     const selectedStyle = !flux ? default_prompt[imageVersion] || default_prompt['sdxl'] : default_prompt.flux;
     
     let imageModel = chat.imageModel || 'novaAnimeXL_ponyV20_461138';
+    let modelData = null;
+    try {
+      modelData = await db.collection('myModels').findOne({ model: imageModel });
+      if (!modelData) {
+        modelData = await db.collection('myModels').findOne({ modelId: modelId?.toString() });
+      }
+      console.log(`[generateImg] Using image model: ${imageModel} from chat or default`);
+    } catch (error) {
+      console.error('[generateImg] Error fetching modelData:', error);
+      modelData = null;
+    }
+
+    // Set default model if not found
     if(modelId && regenerate){
       try {
-          const modelData = await db.collection('myModels').findOne({ modelId:modelId.toString() });
           imageModel = modelData?.model || imageModel;
       } catch (error) {
         console.error('Error fetching model data:', error);
       }
     }
 
-    
     const gender = chat.gender
 
     // Custom negative prompt by gender
@@ -127,6 +138,12 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
       genderNegativePrompt = 'manly,womanly,'
     }
 
+    // find  the model negativePrompt
+    let modelNegativePrompt =  modelData?.negativePrompt || '';
+    let finalNegativePrompt = imageType === 'sfw' ? modelNegativePrompt +','+ selectedStyle.sfw.negative_prompt : modelNegativePrompt +','+ selectedStyle.nsfw.negative_prompt;
+    finalNegativePrompt = ((negativePrompt || finalNegativePrompt) ? (negativePrompt || finalNegativePrompt)  + ',' : '') + genderNegativePrompt;
+    
+
     // Prepare task based on imageType
     let image_request;
     if (imageType === 'sfw') {
@@ -136,7 +153,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
         sampler_name: selectedStyle.sfw.sampler_name || '',
         loras: selectedStyle.sfw.loras,
         prompt: (selectedStyle.sfw.prompt ? selectedStyle.sfw.prompt + prompt : prompt).replace(/^\s+/gm, '').trim(),
-        negative_prompt: ((negativePrompt || selectedStyle.sfw.negative_prompt) ? (negativePrompt || selectedStyle.sfw.negative_prompt)  + ',' : '') + genderNegativePrompt,
+        negative_prompt: finalNegativePrompt,
         width: selectedStyle.sfw.width || params.width,
         height: selectedStyle.sfw.height || params.height,
         blur: false,
@@ -150,7 +167,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
         sampler_name: selectedStyle.nsfw.sampler_name || '',
         loras: selectedStyle.nsfw.loras,
         prompt: (selectedStyle.nsfw.prompt ? selectedStyle.nsfw.prompt + prompt : prompt),
-        negative_prompt: ((negativePrompt || selectedStyle.nsfw.negative_prompt) ? (negativePrompt || selectedStyle.nsfw.negative_prompt)  + ',' : '') + genderNegativePrompt,
+        negative_prompt: finalNegativePrompt,
         width: selectedStyle.nsfw.width || params.width,
         height: selectedStyle.nsfw.height || params.height,
         blur: !isSubscribed,
@@ -179,7 +196,6 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     const novitaTaskId = await fetchNovitaMagic(requestData, flux);
 
     // Find modelId style
-    let modelData = await db.collection('myModels').findOne({ model: imageModel }); 
     imageStyle = modelData ? modelData.style : 'anime';
     chat.imageStyle = chat.imageStyle || imageStyle; // Use chat image style or default to model style
 

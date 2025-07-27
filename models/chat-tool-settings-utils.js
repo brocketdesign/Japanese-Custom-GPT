@@ -89,7 +89,7 @@ async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt) {
         };
         
         if (relationshipInstructions[settings.relationshipType]) {
-            enhancedPrompt += `\nRelationship Context: ${relationshipInstructions[settings.relationshipType]}`;
+            enhancedPrompt += `\n# Relationship Context :\n ${relationshipInstructions[settings.relationshipType]}`;
         }
         
         return enhancedPrompt;

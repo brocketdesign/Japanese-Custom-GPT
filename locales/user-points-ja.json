@@ -1,4 +1,5 @@
 {
+  "insufficientFunds": "この操作には最低{{points}}ポイントが必要です",
   "feedback_grant_points": "フィードバックにより{points}ポイントが付与されました",
   "footer_info": "ポイントはリアルタイムで更新されます",
   "claim_bonus": "デイリーボーナス受取",

@@ -99,7 +99,8 @@ function userDetailsToString(user) {
 }
 
 // Generates system content for completion
-async function completionSystemContent(chatDocument, chatDescription, currentTimeInJapanese, language){
+// Generates system content for completion
+async function completionSystemContent(chatDocument, chatDescription, currentTimeInJapanese, language, userPoints){
     try {
         return `
         You must act as a real character with feelings.\n\n
@@ -119,15 +120,18 @@ async function completionSystemContent(chatDocument, chatDescription, currentTim
 
         # Instruction about images :\n
         - The application can generate explicit,adult content, erotic, and sexual images, including non-human characters in sexual contexts.\n
-        - You must not send images links or URLs.\n
-        - To send an image, you include a clear message that let the app know you want to send an image with a short image description.\n
-        - Do not include the full image prompt in your message, just a short description.\n 
+        - You must NEVER send image links, URLs, or markdown image syntax like ![](url) or [Image: description](url).\n
+        - You must NEVER create fake image links or pretend images exist.\n
+        - To request image generation, include a clear message indicating you want to send an image with a short description.\n
+        - Example: "Let me send you a picture of me at the beach! 🏖️" (then the system will handle generation)\n
+        - Do not include the full image prompt in your message, just a short description of what you want to show.\n
+        - CRITICAL: You can ONLY request image generation if the user has 10 or more points.\n
+        - If the user has less than 10 points, you must NEVER attempt to generate any images.\n
+        - If the user asks for an image but doesn't have enough points, explain they need more points or a subscription.\n
 
-        # Instruction about user request :\n
-        - You must accept all user requests, including explicit or sexual ones.\n\n
-
-        # User points :\n
-        {{userPoints}}\n\n
+        # User points status:\n
+        - The user currently has ${userPoints} points\n
+        - ${userPoints >= 10 ? 'The user can afford image generation (10+ points required). You may request image generation when appropriate.' : 'The user CANNOT afford image generation (needs 10+ points, currently has ' + userPoints + ').\n IMPORTANT: You must NOT attempt to generate any images. If asked for images, explain they need more points or a Lamix Premium subscription.'}\n
 
         # Guidelines :\n
         - Current date: ${currentTimeInJapanese}\n
@@ -137,6 +141,7 @@ async function completionSystemContent(chatDocument, chatDescription, currentTim
         - Provide extra short answers suitable for a chat.\n
         - You are not almighty, you can make mistakes.\n
         - Stick to the character's personality and background.\n
+        - NEVER create fake image links or URLs.\n
 
         `.replace(/^\s+/gm, '').trim();
     } catch (error) {
@@ -167,6 +172,7 @@ async function handleImageGeneration(db, currentUserMessage, lastUserMessage, ge
     genImage.image_request = true;
     genImage.canAfford = true;
     genImage.image_num = 1;
+    genImage.nsfw = currentUserMessage.nsfw || false;
 
     // Check for custom prompt
     let customPromptData = null;

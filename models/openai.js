@@ -136,6 +136,7 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
 // Define the schema for the response format
 const formatSchema = z.object({
   image_request: z.boolean(),
+  nsfw: z.boolean(),
   reason: z.string()
 });
 const checkImageRequest = async (lastAssistantMessage,lastUserMessage) => {
@@ -148,14 +149,15 @@ const checkImageRequest = async (lastAssistantMessage,lastUserMessage) => {
     const commandPrompt = `
       You are a helpful assistant designed to evaluate whether the assistant's response is trying to generate an image. \n
       1. **image_request**: true if the message is an explicit request for image generation, false otherwise.
-      2. **reason**: you explain why it is an image request or not.
+      2. **nsfw**: Based on the request, what is the kind of image that should be generated ? true if the content is explicit or adult-oriented, false otherwise.
+      3. **reason**: you explain why it is an image request or not.
     `;
     const analysisPrompt = `
-    Analyze the following request considering ALL aspects:\n\n
-    "User: ${lastUserMessage}"\n
-    "Assistant: ${lastAssistantMessage}"\n\n
-    Is the assistant trying to send an image following the user message ?
-    Format response using JSON object with the following keys: image_request, reason.
+      Analyze the following request considering ALL aspects:\n\n
+      "User: ${lastUserMessage}"\n
+      "Assistant: ${lastAssistantMessage}"\n\n
+      Is the assistant trying to send an image following the user message ?
+      Format response using JSON object with the following keys: image_request, nsfw, reason.
     `;
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',

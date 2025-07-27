@@ -216,7 +216,6 @@ async function routes(fastify, options) {
 
             // Fetch user information and settings
             const userInfo = await getUserInfo(db, userId);
-            const userPoints = await getUserPoints(fastify.mongo.db, userId);
             const userSettings = await getUserChatToolSettings(fastify.mongo.db, userId, chatId);
             let userData = await getUserChatData(db, userId, userChatId);
             const subscriptionStatus = userInfo.subscriptionStatus == 'active' ? true : false;
@@ -272,17 +271,21 @@ async function routes(fastify, options) {
                 userSettings, language, request, fastify, userId, chatId
             );
 
+            // Check the user's points balance after handling goals in case the user completed a goal
+            const userPoints = await getUserPoints(fastify.mongo.db, userId);
+
             // Generate system content
             let enhancedSystemContent = await completionSystemContent(
                 chatDocument,
                 chatDescription,
                 getCurrentTimeInJapanese(),
-                language
+                language,
+                userPoints
             );
 
             // Apply user settings and goals to system prompt
             enhancedSystemContent = await applyUserSettingsToPrompt(fastify.mongo.db, userId, chatId, enhancedSystemContent);
-            
+      
             if (chatGoal) {
                 const goalContext = `\n\n# Current Conversation Goal:\n` +
                     `Goal: ${chatGoal.goal_description}\n` +
@@ -335,7 +338,8 @@ async function routes(fastify, options) {
 
             // Generate completion
             const customModel = (language === 'ja' || language === 'japanese') ? 'deepseek' : 'mistral';
-            console.log(`[/api/openai-chat-completion] messagesForCompletion:`, messagesForCompletion);
+            //console.log(`[/api/openai-chat-completion] messagesForCompletion:`, messagesForCompletion);
+            //console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
             generateCompletion(messagesForCompletion, 600, customModel, language).then(async (completion) => {
                 if (completion) {
                     fastify.sendNotificationToUser(userId, 'displayCompletionMessage', { message: completion, uniqueId });
@@ -362,15 +366,24 @@ async function routes(fastify, options) {
                     await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt);
 
                     // Check if the assistant's new message was an image request
-                    const assistantImageRequest = await checkImageRequest(newAssistantMessage.content, lastUserMessage.content);
-                    console.log(`[/api/openai-chat-completion] Image request detected:`, assistantImageRequest);
-                    if (assistantImageRequest && assistantImageRequest.image_request) {
-                        lastUserMessage.content += ' ' + newAssistantMessage.content;
+                    const newUserPointsBalance = await getUserPoints(db, userId);
+                    if( messagesForCompletion.length > 3 && newUserPointsBalance >= 10 ) {
+                        const assistantImageRequest = await checkImageRequest(newAssistantMessage.content, lastUserMessage.content);
+                        //console.log(`[/api/openai-chat-completion] Image request detected:`, assistantImageRequest);
+                        if (assistantImageRequest && assistantImageRequest.image_request) {
+                            lastUserMessage.content += ' ' + newAssistantMessage.content;
 
-                        handleImageGeneration(
-                            db, assistantImageRequest, lastUserMessage, assistantImageRequest, userData,
-                            userInfo, isAdmin, characterDescription, userChatId, chatId, userId, request.translations, fastify
-                        );
+                            const imageResult = await handleImageGeneration(
+                                db, assistantImageRequest, lastUserMessage, assistantImageRequest, userData,
+                                userInfo, isAdmin, characterDescription, userChatId, chatId, userId, request.translations, fastify
+                            );
+                            
+                            if(!imageResult.genImage.canAfford) {
+                                fastify.sendNotificationToUser(userId, 'showNotification', { message: request.userPointsTranslations.insufficientFunds.replace('{{points}}', 10), icon: 'warning' });
+                            }   
+                        }
+                    } else {
+                        console.log(`[/api/openai-chat-completion] No image request detected or insufficient points.`);
                     }
                 } else {
                     fastify.sendNotificationToUser(userId, 'hideCompletionMessage', { uniqueId });

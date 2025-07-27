@@ -507,9 +507,14 @@ const generateChatGoal = async (chatDescription, personaInfo = null, userSetting
     
     const personaContext = personaInfo ? 
       `\nUser Persona: ${personaInfo.name} - ${personaInfo.short_intro || 'No description available'}` : '';
-    
+    // Apply relationship type
+    const relationshipInstructions = require('./relashionshipInstructions');
+    let relationship = ''
+    if (relationshipInstructions[userSettings.relationshipType]) {
+        relationship += `${relationshipInstructions[userSettings.relationshipType]}`;
+    }
     // Randomly select a goal type from the available types
-    const goalTypes = ['relationship', 'activity', 'image request'];
+    const goalTypes =  ['activity', 'image request'];
     const randomIndex = Math.floor(Math.random() * goalTypes.length);
     const selectedGoalType = goalTypes[randomIndex];
     const systemPrompt = `You are a chat goal generator that creates engaging conversation objectives for AI character interactions.
@@ -523,22 +528,23 @@ const generateChatGoal = async (chatDescription, personaInfo = null, userSetting
     
     Goal type for this request: ${selectedGoalType}
     Other possible goal types:
-    - relationship: Building rapport, getting closer, learning about each other
     - activity: Doing something together (games, roleplay, etc.)
     - image request: User needs to ask for a specific image
 
     Use the character description and persona context to tailor the goal.
 
     # User Relationship Context :
-    - relationship: ${userSettings?.relationshipType || 'default'}
-    
+    - The user has a relationship with the character, the goal must be in accordance with the relationship.
+    - The relationship type is ${userSettings.relationshipType}.
+    - Relationship Context: ${relationship}
+
     Respond in ${language}.`;
 
     const userPrompt = `Character Description:
-${chatDescription}${personaContext}
+    ${chatDescription}${personaContext}
 
-Generate a chat goal that would be interesting and engaging for this character interaction.
-Consider the character's personality, background, and interests when creating the goal.`;
+    Generate a chat goal that would be interesting and engaging for this character interaction.
+    Consider the character's personality, background, relationship with the user and interests when creating the goal.`;
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',

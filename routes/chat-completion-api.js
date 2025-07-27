@@ -339,7 +339,7 @@ async function routes(fastify, options) {
             // Generate completion
             const customModel = (language === 'ja' || language === 'japanese') ? 'deepseek' : 'mistral';
             //console.log(`[/api/openai-chat-completion] messagesForCompletion:`, messagesForCompletion);
-            //console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
+            console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
             generateCompletion(messagesForCompletion, 600, customModel, language).then(async (completion) => {
                 if (completion) {
                     fastify.sendNotificationToUser(userId, 'displayCompletionMessage', { message: completion, uniqueId });

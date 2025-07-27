@@ -138,6 +138,14 @@ function createSystemPayloadChatRule(purpose, gender, name, details, language) {
             Create a character that maintains consistency across all attributes.
             The character's speech pattern should reflect their background and personality.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim()
         },
+        {
+            role: "user",
+            content: `Ensure the character's system prompt and short introduction are original and engaging.
+            Avoid generic phrases and fashion cliches.
+            Use the provided reference_character to inspire unique traits and characteristics.  
+            The character should feel authentic and relatable, with a well-defined personality and background.      
+            The character's first message should reflect their unique speech pattern and personality.`
+        },
     ];
 }
 
@@ -295,7 +303,9 @@ async function routes(fastify, options) {
 
             // Step 2: Generate enhanced prompt
             let enhancedPrompt = prompt || null;
-            if(enableEnhancedPrompt){
+            let checkIfDetailledPrompt = prompt.toLowerCase().includes("score_")  ;
+
+            if(enableEnhancedPrompt && !checkIfDetailledPrompt) {
                 console.log(`[API/generate-character-comprehensive] Step 2: Generating ${imageType} enhanced prompt`);
 
                 const systemPayload = createSystemPayload(prompt, gender, extractedDetails, imageType);

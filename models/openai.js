@@ -544,7 +544,8 @@ const generateChatGoal = async (chatDescription, personaInfo = null, userSetting
     ${chatDescription}${personaContext}
 
     Generate a chat goal that would be interesting and engaging for this character interaction.
-    Consider the character's personality, background, relationship with the user and interests when creating the goal.`;
+    Consider the character's personality, background, relationship with the user and interests when creating the goal.
+    Allow for explicit, emotionally open language and descriptions of physical affection when the relationship context requires it.`;
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -563,13 +564,7 @@ const generateChatGoal = async (chatDescription, personaInfo = null, userSetting
 
   } catch (error) {
     console.log('Chat goal generation error:', error);
-    return chatGoalSchema.partial().parse({
-      goal_type: 'relationship',
-      goal_description: 'Have a friendly conversation',
-      completion_condition: 'Exchange at least 3 meaningful messages',
-      difficulty: 'easy',
-      estimated_messages: 5
-    });
+    return false;
   }
 };
 

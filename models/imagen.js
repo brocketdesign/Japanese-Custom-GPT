@@ -13,7 +13,7 @@ const default_prompt = {
     sdxl: {
       sfw: {
         sampler_name: "Euler a",
-        prompt: `score_9, score_8_up, masterpiece, best quality, (ultra-detailed), (perfect hands:0.1), (sfw), `,
+        prompt: `score_9, score_8_up, masterpiece, best quality, (sfw), `,
         negative_prompt: `nipple, topless, nsfw, naked, nude, sex,young,child,dick`,
         width: 1024,
         height: 1360,
@@ -22,7 +22,7 @@ const default_prompt = {
       },
       nsfw: {
         sampler_name: "Euler a",
-        prompt: `score_9, score_8_up, masterpiece, best quality, (ultra-detailed), (perfect hands:0.1), nsfw, uncensored, explicit,`,
+        prompt: `score_9, score_8_up, masterpiece, best quality, nsfw, uncensored, explicit,`,
         negative_prompt: `child,censored`,
         width: 1024,
         height: 1360,

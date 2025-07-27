@@ -7,6 +7,7 @@ const {
     getUserGoalsHistory,
     updateGoalsAnalytics
 } = require('../models/chat-tool-goals-utils');
+const { getUserChatToolSettings } = require('../models/chat-tool-settings-utils');
 
 async function routes(fastify, options) {
     
@@ -44,11 +45,16 @@ async function routes(fastify, options) {
                 );
             }
             
+            // Get goals enabled setting
+            const userSettings = await getUserChatToolSettings(fastify.mongo.db, userId, userChatDoc.chatId);
+            const goalsEnabled = userSettings.goalsEnabled !== false; // Default to true
+            
             return reply.send({
                 currentGoal: goalsData.currentGoal,
                 completedGoals: goalsData.completedGoals,
                 goalStatus,
-                goalCreatedAt: goalsData.goalCreatedAt
+                goalCreatedAt: goalsData.goalCreatedAt,
+                goalsEnabled
             });
         } catch (error) {
             console.error('Error fetching chat goals:', error);
@@ -128,6 +134,30 @@ async function routes(fastify, options) {
         } catch (error) {
             console.error('Error refreshing chat goal:', error);
             return reply.status(500).send({ error: 'Failed to refresh chat goal' });
+        }
+    });
+
+    fastify.post('/api/chat-goals/goals-enabled', async (request, reply) => {
+        try {
+            const db = fastify.mongo.db;
+            const { chatId, enabled } = request.body;
+            const userId = request.user._id;
+
+            await db.collection('chatToolSettings').updateOne(
+                { userId: new ObjectId(userId), chatId: new ObjectId(chatId) },
+                { 
+                    $set: { 
+                        goalsEnabled: enabled,
+                        updatedAt: new Date()
+                    }
+                },
+                { upsert: true }
+            );
+            
+            reply.send({ success: true, enabled });
+        } catch (error) {
+            console.error('Error updating goals setting:', error);
+            reply.status(500).send({ error: 'Failed to update goals setting' });
         }
     });
 }

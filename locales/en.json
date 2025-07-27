@@ -1553,6 +1553,11 @@
     "scrollHint": "Scroll to see more benefits"
   },
   "goals": {
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "enabled_notification": "Goals have been enabled",
+    "disabled_notification": "Goals have been disabled",
+    "toggle_error": "Failed to update goals setting",
     "completedGoals": "Chat Goals",
     "completedGoals_description": "View your conversation objectives and completed achievements.",
     "current_goal": "Current Goal",

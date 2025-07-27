@@ -265,11 +265,22 @@ async function routes(fastify, options) {
             
             const userInfo_or_persona = personaInfo || userInfo;
 
-            // Handle chat goals
-            const { chatGoal, goalCompletion } = await handleChatGoals(
-                db, userData, userChatId, chatDescription, personaInfo, 
-                userSettings, language, request, fastify, userId, chatId
-            );
+            
+            // Handle chat goals - Update this section
+            let chatGoal = null;
+            let goalCompletion = null;
+            
+            // Check if goals are enabled for this chat
+            const goalsEnabled = userSettings.goalsEnabled !== false; // Default to true if not set
+            
+            if (goalsEnabled) {
+                const goalResult = await handleChatGoals(
+                    db, userData, userChatId, chatDescription, personaInfo, 
+                    userSettings, language, request, fastify, userId, chatId
+                );
+                chatGoal = goalResult.chatGoal;
+                goalCompletion = goalResult.goalCompletion;
+            }
 
             // Check the user's points balance after handling goals in case the user completed a goal
             const userPoints = await getUserPoints(fastify.mongo.db, userId);
@@ -286,7 +297,7 @@ async function routes(fastify, options) {
             // Apply user settings and goals to system prompt
             enhancedSystemContent = await applyUserSettingsToPrompt(fastify.mongo.db, userId, chatId, enhancedSystemContent);
       
-            if (chatGoal) {
+            if (goalsEnabled && chatGoal) {
                 const goalContext = `\n\n# Current Conversation Goal:\n` +
                     `Goal: ${chatGoal.goal_description}\n` +
                     `Type: ${chatGoal.goal_type}\n` +
@@ -300,7 +311,7 @@ async function routes(fastify, options) {
                 enhancedSystemContent += goalContext;
             }
 
-            if (goalCompletion && !goalCompletion.completed) {
+            if (goalsEnabled && goalCompletion && !goalCompletion.completed) {
                 enhancedSystemContent += `\n\n# Current Goal Status:\n` +
                     `Status: ${goalCompletion.reason}\n` +
                     `Continue working toward this goal.`;

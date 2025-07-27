@@ -3233,3 +3233,22 @@ opacity: 0.8;
 .animate__heartBeat {
     animation: heartBeat 1s ease-in-out;
 }
+#goals-enable-toggle {
+    transition: all 0.3s ease;
+}
+
+#goals-enable-toggle[data-enabled="true"] {
+    background-color: var(--bs-success);
+    border-color: var(--bs-success);
+    color: white;
+}
+
+#goals-enable-toggle[data-enabled="false"] {
+    background-color: var(--bs-secondary);
+    border-color: var(--bs-secondary);
+    color: white;
+}
+
+#goals-enable-toggle[data-enabled="false"] .bi-toggle-on:before {
+    content: "\f235"; /* toggle-off icon */
+}

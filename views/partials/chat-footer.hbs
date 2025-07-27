@@ -261,6 +261,12 @@
                     {{translations.goals.completedGoals}}
                 </h4>
                 <p class="text-center text-muted w-100">{{translations.goals.completedGoals_description}}</p>
+                <div class="mb-2 text-center">
+                    <button id="goals-enable-toggle" class="btn btn-sm btn-outline-primary" data-enabled="true">
+                        <i class="bi bi-toggle-on"></i>
+                        <span class="goals-status-text">{{translations.goals.enabled}}</span>
+                    </button>
+                </div>
                 <div id="goals-content" class="w-100 px-3">
                     <!-- Goals will be dynamically loaded here -->
                     <div class="loading-spinner text-center mt-4">

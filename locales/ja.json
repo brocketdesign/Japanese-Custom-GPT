@@ -181,6 +181,11 @@
     "failed": "接続に失敗しました。ページをリフレッシュしてください。"
   },
   "personas": {
+    "enabled": "有効",
+    "disabled": "無効",
+    "enabled_notification": "目標が有効になりました",
+    "disabled_notification": "目標が無効になりました",
+    "toggle_error": "目標設定の更新に失敗しました",
     "noPersonas": "ペルソナはありません",
     "noPersonasDescription": "まだペルソナを追加していません。",
     "selectPersona": "ペルソナを選択",

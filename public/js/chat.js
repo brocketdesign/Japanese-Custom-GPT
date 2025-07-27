@@ -446,8 +446,8 @@ function setupChatInterface(chat, character) {
 
     const imageCount = chat.imageCount ? chat.imageCount : 0;
     // Set the inner HTML with the icon and the new badge structure
-    albumLink.empty().append(`<i class="bi bi-images"></i><span class="image-count-badge">${imageCount}</span>`);
-    
+    albumLink.empty().append(`<i class="bi bi-images"></i><span class="image-count image-count-badge" data-chat-id="${chat._id}">${imageCount}</span>`);
+
     new bootstrap.Tooltip(albumLink[0]);
     $('#chat-recommend').prepend(albumLink);
 }

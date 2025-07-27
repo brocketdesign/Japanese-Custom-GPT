@@ -461,6 +461,7 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
 
   fastify.sendNotificationToUser(userId, 'handleLoader', { imageId: placeholderId, action: 'remove' });
   fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId: placeholderId, spin: false });
+  fastify.sendNotificationToUser(userId, 'updateImageCount', { chatId, count: images.length });
 
   if (Array.isArray(images)) {
 

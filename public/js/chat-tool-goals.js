@@ -29,6 +29,12 @@ class GoalsManager {
                 this.hide();
             }
         });
+
+        // Add toggle button handler
+        $(document).off('click', '#goals-enable-toggle').on('click', '#goals-enable-toggle', (e) => {
+            e.preventDefault();
+            this.toggleGoalsEnabled();
+        });
     }
 
     // Show the goals overlay
@@ -42,6 +48,73 @@ class GoalsManager {
         $('#goalsOverlay').slideUp('fast');
     }
 
+    // Add this new method
+    async toggleGoalsEnabled() {
+        const $button = $('#goals-enable-toggle');
+        const currentState = $button.attr('data-enabled') === 'true';
+        const newState = !currentState;
+        
+        try {
+            // Show loading state
+            $button.prop('disabled', true);
+            $button.find('.goals-status-text').text(window.translations?.loading || 'Loading...');
+            
+            const response = await fetch('/api/chat-goals/goals-enabled', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    chatId: window.chatId || sessionStorage.getItem('chatId'),
+                    enabled: newState
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to update goals setting');
+            }
+            
+            // Update button state
+            this.updateToggleButton(newState);
+            
+            // Show notification
+            showNotification(
+                newState
+                    ? (window.translations?.goals?.enabled_notification || 'Goals enabled')
+                    : (window.translations?.goals?.disabled_notification || 'Goals disabled'),
+                'success'
+            );
+            
+        } catch (error) {
+            console.error('Error toggling goals:', error);
+            // Show error notification
+            showNotification(
+                window.translations?.goals?.toggle_error || 'Failed to update goals setting',
+                'error'
+            );
+        } finally {
+            $button.prop('disabled', false);
+        }
+    }
+
+    // Add this new method
+    updateToggleButton(enabled) {
+        const $button = $('#goals-enable-toggle');
+        const $icon = $button.find('i');
+        const $text = $button.find('.goals-status-text');
+        
+        $button.attr('data-enabled', enabled.toString());
+        
+        if (enabled) {
+            $icon.removeClass('bi-toggle-off').addClass('bi-toggle-on');
+            $text.text(window.translations?.goals?.enabled || 'Enabled');
+            $button.removeClass('btn-outline-secondary').addClass('btn-outline-success');
+        } else {
+            $icon.removeClass('bi-toggle-on').addClass('bi-toggle-off');
+            $text.text(window.translations?.goals?.disabled || 'Disabled');
+            $button.removeClass('btn-outline-success').addClass('btn-outline-secondary');
+        }
+    }
     // Load goals for the current userChatId
     async loadGoals() {
         const userChatId = sessionStorage.getItem('userChatId') || window.userChatId;
@@ -67,6 +140,11 @@ class GoalsManager {
             }
 
             const data = await response.json();
+        
+            if (data.goalsEnabled !== undefined) {
+                this.updateToggleButton(data.goalsEnabled);
+            }
+
             this.displayGoals(data);
 
         } catch (error) {

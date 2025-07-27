@@ -215,6 +215,13 @@ function initializeWebSocket(onConnectionResult = null) {
             }
             break;
           }
+          case 'updateImageCount': {
+            const { chatId, count } = data.notification;
+            if (window.updateImageCount) {
+              window.updateImageCount(chatId, count);
+            }
+            break;
+          }
           default:
             // Removed console.log('[WebSocket] Unhandled notification type:', data.notification.type);
             break;

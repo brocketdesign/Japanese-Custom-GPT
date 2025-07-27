@@ -186,6 +186,18 @@ window.displayOrRemoveImageLoader = function (imageId, action, imagePreview) {
     }
 };
 
+window.updateImageCount = function(chatId, count) {
+    const badge = $(`.image-count[data-chat-id="${chatId}"]`);
+    if (badge.length) {
+        // Parse current count, add the new count, and update
+        const current = parseInt(badge.text(), 10) || 0;
+        badge.text(current + count);
+    } else {
+        console.warn(`No badge found for chatId: ${chatId}`);
+    }
+};
+
+// Example usage: debugUpdateImageCount(5); // This will update the image count badge for the last chat session
 const sentImageIds = new Set();
 window.generateImage = async function(data) {
     // Validate essential data

@@ -1825,7 +1825,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                           ${(chat.tags || chat.chatTags || []).length ? `
                           <div class="mb-2" style="overflow-x: auto; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none;">
                             <div class="d-inline-flex gap-1" style="white-space: nowrap;">
-                              ${(chat.tags ? chat.tags : chat.chatTags).slice(0, 3).map(tag => `<span onclick="event.stopPropagation(); handleCategoryClick('${tag}')" class="badge bg-light bg-opacity-75 text-dark border text-decoration-none" style="backdrop-filter: blur(4px);">#${tag}</span>`).join('')}
+                              ${(chat.tags ? chat.tags : chat.chatTags).slice(0, 3).map(tag => `<span onclick="event.stopPropagation(); handleCategoryClick('${tag}')" class="badge bg-light bg-opacity-75 text-dark border text-decoration-none" style="backdrop-filter: blur(4px);opacity: 0.7;">#${tag}</span>`).join('')}
                             </div>
                           </div>
                           ` : ''}
@@ -1834,8 +1834,8 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                           <a href="/character/${chat._id}" class="text-decoration-none" onclick="event.stopPropagation();">
                             <div class="d-flex align-items-center justify-content-start mb-1">
                               <!-- User icon with badge -->
-                              <span class="badge bg-light bg-opacity-75 text-dark border text-decoration-none me-2" style="backdrop-filter: blur(4px);">
-                                <i class="bi bi-person-fill"></i>
+                              <span class="rounded-circle px-1 bg-dark bg-opacity-75 text-white border text-decoration-none me-2" style="backdrop-filter: blur(4px);">
+                                <i class="bi bi-info"></i>
                               </span>
                               <h5 class="card-title mb-0 fw-semibold text-truncate text-white" title="${chat.name || chat.chatName}" style="text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${chat.name || chat.chatName}</h5>
                             </div>

@@ -126,7 +126,7 @@
 <!-- Model Details Modal -->
 <div class="modal fade" id="modelDetailsModal" tabindex="-1" aria-labelledby="modelDetailsModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
-    <div class="modal-content bg-dark text-white mx-auto">
+    <div class="modal-content bg-dark text-white mx-auto modal-dialog-scrollable">
       <div class="modal-header border-secondary">
         <h5 class="modal-title" id="modelDetailsModalLabel">Model Details</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -134,7 +134,7 @@
       <div class="modal-body">
         <div class="row">
           <div class="col-md-4">
-            <img id="modalModelImage" src="" alt="Model Image" class="img-fluid rounded">
+            <img id="modalModelImage" src="" alt="Model Image" class="img-fluid rounded" style="max-height: 70vh;">
           </div>
           <div class="col-md-8">
             <h6 id="modalModelName" class="fw-bold mb-2"></h6>
@@ -159,9 +159,6 @@
                 </div>
                 <div class="form-text text-muted">This style will be used as default when generating images with this model.</div>
               </div>
-              <button type="submit" class="btn btn-secondary me-2">
-                <i class="bi bi-palette me-1"></i>Update Style
-              </button>
             </form>
             
             <form id="negativePromptForm">
@@ -336,9 +333,36 @@ $(document).ready(function(){
     // Handle radio button changes
     $(document).on('change', 'input[name="styleOption"]', function() {
         updateStyleIcons();
+        
+        // Auto-submit the form when style is selected
+        if (currentModelId) {
+            const style = $(this).val();
+            console.log('Auto-submitting style update:', style);
+            
+            $.ajax({
+                url: `/admin/models/${currentModelId}/style`,
+                method: 'PUT',
+                data: JSON.stringify({ style }),
+                contentType: 'application/json',
+                success: function(response) {
+                    console.log('Style update successful:', response);
+                    window.showNotification(response.message, 'success');
+                    // Update the style display in modal
+                    $('#modalModelStyle').text(style === 'anime' ? 'Anime' : 'Photorealistic');
+                    // Update the active model card data attribute
+                    $(`.active-model-info-btn[data-model-id="${currentModelId}"]`).data('style', style);
+                    $(`.model-switch[data-model-id="${currentModelId}"]`).data('style', style);
+                },
+                error: function(xhr) {
+                    console.error('Style update failed:', xhr);
+                    const error = xhr.responseJSON ? xhr.responseJSON.error : 'Error updating model style';
+                    window.showNotification(error, 'error');
+                }
+            });
+        }
     });
 
-    // Handle style form submission
+    // Handle style form submission (kept for backward compatibility but shouldn't be triggered)
     $('#styleForm').on('submit', function(e) {
         e.preventDefault();
         
@@ -354,12 +378,6 @@ $(document).ready(function(){
             window.showNotification('Please select a style', 'error');
             return;
         }
-        
-        const submitBtn = $(this).find('button[type="submit"]');
-        const originalText = submitBtn.html();
-        
-        // Show loading state
-        submitBtn.html('<i class="bi bi-hourglass-split me-1"></i>Updating...').prop('disabled', true);
         
         $.ajax({
             url: `/admin/models/${currentModelId}/style`,
@@ -379,10 +397,6 @@ $(document).ready(function(){
                 console.error('Style update failed:', xhr);
                 const error = xhr.responseJSON ? xhr.responseJSON.error : 'Error updating model style';
                 window.showNotification(error, 'error');
-            },
-            complete: function() {
-                // Restore button state
-                submitBtn.html(originalText).prop('disabled', false);
             }
         });
     });

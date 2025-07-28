@@ -1831,10 +1831,16 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                           ` : ''}
 
                           <!-- Character name -->
-                          <a href="/character/${chat._id}" class="text-decoration-none">
-                            <h5 class="card-title mb-1 fw-semibold text-truncate text-white" title="${chat.name || chat.chatName}" style="text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${chat.name || chat.chatName}</h5>
+                          <a href="/character/${chat._id}" class="text-decoration-none" onclick="event.stopPropagation();">
+                            <div class="d-flex align-items-center justify-content-start mb-1">
+                              <!-- User icon with badge -->
+                              <span class="badge bg-light bg-opacity-75 text-dark border text-decoration-none me-2" style="backdrop-filter: blur(4px);">
+                                <i class="bi bi-person-fill"></i>
+                              </span>
+                              <h5 class="card-title mb-0 fw-semibold text-truncate text-white" title="${chat.name || chat.chatName}" style="text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${chat.name || chat.chatName}</h5>
+                            </div>
                           </a>
-                          
+
                           <!-- First message with smaller text -->
                           <div class="text-white-50 small text-truncate" style="font-size: 0.75rem; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 0 1px 2px rgba(0,0,0,0.7);">
                             ${chat.first_message || ''}

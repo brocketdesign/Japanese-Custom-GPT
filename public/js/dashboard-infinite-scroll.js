@@ -102,20 +102,25 @@ function loadImages(type, id, page = 1, reload = false, isModal = false, endpoin
             if (reload) {
                 const hasCache = await handleReload(id, cacheKey, type);
                 
-                // Fix: Always setup infinite scroll after reload, regardless of cache
+                // Always setup infinite scroll after reload
                 setupInfiniteScroll(id, isModal, type);
                 
-                // Fix: If we have cache and we're requesting page 1, don't fetch from server
+                // If we have cache and we're requesting page 1, don't fetch from server
                 if (hasCache && page === 1) {
-                    console.log(`[loadImages] Reload completed with cache for ${cacheKey}, page ${page}`);
                     resolve();
                     return;
                 }
                 
-                // Fix: If no cache but reload is true, reset state properly
+                // If no cache but reload is true, reset state properly
                 if (!hasCache) {
                     manager.currentPages.set(cacheKey, 0);
                 }
+            }
+            
+            // Validate page number
+            if (isNaN(page) || page < 1) {
+                resolve();
+                return;
             }
             
             // Check if page is already cached and not reloading
@@ -130,27 +135,23 @@ function loadImages(type, id, page = 1, reload = false, isModal = false, endpoin
             
             // Prevent duplicate requests
             if (manager.loadingStates.get(cacheKey)) {
-                console.log(`[loadImages] Already loading ${cacheKey}, skipping duplicate request for page ${page}`);
                 resolve();
                 return;
             }
             
             // Check if we've reached the end
             if (page > manager.totalPages.get(cacheKey)) {
-                console.log(`[loadImages] Page ${page} exceeds total pages ${manager.totalPages.get(cacheKey)} for ${cacheKey}`);
                 resolve();
                 return;
             }
             
-            // Fix: Additional check for reload scenario - if we're reloading page 1 and it's already cached
+            // Additional check for reload scenario
             if (reload && page === 1 && manager.cache.get(cacheKey).has(1)) {
-                console.log(`[loadImages] Reload page 1 already handled by cache for ${cacheKey}`);
                 resolve();
                 return;
             }
             
             // Fetch from server
-            console.log(`[loadImages] Fetching page ${page} from server for ${cacheKey}`);
             await fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type);
             resolve();
             
@@ -183,19 +184,14 @@ async function handleReload(id, cacheKey, type) {
             await renderImages(images, id, type);
         }
         
-        // Fix: Properly set the current page to the maximum cached page
+        // Properly set the current page to the maximum cached page
         const maxCachedPage = Math.max(...cachedPages);
         manager.currentPages.set(cacheKey, maxCachedPage);
-        
-        // Fix: If we have page 1 cached, mark it as loaded to prevent duplicate requests
-        if (cachedPages.includes(1)) {
-            console.log(`[handleReload] Page 1 already cached for ${cacheKey}, preventing duplicate request`);
-        }
         
         return true; // Indicate we have cache
     }
     
-    // Fix: If no cache, ensure current page is set to 0
+    // If no cache, ensure current page is set to 0
     manager.currentPages.set(cacheKey, 0);
     return false; // No cache available
 }
@@ -206,18 +202,30 @@ async function handleReload(id, cacheKey, type) {
 async function fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type) {
     const manager = window.chatImageManager;
     
+    // Validate page number again
+    if (isNaN(page) || page < 1) {
+        return;
+    }
+    
     manager.loadingStates.set(cacheKey, true);
     
     // Show loading indicator
     showLoadingIndicator(true, type);
     
     try {
+        const url = `${endpoint}?page=${page}`;
+        
         const response = await $.ajax({
-            url: `${endpoint}?page=${page}`,
+            url: url,
             method: 'GET',
             xhrFields: { withCredentials: true },
             timeout: 10000 // 10 second timeout
         });
+        
+        // Validate response
+        if (!response.page || isNaN(response.page)) {
+            return;
+        }
         
         // Cache the response
         manager.cache.get(cacheKey).set(response.page, response.images || []);
@@ -238,6 +246,9 @@ async function fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type
         // Setup infinite scroll
         setupInfiniteScroll(id, isModal, type);
         
+    } catch (error) {
+        console.error(`[fetchImagesFromServer] AJAX Error for ${cacheKey}:`, error);
+        throw error;
     } finally {
         manager.loadingStates.set(cacheKey, false);
         showLoadingIndicator(false, type);
@@ -259,10 +270,19 @@ async function renderImages(images, id, type) {
     const isAdmin = window.isAdmin || false;
     
     const fragment = document.createDocumentFragment();
+    let newImagesAdded = 0;
+    let duplicatesSkipped = 0;
     
     images.forEach((item, index) => {
         const isBlur = shouldBlurNSFW(item, subscriptionStatus);
         const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
+        
+        // Check for existing image more carefully using data-image-id
+        const imageAlreadyDisplayed = document.querySelector(`[data-image-id="${item._id}"]`) !== null;
+        if (imageAlreadyDisplayed) {
+            duplicatesSkipped++;
+            return;
+        }
         
         // Add to loadedImages if not blurred and not already present
         if (!isBlur && !window.loadedImages.some(img => img._id === item._id)) {
@@ -278,12 +298,13 @@ async function renderImages(images, id, type) {
         const cardElement = tempDiv.firstElementChild;
         
         fragment.appendChild(cardElement);
+        newImagesAdded++;
     });
     
     // Append all cards at once for better performance
     const gallerySelector = type === 'chat' ? '#chat-images-gallery' : '#user-images-gallery';
     const gallery = document.querySelector(gallerySelector);
-    if (gallery) {
+    if (gallery && fragment.hasChildNodes()) {
         gallery.appendChild(fragment);
         
         // Apply grid layout after DOM update
@@ -307,11 +328,11 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedInde
                 ${isBlur ? 
                     `<div class="position-relative">
                         <div type="button" onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary})">
-                            <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" loading="lazy">
+                            <img data-src="${item.imageUrl}" data-id="${item._id}" class="card-img-top img-blur" style="object-fit: cover;" loading="lazy">
                         </div>
                     </div>` :
                     `<div href="${linkUrl}" data-index="${loadedIndex}" 
-                        class="image-fav-double-click"
+                        class="image-container image-fav-double-click"
                         data-id="${item._id}" data-chat-id="${chatId}" onclick="toggleImageFavorite(this)">
                         <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top" style="object-fit: cover;" loading="lazy">
                     </div>

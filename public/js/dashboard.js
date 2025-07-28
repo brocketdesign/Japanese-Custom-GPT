@@ -2534,31 +2534,6 @@ function gridLayout(selector) {
   // Find the image items (typically in a column div)
   const $items = $container.children('div');
 
-  // Use delegation to handle dynamically added elements
-  const observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-      if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-        // Check if new items were added
-        const hasNewItems = Array.from(mutation.addedNodes).some(node => 
-          node.nodeType === Node.ELEMENT_NODE && node.tagName === 'DIV'
-        );
-        if (hasNewItems) {
-          // Re-apply grid layout to new items
-          const currentValue = $slider.val();
-          updateGrid(currentValue);
-        }
-      }
-    });
-  });
-
-  // Start observing the container for changes
-  observer.observe($container[0], {
-    childList: true,
-    subtree: false
-  });
-
-  // Store observer reference for cleanup if needed
-  $container.data('gridObserver', observer);
   if ($items.length === 0) return; // No items to adjust
   
   // If a grid controller already exists, don't create another one
@@ -2604,83 +2579,110 @@ function gridLayout(selector) {
   const $slider = $(`#${sliderId}`);
   const $sizeDisplay = $slider.closest('.grid-control').find('.grid-size-display');
   
-function updateGrid(value) {
-  $sizeDisplay.text(`${value} ${translations?.perRow || 'per row'}`);
 
-  let effectiveValue = parseInt(value);
-  const screenWidth = window.innerWidth;
-
-  // On small screens (<768px), cap at 3 columns max
-  if (screenWidth < 768 && effectiveValue > 3) {
-    effectiveValue = 3;
-    $sizeDisplay.text(`3 ${translations?.perRow || 'per row'} (max on small screens)`);
-  }
-
-  // Remove ALL Bootstrap grid classes and custom col-20p class
-  // The improved regex captures all possible col-* classes including col-20p
-  $container.children('div').each(function() {
-    const $div = $(this);
-    const classes = $div.attr('class') ? $div.attr('class').split(/\s+/) : [];
-    const filtered = classes.filter(c =>
-      !/^col(-[a-z]{2,3})?-\d+$/.test(c) && c !== 'col-20p'
-    );
-    $div.attr('class', filtered.join(' '));
-  });
-
-  // Handle 5 columns (custom 20% width)
-  if (effectiveValue === 5) {
-    // Add the custom CSS if it doesn't exist yet
-    if (!$('#grid-custom-css').length) {
-      $('head').append(`
-        <style id="grid-custom-css">
-          .col-20p { 
-            width: 20%; 
-            flex: 0 0 20%;
-            max-width: 20%;
-            position: relative;
-            padding-right: 15px;
-            padding-left: 15px;
-          }
-        </style>
-      `);
-    }
-    $container.children('div').each(function() {
-      if (screenWidth < 768) {
-        $(this).addClass('col-6');
-      } else {
-        $(this).addClass('col-20p');
+  // Use delegation to handle dynamically added elements
+  const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+        // Check if new items were added
+        const hasNewItems = Array.from(mutation.addedNodes).some(node => 
+          node.nodeType === Node.ELEMENT_NODE && node.tagName === 'DIV'
+        );
+        if (hasNewItems) {
+          // Re-apply grid layout to new items
+          const currentValue = $slider.val();
+          updateGrid(currentValue);
+        }
       }
     });
-  } else {
-    // Standard Bootstrap grid
-    if (screenWidth < 768) {
-      // 1: col-12, 2: col-6, 3: col-4
-      const colClass = `col-${12 / effectiveValue}`;
+  });
+
+  // Start observing the container for changes
+  observer.observe($container[0], {
+    childList: true,
+    subtree: false
+  });
+
+  // Store observer reference for cleanup if needed
+  $container.data('gridObserver', observer);
+
+  function updateGrid(value) {
+    $sizeDisplay.text(`${value} ${translations?.perRow || 'per row'}`);
+
+    let effectiveValue = parseInt(value);
+    const screenWidth = window.innerWidth;
+
+    // On small screens (<768px), cap at 3 columns max
+    if (screenWidth < 768 && effectiveValue > 3) {
+      effectiveValue = 3;
+      $sizeDisplay.text(`3 ${translations?.perRow || 'per row'} (max on small screens)`);
+    }
+
+    // Remove ALL Bootstrap grid classes and custom col-20p class
+    // The improved regex captures all possible col-* classes including col-20p
+    $container.children('div').each(function() {
+      const $div = $(this);
+      const classes = $div.attr('class') ? $div.attr('class').split(/\s+/) : [];
+      const filtered = classes.filter(c =>
+        !/^col(-[a-z]{2,3})?-\d+$/.test(c) && c !== 'col-20p'
+      );
+      $div.attr('class', filtered.join(' '));
+    });
+
+    // Handle 5 columns (custom 20% width)
+    if (effectiveValue === 5) {
+      // Add the custom CSS if it doesn't exist yet
+      if (!$('#grid-custom-css').length) {
+        $('head').append(`
+          <style id="grid-custom-css">
+            .col-20p { 
+              width: 20%; 
+              flex: 0 0 20%;
+              max-width: 20%;
+              position: relative;
+              padding-right: 15px;
+              padding-left: 15px;
+            }
+          </style>
+        `);
+      }
       $container.children('div').each(function() {
-        $(this).addClass(colClass);
+        if (screenWidth < 768) {
+          $(this).addClass('col-6');
+        } else {
+          $(this).addClass('col-20p');
+        }
       });
     } else {
-      const colSize = Math.floor(12 / effectiveValue);
-      $container.children('div').each(function() {
-        $(this).addClass(`col-${colSize} col-sm-${colSize} col-md-${colSize} col-lg-${colSize} col-xl-${colSize}`);
-      });
+      // Standard Bootstrap grid
+      if (screenWidth < 768) {
+        // 1: col-12, 2: col-6, 3: col-4
+        const colClass = `col-${12 / effectiveValue}`;
+        $container.children('div').each(function() {
+          $(this).addClass(colClass);
+        });
+      } else {
+        const colSize = Math.floor(12 / effectiveValue);
+        $container.children('div').each(function() {
+          $(this).addClass(`col-${colSize} col-sm-${colSize} col-md-${colSize} col-lg-${colSize} col-xl-${colSize}`);
+        });
+      }
     }
-  }
 
-  localStorage.setItem('gridPreference', value);
-}
-  
-  // Check for saved preference
-  const savedPreference = localStorage.getItem('gridPreference');
-  if (savedPreference) {
-    $slider.val(savedPreference);
-    updateGrid(savedPreference);
+    localStorage.setItem('gridPreference', value);
   }
-  
-  // Add event listener for slider changes
-  $slider.on('input', function() {
-    updateGrid($(this).val());
-  });
+    
+    // Check for saved preference
+    const savedPreference = localStorage.getItem('gridPreference');
+    if (savedPreference) {
+      $slider.val(savedPreference);
+      updateGrid(savedPreference);
+    }
+    
+    // Add event listener for slider changes
+    $slider.on('input', function() {
+      updateGrid($(this).val());
+    });
 }
 
 // Global state for query management

@@ -143,6 +143,27 @@
             <p class="small mb-1"><strong>Version:</strong> <span id="modalModelVersion"></span></p>
             <p class="small mb-3"><strong>ID:</strong> <span id="modalModelId" class="text-break"></span></p>
             
+            <form id="styleForm" class="mb-3">
+              <div class="mb-3">
+                <label class="form-label">Default Style</label>
+                <div class="btn-group w-100" role="group" aria-label="Style selection">
+                  <input type="radio" class="btn-check" name="styleOption" id="styleAnime" value="anime" autocomplete="off">
+                  <label class="btn btn-outline-primary" for="styleAnime">
+                    <i class="bi bi-square me-1"></i>Anime
+                  </label>
+                  
+                  <input type="radio" class="btn-check" name="styleOption" id="stylePhotorealistic" value="photorealistic" autocomplete="off">
+                  <label class="btn btn-outline-primary" for="stylePhotorealistic">
+                    <i class="bi bi-square me-1"></i>Photorealistic
+                  </label>
+                </div>
+                <div class="form-text text-muted">This style will be used as default when generating images with this model.</div>
+              </div>
+              <button type="submit" class="btn btn-secondary me-2">
+                <i class="bi bi-palette me-1"></i>Update Style
+              </button>
+            </form>
+            
             <form id="negativePromptForm">
               <div class="mb-3">
                 <label for="negativePromptTextarea" class="form-label">Default Negative Prompt</label>
@@ -163,6 +184,22 @@
 
 <style>
   .sticky-bottom {display:none;}
+  
+  /* Custom styling for radio button labels */
+  .btn-check:checked + label i.bi-square:before {
+    content: "\f26e"; /* bi-check-square-fill */
+  }
+  
+  .btn-check:not(:checked) + label i.bi-square:before {
+    content: "\f1c8"; /* bi-square */
+  }
+  
+  /* Custom styling for checked radio buttons */
+  .btn-check:checked + label {
+    background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%) !important;
+    color: white !important;
+    border-color: #8240FF !important;
+  }
 </style>
 
 {{> dashboard-footer}}
@@ -225,6 +262,15 @@ $(document).ready(function(){
         const image = $(this).data('image');
         const name = $(this).data('name');
         
+        console.log('Opening modal for model:', {
+            modelId,
+            model,
+            style,
+            version,
+            image,
+            name
+        });
+        
         currentModelId = modelId;
         
         // Populate modal with basic data
@@ -235,18 +281,110 @@ $(document).ready(function(){
         $('#modalModelVersion').text(version || 'N/A');
         $('#modalModelId').text(modelId);
         
+        // Clear any previous radio button selections and reset icons
+        $('input[name="styleOption"]').prop('checked', false);
+        updateStyleIcons();
+        
+        // Set style radio buttons with fallback
+        const styleValue = style || 'anime';
+        console.log('Setting initial style to:', styleValue);
+        $(`input[name="styleOption"][value="${styleValue}"]`).prop('checked', true);
+        updateStyleIcons();
+        
         // Fetch full model details including negative prompt
         $.get(`/admin/models/${modelId}/details`)
             .done(function(data) {
+                console.log('Fetched model details:', data);
                 $('#negativePromptTextarea').val(data.negativePrompt || '');
+                
+                // Update style radio buttons with database value if available
+                if (data.style) {
+                    console.log('Updating style from database to:', data.style);
+                    // Clear previous selection
+                    $('input[name="styleOption"]').prop('checked', false);
+                    // Set new selection
+                    $(`input[name="styleOption"][value="${data.style}"]`).prop('checked', true);
+                    updateStyleIcons();
+                    // Update modal display
+                    $('#modalModelStyle').text(data.style === 'anime' ? 'Anime' : 'Photorealistic');
+                } else {
+                    console.log('No style in database, keeping initial style:', styleValue);
+                }
             })
-            .fail(function() {
+            .fail(function(xhr) {
+                console.error('Failed to fetch model details:', xhr);
                 $('#negativePromptTextarea').val('');
             });
         
         // Show modal
         const modal = new bootstrap.Modal(document.getElementById('modelDetailsModal'));
         modal.show();
+    });
+
+    // Function to update style button icons
+    function updateStyleIcons() {
+        $('input[name="styleOption"]').each(function() {
+            const icon = $(this).next('label').find('i');
+            if ($(this).is(':checked')) {
+                icon.removeClass('bi-square').addClass('bi-check-square-fill');
+            } else {
+                icon.removeClass('bi-check-square-fill').addClass('bi-square');
+            }
+        });
+    }
+
+    // Handle radio button changes
+    $(document).on('change', 'input[name="styleOption"]', function() {
+        updateStyleIcons();
+    });
+
+    // Handle style form submission
+    $('#styleForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        if (!currentModelId) {
+            window.showNotification('No model selected', 'error');
+            return;
+        }
+        
+        const style = $('input[name="styleOption"]:checked').val();
+        console.log('Submitting style update:', style);
+        
+        if (!style) {
+            window.showNotification('Please select a style', 'error');
+            return;
+        }
+        
+        const submitBtn = $(this).find('button[type="submit"]');
+        const originalText = submitBtn.html();
+        
+        // Show loading state
+        submitBtn.html('<i class="bi bi-hourglass-split me-1"></i>Updating...').prop('disabled', true);
+        
+        $.ajax({
+            url: `/admin/models/${currentModelId}/style`,
+            method: 'PUT',
+            data: JSON.stringify({ style }),
+            contentType: 'application/json',
+            success: function(response) {
+                console.log('Style update successful:', response);
+                window.showNotification(response.message, 'success');
+                // Update the style display in modal
+                $('#modalModelStyle').text(style === 'anime' ? 'Anime' : 'Photorealistic');
+                // Update the active model card data attribute
+                $(`.active-model-info-btn[data-model-id="${currentModelId}"]`).data('style', style);
+                $(`.model-switch[data-model-id="${currentModelId}"]`).data('style', style);
+            },
+            error: function(xhr) {
+                console.error('Style update failed:', xhr);
+                const error = xhr.responseJSON ? xhr.responseJSON.error : 'Error updating model style';
+                window.showNotification(error, 'error');
+            },
+            complete: function() {
+                // Restore button state
+                submitBtn.html(originalText).prop('disabled', false);
+            }
+        });
     });
 
     // Handle negative prompt form submission

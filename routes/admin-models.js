@@ -129,6 +129,45 @@ async function routes(fastify, options) {
     }
   });
 
+  // Update model style
+  fastify.put('/admin/models/:modelId/style', async (req, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, req.user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+
+      const { modelId } = req.params;
+      const { style } = req.body;
+      const db = fastify.mongo.db;
+      
+      // Validate style value
+      const validStyles = ['anime', 'photorealistic'];
+      if (!validStyles.includes(style)) {
+        return reply.status(400).send({ error: 'Invalid style. Must be either "anime" or "photorealistic".' });
+      }
+      
+      const result = await db.collection('myModels').updateOne(
+        { modelId },
+        { 
+          $set: { 
+            style: style,
+            updatedAt: new Date()
+          }
+        }
+      );
+
+      if (result.matchedCount === 0) {
+        return reply.status(404).send({ error: 'Model not found' });
+      }
+
+      reply.send({ success: true, message: 'Model style updated successfully.' });
+    } catch (error) {
+      console.error('Error updating model style:', error);
+      reply.status(500).send({ error: 'Internal Server Error' });
+    }
+  });
+
   // Update model negative prompt
   fastify.put('/admin/models/:modelId/negative-prompt', async (req, reply) => {
     try {

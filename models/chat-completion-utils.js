@@ -276,7 +276,6 @@ async function handleChatGoals(db, userData, userChatId, chatDescription, person
 
     if (messageCount <= 3 || !userData.currentGoal) {
         chatGoal = await generateChatGoal(chatDescription, personaInfo, userSettings, language);
-        console.log(`[handleChatGoals] Generated goal:`, chatGoal);
         
         if (chatGoal) {
             await db.collection('userChat').updateOne(
@@ -289,7 +288,6 @@ async function handleChatGoals(db, userData, userChatId, chatDescription, person
         goalCompletion = await checkGoalCompletion(chatGoal, userData.messages, language);
         
         if (goalCompletion.completed && goalCompletion.confidence > 70) {
-            console.log(`[handleChatGoals] Goal completed:`, goalCompletion.reason);
             
             await db.collection('userChat').updateOne(
                 { _id: new ObjectId(userChatId) },
@@ -319,10 +317,8 @@ async function handleChatGoals(db, userData, userChatId, chatDescription, person
             });
             
             await addUserPoints(db, userId, rewardPoints, request?.userPointsTranslations.points?.reward_reasons?.goal_completion || 'Goal completion reward', 'goal_completion', fastify);
-            console.log(`[handleChatGoals] User rewarded ${rewardPoints} points for goal completion`);
             
             chatGoal = await generateChatGoal(chatDescription, personaInfo, language);
-            console.log(`[handleChatGoals] Generated new goal:`, chatGoal);
             
             if (chatGoal) {
                 await db.collection('userChat').updateOne(

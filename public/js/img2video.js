@@ -30,7 +30,7 @@ window.generateVideoFromImage = async function(imageId, chatId, userChatId, prom
     // Use consistent request key format
     const requestKey = `${imageId}_${userChatId}`;
     if (videoGenerationRequests.has(requestKey)) {
-        showNotification(window.translations.img2video.video_generation_in_progress || 'Video generation in progress', 'warning');
+        showNotification(window.img2videoTranslations.video_generation_in_progress || 'Video generation in progress', 'warning');
         return;
     }
 
@@ -85,14 +85,14 @@ window.generateVideoFromImage = async function(imageId, chatId, userChatId, prom
         }
 
         if (data.success) {
-            showNotification(window.translations.img2video.video_generation_started || 'Video generation started', 'success');
+            showNotification(window.img2videoTranslations.video_generation_started || 'Video generation started', 'success');
         } else {
             throw new Error(data.message || 'Video generation failed');
         }
 
     } catch (error) {
         console.error('Error generating video:', error);
-        showNotification(error.message || window.translations.img2video.video_generation_failed || 'Video generation failed', 'error');
+        showNotification(error.message || window.img2videoTranslations.video_generation_failed || 'Video generation failed', 'error');
         
         // Remove loader on error
         removeVideoLoader(placeholderId);
@@ -114,17 +114,19 @@ function showVideoPromptModal() {
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content mx-auto" style="height: auto;">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="videoPromptModalLabel">
-                                <i class="bi bi-camera-video me-2"></i>
-                                ${window.translations.img2video.video_prompt_title || 'Video Generation Prompt'}
-                            </h5>
-                            <span>${window.translations.img2video.video_prompt_subtitle.replace('{{points}}', 100) || 'Generating a video from an image will use up to {{points}} points.'}</span>
+                            <div class="d-flex align-items-center flex-column w-100">
+                                <h5 class="modal-title" id="videoPromptModalLabel">
+                                    <i class="bi bi-camera-video me-2"></i>
+                                    ${window.img2videoTranslations.video_prompt_title || 'Video Generation Prompt'}
+                                </h5>
+                                <span>${window.img2videoTranslations.video_prompt_subtitle.replace('{{points}}', 100) || 'Generating a video from an image will use up to {{points}} points.'}</span>
+                            </div>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             <div class="mb-3">
                                 <label for="videoPromptTextarea" class="form-label">
-                                    ${window.translations.img2video.video_prompt_description || 'Describe the video motion or style (optional)'}
+                                    ${window.img2videoTranslations.video_prompt_description || 'Describe the video motion or style (optional)'}
                                 </label>
                                 <textarea 
                                     class="form-control" 
@@ -132,20 +134,20 @@ function showVideoPromptModal() {
                                     id="videoPromptTextarea" 
                                     rows="4" 
                                     maxlength="200" 
-                                    placeholder="${window.translations.img2video.video_prompt_placeholder || 'e.g., slow zoom in, dramatic lighting, smooth camera movement...'}"
+                                    placeholder="${window.img2videoTranslations.video_prompt_placeholder || 'e.g., slow zoom in, dramatic lighting, smooth camera movement...'}"
                                 ></textarea>
                                 <div class="form-text">
-                                    <span id="charCount">0</span>/200 ${window.translations.img2video.characters || 'characters'}
+                                    <span id="charCount">0</span>/200 ${window.img2videoTranslations.characters || 'characters'}
                                 </div>
                             </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                ${window.translations.img2video.cancel || 'Cancel'}
+                                ${window.img2videoTranslations.cancel || 'Cancel'}
                             </button>
                             <button type="button" class="btn btn-primary" id="generateVideoBtn">
                                 <i class="bi bi-play-circle me-2"></i>
-                                ${window.translations.img2video.generate_video || 'Generate Video'}
+                                ${window.img2videoTranslations.generate_video || 'Generate Video'}
                             </button>
                         </div>
                     </div>
@@ -239,7 +241,7 @@ function displayVideoLoader(placeholderId, imageId) {
                     <span class="visually-hidden">Loading...</span>
                 </div>
                 <div class="mt-2">
-                    <small class="text-muted">${window.translations.img2video.generating_video || 'Generating video...'}</small>
+                    <small class="text-muted">${window.img2videoTranslations.generating_video || 'Generating video...'}</small>
                 </div>
             </div>
         </div>
@@ -270,7 +272,7 @@ function updateVideoProgress(placeholderId, progress) {
         <div class="progress mt-2" style="height: 4px;">
             <div class="progress-bar" role="progressbar" style="width: ${progress}%"></div>
         </div>
-        <small class="text-muted">${Math.round(progress)}% ${window.translations.img2video.complete || 'complete'}</small>
+        <small class="text-muted">${Math.round(progress)}% ${window.img2videoTranslations.complete || 'complete'}</small>
     `;
     
     const loader = $(document).find(`#video-loader-${placeholderId}`);
@@ -280,7 +282,7 @@ function updateVideoProgress(placeholderId, progress) {
                 <span class="visually-hidden">Loading...</span>
             </div>
             <div class="mt-2">
-                <small class="text-muted">${window.translations.img2video.generating_video || 'Generating video...'}</small>
+                <small class="text-muted">${window.img2videoTranslations.generating_video || 'Generating video...'}</small>
             </div>
             ${progressHtml}
         `);
@@ -333,7 +335,7 @@ function displayGeneratedVideo(videoData) {
                             data-placeholder-id="${placeholderId}"
                         >
                             <source src="${videoUrl}" type="video/mp4">
-                            ${window.translations.img2video?.video_not_supported || 'Your browser does not support the video tag.'}
+                            ${window.translations.img2videoTranslations?.video_not_supported || 'Your browser does not support the video tag.'}
                         </video>
                     </div>
                     ${getVideoTools(videoUrl, duration, videoId)}
@@ -401,11 +403,11 @@ window.regenerateVideo = async function(videoId) {
             // Regenerate using the original image
             generateVideoFromImage(videoData.imageId, chatId, userChatId, videoData.prompt);
         } else {
-            showNotification(window.translations.img2video.regeneration_failed || 'Cannot regenerate this video', 'error');
+            showNotification(window.img2videoTranslations.regeneration_failed || 'Cannot regenerate this video', 'error');
         }
     } catch (error) {
         console.error('Error regenerating video:', error);
-        showNotification(window.translations.img2video.regeneration_failed || 'Failed to regenerate video', 'error');
+        showNotification(window.img2videoTranslations.regeneration_failed || 'Failed to regenerate video', 'error');
     }
 };
 
@@ -416,15 +418,15 @@ window.regenerateVideo = async function(videoId) {
 window.shareVideo = function(videoUrl) {
     if (navigator.share) {
         navigator.share({
-            title: window.translations.img2video.generated_video || 'Generated Video',
+            title: window.img2videoTranslations.generated_video || 'Generated Video',
             url: videoUrl
         }).catch(console.error);
     } else {
         // Fallback: copy to clipboard
         navigator.clipboard.writeText(videoUrl).then(() => {
-            showNotification(window.translations.img2video.video_link_copied || 'Video link copied to clipboard', 'success');
+            showNotification(window.img2videoTranslations.video_link_copied || 'Video link copied to clipboard', 'success');
         }).catch(() => {
-            showNotification(window.translations.img2video.share_failed || 'Failed to share video', 'error');
+            showNotification(window.img2videoTranslations.share_failed || 'Failed to share video', 'error');
         });
     }
 };

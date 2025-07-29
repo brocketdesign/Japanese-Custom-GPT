@@ -45,7 +45,7 @@ async function img2videoRoutes(fastify) {
             const cost = 100; // Define the cost of generating an image
             console.log(`[img2video] Cost for video generation: ${cost} points`);
             try {
-                await removeUserPoints(db, userId, cost, translations.points?.deduction_reasons?.video_generation || 'Video generation', 'video_generation', fastify);
+                await removeUserPoints(db, userId, cost, request.points?.deduction_reasons?.video_generation || 'Video generation', 'video_generation', fastify);
             } catch (error) {
                 console.error('Error deducting points:', error);
                 return reply.status(500).send({ error: 'Error deducting points for video generation.' });

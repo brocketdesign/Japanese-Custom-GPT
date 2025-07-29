@@ -118,6 +118,7 @@ function showVideoPromptModal() {
                                 <i class="bi bi-camera-video me-2"></i>
                                 ${window.translations.img2video.video_prompt_title || 'Video Generation Prompt'}
                             </h5>
+                            <span>${window.translations.img2video.video_prompt_subtitle.replace('{{points}}', 100) || 'Generating a video from an image will use up to {{points}} points.'}</span>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">

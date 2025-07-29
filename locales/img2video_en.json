@@ -4,5 +4,22 @@
     "generationFailed": "Video generation failed to start",
     "videoSaveFailed": "Video generated but failed to save",
     "noVideoUrl": "Video generation completed but no video URL received"
-  }
+  },
+  "video_generation_in_progress": "Video generation in progress",
+  "video_generation_started": "Video generation started",
+  "video_generation_failed": "Video generation failed",
+  "video_prompt_title": "Video Generation Prompt",
+  "video_prompt_subtitle": "Generating a video from an image will use up to {{points}} points.",
+  "video_prompt_description": "Describe the video motion or style (optional)",
+  "video_prompt_placeholder": "e.g., slow zoom in, dramatic lighting, smooth camera movement...",
+  "characters": "characters",
+  "cancel": "Cancel",
+  "generate_video": "Generate Video",
+  "generating_video": "Generating video...",
+  "complete": "complete",
+  "video_not_supported": "Your browser does not support the video tag.",
+  "generated_video": "Generated Video",
+  "video_link_copied": "Video link copied to clipboard",
+  "share_failed": "Failed to share video",
+  "regeneration_failed": "Failed to regenerate video"
 }

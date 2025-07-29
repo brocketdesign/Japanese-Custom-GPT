@@ -4,5 +4,22 @@
     "generationFailed": "動画生成の開始に失敗しました",
     "videoSaveFailed": "動画は生成されましたが、保存に失敗しました",
     "noVideoUrl": "動画生成は完了しましたが、動画URLを受信できませんでした"
-  }
+  },
+  "video_generation_in_progress": "動画生成中",
+  "video_generation_started": "動画生成を開始しました",
+  "video_generation_failed": "動画生成に失敗しました",
+  "video_prompt_title": "動画生成プロンプト",
+  "video_prompt_subtitle": "画像から動画を生成すると最大{{points}}ポイント消費されます。",
+  "video_prompt_description": "動画の動きやスタイルを記述してください（任意）",
+  "video_prompt_placeholder": "例：ゆっくりズームイン、ドラマチックな照明、滑らかなカメラの動き...",
+  "characters": "文字",
+  "cancel": "キャンセル",
+  "generate_video": "動画を生成",
+  "generating_video": "動画生成中...",
+  "complete": "完了",
+  "video_not_supported": "お使いのブラウザはビデオタグをサポートしていません。",
+  "generated_video": "生成された動画",
+  "video_link_copied": "動画リンクをクリップボードにコピーしました",
+  "share_failed": "動画の共有に失敗しました",
+  "regeneration_failed": "動画の再生成に失敗しました"
 }

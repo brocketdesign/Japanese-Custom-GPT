@@ -1,5 +1,7 @@
 const { ObjectId } = require('mongodb');
 const axios = require('axios');
+const { createHash } = require('crypto');
+const { uploadToS3 } = require('../models/tool');
 /**
  * Generate video from image using Novita AI
  * @param {Object} params - Parameters for video generation
@@ -66,15 +68,52 @@ async function checkVideoTaskStatus(taskId) {
     const data = response.data;
     
     if (data.task.status === 'TASK_STATUS_SUCCEED') {
-        console.log(data);
-        console.log(data.videos)
-      return {
-        status: 'completed',
-        result: {
-          videoUrl: data.videos?.[0]?.video_url,
-          duration: data.videos?.[0]?.duration
+      console.log(data);
+      console.log(data.videos);
+      
+      // Download video from Novita and upload to S3
+      const novitaVideoUrl = data.videos?.[0]?.video_url;
+      if (novitaVideoUrl) {
+        try {
+          // Download the video
+          const videoResponse = await axios.get(novitaVideoUrl, { 
+            responseType: 'arraybuffer',
+            timeout: 120000 // 2 minutes timeout for video download
+          });
+          const videoBuffer = Buffer.from(videoResponse.data);
+          
+          // Create hash for unique filename
+          const hash = createHash('md5').update(videoBuffer).digest('hex');
+          
+          // Upload to S3 with .mp4 extension
+          const s3VideoUrl = await uploadToS3(videoBuffer, hash, 'novita_result_video.mp4');
+          
+          console.log(`[checkVideoTaskStatus] Video uploaded to S3: ${s3VideoUrl}`);
+          
+          return {
+            status: 'completed',
+            result: {
+              videoUrl: s3VideoUrl, // Use S3 URL instead of Novita URL
+              duration: data.videos?.[0]?.duration
+            }
+          };
+        } catch (uploadError) {
+          console.error('[checkVideoTaskStatus] Error uploading video to S3:', uploadError);
+          // Fallback to original URL if S3 upload fails
+          return {
+            status: 'completed',
+            result: {
+              videoUrl: novitaVideoUrl,
+              duration: data.videos?.[0]?.duration
+            }
+          };
         }
-      };
+      } else {
+        return {
+          status: 'failed',
+          error: 'No video URL in response'
+        };
+      }
     } else if (data.task.status === 'TASK_STATUS_PROCESSING') {
       return {
         status: 'processing',

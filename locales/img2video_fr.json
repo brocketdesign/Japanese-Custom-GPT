@@ -4,5 +4,22 @@
     "generationFailed": "Échec du démarrage de la génération de vidéo",
     "videoSaveFailed": "Vidéo générée mais échec de la sauvegarde",
     "noVideoUrl": "Génération de vidéo terminée mais aucune URL de vidéo reçue"
-  }
+  },
+  "video_generation_in_progress": "Génération de vidéo en cours",
+  "video_generation_started": "Génération de vidéo démarrée",
+  "video_generation_failed": "Échec de la génération de vidéo",
+  "video_prompt_title": "Prompt de génération de vidéo",
+  "video_prompt_subtitle": "Générer une vidéo à partir d'une image utilisera jusqu'à {{points}} points.",
+  "video_prompt_description": "Décrivez le mouvement ou le style de la vidéo (optionnel)",
+  "video_prompt_placeholder": "ex: zoom lent, éclairage dramatique, mouvement de caméra fluide...",
+  "characters": "caractères",
+  "cancel": "Annuler",
+  "generate_video": "Générer la vidéo",
+  "generating_video": "Génération de la vidéo...",
+  "complete": "terminé",
+  "video_not_supported": "Votre navigateur ne prend pas en charge la balise vidéo.",
+  "generated_video": "Vidéo générée",
+  "video_link_copied": "Lien vidéo copié dans le presse-papiers",
+  "share_failed": "Échec du partage de la vidéo",
+  "regeneration_failed": "Échec de la régénération de la vidéo"
 }

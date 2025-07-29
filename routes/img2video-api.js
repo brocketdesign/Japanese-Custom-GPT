@@ -131,7 +131,6 @@ async function img2videoRoutes(fastify) {
                     });
                 }
                 const instructionPrompt = await generateCompletion(systemPrompt, 600, 'mistral');
-                console.log(`[img2video] Generated instruction prompt: ${instructionPrompt}`);
 
                 // Start video generation
                 const videoTask = await generateVideoFromImage({

@@ -403,7 +403,7 @@ function removeContentBetweenStars(str) {
 
 // Handles sending gallery image
 async function handleGalleryImage(db, lastUserMessage, userData, userChatId, userId, fastify) {
-    if (!lastUserMessage.sendImage) return;
+   if (!lastUserMessage.sendImage) return;
 
     const chatsGalleryCollection = db.collection('gallery');
     const gallery = await chatsGalleryCollection.findOne({ chatId: new ObjectId(userData.chatId) });
@@ -421,12 +421,37 @@ async function handleGalleryImage(db, lastUserMessage, userData, userChatId, use
         };
         
         fastify.sendNotificationToUser(userId, 'imageGenerated', data);
+
+        const imageMessage = { 
+            role: "assistant", 
+            type: "image", 
+            imageId: image._id, 
+            imageUrl: image.imageUrl,
+            content: `I generated an image for you! It describes: ${image.prompt}`,
+            timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
+        };
         
-        const imageMessage = { role: "assistant", content: `[Image] ${image._id}` };
         userData.messages.push(imageMessage);
         userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
         
-        await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt);
+        // Update the database directly instead of relying on updateUserChat's merge logic
+        const collectionUserChat = db.collection('userChat');
+        await collectionUserChat.updateOne(
+            {
+                userId: new ObjectId(userId),
+                _id: new ObjectId(userChatId)
+            },
+            { 
+                $push: { messages: imageMessage },
+                $set: { updatedAt: userData.updatedAt }
+            }
+        );
+        
+        // IMPORTANT: Update the userData object to reflect the database changes
+        userData.messages.push(imageMessage);
+        userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+        
+        console.log(`[handleGalleryImage] Image message added successfully`);
     }
 }
 

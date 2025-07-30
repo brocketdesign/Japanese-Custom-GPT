@@ -62,6 +62,7 @@ async function getChatDocument(request, db, chatId) {
 }
 // Helper function to transform user messages for completion
 function transformUserMessages(messages, translations = {}) {
+    //console.log(`[/api/openai-chat-completion] Original messages:`, messages)
     const transformedMessages = [];
     
     for (let i = 0; i < messages.length; i++) {
@@ -349,8 +350,7 @@ async function routes(fastify, options) {
 
             // Generate completion
             const customModel = (language === 'ja' || language === 'japanese') ? 'deepseek' : 'mistral';
-            //console.log(`[/api/openai-chat-completion] messagesForCompletion:`, messagesForCompletion);
-            console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
+            //console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
             generateCompletion(messagesForCompletion, 600, customModel, language).then(async (completion) => {
                 if (completion) {
                     fastify.sendNotificationToUser(userId, 'displayCompletionMessage', { message: completion, uniqueId });

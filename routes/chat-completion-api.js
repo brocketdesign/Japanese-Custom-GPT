@@ -80,11 +80,18 @@ function transformUserMessages(messages, translations = {}) {
         
         // Handle image messages
         if (message.type === 'image' && message.imageUrl) {
-            let imageContent = translations?.sent_image || 'I sent you an image.';
+            let imageContent = translations?.sent_image || 'I sent you the image.';
 
             imageContent += message.content ? ` ${message.content}` : '';
+
             if (message.prompt) {
-                imageContent += `[*This is for context only* Image prompt : " ${message.prompt} " *Do not include the full image prompt in future message. Only a short description.* ]`;
+                const userDetailMessage = 
+                {
+                    role: 'user',
+                    content: `I asked for the following image : " ${message.prompt} " ]`,
+                    hidden: true
+                };
+                transformedMessages.push(userDetailMessage);
             }
             
             const imageMessage = {
@@ -244,7 +251,7 @@ async function routes(fastify, options) {
 
             // Transform messages for completion (excluding the last message which we handle separately)
             const userMessages = transformUserMessages(userData.messages, request.translations);
-            //console.log(`[/api/openai-chat-completion] Transformed user messages:`, userMessages);
+            console.log(`[/api/openai-chat-completion] Transformed user messages:`, userMessages);
             
             // Handle image generation with the last message
             const imageGenResult = await handleImageGeneration(

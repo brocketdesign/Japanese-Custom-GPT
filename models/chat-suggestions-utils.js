@@ -31,8 +31,7 @@ async function generateChatSuggestions(db, chatDocument, userMessages, userInfo,
         if (relationshipInstructions[relationshipType]) {
             relationshipDescription += `${relationshipInstructions[relationshipType]}`;
         }
-        console.log(`[generateChatSuggestions] Relationship type: ${relationshipType}`);
-        console.log(`[generateChatSuggestions] Relationship description: ${relationshipDescription}`);
+        
         // Get character description
         const characterDescription = chatDataToString(chatDocument);
         const userDetails = userDetailsToString(userInfo);
@@ -67,7 +66,7 @@ ${conversationContext}
 
 Generate 3 conversation suggestions in ${language}.`;
 
-        const userPrompt = 'Generate 3 conversation suggestions based on the context above.';
+        const userPrompt = 'Generate 3 conversation suggestions based on the context above from the point of view of the user. Include the character name in the suggestions if applicable.';
 
         // Use OpenAI with structured output
         const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });

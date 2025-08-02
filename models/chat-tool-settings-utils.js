@@ -79,7 +79,10 @@ async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt) {
         if (relationshipInstructions[settings.relationshipType]) {
             enhancedPrompt += `\n# Relationship Context :\n ${relationshipInstructions[settings.relationshipType]}`;
         }
-        
+        // Add instructions for NSFW relationships if applicabl
+        if (settings.relationshipType === 'lover' || settings.relationshipType === 'submissive' || settings.relationshipType === 'dominant' || settings.relationshipType === 'playmate' || settings.relationshipType === 'intimate') {
+            enhancedPrompt += `\n# NSFW Relationship Context :\n You are in a ${settings.relationshipType} relationship. Use explicit, sensual language and describe intimate acts in detail. `;
+        }
         return enhancedPrompt;
         
     } catch (error) {

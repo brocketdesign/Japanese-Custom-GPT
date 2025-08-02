@@ -21,7 +21,7 @@ async function routes(fastify, options) {
     fastify.post('/api/chat-suggestions', async (request, reply) => {
         try {
             const { userId, chatId, userChatId } = request.body;
-            console.log('[POST /api/chat-suggestions] Request body:', request.body);
+
             // Validate required parameters
             if (!userId || !chatId || !userChatId) {
                 return reply.status(400).send({
@@ -88,7 +88,7 @@ async function routes(fastify, options) {
                 userInfo,
                 language
             );
-            console.log('[POST /api/chat-suggestions] Generated suggestions:', suggestions);
+
             return reply.send({
                 success: true,
                 showSuggestions: true,

@@ -1411,10 +1411,18 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       throw new Error('User data not found');
     }
 
+    // filepath: models/imagen.js
     function normalizeImageUrl(url) {
-      // Match both .../hash_novita_result_image.png and .../hash/novita_result_image.png
-      const match = url.match(/([a-f0-9]{32})[_\/]novita_result_image\.png$/);
-      return match ? match[1] : url;
+      // Extract the hash from the image URL
+      const match = url.match(/([a-f0-9]{32})_novita_result_image\.png/);
+      if (match) {
+        return match[1];
+      }
+      const match2 = url.match(/([a-f0-9]{32})\/novita_result_image\.png/);
+        if (match2) {
+          return match2[1];
+        }
+      return url; // Return original URL if no match
     }
 
     const updateOriginalMessageWithMerge = async (mergeMessage) => {
@@ -1447,7 +1455,8 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
             mergeId: mergeMessage.mergeId,
             originalImageUrl: mergeMessage.originalImageUrl,
           };
-          
+          console.log(`[updateOriginalMessageWithMerge] Updating message at index ${originalIndex} with resultMessage:`, resultMessage);
+
           // Use atomic operation to update the specific message
           await userDataCollection.updateOne(
             {
@@ -1458,6 +1467,9 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
               $set: { [`messages.${originalIndex}`]: resultMessage },
             }
           );
+          console.log(`[updateOriginalMessageWithMerge] Message updated successfully`);
+        } else {
+          console.log(`[updateOriginalMessageWithMerge] No matching message found for merge`);
         }
       } catch (error) {
         console.error('Error updating original message with merge:', error.message);

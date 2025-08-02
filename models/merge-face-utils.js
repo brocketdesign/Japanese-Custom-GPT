@@ -214,21 +214,26 @@ async function saveMergedFaceToDB({
   userChatId,
   fastify
 }) {
-  const db = fastify.mongo.db;
-  const mergedFacesCollection = db.collection('mergedFaces');
-  const mergeData = {
-    originalImageId: new ObjectId(originalImageId),
-    userId: new ObjectId(userId),
-    chatId: new ObjectId(chatId),
-    userChatId: userChatId ? new ObjectId(userChatId) : null,
-    mergedImageUrl, // Only store S3 URL
-    createdAt: new Date()
-  };
+  try {
+    const db = fastify.mongo.db;
+    const mergedFacesCollection = db.collection('mergedFaces');
+    const mergeData = {
+      originalImageId: new ObjectId(originalImageId),
+      userId: new ObjectId(userId),
+      chatId: new ObjectId(chatId),
+      userChatId: userChatId ? new ObjectId(userChatId) : null,
+      mergedImageUrl, // Only store S3 URL
+      createdAt: new Date()
+    };
 
-  const result = await mergedFacesCollection.insertOne(mergeData);
-  console.log(`[saveMergedFaceToDB] Merge saved with ID: ${result.insertedId}`);
+    const result = await mergedFacesCollection.insertOne(mergeData);
+    console.log(`[saveMergedFaceToDB] Merge saved with ID: ${result.insertedId}`);
 
-  return { ...mergeData, _id: result.insertedId };
+    return { ...mergeData, _id: result.insertedId };
+  } catch (error) {
+    console.error('[saveMergedFaceToDB] Error saving merged face to DB:', error);
+    throw error; // Re-throw the error to be handled by the caller
+  }
 }
 /**
  * Add merge face message to chat
@@ -242,14 +247,6 @@ async function addMergeFaceMessageToChat(userChatId, mergeId, mergedImageUrl, fa
     const db = fastify.mongo.db;
     const collectionUserChat = db.collection('userChat');
     
-    // [DEBUG addMergeFaceMessageToChat] Log input parameters
-    console.log(`[DEBUG addMergeFaceMessageToChat] CALLED with parameters:`, {
-      userChatId,
-      mergeId,
-      mergedImageUrl: mergedImageUrl?.includes('merged-face') ? 'MERGED_URL' : 'ORIGINAL_URL',
-      actualUrl: mergedImageUrl
-    });
-    
     const userChatDoc = await collectionUserChat.findOne({ 
       _id: new ObjectId(userChatId) 
     });
@@ -259,58 +256,26 @@ async function addMergeFaceMessageToChat(userChatId, mergeId, mergedImageUrl, fa
       return;
     }
 
-    console.log(`[DEBUG addMergeFaceMessageToChat] Current message count: ${userChatDoc.messages ? userChatDoc.messages.length : 0}`);
-
     // Create assistant message for the merged face with unique timestamp
     const assistantMessage = {
       role: 'assistant',
       content: `[MergeFace] ${mergeId}`,
       timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }),
-      isMergeFace: true,
+      isMerged: true, // Use isMerged instead of isMergeFace for consistency
       mergeId: mergeId,
-      imageUrl: mergedImageUrl, // Add the merged image URL directly
-      mergedImageUrl: mergedImageUrl,
+      imageUrl: mergedImageUrl,
       hidden: true,
       type: 'mergeFace',
-      uniqueId: `merge_${mergeId}_${Date.now()}`,
-      customLog: `[merge-face-utils.js] addMergeFaceMessageToChat called with userChatId: ${userChatId}, mergeId: ${mergeId}`
     };
 
-    // [DEBUG addMergeFaceMessageToChat] Log message being added
-    console.log(`[DEBUG addMergeFaceMessageToChat] Assistant message being added:`, {
-      type: assistantMessage.type,
-      isMergeFace: assistantMessage.isMergeFace,
-      imageUrl: assistantMessage.imageUrl?.includes('merged-face') ? 'MERGED_URL' : 'ORIGINAL_URL',
-      content: assistantMessage.content
-    });
-
-    // Add the message to the chat
-    userChatDoc.messages.push(assistantMessage);
-    userChatDoc.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-
-    console.log(`[DEBUG addMergeFaceMessageToChat] About to update database with ${userChatDoc.messages.length} messages`);
-
-    // Update the database
+    // Add the message to the chat using $push for atomicity
     await collectionUserChat.updateOne(
       { _id: new ObjectId(userChatId) },
       { 
-        $set: { 
-          messages: userChatDoc.messages,
-          updatedAt: userChatDoc.updatedAt
-        }
+        $push: { messages: assistantMessage },
+        $set: { updatedAt: new Date() }
       }
     );
-
-    // Verify the update
-    const verifyDoc = await collectionUserChat.findOne({ _id: new ObjectId(userChatId) });
-    console.log(`[DEBUG addMergeFaceMessageToChat] Verification - message count after update: ${verifyDoc.messages ? verifyDoc.messages.length : 0}`);
-    
-    const lastMessage = verifyDoc.messages[verifyDoc.messages.length - 1];
-    console.log(`[DEBUG addMergeFaceMessageToChat] Last message in chat:`, {
-      type: lastMessage.type,
-      isMergeFace: lastMessage.isMergeFace,
-      imageUrl: lastMessage.imageUrl?.includes('merged-face') ? 'MERGED_URL' : 'ORIGINAL_URL'
-    });
 
     console.log(`[addMergeFaceMessageToChat] Added merge face message to chat ${userChatId}`);
   } catch (error) {

@@ -1,0 +1,16 @@
+{
+  "suggestions_title": "Quick responses",
+  "suggestions_loading": "Generating suggestions...",
+  "suggestions_empty": "No suggestions available",
+  "suggestions_error": "Unable to load suggestions",
+  "suggestions_close": "Close suggestions",
+  "suggestions_disable": "Disable suggestions",
+  "suggestions_enable": "Enable suggestions",
+  "suggestions_sent": "Suggestion sent",
+  "suggestions_failed": "Failed to send suggestion",
+  "settings": {
+    "suggestionsSettings": "Suggestions Settings",
+    "enableSuggestions": "Enable Chat Suggestions",
+    "suggestionsDescription": "Automatically show AI response suggestions"
+  }
+}

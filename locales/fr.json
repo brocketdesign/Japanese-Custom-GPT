@@ -37,6 +37,9 @@
   "close": "Fermer",
   "analytics_title": "Tableau de bord d'analyse",
   "settings": {
+    "suggestionsSettings": "Paramètres de suggestions",
+    "enableSuggestions": "Activer les suggestions de chat",
+    "suggestionsDescription": "Afficher automatiquement les suggestions de réponse IA",
     "saveSettings": "Enregistrer les paramètres",
     "title": "Paramètres",
     "imageSettings": "Paramètres d'image",

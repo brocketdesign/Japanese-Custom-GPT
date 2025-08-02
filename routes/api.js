@@ -1555,7 +1555,6 @@ async function routes(fastify, options) {
                     const response = await axios.head(videoUrl);
                     return response.status === 200; // Check if the video URL is accessible
                 } catch (error) {
-                    console.error(`[API/latest-video-chats] Error fetching video URL: ${videoUrl}`, error.message);
                     return false; // Return false if there's an error fetching the video URL
                 }
             }

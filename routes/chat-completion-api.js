@@ -244,6 +244,7 @@ async function routes(fastify, options) {
 
             // Transform messages for completion (excluding the last message which we handle separately)
             const userMessages = transformUserMessages(userData.messages, request.translations);
+            //console.log(`[/api/openai-chat-completion] Transformed user messages:`, userMessages);
             
             // Handle image generation with the last message
             const imageGenResult = await handleImageGeneration(

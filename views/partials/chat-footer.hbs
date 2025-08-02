@@ -445,6 +445,26 @@
                 </div>
             </div>
 
+            <!-- Chat Suggestions Settings -->
+            <div class="settings-section">
+                <div class="settings-section-title">
+                    <i class="bi bi-lightbulb"></i>
+                    {{translations.settings.suggestionsSettings}}
+                </div>
+                
+                <!-- Enable Suggestions Switch -->
+                <div class="settings-field">
+                    <label class="settings-label">{{translations.settings.enableSuggestions}}</label>
+                    <div class="settings-switch-container">
+                        <span class="settings-switch-description">{{translations.settings.suggestionsDescription}}</span>
+                        <label class="settings-switch">
+                            <input type="checkbox" id="suggestions-enable-switch" checked>
+                            <span class="settings-switch-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
             <button type="button" class="settings-save-btn" id="settings-save-btn">
                 <i class="bi bi-check-circle"></i>
                 {{translations.settings.saveSettings}}

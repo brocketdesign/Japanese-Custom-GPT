@@ -88,6 +88,9 @@
   "loadMore": "Load More",
   "close": "Close",
   "settings": {
+    "suggestionsSettings": "Suggestions Settings",
+    "enableSuggestions": "Enable Chat Suggestions",
+    "suggestionsDescription": "Automatically show AI response suggestions",
     "saveSettings": "Save Settings",
     "title": "Settings",
     "imageSettings": "Image Settings",

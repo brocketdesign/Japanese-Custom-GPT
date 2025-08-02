@@ -28,6 +28,7 @@ async function registerRoutes(fastify) {
   fastify.register(require('../routes/chat-tool-goals-api'));
   fastify.register(require('../routes/chat-completion-api'));
   fastify.register(require('../routes/admin-models'));
+  fastify.register(require('../routes/chat-suggestions-api'));
 }
 
 module.exports = registerRoutes;

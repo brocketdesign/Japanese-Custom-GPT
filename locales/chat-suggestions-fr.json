@@ -1,0 +1,16 @@
+{
+  "suggestions_title": "Réponses rapides",
+  "suggestions_loading": "Génération de suggestions...",
+  "suggestions_empty": "Aucune suggestion disponible",
+  "suggestions_error": "Impossible de charger les suggestions",
+  "suggestions_close": "Fermer les suggestions",
+  "suggestions_disable": "Désactiver les suggestions",
+  "suggestions_enable": "Activer les suggestions",
+  "suggestions_sent": "Suggestion envoyée",
+  "suggestions_failed": "Échec de l'envoi de la suggestion",
+  "settings": {
+    "suggestionsSettings": "Paramètres de suggestions",
+    "enableSuggestions": "Activer les suggestions de chat",
+    "suggestionsDescription": "Afficher automatiquement les suggestions de réponse IA"
+  }
+}

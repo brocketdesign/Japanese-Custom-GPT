@@ -1,0 +1,16 @@
+{
+  "suggestions_title": "クイック返信",
+  "suggestions_loading": "提案を生成中...",
+  "suggestions_empty": "提案がありません",
+  "suggestions_error": "提案を読み込めません",
+  "suggestions_close": "提案を閉じる",
+  "suggestions_disable": "提案を無効にする",
+  "suggestions_enable": "提案を有効にする",
+  "suggestions_sent": "提案を送信しました",
+  "suggestions_failed": "提案の送信に失敗しました",
+  "settings": {
+    "suggestionsSettings": "提案設定",
+    "enableSuggestions": "チャット提案を有効にする",
+    "suggestionsDescription": "AIからの返信提案を自動表示する"
+  }
+}

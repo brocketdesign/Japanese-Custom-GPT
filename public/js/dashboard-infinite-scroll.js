@@ -55,6 +55,12 @@ function saveCacheToStorage(cacheId, pages, currentPage, totalPages) {
  * @returns {Promise}
  */
 window.loadChatImages = function(chatId, page = 1, reload = false, isModal = false) {
+    // Validate chat ID against session storage
+    if (!validateChatIdWithSession(chatId)) {
+        console.warn(`[loadChatImages] Chat ID ${chatId} does not match session storage`);
+        return Promise.resolve();
+    }
+    
     return loadImages('chat', chatId, page, reload, isModal, `/chat/${chatId}/images`);
 };
 
@@ -71,11 +77,25 @@ window.loadUserImages = function(userId, page = 1, reload = false, isModal = fal
 };
 
 /**
+ * Validate if the current chat ID matches session storage
+ */
+function validateChatIdWithSession(chatId) {
+    const sessionChatId = sessionStorage.getItem('lastChatId') || sessionStorage.getItem('chatId');
+    return !sessionChatId || sessionChatId === chatId;
+}
+
+/**
  * Generic function to load images with infinite scroll
  */
 function loadImages(type, id, page = 1, reload = false, isModal = false, endpoint) {
     const manager = window.chatImageManager;
     const cacheKey = `${type}_${id}`;
+    
+    // For chat images, validate session alignment before proceeding
+    if (type === 'chat' && !validateChatIdWithSession(id)) {
+        console.warn(`[loadImages] Chat ID ${id} does not match session storage, skipping load`);
+        return Promise.resolve();
+    }
     
     // Initialize state if not exists
     if (!manager.cache.has(cacheKey)) {
@@ -174,6 +194,12 @@ async function handleReload(id, cacheKey, type) {
     // Clear existing content
     const gallerySelector = type === 'chat' ? '#chat-images-gallery' : '#user-images-gallery';
     $(gallerySelector).empty();
+    
+    // Set data attribute for chat galleries to track which chat is being rendered
+    if (type === 'chat') {
+        $(gallerySelector).attr('data-chat-id', id);
+    }
+    
     window.loadedImages = [];
     
     // If we have cached pages, render them
@@ -261,6 +287,12 @@ async function fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type
 async function renderImages(images, id, type) {
     if (!images || images.length === 0) {
         return;
+    }
+    
+    // Set data attribute for chat galleries to track which chat is being rendered
+    if (type === 'chat') {
+        const gallerySelector = '#chat-images-gallery';
+        $(gallerySelector).attr('data-chat-id', id);
     }
     
     const currentUser = window.user || {};

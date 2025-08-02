@@ -222,6 +222,13 @@ function initializeWebSocket(onConnectionResult = null) {
             }
             break;
           }
+          case 'showChatSuggestions': {
+              const { userId, chatId, userChatId } = data.notification;
+              if (window.chatSuggestionsManager) {
+                  window.chatSuggestionsManager.showSuggestions(userId, chatId, userChatId);
+              }
+              break;
+          }
           default:
             // Removed console.log('[WebSocket] Unhandled notification type:', data.notification.type);
             break;

@@ -237,6 +237,13 @@ $(document).ready(async function() {
         if (window.promptManager) {
             window.promptManager.hide();
         }
+         // Hide suggestions when user sends manual message
+        if (window.chatSuggestionsManager) {
+            window.chatSuggestionsManager.hide();
+        }
+        
+        // Trigger custom event
+        $(document).trigger('chat:messageSent');
         
         $('#startButtonContained, #introChat').hide();
         $('#gen-ideas').removeClass('done');
@@ -251,7 +258,6 @@ $(document).ready(async function() {
     
         const message = customMessage || $('#userMessage').val();
         let finalMessage = message;
-    
     
         if (finalMessage.trim() !== '') {
             if (displayStatus) displayMessage('user', message, userChatId);
@@ -487,6 +493,22 @@ function setupChatInterface(chat, character) {
                     checkAndScroll();
                 }
             }, 1000);
+
+
+            // Add suggestions after assistant message
+            window.chatId = sessionStorage.getItem('chatId') || window.chatId;
+            window.userChatId = sessionStorage.getItem('userChatId') || window.userChatId;
+
+
+            if (window.chatSuggestionsManager && window.userId && window.chatId && window.userChatId) {
+                setTimeout(() => {
+                    window.chatSuggestionsManager.showSuggestions(
+                        window.userId, 
+                        window.chatId, 
+                        window.userChatId
+                    );
+                }, 500);
+            }
         });
 
         const today = new Date().toISOString().split('T')[0];
@@ -1365,6 +1387,21 @@ function setupChatInterface(chat, character) {
                 relativeContainer.append(toolsHtml);
             }
 
+        }
+
+        // Add suggestions after assistant message
+        window.chatId = sessionStorage.getItem('chatId') || window.chatId;
+        window.userChatId = sessionStorage.getItem('userChatId') || window.userChatId;
+
+
+        if (window.chatSuggestionsManager && window.userId && window.chatId && window.userChatId) {
+            setTimeout(() => {
+                window.chatSuggestionsManager.showSuggestions(
+                    window.userId, 
+                    window.chatId, 
+                    window.userChatId
+                );
+            }, 500);
         }
     }
 

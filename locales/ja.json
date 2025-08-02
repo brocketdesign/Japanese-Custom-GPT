@@ -37,6 +37,9 @@
   "close": "閉じる",
   "analytics_title": "分析ダッシュボード",
   "settings": {
+    "suggestionsSettings": "提案設定",
+    "enableSuggestions": "チャット提案を有効にする",
+    "suggestionsDescription": "AIからの返信提案を自動表示する",
     "saveSettings": "設定を保存",
     "title": "設定",
     "imageSettings": "画像設定",

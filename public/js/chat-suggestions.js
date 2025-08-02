@@ -8,6 +8,7 @@ class ChatSuggestionsManager {
         this.currentSuggestions = [];
         this.isVisible = false;
         this.isEnabled = true; // Default enabled state
+        this.suggestionCountPerChat = new Map(); // Track usage per chat
         this.init();
     }
 
@@ -103,6 +104,16 @@ class ChatSuggestionsManager {
                 return;
             }
 
+            // Check subscription status and suggestion limits
+            const subscriptionStatus = window.user?.subscriptionStatus === 'active';
+            const currentCount = this.suggestionCountPerChat.get(chatId) || 0;
+            
+            // Limit to 5 suggestions per chat for non-subscribed users
+            if (!subscriptionStatus && currentCount >= 5) {
+                console.log('[ChatSuggestions] Suggestion limit reached for non-subscribed user');
+                return;
+            }
+
             // Request suggestions from API
             const response = await $.ajax({
                 url: `${API_URL}/api/chat-suggestions`,
@@ -193,6 +204,13 @@ class ChatSuggestionsManager {
             $('#chat-suggestions-container').remove();
             this.suggestionsContainer = null;
             this.isVisible = false;
+
+            // Increment suggestion count for this chat
+            const currentChatId = sessionStorage.getItem('chatId') || window.chatId;
+            if (currentChatId) {
+                const currentCount = this.suggestionCountPerChat.get(currentChatId) || 0;
+                this.suggestionCountPerChat.set(currentChatId, currentCount + 1);
+            }
 
             // Fill the message input
             $('#userMessage').val(suggestion);

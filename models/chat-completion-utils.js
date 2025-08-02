@@ -45,7 +45,6 @@ async function getPersonaById(db, personaId) {
             console.log('[getPersonaById] Persona not found');
             return null;
         }
-        console.log(`[getPersonaById] Persona found: ${persona.name}`);
         return persona;
     } catch (error) {
         console.log('[getPersonaById] Error fetching persona:', error);

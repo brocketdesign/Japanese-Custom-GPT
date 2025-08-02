@@ -100,7 +100,7 @@ function userDetailsToString(user) {
 
 // Generates system content for completion
 // Generates system content for completion
-async function completionSystemContent(chatDocument, chatDescription, currentTimeInJapanese, language, userPoints){
+async function completionSystemContent(chatDocument, chatDescription, currentTimeInJapanese, language, userPoints, all_tasks, subscriptionStatus){
     try {
         return `
         You must act as a real character with feelings.\n\n
@@ -133,6 +133,12 @@ async function completionSystemContent(chatDocument, chatDescription, currentTim
         # User points status:\n
         - The user currently has ${userPoints} points\n
         - ${userPoints >= 10 ? 'The user can afford image generation (10+ points required). You may request image generation when appropriate.' : 'The user CANNOT afford image generation (needs 10+ points, currently has ' + userPoints + ').\n IMPORTANT: You must NOT attempt to generate any images. If asked for images, explain they need more points or a Lamix Premium subscription.'}\n
+        
+        # Subscription status:\n
+        - The user is currently ${subscriptionStatus ? 'an active Lamix Premium subscriber.' : 'not an active Lamix Premium subscriber.'}\n
+        ${!subscriptionStatus ? '- Since the user is not subscribed, you can mention the benefits of subscribing, such as unlimited image generation and access to more intimate relashionship and NSFW content.\n': ''}
+        ${!subscriptionStatus ? '- There is a limit of 5 image generation per day for non-subscribers.\n' : ''}
+        ${!subscriptionStatus ? (all_tasks.length < 5 ? `- The user has ${parseInt(5 - all_tasks.length)} image generation left for today.` : '- The user is not a premium subscriber and has atteing the image generation limit for today.') : '- The user is a premium subscriber and only need points to generate images.' }
 
         # Guidelines :\n
         - Current date: ${currentTimeInJapanese}\n

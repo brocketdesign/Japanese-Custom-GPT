@@ -6,6 +6,7 @@ const {
 } = require('../models/openai');
 const { 
     checkImageDescription,
+    getTasks
 } = require('../models/imagen');
 const { 
     getLanguageName, 
@@ -251,7 +252,7 @@ async function routes(fastify, options) {
 
             // Transform messages for completion (excluding the last message which we handle separately)
             const userMessages = transformUserMessages(userData.messages, request.translations);
-            console.log(`[/api/openai-chat-completion] Transformed user messages:`, userMessages);
+            //console.log(`[/api/openai-chat-completion] Transformed user messages:`, userMessages);
             
             // Handle image generation with the last message
             const imageGenResult = await handleImageGeneration(
@@ -293,6 +294,7 @@ async function routes(fastify, options) {
 
             // Check the user's points balance after handling goals in case the user completed a goal
             const userPoints = await getUserPoints(fastify.mongo.db, userId);
+            const all_tasks = await getTasks(db, null, userId);
 
             // Generate system content
             let enhancedSystemContent = await completionSystemContent(
@@ -300,7 +302,9 @@ async function routes(fastify, options) {
                 chatDescription,
                 getCurrentTimeInJapanese(),
                 language,
-                userPoints
+                userPoints,
+                all_tasks,
+                subscriptionStatus
             );
 
             // Apply user settings and goals to system prompt

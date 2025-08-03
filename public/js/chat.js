@@ -161,6 +161,7 @@ $(document).ready(async function() {
             contentType: 'application/json',
             data: JSON.stringify({ userId: fetch_userId, chatId: fetch_chatId, userChatId }),
             success: function(data) {
+                console.log('[postChatData] Chat data fetched successfully:', data.imageModel);
                 handleChatSuccess(data, fetch_reset, fetch_userId, userChatId);
             },
             error: function(xhr, status, error) {
@@ -1412,8 +1413,11 @@ function setupChatInterface(chat, character) {
 
     window.generateChatCompletion = function(callback, isHidden = false) {
         const uniqueId = `${currentStep}-${Date.now()}`;
-        const container = createBotResponseContainer(uniqueId);
-
+        const container = createBotResponseContainer(uniqueId); 
+        // Hide chat suggestions when completion starts
+        if (window.chatSuggestionsManager) {
+            window.chatSuggestionsManager.hide();
+        }
         $.ajax({
             url: API_URL + '/api/openai-chat-completion',
             method: 'POST',

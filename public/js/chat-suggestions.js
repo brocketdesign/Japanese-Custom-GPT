@@ -170,12 +170,6 @@ class ChatSuggestionsManager {
             this.suggestionsContainer.fadeIn(200);
             this.isVisible = true;
 
-            // Auto-hide after 30 seconds
-            setTimeout(() => {
-                if (this.isVisible) {
-                    this.hide();
-                }
-            }, 60000);
         }
     }
 

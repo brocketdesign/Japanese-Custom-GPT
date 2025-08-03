@@ -191,7 +191,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
 
     // [DEBUG] Log the request data
     console.log(`[generateImg] Request data for image generation:`, requestData);
-
+    
     // Send request to Novita and get taskId
     const novitaTaskId = await fetchNovitaMagic(requestData, flux);
 

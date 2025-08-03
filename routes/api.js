@@ -180,10 +180,10 @@ async function routes(fastify, options) {
                     startMessage.sendImage = true;
                     if (subscriptionActive) {
                         startMessage.content =
-                        "Start by greeting me, say it's nice to meet me for the first time, introduce yourself and mention you can send images.";
+                        "Start by greeting me, say it's nice to meet me for the first time, introduce yourself. Tell about the current relationship with me, and inform me that we could get more intimate if I enroll in a subscription.";
                     } else {
                         startMessage.content =
-                        "Start by greeting me, say it's nice to meet me for the first time, introduce yourself and mention you can send images.";
+                        "Start by greeting me, say it's nice to meet me for the first time, introduce yourself. Tell about the current relationship with me.";
                     }
                     const chatsGalleryCollection = fastify.mongo.db.collection('gallery');
                     const gallery = await chatsGalleryCollection.findOne({

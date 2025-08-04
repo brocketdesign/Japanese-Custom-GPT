@@ -561,6 +561,7 @@
   "premium": " 💎 プレミアム",
   "discount": "70%オフ",
   "new_user_discount": "💎 新規ユーザーに70%割引",
+  "new_user_points_bonus": "🪙 1000ポイントボーナス（新規プレミアムユーザー向け）",
   "plan_page": {
     "unlock_everything": "すべてのプレミアム機能を解除",
     "choose_your_plan_description": "あなたに最適なプランを選択してください。100%匿名。いつでもキャンセル可能。",

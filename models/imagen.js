@@ -1356,9 +1356,7 @@ async function fetchNovitaMagic(data, flux = false) {
       console.log(`Error - ${response.data.reason}`);
       return false;
     }
-    
-    console.log(response.data);
-    
+        
     // For FLUX, return the complete response with images
     if (flux) {
       const taskId = response.data.task.task_id;

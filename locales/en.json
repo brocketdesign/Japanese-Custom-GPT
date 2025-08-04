@@ -555,6 +555,8 @@
   "premium": " 💎 Premium",
   "discount": "70% off",
   "new_user_discount": "💎 70% off for new users",
+  "new_user_points_bonus": "🪙 1000 points bonus for new premium users",
+  "new_user_points_bonus_description": "Get 1000 bonus points when you upgrade to premium for the first time. Use these points to create more images and chat with characters.",
   "plan_page": {
     "unlock_everything": "Unlock All Premium Features",
     "choose_your_plan_description": "Choose the perfect plan for your needs. 100% anonymous. Cancel anytime.",

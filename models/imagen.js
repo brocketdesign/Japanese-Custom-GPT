@@ -74,10 +74,254 @@ const default_prompt = {
     strength: 0.65,
     loras: [],
   } 
+/**
+ * Handle FLUX immediate completion processing
+ * @param {Object} params - All parameters needed for FLUX processing
+ * @returns {Object} Task completion result
+ */
+async function handleFluxCompletion({
+  novitaResult,
+  newTitle,
+  taskSlug,
+  prompt,
+  imageType,
+  image_request,
+  aspectRatio,
+  userId,
+  chatId,
+  userChatId,
+  chatCreation,
+  placeholderId,
+  shouldAutoMerge,
+  enableMergeFace,
+  image_base64,
+  chat,
+  customPromptId,
+  customGiftId,
+  fastify,
+  translations
+}) {
+  const db = fastify.mongo.db;
+  
+  console.log('[handleFluxCompletion] FLUX completed immediately, processing results');
+  console.log('[handleFluxCompletion] Using generated title:', newTitle);
 
-// Module to generate an image
+  // Process images immediately for FLUX with proper merge handling
+  let processedImages = Array.isArray(novitaResult.images) ? novitaResult.images : [novitaResult.images];
+  
+  // Handle auto merge for FLUX if enabled
+  if (shouldAutoMerge) {
+    if (chatCreation && enableMergeFace && image_base64) {
+      // Character creation with uploaded face image
+      console.log('[handleFluxCompletion] Character creation merge enabled');
+      
+      const mergedImages = [];
+      for (const imageData of processedImages) {
+        try {
+          const mergedResult = await performAutoMergeFaceWithBase64(
+            { 
+              imageUrl: imageData.imageUrl, 
+              imageId: null,
+              seed: imageData.seed || 0,
+              nsfw_detection_result: null
+            }, 
+            image_base64, 
+            fastify
+          );
+          
+          if (mergedResult && mergedResult.imageUrl) {
+            mergedImages.push({
+              ...mergedResult,
+              isMerged: true
+            });
+          } else {
+            mergedImages.push({ ...imageData, isMerged: false });
+          }
+        } catch (error) {
+          console.error(`FLUX character creation merge error:`, error.message);
+          mergedImages.push({ ...imageData, isMerged: false });
+        }
+      }
+      processedImages = mergedImages;
+    } else if (!chatCreation && chat.chatImageUrl && chat.chatImageUrl.length > 0) {
+      // Regular auto merge with chat image
+      console.log('[handleFluxCompletion] Regular auto merge enabled');
+      
+      const mergedImages = [];
+      for (const imageData of processedImages) {
+        try {
+          const mergedResult = await performAutoMergeFace(
+            { 
+              imageUrl: imageData.imageUrl, 
+              imageId: null,
+              seed: imageData.seed || 0,
+              nsfw_detection_result: null
+            }, 
+            chat.chatImageUrl, 
+            fastify
+          );
+          
+          if (mergedResult && mergedResult.imageUrl) {
+            mergedImages.push({
+              ...imageData,
+              ...mergedResult,
+              isMerged: true
+            });
+          } else {
+            mergedImages.push({ ...imageData, isMerged: false });
+          }
+        } catch (error) {
+          console.error(`FLUX auto merge error:`, error.message);
+          mergedImages.push({ ...imageData, isMerged: false });
+        }
+      }
+      processedImages = mergedImages;
+    } else {
+      processedImages = processedImages.map(imageData => ({ ...imageData, isMerged: false }));
+    }
+  } else {
+    processedImages = processedImages.map(imageData => ({ ...imageData, isMerged: false }));
+  }
+
+  // Store basic task data with title and slug
+  const taskData = {
+    taskId: novitaResult.taskId,
+    type: imageType,
+    status: 'completed',
+    prompt: prompt,
+    title: newTitle,
+    slug: taskSlug,
+    negative_prompt: image_request.negative_prompt || '',
+    aspectRatio: aspectRatio,
+    userId: new ObjectId(userId),
+    chatId: new ObjectId(chatId),
+    userChatId: userChatId ? new ObjectId(userChatId) : null,
+    blur: image_request.blur,
+    chatCreation,
+    placeholderId,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    shouldAutoMerge,
+    enableMergeFace: enableMergeFace || false,
+    result: { images: processedImages }
+  };
+
+  // Add custom prompt/gift IDs if provided
+  if (customPromptId) taskData.customPromptId = customPromptId;
+  if (customGiftId) taskData.customGiftId = customGiftId;
+
+  // Store original request data for character creation tasks with merge face enabled
+  if (chatCreation && enableMergeFace && image_base64) {
+    taskData.originalRequestData = {
+      image_base64: image_base64
+    };
+    console.log('[handleFluxCompletion] Stored original request data for character creation merge');
+  }
+
+  await db.collection('tasks').insertOne(taskData);
+
+  // Save processed images to database directly (bypass checkTaskStatus)
+  const savedImages = [];
+  for (let arrayIndex = 0; arrayIndex < processedImages.length; arrayIndex++) {
+    const imageData = processedImages[arrayIndex];
+    
+    let nsfw = imageType === 'nsfw';
+    
+    let uniqueSlug = taskSlug;
+    if (processedImages.length > 1) {
+      uniqueSlug = `${taskSlug}-${arrayIndex + 1}`;
+    }
+
+    const imageResult = await saveImageToDB({
+      taskId: novitaResult.taskId,
+      userId: new ObjectId(userId),
+      chatId: new ObjectId(chatId),
+      userChatId: userChatId ? new ObjectId(userChatId) : null,
+      prompt: prompt,
+      title: newTitle,
+      slug: uniqueSlug,
+      imageUrl: imageData.imageUrl,
+      aspectRatio: aspectRatio,
+      seed: imageData.seed || 0,
+      blurredImageUrl: null, // FLUX doesn't support blurred images
+      nsfw: nsfw,
+      fastify,
+      isMerged: imageData.isMerged || false,
+      originalImageUrl: imageData.originalImageUrl,
+      mergeId: imageData.mergeId,
+      shouldAutoMerge: shouldAutoMerge
+    });
+
+    // Handle merge face relationships for FLUX
+    if (shouldAutoMerge && imageData.isMerged && imageData.mergeId) {
+      try {
+        const { saveMergedFaceToDB } = require('./merge-face-utils');
+        await saveMergedFaceToDB({
+          originalImageId: imageResult.imageId,
+          mergedImageUrl: imageData.imageUrl,
+          userId: new ObjectId(userId),
+          chatId: new ObjectId(chatId),
+          userChatId: userChatId ? new ObjectId(userChatId) : null,
+          fastify
+        });
+        console.log(`[handleFluxCompletion] Created merge relationship: ${imageData.mergeId}`);
+      } catch (error) {
+        console.error(`[handleFluxCompletion] Error creating merge relationship:`, error);
+      }
+    }
+
+    savedImages.push({
+      ...imageResult,
+      status: 'completed'
+    });
+  }
+
+  // Update task with saved images
+  await db.collection('tasks').updateOne(
+    { taskId: novitaResult.taskId },
+    { 
+      $set: { 
+        status: 'completed', 
+        result: { images: savedImages }, 
+        updatedAt: new Date() 
+      } 
+    }
+  );
+
+  // Create the completed task status object for handleTaskCompletion
+  const completedTaskStatus = {
+    taskId: novitaResult.taskId,
+    userId: userId,
+    userChatId: userChatId,
+    status: 'completed',
+    images: savedImages,
+    result: { images: savedImages }
+  };
+
+  // Handle task completion using the standard flow
+  try {
+    await handleTaskCompletion(completedTaskStatus, fastify, {
+      chatCreation,
+      translations,
+      userId,
+      chatId,
+      placeholderId
+    });
+  } catch (error) {
+    console.error('Error handling FLUX task completion:', error);
+    fastify.sendNotificationToUser(userId, 'handleLoader', { imageId: placeholderId, action: 'remove' });
+    fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId: placeholderId, spin: false });
+    fastify.sendNotificationToUser(userId, 'resetCharacterForm');
+    throw error;
+  }
+
+  return { taskId: novitaResult.taskId };
+}
+
+// Simplified generateImg function
 async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSeed, modelId, regenerate, userId, chatId, userChatId, imageType, image_num, image_base64, chatCreation, placeholderId, translations, fastify, flux = false, customPromptId = null, customGiftId = null, enableMergeFace = false}) {
     const db = fastify.mongo.db;
+    
     // Validate required parameters (prompt)
     if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
         fastify.sendNotificationToUser(userId, 'showNotification', {
@@ -86,6 +330,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
         });
         return;
     }
+
     // Fetch the user
     let user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
     if (!user) {
@@ -104,19 +349,23 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     
     let imageModel = chat.imageModel || 'novaAnimeXL_ponyV20_461138';
     let modelData = null;
-    try {
-      modelData = await db.collection('myModels').findOne({ model: imageModel });
-      if (!modelData) {
-        modelData = await db.collection('myModels').findOne({ modelId: modelId?.toString() });
-      }
-      console.log(`[generateImg] Using image model: ${imageModel} from chat or default`);
-    } catch (error) {
-      console.error('[generateImg] Error fetching modelData:', error);
-      modelData = null;
+    
+    // For FLUX, use default flux settings instead of fetching model data
+    if (!flux) {
+        try {
+          modelData = await db.collection('myModels').findOne({ model: imageModel });
+          if (!modelData) {
+            modelData = await db.collection('myModels').findOne({ modelId: modelId?.toString() });
+          }
+          console.log(`[generateImg] Using image model: ${imageModel} from chat or default`);
+        } catch (error) {
+          console.error('[generateImg] Error fetching modelData:', error);
+          modelData = null;
+        }
     }
 
-    // Set default model if not found
-    if(modelId && regenerate){
+    // Set default model if not found (non-FLUX only)
+    if(modelId && regenerate && !flux){
       try {
           imageModel = modelData?.model || imageModel;
       } catch (error) {
@@ -126,58 +375,72 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
 
     const gender = chat.gender
 
-    // Custom negative prompt by gender
+    // Custom negative prompt by gender (not used for FLUX)
     let genderNegativePrompt = '';
-    if(gender == 'female'){
-      genderNegativePrompt = 'muscular,manly,'
-    }
-    if(gender == 'male'){
-      genderNegativePrompt = 'feminine,womanly,'
-    }
-    if(gender == 'nonBinary'){
-      genderNegativePrompt = 'manly,womanly,'
+    if (!flux) {
+        if(gender == 'female'){
+          genderNegativePrompt = 'muscular,manly,'
+        }
+        if(gender == 'male'){
+          genderNegativePrompt = 'feminine,womanly,'
+        }
+        if(gender == 'nonBinary'){
+          genderNegativePrompt = 'manly,womanly,'
+        }
     }
 
-    // find  the model negativePrompt
-    let modelNegativePrompt =  modelData?.negativePrompt || '';
-    let finalNegativePrompt = imageType === 'sfw' ? modelNegativePrompt +','+ selectedStyle.sfw.negative_prompt : modelNegativePrompt +','+ selectedStyle.nsfw.negative_prompt;
-    finalNegativePrompt = ((negativePrompt || finalNegativePrompt) ? (negativePrompt || finalNegativePrompt)  + ',' : '') + genderNegativePrompt;
-    
-
-    // Prepare task based on imageType
+    // Prepare task based on imageType and model
     let image_request;
-    if (imageType === 'sfw') {
-      image_request = {
-        type: 'sfw',
-        model_name: imageModel.replace('.safetensors', '') + '.safetensors',
-        sampler_name: selectedStyle.sfw.sampler_name || '',
-        loras: selectedStyle.sfw.loras,
-        prompt: (selectedStyle.sfw.prompt ? selectedStyle.sfw.prompt + prompt : prompt).replace(/^\s+/gm, '').trim(),
-        negative_prompt: finalNegativePrompt,
-        width: selectedStyle.sfw.width || params.width,
-        height: selectedStyle.sfw.height || params.height,
-        blur: false,
-        seed: imageSeed || selectedStyle.sfw.seed,
-        steps: regenerate ? params.steps + 10 : params.steps,
-      };
+    if (flux) {
+        // FLUX-specific request structure
+        image_request = {
+            type: imageType,
+            prompt: (selectedStyle[imageType].prompt ? selectedStyle[imageType].prompt + prompt : prompt).replace(/^\s+/gm, '').trim(),
+            width: 768, // FLUX portrait dimensions
+            height: 1024,
+            seed: imageSeed || selectedStyle[imageType].seed,
+            steps: 4, // FLUX uses fewer steps
+            blur: false, // FLUX doesn't support blurring
+        };
     } else {
-      image_request = {
-        type: 'nsfw',
-        model_name: imageModel.replace('.safetensors', '') + '.safetensors',
-        sampler_name: selectedStyle.nsfw.sampler_name || '',
-        loras: selectedStyle.nsfw.loras,
-        prompt: (selectedStyle.nsfw.prompt ? selectedStyle.nsfw.prompt + prompt : prompt),
-        negative_prompt: finalNegativePrompt,
-        width: selectedStyle.nsfw.width || params.width,
-        height: selectedStyle.nsfw.height || params.height,
-        blur: !isSubscribed,
-        seed: imageSeed || selectedStyle.nsfw.seed,
-        steps: regenerate ? params.steps + 10 : params.steps,
-      };
+        // Regular model request structure
+        let modelNegativePrompt = modelData?.negativePrompt || '';
+        let finalNegativePrompt = imageType === 'sfw' ? modelNegativePrompt +','+ selectedStyle.sfw.negative_prompt : modelNegativePrompt +','+ selectedStyle.nsfw.negative_prompt;
+        finalNegativePrompt = ((negativePrompt || finalNegativePrompt) ? (negativePrompt || finalNegativePrompt)  + ',' : '') + genderNegativePrompt;
+        
+        if (imageType === 'sfw') {
+          image_request = {
+            type: 'sfw',
+            model_name: imageModel.replace('.safetensors', '') + '.safetensors',
+            sampler_name: selectedStyle.sfw.sampler_name || '',
+            loras: selectedStyle.sfw.loras,
+            prompt: (selectedStyle.sfw.prompt ? selectedStyle.sfw.prompt + prompt : prompt).replace(/^\s+/gm, '').trim(),
+            negative_prompt: finalNegativePrompt,
+            width: selectedStyle.sfw.width || params.width,
+            height: selectedStyle.sfw.height || params.height,
+            blur: false,
+            seed: imageSeed || selectedStyle.sfw.seed,
+            steps: regenerate ? params.steps + 10 : params.steps,
+          };
+        } else {
+          image_request = {
+            type: 'nsfw',
+            model_name: imageModel.replace('.safetensors', '') + '.safetensors',
+            sampler_name: selectedStyle.nsfw.sampler_name || '',
+            loras: selectedStyle.nsfw.loras,
+            prompt: (selectedStyle.nsfw.prompt ? selectedStyle.nsfw.prompt + prompt : prompt),
+            negative_prompt: finalNegativePrompt,
+            width: selectedStyle.nsfw.width || params.width,
+            height: selectedStyle.nsfw.height || params.height,
+            blur: !isSubscribed,
+            seed: imageSeed || selectedStyle.nsfw.seed,
+            steps: regenerate ? params.steps + 10 : params.steps,
+          };
+        }
     }
 
     // Prepare params
-    let requestData = { ...params, ...image_request, image_num };
+    let requestData = flux ? { ...image_request, image_num } : { ...params, ...image_request, image_num };
 
     if(image_base64){
       // Get target dimensions from the selected style
@@ -191,12 +454,9 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
 
     // [DEBUG] Log the request data
     console.log(`[generateImg] Request data for image generation:`, requestData);
-    
-    // Send request to Novita and get taskId
-    const novitaTaskId = await fetchNovitaMagic(requestData, flux);
 
     // Find modelId style
-    imageStyle = modelData ? modelData.style : 'anime';
+    const imageStyle = modelData ? modelData.style : 'anime';
     chat.imageStyle = chat.imageStyle || imageStyle; // Use chat image style or default to model style
 
     // Check if auto merge should be applied
@@ -210,13 +470,92 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     
     console.log(`[generateImg] shouldAutoMerge: ${!!shouldAutoMerge}, chatCreation: ${chatCreation}, enableMergeFace: ${enableMergeFace}, hasUploadedImage: ${!!image_base64}`);
 
-    // Store task details in DB
+    // Generate title if not provided
+    let newTitle = title;
+    if (!title) {
+      const lang = getLanguageName(user?.lang || 'en');
+      const userLangTitle = await generatePromptTitle(requestData.prompt, lang);
+      // Create title object with just the user's language
+      newTitle = {
+        en: lang === 'english' ? userLangTitle : '',
+        ja: lang === 'japanese' ? userLangTitle : '',
+        fr: lang === 'french' ? userLangTitle : ''
+      };
+    }
+
+    // Generate a slug from the prompt or title
+    let taskSlug = '';
+    if (newTitle && typeof newTitle === 'object') {
+      // If title is an object with language keys, use the first available title
+      const firstAvailableTitle = newTitle.en || newTitle.ja || newTitle.fr || '';
+      taskSlug = slugify(firstAvailableTitle.substring(0, 50), { lower: true, strict: true });
+    } else if (newTitle) {
+      // If title is a string
+      taskSlug = slugify(newTitle.substring(0, 50), { lower: true, strict: true });
+    } else {
+      // Use the first 50 chars of the prompt if no title
+      taskSlug = slugify(prompt.substring(0, 50), { lower: true, strict: true });
+    }
+    
+    if(chat.slug){
+      taskSlug = chat.slug + '-' + taskSlug;
+    }
+    
+    // Ensure slug is unique by appending random string if needed
+    const existingTask = await db.collection('tasks').findOne({ slug: taskSlug });
+    if (existingTask) {
+      const randomStr = Math.random().toString(36).substring(2, 6);
+      taskSlug = `${taskSlug}-${randomStr}`;
+    }
+
+    // Send request to Novita and get taskId
+    const novitaResult = await fetchNovitaMagic(requestData, flux);
+
+    if (!novitaResult) {
+        fastify.sendNotificationToUser(userId, 'showNotification', {
+            message: 'Failed to initiate image generation',
+            icon: 'error'
+        });
+        return;
+    }
+
+    // Handle FLUX immediate completion with dedicated function
+    if (flux && novitaResult && novitaResult.isFluxComplete) {
+      return await handleFluxCompletion({
+        novitaResult,
+        newTitle,
+        taskSlug,
+        prompt,
+        imageType,
+        image_request,
+        aspectRatio,
+        userId,
+        chatId,
+        userChatId,
+        chatCreation,
+        placeholderId,
+        shouldAutoMerge,
+        enableMergeFace,
+        image_base64,
+        chat,
+        customPromptId,
+        customGiftId,
+        fastify,
+        translations
+      });
+    }
+
+    // For non-FLUX, continue with regular polling
+    const novitaTaskId = typeof novitaResult === 'string' ? novitaResult : novitaResult.taskId;
+    
+    // Store task details in DB with title and slug
     const taskData = {
         taskId: novitaTaskId,
         type: imageType,
         status: 'pending',
         prompt: prompt,
-        title: {},
+        title: newTitle,
+        slug: taskSlug,
         negative_prompt: image_request.negative_prompt,
         aspectRatio: aspectRatio,
         userId: new ObjectId(userId),
@@ -251,52 +590,11 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
 
     await db.collection('tasks').insertOne(taskData);
 
-    let newTitle = title;
-    if (!title) {
-      const lang = getLanguageName(user?.lang || 'en');
-      const userLangTitle = await generatePromptTitle(requestData.prompt, lang);
-      // Create title object with just the user's language
-      newTitle = {
-        en: lang === 'english' ? userLangTitle : '',
-        ja: lang === 'japanese' ? userLangTitle : '',
-        fr: lang === 'french' ? userLangTitle : ''
-      };
-      
-      // Update task with the title
-      updateTitle({ taskId: novitaTaskId, newTitle, fastify, userId, chatId, placeholderId });
-    }
-
-    // Generate a slug from the prompt or title
-    let taskSlug = '';
-    if (title && typeof title === 'object') {
-      // If title is an object with language keys, use the first available title
-      const firstAvailableTitle = title.en || title.ja || title.fr || '';
-      taskSlug = slugify(firstAvailableTitle.substring(0, 50), { lower: true, strict: true });
-    } else if (title) {
-      // If title is a string
-      taskSlug = slugify(title.substring(0, 50), { lower: true, strict: true });
-    } else {
-      // Use the first 50 chars of the prompt if no title
-      taskSlug = slugify(prompt.substring(0, 50), { lower: true, strict: true });
-    }
-    if(chat.slug){
-      taskSlug = chat.slug + '-' + taskSlug;
-    }
-    // Ensure slug is unique by appending random string if needed
-    const existingTask = await db.collection('tasks').findOne({ slug: taskSlug });
-    if (existingTask) {
-      const randomStr = Math.random().toString(36).substring(2, 6);
-      taskSlug = `${taskSlug}-${randomStr}`;
-    }
-    
-    // Update task with the slug
-    updateSlug({ taskId: novitaTaskId, taskSlug, fastify, userId, chatId, placeholderId });
-
     if(chatCreation){
       fastify.sendNotificationToUser(userId, 'showNotification', { message:translations.character_image_generation_started , icon:'success' });
     }
 
-    // Poll the task status
+    // Poll the task status for non-FLUX models
     pollTaskStatus(novitaTaskId, fastify) 
     .then(taskStatus => {
       if (taskStatus.status === 'background') {
@@ -313,8 +611,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
     });
 
     return { taskId: novitaTaskId };
-
-  }
+}
 
 // Add this function to your code
 async function centerCropImage(base64Image, targetWidth, targetHeight) {
@@ -358,8 +655,8 @@ async function centerCropImage(base64Image, targetWidth, targetHeight) {
     return base64Image; // Return original if error occurs
   }
 }
-    // Module to check the status of a task at regular intervals
-    const completedTasks = new Set();
+  // Module to check the status of a task at regular intervals
+  const completedTasks = new Set();
 
     async function pollTaskStatus(taskId, fastify) {
       let startTime = Date.now();
@@ -1054,13 +1351,51 @@ async function fetchNovitaMagic(data, flux = false) {
     const response = await axios.post(apiUrl, requestBody.data, {
       headers: requestBody.headers,
     });
+    
     if (response.status !== 200) {
       console.log(`Error - ${response.data.reason}`);
       return false;
     }
-
-    const taskId = !flux ? response.data.task_id : response.data.task.task_id;
+    
+    console.log(response.data);
+    
+    // For FLUX, return the complete response with images
+    if (flux) {
+      const taskId = response.data.task.task_id;
+      console.log(`Flux task completed immediately with ID: ${taskId}`);
+      
+      // Process images immediately for FLUX
+      const images = response.data.images;
+      if (images && images.length > 0) {
+        const processedImages = await Promise.all(images.map(async (image, index) => {
+          const imageUrl = image.image_url;
+          const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+          const buffer = Buffer.from(imageResponse.data, 'binary');
+          const hash = createHash('md5').update(buffer).digest('hex');
+          const uploadedUrl = await uploadToS3(buffer, hash, 'novita_result_image.png');
+          return { 
+            imageId: hash, 
+            imageUrl: uploadedUrl, 
+            nsfw_detection_result: null, // FLUX doesn't return NSFW detection
+            seed: 0, // FLUX uses seed 0
+            index
+          };
+        }));
+        
+        return {
+          taskId,
+          status: 'completed',
+          images: processedImages.length === 1 ? processedImages[0] : processedImages,
+          isFluxComplete: true // Flag to indicate immediate completion
+        };
+      }
+    }
+    
+    // For non-FLUX, return just the task ID for polling
+    const taskId = response.data.task_id;
+    console.log(`Novita task created with ID: ${taskId}`);
     return taskId;
+    
   } catch (error) {
     console.error('Error fetching Novita image:', error.message);
     console.log(error)
@@ -1114,8 +1449,8 @@ async function fetchNovitaResult(task_id) {
     }
 
     } catch (error) {
-    console.error("Error fetching Novita result:", error.message);
-    return { error: error.message, status: 'failed' };
+      console.error("Error fetching Novita result:", error.message);
+      return { error: error.message, status: 'failed' };
     }
 }
 

@@ -111,7 +111,11 @@ async function routes(fastify, options) {
 });
         }
       }
-      let imageSeed = -1
+
+      // [DEBUG] use flux model
+      const flux = false
+
+      let imageSeed = !flux ? -1 : 0;
       if(regenerate){
         imageSeed = await getImageSeed(db, placeholderId);
       }
@@ -123,6 +127,7 @@ async function routes(fastify, options) {
           imageSeed, 
           regenerate, 
           modelId,
+          flux,
           userId, 
           chatId, 
           userChatId, 

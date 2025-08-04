@@ -1324,7 +1324,8 @@ async function routes(fastify, options) {
                                             as: 'image',
                                             cond: { $and: [
                                                 { $ne: ['$$image', null] },
-                                                { $ne: ['$$image.nsfw', true] }
+                                                { $ne: ['$$image.nsfw', true] },
+                                                { $ne: ['$$image.nsfw', 'true'] }
                                             ]}
                                         }
                                     },

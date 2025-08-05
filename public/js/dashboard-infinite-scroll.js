@@ -355,7 +355,7 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedInde
     const linkUrl = item.chatSlug ? `/character/slug/${item.chatSlug}?imageSlug=${item.slug}` : `/character/${chatId}`;
     
     return `
-        <div class="col-6 col-md-3 col-lg-2 mb-2" data-image-id="${item._id}">
+        <div class="image-card col-6 col-md-3 col-lg-2 mb-2" data-image-id="${item._id}">
             <div class="card shadow-0">
                 ${isBlur ? 
                     `<div class="position-relative">

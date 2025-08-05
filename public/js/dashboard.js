@@ -802,6 +802,7 @@ window.toggleImageNSFW = function(el) {
   const nsfwStatus = !isNSFW; // Toggle NSFW status
 
   $this.toggleClass('nsfw'); // Toggle NSFW class for UI change
+  $this.closest('.image-card').toggleClass('nsfw-content', nsfwStatus); // Toggle NSFW content class
 
   // Update the button icon based on the NSFW status
   const icon = nsfwStatus 
@@ -820,19 +821,21 @@ window.toggleImageNSFW = function(el) {
     data: JSON.stringify({ nsfw: nsfwStatus }), // Send NSFW status in request body
     success: function () {
 
-    // Show success notification in Japanese
-    if (nsfwStatus) {
-      showNotification('NSFWに設定されました！', 'success');
-    } else {
-      showNotification('NSFW設定が解除されました！', 'success');
-    }
+      // Show success notification in Japanese
+      if (nsfwStatus) {
+          showNotification(window.translations.setNsfw, 'success');
+      } else {
+          showNotification(window.translations.unsetNsfw, 'success');
+      }
+      updateNSFWContentUI();
+
     },
     error: function () {
     $this.toggleClass('nsfw'); // Revert the class change if request fails
     $this.html(isNSFW 
       ? '<i class="bi bi-eye-fill"></i>' 
       : '<i class="bi bi-eye-slash-fill"></i>'); // Revert the icon as well
-    showNotification('リクエストに失敗しました。', 'error');
+      showNotification(window.translations.errorOccurred, 'error');
     }
   });
 }
@@ -1931,7 +1934,8 @@ window.toggleChatNSFW = function(el) {
   const nsfwStatus = !isNSFW; // Toggle NSFW status
 
   $this.toggleClass('nsfw'); // Toggle NSFW class for UI change
-
+  $this.closest('.gallery-card').toggleClass('nsfw-content', nsfwStatus); // Toggle NSFW content class
+  
   // Update the button icon based on the NSFW status
   const icon = nsfwStatus 
     ? '<i class="bi bi-eye-slash-fill"></i>'   // NSFW icon (eye-slash for hidden content)
@@ -1954,6 +1958,7 @@ window.toggleChatNSFW = function(el) {
       } else {
         showNotification(window.translations.unsetNsfw, 'success');
       }
+      updateNSFWContentUI();
     },
     error: function () {
       $this.toggleClass('nsfw'); // Revert the class change if request fails
@@ -2870,7 +2875,7 @@ $(document).ready(function () {
                   : false;
   
                 additionalImagesHtml += `
-                  <div class="horizontal-image-wrapper col-12 col-md-4 col-lg-2 mb-2">
+                  <div class="image-card horizontal-image-wrapper col-12 col-md-4 col-lg-2 mb-2">
                     <div class="card shadow-0">
                       ${
                         isBlur

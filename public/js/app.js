@@ -64,7 +64,7 @@ window.showNSFW;
 
 // Always prioritize user.showNSFW if defined
 if (typeof user.showNSFW !== 'undefined') {
-    window.showNSFW = user.showNSFW;
+    window.showNSFW = user.showNSFW === true; // Ensure it's a boolean
     sessionStorage.setItem('showNSFW', window.showNSFW.toString());
 } else {
     // Fall back to sessionStorage value if user.showNSFW is not defined

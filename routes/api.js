@@ -319,11 +319,16 @@ async function routes(fastify, options) {
             { _id: new fastify.mongo.ObjectId(chatId) },
             { $set: { nsfw: !!nsfw } }
           );
-      
+
           if (result.modifiedCount === 1) {
             reply.send({ success: true });
           } else {
             console.error('Chat not found or not updated:', chatId);
+            const findChat = await chatsCollection.findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+            if(findChat.nsfw === !!nsfw) {
+                console.log('Chat already has the requested NSFW status');
+                return reply.send({ success: true, message: 'Chat already has the requested NSFW status' });
+            }
             reply.status(404).send({ error: 'Chat not found or not updated' });
           }
         } catch (error) {
@@ -1223,6 +1228,15 @@ async function routes(fastify, options) {
         }
       });
     // --- New: Popular Chats Route ---
+    fastify.post('/api/popular-chats/reset-cache', async (request, reply) => {
+        try {
+            const db = fastify.mongo.db;
+            await db.collection('popularChatsCache').deleteMany({});
+            reply.send({ success: true });
+        } catch (err) {
+            reply.code(500).send('Failed to reset cache');
+        }
+    });
     fastify.get('/api/popular-chats', async (request, reply) => {
         try {
             const reloadCache = request.query.reloadCache === 'true'; // Check if cache reload is requested

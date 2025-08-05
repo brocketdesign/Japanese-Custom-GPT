@@ -505,12 +505,35 @@ $(document).ready(function() {
 
     // Reset popular chats cache button 
     $('#reset-popular-chat-cache').on('click', function() {
-        sessionStorage.removeItem(POPULAR_CHATS_CACHE_KEY);
-        sessionStorage.removeItem(POPULAR_CHATS_CACHE_TIME_KEY);
-        popularChatsPage = 1;
+        resetPopularChatCache();
         $('#chat-gallery').empty();
         loadPopularChats(1, true);
     });
+    
+    window.resetPopularChatCache = function() {
+        sessionStorage.removeItem(POPULAR_CHATS_CACHE_KEY);
+        sessionStorage.removeItem(POPULAR_CHATS_CACHE_TIME_KEY);
+        popularChatsPage = 1;
+        return fetch('/api/popular-chats/reset-cache', {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({ reloadCache: true })
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Failed to reset popular chats cache');
+            return response.json();
+        })
+        .then(data => {
+            return data;
+        })
+        .catch(err => {
+            console.error('Error resetting popular chats cache:', err);
+        });
+    };
+
     // Initial load (always loads page 1)
     loadPopularChats();
 

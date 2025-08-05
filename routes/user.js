@@ -293,6 +293,11 @@ async function routes(fastify, options) {
       );
 
       if (updateResult.modifiedCount === 0) {
+        const findUser = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+        if(findUser.showNSFW === showNSFW) {
+          console.log('User already has the requested NSFW preference');
+          return reply.send({ status: 'NSFW preference already set' });
+        }
         return reply.status(404).send({ error: 'User not found or NSFW preference not updated' });
       }
 

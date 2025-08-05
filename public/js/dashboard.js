@@ -1766,7 +1766,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
             const moderationFlagged = Array.isArray(chat?.moderation?.results) && chat.moderation.results.length > 0
             ? !!chat.moderation.results[0].flagged
             : false;
-            const finalNsfwResult = false //nsfw || moderationFlagged;
+            const finalNsfwResult = nsfw || moderationFlagged;
             chat.premium = false //(chat.premium || finalNsfwResult);
             const isOwner = chat.userId === user._id;
           // --- Begin: Random sample image selection logic ---
@@ -1800,7 +1800,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
 
           // --- End: Random sample image selection logic ---
           htmlContent += `
-                  <div class="gallery-card col-6 col-sm-6 col-lg-3 mb-4 ${chat.nsfw ? "nsfw-content":''} ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} ${chat.imageStyle ? 'chat-style-'+chat.imageStyle : ''} nsfw-${finalNsfwResult}">
+                  <div class="gallery-card col-6 col-sm-6 col-lg-3 mb-4 ${finalNsfwResult ? "nsfw-content":''} ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} ${chat.imageStyle ? 'chat-style-'+chat.imageStyle : ''} nsfw-${finalNsfwResult}">
                     <div class="card shadow border-0 h-100 position-relative gallery-hover" style="overflow: hidden;">
                       <!-- Clickable image area -->
                       <div class="gallery-image-wrapper position-relative chat-card-clickable-area" style="aspect-ratio: 4/5; background: #f8f9fa; cursor: pointer;"
@@ -1958,6 +1958,7 @@ window.toggleChatNSFW = function(el) {
       } else {
         showNotification(window.translations.unsetNsfw, 'success');
       }
+      resetPopularChatCache();
       updateNSFWContentUI();
     },
     error: function () {

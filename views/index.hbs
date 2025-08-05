@@ -28,7 +28,7 @@
                 <img class="d-sm-none" src="/img/lpbanner/{{#unless (eq translations.lang "en")}}2{{else}}{{bannerNumber}}{{/unless}}.png" style="width: 100%;">
                 <h1 class="mb-3 fw-bold u-color-grad text-start" id="headline-container">
                 </h1>
-                <div class="text-start animate__animated"  data-animate="animate__fadeIn" id="subheadline-container">
+                <div class="text-start animate__animated text-muted fs-4"  data-animate="animate__fadeIn" id="subheadline-container">
                     {{translations.lp.banner.[bannerNumber].subtitle}}
                 </div>
                 <div class="text-center d-flex flex-column justify-content-start align-items-start mt-3 animate__animated"  data-animate="animate__fadeIn">
@@ -122,7 +122,6 @@
         <div class="row g-4">
             <div class="col-md-4">
                 <div class="card h-100 shadow-sm">
-                    <img src="img/lp_en/desktop-1.png" class="card-img-top d-block" alt="Step 1">
                     <div class="card-body text-center">
                         <h3 class="card-title">{{translations.lp.how_step1_title}}</h3>
                         <p class="card-text">{{translations.lp.how_step1_text}}</p>
@@ -131,7 +130,6 @@
             </div>
             <div class="col-md-4">
                 <div class="card h-100 shadow-sm">
-                    <img src="img/lp_en/desktop-2.png" class="card-img-top d-block" alt="Step 2">
                     <div class="card-body text-center">
                         <h3 class="card-title">{{translations.lp.how_step2_title}}</h3>
                         <p class="card-text">{{translations.lp.how_step2_text}}</p>
@@ -140,7 +138,6 @@
             </div>
             <div class="col-md-4">
                 <div class="card h-100 shadow-sm">
-                    <img src="img/lp_en/desktop-3.png" class="card-img-top d-block" alt="Step 3">
                     <div class="card-body text-center">
                         <h3 class="card-title">{{translations.lp.how_step3_title}}</h3>
                         <p class="card-text">{{translations.lp.how_step3_text}}</p>
@@ -267,7 +264,7 @@
 </section>
 
 <!-- Desktop Images (Hidden on Mobile) -->
-<div class="d-block">
+<div class="d-none">
     <div class="row flex-nowrap overflow-auto" style="white-space: nowrap;">
         {{#each (range 4 10)}}
             <div class="col-4 col-sm-3 col-lg-2 px-0" style="display: inline-block;">

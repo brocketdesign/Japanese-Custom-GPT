@@ -165,6 +165,8 @@ function createSystemPayload(prompt, gender, details, imageType) {
             - Optimize for high-quality, detailed character generation
             - Maintain consistency with provided character details
             - NO complete sentences, only relevant keywords
+            - ${gender === 'female' ? 
+                'Include feminine features like breast size, body curves, and feminine clothing styles. Avoid masculine traits. Avoid muscular builds if not explicitly desired. Provide beautiful and elegant poses. Beautiful make up.' : 'Include masculine features like broad shoulders, muscular build, and masculine clothing styles. Avoid feminine traits. Provide strong and confident poses.'}
             ${imageType === 'nsfw' ? '- Include explicit content descriptors for a NSFW result' : '- Make sure the prompt is suitable for a general audience'}
             
             Respond with the enhanced prompt only in English.

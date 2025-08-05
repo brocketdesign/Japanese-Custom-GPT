@@ -249,7 +249,8 @@ async function routes(fastify, options) {
             const language = requestLanguage || request.lang;
  
             console.log(`[API/generate-character-comprehensive] Input parameters - chatId: ${chatId || 'undefined'}, gender: ${gender || 'undefined'}, language: ${language}, prompt: ${prompt ? prompt.substring(0, 50) + '...' : 'undefined'}, name: ${name || 'undefined'}, hasImageBase64: ${!!image_base64}, enableMergeFace: ${!!enableMergeFace}`);
-            
+            console.log(`Translations Language: ${request.translations.lang}`);
+
             if (!prompt || prompt.trim() === '') {
                 fastify.sendNotificationToUser(userId, 'showNotification', { message: 'Please provide a valid prompt.', icon: 'error' });
                 console.log('[API/generate-character-comprehensive] Missing required fields');

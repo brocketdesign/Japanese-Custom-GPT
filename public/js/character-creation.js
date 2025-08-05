@@ -238,7 +238,6 @@
             },
             error: function(xhr, status, error) {
                 console.error('Error fetching chat data:', error);
-                showNotification('チャットデータの取得に失敗しました。再試行してください。', 'error');
             }
         });
     }
@@ -660,7 +659,6 @@
     // Add character update functionality
     window.loadCharacterUpdatePage = function(chatId) {
         if (!chatId) {
-            showNotification('Character ID is required', 'error');
             return;
         }
 
@@ -674,7 +672,6 @@
             },
             error: function(xhr, status, error) {
                 console.error('Error loading character update page:', error);
-                showNotification('Failed to load character update form', 'error');
             }
         });
     };

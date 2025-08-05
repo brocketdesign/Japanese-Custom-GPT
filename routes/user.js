@@ -277,7 +277,31 @@ async function routes(fastify, options) {
       return false;
     }
   }
+  fastify.post('/user/update-nsfw-preference/:userId', async (request, reply) => {
+    try {
+      const userId = request.params.userId;
+      const { showNSFW } = request.body;
 
+      if (!userId) {
+        return reply.status(400).send({ error: 'User ID is required' });
+      }
+
+      const usersCollection = fastify.mongo.db.collection('users');
+      const updateResult = await usersCollection.updateOne(
+        { _id: new fastify.mongo.ObjectId(userId) },
+        { $set: { showNSFW: showNSFW } }
+      );
+
+      if (updateResult.modifiedCount === 0) {
+        return reply.status(404).send({ error: 'User not found or NSFW preference not updated' });
+      }
+
+      return reply.send({ status: 'NSFW preference updated successfully' });
+    } catch (error) {
+      console.error('Error updating NSFW preference:', error);
+      return reply.status(500).send({ error: 'Failed to update NSFW preference' });
+    }
+  });
   fastify.post('/user/update-info/:currentUserId', async (request, reply) => {
     try {
 

@@ -60,26 +60,54 @@ function getCookie(name) {
     return null;
 }
 
-// Call this function on page load
-window.addEventListener('DOMContentLoaded', () => {
-    getReferrerAndSave();
-    
-});
-
-let showNSFW;
+window.showNSFW;
 
 // Always prioritize user.showNSFW if defined
 if (typeof user.showNSFW !== 'undefined') {
-    showNSFW = user.showNSFW;
-    sessionStorage.setItem('showNSFW', showNSFW.toString());
+    window.showNSFW = user.showNSFW;
+    sessionStorage.setItem('showNSFW', window.showNSFW.toString());
 } else {
     // Fall back to sessionStorage value if user.showNSFW is not defined
     const sessionNSFW = sessionStorage.getItem('showNSFW');
     if (sessionNSFW !== null) {
-        showNSFW = sessionNSFW === 'true';
+        window.showNSFW = sessionNSFW === 'true';
     } else {
-        showNSFW = false;
+        window.showNSFW = false;
         sessionStorage.setItem('showNSFW', 'false');
+    }
+}
+
+window.toggleNSFWContent = function() {
+    window.showNSFW = !window.showNSFW;
+    sessionStorage.setItem('showNSFW', window.showNSFW.toString());
+    updateNSFWContentUI();
+};
+
+window.updateNSFWContentUI = function() {
+    if (window.showNSFW) {
+        document.querySelectorAll('.nsfw-content').forEach(el => {
+            el.style.display = 'block';
+        });
+        document.querySelectorAll('.sfw-content').forEach(el => {
+            el.style.display = 'none';
+        });
+    } else {
+        document.querySelectorAll('.nsfw-content').forEach(el => {
+            el.style.display = 'none';
+        });
+        document.querySelectorAll('.sfw-content').forEach(el => {
+            el.style.display = 'block';
+        });
+    }
+
+    if (window.showNSFW) {
+        document.body.classList.add('nsfw-mode');
+        document.body.classList.remove('sfw-mode');
+
+    }
+    else {
+        document.body.classList.remove('nsfw-mode');
+        document.body.classList.add('sfw-mode');
     }
 }
 
@@ -99,3 +127,16 @@ if(subscriptionStatus){
         el.style.display = 'block';
     });
 }
+
+$(document).ready(function() {
+    // Initialize the referrer tracking
+    getReferrerAndSave();
+
+    // Update NSFW content visibility on page load
+    updateNSFWContentUI();
+
+    // Handle click events for NSFW toggle
+    $('.toggle-nsfw').on('click', function() {
+        window.toggleNSFWContent();
+    });
+});

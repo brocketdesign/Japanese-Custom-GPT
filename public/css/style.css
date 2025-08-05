@@ -27,9 +27,16 @@
   }
 
   .isAdmin,.local-mode {
-  display:none
+    display:none
   }
   
+  body.sfw-mode .nsfw-content {
+    display: none !important; /* Hide NSFW content */
+  }
+  body.nsfw-mode .nsfw-content {
+    display: block !important; /* Or any other appropriate display value */
+  }
+
   .cursor-pointer {
   cursor:pointer
   }

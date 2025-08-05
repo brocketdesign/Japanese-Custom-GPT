@@ -970,6 +970,7 @@ async function routes(fastify, options) {
               if (galleryDoc && Array.isArray(galleryDoc.images)) {
                 sampleImages = galleryDoc.images.filter(img => !img.nsfw).slice(0, 5);
               }
+
               return {
                 ...chat,
                 nickname:   u?.nickname   || null,

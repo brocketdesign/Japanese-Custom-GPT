@@ -22,7 +22,6 @@ const LATEST_VIDEO_CHATS_CACHE_KEY = 'latestVideoChatsCache';
 const LATEST_VIDEO_CHATS_CACHE_TIME_KEY = 'latestVideoChatsaCacheTime';
 const LATEST_VIDEO_CHATS_CACHE_TTL = 1 * 60 * 60 * 1000; // 1 hour in milliseconds
 
-
 // loadUserPosts 
 // loadChatUsers
 // loadUsers
@@ -1670,7 +1669,7 @@ window.displaySimilarChats = function (chatData, targetGalleryIdParam) {
     // Using col-md-4 col-lg-3 for potentially 3-4 cards per row
     let cardClass = `gallery-card col-6 col-sm-4 col-md-3 col-lg-3 col-xl-2 p-1 animate__animated animate__fadeIn ${genderClass} ${styleClass}`;
     if (isPremiumChat) cardClass += ' premium-chat';
-    if (isNSFW) cardClass += ' nsfw-true';
+    if (isNSFW) cardClass += ' nsfw-content';
 
     let imageSrc = chat.chatImageUrl || chat.thumbnailUrl || '/img/logo.webp';
     let nsfwOverlay = '';
@@ -1798,7 +1797,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
 
           // --- End: Random sample image selection logic ---
           htmlContent += `
-                  <div class="gallery-card col-6 col-sm-6 col-lg-3 mb-4 ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} ${chat.imageStyle ? 'chat-style-'+chat.imageStyle : ''} nsfw-${finalNsfwResult}">
+                  <div class="gallery-card col-6 col-sm-6 col-lg-3 mb-4 ${chat.nsfw ? "nsfw-content":''} ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} ${chat.imageStyle ? 'chat-style-'+chat.imageStyle : ''} nsfw-${finalNsfwResult}">
                     <div class="card shadow border-0 h-100 position-relative gallery-hover" style="overflow: hidden;">
                       <!-- Clickable image area -->
                       <div class="gallery-image-wrapper position-relative chat-card-clickable-area" style="aspect-ratio: 4/5; background: #f8f9fa; cursor: pointer;"

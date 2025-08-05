@@ -34,35 +34,33 @@ $(document).ready(function() {
   // NSFW toggle logic
   const nsfwToggle = $('#nsfw-toggle');
     
-  // Check sessionStorage first, then fall back to user preference, default to false
-  let showNSFW;
-  const sessionNSFW = sessionStorage.getItem('showNSFW');
-  
-  if (sessionNSFW !== null) {
-    // Use sessionStorage value if it exists
-    showNSFW = sessionNSFW === 'true';
-  } else if (user.showNSFW !== undefined) {
-    // Fall back to user's saved preference
-    showNSFW = user.showNSFW;
-    // Save to sessionStorage for consistency
-    sessionStorage.setItem('showNSFW', showNSFW.toString());
-  } else {
-    // Default to false if neither exists
-    showNSFW = false;
-    sessionStorage.setItem('showNSFW', 'false');
-  }
-
-  nsfwToggle.prop('checked', showNSFW);
+  nsfwToggle.prop('checked', window.showNSFW);
 
   // Save toggle state to session storage on change
   nsfwToggle.on('change', function() {
-    sessionStorage.setItem('showNSFW', $(this).is(':checked'));
-    console.log('NSFW preference saved to session:', $(this).is(':checked'));
-        
-    // Optionally reload the page or refresh content
-    //location.reload();
+    toggleNSFWContent();
+    updateNSFWPreference(this.checked); // Call the new function here
   });
 
+  // Function to update NSFW preference
+  function updateNSFWPreference(showNSFW) {
+    const currentUserId = $('#profile #profileSection').data('user-id');
+    $.ajax({
+      url: '/user/update-nsfw-preference/' + currentUserId,
+      method: 'POST',
+      data: { showNSFW: showNSFW },
+      success: function(response) {
+        // Optionally, update the global user object
+        user.showNSFW = showNSFW;
+      },
+      error: function(jqXHR) {
+        console.error('Error updating NSFW preference:', jqXHR.responseJSON.error);
+        // Optionally, revert the toggle state in case of an error
+        nsfwToggle.prop('checked', !showNSFW);
+        showNotification(translations.errorOccurred, 'error');
+      }
+    });
+  }
   // Set user info
   $('#profile #profileSection').attr('data-user-id', user._id);
 
@@ -232,25 +230,21 @@ $(document).ready(function() {
 
   // Display user plan
   $.get('/user/plan/'+user._id,function(data){
-    console.log('[Settings] User plan data fetched:', data);
     let message = `${translations.no_subscription}<br> <button class="btn custom-gradient-bg" onclick="loadPlanPage()">${translations.select_plan_here}</button>`;
 
     if (dayPassCountdownInterval) {
       clearInterval(dayPassCountdownInterval); // Clear any existing interval
       dayPassCountdownInterval = null;
-      console.log('[Settings] Cleared existing day pass countdown interval.');
     }
 
     if(data.plan && data.plan.subscriptionStatus === 'active'){
       if (data.plan.subscriptionType === 'day-pass') {
-        console.log('[Settings] Active day pass detected for user:', user._id);
         $('#user-plan').hide();
         $('#cancel-plan').hide();
         $('#day-pass-countdown-section').show();
         $('#day-pass-expired-message').hide();
 
         const endDate = new Date(data.plan.subscriptionEndDate).getTime();
-        console.log('[Settings] Day pass expiry date:', new Date(data.plan.subscriptionEndDate));
 
         dayPassCountdownInterval = setInterval(function() {
           const now = new Date().getTime();
@@ -278,10 +272,8 @@ $(document).ready(function() {
           $('#minutes').text(minutes < 10 ? '0' + minutes : minutes);
           $('#seconds').text(seconds < 10 ? '0' + seconds : seconds);
         }, 1000);
-        console.log('[Settings] Day pass countdown started.');
 
       } else if (data.plan.subscriptionType === 'subscription') {
-        console.log('[Settings] Active subscription detected for user:', user._id, 'Billing Cycle:', data.plan.billingCycle);
         $('#day-pass-countdown-section').hide(); // Ensure countdown is hidden
         const billingCycle = data.plan.billingCycle;
         const subscriptionEndDate = new Date(data.plan.subscriptionEndDate);
@@ -292,7 +284,6 @@ $(document).ready(function() {
         // Assuming billingCycle (e.g., '12-months') is the ID for the plan details
         $.get('/plan/list/' + billingCycle, function(planData) {
           if (planData && planData.plan) {
-            console.log('[Settings] Fetched plan details for subscription:', planData.plan.name);
             message = `
               <div class="card mx-auto my-3 shadow-sm" style="max-width: 400px;">
               <div class="card-body text-center">

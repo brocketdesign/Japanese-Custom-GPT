@@ -1475,7 +1475,7 @@
   "action_removed": "Action supprimée",
   "message_liked": "J'aime quand tu réponds ainsi. Essaie d'être davantage comme ça.",
   "message_disliked": "Je n'aime pas quand tu réponds ainsi. Essaie d'être moins comme ça.",
-  "like_grant_points": "You have earned {point} point for your like",
+  "like_grant_points": "Vous avez gagné {point} point pour votre j'aime",
   "message_regenerating": "Régénération du message...",
   "error_updating_action": "Erreur lors de la mise à jour de l'action",
   "error_regenerating": "Erreur lors de la régénération du message",

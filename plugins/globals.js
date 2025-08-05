@@ -102,7 +102,6 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             mode: process.env.MODE,
             apiurl: apiUrl
         };
-
     });
 
     // Hooks to handle language and user settings
@@ -163,10 +162,17 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         return user || await getOrCreateTempUser(request, reply, userCollection);
     }
 
-    /** Get language from subdomain */
+    /** Get language from subdomain or fallback to user lang */
     async function getLang(request, reply) {
         const subdomain = request.hostname.split('.')[0];
-        return ['en', 'fr', 'ja'].includes(subdomain) ? subdomain : 'en';
+        if (['en', 'fr', 'ja'].includes(subdomain)) {
+            return subdomain;
+        }
+        // Fallback to user lang if available
+        if (request.user && request.user.lang) {
+            return request.user.lang;
+        }
+        return 'en';
     }
 
     /** Load translations for a specific language (cached for performance) */

@@ -407,7 +407,8 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
         let modelNegativePrompt = modelData?.negativePrompt || '';
         let finalNegativePrompt = imageType === 'sfw' ? modelNegativePrompt +','+ selectedStyle.sfw.negative_prompt : modelNegativePrompt +','+ selectedStyle.nsfw.negative_prompt;
         finalNegativePrompt = ((negativePrompt || finalNegativePrompt) ? (negativePrompt || finalNegativePrompt)  + ',' : '') + genderNegativePrompt;
-        
+        finalNegativePrompt = finalNegativePrompt.replace(/,+/g, ',').replace(/^\s*,|\s*,\s*$/g, '').trim();
+
         if (imageType === 'sfw') {
           image_request = {
             type: 'sfw',

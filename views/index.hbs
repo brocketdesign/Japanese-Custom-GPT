@@ -7,7 +7,7 @@
 <section>
     <style>
     #intro {
-        background-image: url('/img/lpbanner/{{#unless (eq translations.lang "en")}}2{{else}}{{bannerNumber}}{{/unless}}.png');
+        background-image: url('/img/lpbanner2/main-{{bannerNumber}}.png');
         background-size: contain;
         background-position: right;
         min-height: 760px;
@@ -21,16 +21,15 @@
         }
     }
     </style>
-
     <div id="intro" class="bg-image shadow-0" >
         <div class="row container align-items-center h-100 m-auto">
             <div class="col-12 col-md-6 pb-5">
-                <img class="d-sm-none" src="/img/lpbanner/{{#unless (eq translations.lang "en")}}2{{else}}{{bannerNumber}}{{/unless}}.png" style="width: 100%;">
                 <h1 class="mb-3 fw-bold u-color-grad text-start" id="headline-container">
                 </h1>
-                <div class="text-start animate__animated text-muted fs-4"  data-animate="animate__fadeIn" id="subheadline-container">
+                <div class="text-start animate__animated text-muted fs-4" data-animate="animate__fadeIn" id="subheadline-container">
                     {{translations.lp.banner.[bannerNumber].subtitle}}
                 </div>
+                <img class="d-sm-none rounded my-2 shadow" src="/img/lpbanner2/main-{{bannerNumber}}.png" style="width: auto;max-height: 300px;object-fit: cover;" alt="Banner Image">
                 <div class="text-center d-flex flex-column justify-content-start align-items-start mt-3 animate__animated"  data-animate="animate__fadeIn">
                     <a href="#" onclick="openLoginForm()" class="btn custom-gradient-bg text-white btn-lg m-2 px-5 py-3 cta-button fw-bold w-auto" role="button" style="border-radius: 50px;">
                         {{translations.lp.cta_button}}
@@ -117,6 +116,18 @@
         <div class="text-center mb-5">
             <h2 class="fw-bold u-color-grad">{{translations.lp.how_heading}}</h2>
             <p class="lead">{{translations.lp.how_subheading}}</p>
+        </div>
+        <div class="row justify-content-center mb-4">
+            <div class="col-12 col-md-10 mx-auto" style="overflow-y:hidden">
+                <div id="howto-slider" class="d-flex justify-content-center align-items-center overflow-auto flex-nowrap" style="gap: 1rem; scroll-snap-type: x mandatory;overflow-x: auto;">
+                    {{#each (range 1 4)}}
+                        <img src="/img/lpbanner2/slide-{{this}}.png"
+                             class="img-fluid mb-3"
+                             alt="Slide {{this}}"
+                             style="max-height: 200px; width: auto; scroll-snap-align: center; border-radius: 10px;">
+                    {{/each}}
+                </div>
+            </div>
         </div>
 
         <div class="row g-4">

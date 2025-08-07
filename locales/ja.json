@@ -1,5 +1,9 @@
 {
   "lang": "ja",
+  "restart": "再起動",
+  "personalSettings": "個人設定",
+  "restartOnboarding": "オンボーディングを再起動",
+  "restartOnboardingDesc": "イントロダクションガイドを再度表示します。",
   "follow": {
     "following": "フォロー中",
     "followed": "フォローしました！",
@@ -1092,6 +1096,12 @@
     "ageVerification": "私は18歳以上です"
   },
   "setting": {
+    "ageRange": "年齢範囲",
+    "below_18": "18歳未満",
+    "age_18_20": "18〜20歳",
+    "age_21_23": "21〜23歳",
+    "age_24_26": "24〜26歳",
+    "above_26": "26歳以上",
     "dayPassActiveTitle": "有効な1日パス",
     "dayPassExpiresIn": "有効期限:",
     "dayPassExpired": "1日パスの有効期限が切れました。",

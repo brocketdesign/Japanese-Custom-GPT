@@ -1,36 +1,4 @@
 $(document).ready(function() {
-  let dateFormat;
-  switch (window.lang) {
-    case 'ja':
-      dateFormat = "Y年m月d日";
-      break;
-    case 'fr':
-      dateFormat = "d/m/Y";
-      break;
-    case 'en':
-    default:
-      dateFormat = "Y-m-d";
-      break;
-  }
-  // Initialize flatpickr for birthdate
-  flatpickr("#birthdate", {
-    locale: window.lang,
-    dateFormat: dateFormat,
-    maxDate: new Date(),
-    defaultDate: new Date(new Date().setFullYear(new Date().getFullYear() - 18)),
-    onChange: function(selectedDates, dateStr, instance) {
-      if (!selectedDates.length) return;
-      const date = selectedDates[0];
-      const birthYear = date.getFullYear();
-      const birthMonth = String(date.getMonth() + 1).padStart(2, '0');
-      const birthDay = String(date.getDate()).padStart(2, '0');
-
-      $('#birthYear').val(birthYear);
-      $('#birthMonth').val(birthMonth);
-      $('#birthDay').val(birthDay);
-    }
-  });
-
   // NSFW toggle logic
   const nsfwToggle = $('#nsfw-toggle');
     
@@ -70,23 +38,19 @@ $(document).ready(function() {
   // Set user nickname
   $('#nickname').val(user.nickname);
 
-  // Set user birthdate field
-  if(user.birthDate){
-    // Format the birthdate according to the selected language's dateFormat
-    let formattedBirthDate;
-    switch (window.lang) {
-      case 'ja':
-      formattedBirthDate = `${user.birthDate.year}年${user.birthDate.month}月${user.birthDate.day}日`;
-      break;
-      case 'fr':
-      formattedBirthDate = `${user.birthDate.day}/${user.birthDate.month}/${user.birthDate.year}`;
-      break;
-      case 'en':
-      default:
-      formattedBirthDate = `${user.birthDate.year}-${String(user.birthDate.month).padStart(2, '0')}-${String(user.birthDate.day).padStart(2, '0')}`;
-      break;
-    }
-    $('#birthdate').val(formattedBirthDate);
+  // Display user age range if available
+  if(user.ageRange){
+    const ageRangeLabels = {
+      'below18': translations.setting?.below_18 || 'Below 18',
+      '18-20': translations.setting?.age_18_20 || '18-20',
+      '21-23': translations.setting?.age_21_23 || '21-23', 
+      '24-26': translations.setting?.age_24_26 || '24-26',
+      'above26': translations.setting?.above_26 || 'Above 26'
+    };
+    
+    const ageRangeDisplay = ageRangeLabels[user.ageRange] || user.ageRange;
+    $('#userAgeRange').text(ageRangeDisplay);
+    $('#ageRangeSection').show();
   }
 
   // Set user gender
@@ -125,9 +89,7 @@ $(document).ready(function() {
     const formData = new FormData();
     formData.append('email', $('#inputEmail4').val());
     formData.append('nickname', $('#nickname').val());
-    formData.append('birthYear', $('#birthYear').val());
-    formData.append('birthMonth', $('#birthMonth').val());
-    formData.append('birthDay', $('#birthDay').val());
+    // Remove birth date fields
     formData.append('gender', $('#gender').val());
     formData.append('bio', $('#bio').val());
     formData.append('showNSFW', $('#nsfw-toggle').is(':checked'));
@@ -281,7 +243,7 @@ $(document).ready(function() {
         
         // It's important that '/plan/list/:id' route in plan.js returns the correct plan details by its ID (billingCycle)
         // The original code used data.plan.billingCycle as the ID for /plan/list/
-        // Assuming billingCycle (e.g., '12-months') is the ID for the plan details
+        // Assuming billingCycle (e.g., '12-months') is the ID of the plan details
         $.get('/plan/list/' + billingCycle, function(planData) {
           if (planData && planData.plan) {
             message = `
@@ -333,4 +295,80 @@ $(document).ready(function() {
     $('#cancel-plan').hide();
     $('#day-pass-countdown-section').hide();
   });
+
+  // Add onboarding restart button handler
+  $('#restart-onboarding').on('click', function() {
+    const userId = user._id;
+    
+    Swal.fire({
+      title: window.onboardingTranslations?.skip_confirmation || 'Restart Onboarding?',
+      text: 'This will guide you through the setup process again to personalize your experience.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: window.onboardingTranslations?.continue || 'Yes, restart',
+      cancelButtonText: window.onboardingTranslations?.skip || 'Cancel'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Clear onboarding data
+        localStorage.removeItem(`onboarding_${userId}`);
+        
+        // Reset user onboarding status
+        $.ajax({
+          url: `/user/${userId}/reset-onboarding`,
+          method: 'POST',
+          xhrFields: {
+            withCredentials: true
+          },
+          success: function() {
+            // Start onboarding
+            if (window.OnboardingFunnel) {
+              const onboarding = new OnboardingFunnel();
+              onboarding.start();
+            }
+            showNotification(window.onboardingTranslations?.onboarding_complete || 'Onboarding restarted successfully!', 'success');
+          },
+          error: function() {
+            showNotification('Failed to restart onboarding', 'error');
+          }
+        });
+      }
+    });
+  });
 });
+  $('#restart-onboarding').on('click', function() {
+    const userId = user._id;
+    
+    Swal.fire({
+      title: window.onboardingTranslations?.skip_confirmation || 'Restart Onboarding?',
+      text: 'This will guide you through the setup process again to personalize your experience.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: window.onboardingTranslations?.continue || 'Yes, restart',
+      cancelButtonText: window.onboardingTranslations?.skip || 'Cancel'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Clear onboarding data
+        localStorage.removeItem(`onboarding_${userId}`);
+        
+        // Reset user onboarding status
+        $.ajax({
+          url: `/user/${userId}/reset-onboarding`,
+          method: 'POST',
+          xhrFields: {
+            withCredentials: true
+          },
+          success: function() {
+            // Start onboarding
+            if (window.OnboardingFunnel) {
+              const onboarding = new OnboardingFunnel();
+              onboarding.start();
+            }
+            showNotification(window.onboardingTranslations?.onboarding_complete || 'Onboarding restarted successfully!', 'success');
+          },
+          error: function() {
+            showNotification('Failed to restart onboarding', 'error');
+          }
+        });
+      }
+    });
+  });

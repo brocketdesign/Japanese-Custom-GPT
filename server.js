@@ -87,7 +87,8 @@ const partials = [
   'chat-list',
   'dashboard-modals',
   'translations',
-  'footer-toolbar'
+  'footer-toolbar',
+  'onboarding-modals'
 ];
 
 partials.forEach(partial => {
@@ -943,12 +944,11 @@ fastify.get('/settings', async (request, reply) => {
     const userId = request.user._id;
     const usersCollection = db.collection('users');
     const userData = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-    
+    const isAdmin = await checkUserAdmin(fastify, userId);
 
     return reply.view('/settings', {
       title: 'AIフレンズ',
-      
-      
+      isAdmin,
       user: userData,
     });
   } catch (err) {

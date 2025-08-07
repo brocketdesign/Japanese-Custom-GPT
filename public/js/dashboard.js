@@ -1,4 +1,3 @@
-
 // Global states
 var swiperInstance;
 var currentSwiperIndex = 0;
@@ -1800,7 +1799,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
 
           // --- End: Random sample image selection logic ---
           htmlContent += `
-                  <div class="gallery-card col-6 col-sm-6 col-lg-3 mb-4 ${finalNsfwResult ? "nsfw-content":''} ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} ${chat.imageStyle ? 'chat-style-'+chat.imageStyle : ''} nsfw-${finalNsfwResult}">
+                  <div class="gallery-card col-6 col-sm-6 col-lg-3 mb-4 ${finalNsfwResult ? "nsfw-content":''} ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} ${chat.imageStyle ? 'chat-style-'+chat.imageStyle : ''} nsfw-${finalNsfwResult}" data-id="${chat._id}" style="cursor:pointer;">
                     <div class="card shadow border-0 h-100 position-relative gallery-hover" style="overflow: hidden;">
                       <!-- Clickable image area -->
                       <div class="gallery-image-wrapper position-relative chat-card-clickable-area" style="aspect-ratio: 4/5; background: #f8f9fa; cursor: pointer;"
@@ -1870,7 +1869,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                             class="btn btn-light ms-2 chat-nsfw-toggle ${finalNsfwResult ? 'nsfw' : 'sfw'}" 
                             data-id="${chat.chatId || chat._id}" 
                             onclick="toggleChatNSFW(this)">
-                            <i class="bi ${finalNsfwResult ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
+                            <i class="bi ${finalNsfwResult ? 'bi-eye-slash' : 'bi-eye'}"></i>
                             </button>
                             
                             <button class="btn btn-sm btn-danger border-0 ms-1" data-id="${chat._id}" onclick="deleteChat(this); event.stopPropagation();" title="Delete Chat" style="padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
@@ -1954,9 +1953,9 @@ window.toggleChatNSFW = function(el) {
     success: function () {
       // Show success notification in Japanese
       if (nsfwStatus) {
-        showNotification(window.translations.setNsfw, 'success');
+          showNotification(window.translations.setNsfw, 'success');
       } else {
-        showNotification(window.translations.unsetNsfw, 'success');
+          showNotification(window.translations.unsetNsfw, 'success');
       }
       resetPopularChatCache();
       updateNSFWContentUI();
@@ -2017,12 +2016,12 @@ window.loadAllUserPosts = async function (page = 1) {
                                 class="btn btn-light post-nsfw-toggle ${!isAdmin?'d-none':''}" 
                                 data-id="${item.post.postId}"
                                 onclick="togglePostNSFW(this)">
-                                    <i class="bi ${item?.post?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
+                                    <i class="bi ${item?.post?.nsfw ? 'bi-eye-slash':'bi-eye'} me-2" style="cursor: pointer;"></i>
                                 </button>
                                 <button 
                                 class="btn btn-light shadow-0 post-fav  ${isLiked ? 'liked' : ''}" 
                                 data-id="${item.post.postId}"
-                                onclick="togglePostFavorite(this)"
+                                onclick="togglePostFavorite(this)" 
                                 > 
                                     <i class="bi bi-heart me-2"></i>いいね 
                                     <span class="ct">${item.post.likes || 0}</span>
@@ -2148,7 +2147,9 @@ window.loadAllChatImages = function (page = 1, reload = false) {
       // If reload => append all cached pages, set current page
       if (reload) {
         cachedPages.forEach((p) => {
-          appendAllChatsImages(allChatsImagesCache[p], subscriptionStatus, isAdmin)
+          if (allChatsImagesCache[p]?.recent) {
+            appendAllChatsImages(allChatsImagesCache[p].recent, subscriptionStatus, isAdmin)
+          }
         })
         allChatsCurrentPage = maxCachedPage
         if (maxCachedPage > 0) page = maxCachedPage + 1 // optional: refresh the last cached page
@@ -2219,7 +2220,7 @@ window.loadAllChatImages = function (page = 1, reload = false) {
     updateAllChatsPaginationControls(9999)
   }
   
-  // Spinner vs. Back-to-Top
+  // Spinner vs. Back-to-top
   function updateAllChatsPaginationControls(totalPages) {
     if (allChatsCurrentPage >= totalPages) {
       console.log('All Chats: No more pages to load.')
@@ -2238,7 +2239,9 @@ window.loadAllChatImages = function (page = 1, reload = false) {
   
     images.forEach((item) => {
       const isBlur = shouldBlurNSFW(item, subscriptionStatus);
-      const isLiked = item?.likedBy?.some((id) => id.toString() === currentUserId.toString())
+      const isLiked = Array.isArray(item.likedBy)
+        ? item.likedBy.some(id => id.toString() === currentUserId.toString())
+        : false;
 
       chatGalleryHtml += `
         <div class="col-6 col-md-3 col-lg-2 mb-2">
@@ -2256,7 +2259,7 @@ window.loadAllChatImages = function (page = 1, reload = false) {
                        <i class="bi bi-chat-dots me-2"></i> ${translations.startChat}
                      </a>
                      <button class="btn btn-light image-nsfw-toggle ${!isAdmin ? 'd-none' : ''} ${item?.nsfw ? 'nsfw' : 'sfw'}" data-id="${item._id}">
-                       <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
+                       <i class="bi ${item.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
                      </button>
                      <span 
                      class="btn btn-light float-end image-fav ${isLiked ? 'liked' : ''}" 

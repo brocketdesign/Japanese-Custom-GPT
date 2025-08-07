@@ -27,6 +27,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     const affiliationTranslationsCache = {}; // Add cache for affiliation translations
     const chatToolSettingsTranslationsCache = {}; // Add cache for chat tool settings translations
     const chatSuggestionsTranslationsCache = {}; // Add cache for chat suggestions translations
+    const onboardingTranslationsCache = {}; // Add cache for onboarding translations
 
     // Decorate Fastify with user, lang, and translations functions
     fastify.decorate('getUser', getUser);
@@ -41,6 +42,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorate('getAffiliationTranslations', getAffiliationTranslations); // Add affiliation translations decorator
     fastify.decorate('getChatToolSettingsTranslations', getChatToolSettingsTranslations); // Add chat tool settings translations decorator
     fastify.decorate('getChatSuggestionsTranslations', getChatSuggestionsTranslations); // Add chat suggestions translations decorator
+    fastify.decorate('getOnboardingTranslations', getOnboardingTranslations); // Add onboarding translations decorator
     
     // Attach `lang` and `user` dynamically
     Object.defineProperty(fastify, 'lang', {
@@ -67,6 +69,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorateRequest('affiliationTranslations', null); // Add affiliation translations to request
     fastify.decorateRequest('chatToolSettingsTranslations', null); // Add chat tool settings translations to request
     fastify.decorateRequest('chatSuggestionsTranslations', null); // Add chat suggestions translations to request
+    fastify.decorateRequest('onboardingTranslations', null); // Add onboarding translations to request
 
     // Pre-handler to set user, lang, and translations
     fastify.addHook('preHandler', async (request, reply) => {
@@ -83,6 +86,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         request.affiliationTranslations = getAffiliationTranslations(request.lang); // Load affiliation translations
         request.chatToolSettingsTranslations = getChatToolSettingsTranslations(request.lang); // Load chat tool settings translations
         request.chatSuggestionsTranslations = getChatSuggestionsTranslations(request.lang); // Load chat suggestions translations
+        request.onboardingTranslations = getOnboardingTranslations(request.lang); // Load onboarding translations
    
         // Make translations available in Handlebars templates
         reply.locals = {
@@ -97,6 +101,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             affiliationTranslations: request.affiliationTranslations, // Make affiliation translations available
             chatToolSettingsTranslations: request.chatToolSettingsTranslations, // Make chat tool settings translations available
             chatSuggestionsTranslations: request.chatSuggestionsTranslations, // Make chat suggestions translations available
+            onboardingTranslations: request.onboardingTranslations, // Make onboarding translations available
             user: request.user, // Make user available
             isUserAdmin: request.isUserAdmin, // Make admin status available
             mode: process.env.MODE,
@@ -374,6 +379,26 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         return chatSuggestionsTranslationsCache[currentLang];
     }
 
+    /** Load OnboardingTranslations for a specific language (cached for performance) */
+    function getOnboardingTranslations(currentLang) {
+        if (!currentLang) currentLang = 'en';
+        
+        if (!onboardingTranslationsCache[currentLang]) {
+            const onboardingTranslationFile = path.join(__dirname, '..', 'locales', `onboarding-${currentLang}.json`);
+            if (fs.existsSync(onboardingTranslationFile)) {
+                try {
+                    onboardingTranslationsCache[currentLang] = JSON.parse(fs.readFileSync(onboardingTranslationFile, 'utf-8'));
+                } catch (e) {
+                    fastify.log.error(`Error reading onboarding translations for ${currentLang}:`, e);
+                    onboardingTranslationsCache[currentLang] = {};
+                }
+            } else {
+                onboardingTranslationsCache[currentLang] = {}; // Fallback to empty object if translation file is missing
+            }
+        }
+        return onboardingTranslationsCache[currentLang];
+    }
+
     /** Middleware: Set request language and user */
     async function setRequestLangAndUser(request, reply) {
         request.user = await fastify.getUser(request, reply);
@@ -388,7 +413,14 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         request.affiliationTranslations = fastify.getAffiliationTranslations(request.lang);
         request.chatToolSettingsTranslations = fastify.getChatToolSettingsTranslations(request.lang);
         request.chatSuggestionsTranslations = fastify.getChatSuggestionsTranslations(request.lang);
+        request.onboardingTranslations = fastify.getOnboardingTranslations(request.lang);
         request.isAdmin = await checkUserAdmin(fastify, request.user._id) || false;
+
+        // Add onboarding status check
+        if (request.user && !request.user.isTemporary) {
+            // Check if user should see onboarding
+            request.user.firstTime = request.user.onboardingCompleted !== true;
+        }
     }
 
     /** Middleware: Set reply.locals */
@@ -408,6 +440,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             affiliationTranslations: request.affiliationTranslations, // Add affiliation translations to locals
             chatToolSettingsTranslations: request.chatToolSettingsTranslations, // Add chat tool settings translations to locals
             chatSuggestionsTranslations: request.chatSuggestionsTranslations, // Add chat suggestions translations to locals
+            onboardingTranslations: request.onboardingTranslations, // Add onboarding translations to locals
             lang: request.lang,
             user: request.user,
             isAdmin: request.isAdmin

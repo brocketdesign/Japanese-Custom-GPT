@@ -1,0 +1,471 @@
+/* Onboarding Modal Overlay */
+.onboarding-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    z-index: 9999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+}
+
+.onboarding-overlay.show {
+    opacity: 1 !important;
+}
+
+/* Onboarding Modal - Professional Design with Bootstrap Structure */
+.onboarding-modal {
+    border-radius: 24px !important;
+    box-shadow: 0 24px 80px rgba(110, 32, 244, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+    border: none !important;
+}
+
+.onboarding-modal .modal-header {
+    padding: 1rem 2rem 0 2rem !important;
+    background: #ffffff !important;
+}
+
+.onboarding-modal .modal-body {
+    padding: 2rem !important;
+    background: #ffffff !important;
+}
+
+.onboarding-modal .modal-footer {
+    padding: 1rem 2rem 2rem 2rem !important;
+    background: #ffffff !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 1rem !important;
+}
+
+/* Progress Indicator */
+.onboarding-progress {
+    height: 4px !important;
+    background: #f1f5f9 !important;
+    border-radius: 4px !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.onboarding-progress-bar {
+    height: 100% !important;
+    background: linear-gradient(135deg, #6E20F4 0%, #8B4CF8 100%) !important;
+    border-radius: 4px !important;
+    transition: width 0.3s ease !important;
+}
+
+/* Welcome Step Styling */
+.onboarding-welcome {
+    text-align: center !important;
+    color: #1a1a1a !important;
+}
+
+.welcome-title {
+    font-size: 2rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 0.75rem !important;
+    color: #1a1a1a !important;
+    line-height: 1.2 !important;
+}
+
+.welcome-subtitle {
+    color: #6b7280 !important;
+    font-size: 1.1rem !important;
+    font-weight: 400 !important;
+    margin-bottom: 3rem !important;
+    line-height: 1.4 !important;
+}
+
+/* Form Sections */
+.form-section {
+    margin-bottom: 2.5rem !important;
+}
+
+.form-label {
+    display: block !important;
+    font-weight: 600 !important;
+    color: #374151 !important;
+    font-size: 1.05rem !important;
+    margin-bottom: 1.25rem !important;
+    text-align: center !important;
+}
+
+.required {
+    color: #ef4444 !important;
+    font-weight: 700 !important;
+}
+
+/* Nickname Input - Limited width */
+.nickname-input {
+    max-width: 300px !important;
+    width: 100% !important;
+}
+
+/* Button Options - Ensure proper centering */
+.pronoun-options,
+.relationship-options,
+.gender-options {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 1rem !important;
+    flex-wrap: wrap !important;
+}
+
+.gender-options {
+    gap: 1.5rem !important;
+}
+
+.option-btn,
+.relationship-btn {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100px !important;
+    height: 100px !important;
+    background: #f8fafc !important;
+    border: 2px solid #e5e7eb !important;
+    border-radius: 20px !important;
+    color: #6b7280 !important;
+    cursor: pointer !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.relationship-btn {
+    width: 95px !important;
+    height: 90px !important;
+    font-size: 0.85rem !important;
+}
+
+.option-btn:hover,
+.relationship-btn:hover {
+    border-color: #6E20F4 !important;
+    background: #faf5ff !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(110, 32, 244, 0.15) !important;
+}
+
+.option-btn.active,
+.relationship-btn.active {
+    background: linear-gradient(135deg, #6E20F4 0%, #8B4CF8 100%) !important;
+    border-color: #6E20F4 !important;
+    color: white !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 12px 32px rgba(110, 32, 244, 0.3) !important;
+}
+
+.option-btn i,
+.relationship-btn i {
+    font-size: 1.75rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.relationship-btn i {
+    font-size: 1.5rem !important;
+}
+
+/* Age Options - Grid Layout */
+.age-options {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+    max-width: 320px !important;
+    margin: 0 auto !important;
+}
+
+.age-btn {
+    padding: 1rem !important;
+    background: #f8fafc !important;
+    border: 2px solid #e5e7eb !important;
+    border-radius: 16px !important;
+    color: #374151 !important;
+    cursor: pointer !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+}
+
+.age-btn:hover {
+    border-color: #6E20F4 !important;
+    background: #faf5ff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 16px rgba(110, 32, 244, 0.1) !important;
+}
+
+.age-btn.active {
+    background: linear-gradient(135deg, #6E20F4 0%, #8B4CF8 100%) !important;
+    border-color: #6E20F4 !important;
+    color: white !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 8px 25px rgba(110, 32, 244, 0.25) !important;
+}
+
+/* Navigation Buttons */
+.btn-continue {
+    background: linear-gradient(135deg, #6E20F4 0%, #8B4CF8 100%) !important;
+    border: none !important;
+    color: white !important;
+    padding: 0.875rem 2rem !important;
+    border-radius: 16px !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 8px 25px rgba(110, 32, 244, 0.25) !important;
+    flex: 1 !important;
+    max-width: 200px !important;
+}
+
+.btn-continue:hover:not(:disabled) {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 12px 32px rgba(110, 32, 244, 0.35) !important;
+}
+
+.btn-continue:disabled {
+    background: #e5e7eb !important;
+    color: #9ca3af !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+/* Style Options for Steps */
+.style-options,
+.character-gender-options {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 1rem !important;
+    flex-wrap: wrap !important;
+    margin-top: 1.5rem !important;
+}
+
+.style-btn,
+.char-gender-btn {
+    background: #f8fafc !important;
+    border: 2px solid #e5e7eb !important;
+    color: #374151 !important;
+    border-radius: 16px !important;
+    padding: 0.875rem 1.75rem !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+}
+
+.style-btn:hover,
+.char-gender-btn:hover {
+    border-color: #6E20F4 !important;
+    background: #faf5ff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 16px rgba(110, 32, 244, 0.1) !important;
+}
+
+.style-btn.active,
+.char-gender-btn.active {
+    background: linear-gradient(135deg, #6E20F4 0%, #8B4CF8 100%) !important;
+    border-color: #6E20F4 !important;
+    color: white !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 8px 25px rgba(110, 32, 244, 0.25) !important;
+}
+
+/* Character Grid - Horizontal Scroll */
+.character-grid {
+    display: flex !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 1.5rem 0 2rem !important;
+    flex-wrap: nowrap !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+.character-grid::-webkit-scrollbar {
+    display: none !important;
+}
+
+.character-grid .gallery-card {
+    flex: 0 0 auto !important;
+    white-space: normal !important;
+}
+
+/* Character Selection Effect */
+.character-grid .gallery-card.selected .card {
+    border: 3px solid #6E20F4 !important;
+    box-shadow: 0 12px 40px rgba(110, 32, 244, 0.25) !important;
+    transform: scale(1.05) !important;
+}
+
+.character-grid .gallery-card.selected::after {
+    content: '✓' !important;
+    position: absolute !important;
+    top: 12px !important;
+    right: 12px !important;
+    background: linear-gradient(135deg, #6E20F4 0%, #8B4CF8 100%) !important;
+    color: white !important;
+    border-radius: 50% !important;
+    width: 32px !important;
+    height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    z-index: 10 !important;
+    box-shadow: 0 4px 16px rgba(110, 32, 244, 0.3) !important;
+    border: 2px solid white !important;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    height: 200px !important;
+}
+
+.spinner-border {
+    color: #6E20F4 !important;
+    width: 3rem !important;
+    height: 3rem !important;
+}
+
+/* Completion Step */
+.completion-illustration i {
+    font-size: 4rem !important;
+    color: #10b981 !important;
+    margin-bottom: 1.5rem !important;
+}
+
+/* Form Controls */
+.form-control {
+    background: #f8fafc !important;
+    border: 2px solid #e5e7eb !important;
+    color: #374151 !important;
+    border-radius: 12px !important;
+    padding: 0.875rem 1rem !important;
+    font-size: 0.95rem !important;
+}
+
+.form-control:focus {
+    background: #ffffff !important;
+    border-color: #6E20F4 !important;
+    color: #374151 !important;
+    box-shadow: 0 0 0 3px rgba(110, 32, 244, 0.1) !important;
+}
+
+/* Navigation Buttons - Remove duplicate styles since they're now in modal footer */
+.onboarding-footer-buttons {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 1rem !important;
+    width: 100% !important;
+}
+
+.onboarding-footer-buttons .btn {
+    min-width: 120px !important;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .onboarding-modal .modal-body {
+        padding: 1.5rem !important;
+    }
+    
+    .welcome-title {
+        font-size: 1.75rem !important;
+    }
+    
+    .welcome-subtitle {
+        font-size: 1rem !important;
+    }
+    
+    .form-label {
+        font-size: 1rem !important;
+    }
+    
+    .option-btn {
+        width: 85px !important;
+        height: 85px !important;
+    }
+    
+    .relationship-btn {
+        width: 80px !important;
+        height: 75px !important;
+    }
+    
+    .age-options {
+        max-width: 280px !important;
+    }
+    
+    .character-grid .gallery-card {
+        width: 160px !important;
+    }
+    
+    .nickname-input {
+        max-width: 250px !important;
+    }
+    
+    .gender-options {
+        gap: 1rem !important;
+    }
+    
+    .onboarding-footer-buttons {
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+    }
+    
+    .onboarding-footer-buttons .btn {
+        width: 100% !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .pronoun-options {
+        gap: 0.75rem !important;
+    }
+    
+    .option-btn {
+        width: 75px !important;
+        height: 75px !important;
+        font-size: 0.8rem !important;
+    }
+    
+    .option-btn i {
+        font-size: 1.5rem !important;
+    }
+    
+    .relationship-options {
+        gap: 0.75rem !important;
+    }
+    
+    .relationship-btn {
+        width: 70px !important;
+        height: 65px !important;
+        font-size: 0.75rem !important;
+    }
+    
+    .age-options {
+        max-width: 240px !important;
+        gap: 0.5rem !important;
+    }
+    
+    .age-btn {
+        padding: 0.75rem !important;
+        font-size: 0.85rem !important;
+    }
+    
+    .nickname-input {
+        max-width: 200px !important;
+    }
+}

@@ -65,15 +65,12 @@
                 <input type="email" class="form-control" id="inputEmail4" placeholder="" />
               </div>
 
-              <div class="row mb-3">
-                <div class="form-group mb-3 text-start">
-                    <label for="birthdate" class="form-label" style="font-size:12px">{{translations.setting.birthdate}}</label>
-                    <input id="birthdate" type="text" class="form-control" placeholder="{{translations.userinfo.birthdatePlaceholder}}" autocomplete="off">
-                    <input type="hidden" id="birthYear" name="birthYear">
-                    <input type="hidden" id="birthMonth" name="birthMonth">
-                    <input type="hidden" id="birthDay" name="birthDay">
-                </div>
+              <!-- Age Range Display -->
+              <div class="mb-3" id="ageRangeSection" style="display: none;">
+                <label class="form-label">{{translations.setting.ageRange}}</label>
+                <div class="form-control-plaintext" id="userAgeRange"></div>
               </div>
+
               <div class="row mb-3">
                 <div class="col-auto">
                   <label for="gender" class="form-label"><i class="fas fa-user"></i> {{translations.setting.gender}}:</label>
@@ -118,6 +115,22 @@
                 <label for="bio" class="form-label">{{translations.setting.bio}}</label>
                 <textarea class="form-control" id="bio" name="bio" rows="5" maxlength="400"></textarea>
               </div>
+              {{#if isAdmin}}
+              <!-- Onboarding restart option -->
+              <div class="settings-section mb-4 border-top pt-4">
+                <h6 class="fw-bold mb-3">{{translations.personalSettings}}</h6>
+                
+                <div class="d-flex justify-content-between align-items-center py-2 border rounded p-3 bg-light">
+                  <div>
+                    <div class="fw-semibold">{{translations.restartOnboarding}}</div>
+                    <small class="text-muted">{{translations.restartOnboardingDesc}}</small>
+                  </div>
+                  <button type="button" id="restart-onboarding" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-arrow-clockwise"></i> {{translations.restart}}
+                  </button>
+                </div>
+              </div>
+              {{/if}}
 
               <div class="col">
                 <button type="submit" class="btn custom-gradient-bg">{{translations.setting.saveUserInfo}}</button>

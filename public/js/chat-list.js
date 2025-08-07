@@ -178,7 +178,8 @@ function displayChatList(reset, userId) {
         chats.forEach(function(chat){
             // Check if this chat is already displayed
             if ($(`#chat-list .chat-list.item[data-id="${chat._id}"]`).length === 0) {
-                var chatHtml = constructChatItemHtml(chat, chat._id === chatId);
+                const isActive = chatId ? chat._id === chatId : false;
+                var chatHtml = constructChatItemHtml(chat, isActive);
                 // Add smooth fade-in animation for new chats
                 const $chatElement = $(chatHtml).hide();
                 $('#chat-list').append($chatElement);

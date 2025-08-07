@@ -547,10 +547,13 @@ async function routes(fastify, options) {
       }
 
       const translations = request.translations;
+      // Add onboarding translations
+      const onboardingTranslations = request.translations.onboarding || {};
 
       return reply.renderWithGtm('/user-profile.hbs', {
         title: `${userData.nickname}さんのプロフィール`,
         translations,
+        onboardingTranslations,
         mode: process.env.MODE,
         apiurl: getApiUrl(request),
         isAdmin,
@@ -998,6 +1001,196 @@ async function routes(fastify, options) {
     } catch (error) {
       console.error('Error rendering banking page:', error);
       return reply.status(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Add onboarding completion endpoint
+  fastify.post('/user/onboarding-complete', async (req, res) => {
+    try {
+        const { userId, onboardingData, completedAt } = req.body;
+        
+        if (!userId) {
+            return res.status(400).send({ success: false, error: 'User ID required' });
+        }
+
+        // Update user with onboarding data
+        const updateData = {
+            onboardingCompleted: true,
+            firstTime: false,
+            onboardingData: onboardingData,
+            onboardingCompletedAt: completedAt || new Date().toISOString()
+        };
+
+        // Apply basic user data if provided
+        if (onboardingData.nickname) updateData.nickname = onboardingData.nickname;
+        if (onboardingData.gender) updateData.gender = onboardingData.gender;
+        if (onboardingData.birthdate) {
+            const birthDate = new Date(onboardingData.birthdate);
+            updateData.birthDate = birthDate;
+        }
+
+        const result = await fastify.mongo.db.collection('users').findOneAndUpdate(
+          { _id: new ObjectId(userId) },
+          { $set: updateData },
+          { new: true }
+        );
+        
+        if (!result.value) {
+            return res.status(404).send({ success: false, error: 'User not found' });
+        }
+
+        res.send({ 
+            success: true, 
+            message: 'Onboarding completed successfully',
+            user: result.value 
+        });
+
+    } catch (error) {
+        console.error('Error completing onboarding:', error);
+        res.status(500).send({ success: false, error: 'Internal server error' });
+    }
+  });
+
+  // Add onboarding reset endpoint
+  fastify.post('/user/:userId/reset-onboarding', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        if (!userId) {
+            return res.status(400).json({ success: false, error: 'User ID required' });
+        }
+
+        // Reset user onboarding status
+        const result = await fastify.mongo.db.collection('users').findOneAndUpdate(
+          { _id: new ObjectId(userId) },
+          { 
+            $set: { 
+              onboardingCompleted: false,
+              firstTime: true
+            },
+            $unset: {
+              onboardingData: "",
+              onboardingCompletedAt: ""
+            }
+          },
+          { new: true }
+        );
+        
+        if (!result.value) {
+            return res.status(404).send({ success: false, error: 'User not found' });
+        }
+
+        res.send({ 
+            success: true, 
+            message: 'Onboarding reset successfully'
+        });
+
+    } catch (error) {
+        console.error('Error resetting onboarding:', error);
+        res.status(500).send({ success: false, error: 'Internal server error' });
+    }
+  });
+
+  // Add character recommendations endpoint
+  fastify.get('/api/character-recommendations', async (req, res) => {
+    try {
+        const { style = 'anime', gender = 'female', interests = '', limit = 4 } = req.query;
+        const lang = req.lang || 'en';
+        console.log(`Language for recommendations: ${lang}`);
+        // Build query based on preferences
+        const query = {};
+        
+        if (style && style !== 'any') {
+            console.log(`Using image style: ${style}`);
+            query.imageStyle = style;
+        }
+        
+        if (gender && gender !== 'both') {
+            query.gender = gender;
+        }
+
+        if (lang && lang !== 'any') {
+            query.language = lang;
+        }
+
+        // Add interest-based filtering if available
+        if (interests) {
+            const interestKeywords = interests.split(',').map(i => i.trim().toLowerCase());
+            query.$or = [
+                { tags: { $in: interestKeywords } },
+                { name: { $regex: interestKeywords.join('|'), $options: 'i' } },
+                { first_message: { $regex: interestKeywords.join('|'), $options: 'i' } }
+            ];
+        }
+
+        // Get recommended characters
+        const characters = await fastify.mongo.db.collection('chats').find(query)
+            .project({ _id: 1, name: 1, chatImageUrl: 1, first_message: 1, tags: 1, gender: 1, imageStyle: 1 })
+            .limit(parseInt(limit))
+            .sort({ popularity: -1, createdAt: -1 })
+            .toArray();
+
+        // If not enough characters found, get popular ones as fallback
+        if (characters.length < limit) {
+            const fallbackQuery = { gender: gender !== 'both' ? gender : 'female' };
+            const fallbackCharacters = await fastify.mongo.db.collection('chats').find(fallbackQuery)
+                .project({ _id: 1, name: 1, chatImageUrl: 1, first_message: 1, tags: 1, gender: 1, imageStyle: 1 })
+                .limit(parseInt(limit) - characters.length)
+                .sort({ popularity: -1 })
+                .toArray();
+            
+            characters.push(...fallbackCharacters);
+        }
+
+        res.send({ 
+            success: true, 
+            characters: characters.slice(0, parseInt(limit))
+        });
+
+    } catch (error) {
+        console.error('Error getting character recommendations:', error);
+        res.status(500).send({ success: false, error: 'Failed to get recommendations' });
+    }
+});
+  // Add onboarding real-time update endpoint
+  fastify.post('/user/onboarding-update/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const updateData = req.body;
+        
+        if (!userId) {
+            return res.status(400).send({ success: false, error: 'User ID required' });
+        }
+
+        console.log(`[debug] Onboarding update for user ${userId}:`, updateData);
+
+        // Prepare the update object
+        const userUpdate = {
+            ...updateData,
+            lastOnboardingUpdate: new Date().toISOString()
+        };
+
+        const result = await fastify.mongo.db.collection('users').findOneAndUpdate(
+          { _id: new ObjectId(userId) },
+          { $set: userUpdate },
+          { new: true }
+        );
+        
+        if (!result.value) {
+            console.log(`[debug] User not found for ID: ${userId}`);
+            return res.status(404).send({ success: false, error: 'User not found' });
+        }
+
+        console.log(`[debug] Successfully updated user ${userId} with:`, updateData);
+        res.send({ 
+            success: true, 
+            message: 'User data updated successfully',
+            updatedFields: Object.keys(updateData)
+        });
+
+    } catch (error) {
+        console.error('[debug] Error updating user onboarding data:', error);
+        res.status(500).send({ success: false, error: 'Internal server error' });
     }
   });
 }

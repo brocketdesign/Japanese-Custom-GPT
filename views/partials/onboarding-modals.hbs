@@ -1,0 +1,160 @@
+{{! This modal is used for the onboarding process, guiding users through initial setup steps. }}
+<!-- Onboarding Modal -->
+<div class="modal fade" id="onboardingModal" tabindex="-1" aria-labelledby="onboardingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content onboarding-modal">
+            <div class="modal-header border-0" id="onboardingModalHeader">
+                <div class="onboarding-progress w-100">
+                    <div class="onboarding-progress-bar" id="onboardingProgressBar" style="width: 0%;"></div>
+                </div>
+            </div>
+            <div class="modal-body" id="onboardingModalContent">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+            <div class="modal-footer border-0 bg-white" id="onboardingModalFooter">
+                <!-- Navigation buttons will be inserted here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Step 0: Welcome + Personal Info Combined -->
+<template id="onboarding-step-0">
+    <div class="onboarding-welcome">
+        <div class="welcome-section text-center mb-4">
+            <h2 class="welcome-title">{{onboardingTranslations.welcome_title}}</h2>
+            <p class="welcome-subtitle">{{onboardingTranslations.welcome_subtitle}}</p>
+        </div>
+        
+        <div class="onboarding-form">
+            <div class="form-section mb-4">
+                <label class="form-label">
+                    {{onboardingTranslations.nickname_question}} 
+                    <span class="required">*</span>
+                </label>
+                <div class="d-flex justify-content-center">
+                    <input type="text" class="form-control nickname-input" id="userNickname" placeholder="{{onboardingTranslations.nickname_placeholder}}" maxlength="30">
+                </div>
+            </div>
+            
+            <div class="form-section mb-4">
+                <label class="form-label">
+                    {{onboardingTranslations.gender_question}} 
+                    <span class="required">*</span>
+                </label>
+                <div class="gender-options d-flex justify-content-center">
+                    <button type="button" class="option-btn" data-gender="male">
+                        <i class="bi bi-gender-male"></i>
+                        <span>{{onboardingTranslations.male}}</span>
+                    </button>
+                    <button type="button" class="option-btn" data-gender="female">
+                        <i class="bi bi-gender-female"></i>
+                        <span>{{onboardingTranslations.female}}</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="form-section mb-4">
+                <label class="form-label">
+                    {{onboardingTranslations.age_question}} 
+                    <span class="required">*</span>
+                </label>
+                <div class="age-options">
+                    <button type="button" class="age-btn" data-age="below18">{{onboardingTranslations.below_18}}</button>
+                    <button type="button" class="age-btn" data-age="18-20">{{onboardingTranslations.age_18_20}}</button>
+                    <button type="button" class="age-btn" data-age="21-23">{{onboardingTranslations.age_21_23}}</button>
+                    <button type="button" class="age-btn" data-age="24-26">{{onboardingTranslations.age_24_26}}</button>
+                    <button type="button" class="age-btn" data-age="above26">{{onboardingTranslations.above_26}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Navigation buttons for modal footer -->
+    <div class="onboarding-footer-buttons d-none">
+        <button type="button" class="btn btn-primary btn-continue" onclick="window.onboardingFunnel.nextStep()" disabled>
+            {{onboardingTranslations.continue}}
+        </button>
+    </div>
+</template>
+
+<!-- Step 1: Preferences -->
+<template id="onboarding-step-1">
+    <div class="onboarding-header text-center mb-4">
+        <h2 class="h3 mb-3">{{onboardingTranslations.character_preferences}}</h2>
+        <p class="text-muted mb-0">{{onboardingTranslations.step3_intro}}</p>
+    </div>
+    <div class="onboarding-content">
+        <div class="preference-section mb-4">
+            <label class="form-label fw-semibold">
+                {{onboardingTranslations.visual_style}} 
+                <span class="required">*</span>
+            </label>
+            <div class="style-options">
+                <button type="button" class="style-btn" data-style="anime">
+                    {{onboardingTranslations.anime_style}}
+                </button>
+                <button type="button" class="style-btn" data-style="photorealistic">
+                    {{onboardingTranslations.realistic_style}}
+                </button>
+            </div>
+        </div>
+        <div class="preference-section">
+            <label class="form-label fw-semibold">
+                {{onboardingTranslations.character_gender}} 
+                <span class="required">*</span>
+            </label>
+            <div class="character-gender-options">
+                <button type="button" class="char-gender-btn" data-char-gender="female">
+                    {{onboardingTranslations.female_characters}}
+                </button>
+                <button type="button" class="char-gender-btn" data-char-gender="male">
+                    {{onboardingTranslations.male_characters}}
+                </button>
+                <button type="button" class="char-gender-btn" data-char-gender="both">
+                    {{onboardingTranslations.both_genders}}
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Navigation buttons for modal footer -->
+    <div class="onboarding-footer-buttons d-none">
+        <button type="button" class="btn btn-outline-secondary" onclick="window.onboardingFunnel.prevStep()">
+            {{onboardingTranslations.back}}
+        </button>
+        <button type="button" class="btn btn-primary btn-continue" onclick="window.onboardingFunnel.nextStep()" disabled>
+            {{onboardingTranslations.continue}}
+        </button>
+    </div>
+</template>
+
+<!-- Step 2: Character Selection -->
+<template id="onboarding-step-2">
+    <div class="onboarding-header text-center mb-4">
+        <h2 class="h3 mb-3">{{onboardingTranslations.select_character}}</h2>
+        <p class="text-muted mb-0">{{onboardingTranslations.step4_intro}}</p>
+    </div>
+    <div class="onboarding-content">
+        <div id="character-recommendations" class="character-grid row flex-nowrap overflow-auto mx-0" style="flex-wrap: nowrap; overflow-x: auto; white-space: nowrap;">
+            <div class="loading-spinner d-flex justify-content-center align-items-center" style="height: 200px;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">{{onboardingTranslations.loading}}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Navigation buttons for modal footer -->
+    <div class="onboarding-footer-buttons d-none">
+        <button type="button" class="btn btn-outline-secondary" onclick="window.onboardingFunnel.prevStep()">
+            {{onboardingTranslations.back}}
+        </button>
+        <button type="button" class="btn btn-primary btn-continue" onclick="window.onboardingFunnel.complete()">
+            {{onboardingTranslations.start_chatting}}
+        </button>
+    </div>
+</template>
+
+<link rel="stylesheet" href="/css/onboarding.css">
+<script src="/js/onboarding.js"></script>

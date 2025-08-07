@@ -859,8 +859,3 @@ class ChatToolSettings {
 document.addEventListener('DOMContentLoaded', () => {
     window.chatToolSettings = new ChatToolSettings();
 });
-
-// Export for module usage
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = ChatToolSettings;
-}

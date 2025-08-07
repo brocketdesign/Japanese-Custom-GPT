@@ -1,5 +1,9 @@
 {
   "lang": "en",
+  "restart": "Restart",
+  "personalSettings": "Personal Settings",
+  "restartOnboarding": "Restart Onboarding",
+  "restartOnboardingDesc": "See the introductory guide again.",
   "follow": {
     "following": "Following",
     "followed": "Followed!",
@@ -1058,6 +1062,12 @@
     "ageVerification": "I am over 18 years old"
   },
   "setting": {
+    "ageRange": "Age Range",
+    "below_18": "Below 18",
+    "age_18_20": "18-20",
+    "age_21_23": "21-23",
+    "age_24_26": "24-26",
+    "above_26": "Above 26",
     "dayPassActiveTitle": "Active Day Pass",
     "dayPassExpiresIn": "Expires in:",
     "dayPassExpired": "Your day pass has expired.",

@@ -71,7 +71,10 @@
   color:#dddedf!important;
   font-weight:300
   }
-  
+  .modal-content {
+    margin-left: auto;
+    margin-right: auto;
+  }
   .payment-methods img {
   width:50px
   }

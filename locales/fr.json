@@ -1,5 +1,9 @@
 {
-  "lang": "fr",
+      "lang": "fr",
+      "restart": "Redémarrer",
+      "personalSettings": "Paramètres personnels",
+      "restartOnboarding": "Redémarrer l'intégration",
+      "restartOnboardingDesc": "Voir à nouveau le guide d'introduction.",
   "follow": {
     "following": "Abonné",
     "followed": "Abonné !",
@@ -1036,6 +1040,12 @@
     "ageVerification": "J'ai plus de 18 ans"
   },
   "setting": {
+    "ageRange": "Tranche d'âge",
+    "below_18": "Moins de 18 ans",
+    "age_18_20": "18-20 ans",
+    "age_21_23": "21-23 ans",
+    "age_24_26": "24-26 ans",
+    "above_26": "Plus de 26 ans",
     "dayPassActiveTitle": "Passe Journalier Actif",
     "dayPassExpiresIn": "Expire dans:",
     "dayPassExpired": "Votre passe journalier a expiré.",

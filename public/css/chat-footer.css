@@ -1452,12 +1452,8 @@
   
   #userMessage:focus {
   outline:none;
-  box-shadow:none
-  }
-  
-  #userMessage:focus {
-  outline:none;
-  box-shadow:none
+  box-shadow:none;
+  transform: translateY(0px) !important;
   }
 
   #userMessage.prompt-image {

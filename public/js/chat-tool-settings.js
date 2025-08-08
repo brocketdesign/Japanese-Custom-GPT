@@ -5,9 +5,10 @@ class ChatToolSettings {
             videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
             relationshipType: 'companion',
             selectedVoice: 'nova',
-            voiceProvider: 'openai',
-            evenLabVoice: 'Thandiwe',
-            autoMergeFace: true
+            voiceProvider: 'standard',
+            premiumVoice: 'Thandiwe',
+            autoMergeFace: true,
+            suggestionsEnabled: true
         };
         
         this.isLoading = false;
@@ -21,6 +22,22 @@ class ChatToolSettings {
 
     // Add translation method
     t(key, fallback = key) {
+        // Handle nested keys like "voices.Thandiwe.name"
+        if (key.includes('.')) {
+            const keys = key.split('.');
+            let value = this.translations;
+            
+            for (const k of keys) {
+                if (value && typeof value === 'object' && k in value) {
+                    value = value[k];
+                } else {
+                    return fallback;
+                }
+            }
+            
+            return value || fallback;
+        }
+        
         return this.translations[key] || fallback;
     }
 
@@ -76,6 +93,13 @@ class ChatToolSettings {
             }
         });
 
+        // Premium voice selection - Use event delegation
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.settings-premium-voice-option')) {
+                this.selectPremiumVoice(e.target.closest('.settings-premium-voice-option'));
+            }
+        });
+
         // Relationship tone selection - Use event delegation
         document.addEventListener('click', (e) => {
             if (e.target.closest('.settings-tone-option')) {
@@ -83,11 +107,11 @@ class ChatToolSettings {
             }
         });
 
-        // Voice provider switch
+        // Voice provider switch - Allow switching for all users
         const voiceProviderSwitch = document.getElementById('voice-provider-switch');
         if (voiceProviderSwitch) {
             voiceProviderSwitch.addEventListener('change', (e) => {
-                this.settings.voiceProvider = e.target.checked ? 'evenlab' : 'openai';
+                this.settings.voiceProvider = e.target.checked ? 'premium' : 'standard';
                 this.toggleVoiceProviderUI();
                 this.updateSwitchLabels();
             });
@@ -101,11 +125,33 @@ class ChatToolSettings {
             });
         }
 
-        // Video prompt textarea
+        // Video prompt textarea - disable for non-premium users
         const videoPrompt = document.getElementById('video-prompt');
         if (videoPrompt) {
-            videoPrompt.addEventListener('input', (e) => {
-                this.settings.videoPrompt = e.target.value;
+            const user = window.user || {};
+            const subscriptionStatus = user.subscriptionStatus === 'active';
+            
+            if (!subscriptionStatus) {
+                videoPrompt.disabled = true;
+                videoPrompt.addEventListener('click', () => {
+                    if (typeof loadPlanPage === 'function') {
+                        loadPlanPage();
+                    } else {
+                        window.location.href = '/plan';
+                    }
+                });
+            } else {
+                videoPrompt.addEventListener('input', (e) => {
+                    this.settings.videoPrompt = e.target.value;
+                });
+            }
+        }
+
+        // Suggestions enable switch
+        const suggestionsEnableSwitch = document.getElementById('suggestions-enable-switch');
+        if (suggestionsEnableSwitch) {
+            suggestionsEnableSwitch.addEventListener('change', (e) => {
+                this.settings.suggestionsEnabled = e.target.checked;
             });
         }
 
@@ -136,10 +182,87 @@ class ChatToolSettings {
         }
     }
 
+    // Check if this is the first time user is opening chat settings
+    checkFirstTimeSettings(callback) {
+        if (!this.userId) {
+            if (callback) callback();
+            return;
+        }
+        
+        const storageKey = `chat_settings_opened_${this.userId}`;
+        const hasOpenedSettings = localStorage.getItem(storageKey);
+        
+        // If user has never opened settings before, show them automatically
+        if (!hasOpenedSettings) {
+            // Show settings with callback to continue chat generation
+            this.openModalForFirstTime(callback);
+        } else if (callback) {
+            // User has seen settings before, continue normally
+            callback();
+        }
+    }
+
+    // Special method for first-time opening with welcome message and callback
+    openModalForFirstTime(callback) {
+        // Mark that user has now seen the settings
+        this.markSettingsAsOpened();
+        
+        // Open the modal
+        this.openModal();
+        
+        // Add a welcome message
+        this.showFirstTimeWelcome();
+        
+        // Set up callback for when modal is closed
+        if (callback) {
+            this.onFirstTimeClose = callback;
+        }
+    }
+
+    // Mark settings as opened in localStorage
+    markSettingsAsOpened() {
+        if (!this.userId) return;
+        
+        const storageKey = `chat_settings_opened_${this.userId}`;
+        localStorage.setItem(storageKey, 'true');
+    }
+
+    // Show a welcome message for first-time users
+    showFirstTimeWelcome() {
+        // Add a welcome message at the top of the modal
+        setTimeout(() => {
+            const modalContent = document.querySelector('#settings-modal-overlay .settings-modal-container');
+            if (modalContent && !modalContent.querySelector('.first-time-welcome')) {
+                const welcomeMessage = document.createElement('div');
+                welcomeMessage.className = 'first-time-welcome alert alert-info mb-3 animate__animated animate__fadeIn';
+                welcomeMessage.innerHTML = `
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>${this.t('welcomeToSettings', 'Welcome to Chat Settings!')}</strong><br>
+                    <small>${this.t('settingsWelcomeMessage', 'Customize your chat experience before we start. You can change these settings anytime later.')}</small>
+                    <hr class="my-2">
+                    <small class="text-muted">${this.t('settingsCloseToStart', 'Close this dialog to start chatting with your character.')}</small>
+                `;
+                
+                // Insert at the beginning of the modal content
+                const firstChild = modalContent.firstChild;
+                modalContent.insertBefore(welcomeMessage, firstChild);
+                
+                // Auto-remove the welcome message after 12 seconds
+                setTimeout(() => {
+                    if (welcomeMessage.parentNode) {
+                        welcomeMessage.classList.add('animate__fadeOut');
+                        setTimeout(() => {
+                            welcomeMessage.remove();
+                        }, 500);
+                    }
+                }, 12000);
+            }
+        }, 300);
+    }
+
     setupRangeSliders() {
         const minImagesRange = document.getElementById('min-images-range');
         const minImagesValue = document.getElementById('min-images-value');
-        const autoMergeFaceSwitch = document.getElementById('auto-merge-face-switch');
         const user = window.user || {};
         const subscriptionStatus = user.subscriptionStatus === 'active';
 
@@ -200,36 +323,702 @@ class ChatToolSettings {
             });
         }
 
-        // Handle Auto Merge Face premium restriction
-        if (autoMergeFaceSwitch) {
-            if (!subscriptionStatus) {
-                // Auto-correct non-premium users who have autoMergeFace enabled
-                if (this.settings.autoMergeFace) {
-                    this.settings.autoMergeFace = false;
-                }
+        // Setup premium indicators based on subscription status
+        this.setupPremiumIndicators(subscriptionStatus);
+    }
 
-                // Non-premium users cannot use auto merge face
+    setupPremiumIndicators(subscriptionStatus) {
+        // Auto Merge Face premium indicator
+        const autoMergeIcon = document.getElementById('auto-merge-premium-icon');
+        const autoMergeIndicator = document.getElementById('auto-merge-premium-indicator');
+        const autoMergeFaceSwitch = document.getElementById('auto-merge-face-switch');
+
+        if (!subscriptionStatus) {
+            if (autoMergeIcon) autoMergeIcon.style.display = 'inline';
+            if (autoMergeIndicator) autoMergeIndicator.style.display = 'block';
+            
+            if (autoMergeFaceSwitch) {
                 this.settings.autoMergeFace = false;
                 autoMergeFaceSwitch.checked = false;
                 autoMergeFaceSwitch.disabled = true;
                 autoMergeFaceSwitch.style.opacity = '0.6';
+            }
+            
+            this.autoSaveCorrection();
+        } else {
+            if (autoMergeIcon) autoMergeIcon.style.display = 'none';
+            if (autoMergeIndicator) autoMergeIndicator.style.display = 'none';
+            
+            if (autoMergeFaceSwitch) {
+                autoMergeFaceSwitch.disabled = false;
+                autoMergeFaceSwitch.style.opacity = '1';
+            }
+        }
+
+        // Video settings premium indicator
+        const videoIndicator = document.getElementById('video-premium-indicator');
+        const videoPrompt = document.getElementById('video-prompt');
+        
+        if (!subscriptionStatus) {
+            if (videoIndicator) videoIndicator.style.display = 'block';
+            if (videoPrompt) {
+                videoPrompt.disabled = true;
+                videoPrompt.style.opacity = '0.6';
+                videoPrompt.style.cursor = 'pointer';
+            }
+        } else {
+            if (videoIndicator) videoIndicator.style.display = 'none';
+            if (videoPrompt) {
+                videoPrompt.disabled = false;
+                videoPrompt.style.opacity = '1';
+                videoPrompt.style.cursor = 'text';
+            }
+        }
+
+        // Premium relationships indicator
+        const premiumRelIndicator = document.getElementById('premium-relationships-indicator');
+        if (!subscriptionStatus) {
+            if (premiumRelIndicator) premiumRelIndicator.style.display = 'block';
+        } else {
+            if (premiumRelIndicator) premiumRelIndicator.style.display = 'none';
+        }
+
+        // Premium voices indicator
+        const premiumVoicesIndicator = document.getElementById('premium-voices-indicator');
+        if (!subscriptionStatus) {
+            if (premiumVoicesIndicator) premiumVoicesIndicator.style.display = 'block';
+        } else {
+            if (premiumVoicesIndicator) premiumVoicesIndicator.style.display = 'none';
+        }
+    }
+
+    // Check if this is the first time user is opening chat settings
+    checkFirstTimeSettings(callback) {
+        if (!this.userId) {
+            if (callback) callback();
+            return;
+        }
+        
+        const storageKey = `chat_settings_opened_${this.userId}`;
+        const hasOpenedSettings = localStorage.getItem(storageKey);
+        
+        // If user has never opened settings before, show them automatically
+        if (!hasOpenedSettings) {
+            // Show settings with callback to continue chat generation
+            this.openModalForFirstTime(callback);
+        } else if (callback) {
+            // User has seen settings before, continue normally
+            callback();
+        }
+    }
+
+    // Special method for first-time opening with welcome message and callback
+    openModalForFirstTime(callback) {
+        // Mark that user has now seen the settings
+        this.markSettingsAsOpened();
+        
+        // Open the modal
+        this.openModal();
+        
+        // Add a welcome message
+        this.showFirstTimeWelcome();
+        
+        // Set up callback for when modal is closed
+        if (callback) {
+            this.onFirstTimeClose = callback;
+        }
+    }
+
+    // Mark settings as opened in localStorage
+    markSettingsAsOpened() {
+        if (!this.userId) return;
+        
+        const storageKey = `chat_settings_opened_${this.userId}`;
+        localStorage.setItem(storageKey, 'true');
+    }
+
+    // Show a welcome message for first-time users
+    showFirstTimeWelcome() {
+        // Add a welcome message at the top of the modal
+        setTimeout(() => {
+            const modalContent = document.querySelector('#settings-modal-overlay .settings-modal-container');
+            if (modalContent && !modalContent.querySelector('.first-time-welcome')) {
+                const welcomeMessage = document.createElement('div');
+                welcomeMessage.className = 'first-time-welcome alert alert-info mb-3 animate__animated animate__fadeIn';
+                welcomeMessage.innerHTML = `
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>${this.t('welcomeToSettings', 'Welcome to Chat Settings!')}</strong><br>
+                    <small>${this.t('settingsWelcomeMessage', 'Customize your chat experience before we start. You can change these settings anytime later.')}</small>
+                    <hr class="my-2">
+                    <small class="text-muted">${this.t('settingsCloseToStart', 'Close this dialog to start chatting with your character.')}</small>
+                `;
                 
-                // Add premium indicator - converted to plain JS
-                const labelDescription = document.querySelector('.settings-switch-description');
-                if (labelDescription && !labelDescription.querySelector('.premium-feature-indicator')) {
+                // Insert at the beginning of the modal content
+                const firstChild = modalContent.firstChild;
+                modalContent.insertBefore(welcomeMessage, firstChild);
+                
+                // Auto-remove the welcome message after 12 seconds
+                setTimeout(() => {
+                    if (welcomeMessage.parentNode) {
+                        welcomeMessage.classList.add('animate__fadeOut');
+                        setTimeout(() => {
+                            welcomeMessage.remove();
+                        }, 500);
+                    }
+                }, 12000);
+            }
+        }, 300);
+    }
+
+    setupRangeSliders() {
+        const minImagesRange = document.getElementById('min-images-range');
+        const minImagesValue = document.getElementById('min-images-value');
+        const user = window.user || {};
+        const subscriptionStatus = user.subscriptionStatus === 'active';
+
+        if (minImagesRange && minImagesValue) {
+            // Set initial value based on subscription status
+            if (!subscriptionStatus) {
+                // Auto-correct non-premium users who have minImages > 1
+                if (this.settings.minImages > 1) {
+                    this.settings.minImages = 1;
+                }
+
+                // Non-premium users are limited to 1 image
+                this.settings.minImages = 1;
+                minImagesRange.value = 1;
+                minImagesValue.textContent = 1;
+                minImagesRange.disabled = true;
+                minImagesRange.style.opacity = '0.6';
+                
+                // Add premium indicator
+                const rangeContainer = document.querySelector('.settings-field');
+                if (!rangeContainer.querySelector('.premium-feature-indicator')) {
                     const premiumIndicator = document.createElement('small');
                     premiumIndicator.className = 'premium-feature-indicator text-muted d-block mt-1';
-                    premiumIndicator.innerHTML = '<i class="bi bi-star-fill text-warning"></i> ' + (this.t('autoMergeFacePremiumFeature') || 'Premium feature required for auto merge face');
-                    labelDescription.appendChild(premiumIndicator);
+                    premiumIndicator.innerHTML = '<i class="bi bi-star-fill text-warning"></i> ' + (this.t('minImagesPremiumFeature') || 'Premium feature required for more images');
+                    rangeContainer.appendChild(premiumIndicator);
                 }
 
                 // Save corrected settings after UI is set up
                 this.autoSaveCorrection();
             } else {
-                // Premium users can use auto merge face
+                // Premium users can use any value
+                minImagesRange.disabled = false;
+                minImagesRange.style.opacity = '1';
+            }
+
+            minImagesRange.addEventListener('input', (e) => {
+                const value = parseInt(e.target.value);
+                
+                // Check if user is trying to set value > 1 without subscription
+                if (!subscriptionStatus && value > 1) {
+                    // Reset to 1 and show upgrade popup
+                    e.target.value = 1;
+                    minImagesValue.textContent = 1;
+                    this.settings.minImages = 1;
+                    
+                    // Show plan page for upgrade
+                    if (typeof loadPlanPage === 'function') {
+                        loadPlanPage();
+                    } else {
+                        window.location.href = '/plan';
+                    }
+                    return;
+                }
+                
+                // Update value for premium users or when value is 1
+                minImagesValue.textContent = value;
+                this.settings.minImages = value;
+            });
+        }
+
+        // Setup premium indicators based on subscription status
+        this.setupPremiumIndicators(subscriptionStatus);
+    }
+
+    setupPremiumIndicators(subscriptionStatus) {
+        // Auto Merge Face premium indicator
+        const autoMergeIcon = document.getElementById('auto-merge-premium-icon');
+        const autoMergeIndicator = document.getElementById('auto-merge-premium-indicator');
+        const autoMergeFaceSwitch = document.getElementById('auto-merge-face-switch');
+
+        if (!subscriptionStatus) {
+            if (autoMergeIcon) autoMergeIcon.style.display = 'inline';
+            if (autoMergeIndicator) autoMergeIndicator.style.display = 'block';
+            
+            if (autoMergeFaceSwitch) {
+                this.settings.autoMergeFace = false;
+                autoMergeFaceSwitch.checked = false;
+                autoMergeFaceSwitch.disabled = true;
+                autoMergeFaceSwitch.style.opacity = '0.6';
+            }
+            
+            this.autoSaveCorrection();
+        } else {
+            if (autoMergeIcon) autoMergeIcon.style.display = 'none';
+            if (autoMergeIndicator) autoMergeIndicator.style.display = 'none';
+            
+            if (autoMergeFaceSwitch) {
                 autoMergeFaceSwitch.disabled = false;
                 autoMergeFaceSwitch.style.opacity = '1';
             }
+        }
+
+        // Video settings premium indicator
+        const videoIndicator = document.getElementById('video-premium-indicator');
+        const videoPrompt = document.getElementById('video-prompt');
+        
+        if (!subscriptionStatus) {
+            if (videoIndicator) videoIndicator.style.display = 'block';
+            if (videoPrompt) {
+                videoPrompt.disabled = true;
+                videoPrompt.style.opacity = '0.6';
+                videoPrompt.style.cursor = 'pointer';
+            }
+        } else {
+            if (videoIndicator) videoIndicator.style.display = 'none';
+            if (videoPrompt) {
+                videoPrompt.disabled = false;
+                videoPrompt.style.opacity = '1';
+                videoPrompt.style.cursor = 'text';
+            }
+        }
+
+        // Premium relationships indicator
+        const premiumRelIndicator = document.getElementById('premium-relationships-indicator');
+        if (!subscriptionStatus) {
+            if (premiumRelIndicator) premiumRelIndicator.style.display = 'block';
+        } else {
+            if (premiumRelIndicator) premiumRelIndicator.style.display = 'none';
+        }
+
+        // Premium voices indicator
+        const premiumVoicesIndicator = document.getElementById('premium-voices-indicator');
+        if (!subscriptionStatus) {
+            if (premiumVoicesIndicator) premiumVoicesIndicator.style.display = 'block';
+        } else {
+            if (premiumVoicesIndicator) premiumVoicesIndicator.style.display = 'none';
+        }
+    }
+
+    // Check if this is the first time user is opening chat settings
+    checkFirstTimeSettings(callback) {
+        if (!this.userId) {
+            if (callback) callback();
+            return;
+        }
+        
+        const storageKey = `chat_settings_opened_${this.userId}`;
+        const hasOpenedSettings = localStorage.getItem(storageKey);
+        
+        // If user has never opened settings before, show them automatically
+        if (!hasOpenedSettings) {
+            // Show settings with callback to continue chat generation
+            this.openModalForFirstTime(callback);
+        } else if (callback) {
+            // User has seen settings before, continue normally
+            callback();
+        }
+    }
+
+    // Special method for first-time opening with welcome message and callback
+    openModalForFirstTime(callback) {
+        // Mark that user has now seen the settings
+        this.markSettingsAsOpened();
+        
+        // Open the modal
+        this.openModal();
+        
+        // Add a welcome message
+        this.showFirstTimeWelcome();
+        
+        // Set up callback for when modal is closed
+        if (callback) {
+            this.onFirstTimeClose = callback;
+        }
+    }
+
+    // Mark settings as opened in localStorage
+    markSettingsAsOpened() {
+        if (!this.userId) return;
+        
+        const storageKey = `chat_settings_opened_${this.userId}`;
+        localStorage.setItem(storageKey, 'true');
+    }
+
+    // Show a welcome message for first-time users
+    showFirstTimeWelcome() {
+        // Add a welcome message at the top of the modal
+        setTimeout(() => {
+            const modalContent = document.querySelector('#settings-modal-overlay .settings-modal-container');
+            if (modalContent && !modalContent.querySelector('.first-time-welcome')) {
+                const welcomeMessage = document.createElement('div');
+                welcomeMessage.className = 'first-time-welcome alert alert-info mb-3 animate__animated animate__fadeIn';
+                welcomeMessage.innerHTML = `
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>${this.t('welcomeToSettings', 'Welcome to Chat Settings!')}</strong><br>
+                    <small>${this.t('settingsWelcomeMessage', 'Customize your chat experience before we start. You can change these settings anytime later.')}</small>
+                    <hr class="my-2">
+                    <small class="text-muted">${this.t('settingsCloseToStart', 'Close this dialog to start chatting with your character.')}</small>
+                `;
+                
+                // Insert at the beginning of the modal content
+                const firstChild = modalContent.firstChild;
+                modalContent.insertBefore(welcomeMessage, firstChild);
+                
+                // Auto-remove the welcome message after 12 seconds
+                setTimeout(() => {
+                    if (welcomeMessage.parentNode) {
+                        welcomeMessage.classList.add('animate__fadeOut');
+                        setTimeout(() => {
+                            welcomeMessage.remove();
+                        }, 500);
+                    }
+                }, 12000);
+            }
+        }, 300);
+    }
+
+    setupRangeSliders() {
+        const minImagesRange = document.getElementById('min-images-range');
+        const minImagesValue = document.getElementById('min-images-value');
+        const user = window.user || {};
+        const subscriptionStatus = user.subscriptionStatus === 'active';
+
+        if (minImagesRange && minImagesValue) {
+            // Set initial value based on subscription status
+            if (!subscriptionStatus) {
+                // Auto-correct non-premium users who have minImages > 1
+                if (this.settings.minImages > 1) {
+                    this.settings.minImages = 1;
+                }
+
+                // Non-premium users are limited to 1 image
+                this.settings.minImages = 1;
+                minImagesRange.value = 1;
+                minImagesValue.textContent = 1;
+                minImagesRange.disabled = true;
+                minImagesRange.style.opacity = '0.6';
+                
+                // Add premium indicator
+                const rangeContainer = document.querySelector('.settings-field');
+                if (!rangeContainer.querySelector('.premium-feature-indicator')) {
+                    const premiumIndicator = document.createElement('small');
+                    premiumIndicator.className = 'premium-feature-indicator text-muted d-block mt-1';
+                    premiumIndicator.innerHTML = '<i class="bi bi-star-fill text-warning"></i> ' + (this.t('minImagesPremiumFeature') || 'Premium feature required for more images');
+                    rangeContainer.appendChild(premiumIndicator);
+                }
+
+                // Save corrected settings after UI is set up
+                this.autoSaveCorrection();
+            } else {
+                // Premium users can use any value
+                minImagesRange.disabled = false;
+                minImagesRange.style.opacity = '1';
+            }
+
+            minImagesRange.addEventListener('input', (e) => {
+                const value = parseInt(e.target.value);
+                
+                // Check if user is trying to set value > 1 without subscription
+                if (!subscriptionStatus && value > 1) {
+                    // Reset to 1 and show upgrade popup
+                    e.target.value = 1;
+                    minImagesValue.textContent = 1;
+                    this.settings.minImages = 1;
+                    
+                    // Show plan page for upgrade
+                    if (typeof loadPlanPage === 'function') {
+                        loadPlanPage();
+                    } else {
+                        window.location.href = '/plan';
+                    }
+                    return;
+                }
+                
+                // Update value for premium users or when value is 1
+                minImagesValue.textContent = value;
+                this.settings.minImages = value;
+            });
+        }
+
+        // Setup premium indicators based on subscription status
+        this.setupPremiumIndicators(subscriptionStatus);
+    }
+
+    setupPremiumIndicators(subscriptionStatus) {
+        // Auto Merge Face premium indicator
+        const autoMergeIcon = document.getElementById('auto-merge-premium-icon');
+        const autoMergeIndicator = document.getElementById('auto-merge-premium-indicator');
+        const autoMergeFaceSwitch = document.getElementById('auto-merge-face-switch');
+
+        if (!subscriptionStatus) {
+            if (autoMergeIcon) autoMergeIcon.style.display = 'inline';
+            if (autoMergeIndicator) autoMergeIndicator.style.display = 'block';
+            
+            if (autoMergeFaceSwitch) {
+                this.settings.autoMergeFace = false;
+                autoMergeFaceSwitch.checked = false;
+                autoMergeFaceSwitch.disabled = true;
+                autoMergeFaceSwitch.style.opacity = '0.6';
+            }
+            
+            this.autoSaveCorrection();
+        } else {
+            if (autoMergeIcon) autoMergeIcon.style.display = 'none';
+            if (autoMergeIndicator) autoMergeIndicator.style.display = 'none';
+            
+            if (autoMergeFaceSwitch) {
+                autoMergeFaceSwitch.disabled = false;
+                autoMergeFaceSwitch.style.opacity = '1';
+            }
+        }
+
+        // Video settings premium indicator
+        const videoIndicator = document.getElementById('video-premium-indicator');
+        const videoPrompt = document.getElementById('video-prompt');
+        
+        if (!subscriptionStatus) {
+            if (videoIndicator) videoIndicator.style.display = 'block';
+            if (videoPrompt) {
+                videoPrompt.disabled = true;
+                videoPrompt.style.opacity = '0.6';
+                videoPrompt.style.cursor = 'pointer';
+            }
+        } else {
+            if (videoIndicator) videoIndicator.style.display = 'none';
+            if (videoPrompt) {
+                videoPrompt.disabled = false;
+                videoPrompt.style.opacity = '1';
+                videoPrompt.style.cursor = 'text';
+            }
+        }
+
+        // Premium relationships indicator
+        const premiumRelIndicator = document.getElementById('premium-relationships-indicator');
+        if (!subscriptionStatus) {
+            if (premiumRelIndicator) premiumRelIndicator.style.display = 'block';
+        } else {
+            if (premiumRelIndicator) premiumRelIndicator.style.display = 'none';
+        }
+
+        // Premium voices indicator
+        const premiumVoicesIndicator = document.getElementById('premium-voices-indicator');
+        if (!subscriptionStatus) {
+            if (premiumVoicesIndicator) premiumVoicesIndicator.style.display = 'block';
+        } else {
+            if (premiumVoicesIndicator) premiumVoicesIndicator.style.display = 'none';
+        }
+    }
+
+    // Check if this is the first time user is opening chat settings
+    checkFirstTimeSettings(callback) {
+        if (!this.userId) {
+            if (callback) callback();
+            return;
+        }
+        
+        const storageKey = `chat_settings_opened_${this.userId}`;
+        const hasOpenedSettings = localStorage.getItem(storageKey);
+        
+        // If user has never opened settings before, show them automatically
+        if (!hasOpenedSettings) {
+            // Show settings with callback to continue chat generation
+            this.openModalForFirstTime(callback);
+        } else if (callback) {
+            // User has seen settings before, continue normally
+            callback();
+        }
+    }
+
+    // Special method for first-time opening with welcome message and callback
+    openModalForFirstTime(callback) {
+        // Mark that user has now seen the settings
+        this.markSettingsAsOpened();
+        
+        // Open the modal
+        this.openModal();
+        
+        // Add a welcome message
+        this.showFirstTimeWelcome();
+        
+        // Set up callback for when modal is closed
+        if (callback) {
+            this.onFirstTimeClose = callback;
+        }
+    }
+
+    // Mark settings as opened in localStorage
+    markSettingsAsOpened() {
+        if (!this.userId) return;
+        
+        const storageKey = `chat_settings_opened_${this.userId}`;
+        localStorage.setItem(storageKey, 'true');
+    }
+
+    // Show a welcome message for first-time users
+    showFirstTimeWelcome() {
+        // Add a welcome message at the top of the modal
+        setTimeout(() => {
+            const modalContent = document.querySelector('#settings-modal-overlay .settings-modal-container');
+            if (modalContent && !modalContent.querySelector('.first-time-welcome')) {
+                const welcomeMessage = document.createElement('div');
+                welcomeMessage.className = 'first-time-welcome alert alert-info mb-3 animate__animated animate__fadeIn';
+                welcomeMessage.innerHTML = `
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>${this.t('welcomeToSettings', 'Welcome to Chat Settings!')}</strong><br>
+                    <small>${this.t('settingsWelcomeMessage', 'Customize your chat experience before we start. You can change these settings anytime later.')}</small>
+                    <hr class="my-2">
+                    <small class="text-muted">${this.t('settingsCloseToStart', 'Close this dialog to start chatting with your character.')}</small>
+                `;
+                
+                // Insert at the beginning of the modal content
+                const firstChild = modalContent.firstChild;
+                modalContent.insertBefore(welcomeMessage, firstChild);
+                
+                // Auto-remove the welcome message after 12 seconds
+                setTimeout(() => {
+                    if (welcomeMessage.parentNode) {
+                        welcomeMessage.classList.add('animate__fadeOut');
+                        setTimeout(() => {
+                            welcomeMessage.remove();
+                        }, 500);
+                    }
+                }, 12000);
+            }
+        }, 300);
+    }
+
+    setupRangeSliders() {
+        const minImagesRange = document.getElementById('min-images-range');
+        const minImagesValue = document.getElementById('min-images-value');
+        const user = window.user || {};
+        const subscriptionStatus = user.subscriptionStatus === 'active';
+
+        if (minImagesRange && minImagesValue) {
+            // Set initial value based on subscription status
+            if (!subscriptionStatus) {
+                // Auto-correct non-premium users who have minImages > 1
+                if (this.settings.minImages > 1) {
+                    this.settings.minImages = 1;
+                }
+
+                // Non-premium users are limited to 1 image
+                this.settings.minImages = 1;
+                minImagesRange.value = 1;
+                minImagesValue.textContent = 1;
+                minImagesRange.disabled = true;
+                minImagesRange.style.opacity = '0.6';
+                
+                // Add premium indicator
+                const rangeContainer = document.querySelector('.settings-field');
+                if (!rangeContainer.querySelector('.premium-feature-indicator')) {
+                    const premiumIndicator = document.createElement('small');
+                    premiumIndicator.className = 'premium-feature-indicator text-muted d-block mt-1';
+                    premiumIndicator.innerHTML = '<i class="bi bi-star-fill text-warning"></i> ' + (this.t('minImagesPremiumFeature') || 'Premium feature required for more images');
+                    rangeContainer.appendChild(premiumIndicator);
+                }
+
+                // Save corrected settings after UI is set up
+                this.autoSaveCorrection();
+            } else {
+                // Premium users can use any value
+                minImagesRange.disabled = false;
+                minImagesRange.style.opacity = '1';
+            }
+
+            minImagesRange.addEventListener('input', (e) => {
+                const value = parseInt(e.target.value);
+                
+                // Check if user is trying to set value > 1 without subscription
+                if (!subscriptionStatus && value > 1) {
+                    // Reset to 1 and show upgrade popup
+                    e.target.value = 1;
+                    minImagesValue.textContent = 1;
+                    this.settings.minImages = 1;
+                    
+                    // Show plan page for upgrade
+                    if (typeof loadPlanPage === 'function') {
+                        loadPlanPage();
+                    } else {
+                        window.location.href = '/plan';
+                    }
+                    return;
+                }
+                
+                // Update value for premium users or when value is 1
+                minImagesValue.textContent = value;
+                this.settings.minImages = value;
+            });
+        }
+
+        // Setup premium indicators based on subscription status
+        this.setupPremiumIndicators(subscriptionStatus);
+    }
+
+    setupPremiumIndicators(subscriptionStatus) {
+        // Auto Merge Face premium indicator
+        const autoMergeIcon = document.getElementById('auto-merge-premium-icon');
+        const autoMergeIndicator = document.getElementById('auto-merge-premium-indicator');
+        const autoMergeFaceSwitch = document.getElementById('auto-merge-face-switch');
+
+        if (!subscriptionStatus) {
+            if (autoMergeIcon) autoMergeIcon.style.display = 'inline';
+            if (autoMergeIndicator) autoMergeIndicator.style.display = 'block';
+            
+            if (autoMergeFaceSwitch) {
+                this.settings.autoMergeFace = false;
+                autoMergeFaceSwitch.checked = false;
+                autoMergeFaceSwitch.disabled = true;
+                autoMergeFaceSwitch.style.opacity = '0.6';
+            }
+            
+            this.autoSaveCorrection();
+        } else {
+            if (autoMergeIcon) autoMergeIcon.style.display = 'none';
+            if (autoMergeIndicator) autoMergeIndicator.style.display = 'none';
+            
+            if (autoMergeFaceSwitch) {
+                autoMergeFaceSwitch.disabled = false;
+                autoMergeFaceSwitch.style.opacity = '1';
+            }
+        }
+
+        // Video settings premium indicator
+        const videoIndicator = document.getElementById('video-premium-indicator');
+        const videoPrompt = document.getElementById('video-prompt');
+        
+        if (!subscriptionStatus) {
+            if (videoIndicator) videoIndicator.style.display = 'block';
+            if (videoPrompt) {
+                videoPrompt.disabled = true;
+                videoPrompt.style.opacity = '0.6';
+                videoPrompt.style.cursor = 'pointer';
+            }
+        } else {
+            if (videoIndicator) videoIndicator.style.display = 'none';
+            if (videoPrompt) {
+                videoPrompt.disabled = false;
+                videoPrompt.style.opacity = '1';
+                videoPrompt.style.cursor = 'text';
+            }
+        }
+
+        // Premium relationships indicator
+        const premiumRelIndicator = document.getElementById('premium-relationships-indicator');
+        if (!subscriptionStatus) {
+            if (premiumRelIndicator) premiumRelIndicator.style.display = 'block';
+        } else {
+            if (premiumRelIndicator) premiumRelIndicator.style.display = 'none';
+        }
+
+        // Premium voices indicator
+        const premiumVoicesIndicator = document.getElementById('premium-voices-indicator');
+        if (!subscriptionStatus) {
+            if (premiumVoicesIndicator) premiumVoicesIndicator.style.display = 'block';
+        } else {
+            if (premiumVoicesIndicator) premiumVoicesIndicator.style.display = 'none';
         }
     }
 
@@ -266,7 +1055,7 @@ class ChatToolSettings {
             console.error('Error auto-correcting settings:', error);
         });
     }
-
+    
     openModal() {
         const overlay = document.getElementById('settings-modal-overlay');
         if (overlay) {
@@ -279,6 +1068,9 @@ class ChatToolSettings {
             if (firstFocusable) {
                 setTimeout(() => firstFocusable.focus(), 100);
             }
+            
+            // Mark settings as opened when manually opened
+            this.markSettingsAsOpened();
         }
     }
 
@@ -288,7 +1080,39 @@ class ChatToolSettings {
             overlay.classList.remove('show');
             $('.navbar').css('z-index', '1000'); // Restore navbar z-index
             document.body.style.overflow = '';
+            
+            // Remove welcome message if it exists
+            const welcomeMessage = overlay.querySelector('.first-time-welcome');
+            if (welcomeMessage) {
+                welcomeMessage.remove();
+            }
+            
+            // Execute callback if this was a first-time opening
+            if (this.onFirstTimeClose) {
+                const callback = this.onFirstTimeClose;
+                this.onFirstTimeClose = null; // Clear the callback
+                setTimeout(() => {
+                    callback();
+                }, 300); // Small delay to ensure modal is fully closed
+            }
         }
+    }
+
+    // Add method to reset the first-time flag (useful for testing)
+    resetFirstTimeFlag() {
+        if (!this.userId) return;
+        
+        const storageKey = `chat_settings_opened_${this.userId}`;
+        localStorage.removeItem(storageKey);
+        console.log('First-time settings flag reset for user:', this.userId);
+    }
+
+    // Add method to check if user is first-time (useful for other components)
+    isFirstTimeUser() {
+        if (!this.userId) return false;
+        
+        const storageKey = `chat_settings_opened_${this.userId}`;
+        return !localStorage.getItem(storageKey);
     }
 
     selectVoice(selectedOption) {
@@ -317,6 +1141,34 @@ class ChatToolSettings {
         this.settings.evenLabVoice = selectedOption.dataset.voice;
         
         console.log('EvenLab voice selected:', this.settings.evenLabVoice);
+    }
+
+    selectPremiumVoice(selectedOption) {
+        const user = window.user || {};
+        const subscriptionStatus = user.subscriptionStatus === 'active';
+        
+        if (!subscriptionStatus) {
+            // Show upgrade popup for non-premium users
+            if (typeof loadPlanPage === 'function') {
+                loadPlanPage();
+            } else {
+                window.location.href = '/plan';
+            }
+            return;
+        }
+        
+        // Remove selected class from all premium voice options
+        document.querySelectorAll('.settings-premium-voice-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked option
+        selectedOption.classList.add('selected');
+        
+        // Update settings
+        this.settings.premiumVoice = selectedOption.dataset.voice;
+        
+        console.log('Premium voice selected:', this.settings.premiumVoice);
     }
 
     selectRelationshipTone(selectedOption) {
@@ -389,8 +1241,8 @@ class ChatToolSettings {
             }
             
             voiceOption.innerHTML = `
-                <div class="settings-voice-name">${voice.name}</div>
-                <div class="settings-voice-description">${voice.description}</div>
+                <div class="settings-voice-name">${t(voice.name)}</div>
+                <div class="settings-voice-description">${t(voice.description)}</div>
             `;
             
             grid.appendChild(voiceOption);
@@ -412,34 +1264,102 @@ class ChatToolSettings {
         `;
     }
 
-    toggleVoiceProviderUI() {
-        const openaiVoices = document.getElementById('openai-voices');
-        const evenlabVoices = document.getElementById('evenlab-voices');
-        
-        if (this.settings.voiceProvider === 'evenlab') {
-            openaiVoices.style.display = 'none';
-            evenlabVoices.style.display = 'block';
+    async loadPremiumVoices() {
+        try {
+            const response = await fetch('/api/evenlab-voices');
+            const data = await response.json();
             
-            // Load EvenLab voices if not already loaded
-            if (this.evenLabVoices.length === 0) {
-                this.loadEvenLabVoices();
+            if (response.ok && data.success) {
+                this.premiumVoices = data.voices;
+                this.renderPremiumVoices();
+            } else {
+                console.error('Failed to load Premium voices:', data.error);
+                this.showPremiumVoicesError();
+            }
+        } catch (error) {
+            console.error('Error loading Premium voices:', error);
+            this.showPremiumVoicesError();
+        }
+    }
+
+    renderPremiumVoices() {
+        const grid = document.getElementById('premium-voices-grid');
+        if (!grid || !this.premiumVoices.length) return;
+
+        const user = window.user || {};
+        const subscriptionStatus = user.subscriptionStatus === 'active';
+
+        grid.innerHTML = '';
+        
+        this.premiumVoices.forEach(voice => {
+            const voiceOption = document.createElement('div');
+            voiceOption.className = 'settings-premium-voice-option settings-voice-option';
+            voiceOption.setAttribute('data-voice', voice.key);
+            
+            if (voice.key === this.settings.premiumVoice) {
+                voiceOption.classList.add('selected');
+            }
+
+            // Disable for non-premium users
+            if (!subscriptionStatus) {
+                voiceOption.classList.add('disabled');
+                voiceOption.style.opacity = '0.5';
+                voiceOption.style.cursor = 'pointer';
+            }
+
+            voiceOption.innerHTML = `
+                <div class="settings-voice-name">${this.t(`voices.${voice.key}.name`, voice.name)}</div>
+                <div class="settings-voice-description">${this.t(`voices.${voice.key}.description`, voice.description)}</div>
+                ${!subscriptionStatus ? '<i class="bi bi-crown-fill premium-icon"></i>' : ''}
+            `;
+            
+            grid.appendChild(voiceOption);
+        });
+    }
+
+    showPremiumVoicesError() {
+        const grid = document.getElementById('premium-voices-grid');
+        if (!grid) return;
+        
+        grid.innerHTML = `
+            <div class="voice-error text-center text-muted">
+                <i class="bi bi-exclamation-triangle"></i>
+                <div>${this.t('failedToLoadPremiumVoices')}</div>
+                <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="window.chatToolSettings.loadPremiumVoices()">
+                    ${this.t('retry')}
+                </button>
+            </div>
+        `;
+    }
+
+    toggleVoiceProviderUI() {
+        const standardVoices = document.getElementById('standard-voices');
+        const premiumVoices = document.getElementById('premium-voices');
+        
+        if (this.settings.voiceProvider === 'premium') {
+            standardVoices.style.display = 'none';
+            premiumVoices.style.display = 'block';
+            
+            // Load Premium voices if not already loaded
+            if (!this.premiumVoices || this.premiumVoices.length === 0) {
+                this.loadPremiumVoices();
             }
         } else {
-            openaiVoices.style.display = 'block';
-            evenlabVoices.style.display = 'none';
+            standardVoices.style.display = 'block';
+            premiumVoices.style.display = 'none';
         }
     }
 
     updateSwitchLabels() {
-        const openaiLabel = document.querySelector('.openai-label');
-        const evenlabLabel = document.querySelector('.evenlab-label');
+        const standardLabel = document.querySelector('.standard-label');
+        const premiumLabel = document.querySelector('.premium-label');
         
-        if (this.settings.voiceProvider === 'evenlab') {
-            if (openaiLabel) openaiLabel.style.color = '#666';
-            if (evenlabLabel) evenlabLabel.style.color = '#28a745';
+        if (this.settings.voiceProvider === 'premium') {
+            if (standardLabel) standardLabel.style.color = '#666';
+            if (premiumLabel) premiumLabel.style.color = '#28a745';
         } else {
-            if (openaiLabel) openaiLabel.style.color = '#6E20F4';
-            if (evenlabLabel) evenlabLabel.style.color = '#666';
+            if (standardLabel) standardLabel.style.color = '#6E20F4';
+            if (premiumLabel) premiumLabel.style.color = '#666';
         }
     }
 
@@ -612,16 +1532,16 @@ class ChatToolSettings {
         const user = window.user || {};
         const subscriptionStatus = user.subscriptionStatus === 'active';
         
-        // Auto-correct minImages for non-premium users before applying to UI
-        if (!subscriptionStatus && this.settings.minImages > 1) {
-            this.settings.minImages = 1;
-            this.autoSaveCorrection();
-        }
-
-        // Auto-correct autoMergeFace for non-premium users before applying to UI
-        if (!subscriptionStatus && this.settings.autoMergeFace) {
-            this.settings.autoMergeFace = false;
-            this.autoSaveCorrection();
+        // Auto-correct settings for non-premium users before applying to UI
+        if (!subscriptionStatus) {
+            if (this.settings.minImages > 1) {
+                this.settings.minImages = 1;
+                this.autoSaveCorrection();
+            }
+            if (this.settings.autoMergeFace) {
+                this.settings.autoMergeFace = false;
+                this.autoSaveCorrection();
+            }
         }
 
         // Update range slider
@@ -642,6 +1562,17 @@ class ChatToolSettings {
         const videoPrompt = document.getElementById('video-prompt');
         if (videoPrompt) {
             videoPrompt.value = this.settings.videoPrompt;
+            
+            // Disable for non-premium users
+            if (!subscriptionStatus) {
+                videoPrompt.disabled = true;
+                videoPrompt.style.opacity = '0.6';
+                videoPrompt.style.cursor = 'pointer';
+            } else {
+                videoPrompt.disabled = false;
+                videoPrompt.style.opacity = '1';
+                videoPrompt.style.cursor = 'text';
+            }
         }
 
         // Update voice selection
@@ -649,9 +1580,20 @@ class ChatToolSettings {
             option.classList.toggle('selected', option.dataset.voice === this.settings.selectedVoice);
         });
 
-        // Update EvenLab voice selection
-        document.querySelectorAll('.settings-evenlab-voice-option').forEach(option => {
-            option.classList.toggle('selected', option.dataset.voice === this.settings.evenLabVoice);
+        // Update premium voice selection
+        document.querySelectorAll('.settings-premium-voice-option').forEach(option => {
+            option.classList.toggle('selected', option.dataset.voice === this.settings.premiumVoice);
+            
+            // Disable for non-premium users
+            if (!subscriptionStatus) {
+                option.classList.add('disabled');
+                option.style.opacity = '0.5';
+                option.style.cursor = 'pointer';
+            } else {
+                option.classList.remove('disabled');
+                option.style.opacity = '1';
+                option.style.cursor = 'pointer';
+            }
         });
 
         // Update relationship tone selection with premium check
@@ -674,35 +1616,22 @@ class ChatToolSettings {
             }
         });
 
-        // Update voice provider switch
+        // Update voice provider switch - Allow both users to switch
         const voiceProviderSwitch = document.getElementById('voice-provider-switch');
         if (voiceProviderSwitch) {
-            voiceProviderSwitch.checked = this.settings.voiceProvider === 'evenlab';
+            voiceProviderSwitch.checked = this.settings.voiceProvider === 'premium';
             this.toggleVoiceProviderUI();
             this.updateSwitchLabels();
         }
 
-        // Update relationship select
-        const relationshipSelect = document.getElementById('relationship-select');
-        if (relationshipSelect) {
-            relationshipSelect.value = this.settings.relationshipType;
+        // Update suggestions enable switch
+        const suggestionsEnableSwitch = document.getElementById('suggestions-enable-switch');
+        if (suggestionsEnableSwitch) {
+            suggestionsEnableSwitch.checked = this.settings.suggestionsEnabled !== undefined ? this.settings.suggestionsEnabled : true;
         }
 
-        // Update auto merge face switch
-        const autoMergeFaceSwitch = document.getElementById('auto-merge-face-switch');
-        if (autoMergeFaceSwitch) {
-            autoMergeFaceSwitch.checked = this.settings.autoMergeFace !== undefined ? this.settings.autoMergeFace : true;
-            
-            // Ensure non-premium users can't enable auto merge face
-            if (!subscriptionStatus) {
-                autoMergeFaceSwitch.checked = false;
-                autoMergeFaceSwitch.disabled = true;
-                autoMergeFaceSwitch.style.opacity = '0.6';
-            } else {
-                autoMergeFaceSwitch.disabled = false;
-                autoMergeFaceSwitch.style.opacity = '1';
-            }
-        }
+        // Update premium indicators
+        this.setupPremiumIndicators(subscriptionStatus);
     }
 
     applySettings() {

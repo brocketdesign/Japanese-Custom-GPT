@@ -24,8 +24,88 @@
     "resetSettingsTitle": "Reset Settings?",
     "resetChatSettingsText": "This will reset your settings for this chat to default values.",
     "resetGlobalSettingsText": "This will reset all your chat tool settings to default values.",
-    "failedToLoadEvenLabVoices": "Failed to load EvenLab voices",
+    "failedToLoadEvenLabVoices": "Failed to load Premium voices",
+    "failedToLoadPremiumVoices": "Failed to load Premium voices",
     "retry": "Retry",
     "minImagesPremiumFeature": "Premium feature required for more images",
-    "autoMergeFacePremiumFeature": "Premium feature required for auto merge face"
+    "autoMergeFacePremiumFeature": "Premium feature required for auto merge face",
+    "imageSettings": "Image Settings",
+    "minImagesToSend": "Number of Images per Request",
+    "imageSettingsDescription": "Configure the number of images you'll receive per request. Each image costs 10 points and contributes to creating a richer, more immersive conversation experience.",
+    "autoMergeFace": "Auto Merge Face",
+    "autoMergeFaceDescription": "Maintain consistent character appearance across all generated images using advanced facial recognition technology. This ensures your character's face remains uniform throughout photorealistic image generation.",
+    "videoSettings": "Video Generation",
+    "videoSettingsDescription": "Transform your generated images into captivating 5-second videos with smooth transitions, dynamic effects, and professional-quality output tailored to your preferences.",
+    "videoPremiumFeature": "Premium subscription required to access video generation features",
+    "defaultVideoPrompt": "Default Video Prompt",
+    "videoPromptPlaceholder": "Enter your video generation preferences...",
+    "defaultVideoPromptText": "Generate a short, engaging video with smooth transitions and vibrant colors.",
+    "relationshipType": "Relationship Settings",
+    "freeRelationships": "Free Relationships",
+    "freeRelationshipsDescription": "Choose from our standard relationship dynamics designed for genuine, casual, and adventurous conversations. Perfect for exploring different interaction styles and building meaningful connections.",
+    "premiumRelationships": "Premium Relationships",
+    "premiumRelationshipsDescription": "Unlock advanced relationship dynamics that enable more intimate conversations, mature content, and sophisticated adult-oriented dialogue options for enhanced roleplay experiences.",
+    "premiumRelationshipsPremiumFeature": "Premium subscription required to access intimate relationship dynamics",
+    "relationships": {
+        "friend": "Friend",
+        "companion": "Companion",
+        "mentor": "Mentor",
+        "assistant": "Assistant",
+        "lover": "Lover",
+        "submissive": "Submissive",
+        "dominant": "Dominant",
+        "playmate": "Playmate",
+        "intimate": "Intimate"
+    },
+    "voiceSettings": "Voice Settings",
+    "voiceSettingsDescription": "Personalize your character's voice with high-quality text-to-speech technology. Choose from our voice library and enable audio playback to bring your conversations to life.",
+    "voiceProvider": "Voice Provider",
+    "standard": "Standard",
+    "premium": "Premium",
+    "selectStandardVoice": "Select Standard Voice",
+    "selectPremiumVoice": "Select Premium Voice",
+    "premiumVoicesPremiumFeature": "Premium subscription required to access high-quality premium voice options",
+    "getPremiumVoice": "Get Premium Voice",
+    "premiumVoicesFeature": "Premium voice options for enhanced audio experience",
+    "voices": {
+        "nova": {
+            "name": "Nova",
+            "description": "Bright and energetic female voice"
+        },
+        "alloy": {
+            "name": "Alloy",
+            "description": "Balanced and neutral voice"
+        },
+        "shimmer": {
+            "name": "Shimmer",
+            "description": "Warm and friendly female voice"
+        },
+        "fable": {
+            "name": "Fable",
+            "description": "Deep and storytelling voice"
+        },
+        "Thandiwe": {
+            "name": "Thandiwe Dlamini",
+            "description": "A South African strategic brand leader"
+        },
+        "Miranda": {
+            "name": "Miranda",
+            "description": "A sweet and bubbly young woman"
+        },
+        "Nana": {
+            "name": "Nana-chan",
+            "description": "A youthful female voice, cute and cheerful"
+        },
+        "Sophia": {
+            "name": "Sophia",
+            "description": "An American girl talking softly with a gentle tone"
+        },
+        "Fena": {
+            "name": "Fena - Character",
+            "description": "Young, sassy girl character"
+        }
+    },
+    "suggestionsSettings": "Chat Suggestions",
+    "suggestionsSettingsDescription": "Receive intelligent conversation suggestions powered by AI analysis of your current dialogue context. Get 2 thoughtfully crafted response options to enhance your chat experience and maintain engaging conversations.",
+    "enableSuggestions": "Enable Chat Suggestions"
 }

@@ -24,8 +24,88 @@
     "resetSettingsTitle": "設定をリセットしますか？",
     "resetChatSettingsText": "このチャットの設定をデフォルト値にリセットします。",
     "resetGlobalSettingsText": "すべてのチャットツール設定をデフォルト値にリセットします。",
-    "failedToLoadEvenLabVoices": "EvenLabの音声の読み込みに失敗しました",
+    "failedToLoadEvenLabVoices": "プレミアム音声の読み込みに失敗しました",
+    "failedToLoadPremiumVoices": "プレミアム音声の読み込みに失敗しました",
     "retry": "再試行",
     "minImagesPremiumFeature": "画像を増やすにはプレミアム機能が必要です",
-    "autoMergeFacePremiumFeature": "顔の自動マージにはプレミアム機能が必要です"
+    "autoMergeFacePremiumFeature": "顔の自動マージにはプレミアム機能が必要です",
+    "imageSettings": "画像設定",
+    "minImagesToSend": "リクエストあたりの画像数",
+    "imageSettingsDescription": "リクエストごとに受け取る画像の数を設定します。各画像は10ポイントを消費し、より豊かで没入感のある会話体験の創造に貢献します。",
+    "autoMergeFace": "顔の自動マージ",
+    "autoMergeFaceDescription": "高度な顔認識技術を使用して、生成されるすべての画像でキャラクターの外観の一貫性を保ちます。これにより、フォトリアリスティック画像生成全体を通してキャラクターの顔が均一に保たれます。",
+    "videoSettings": "動画生成",
+    "videoSettingsDescription": "生成された画像を、滑らかなトランジション、ダイナミックエフェクト、そしてあなたの好みに合わせた professional品質の出力で魅力的な5秒動画に変換します。",
+    "videoPremiumFeature": "動画生成機能にアクセスするにはプレミアムサブスクリプションが必要です",
+    "defaultVideoPrompt": "デフォルト動画プロンプト",
+    "videoPromptPlaceholder": "動画生成の設定を入力...",
+    "defaultVideoPromptText": "滑らかなトランジションと鮮やかな色彩で短く魅力的な動画を生成。",
+    "relationshipType": "関係性設定",
+    "freeRelationships": "無料関係性",
+    "freeRelationshipsDescription": "本格的で気軽で冒険的な会話のために設計された標準的な関係性ダイナミクスから選択します。様々な相互作用スタイルを探索し、意味のあるつながりを築くのに最適です。",
+    "premiumRelationships": "プレミアム関係性",
+    "premiumRelationshipsDescription": "より親密な会話、成人向けコンテンツ、そして高度なロールプレイ体験のための洗練された大人向け対話オプションを可能にする高度な関係性ダイナミクスをアンロックします。",
+    "premiumRelationshipsPremiumFeature": "親密な関係性ダイナミクスにアクセスするにはプレミアムサブスクリプションが必要です",
+    "relationships": {
+        "friend": "友達",
+        "companion": "コンパニオン",
+        "mentor": "メンター",
+        "assistant": "アシスタント",
+        "lover": "恋人",
+        "submissive": "従順",
+        "dominant": "支配的",
+        "playmate": "遊び相手",
+        "intimate": "親密"
+    },
+    "voiceSettings": "音声設定",
+    "voiceSettingsDescription": "高品質のテキスト読み上げ技術でキャラクターの声をカスタマイズします。音声ライブラリから選択し、オーディオ再生を有効にして会話に命を吹き込みます。",
+    "voiceProvider": "音声プロバイダー",
+    "standard": "スタンダード",
+    "premium": "プレミアム",
+    "selectStandardVoice": "スタンダード音声を選択",
+    "selectPremiumVoice": "プレミアム音声を選択",
+    "premiumVoicesPremiumFeature": "高品質プレミアム音声オプションにアクセスするにはプレミアムサブスクリプションが必要です",
+    "getPremiumVoice": "プレミアム音声を取得",
+    "premiumVoicesFeature": "強化されたオーディオ体験のためのプレミアム音声オプション",
+    "voices": {
+        "nova": {
+            "name": "Nova",
+            "description": "明るくエネルギッシュな女性の声"
+        },
+        "alloy": {
+            "name": "Alloy",
+            "description": "バランスの取れたニュートラルな声"
+        },
+        "shimmer": {
+            "name": "Shimmer",
+            "description": "温かくフレンドリーな女性の声"
+        },
+        "fable": {
+            "name": "Fable",
+            "description": "深く物語性のある声"
+        },
+        "Thandiwe": {
+            "name": "Thandiwe Dlamini",
+            "description": "南アフリカの戦略的ブランドリーダー"
+        },
+        "Miranda": {
+            "name": "Miranda",
+            "description": "甘くて陽気な若い女性"
+        },
+        "Nana": {
+            "name": "Nana-chan",
+            "description": "若々しい女性の声、可愛らしく元気"
+        },
+        "Sophia": {
+            "name": "Sophia",
+            "description": "優しいトーンで静かに話すアメリカの女の子"
+        },
+        "Fena": {
+            "name": "Fena - Character",
+            "description": "若くて生意気な女の子キャラクター"
+        }
+    },
+    "suggestionsSettings": "チャット提案",
+    "suggestionsSettingsDescription": "現在の対話コンテキストのAI分析によって支援される知的な会話提案を受け取ります。チャット体験を向上させ、魅力的な会話を維持するための2つの思慮深く作成された返答オプションを取得します。",
+    "enableSuggestions": "チャット提案を有効化"
 }

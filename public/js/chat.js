@@ -161,7 +161,6 @@ $(document).ready(async function() {
             contentType: 'application/json',
             data: JSON.stringify({ userId: fetch_userId, chatId: fetch_chatId, userChatId }),
             success: function(data) {
-                console.log('[postChatData] Chat data fetched successfully:', data.imageModel);
                 handleChatSuccess(data, fetch_reset, fetch_userId, userChatId);
             },
             error: function(xhr, status, error) {
@@ -628,11 +627,20 @@ function setupChatInterface(chat, character) {
                 sessionStorage.setItem('userChatId', userChatId);
                 sessionStorage.setItem('lastChatId', chatId);
                 sessionStorage.setItem('chatId', chatId);
-                
-                generateChatCompletion();
+            
                 updateCurrentChat(chatId,userId);
+                updateParameters(chatId,userId,userChatId);
 
-                updateParameters(chatId,userId,userChatId)
+                // Check if user should see settings before starting chat completion
+                if (window.chatToolSettings) {
+                    window.chatToolSettings.checkFirstTimeSettings(() => {
+                        // This callback runs after settings modal is closed (or immediately if not first-time)
+                        generateChatCompletion();
+                    });
+                } else {
+                    // Fallback if settings not available
+                    generateChatCompletion();
+                }
 
             },
             error: function(xhr, status, error)  {

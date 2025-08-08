@@ -10,10 +10,6 @@ class OnboardingFunnel {
         this.translations = window.onboardingTranslations || {};
         this.userId = window.user?._id || window.userId;
         
-        // Debug translations availability
-        console.debug('[debug] Constructor - translations available:', Object.keys(this.translations).length > 0);
-        console.debug('[debug] Constructor - window.onboardingTranslations:', window.onboardingTranslations);
-
         // If no translations loaded, try to load them
         if (Object.keys(this.translations).length === 0) {
             this.loadTranslations();
@@ -25,19 +21,15 @@ class OnboardingFunnel {
         try {
             // Get user's language preference or default to English
             const lang = window.user?.language || document.documentElement.lang || 'en';
-            console.debug('[debug] Loading translations for language:', lang);
             
             const response = await fetch(`/locales/onboarding-${lang}.json`);
             if (response.ok) {
                 this.translations = await response.json();
                 window.onboardingTranslations = this.translations;
-                console.debug('[debug] Translations loaded successfully:', Object.keys(this.translations).length, 'keys');
             } else {
-                console.warn('[debug] Failed to load translations, using fallbacks');
                 this.translations = this.getFallbackTranslations();
             }
         } catch (error) {
-            console.error('[debug] Error loading translations:', error);
             this.translations = this.getFallbackTranslations();
         }
     }
@@ -73,23 +65,18 @@ class OnboardingFunnel {
     }
 
     async start() {
-        console.debug('[debug] start() called for userId:', this.userId);
         if (!this.userId) {
-            console.error('No user ID available for onboarding');
             return;
         }
 
         // Ensure translations are loaded before starting
         if (Object.keys(this.translations).length === 0) {
-            console.debug('[debug] Translations not loaded, loading now...');
             await this.loadTranslations();
         }
 
         // Check if user has already completed onboarding
         const hasCompleted = localStorage.getItem(`onboarding_${this.userId}`);
         if (hasCompleted) {
-            console.debug('[debug] Onboarding already completed for userId:', this.userId);
-            console.log('Onboarding already completed for this user');
             return;
         }
 
@@ -97,19 +84,16 @@ class OnboardingFunnel {
     }
 
     showStep(stepIndex) {
-        console.debug('[debug] showStep() called with stepIndex:', stepIndex);
         this.currentStep = stepIndex;
 
         // Get the Bootstrap modal
         const modal = document.getElementById('onboardingModal');
-        console.debug('[debug] Found modal element:', modal);
         
         // Update progress bar
         this.updateProgressBar(stepIndex);
         
         // Generate step content
         const stepContent = this.getStepContent(stepIndex);
-        console.debug('[debug] Generated step content length:', stepContent.length);
         
         // Update modal content
         this.updateModalContent(stepIndex, stepContent);
@@ -120,48 +104,38 @@ class OnboardingFunnel {
         // Show modal using Bootstrap
         const bootstrapModal = new bootstrap.Modal(modal);
         bootstrapModal.show();
-        console.debug('[debug] Showed Bootstrap modal');
     }
 
     // Add new method to update progress bar
     updateProgressBar(stepIndex) {
         const progressBar = document.getElementById('onboardingProgressBar');
         if (!progressBar) {
-            console.debug('[debug] Progress bar element not found');
             return;
         }
 
         // Calculate progress percentage (step 0 = 25%, step 1 = 50%, step 2 = 75%, step 3 = 100%)
         const progressPercentage = ((stepIndex + 1) / this.totalSteps) * 100;
         
-        console.debug('[debug] Updating progress bar to', progressPercentage + '%', 'for step', stepIndex);
         progressBar.style.width = progressPercentage + '%';
     }
 
     getStepContent(stepIndex) {
         // Get template from DOM
         const template = document.getElementById(`onboarding-step-${stepIndex}`);
-        console.debug('[debug] getStepContent - template element:', template);
         
         if (template) {
-            console.debug('[debug] Template innerHTML:', template.innerHTML.substring(0, 300));
-            
             // Use innerHTML directly since Handlebars placeholders get processed differently
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = template.innerHTML;
-            
-            console.debug('[debug] Before replacement - tempDiv innerHTML:', tempDiv.innerHTML.substring(0, 300));
             
             // Replace translation placeholders with actual translations
             this.replaceTranslationsInHTML(tempDiv);
             
             const result = tempDiv.innerHTML;
-            console.debug('[debug] Final result after replacement:', result.substring(0, 300));
             return result;
         }
         
         // If template not found, show error
-        console.error(`Template not found for step ${stepIndex}`);
         return `
             <div class="onboarding-content">
                 <div class="text-center">
@@ -175,20 +149,15 @@ class OnboardingFunnel {
 
     // New method specifically for handling HTML with Handlebars-style placeholders
     replaceTranslationsInHTML(element) {
-        console.debug('[debug] replaceTranslationsInHTML called');
-        
         // Get the HTML as string and replace placeholders
         let html = element.innerHTML;
-        console.debug('[debug] Original HTML:', html.substring(0, 200));
         
         // Replace {{window.onboardingTranslations.key}} patterns in the HTML string
         html = html.replace(/\{\{window\.onboardingTranslations\.(\w+)\}\}/g, (match, key) => {
             const translation = this.t(key, `[MISSING: ${key}]`);
-            console.debug(`[debug] HTML replacement: "${match}" -> "${translation}"`);
             return translation;
         });
         
-        console.debug('[debug] HTML after replacement:', html.substring(0, 200));
         element.innerHTML = html;
         
         // Also handle any remaining text nodes that might have been missed
@@ -197,21 +166,10 @@ class OnboardingFunnel {
 
     // Helper method to replace translation placeholders in DOM elements
     replaceTranslations(element) {
-        console.debug('[debug] replaceTranslations called, available keys:', Object.keys(this.translations).length);
-        console.debug('[debug] Element to process:', element);
-        
-        // First, let's see what we're working with
-        if (element.innerHTML) {
-            console.debug('[debug] Element innerHTML:', element.innerHTML.substring(0, 300));
-        }
-        
         // Handle text content in all elements including the root
         const allElements = [element, ...element.querySelectorAll('*')];
-        console.debug('[debug] Processing', allElements.length, 'elements');
         
         allElements.forEach((el, index) => {
-            console.debug(`[debug] Processing element ${index}:`, el.tagName, el.textContent?.substring(0, 100));
-            
             // Process text content
             if (el.childNodes) {
                 el.childNodes.forEach(node => {
@@ -222,12 +180,10 @@ class OnboardingFunnel {
                         // Replace {{window.onboardingTranslations.key}} patterns
                         text = text.replace(/\{\{window\.onboardingTranslations\.(\w+)\}\}/g, (match, key) => {
                             const translation = this.t(key, `[MISSING: ${key}]`);
-                            console.debug(`[debug] Translating "${match}" -> "${translation}"`);
                             return translation;
                         });
                         
                         if (originalText !== text) {
-                            console.debug(`[debug] Text node changed from "${originalText}" to "${text}"`);
                             node.textContent = text;
                         }
                     }
@@ -242,32 +198,22 @@ class OnboardingFunnel {
                     
                     attrValue = attrValue.replace(/\{\{window\.onboardingTranslations\.(\w+)\}\}/g, (match, key) => {
                         const translation = this.t(key, `[MISSING: ${key}]`);
-                        console.debug(`[debug] Translating attribute ${attr} "${match}" -> "${translation}"`);
                         return translation;
                     });
                     
                     if (originalValue !== attrValue) {
-                        console.debug(`[debug] Attribute ${attr} changed from "${originalValue}" to "${attrValue}"`);
                         el.setAttribute(attr, attrValue);
                     }
                 }
             });
         });
-        
-        // Log final result
-        if (element.innerHTML) {
-            console.debug('[debug] Final element innerHTML:', element.innerHTML.substring(0, 300));
-        }
     }
 
     updateModalContent(stepIndex, stepContent) {
-        console.debug('[debug] Updating modal with content:', stepContent.substring(0, 100) + '...');
-        
         const contentContainer = document.getElementById('onboardingModalContent');
         const footerContainer = document.getElementById('onboardingModalFooter');
         
         if (!contentContainer || !footerContainer) {
-            console.error('[debug] Modal containers not found');
             return;
         }
 
@@ -285,7 +231,6 @@ class OnboardingFunnel {
             // Move footer buttons to actual modal footer
             footerButtons.classList.remove('d-none');
             footerContainer.appendChild(footerButtons.cloneNode(true));
-            console.debug('[debug] Added footer buttons to modal footer');
         }
         
         // For step 0 (welcome + personal info), handle it like other steps but with different structure
@@ -299,10 +244,8 @@ class OnboardingFunnel {
                     contentFooter.remove();
                 }
                 contentContainer.innerHTML = welcomeContent.outerHTML;
-                console.debug('[debug] Set step 0 welcome content, length:', welcomeContent.outerHTML.length);
             } else {
                 contentContainer.innerHTML = stepContent;
-                console.debug('[debug] Set step 0 content directly, length:', stepContent.length);
             }
             return;
         }
@@ -314,16 +257,12 @@ class OnboardingFunnel {
         // Add header if present
         if (header) {
             contentContainer.appendChild(header.cloneNode(true));
-            console.debug('[debug] Added header section');
         }
 
         // Add content if present
         if (content) {
             contentContainer.appendChild(content.cloneNode(true));
-            console.debug('[debug] Added content section');
         }
-
-        console.debug('[debug] Modal content updated successfully');
     }
 
     hideCurrentStep(callback) {
@@ -374,7 +313,6 @@ class OnboardingFunnel {
             if (nicknameInput) {
                 nicknameInput.addEventListener('input', async (e) => {
                     this.userData.nickname = e.target.value.trim();
-                    console.debug('[debug] Updated nickname:', this.userData.nickname);
                     
                     // Update user in database if nickname is not empty
                     if (this.userData.nickname) {
@@ -390,7 +328,6 @@ class OnboardingFunnel {
                     document.querySelectorAll('.option-btn[data-gender]').forEach(b => b.classList.remove('active'));
                     e.currentTarget.classList.add('active');
                     this.userData.gender = e.currentTarget.dataset.gender;
-                    console.debug('[debug] Selected gender:', this.userData.gender);
                     
                     // Update user in database
                     await this.updateUserData({ gender: this.userData.gender });
@@ -404,15 +341,12 @@ class OnboardingFunnel {
                     document.querySelectorAll('.age-btn').forEach(b => b.classList.remove('active'));
                     e.currentTarget.classList.add('active');
                     this.userData.age = e.currentTarget.dataset.age;
-                    console.debug('[debug] Selected age:', this.userData.age);
                     
                     // Update user in database
                     await this.updateUserData({ ageRange: this.userData.age });
                     this.validateStep0();
                 });
             });
-
-            console.debug('[debug] Welcome/Personal info events bound successfully');
         }, 100);
     }
 
@@ -425,7 +359,6 @@ class OnboardingFunnel {
                     document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
                     e.target.classList.add('active');
                     this.userData.preferredStyle = e.target.dataset.style;
-                    console.debug('[debug] Selected style:', this.userData.preferredStyle);
                     
                     // Update user in database
                     await this.updateUserData({ preferredImageStyle: this.userData.preferredStyle });
@@ -439,15 +372,12 @@ class OnboardingFunnel {
                     document.querySelectorAll('.char-gender-btn').forEach(b => b.classList.remove('active'));
                     e.target.classList.add('active');
                     this.userData.preferredCharacterGender = e.target.dataset.charGender;
-                    console.debug('[debug] Selected character gender:', this.userData.preferredCharacterGender);
                     
                     // Update user in database
                     await this.updateUserData({ preferredCharacterGender: this.userData.preferredCharacterGender });
                     this.validateStep1();
                 });
             });
-
-            console.debug('[debug] Preferences events bound successfully');
         }, 100);
     }
 
@@ -460,11 +390,6 @@ class OnboardingFunnel {
         const continueBtn = document.querySelector('.btn-continue');
         if (continueBtn) {
             continueBtn.disabled = !hasRequiredFields;
-            console.debug('[debug] Step 0 validation:', hasRequiredFields, {
-                nickname: this.userData.nickname,
-                gender: this.userData.gender,
-                age: this.userData.age
-            });
         }
     }
 
@@ -473,7 +398,6 @@ class OnboardingFunnel {
         const continueBtn = document.querySelector('.btn-continue');
         if (continueBtn) {
             continueBtn.disabled = !hasRequiredFields;
-            console.debug('[debug] Step 1 validation:', hasRequiredFields);
         }
     }
 
@@ -482,7 +406,6 @@ class OnboardingFunnel {
         const continueBtn = document.querySelector('.btn-continue');
         if (continueBtn) {
             continueBtn.disabled = !hasSelection;
-            console.debug('[debug] Step 2 validation:', hasSelection);
         }
 
         // Complete onboarding if all steps are valid
@@ -492,12 +415,10 @@ class OnboardingFunnel {
     // Add real-time user update method
     async updateUserData(data) {
         if (!this.userId) {
-            console.debug('[debug] No user ID available for update');
             return;
         }
 
         try {
-            console.debug('[debug] Updating user data:', data);
             const response = await fetch(`/user/onboarding-update/${this.userId}`, {
                 method: 'POST',
                 headers: {
@@ -508,12 +429,12 @@ class OnboardingFunnel {
 
             const result = await response.json();
             if (result.success) {
-                console.debug('[debug] User data updated successfully:', data);
+                // User data updated successfully
             } else {
-                console.debug('[debug] Failed to update user data:', result.error);
+                // Failed to update user data
             }
         } catch (error) {
-            console.debug('[debug] Error updating user data:', error);
+            // Error updating user data
         }
     }
 
@@ -582,7 +503,6 @@ class OnboardingFunnel {
             const selectedCard = container.querySelector(`[data-id="${characterId}"]`);
             if (selectedCard) {
                 selectedCard.classList.add('selected');
-                console.debug('[debug] Selected character:', characterId);
                 
                 // Add some visual feedback for selection
                 if (!document.getElementById('onboarding-selection-styles')) {
@@ -602,17 +522,14 @@ class OnboardingFunnel {
     }
 
     nextStep() {
-        console.debug('[debug] nextStep() called on currentStep:', this.currentStep);
         // Collect data from current step
         this.collectStepData();
         
         if (this.currentStep < this.totalSteps - 1) {
-            console.debug('[debug] Proceeding to next step:', this.currentStep + 1);
             this.hideCurrentStep(() => {
                 this.showStep(this.currentStep + 1);
             });
         } else {
-            console.debug('[debug] Final step reached, completing onboarding.');
             this.complete();
         }
     }
@@ -634,7 +551,6 @@ class OnboardingFunnel {
     }
 
     async complete() {
-        console.debug('[debug] complete() called for userId:', this.userId);
         try {
             // Save onboarding data
             const response = await fetch('/user/onboarding-complete', {
@@ -650,7 +566,6 @@ class OnboardingFunnel {
             });
 
             if (response.ok) {
-                console.debug('[debug] Onboarding complete response OK, marking as completed.');
                 // Mark as completed in localStorage
                 localStorage.setItem(`onboarding_${this.userId}`, 'completed');
                 
@@ -662,7 +577,6 @@ class OnboardingFunnel {
                 
             }
         } catch (error) {
-            console.debug('[debug] Error during complete():', error);
             console.error('Error completing onboarding:', error);
         }
     }
@@ -671,7 +585,6 @@ class OnboardingFunnel {
     debug = {
         // Test specific step
         showStep: (stepIndex) => {
-            console.debug('[debug] Manual step test:', stepIndex);
             this.showStep(stepIndex);
         },
         
@@ -730,39 +643,28 @@ class OnboardingFunnel {
         
         // Test template extraction with more details
         testTemplate: (stepIndex) => {
-            console.debug(`[debug] Testing template extraction for step ${stepIndex}`);
             const template = document.getElementById(`onboarding-step-${stepIndex}`);
-            console.log('Template element:', template);
-            console.log('Template innerHTML:', template?.innerHTML);
-            console.log('Template content:', template?.content);
             
             if (template) {
                 // Test raw HTML replacement
                 const testDiv = document.createElement('div');
                 testDiv.innerHTML = template.innerHTML;
-                console.log('Raw template HTML:', testDiv.innerHTML);
                 
                 // Test our replacement function
                 const testHtml = testDiv.innerHTML.replace(/\{\{window\.onboardingTranslations\.(\w+)\}\}/g, (match, key) => {
                     const translation = this.t(key, `[MISSING: ${key}]`);
-                    console.log(`Replacing "${match}" with "${translation}"`);
                     return translation;
                 });
-                
-                console.log('After replacement:', testHtml);
             }
             
             const content = this.getStepContent(stepIndex);
-            console.log('Final processed content:', content);
             return content;
         },
         
         // Test all steps sequentially
         testAllSteps: () => {
-            console.debug('[debug] Testing all steps');
             for (let i = 0; i < this.totalSteps; i++) {
                 setTimeout(() => {
-                    console.debug(`[debug] Auto-showing step ${i}`);
                     this.close();
                     setTimeout(() => this.showStep(i), 100);
                 }, i * 2000);
@@ -771,7 +673,6 @@ class OnboardingFunnel {
         
         // Force start onboarding
         forceStart: async () => {
-            console.debug('[debug] Force starting onboarding');
             localStorage.removeItem(`onboarding_${this.userId}`);
             await this.start();
         },
@@ -795,30 +696,24 @@ class OnboardingFunnel {
         // Test translation function
         testTranslations: () => {
             const testKeys = ['welcome', 'continue', 'back', 'onboarding_complete', 'create_persona'];
-            console.debug('[debug] Testing translations:');
             testKeys.forEach(key => {
-                console.log(`${key}: "${this.t(key)}"`);
+                this.t(key);
             });
-            console.log('Available translation keys:', Object.keys(this.translations));
-            console.log('window.onboardingTranslations:', window.onboardingTranslations);
             
             // Log template content for debugging
             const template0 = document.getElementById('onboarding-step-0');
             if (template0) {
-                console.log('Template 0 innerHTML:', template0.innerHTML);
+                // template0.innerHTML is available
             }
         },
         
         // Force reload translations
-        reloadTranslations: async () => {
-            console.debug('[debug] Force reloading translations');
+        async reloadTranslations() {
             await this.loadTranslations();
-            console.log('Translations reloaded:', Object.keys(this.translations).length, 'keys');
         },
         
         // Reset onboarding state
         reset: () => {
-            console.debug('[debug] Resetting onboarding state');
             localStorage.removeItem(`onboarding_${this.userId}`);
             this.close();
             this.currentStep = 0;
@@ -887,39 +782,3 @@ Reset everything:
         `);
     }
 };
-
-// Log debug availability with usage instructions
-console.log(`
-🛠️ [DEBUG] Onboarding debug methods loaded!
-
-Quick start:
-- Type "onboardingDebug.help()" for full command list
-- Try "onboardingDebug.showStep(0)" to test welcome step
-- Use "onboardingDebug.forceStart()" to bypass completion check
-
-Open DevTools Console (F12) to use these commands.
-`);
-
-/**
- * Bootstrap Modal HTML Structure
- * Ensure this is included in your HTML file
- */
-/*
-<div class="modal fade" id="onboardingModal" tabindex="-1" aria-labelledby="onboardingModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="onboardingModalLabel">Onboarding</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div id="onboardingModalSubtitle" class="text-muted mb-3"></div>
-        <div id="onboardingModalContent"></div>
-      </div>
-      <div class="modal-footer" id="onboardingModalFooter">
-        <!-- Dynamic footer buttons will be injected here -->
-      </div>
-    </div>
-  </div>
-</div>
-*/

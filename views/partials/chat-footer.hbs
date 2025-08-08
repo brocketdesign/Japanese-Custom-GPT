@@ -127,7 +127,6 @@
                     </div>
                 </div>
             </div>
-        </div>
 
 
         <div id="suggestionsContainer" class="shadow" style="padding-bottom: 10vh;position: absolute; bottom: -10px; width: 95%; margin: auto; max-height: 55vh; background: rgb(255, 255, 255); overflow-y: auto; left: 0; right: 0; z-index: 10; border-radius: 15px 15px 0 0; display: none;">
@@ -285,8 +284,8 @@
     <div class="settings-modal">
         <div class="settings-modal-header">
             <h3 class="settings-modal-title">
-                <i class="bi bi-gear"></i>
-                {{translations.settings.title}}
+                <i class="bi bi-gear me-2"></i>
+                {{chatToolSettingsTranslations.title}}
             </h3>
             <button type="button" class="settings-close-btn" id="settings-close-btn">
                 <i class="bi bi-x"></i>
@@ -295,180 +294,262 @@
         <div class="settings-modal-body">
             <!-- Image Settings -->
             <div class="settings-section">
-                <div class="settings-section-title">
-                    <i class="bi bi-image"></i>
-                    {{translations.settings.imageSettings}}
+                <div class="settings-section-header">
+                    <div class="settings-section-title">
+                        <i class="bi bi-image me-2"></i>
+                        {{chatToolSettingsTranslations.imageSettings}}
+                    </div>
                 </div>
+                
                 <div class="settings-field">
-                    <label class="settings-label" for="min-images-range">
-                        {{translations.settings.minImagesToSend}}
+                    <label class="settings-label fw-semibold" for="min-images-range">
+                        {{chatToolSettingsTranslations.minImagesToSend}}
                     </label>
+                    <div class="settings-description text-muted mb-3">
+                        {{chatToolSettingsTranslations.imageSettingsDescription}}
+                    </div>
                     <div class="settings-range-container">
                         <input type="range" id="min-images-range" class="settings-range" 
                                min="1" max="5" value="1" step="1">
-                        <div class="settings-range-value" id="min-images-value">3</div>
+                        <div class="settings-range-value fw-bold" id="min-images-value">3</div>
                     </div>
                 </div>
                 
                 <!-- Auto Merge Face Switch -->
                 <div class="settings-field">
-                    <label class="settings-label">{{translations.settings.autoMergeFace}}</label>
-                    <div class="settings-switch-container">
-                        <span class="settings-switch-description">{{translations.settings.autoMergeFaceDescription}}</span>
-                        <label class="settings-switch">
-                            <input type="checkbox" id="auto-merge-face-switch" checked>
-                            <span class="settings-switch-slider"></span>
+                    <div class="settings-field-header">
+                        <label class="settings-label fw-semibold mb-0">
+                            {{chatToolSettingsTranslations.autoMergeFace}}
+                            <i class="bi bi-crown-fill premium-icon ms-1 text-warning" id="auto-merge-premium-icon" style="display: none;"></i>
                         </label>
+                        <div class="settings-switch-container">
+                            <label class="settings-switch">
+                                <input type="checkbox" id="auto-merge-face-switch" checked>
+                                <span class="settings-switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="settings-description text-muted small mt-2">
+                        {{chatToolSettingsTranslations.autoMergeFaceDescription}}
+                    </div>
+                    <div id="auto-merge-premium-indicator" class="premium-feature-indicator" style="display: none;">
+                        <small class="text-warning d-block mt-2">
+                            <i class="bi bi-star-fill me-1"></i> 
+                            {{chatToolSettingsTranslations.autoMergeFacePremiumFeature}}
+                        </small>
                     </div>
                 </div>
             </div>
 
             <!-- Video Settings -->
             <div class="settings-section">
-                <div class="settings-section-title">
-                    <i class="bi bi-camera-video"></i>
-                    {{translations.settings.videoSettings}}
+                <div class="settings-section-header">
+                    <div class="settings-section-title">
+                        <i class="bi bi-camera-video me-2"></i>
+                        {{chatToolSettingsTranslations.videoSettings}}
+                        <i class="bi bi-crown-fill premium-icon ms-2 text-warning"></i>
+                    </div>
+                </div>
+                <div class="settings-description text-muted mb-4">
+                    {{chatToolSettingsTranslations.videoSettingsDescription}}
                 </div>
                 <div class="settings-field">
-                    <label class="settings-label" for="video-prompt">
-                        {{translations.settings.defaultVideoPrompt}}
+                    <label class="settings-label fw-semibold" for="video-prompt">
+                        {{chatToolSettingsTranslations.defaultVideoPrompt}}
                     </label>
-                    <textarea id="video-prompt" class="settings-textarea" 
-                              placeholder="{{translations.settings.videoPromptPlaceholder}}">{{translations.settings.defaultVideoPromptText}}</textarea>
+                    <textarea id="video-prompt" class="settings-textarea mt-2" 
+                              placeholder="{{chatToolSettingsTranslations.videoPromptPlaceholder}}"
+                              disabled>{{chatToolSettingsTranslations.defaultVideoPromptText}}</textarea>
+                    <div id="video-premium-indicator" class="premium-feature-indicator">
+                        <small class="text-warning d-block mt-2">
+                            <i class="bi bi-star-fill me-1"></i> 
+                            {{chatToolSettingsTranslations.videoPremiumFeature}}
+                        </small>
+                    </div>
                 </div>
             </div>
-            <!-- Relationship Settings (New Design) -->
+
+            <!-- Relationship Settings -->
             <div class="settings-section">
-                <div class="settings-section-title">
-                    <i class="bi bi-heart"></i>
-                    {{translations.settings.relationshipType}}
+                <div class="settings-section-header">
+                    <div class="settings-section-title">
+                        <i class="bi bi-heart me-2"></i>
+                        {{chatToolSettingsTranslations.relationshipType}}
+                    </div>
                 </div>
-                <div class="settings-field">
-                    <label class="settings-label">{{translations.settings.relationshipTypeLabel}}</label>
+                
+                <div class="settings-subsection">
+                    <h6 class="settings-subsection-title fw-semibold mb-2">
+                        {{chatToolSettingsTranslations.freeRelationships}}
+                    </h6>
+                    <div class="settings-description text-muted mb-3">
+                        {{chatToolSettingsTranslations.freeRelationshipsDescription}}
+                    </div>
                     <div class="settings-tone-grid">
-                        <div class="settings-tone-option" data-relationship="friend">
-                            😊 {{translations.settings.relationships.friend}}
-                        </div>
                         <div class="settings-tone-option selected" data-relationship="companion">
-                            😎 {{translations.settings.relationships.companion}}
+                            😎 {{chatToolSettingsTranslations.relationships.companion}}
+                        </div>
+                        <div class="settings-tone-option" data-relationship="friend">
+                            😊 {{chatToolSettingsTranslations.relationships.friend}}
                         </div>
                         <div class="settings-tone-option" data-relationship="mentor">
-                            💼 {{translations.settings.relationships.mentor}}
-                        </div>
-                        <div class="settings-tone-option" data-relationship="partner">
-                            ❤️ {{translations.settings.relationships.partner}}
+                            💼 {{chatToolSettingsTranslations.relationships.mentor}}
                         </div>
                         <div class="settings-tone-option" data-relationship="assistant">
-                            🤖 {{translations.settings.relationships.assistant}}
+                            🤖 {{chatToolSettingsTranslations.relationships.assistant}}
                         </div>
-                        
+                    </div>
+                </div>
+
+                <div class="settings-subsection">
+                    <h6 class="settings-subsection-title fw-semibold mb-2">
+                        {{chatToolSettingsTranslations.premiumRelationships}}
+                        <i class="bi bi-crown-fill premium-icon ms-1 text-warning"></i>
+                    </h6>
+                    <div class="settings-description text-muted mb-3">
+                        {{chatToolSettingsTranslations.premiumRelationshipsDescription}}
+                    </div>
+                    <div class="settings-tone-grid">
                         <!-- Premium NSFW Relationships -->
                         <div class="settings-tone-option premium-relationship" data-relationship="lover" data-nsfw="true">
-                            💋 {{translations.settings.relationships.lover}}
-                            <i class="bi bi-crown-fill premium-icon"></i>
+                            💋 {{chatToolSettingsTranslations.relationships.lover}}
+                            <i class="bi bi-crown-fill premium-icon text-warning"></i>
                         </div>
                         <div class="settings-tone-option premium-relationship" data-relationship="submissive" data-nsfw="true">
-                            🔒 {{translations.settings.relationships.submissive}}
-                            <i class="bi bi-crown-fill premium-icon"></i>
+                            🔒 {{chatToolSettingsTranslations.relationships.submissive}}
+                            <i class="bi bi-crown-fill premium-icon text-warning"></i>
                         </div>
                         <div class="settings-tone-option premium-relationship" data-relationship="dominant" data-nsfw="true">
-                            ⚡ {{translations.settings.relationships.dominant}}
-                            <i class="bi bi-crown-fill premium-icon"></i>
+                            ⚡ {{chatToolSettingsTranslations.relationships.dominant}}
+                            <i class="bi bi-crown-fill premium-icon text-warning"></i>
                         </div>
                         <div class="settings-tone-option premium-relationship" data-relationship="playmate" data-nsfw="true">
-                            🎭 {{translations.settings.relationships.playmate}}
-                            <i class="bi bi-crown-fill premium-icon"></i>
+                            🎭 {{chatToolSettingsTranslations.relationships.playmate}}
+                            <i class="bi bi-crown-fill premium-icon text-warning"></i>
                         </div>
                         <div class="settings-tone-option premium-relationship" data-relationship="intimate" data-nsfw="true">
-                            🌹 {{translations.settings.relationships.intimate}}
-                            <i class="bi bi-crown-fill premium-icon"></i>
+                            🌹 {{chatToolSettingsTranslations.relationships.intimate}}
+                            <i class="bi bi-crown-fill premium-icon text-warning"></i>
                         </div>
+                    </div>
+                    <div id="premium-relationships-indicator" class="premium-feature-indicator">
+                        <small class="text-warning d-block mt-2">
+                            <i class="bi bi-star-fill me-1"></i> 
+                            {{chatToolSettingsTranslations.premiumRelationshipsPremiumFeature}}
+                        </small>
                     </div>
                 </div>
             </div>
 
             <!-- Voice Settings -->
             <div class="settings-section">
-                <div class="settings-section-title">
-                    <i class="bi bi-mic"></i>
-                    {{translations.settings.voiceSettings}}
+                <div class="settings-section-header">
+                    <div class="settings-section-title">
+                        <i class="bi bi-mic me-2"></i>
+                        {{chatToolSettingsTranslations.voiceSettings}}
+                    </div>
+                </div>
+                <div class="settings-description text-muted mb-4">
+                    {{chatToolSettingsTranslations.voiceSettingsDescription}}
                 </div>
                 
                 <!-- Voice Provider Switch -->
                 <div class="settings-field">
-                    <label class="settings-label">{{translations.settings.voiceProvider}}</label>
-                    <div class="settings-switch-container">
-                        <span class="settings-switch-label openai-label">{{translations.settings.openAI}}</span>
-                        <label class="settings-switch">
-                            <input type="checkbox" id="voice-provider-switch">
-                            <span class="settings-switch-slider"></span>
-                        </label>
-                        <span class="settings-switch-label evenlab-label">{{translations.settings.evenLabs}}</span>
+                    <div class="settings-field-header">
+                        <label class="settings-label fw-semibold mb-0">{{chatToolSettingsTranslations.voiceProvider}}</label>
+                        <div class="settings-switch-container">
+                            <span class="settings-switch-label standard-label me-2">{{chatToolSettingsTranslations.standard}}</span>
+                            <label class="settings-switch">
+                                <input type="checkbox" id="voice-provider-switch">
+                                <span class="settings-switch-slider"></span>
+                            </label>
+                            <span class="settings-switch-label premium-label ms-2">
+                                {{chatToolSettingsTranslations.premium}} 
+                                <i class="bi bi-crown-fill premium-icon text-warning"></i>
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- OpenAI Voices -->
-                <div class="settings-field" id="openai-voices">
-                    <label class="settings-label">{{translations.settings.selectOpenAIVoice}}</label>
-                    <div class="settings-voice-grid">
+                <!-- Standard Voices -->
+                <div class="settings-field" id="standard-voices">
+                    <label class="settings-label fw-semibold">{{chatToolSettingsTranslations.selectStandardVoice}}</label>
+                    <div class="settings-voice-grid mt-3">
                         <div class="settings-voice-option selected" data-voice="nova">
-                            <div class="settings-voice-name">{{translations.settings.voices.nova.name}}</div>
-                            <div class="settings-voice-description">{{translations.settings.voices.nova.description}}</div>
+                            <div class="settings-voice-name fw-semibold">{{chatToolSettingsTranslations.voices.nova.name}}</div>
+                            <div class="settings-voice-description text-muted small">{{chatToolSettingsTranslations.voices.nova.description}}</div>
                         </div>
                         <div class="settings-voice-option" data-voice="alloy">
-                            <div class="settings-voice-name">{{translations.settings.voices.alloy.name}}</div>
-                            <div class="settings-voice-description">{{translations.settings.voices.alloy.description}}</div>
+                            <div class="settings-voice-name fw-semibold">{{chatToolSettingsTranslations.voices.alloy.name}}</div>
+                            <div class="settings-voice-description text-muted small">{{chatToolSettingsTranslations.voices.alloy.description}}</div>
                         </div>
                         <div class="settings-voice-option" data-voice="shimmer">
-                            <div class="settings-voice-name">{{translations.settings.voices.shimmer.name}}</div>
-                            <div class="settings-voice-description">{{translations.settings.voices.shimmer.description}}</div>
+                            <div class="settings-voice-name fw-semibold">{{chatToolSettingsTranslations.voices.shimmer.name}}</div>
+                            <div class="settings-voice-description text-muted small">{{chatToolSettingsTranslations.voices.shimmer.description}}</div>
                         </div>
                         <div class="settings-voice-option" data-voice="fable">
-                            <div class="settings-voice-name">{{translations.settings.voices.fable.name}}</div>
-                            <div class="settings-voice-description">{{translations.settings.voices.fable.description}}</div>
+                            <div class="settings-voice-name fw-semibold">{{chatToolSettingsTranslations.voices.fable.name}}</div>
+                            <div class="settings-voice-description text-muted small">{{chatToolSettingsTranslations.voices.fable.description}}</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- EvenLabs Voices -->
-                <div class="settings-field" id="evenlab-voices" style="display: none;">
-                    <label class="settings-label">{{translations.settings.selectEvenLabsVoice}}</label>
-                    <div class="settings-voice-grid" id="evenlab-voices-grid">
-                        <!-- EvenLab voices will be dynamically loaded here -->
-                        <div class="voice-loading-spinner text-center">
-                            <div class="spinner-border spinner-border-sm" role="status">
+                <!-- Premium Voices -->
+                <div class="settings-field" id="premium-voices" style="display: none;">
+                    <label class="settings-label fw-semibold">
+                        {{chatToolSettingsTranslations.selectPremiumVoice}}
+                        <i class="bi bi-crown-fill premium-icon ms-1 text-warning"></i>
+                    </label>
+                    <div class="settings-voice-grid mt-3" id="premium-voices-grid">
+                        <!-- Premium voices will be dynamically loaded here -->
+                        <div class="voice-loading-spinner text-center py-4">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status">
                                 <span class="visually-hidden">Loading voices...</span>
                             </div>
-                            <div class="loading-text">Loading EvenLab voices...</div>
+                            <div class="loading-text text-muted mt-2">Loading Premium voices...</div>
                         </div>
+                    </div>
+                    <div id="premium-voices-indicator" class="premium-feature-indicator">
+                        <small class="text-warning d-block mt-2">
+                            <i class="bi bi-star-fill me-1"></i> 
+                            {{chatToolSettingsTranslations.premiumVoicesPremiumFeature}}
+                        </small>
                     </div>
                 </div>
             </div>
 
             <!-- Chat Suggestions Settings -->
             <div class="settings-section">
-                <div class="settings-section-title">
-                    <i class="bi bi-lightbulb"></i>
-                    {{translations.settings.suggestionsSettings}}
+                <div class="settings-section-header">
+                    <div class="settings-section-title">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        {{chatToolSettingsTranslations.suggestionsSettings}}
+                    </div>
+                </div>
+                <div class="settings-description text-muted mb-4">
+                    {{chatToolSettingsTranslations.suggestionsSettingsDescription}}
                 </div>
                 
                 <!-- Enable Suggestions Switch -->
                 <div class="settings-field">
-                    <label class="settings-label">{{translations.settings.enableSuggestions}}</label>
-                    <div class="settings-switch-container">
-                        <span class="settings-switch-description">{{translations.settings.suggestionsDescription}}</span>
-                        <label class="settings-switch">
-                            <input type="checkbox" id="suggestions-enable-switch" checked>
-                            <span class="settings-switch-slider"></span>
-                        </label>
+                    <div class="settings-field-header">
+                        <label class="settings-label fw-semibold mb-0">{{chatToolSettingsTranslations.enableSuggestions}}</label>
+                        <div class="settings-switch-container">
+                            <label class="settings-switch">
+                                <input type="checkbox" id="suggestions-enable-switch" checked>
+                                <span class="settings-switch-slider"></span>
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <button type="button" class="settings-save-btn" id="settings-save-btn">
-                <i class="bi bi-check-circle"></i>
-                {{translations.settings.saveSettings}}
-            </button>
+            <div class="settings-footer mt-4 pt-4 border-top">
+                <button type="button" class="settings-save-btn" id="settings-save-btn">
+                    <i class="bi bi-check-circle me-2"></i>
+                    {{chatToolSettingsTranslations.saveSettings}}
+                </button>
+            </div>
         </div>
     </div>
 </div>

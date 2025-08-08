@@ -24,8 +24,88 @@
     "resetSettingsTitle": "Réinitialiser les paramètres ?",
     "resetChatSettingsText": "Cela réinitialisera vos paramètres de ce chat aux valeurs par défaut.",
     "resetGlobalSettingsText": "Cela réinitialisera tous les paramètres de votre outil de chat aux valeurs par défaut.",
-    "failedToLoadEvenLabVoices": "Échec du chargement des voix EvenLab",
+    "failedToLoadEvenLabVoices": "Échec du chargement des voix Premium",
+    "failedToLoadPremiumVoices": "Échec du chargement des voix Premium",
     "retry": "Réessayer",
     "minImagesPremiumFeature": "Abonnement requis pour plus d'images",
-    "autoMergeFacePremiumFeature": "Abonnement requis pour la fusion automatique des visages"
+    "autoMergeFacePremiumFeature": "Abonnement requis pour la fusion automatique des visages",
+    "imageSettings": "Paramètres d'image",
+    "minImagesToSend": "Nombre d'images par demande",
+    "imageSettingsDescription": "Configurez le nombre d'images que vous recevrez par demande. Chaque image coûte 10 points et contribue à créer une expérience de conversation plus riche et immersive.",
+    "autoMergeFace": "Fusion automatique des visages",
+    "autoMergeFaceDescription": "Maintenez une apparence cohérente du personnage dans toutes les images générées grâce à la technologie avancée de reconnaissance faciale. Cela garantit que le visage de votre personnage reste uniforme tout au long de la génération d'images photoréalistes.",
+    "videoSettings": "Génération de Vidéo",
+    "videoSettingsDescription": "Transformez vos images générées en vidéos captivantes de 5 secondes avec des transitions fluides, des effets dynamiques et une sortie de qualité professionnelle adaptée à vos préférences.",
+    "videoPremiumFeature": "Abonnement premium requis pour accéder aux fonctionnalités de génération vidéo",
+    "defaultVideoPrompt": "Invite vidéo par défaut",
+    "videoPromptPlaceholder": "Entrez vos préférences de génération vidéo...",
+    "defaultVideoPromptText": "Générez une vidéo courte et engageante avec des transitions fluides et des couleurs vibrantes.",
+    "relationshipType": "Paramètres de relation",
+    "freeRelationships": "Relations gratuites",
+    "freeRelationshipsDescription": "Choisissez parmi nos dynamiques relationnelles standard conçues pour des conversations authentiques, décontractées et aventureuses. Parfait pour explorer différents styles d'interaction et établir des connexions significatives.",
+    "premiumRelationships": "Relations Premium",
+    "premiumRelationshipsDescription": "Débloquez des dynamiques relationnelles avancées qui permettent des conversations plus intimes, du contenu mature et des options de dialogue sophistiquées orientées adultes pour des expériences de jeu de rôle améliorées.",
+    "premiumRelationshipsPremiumFeature": "Abonnement premium requis pour accéder aux dynamiques relationnelles intimes",
+    "relationships": {
+        "friend": "Ami",
+        "companion": "Compagnon",
+        "mentor": "Mentor",
+        "assistant": "Assistant",
+        "lover": "Amoureux",
+        "submissive": "Soumis",
+        "dominant": "Dominant",
+        "playmate": "Camarade de jeu",
+        "intimate": "Intime"
+    },
+    "voiceSettings": "Paramètres vocaux",
+    "voiceSettingsDescription": "Personnalisez la voix de votre personnage avec une technologie de synthèse vocale de haute qualité. Choisissez dans notre bibliothèque de voix et activez la lecture audio pour donner vie à vos conversations.",
+    "voiceProvider": "Fournisseur vocal",
+    "standard": "Standard",
+    "premium": "Premium",
+    "selectStandardVoice": "Sélectionner une voix standard",
+    "selectPremiumVoice": "Sélectionner une voix premium",
+    "premiumVoicesPremiumFeature": "Abonnement premium requis pour accéder aux options vocales premium de haute qualité",
+    "getPremiumVoice": "Obtenir une voix Premium",
+    "premiumVoicesFeature": "Options de voix premium pour une expérience audio améliorée",
+    "voices": {
+        "nova": {
+            "name": "Nova",
+            "description": "Voix féminine vive et énergique"
+        },
+        "alloy": {
+            "name": "Alloy",
+            "description": "Voix équilibrée et neutre"
+        },
+        "shimmer": {
+            "name": "Shimmer",
+            "description": "Voix féminine chaleureuse et amicale"
+        },
+        "fable": {
+            "name": "Fable",
+            "description": "Voix profonde et narrative"
+        },
+        "Thandiwe": {
+            "name": "Thandiwe Dlamini",
+            "description": "Une leader stratégique de marque sud-africaine"
+        },
+        "Miranda": {
+            "name": "Miranda",
+            "description": "Une jeune femme douce et pétillante"
+        },
+        "Nana": {
+            "name": "Nana-chan",
+            "description": "Une voix féminine jeune, mignonne et joyeuse"
+        },
+        "Sophia": {
+            "name": "Sophia",
+            "description": "Une fille américaine parlant doucement avec un ton délicat"
+        },
+        "Fena": {
+            "name": "Fena - Character",
+            "description": "Jeune personnage de fille impertinente"
+        }
+    },
+    "suggestionsSettings": "Suggestions de chat",
+    "suggestionsSettingsDescription": "Recevez des suggestions de conversation intelligentes alimentées par l'analyse IA de votre contexte de dialogue actuel. Obtenez 2 options de réponse soigneusement élaborées pour améliorer votre expérience de chat et maintenir des conversations engageantes.",
+    "enableSuggestions": "Activer les suggestions de chat"
 }

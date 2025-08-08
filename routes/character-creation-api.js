@@ -35,7 +35,6 @@ const details_description = z.object({
         eyeShape: z.enum(['almond', 'round', 'hooded', 'monolid', 'upturned', 'downturned']),
         eyeSize: z.enum(['small', 'medium', 'large']),
         facialFeatures: z.string(),
-        makeup: z.string(),
     }),
     
     // Hair

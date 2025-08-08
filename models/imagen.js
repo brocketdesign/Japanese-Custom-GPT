@@ -1541,7 +1541,6 @@ function characterDescriptionToString(data) {
     if (face?.eyeShape) description.push(`Eye Shape: ${face.eyeShape}`);
     if (face?.eyeSize) description.push(`Eye Size: ${face.eyeSize}`);
     if (face?.facialFeatures) description.push(`Facial Features: ${face.facialFeatures}`);
-    if (face?.makeup) description.push(`Makeup: ${face.makeup}`);
     
     // Hair
     if (hair?.hairColor) description.push(`Hair Color: ${hair.hairColor}`);

@@ -107,5 +107,55 @@
     },
     "suggestionsSettings": "チャット提案",
     "suggestionsSettingsDescription": "現在の対話コンテキストのAI分析によって支援される知的な会話提案を受け取ります。チャット体験を向上させ、魅力的な会話を維持するための2つの思慮深く作成された返答オプションを取得します。",
-    "enableSuggestions": "チャット提案を有効化"
+    "enableSuggestions": "チャット提案を有効化",
+    "modelSettings": "キャラクターAIモデル",
+    "modelSettingsDescription": "キャラクターの応答を強化するAIモデルを選択します。異なるモデルは創造性、推論、会話スタイルにおいて様々な能力を提供します。",
+    "selectModel": "AIモデルを選択",
+    "freeModels": "無料モデル",
+    "freeModelsDescription": "すべてのユーザーが利用可能で、バランスの取れたパフォーマンスと信頼性を提供します。",
+    "premiumModels": "プレミアムモデル",
+    "premiumModelsDescription": "高度な能力を持つ先進的なモデルで、プレミアム購読者が利用できます。",
+    "premiumModelsPremiumFeature": "高度なAIモデルにアクセスするにはプレミアムサブスクリプションが必要です",
+    "models": {
+        "openai": {
+            "name": "OpenAI GPT-4o",
+            "description": "高度な推論と創造性",
+            "category": "無料",
+            "provider": "OpenAI",
+            "speed": "中程度",
+            "quality": "優秀"
+        },
+        "mistral": {
+            "name": "Mistral Nemo",
+            "description": "高速で効率的な応答",
+            "category": "無料",
+            "provider": "Novita AI",
+            "speed": "高速",
+            "quality": "良好"
+        },
+        "llama": {
+            "name": "Llama 3 70B",
+            "description": "大規模推論と分析",
+            "category": "プレミアム",
+            "provider": "Meta via Novita AI",
+            "speed": "中程度",
+            "quality": "優秀"
+        },
+        "gemma": {
+            "name": "Gemma 2 9B",
+            "description": "Googleの効率的な言語モデル",
+            "category": "プレミアム",
+            "provider": "Google via Novita AI",
+            "speed": "高速",
+            "quality": "非常に良好"
+        },
+        "deepseek": {
+            "name": "DeepSeek V3 Turbo",
+            "description": "高度なコーディングと推論",
+            "category": "プレミアム",
+            "provider": "DeepSeek via Novita AI",
+            "speed": "非常に高速",
+            "quality": "優秀"
+        }
+    }
 }

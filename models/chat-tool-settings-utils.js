@@ -196,6 +196,48 @@ async function getAutoMergeFaceSetting(db, userId, chatId = null) {
     }
 }
 
+/**
+ * Get user's selected model setting
+ * @param {Object} db - MongoDB database instance
+ * @param {string} userId - User ID
+ * @param {string} chatId - Optional chat ID for chat-specific settings
+ * @returns {string} Selected model key
+ */
+async function getUserSelectedModel(db, userId, chatId = null) {
+    try {
+        const settings = await getUserChatToolSettings(db, userId, chatId);
+        return settings.selectedModel || 'mistral'; // Default to mistral
+    } catch (error) {
+        console.error('[getUserSelectedModel] Error getting selected model:', error);
+        return 'mistral';
+    }
+}
+
+/**
+ * Check if user has premium subscription
+ * @param {Object} db - MongoDB database instance
+ * @param {string} userId - User ID
+ * @returns {boolean} Whether user has premium subscription
+ */
+async function getUserPremiumStatus(db, userId) {
+    try {
+        if (!userId || !ObjectId.isValid(userId)) {
+            return false;
+        }
+
+        const usersCollection = db.collection('users');
+        const user = await usersCollection.findOne({ 
+            _id: new ObjectId(userId) 
+        });
+        
+        return user?.subscriptionStatus === 'active';
+        
+    } catch (error) {
+        console.error('[getUserPremiumStatus] Error checking premium status:', error);
+        return false;
+    }
+}
+
 module.exports = {
     DEFAULT_SETTINGS,
     getUserChatToolSettings,
@@ -203,5 +245,7 @@ module.exports = {
     getUserVideoPrompt,
     getVoiceSettings,
     getUserMinImages,
-    getAutoMergeFaceSetting
+    getAutoMergeFaceSetting,
+    getUserSelectedModel,
+    getUserPremiumStatus
 };

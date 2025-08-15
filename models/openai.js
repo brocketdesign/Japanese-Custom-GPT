@@ -8,7 +8,7 @@ const { sanitizeMessages } = require('./tool')
 const apiDetails = {
   openai: {
     apiUrl: 'https://api.openai.com/v1/chat/completions',
-    model: 'gpt-4o',
+    model: 'gpt-4o-mini',
     key: process.env.OPENAI_API_KEY
   },
   novita: {
@@ -27,6 +27,63 @@ const apiDetails = {
 let currentModelConfig = {
   provider: 'novita',
   modelName: 'mistral'
+};
+
+// Enhanced model config with categorization
+const modelConfig = {
+  free: {
+    openai: {
+      provider: 'openai',
+      modelName: null,
+      displayName: 'OpenAI gpt-4o-mini',
+      description: 'Advanced reasoning and creativity'
+    },
+    mistral: {
+      provider: 'novita',
+      modelName: 'mistral',
+      displayName: 'Mistral Nemo',
+      description: 'Fast and efficient responses'
+    }
+  },
+  premium: {
+    llama: {
+      provider: 'novita',
+      modelName: 'llama',
+      displayName: 'Llama 3 70B',
+      description: 'Large-scale reasoning and analysis'
+    },
+    gemma: {
+      provider: 'novita',
+      modelName: 'gemma',
+      displayName: 'Gemma 2 9B',
+      description: 'Google\'s efficient language model'
+    },
+    deepseek: {
+      provider: 'novita',
+      modelName: 'deepseek',
+      displayName: 'DeepSeek V3 Turbo',
+      description: 'Advanced coding and reasoning'
+    }
+  }
+};
+// Helper function to get all available models
+const getAllAvailableModels = (isPremium = false) => {
+  const models = { ...modelConfig.free, ...modelConfig.premium };
+  return models;
+};
+// Helper function to get available models based on subscription
+const getAvailableModels = (isPremium = false) => {
+  const models = { ...modelConfig.free };
+  if (isPremium) {
+    Object.assign(models, modelConfig.premium);
+  }
+  return models;
+};
+
+// Helper function to get model config by key
+const getModelConfig = (modelKey, isPremium = false) => {
+  const availableModels = getAvailableModels(isPremium);
+  return availableModels[modelKey] || availableModels.mistral; // Default to mistral
 };
 
 const moderateText = async (text) => {
@@ -65,9 +122,18 @@ const moderateImage = async (imageUrl) => {
 };
 
 
-async function generateCompletion(messages, maxToken = 1000, model = null, lang = 'en') {
+async function generateCompletion(messages, maxToken = 1000, model = null, lang = 'en', userModelPreference = null, isPremium = false) {
   // Determine which model configuration to use
   let modelConfig = { ...currentModelConfig };
+  
+  // Check if user has a model preference and it's available
+  if (userModelPreference) {
+    const userModelConfig = getModelConfig(userModelPreference, isPremium);
+    if (userModelConfig) {
+      modelConfig.provider = userModelConfig.provider;
+      modelConfig.modelName = userModelConfig.modelName;
+    }
+  }
   
   if (model) {
     if (apiDetails[model]) {
@@ -91,7 +157,8 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
   const modelName = modelConfig.modelName ? 
     provider.models[modelConfig.modelName] : 
     provider.model;
-    
+
+  console.log(`[generateCompletion] Using model: ${modelName}`);
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
       const response = await fetch(provider.apiUrl, {
@@ -103,11 +170,8 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
         body: JSON.stringify({
           model: modelName,
           messages,
-          temperature: 0.85,
-          top_p: 0.95,
-          frequency_penalty: 0,
-          presence_penalty: 0,
-          max_tokens: maxToken,
+          temperature: 1,
+          max_completion_tokens: maxToken,
           stream: false,
           n: 1,
         }),
@@ -160,17 +224,14 @@ const checkImageRequest = async (lastAssistantMessage,lastUserMessage) => {
       Format response using JSON object with the following keys: image_request, nsfw, reason.
     `;
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5-mini',
       messages: [
         { role: "system", content: commandPrompt },
         { role: "user", content: analysisPrompt }
       ],
       response_format: zodResponseFormat(formatSchema, "image_instructions"),
-      max_tokens: 600,
+      max_completion_tokens: 600,
       temperature: 1,
-      top_p: 0.95,
-      frequency_penalty: 0.75,
-      presence_penalty: 0.75,
     });
 
 
@@ -261,15 +322,14 @@ const analyzeConversationContext = async (messages, userInfo, language) => {
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5-mini',
       messages: [
         { role: "system", content: commandPrompt },
         { role: "user", content: analysisPrompt }
       ],
       response_format: zodResponseFormat(enhancedAnalysisSchema, "conversation_analysis"),
-      max_tokens: 800,
+      max_completion_tokens: 800,
       temperature: 1,
-      top_p: 0.95,
     });
 
     const analysis = JSON.parse(response.choices[0].message.content);
@@ -293,7 +353,7 @@ async function generatePromptSuggestions(messages, chatDescription, language, mo
     .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system')
     .slice(-5);
 
-  console.log(`[generatePromptSuggestions] Using OpenAI GPT-4o for stable structured output`);
+  console.log(`[generatePromptSuggestions] Using OpenAI gpt-5-mini for stable structured output`);
 
   // Define Zod schemas for each category
   const chatSchema = z.object({
@@ -310,7 +370,7 @@ async function generatePromptSuggestions(messages, chatDescription, language, mo
       const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
       const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-5-mini',
         messages: [
           { 
             role: "system", 
@@ -325,8 +385,8 @@ async function generatePromptSuggestions(messages, chatDescription, language, mo
             content: 'Provide concise suggestions. One short sentence. Use first person for your sentence. The user is sending the messages.'
           }
         ],
-        max_tokens: 800,
-        temperature: 0.85,
+        max_completion_tokens: 800,
+        temperature: 1,
         response_format: zodResponseFormat(schema, `${categoryName}_suggestions`)
       });
 
@@ -548,15 +608,14 @@ const generateChatGoal = async (chatDescription, personaInfo = null, userSetting
     Allow for explicit, emotionally open language and descriptions of physical affection when the relationship context requires it.`;
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5-mini',
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
       ],
       response_format: zodResponseFormat(chatGoalSchema, "chat_goal"),
-      max_tokens: 600,
-      temperature: 0.8,
-      top_p: 0.9,
+      max_completion_tokens: 1600,
+      temperature: 1,
     });
 
     const goal = JSON.parse(response.choices[0].message.content);
@@ -609,14 +668,14 @@ Respond in ${language}`;
     });
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5-mini',
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
       ],
       response_format: zodResponseFormat(completionSchema, "goal_completion"),
-      max_tokens: 300,
-      temperature: 0.3,
+      max_completion_tokens: 1600,
+      temperature: 1,
     });
 
     const result = JSON.parse(response.choices[0].message.content);
@@ -639,4 +698,7 @@ module.exports = {
     generatePromptSuggestions,
     generateChatGoal,
     checkGoalCompletion,
+    getAllAvailableModels,
+    getAvailableModels,
+    getModelConfig,
 }

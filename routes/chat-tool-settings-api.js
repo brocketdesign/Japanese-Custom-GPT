@@ -27,7 +27,9 @@ async function routes(fastify, options) {
                     selectedVoice: 'nova',
                     voiceProvider: 'openai', // new field
                     evenLabVoice: 'sakura', // new field
-                    autoMergeFace: true // new field
+                    autoMergeFace: true, // new field
+                    selectedModel: 'mistral', // new field
+                    suggestionsEnabled: true // new field
                 };
                 return reply.send({ success: true, settings: defaultSettings });
             }
@@ -71,7 +73,9 @@ async function routes(fastify, options) {
                 selectedVoice: String(settings.selectedVoice || 'nova'),
                 voiceProvider: String(settings.voiceProvider || 'openai'),
                 evenLabVoice: String(settings.evenLabVoice || 'sakura'),
-                autoMergeFace: Boolean(settings.autoMergeFace !== undefined ? settings.autoMergeFace : true)
+                autoMergeFace: Boolean(settings.autoMergeFace !== undefined ? settings.autoMergeFace : true),
+                selectedModel: String(settings.selectedModel || 'mistral'),
+                suggestionsEnabled: Boolean(settings.suggestionsEnabled !== undefined ? settings.suggestionsEnabled : true)
             };
 
             // Validate ranges and constraints
@@ -157,7 +161,9 @@ async function routes(fastify, options) {
                 selectedVoice: 'nova',
                 voiceProvider: 'openai',
                 evenLabVoice: 'sakura',
-                autoMergeFace: true
+                autoMergeFace: true,
+                selectedModel: 'mistral',
+                suggestionsEnabled: true
             };
 
             reply.send({ 
@@ -215,13 +221,48 @@ async function routes(fastify, options) {
                 selectedVoice: 'nova',
                 voiceProvider: 'openai',
                 evenLabVoice: 'sakura',
-                autoMergeFace: true
+                autoMergeFace: true,
+                selectedModel: 'mistral',
+                suggestionsEnabled: true
             };
 
             reply.send({ success: true, settings: defaultSettings, isChatSpecific: false });
             
         } catch (error) {
             console.error('Error fetching chat-specific settings:', error);
+            reply.status(500).send({ error: 'Internal server error' });
+        }
+    });
+
+    // Get available models based on user subscription status
+    fastify.get('/api/chat-tool-settings/models/:userId', async (request, reply) => {
+        try {
+            const { userId } = request.params;
+            
+            if (!userId || !ObjectId.isValid(userId)) {
+                return reply.status(400).send({ error: 'Invalid user ID' });
+            }
+
+            // Check user subscription status
+            const usersCollection = fastify.mongo.db.collection('users');
+            const user = await usersCollection.findOne({ 
+                _id: new ObjectId(userId) 
+            });
+            
+            const isPremium = user?.subscriptionStatus === 'active';
+            
+            // Import model configuration from openai.js
+            const { getAllAvailableModels } = require('../models/openai');
+            const availableModels = getAllAvailableModels(isPremium);
+            
+            reply.send({ 
+                success: true, 
+                models: availableModels,
+                isPremium: isPremium
+            });
+            
+        } catch (error) {
+            console.error('Error fetching available models:', error);
             reply.status(500).send({ error: 'Internal server error' });
         }
     });

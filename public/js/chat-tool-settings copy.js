@@ -16,8 +16,6 @@ class ChatToolSettings {
         this.userId = window.userId || window.user?.id;
         this.evenLabVoices = [];
         this.premiumVoices = [];
-        this.availableModels = {};
-        this.isPremium = false;
         this.translations = window.chatToolSettingsTranslations || {};
         this.onFirstTimeClose = null;
         
@@ -79,16 +77,15 @@ class ChatToolSettings {
             saveBtn.addEventListener('click', () => this.saveSettings());
         }
 
+        // Reset settings button
+        const resetBtn = document.getElementById('settings-reset-btn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => this.resetSettings());
+        }
+
         // Voice selection
         document.querySelectorAll('.settings-voice-option').forEach(option => {
             option.addEventListener('click', () => this.selectVoice(option));
-        });
-
-        // Dynamic model selection - Use event delegation
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.settings-model-option')) {
-                this.selectModel(e.target.closest('.settings-model-option'));
-            }
         });
 
         // EvenLab voice selection - Use event delegation to handle dynamic content
@@ -112,6 +109,13 @@ class ChatToolSettings {
             }
         });
 
+        // Model selection - Use event delegation for dynamic content
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.settings-model-option')) {
+                this.selectModel(e.target.closest('.settings-model-option'));
+            }
+        });
+
         // Voice provider switch - Allow switching for all users
         const voiceProviderSwitch = document.getElementById('voice-provider-switch');
         if (voiceProviderSwitch) {
@@ -122,29 +126,11 @@ class ChatToolSettings {
             });
         }
 
-        // Auto merge face switch
-        const autoMergeFaceSwitch = document.getElementById('auto-merge-face-switch');
-        if (autoMergeFaceSwitch) {
-            autoMergeFaceSwitch.addEventListener('change', (e) => {
-                const user = window.user || {};
-                const subscriptionStatus = user.subscriptionStatus === 'active';
-                
-                // Check if user is trying to enable auto merge face without subscription
-                if (!subscriptionStatus && e.target.checked) {
-                    // Reset to false and show upgrade popup
-                    e.target.checked = false;
-                    this.settings.autoMergeFace = false;
-                    
-                    // Show plan page for upgrade
-                    if (typeof loadPlanPage === 'function') {
-                        loadPlanPage();
-                    } else {
-                        window.location.href = '/plan';
-                    }
-                    return;
-                }
-                
-                this.settings.autoMergeFace = e.target.checked;
+        // Relationship select
+        const relationshipSelect = document.getElementById('relationship-select');
+        if (relationshipSelect) {
+            relationshipSelect.addEventListener('change', (e) => {
+                this.settings.relationshipType = e.target.value;
             });
         }
 
@@ -177,6 +163,32 @@ class ChatToolSettings {
                 this.settings.suggestionsEnabled = e.target.checked;
             });
         }
+
+        // Auto merge face switch
+        const autoMergeFaceSwitch = document.getElementById('auto-merge-face-switch');
+        if (autoMergeFaceSwitch) {
+            autoMergeFaceSwitch.addEventListener('change', (e) => {
+                const user = window.user || {};
+                const subscriptionStatus = user.subscriptionStatus === 'active';
+                
+                // Check if user is trying to enable auto merge face without subscription
+                if (!subscriptionStatus && e.target.checked) {
+                    // Reset to false and show upgrade popup
+                    e.target.checked = false;
+                    this.settings.autoMergeFace = false;
+                    
+                    // Show plan page for upgrade
+                    if (typeof loadPlanPage === 'function') {
+                        loadPlanPage();
+                    } else {
+                        window.location.href = '/plan';
+                    }
+                    return;
+                }
+                
+                this.settings.autoMergeFace = e.target.checked;
+            });
+        }
     }
 
     // Model selection method
@@ -184,12 +196,21 @@ class ChatToolSettings {
         // Check if this is a premium model and user is not premium
         const isPremiumModel = selectedOption.classList.contains('premium-model');
         
-        if (isPremiumModel && !this.isPremium) {
-            // Launch plan page for non-premium users
-            if (typeof loadPlanPage === 'function') {
-                loadPlanPage();
+        if (isPremiumModel) {
+            // Check user subscription status
+            const user = window.user || {};
+            const subscriptionStatus = user.subscriptionStatus === 'active';
+            
+            if (!subscriptionStatus) {
+                // Launch plan page for non-premium users
+                if (typeof loadPlanPage === 'function') {
+                    loadPlanPage();
+                } else {
+                    // Fallback redirect
+                    window.location.href = '/plan';
+                }
+                return;
             }
-            return;
         }
         
         // Remove selected class from all model options
@@ -201,25 +222,9 @@ class ChatToolSettings {
         selectedOption.classList.add('selected');
         
         // Update settings
-        const modelKey = selectedOption.dataset.model;
-        this.settings.selectedModel = modelKey;
+        this.settings.selectedModel = selectedOption.dataset.model;
         
-        // Show selection feedback
-        this.showModelSelectionFeedback(selectedOption, modelKey);
-        
-        console.log('Model selected:', modelKey, this.availableModels[modelKey]);
-    }
-
-    showModelSelectionFeedback(selectedOption, modelKey) {
-        // Add a brief animation to show selection
-        selectedOption.style.transform = 'scale(1.02)';
-        setTimeout(() => {
-            selectedOption.style.transform = '';
-        }, 200);
-
-        // Optional: Show a brief notification
-        const modelName = this.availableModels[modelKey]?.displayName || modelKey;
-        console.log(`Selected AI model: ${modelName}`);
+        console.log('Model selected:', this.settings.selectedModel);
     }
 
     // First time settings check
@@ -480,11 +485,6 @@ class ChatToolSettings {
             overlay.classList.add('show');
             $('.navbar').css('z-index', '100'); // Lower navbar z-index
             document.body.style.overflow = 'hidden';
-            
-            // Load models when modal opens if not already loaded
-            if (Object.keys(this.availableModels).length === 0) {
-                this.loadAvailableModels();
-            }
             
             // Focus trap for accessibility
             const firstFocusable = overlay.querySelector('button, input, select, textarea');
@@ -1058,8 +1058,12 @@ class ChatToolSettings {
             // Disable premium models for non-premium users
             if (isPremiumModel && !subscriptionStatus) {
                 option.classList.add('disabled');
+                option.style.opacity = '0.5';
+                option.style.cursor = 'pointer'; // Keep cursor pointer to trigger upgrade
             } else {
                 option.classList.remove('disabled');
+                option.style.opacity = '1';
+                option.style.cursor = 'pointer';
             }
         });
 
@@ -1234,206 +1238,6 @@ class ChatToolSettings {
         } catch (error) {
             console.error('Error correcting non-premium users:', error);
         }
-    }
-
-    // Enhanced Model loading and selection methods
-    async loadAvailableModels() {
-        if (!this.userId) {
-            console.warn('No user ID available for loading models');
-            this.showModelError('User ID not available');
-            return;
-        }
-
-        try {
-            const response = await fetch(`/api/chat-tool-settings/models/${this.userId}`);
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Failed to load models');
-            }
-
-            this.availableModels = data.models;
-            this.isPremium = data.isPremium;
-            this.renderModels();
-
-        } catch (error) {
-            console.error('Error loading available models:', error);
-            this.showModelError(error.message);
-        }
-    }
-
-    renderModels() {
-        const container = document.getElementById('models-container');
-        if (!container) return;
-
-        if (Object.keys(this.availableModels).length === 0) {
-            this.showModelError('No models available');
-            return;
-        }
-
-        // Separate free and premium models
-        const freeModels = {};
-        const premiumModels = {};
-
-        Object.entries(this.availableModels).forEach(([key, model]) => {
-            if (model.provider === 'openai' || key === 'mistral') {
-                freeModels[key] = model;
-            } else {
-                premiumModels[key] = model;
-            }
-        });
-
-        let html = '<div class="settings-model-sections">';
-
-        // Render free models section
-        if (Object.keys(freeModels).length > 0) {
-            html += `
-                <div class="settings-subsection">
-                    <h6 class="settings-subsection-title fw-semibold mb-3">
-                        <i class="bi bi-cpu me-2"></i>
-                        ${this.t('freeModels')}
-                    </h6>
-                    <div class="settings-description text-muted mb-3">
-                        ${this.t('freeModelsDescription')}
-                    </div>
-                    <div class="settings-model-grid">
-                        ${this.renderModelOptions(freeModels, false)}
-                    </div>
-                </div>
-            `;
-        }
-
-        // Render premium models section
-        if (Object.keys(premiumModels).length > 0) {
-            html += `
-                <div class="settings-subsection">
-                    <h6 class="settings-subsection-title fw-semibold mb-3">
-                        <i class="bi bi-crown-fill premium-icon me-2 text-warning"></i>
-                        ${this.t('premiumModels')}
-                    </h6>
-                    <div class="settings-description text-muted mb-3">
-                        ${this.t('premiumModelsDescription')}
-                    </div>
-                    <div class="settings-model-grid">
-                        ${this.renderModelOptions(premiumModels, true)}
-                    </div>
-                    ${!this.isPremium ? `
-                        <div class="premium-feature-indicator mt-3">
-                            <small class="text-warning d-block">
-                                <i class="bi bi-star-fill me-1"></i> 
-                                ${this.t('premiumModelsPremiumFeature')}
-                            </small>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-        }
-
-        html += '</div>';
-        container.innerHTML = html;
-    }
-
-    renderModelOptions(models, isPremium) {
-        return Object.entries(models).map(([key, model]) => {
-            const isSelected = key === this.settings.selectedModel;
-            // Remove the isDisabled logic - premium models should be clickable for all users
-            
-            const modelTranslations = this.t(`models.${key}`, {});
-            const modelName = modelTranslations.name || model.displayName || model.modelName;
-            const modelDescription = modelTranslations.description || model.description;
-            const provider = modelTranslations.provider || this.getProviderName(model.provider);
-            const speed = modelTranslations.speed || this.getSpeedLabel(key);
-            const quality = modelTranslations.quality || this.getQualityLabel(key);
-
-            return `
-                <div class="settings-model-option ${isSelected ? 'selected' : ''} ${isPremium ? 'premium-model' : ''}" 
-                     data-model="${key}">
-                    ${isPremium ? '<div class="premium-model-badge"><i class="bi bi-crown-fill"></i> Premium</div>' : ''}
-                    
-                    <div class="settings-model-header">
-                        <div class="settings-model-info">
-                            <div class="settings-model-name">${modelName}</div>
-                            <div class="settings-model-description">${modelDescription}</div>
-                            <div class="settings-model-provider">via ${provider}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-model-stats">
-                        <div class="settings-model-stat">
-                            <div class="settings-model-stat-label">Speed</div>
-                            <div class="settings-model-stat-value">
-                                <span class="speed-indicator speed-${speed.toLowerCase().replace(' ', '-')}">
-                                    <span class="speed-dot"></span>
-                                    <span class="speed-dot"></span>
-                                    <span class="speed-dot"></span>
-                                    <span class="speed-dot"></span>
-                                </span>
-                                ${speed}
-                            </div>
-                        </div>
-                        <div class="settings-model-stat">
-                            <div class="settings-model-stat-label">Quality</div>
-                            <div class="settings-model-stat-value">${quality}</div>
-                        </div>
-                        ${isPremium ? `
-                            <div class="settings-model-stat">
-                                <div class="settings-model-stat-label">Type</div>
-                                <div class="settings-model-stat-value">
-                                    <i class="bi bi-crown-fill text-warning"></i> Premium
-                                </div>
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    getProviderName(provider) {
-        const providerNames = {
-            'openai': 'OpenAI',
-            'novita': 'Novita AI'
-        };
-        return providerNames[provider] || provider;
-    }
-
-    getSpeedLabel(modelKey) {
-        const speedMap = {
-            'deepseek': 'Very Fast',
-            'mistral': 'Fast',
-            'gemma': 'Fast',
-            'openai': 'Medium',
-            'llama': 'Medium'
-        };
-        return speedMap[modelKey] || 'Medium';
-    }
-
-    getQualityLabel(modelKey) {
-        const qualityMap = {
-            'openai': 'Excellent',
-            'llama': 'Excellent',
-            'deepseek': 'Excellent',
-            'gemma': 'Very Good',
-            'mistral': 'Good'
-        };
-        return qualityMap[modelKey] || 'Good';
-    }
-
-    showModelError(message) {
-        const container = document.getElementById('models-container');
-        if (!container) return;
-
-        container.innerHTML = `
-            <div class="model-error-container">
-                <i class="bi bi-exclamation-triangle fs-3 text-muted mb-3"></i>
-                <div class="fw-semibold mb-2">Failed to Load AI Models</div>
-                <div class="text-muted mb-3">${message}</div>
-                <button type="button" class="model-retry-btn" onclick="window.chatToolSettings.loadAvailableModels()">
-                    <i class="bi bi-arrow-clockwise me-1"></i>
-                    Retry
-                </button>
-            </div>
-        `;
     }
 }
 

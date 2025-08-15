@@ -107,5 +107,55 @@
     },
     "suggestionsSettings": "Suggestions de chat",
     "suggestionsSettingsDescription": "Recevez des suggestions de conversation intelligentes alimentées par l'analyse IA de votre contexte de dialogue actuel. Obtenez 2 options de réponse soigneusement élaborées pour améliorer votre expérience de chat et maintenir des conversations engageantes.",
-    "enableSuggestions": "Activer les suggestions de chat"
+    "enableSuggestions": "Activer les suggestions de chat",
+    "modelSettings": "Modèle IA du Personnage",
+    "modelSettingsDescription": "Choisissez le modèle IA qui alimente les réponses de votre personnage. Différents modèles offrent des capacités variées en créativité, raisonnement et style de conversation.",
+    "selectModel": "Sélectionner le Modèle IA",
+    "freeModels": "Modèles Gratuits",
+    "freeModelsDescription": "Disponibles pour tous les utilisateurs avec des performances équilibrées et une fiabilité.",
+    "premiumModels": "Modèles Premium",
+    "premiumModelsDescription": "Modèles avancés avec des capacités améliorées, disponibles pour les abonnés premium.",
+    "premiumModelsPremiumFeature": "Abonnement premium requis pour accéder aux modèles IA avancés",
+    "models": {
+        "openai": {
+            "name": "OpenAI GPT-4o",
+            "description": "Raisonnement avancé et créativité",
+            "category": "gratuit",
+            "provider": "OpenAI",
+            "speed": "Moyen",
+            "quality": "Excellent"
+        },
+        "mistral": {
+            "name": "Mistral Nemo",
+            "description": "Réponses rapides et efficaces",
+            "category": "gratuit",
+            "provider": "Novita AI",
+            "speed": "Rapide",
+            "quality": "Bon"
+        },
+        "llama": {
+            "name": "Llama 3 70B",
+            "description": "Raisonnement et analyse à grande échelle",
+            "category": "premium",
+            "provider": "Meta via Novita AI",
+            "speed": "Moyen",
+            "quality": "Excellent"
+        },
+        "gemma": {
+            "name": "Gemma 2 9B",
+            "description": "Modèle de langue efficace de Google",
+            "category": "premium",
+            "provider": "Google via Novita AI",
+            "speed": "Rapide",
+            "quality": "Très bon"
+        },
+        "deepseek": {
+            "name": "DeepSeek V3 Turbo",
+            "description": "Codage et raisonnement avancés",
+            "category": "premium",
+            "provider": "DeepSeek via Novita AI",
+            "speed": "Très rapide",
+            "quality": "Excellent"
+        }
+    }
 }

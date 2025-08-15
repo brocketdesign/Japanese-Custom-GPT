@@ -30,7 +30,7 @@ class ChatSuggestionsManager {
         const containerHtml = `
             <div id="chat-suggestions-container" class="suggestions-container shadow-0 w-100" style="display: none;">
                 <div class="suggestions-header">
-                    <span class="suggestions-title">${window.translations?.suggestions_title || 'Quick responses'}</span>
+                    <span class="suggestions-title">${window.chatSuggestionsTranslations?.suggestions_title || 'Quick responses'}</span>
                     <button class="suggestions-close" aria-label="Close suggestions">
                         <i class="bi bi-x"></i>
                     </button>

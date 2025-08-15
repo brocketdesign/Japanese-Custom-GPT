@@ -107,5 +107,55 @@
     },
     "suggestionsSettings": "Chat Suggestions",
     "suggestionsSettingsDescription": "Receive intelligent conversation suggestions powered by AI analysis of your current dialogue context. Get 2 thoughtfully crafted response options to enhance your chat experience and maintain engaging conversations.",
-    "enableSuggestions": "Enable Chat Suggestions"
+    "enableSuggestions": "Enable Chat Suggestions",
+    "modelSettings": "Character AI Model",
+    "modelSettingsDescription": "Choose the AI model that powers your character's responses. Different models offer varying capabilities in creativity, reasoning, and conversation style.",
+    "selectModel": "Select AI Model",
+    "freeModels": "Free Models",
+    "freeModelsDescription": "Available to all users with balanced performance and reliability.",
+    "premiumModels": "Premium Models",
+    "premiumModelsDescription": "Advanced models with enhanced capabilities, available to premium subscribers.",
+    "premiumModelsPremiumFeature": "Premium subscription required to access advanced AI models",
+    "models": {
+        "openai": {
+            "name": "OpenAI GPT-4o",
+            "description": "Advanced reasoning and creativity",
+            "category": "free",
+            "provider": "OpenAI",
+            "speed": "Medium",
+            "quality": "Excellent"
+        },
+        "mistral": {
+            "name": "Mistral Nemo",
+            "description": "Fast and efficient responses",
+            "category": "free",
+            "provider": "Novita AI",
+            "speed": "Fast",
+            "quality": "Good"
+        },
+        "llama": {
+            "name": "Llama 3 70B",
+            "description": "Large-scale reasoning and analysis",
+            "category": "premium",
+            "provider": "Meta via Novita AI",
+            "speed": "Medium",
+            "quality": "Excellent"
+        },
+        "gemma": {
+            "name": "Gemma 2 9B",
+            "description": "Google's efficient language model",
+            "category": "premium",
+            "provider": "Google via Novita AI",
+            "speed": "Fast",
+            "quality": "Very Good"
+        },
+        "deepseek": {
+            "name": "DeepSeek V3 Turbo",
+            "description": "Advanced coding and reasoning",
+            "category": "premium",
+            "provider": "DeepSeek via Novita AI",
+            "speed": "Very Fast",
+            "quality": "Excellent"
+        }
+    }
 }

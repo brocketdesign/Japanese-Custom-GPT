@@ -723,6 +723,7 @@ async function routes(fastify, options) {
                     }
                 ]
                 system_tone = await generateCompletion(system_tone_message, 100, 'openai');
+                console.log('[openAi txt2speech] system_tone:', system_tone);
             } catch (error) {
                 console.log(error);
             }

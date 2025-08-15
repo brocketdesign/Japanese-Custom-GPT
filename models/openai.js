@@ -224,7 +224,7 @@ const checkImageRequest = async (lastAssistantMessage,lastUserMessage) => {
       Format response using JSON object with the following keys: image_request, nsfw, reason.
     `;
     const response = await openai.chat.completions.create({
-      model: 'gpt-5-mini',
+      model: 'gpt-4o-mini',
       messages: [
         { role: "system", content: commandPrompt },
         { role: "user", content: analysisPrompt }
@@ -322,7 +322,7 @@ const analyzeConversationContext = async (messages, userInfo, language) => {
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-5-mini',
+      model: 'gpt-4o-mini',
       messages: [
         { role: "system", content: commandPrompt },
         { role: "user", content: analysisPrompt }
@@ -353,7 +353,7 @@ async function generatePromptSuggestions(messages, chatDescription, language, mo
     .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system')
     .slice(-5);
 
-  console.log(`[generatePromptSuggestions] Using OpenAI gpt-5-mini for stable structured output`);
+  console.log(`[generatePromptSuggestions] Using OpenAI gpt-4o-mini for stable structured output`);
 
   // Define Zod schemas for each category
   const chatSchema = z.object({
@@ -370,7 +370,7 @@ async function generatePromptSuggestions(messages, chatDescription, language, mo
       const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
       const response = await openai.chat.completions.create({
-        model: 'gpt-5-mini',
+        model: 'gpt-4o-mini',
         messages: [
           { 
             role: "system", 
@@ -608,7 +608,7 @@ const generateChatGoal = async (chatDescription, personaInfo = null, userSetting
     Allow for explicit, emotionally open language and descriptions of physical affection when the relationship context requires it.`;
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-5-mini',
+      model: 'gpt-4o-mini',
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
@@ -668,7 +668,7 @@ Respond in ${language}`;
     });
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-5-mini',
+      model: 'gpt-4o-mini',
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }

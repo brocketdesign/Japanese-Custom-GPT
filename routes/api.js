@@ -126,105 +126,131 @@ const free_models = false // ['293564']; // [DEBUG] Disable temporary
     
 async function routes(fastify, options) {
 
-    fastify.post('/api/init-chat', async (request, reply) => {
-        try {
-          // Mongo collections
-          const usersCollection = fastify.mongo.db.collection('users');
-          const collectionChat = fastify.mongo.db.collection('chats');
-          const collectionUserChat = fastify.mongo.db.collection('userChat');
-          
+fastify.post('/api/init-chat', async (request, reply) => {
+    try {
+      // Mongo collections
+      const usersCollection = fastify.mongo.db.collection('users');
+      const collectionChat = fastify.mongo.db.collection('chats');
+      const collectionUserChat = fastify.mongo.db.collection('userChat');
       
-          // Extract and normalize request data
-          let { message, chatId, userChatId, isNew } = request.body;
-          let userId = request.body.userId;
-          if (!userId) {
-            const authenticatedUser = request.user;
-            userId = authenticatedUser._id;
-          }
-      
-          const user = request.user;
-          let language = getLanguageName(user?.lang);
-      
-          const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
-      
-          // Retrieve chat and user-chat documents
-          let userChatDocument = await collectionUserChat.findOne({ 
-            userId: new fastify.mongo.ObjectId(userId), 
-            _id: new fastify.mongo.ObjectId(userChatId) 
-          });
 
-        if (!userChatDocument || isNew) {
-            const isLoggedIn = user && !user.isTemporary;
-            let startMessage = { role: 'user', name: 'master' };
+      // Extract and normalize request data
+      let { message, chatId, userChatId, isNew } = request.body;
+      let userId = request.body.userId;
+      if (!userId) {
+        const authenticatedUser = request.user;
+        userId = authenticatedUser._id;
+      }
 
-            if (!isLoggedIn) {
-                // [DEBUG] Disable temporary
-                /*
-                startMessage.content =
-                "Start with a greeting and prompt the user to log in. Do not start with a confirmation, but directly greet and ask the user to log in.";
-                */
-            } else {
-                const subscriptionActive = user?.subscriptionStatus === 'active';
-                const userChat = await collectionUserChat
-                .find({
-                    userId: new fastify.mongo.ObjectId(userId),
-                    chatId: new fastify.mongo.ObjectId(chatId),
-                })
-                .toArray();
+      const user = request.user;
+      let language = getLanguageName(user?.lang);
+      
+      const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
 
-                if (userChat.length > 0) {
-                    startMessage.sendImage = true;
-                    startMessage.content =
-                        "Start by welcoming me back. Inform me that you enjoy our chats and ask if I would like to see another image.";
-                } else {
-                    startMessage.sendImage = true;
-                    if (subscriptionActive) {
-                        startMessage.content =
-                        "Start by greeting me, say it's nice to meet me for the first time, introduce yourself. Tell about the current relationship with me, and inform me that we could get more intimate if I enroll in a subscription.";
-                    } else {
-                        startMessage.content =
-                        "Start by greeting me, say it's nice to meet me for the first time, introduce yourself. Tell about the current relationship with me.";
-                    }
-                    const chatsGalleryCollection = fastify.mongo.db.collection('gallery');
-                    const gallery = await chatsGalleryCollection.findOne({
-                        chatId: new fastify.mongo.ObjectId(chatId),
-                    });
-                    if (!gallery?.images || gallery.images.length === 0) {
-                        if (subscriptionActive) {
-                        startMessage.content =
-                            "Start by greeting me, say it's nice to meet me, introduce yourself and inform me that you want to send an image , but ask which image I prefer.";
-                        } else {
-                        startMessage.content =
-                            "Start by greeting me, say it's nice to meet me, introduce yourself and inform me that you want to send an image (the chat is temporary because I'm not subscribed), ask which image I prefer, and express your hope that I'll enjoy the chat and become a permanent user.";
-                        }
-                        startMessage.sendImage = false;
-                    }
+      // Retrieve chat and user-chat documents
+      let userChatDocument = await collectionUserChat.findOne({ 
+        userId: new fastify.mongo.ObjectId(userId), 
+        _id: new fastify.mongo.ObjectId(userChatId) 
+      });
+
+    if (!userChatDocument || isNew) {
+        const isLoggedIn = user && !user.isTemporary;
+        let startMessage = { role: 'user', name: 'master' };
+
+        // Helper function to get localized messages
+        const getLocalizedMessages = (lang) => {
+            const messages = {
+                'french': {
+                    welcomeBack: "Commence en me souhaitant la bienvenue. Informe-moi que tu apprécies nos conversations et demande-moi si j'aimerais voir une autre image.",
+                    firstMeetingWithSub: "Commence par me saluer, dis que c'est agréable de me rencontrer pour la première fois, présente-toi. Parle de notre relation actuelle et informe-moi que nous pourrions devenir plus intimes si je m'abonne.",
+                    firstMeetingNoSub: "Commence par me saluer, dis que c'est agréable de me rencontrer pour la première fois, présente-toi. Parle de notre relation actuelle.",
+                    firstMeetingWithImageSub: "Commence par me saluer, dis que c'est agréable de me rencontrer, présente-toi et informe-moi que tu veux envoyer une image, mais demande quelle image je préfère.",
+                    firstMeetingWithImageNoSub: "Commence par me saluer, dis que c'est agréable de me rencontrer, présente-toi et informe-moi que tu veux envoyer une image (la conversation est temporaire car je ne suis pas abonné), demande quelle image je préfère, et exprime ton espoir que j'apprécierai la conversation et deviendrai un utilisateur permanent."
+                },
+                'english': {
+                    welcomeBack: "Start by welcoming me back. Inform me that you enjoy our chats and ask if I would like to see another image.",
+                    firstMeetingWithSub: "Start by greeting me, say it's nice to meet me for the first time, introduce yourself. Tell about the current relationship with me, and inform me that we could get more intimate if I enroll in a subscription.",
+                    firstMeetingNoSub: "Start by greeting me, say it's nice to meet me for the first time, introduce yourself. Tell about the current relationship with me.",
+                    firstMeetingWithImageSub: "Start by greeting me, say it's nice to meet me, introduce yourself and inform me that you want to send an image, but ask which image I prefer.",
+                    firstMeetingWithImageNoSub: "Start by greeting me, say it's nice to meet me, introduce yourself and inform me that you want to send an image (the chat is temporary because I'm not subscribed), ask which image I prefer, and express your hope that I'll enjoy the chat and become a permanent user."
+                },
+                'japanese': {
+                    welcomeBack: "お帰りなさいと挨拶することから始めてください。私たちのチャットを楽しんでいることを伝え、別の画像を見たいかどうか尋ねてください。",
+                    firstMeetingWithSub: "挨拶から始めて、初めてお会いできて嬉しいと言い、自己紹介をしてください。現在の私との関係について話し、サブスクリプションに登録すればより親密になれることを伝えてください。",
+                    firstMeetingNoSub: "挨拶から始めて、初めてお会いできて嬉しいと言い、自己紹介をしてください。現在の私との関係について話してください。",
+                    firstMeetingWithImageSub: "挨拶から始めて、初めてお会いできて嬉しいと言い、自己紹介をして、画像を送りたいと伝えますが、どの画像が好みか尋ねてください。",
+                    firstMeetingWithImageNoSub: "挨拶から始めて、初めてお会いできて嬉しいと言い、自己紹介をして、画像を送りたいと伝えてください（サブスクリプションに登録していないためチャットは一時的です）。どの画像が好みか尋ね、チャットを楽しんで永続的なユーザーになってくれることを願っていると表現してください。"
                 }
-            }
+            };
+            
+            // Default to English if language not found
+            return messages[lang] || messages['english'];
+        };
 
-            userChatDocument = {
+        const localizedMessages = getLocalizedMessages(language);
+
+        if (!isLoggedIn) {
+            // [DEBUG] Disable temporary
+            /*
+            startMessage.content = localizedMessages.loginPrompt;
+            */
+        } else {
+            const subscriptionActive = user?.subscriptionStatus === 'active';
+            const userChat = await collectionUserChat
+            .find({
                 userId: new fastify.mongo.ObjectId(userId),
                 chatId: new fastify.mongo.ObjectId(chatId),
-                createdAt: today,
-                updatedAt: today,
-                messages: [startMessage],
-            };
+            })
+            .toArray();
+
+            if (userChat.length > 0) {
+                startMessage.sendImage = true;
+                startMessage.content = localizedMessages.welcomeBack;
+            } else {
+                startMessage.sendImage = true;
+                if (subscriptionActive) {
+                    startMessage.content = localizedMessages.firstMeetingWithSub;
+                } else {
+                    startMessage.content = localizedMessages.firstMeetingNoSub;
+                }
+                const chatsGalleryCollection = fastify.mongo.db.collection('gallery');
+                const gallery = await chatsGalleryCollection.findOne({
+                    chatId: new fastify.mongo.ObjectId(chatId),
+                });
+                if (!gallery?.images || gallery.images.length === 0) {
+                    if (subscriptionActive) {
+                    startMessage.content = localizedMessages.firstMeetingWithImageSub;
+                    } else {
+                    startMessage.content = localizedMessages.firstMeetingWithImageNoSub;
+                    }
+                    startMessage.sendImage = false;
+                }
+            }
         }
 
-          let result = await collectionUserChat.insertOne(userChatDocument);
-          let documentId = result.insertedId;
+        userChatDocument = {
+            userId: new fastify.mongo.ObjectId(userId),
+            chatId: new fastify.mongo.ObjectId(chatId),
+            createdAt: today,
+            updatedAt: today,
+            messages: [startMessage],
+        };
+    }
 
-          // Reply with summary
-          return reply.send({ 
-            userChatId: documentId, 
-            chatId
-          });
-      
-        } catch (error) {
-          console.log(error);
-          return reply.status(403).send({ error: error.message });
-        }
+      let result = await collectionUserChat.insertOne(userChatDocument);
+      let documentId = result.insertedId;
+
+      // Reply with summary
+      return reply.send({ 
+        userChatId: documentId, 
+        chatId
       });
+  
+    } catch (error) {
+      console.log(error);
+      return reply.status(403).send({ error: error.message });
+    }
+  });
 
     fastify.post('/api/check-chat', async (request, reply) => {
       try {

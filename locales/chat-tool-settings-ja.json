@@ -118,42 +118,42 @@
     "premiumModelsPremiumFeature": "高度なAIモデルにアクセスするにはプレミアムサブスクリプションが必要です",
     "models": {
         "openai": {
-            "name": "OpenAI GPT-4o",
-            "description": "高度な推論と創造性",
+            "name": "Sage",
+            "description": "優秀な推論力を持つ思慮深く創造的な会話相手",
             "category": "無料",
-            "provider": "OpenAI",
+            "provider": "AI Labs",
             "speed": "中程度",
             "quality": "優秀"
         },
         "mistral": {
-            "name": "Mistral Nemo",
-            "description": "高速で効率的な応答",
+            "name": "Swift",
+            "description": "素早い思考と反応性を持つチャット相手",
             "category": "無料",
-            "provider": "Novita AI",
+            "provider": "Lightning AI",
             "speed": "高速",
             "quality": "良好"
         },
         "llama": {
-            "name": "Llama 3 70B",
-            "description": "大規模推論と分析",
+            "name": "Atlas",
+            "description": "複雑な会話のための深い分析的思考者",
             "category": "プレミアム",
-            "provider": "Meta via Novita AI",
+            "provider": "Titan Intelligence",
             "speed": "中程度",
             "quality": "優秀"
         },
         "gemma": {
-            "name": "Gemma 2 9B",
-            "description": "Googleの効率的な言語モデル",
+            "name": "Crystal",
+            "description": "明確で効率的なコミュニケーション専門家",
             "category": "プレミアム",
-            "provider": "Google via Novita AI",
+            "provider": "Clarity Systems",
             "speed": "高速",
             "quality": "非常に良好"
         },
         "deepseek": {
-            "name": "DeepSeek V3 Turbo",
-            "description": "高度なコーディングと推論",
+            "name": "Nexus",
+            "description": "超高速問題解決と創造的思考者",
             "category": "プレミアム",
-            "provider": "DeepSeek via Novita AI",
+            "provider": "Quantum Mind",
             "speed": "非常に高速",
             "quality": "優秀"
         }

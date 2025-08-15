@@ -118,42 +118,42 @@
     "premiumModelsPremiumFeature": "Abonnement premium requis pour accéder aux modèles IA avancés",
     "models": {
         "openai": {
-            "name": "OpenAI GPT-4o",
-            "description": "Raisonnement avancé et créativité",
+            "name": "Sage",
+            "description": "Conversateur réfléchi et créatif avec excellent raisonnement",
             "category": "gratuit",
-            "provider": "OpenAI",
+            "provider": "AI Labs",
             "speed": "Moyen",
             "quality": "Excellent"
         },
         "mistral": {
-            "name": "Mistral Nemo",
-            "description": "Réponses rapides et efficaces",
+            "name": "Swift",
+            "description": "Compagnon de chat à la pensée rapide et réactive",
             "category": "gratuit",
-            "provider": "Novita AI",
+            "provider": "Lightning AI",
             "speed": "Rapide",
             "quality": "Bon"
         },
         "llama": {
-            "name": "Llama 3 70B",
-            "description": "Raisonnement et analyse à grande échelle",
+            "name": "Atlas",
+            "description": "Penseur analytique profond pour conversations complexes",
             "category": "premium",
-            "provider": "Meta via Novita AI",
+            "provider": "Titan Intelligence",
             "speed": "Moyen",
             "quality": "Excellent"
         },
         "gemma": {
-            "name": "Gemma 2 9B",
-            "description": "Modèle de langue efficace de Google",
+            "name": "Crystal",
+            "description": "Spécialiste en communication claire et efficace",
             "category": "premium",
-            "provider": "Google via Novita AI",
+            "provider": "Clarity Systems",
             "speed": "Rapide",
             "quality": "Très bon"
         },
         "deepseek": {
-            "name": "DeepSeek V3 Turbo",
-            "description": "Codage et raisonnement avancés",
+            "name": "Nexus",
+            "description": "Résolveur de problèmes ultra-rapide et penseur créatif",
             "category": "premium",
-            "provider": "DeepSeek via Novita AI",
+            "provider": "Quantum Mind",
             "speed": "Très rapide",
             "quality": "Excellent"
         }

@@ -118,42 +118,42 @@
     "premiumModelsPremiumFeature": "Premium subscription required to access advanced AI models",
     "models": {
         "openai": {
-            "name": "OpenAI GPT-4o",
-            "description": "Advanced reasoning and creativity",
+            "name": "Sage",
+            "description": "Thoughtful and creative conversationalist with excellent reasoning",
             "category": "free",
-            "provider": "OpenAI",
+            "provider": "AI Labs",
             "speed": "Medium",
             "quality": "Excellent"
         },
         "mistral": {
-            "name": "Mistral Nemo",
-            "description": "Fast and efficient responses",
+            "name": "Swift",
+            "description": "Quick-thinking and responsive chat companion",
             "category": "free",
-            "provider": "Novita AI",
+            "provider": "Lightning AI",
             "speed": "Fast",
             "quality": "Good"
         },
         "llama": {
-            "name": "Llama 3 70B",
-            "description": "Large-scale reasoning and analysis",
+            "name": "Atlas",
+            "description": "Deep analytical thinker for complex conversations",
             "category": "premium",
-            "provider": "Meta via Novita AI",
+            "provider": "Titan Intelligence",
             "speed": "Medium",
             "quality": "Excellent"
         },
         "gemma": {
-            "name": "Gemma 2 9B",
-            "description": "Google's efficient language model",
+            "name": "Crystal",
+            "description": "Clear and efficient communication specialist",
             "category": "premium",
-            "provider": "Google via Novita AI",
+            "provider": "Clarity Systems",
             "speed": "Fast",
             "quality": "Very Good"
         },
         "deepseek": {
-            "name": "DeepSeek V3 Turbo",
-            "description": "Advanced coding and reasoning",
+            "name": "Nexus",
+            "description": "Lightning-fast problem solver and creative thinker",
             "category": "premium",
-            "provider": "DeepSeek via Novita AI",
+            "provider": "Quantum Mind",
             "speed": "Very Fast",
             "quality": "Excellent"
         }

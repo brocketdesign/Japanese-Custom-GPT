@@ -24,6 +24,8 @@ const {
 } = require('./chat-tool-settings-utils');
 const { addUserPoints, removeUserPoints, getUserPoints } = require('./user-points-utils');
 
+const FREE_IMAGE_LIMIT = 3
+
 // Fetches user info from 'users' collection
 async function getUserInfo(db, userId) {
     return db.collection('users').findOne({ _id: new ObjectId(userId) });
@@ -161,8 +163,8 @@ async function completionSystemContent(chatDocument, chatDescription, currentTim
     # Subscription status:\n
     - The user is currently ${subscriptionStatus ? 'an active Lamix Premium subscriber.' : 'not an active Lamix Premium subscriber.'}\n
     ${!subscriptionStatus ? '- Since the user is not subscribed, you can mention the benefits of subscribing, such as unlimited image generation and access to more intimate relationship and NSFW content.\n': ''}
-    ${!subscriptionStatus ? '- There is a limit of 5 image generation per day for non-subscribers.\n' : ''}
-    ${!subscriptionStatus ? (all_tasks.length < 5 ? `- The user has ${parseInt(5 - all_tasks.length)} image generation left for today.` : '- The user is not a premium subscriber and has reached the image generation limit for today.') : '- The user is a premium subscriber and only needs points to generate images.' }
+    ${!subscriptionStatus ? '- There is a limit of '+FREE_IMAGE_LIMIT+' image generation per day for non-subscribers.\n' : ''}
+    ${!subscriptionStatus ? (all_tasks.length < FREE_IMAGE_LIMIT ? `- The user has ${parseInt(FREE_IMAGE_LIMIT - all_tasks.length)} image generation left for today.` : '- The user is not a premium subscriber and has reached the image generation limit for today.') : '- The user is a premium subscriber and only needs points to generate images.' }
 
     # Guidelines :\n
     - Current date: ${currentTimeInJapanese}\n
@@ -232,7 +234,7 @@ async function handleImageGeneration(db, currentUserMessage, lastUserMessage, ge
 
     if(genImage.canAfford) {
         const all_tasks = await getTasks(db, null, userId);
-        if(userInfo.subscriptionStatus == 'active' || (userInfo.subscriptionStatus !== 'active' && all_tasks.length < 5)){
+        if(userInfo.subscriptionStatus == 'active' || (userInfo.subscriptionStatus !== 'active' && all_tasks.length < FREE_IMAGE_LIMIT)){
             const imageId = Math.random().toString(36).substr(2, 9);
             const pending_tasks = await getTasks(db, 'pending', userId);
             

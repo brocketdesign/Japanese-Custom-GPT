@@ -8,6 +8,8 @@ const { upscaleImg } = require('../models/upscale-utils');
 const { removeUserPoints } = require('../models/user-points-utils');
 const { getUserMinImages } = require('../models/chat-tool-settings-utils')
 
+const FREE_IMAGE_LIMIT = 3
+
 async function routes(fastify, options) {
 
   // Endpoint to initiate generate-img for selected image type
@@ -27,8 +29,8 @@ async function routes(fastify, options) {
       
       const subscriptionStatus = freshUserData?.subscriptionStatus;
       const all_tasks = await getTasks(db, null, userId)
-      
-      if(subscriptionStatus !== 'active' && all_tasks.length >= 5){
+
+      if(subscriptionStatus !== 'active' && all_tasks.length >= FREE_IMAGE_LIMIT){
         fastify.sendNotificationToUser(userId, 'loadPlanPage')
         return reply.status(500).send({ error: 'You reached the limit of the free usage' });
       }

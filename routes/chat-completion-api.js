@@ -369,7 +369,7 @@ async function routes(fastify, options) {
             const selectedModel = userSettings.selectedModel || customModel;
             const isPremium = subscriptionStatus;
 
-            //console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
+            console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
             generateCompletion(messagesForCompletion, 600, selectedModel, language, selectedModel, isPremium).then(async (completion) => {
                 if (completion) {
                     fastify.sendNotificationToUser(userId, 'displayCompletionMessage', { message: completion, uniqueId });

@@ -116,6 +116,8 @@
     "premiumModels": "プレミアムモデル",
     "premiumModelsDescription": "高度な能力を持つ先進的なモデルで、プレミアム購読者が利用できます。",
     "premiumModelsPremiumFeature": "高度なAIモデルにアクセスするにはプレミアムサブスクリプションが必要です",
+    "autoImageGeneration": "自動画像生成",
+    "autoImageGenerationDescription": "会話中にAIが画像作成を提案またはリクエストした際に自動的に画像を生成します。この機能はポイント残高を使用し、視覚的なストーリーテリング体験を向上させます。",
     "models": {
         "openai": {
             "name": "Sage",

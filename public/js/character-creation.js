@@ -132,6 +132,25 @@
             $(this).toggleClass('d-none')
         })
     }
+
+    // Enable NSFW toggle for premium users only
+    if (subscriptionStatus) {
+        $('#basic_nsfw').prop('disabled', false);
+        $('#nsfwPremiumPrompt').hide();
+    } else {
+        $('#basic_nsfw').prop('disabled', true).prop('checked', false);
+        $('#nsfwPremiumPrompt').show();
+    }
+    
+    // Handle NSFW toggle click for non-premium users
+    $('#basic_nsfw').on('click', function() {
+        if (!subscriptionStatus && $(this).is(':checked')) {
+            $(this).prop('checked', false);
+            showUpgradePopup('nsfw-content');
+            return false;
+        }
+    });
+
     $('input, textarea').val('');
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -461,9 +480,7 @@
         try {
 
             // Start image generation with enhanced prompt
-            $button.html(`<div class="me-2 spinner-border spinner-border-sm" role="status">
-            <span class="visually-hidden">Loading...</span>
-            </div>${translations.imageForm.generatingImages}`);
+            $button.html(`${translations.imageForm.generatingImages}`);
             $('.genexp').fadeIn();
             showImageSpinner(); // Show spinner overlay
 
@@ -475,13 +492,15 @@
             if (file) {
                 image_base64 = await uploadAndConvertToBase64(file);
             }
+            const nsfw = subscriptionStatus && $('#basic_nsfw').is(':checked');
             // Use new comprehensive generation route
             const comprehensiveData = {
                 prompt,
                 gender,
                 chatPurpose,
                 name,
-                imageType,
+                nsfw,
+                imageType: nsfw ? 'nsfw' : 'sfw',
                 image_base64,
                 enableMergeFace,
                 chatId: chatCreationId,

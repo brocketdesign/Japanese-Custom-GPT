@@ -8,7 +8,8 @@ const DEFAULT_SETTINGS = {
     videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
     relationshipType: 'companion',
     selectedVoice: 'nova',
-    autoMergeFace: true
+    autoMergeFace: true,
+    autoImageGeneration: true
 };
 
 /**
@@ -238,6 +239,23 @@ async function getUserPremiumStatus(db, userId) {
     }
 }
 
+/**
+ * Check if auto image generation is enabled for user
+ * @param {Object} db - MongoDB database instance
+ * @param {string} userId - User ID
+ * @param {string} chatId - Optional chat ID for chat-specific settings
+ * @returns {boolean} Whether auto image generation is enabled
+ */
+async function getAutoImageGenerationSetting(db, userId, chatId = null) {
+    try {
+        const settings = await getUserChatToolSettings(db, userId, chatId);
+        return settings.autoImageGeneration !== undefined ? settings.autoImageGeneration : DEFAULT_SETTINGS.autoImageGeneration;
+    } catch (error) {
+        console.error('[getAutoImageGenerationSetting] Error getting auto image generation setting:', error);
+        return DEFAULT_SETTINGS.autoImageGeneration;
+    }
+}
+
 module.exports = {
     DEFAULT_SETTINGS,
     getUserChatToolSettings,
@@ -247,5 +265,6 @@ module.exports = {
     getUserMinImages,
     getAutoMergeFaceSetting,
     getUserSelectedModel,
-    getUserPremiumStatus
+    getUserPremiumStatus,
+    getAutoImageGenerationSetting
 };

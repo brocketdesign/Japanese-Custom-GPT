@@ -86,7 +86,6 @@ $(document).ready(function() {
 
     // Populate form with character data
     function populateForm(chatData) {
-        console.log('Loading chat data:', chatData);
         const details = chatData.details_description || {};
         
         // Basic character info in header
@@ -100,6 +99,22 @@ $(document).ready(function() {
             $('#characterImage').attr('src', chatData.chatImageUrl).show();
         }
 
+    
+        // Check subscription status for NSFW toggle
+        const subscriptionStatus = typeof user !== 'undefined' && user.subscriptionStatus === 'active';
+        const currentNsfw = chatData.nsfw || false;
+        
+        // Populate NSFW field with subscription check
+        if (subscriptionStatus) {
+            $('#basic_nsfw').prop('disabled', false).val(currentNsfw ? 'true' : 'false');
+            $('#nsfwPremiumPrompt').hide();
+        } else {
+            $('#basic_nsfw').prop('disabled', true).val('false');
+            if (currentNsfw) {
+                // Show warning that NSFW is disabled due to subscription
+                $('#nsfwPremiumPrompt').show();
+            }
+        }
         // Populate basic information fields from chat document
         $('#basic_name').val(chatData.name || '');
         $('#basic_slug').val(chatData.slug || '');
@@ -250,13 +265,15 @@ $(document).ready(function() {
 
     // Collect basic data (from chat-level fields)
     function collectBasicData() {
+        const subscriptionStatus = typeof user !== 'undefined' && user.subscriptionStatus === 'active';
+
         return {
             name: $('#basic_name').val() || null,
             slug: $('#basic_slug').val() || null,
             short_intro: $('#basic_short_intro').val() || null,
             description: $('#basic_description').val() || null,
             gender: $('#basic_gender').val() || null,
-            nsfw: $('#basic_nsfw').val() === 'true'
+            nsfw: subscriptionStatus && $('#basic_nsfw').val() === 'true'
         };
     }
 

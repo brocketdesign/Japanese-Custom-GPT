@@ -44,7 +44,25 @@
                                 <option value="nonBinary">{{translations.newCharacter.nonBinary}}</option>
                             </select>
                         </div>
-
+                        <!-- NSFW selector -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">{{translations.newCharacter.contentRating}}</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="basic_nsfw" name="basic_nsfw" disabled>
+                                <label class="form-check-label" for="basic_nsfw">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>{{translations.newCharacter.enableNSFW}}
+                                </label>
+                            </div>
+                            <small class="text-muted">{{translations.newCharacter.nsfwDescription}}</small>
+                            
+                            <!-- Premium upgrade prompt for non-subscribers -->
+                            <div id="nsfwPremiumPrompt" class="mt-2" style="display: none;">
+                                <div class="alert alert-warning py-2">
+                                    <i class="bi bi-star me-2"></i>{{translations.newCharacter.nsfwPremiumRequired}}
+                                    <a href="#" onclick="loadPlanPage()" class="alert-link">{{translations.upgrade_now}}</a>
+                                </div>
+                            </div>
+                        </div>
                         <!-- Character Prompt Input -->
                         <div class="mb-3">
                             <label for="characterPrompt" class="form-label fw-semibold"><i class="bi bi-asterisk text-danger me-2"></i>{{translations.newCharacter.character_prompt}}</label>

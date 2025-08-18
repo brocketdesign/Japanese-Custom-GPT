@@ -16,6 +16,7 @@ const {
 const {
     getUserChatToolSettings,
     applyUserSettingsToPrompt,
+    getAutoImageGenerationSetting,
 } = require('../models/chat-tool-settings-utils');
 const { getUserPoints } = require('../models/user-points-utils');
 const {
@@ -235,6 +236,9 @@ async function routes(fastify, options) {
 
             const isAdmin = await checkUserAdmin(fastify, userId);
             const chatDocument = await getChatDocument(request, db, chatId);
+            const nsfw = chatDocument.nsfw || false;
+            const characterNsfw = chatDocument?.nsfw || false;
+            console.log(`[api/openai-chat-completion] Character NSFW setting: ${characterNsfw}`);
             const chatDescription = chatDataToString(chatDocument);
             const characterDescription = await checkImageDescription(db, chatId, chatDocument);
             const language = getLanguageName(userInfo.lang);
@@ -257,7 +261,7 @@ async function routes(fastify, options) {
             // Handle image generation with the last message
             const imageGenResult = await handleImageGeneration(
                 db, lastUserMessage, lastUserMessage, genImage, userData, 
-                userInfo, isAdmin, characterDescription, userChatId, chatId, 
+                userInfo, isAdmin, characterDescription, characterNsfw, userChatId, chatId, 
                 userId, request.translations, fastify
             );
             
@@ -391,9 +395,11 @@ async function routes(fastify, options) {
                     await updateChatLastMessage(db, chatId, userId, completion, userData.updatedAt);
                     await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt);
 
-                    // Check if the assistant's new message was an image request
+                    // Check if the assistant's new message was an image request [ONLY IF THE USER SETTING IS ENABLED] // New Update
                     const newUserPointsBalance = await getUserPoints(db, userId);
-                    if( messagesForCompletion.length > 3 && newUserPointsBalance >= 10 ) {
+                    const autoImageGenerationEnabled = await getAutoImageGenerationSetting(db, userId, chatId);
+
+                    if( messagesForCompletion.length > 3 && newUserPointsBalance >= 10 && autoImageGenerationEnabled ) {
                         const assistantImageRequest = await checkImageRequest(newAssistantMessage.content, lastUserMessage.content);
                         //console.log(`[/api/openai-chat-completion] Image request detected:`, assistantImageRequest);
                         if (assistantImageRequest && assistantImageRequest.image_request) {
@@ -401,7 +407,7 @@ async function routes(fastify, options) {
 
                             const imageResult = await handleImageGeneration(
                                 db, assistantImageRequest, lastUserMessage, assistantImageRequest, userData,
-                                userInfo, isAdmin, characterDescription, userChatId, chatId, userId, request.translations, fastify
+                                userInfo, isAdmin, characterDescription, nsfw, userChatId, chatId, userId, request.translations, fastify
                             );
                             
                             if(!imageResult.genImage.canAfford) {
@@ -409,7 +415,7 @@ async function routes(fastify, options) {
                             }   
                         }
                     } else {
-                        console.log(`[/api/openai-chat-completion] No image request detected or insufficient points.`);
+                        console.log(`[/api/openai-chat-completion] Auto image generation disabled, insufficient points, or not enough context.`);
                     }
                 } else {
                     fastify.sendNotificationToUser(userId, 'hideCompletionMessage', { uniqueId });

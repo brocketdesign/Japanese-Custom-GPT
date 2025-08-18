@@ -319,7 +319,29 @@ async function handleFluxCompletion({
 }
 
 // Simplified generateImg function
-async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSeed, modelId, regenerate, userId, chatId, userChatId, imageType, image_num, image_base64, chatCreation, placeholderId, translations, fastify, flux = false, customPromptId = null, customGiftId = null, enableMergeFace = false}) {
+async function generateImg({
+    title, 
+    prompt, 
+    negativePrompt, 
+    aspectRatio, 
+    imageSeed, 
+    modelId, 
+    regenerate, 
+    userId, 
+    chatId, 
+    userChatId, 
+    imageType, 
+    image_num, 
+    image_base64, 
+    chatCreation, 
+    placeholderId, 
+    translations, 
+    fastify, 
+    flux = false, 
+    customPromptId = null, 
+    customGiftId = null, 
+    enableMergeFace = false
+}) {
     const db = fastify.mongo.db;
     
     // Validate required parameters (prompt)
@@ -408,7 +430,7 @@ async function generateImg({title, prompt, negativePrompt, aspectRatio, imageSee
         let finalNegativePrompt = imageType === 'sfw' ? modelNegativePrompt +','+ selectedStyle.sfw.negative_prompt : modelNegativePrompt +','+ selectedStyle.nsfw.negative_prompt;
         finalNegativePrompt = ((negativePrompt || finalNegativePrompt) ? (negativePrompt || finalNegativePrompt)  + ',' : '') + genderNegativePrompt;
         finalNegativePrompt = finalNegativePrompt.replace(/,+/g, ',').replace(/^\s*,|\s*,\s*$/g, '').trim();
-
+        console.log(`[generateImg] imageType: ${imageType}`);
         if (imageType === 'sfw') {
           image_request = {
             type: 'sfw',

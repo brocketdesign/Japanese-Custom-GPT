@@ -101,14 +101,21 @@
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label for="basic_nsfw" class="form-label">
-                            <i class="bi bi-shield-exclamation me-1"></i>
-                            {{translations.characterUpdate.contentRating}}
-                        </label>
-                        <select class="form-select" id="basic_nsfw" name="basic_nsfw">
-                            <option value="false">{{translations.characterUpdate.sfw}}</option>
-                            <option value="true">{{translations.characterUpdate.nsfw}}</option>
-                        </select>
+                        <div class="mb-3">
+                            <label for="basic_nsfw" class="form-label fw-semibold">{{translations.newCharacter.contentRating}}</label>
+                            <select class="form-select" id="basic_nsfw" name="basic_nsfw">
+                                <option value="false">{{translations.newCharacter.sfw}}</option>
+                                <option value="true">{{translations.newCharacter.nsfw}}</option>
+                            </select>
+                            <small class="text-muted">{{translations.newCharacter.nsfwDescription}}</small>
+                            
+                            <!-- Premium prompt for updates -->
+                            <div id="nsfwPremiumPrompt" class="mt-2" style="display: none;">
+                                <div class="alert alert-warning py-2">
+                                    <i class="bi bi-star me-2"></i>{{translations.newCharacter.nsfwPremiumRequired}}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

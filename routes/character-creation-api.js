@@ -241,12 +241,35 @@ async function routes(fastify, options) {
         console.log('[API/generate-character-comprehensive] Starting comprehensive character generation');
         
         try {
-            const { prompt, negativePrompt = null, name, chatPurpose, language: requestLanguage, imageType, image_base64, enableMergeFace, enableEnhancedPrompt = true } = request.body;
+            const { 
+                prompt, 
+                negativePrompt = null, 
+                name, 
+                chatPurpose, 
+                language: requestLanguage, 
+                imageType, 
+                image_base64, 
+                enableMergeFace, 
+                enableEnhancedPrompt = true,
+                nsfw = false // Add this parameter
+            } = request.body;
             let gender = request.body.gender || null;
             let chatId = request.body.chatId || request.query.chatId || request.params.chatId || null;
+            
             const userId = request.body.userId || request.user._id;
             const language = requestLanguage || request.lang;
- 
+            // Check user subscription for NSFW content
+            const user = await fastify.mongo.db.collection('users').findOne({ 
+                _id: new ObjectId(userId) 
+            });
+            const isPremium = user?.subscriptionStatus === 'active';
+            
+            // Enforce NSFW restrictions for non-premium users
+            const allowNsfw = isPremium && nsfw;
+            const finalImageType = allowNsfw ? imageType : 'sfw';
+            
+            console.log(`[API/generate-character-comprehensive] NSFW settings - isPremium: ${isPremium}, requested: ${nsfw}, allowed: ${allowNsfw}`);
+        
             console.log(`[API/generate-character-comprehensive] Input parameters - chatId: ${chatId || 'undefined'}, gender: ${gender || 'undefined'}, language: ${language}, prompt: ${prompt ? prompt.substring(0, 50) + '...' : 'undefined'}, name: ${name || 'undefined'}, hasImageBase64: ${!!image_base64}, enableMergeFace: ${!!enableMergeFace}`);
             console.log(`Translations Language: ${request.translations.lang}`);
 
@@ -308,9 +331,9 @@ async function routes(fastify, options) {
             let checkIfDetailledPrompt = prompt.toLowerCase().includes("score_")  ;
 
             if(enableEnhancedPrompt && !checkIfDetailledPrompt) {
-                console.log(`[API/generate-character-comprehensive] Step 2: Generating ${imageType} enhanced prompt`);
+                console.log(`[API/generate-character-comprehensive] Step 2: Generating ${finalImageType} enhanced prompt`);
 
-                const systemPayload = createSystemPayload(prompt, gender, extractedDetails, imageType);
+                const systemPayload = createSystemPayload(prompt, gender, extractedDetails, finalImageType);
                 enhancedPrompt = await generateCompletion(systemPayload, 600, 'mistral');
                 
                 console.log('[API/generate-character-comprehensive] Enhanced prompt generated:', enhancedPrompt.substring(0, 100) + '...');
@@ -405,7 +428,9 @@ async function routes(fastify, options) {
             chatData.details_description = extractedDetails;
             chatData.createdAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
             chatData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-
+            chatData.nsfw = allowNsfw;
+            chatData.imageType = finalImageType;
+            
             const collectionChats = fastify.mongo.db.collection('chats');
 
             // Step 5: Generate unique slug if name is provided

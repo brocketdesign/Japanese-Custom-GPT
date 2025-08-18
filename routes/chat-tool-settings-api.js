@@ -29,7 +29,8 @@ async function routes(fastify, options) {
                     evenLabVoice: 'sakura', // new field
                     autoMergeFace: true, // new field
                     selectedModel: 'mistral', // new field
-                    suggestionsEnabled: true // new field
+                    suggestionsEnabled: true, // new field
+                    autoImageGeneration: true // new field
                 };
                 return reply.send({ success: true, settings: defaultSettings });
             }
@@ -75,7 +76,8 @@ async function routes(fastify, options) {
                 evenLabVoice: String(settings.evenLabVoice || 'sakura'),
                 autoMergeFace: Boolean(settings.autoMergeFace !== undefined ? settings.autoMergeFace : true),
                 selectedModel: String(settings.selectedModel || 'mistral'),
-                suggestionsEnabled: Boolean(settings.suggestionsEnabled !== undefined ? settings.suggestionsEnabled : true)
+                suggestionsEnabled: Boolean(settings.suggestionsEnabled !== undefined ? settings.suggestionsEnabled : true),
+                autoImageGeneration: Boolean(settings.autoImageGeneration !== undefined ? settings.autoImageGeneration : true)
             };
 
             // Validate ranges and constraints
@@ -163,7 +165,8 @@ async function routes(fastify, options) {
                 evenLabVoice: 'sakura',
                 autoMergeFace: true,
                 selectedModel: 'mistral',
-                suggestionsEnabled: true
+                suggestionsEnabled: true,
+                autoImageGeneration: true
             };
 
             reply.send({ 
@@ -223,7 +226,8 @@ async function routes(fastify, options) {
                 evenLabVoice: 'sakura',
                 autoMergeFace: true,
                 selectedModel: 'mistral',
-                suggestionsEnabled: true
+                suggestionsEnabled: true,
+                autoImageGeneration: true
             };
 
             reply.send({ success: true, settings: defaultSettings, isChatSpecific: false });

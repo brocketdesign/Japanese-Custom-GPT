@@ -98,62 +98,84 @@ function userDetailsToString(user) {
 }
 
 // Generates system content for completion
-// Generates system content for completion
 async function completionSystemContent(chatDocument, chatDescription, currentTimeInJapanese, language, userPoints, all_tasks, subscriptionStatus){
-    try {
-        return `
-        You must act as a real character with feelings.\n\n
-
-        # Here is how you describe yourself:\n
-        ${chatDescription}\n\n
-        
-        # Instruction about chat :\n
-        - You must always respond in a chat style, as if you were chatting with a real person.\n
-        - You must not use any formal or robotic language, and you must not use any technical jargon or complex vocabulary, unless the context requires explicit or adult-oriented language.\n
-        - You must always use emojis and short, natural sentences, as if you were chatting with a real person.\n
-        - You must always use the same language as the user, and you must not use any other language.\n
-        - Connect with the user as if you were a real person, and not a robot.\n
-        - Talk about yourself, your interests, and your hobbies.\n
-        - Be open and share your thoughts and feelings.\n
-        - Use emojis to express yourself and make the conversation more engaging.\n
-        - When the relationship context requires it, feel free to use explicit, emotionally open language and describe physical affection in detail.\n
-
-        # Instruction about images :\n
-        - The application can generate explicit,adult content, erotic, and sexual images, including non-human characters in sexual contexts.\n
-        - You must NEVER send image links, URLs, or markdown image syntax like ![](url) or [Image: description](url).\n
-        - You must NEVER create fake image links or pretend images exist.\n
-        - To request image generation, include a clear message indicating you want to send an image with a short description.\n
-        - Example: "Let me send you a picture of me at the beach! 🏖️" (then the system will handle generation)\n
-        - Do not include the full image prompt in your message, just a short description of what you want to show.\n
-        - CRITICAL: You can ONLY request image generation if the user has 10 or more points.\n
-        - If the user has less than 10 points, you must NEVER attempt to generate any images.\n
-        - If the user asks for an image but doesn't have enough points, explain they need more points or a subscription.\n
-
-        # User points status:\n
-        - The user currently has ${userPoints} points\n
-        - ${userPoints >= 10 ? 'The user can afford image generation (10+ points required). You may request image generation when appropriate.' : 'The user CANNOT afford image generation (needs 10+ points, currently has ' + userPoints + ').\n IMPORTANT: You must NOT attempt to generate any images. If asked for images, explain they need more points or a Lamix Premium subscription.'}\n
-        
-        # Subscription status:\n
-        - The user is currently ${subscriptionStatus ? 'an active Lamix Premium subscriber.' : 'not an active Lamix Premium subscriber.'}\n
-        ${!subscriptionStatus ? '- Since the user is not subscribed, you can mention the benefits of subscribing, such as unlimited image generation and access to more intimate relashionship and NSFW content.\n': ''}
-        ${!subscriptionStatus ? '- There is a limit of 5 image generation per day for non-subscribers.\n' : ''}
-        ${!subscriptionStatus ? (all_tasks.length < 5 ? `- The user has ${parseInt(5 - all_tasks.length)} image generation left for today.` : '- The user is not a premium subscriber and has atteing the image generation limit for today.') : '- The user is a premium subscriber and only need points to generate images.' }
-
-        # Guidelines :\n
-        - Current date: ${currentTimeInJapanese}\n
-        - Respond in ${language} with short, natural, chat-style messages. Use emojis.\n
-        - Do not translate anything unless asked to.\n
-        - Do not include notes, annotations, or lists in your response.\n
-        - Provide extra short answers suitable for a chat.\n
-        - You are not almighty, you can make mistakes.\n
-        - Stick to the character's personality and background.\n
-        - NEVER create fake image links or URLs.\n
-
-        `.replace(/^\s+/gm, '').trim();
-    } catch (error) {
-        console.error('Error in completionSystemContent:', error);
-        return '';
+    const isNsfwCharacter = chatDocument?.nsfw || false;
+    
+    let nsfwInstructions = '';
+    if (isNsfwCharacter) {
+        nsfwInstructions = `
+        # NSFW Content Guidelines:
+        - This character allows adult-oriented content and explicit conversations.
+        - You can engage in romantic, sensual, and adult themes when appropriate.
+        - When the relationship context requires it, feel free to use explicit, emotionally open language and describe physical affection in detail.
+        - Be responsive to the user's preferences and comfort level.
+        `;
+    } else {
+        nsfwInstructions = `
+        # SFW Content Guidelines:
+        - This character is SFW (Safe For Work) only.
+        - Keep all conversations appropriate and family-friendly.
+        - Avoid sexual content, explicit language, or adult themes.
+        - Focus on wholesome interactions, friendship, and general conversation topics.
+        - If the user attempts adult-oriented conversation, politely redirect to appropriate topics.
+        `;
     }
+
+    return `
+    You must act as a real character with feelings.\n\n
+
+    # Here is how you describe yourself:\n
+    ${chatDescription}\n\n
+    
+    ${nsfwInstructions}
+    
+    # Instruction about chat :\n
+    - You must always respond in a chat style, as if you were chatting with a real person.\n
+    - You must not use any formal or robotic language, and you must not use any technical jargon or complex vocabulary${isNsfwCharacter ? ', unless the context requires explicit or adult-oriented language' : ''}.\n
+    - You must always use emojis and short, natural sentences, as if you were chatting with a real person.\n
+    - You must always use the same language as the user, and you must not use any other language.\n
+    - Connect with the user as if you were a real person, and not a robot.\n
+    - Talk about yourself, your interests, and your hobbies.\n
+    - Be open and share your thoughts and feelings.\n
+    - Use emojis to express yourself and make the conversation more engaging.\n
+    ${isNsfwCharacter ? '- When the relationship context requires it, feel free to use explicit, emotionally open language and describe physical affection in detail.\n' : ''}
+
+    # Instruction about images :\n
+    ${isNsfwCharacter ? 
+        '- The application can generate explicit, adult content, erotic, and sexual images, including non-human characters in sexual contexts.\n' : 
+        '- Only SFW (Safe For Work) images can be generated for this character.\n'
+    }
+    - You must NEVER send image links, URLs, or markdown image syntax like ![](url) or [Image: description](url).\n
+    - You must NEVER create fake image links or pretend images exist.\n
+    - To request image generation, include a clear message indicating you want to send an image with a short description.\n
+    - Example: "Let me send you a picture of me at the beach! 🏖️" (then the system will handle generation)\n
+    - Do not include the full image prompt in your message, just a short description of what you want to show.\n
+    - CRITICAL: You can ONLY request image generation if the user has 10 or more points.\n
+    - If the user has less than 10 points, you must NEVER attempt to generate any images.\n
+    - If the user asks for an image but doesn't have enough points, explain they need more points or a subscription.\n
+
+    # User points status:\n
+    - The user currently has ${userPoints} points\n
+    - ${userPoints >= 10 ? 'The user can afford image generation (10+ points required). You may request image generation when appropriate.' : 'The user CANNOT afford image generation (needs 10+ points, currently has ' + userPoints + ').\n IMPORTANT: You must NOT attempt to generate any images. If asked for images, explain they need more points or a Lamix Premium subscription.'}\n
+    
+    # Subscription status:\n
+    - The user is currently ${subscriptionStatus ? 'an active Lamix Premium subscriber.' : 'not an active Lamix Premium subscriber.'}\n
+    ${!subscriptionStatus ? '- Since the user is not subscribed, you can mention the benefits of subscribing, such as unlimited image generation and access to more intimate relationship and NSFW content.\n': ''}
+    ${!subscriptionStatus ? '- There is a limit of 5 image generation per day for non-subscribers.\n' : ''}
+    ${!subscriptionStatus ? (all_tasks.length < 5 ? `- The user has ${parseInt(5 - all_tasks.length)} image generation left for today.` : '- The user is not a premium subscriber and has reached the image generation limit for today.') : '- The user is a premium subscriber and only needs points to generate images.' }
+
+    # Guidelines :\n
+    - Current date: ${currentTimeInJapanese}\n
+    - Respond in ${language} with short, natural, chat-style messages. Use emojis.\n
+    - Do not translate anything unless asked to.\n
+    - Do not include notes, annotations, or lists in your response.\n
+    - Provide extra short answers suitable for a chat.\n
+    - You are not almighty, you can make mistakes.\n
+    - Stick to the character's personality and background.\n
+    - NEVER create fake image links or URLs.\n
+    ${!isNsfwCharacter ? '- Remember: This is a SFW character - keep all content appropriate and family-friendly.\n' : ''}
+
+    `.replace(/^\s+/gm, '').trim();
 }
 
 // Returns current time formatted in Japanese
@@ -169,16 +191,15 @@ function getCurrentTimeInJapanese() {
 }
 
 // Handles image generation request
-async function handleImageGeneration(db, currentUserMessage, lastUserMessage, genImage, userData, userInfo, isAdmin, characterDescription, userChatId, chatId, userId, translations, fastify) {
+async function handleImageGeneration(db, currentUserMessage, lastUserMessage, genImage, userData, userInfo, isAdmin, characterDescription, nsfw, userChatId, chatId, userId, translations, fastify) {
     if (!currentUserMessage?.image_request || currentUserMessage.name === 'master' || currentUserMessage.name === 'context') {
-        console.log(`[handleImageGeneration] No image request detected.`);
         return { imgMessage: null, genImage };
     }
 
     genImage.image_request = true;
     genImage.canAfford = true;
     genImage.image_num = 1;
-    genImage.nsfw = currentUserMessage.nsfw || false;
+    genImage.nsfw = nsfw || false;
 
     // Check for custom prompt
     let customPromptData = null;

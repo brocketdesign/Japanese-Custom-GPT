@@ -116,6 +116,8 @@
     "premiumModels": "Modèles Premium",
     "premiumModelsDescription": "Modèles avancés avec des capacités améliorées, disponibles pour les abonnés premium.",
     "premiumModelsPremiumFeature": "Abonnement premium requis pour accéder aux modèles IA avancés",
+    "autoImageGeneration": "Génération d'image automatique",
+    "autoImageGenerationDescription": "Générez automatiquement des images lorsque l'IA suggère ou demande la création d'images pendant les conversations. Cette fonctionnalité utilise votre solde de points et améliore l'expérience de narration visuelle.",
     "models": {
         "openai": {
             "name": "Sage",

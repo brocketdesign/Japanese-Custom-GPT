@@ -9,7 +9,8 @@ class ChatToolSettings {
             premiumVoice: 'Thandiwe',
             autoMergeFace: true,
             suggestionsEnabled: true,
-            selectedModel: 'mistral'
+            selectedModel: 'mistral',
+            autoImageGeneration: true
         };
         
         this.isLoading = false;
@@ -145,6 +146,14 @@ class ChatToolSettings {
                 }
                 
                 this.settings.autoMergeFace = e.target.checked;
+            });
+        }
+
+        // Auto image generation switch
+        const autoImageGenerationSwitch = document.getElementById('auto-image-generation-switch');
+        if (autoImageGenerationSwitch) {
+            autoImageGenerationSwitch.addEventListener('change', (e) => {
+                this.settings.autoImageGeneration = e.target.checked;
             });
         }
 
@@ -1071,6 +1080,27 @@ class ChatToolSettings {
             this.updateSwitchLabels();
         }
 
+        // Update auto merge face switch
+        const autoMergeFaceSwitch = document.getElementById('auto-merge-face-switch');
+        if (autoMergeFaceSwitch) {
+            autoMergeFaceSwitch.checked = this.settings.autoMergeFace !== undefined ? this.settings.autoMergeFace : true;
+            
+            // Disable for non-premium users
+            if (!subscriptionStatus) {
+                autoMergeFaceSwitch.disabled = true;
+                autoMergeFaceSwitch.style.opacity = '0.6';
+            } else {
+                autoMergeFaceSwitch.disabled = false;
+                autoMergeFaceSwitch.style.opacity = '1';
+            }
+        }
+
+        // Update auto image generation switch
+        const autoImageGenerationSwitch = document.getElementById('auto-image-generation-switch');
+        if (autoImageGenerationSwitch) {
+            autoImageGenerationSwitch.checked = this.settings.autoImageGeneration !== undefined ? this.settings.autoImageGeneration : true;
+        }
+
         // Update suggestions enable switch
         const suggestionsEnableSwitch = document.getElementById('suggestions-enable-switch');
         if (suggestionsEnableSwitch) {
@@ -1189,6 +1219,10 @@ class ChatToolSettings {
 
     getSelectedModel() {
         return this.settings.selectedModel;
+    }
+
+    getAutoImageGeneration() {
+        return this.settings.autoImageGeneration;
     }
 
     // Chat-specific methods

@@ -208,7 +208,7 @@ fastify.post('/api/init-chat', async (request, reply) => {
                 startMessage.content = localizedMessages.welcomeBack;
             } else {
                 startMessage.sendImage = true;
-                if (subscriptionActive) {
+                if (!subscriptionActive) {
                     startMessage.content = localizedMessages.firstMeetingWithSub;
                 } else {
                     startMessage.content = localizedMessages.firstMeetingNoSub;

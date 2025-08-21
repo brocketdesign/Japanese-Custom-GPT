@@ -29,6 +29,7 @@
     "retry": "再試行",
     "minImagesPremiumFeature": "画像を増やすにはプレミアム機能が必要です",
     "autoMergeFacePremiumFeature": "顔の自動マージにはプレミアム機能が必要です",
+    "autoImagePremiumFeature": "自動画像生成にアクセスするにはプレミアムサブスクリプションが必要です",
     "imageSettings": "画像設定",
     "minImagesToSend": "リクエストあたりの画像数",
     "imageSettingsDescription": "リクエストごとに受け取る画像の数を設定します。各画像は10ポイントを消費し、より豊かで没入感のある会話体験の創造に貢献します。",

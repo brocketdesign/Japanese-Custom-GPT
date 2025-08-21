@@ -29,6 +29,7 @@
     "retry": "Réessayer",
     "minImagesPremiumFeature": "Abonnement requis pour plus d'images",
     "autoMergeFacePremiumFeature": "Abonnement requis pour la fusion automatique des visages",
+    "autoImagePremiumFeature": "Abonnement premium requis pour accéder à la génération d'images automatique",
     "imageSettings": "Paramètres d'image",
     "minImagesToSend": "Nombre d'images par demande",
     "imageSettingsDescription": "Configurez le nombre d'images que vous recevrez par demande. Chaque image coûte 10 points et contribue à créer une expérience de conversation plus riche et immersive.",

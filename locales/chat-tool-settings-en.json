@@ -29,6 +29,7 @@
     "retry": "Retry",
     "minImagesPremiumFeature": "Premium feature required for more images",
     "autoMergeFacePremiumFeature": "Premium feature required for auto merge face",
+    "autoImagePremiumFeature": "Premium subscription required to access automatic image generation",
     "imageSettings": "Image Settings",
     "minImagesToSend": "Number of Images per Request",
     "imageSettingsDescription": "Configure the number of images you'll receive per request. Each image costs 10 points and contributes to creating a richer, more immersive conversation experience.",

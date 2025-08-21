@@ -24,8 +24,6 @@ const {
 } = require('./chat-tool-settings-utils');
 const { addUserPoints, removeUserPoints, getUserPoints } = require('./user-points-utils');
 
-const FREE_IMAGE_LIMIT = 3
-
 // Fetches user info from 'users' collection
 async function getUserInfo(db, userId) {
     return db.collection('users').findOne({ _id: new ObjectId(userId) });
@@ -162,9 +160,6 @@ async function completionSystemContent(chatDocument, chatDescription, currentTim
     
     # Subscription status:\n
     - The user is currently ${subscriptionStatus ? 'an active Lamix Premium subscriber.' : 'not an active Lamix Premium subscriber.'}\n
-    ${!subscriptionStatus ? '- Since the user is not subscribed, you can mention the benefits of subscribing, such as unlimited image generation and access to more intimate relationship and NSFW content.\n': ''}
-    ${!subscriptionStatus ? '- There is a limit of '+FREE_IMAGE_LIMIT+' image generation per day for non-subscribers.\n' : ''}
-    ${!subscriptionStatus ? (all_tasks.length < FREE_IMAGE_LIMIT ? `- The user has ${parseInt(FREE_IMAGE_LIMIT - all_tasks.length)} image generation left for today.` : '- The user is not a premium subscriber and has reached the image generation limit for today.') : '- The user is a premium subscriber and only needs points to generate images.' }
 
     # Guidelines :\n
     - Current date: ${currentTimeInJapanese}\n
@@ -233,8 +228,7 @@ async function handleImageGeneration(db, currentUserMessage, lastUserMessage, ge
     let imgMessage = [{ role: 'user', name: 'master' }];
 
     if(genImage.canAfford) {
-        const all_tasks = await getTasks(db, null, userId);
-        if(userInfo.subscriptionStatus == 'active' || (userInfo.subscriptionStatus !== 'active' && all_tasks.length < FREE_IMAGE_LIMIT)){
+        if(userInfo.subscriptionStatus == 'active'){
             const imageId = Math.random().toString(36).substr(2, 9);
             const pending_tasks = await getTasks(db, 'pending', userId);
             
@@ -297,13 +291,13 @@ async function handleImageGeneration(db, currentUserMessage, lastUserMessage, ge
 }
 
 // Handles chat goals
-async function handleChatGoals(db, userData, userChatId, chatDescription, personaInfo, userSettings, language, request, fastify, userId, chatId) {
+async function handleChatGoals(db, userData, userChatId, chatDescription, personaInfo, userSettings, subscriptionStatus, language, request, fastify, userId, chatId) {
     const messageCount = userData.messages.filter(m => m.role === 'user' || m.role === 'assistant').length;
     let chatGoal = null;
     let goalCompletion = null;
 
     if (messageCount <= 3 || !userData.currentGoal) {
-        chatGoal = await generateChatGoal(chatDescription, personaInfo, userSettings, language);
+        chatGoal = await generateChatGoal(chatDescription, personaInfo, userSettings, subscriptionStatus, language);
         
         if (chatGoal) {
             await db.collection('userChat').updateOne(
@@ -345,9 +339,9 @@ async function handleChatGoals(db, userData, userChatId, chatDescription, person
             });
             
             await addUserPoints(db, userId, rewardPoints, request?.userPointsTranslations.points?.reward_reasons?.goal_completion || 'Goal completion reward', 'goal_completion', fastify);
-            
-            chatGoal = await generateChatGoal(chatDescription, personaInfo, language);
-            
+
+            chatGoal = await generateChatGoal(chatDescription, personaInfo, userSettings, subscriptionStatus, language);
+
             if (chatGoal) {
                 await db.collection('userChat').updateOne(
                     { _id: new ObjectId(userChatId) },

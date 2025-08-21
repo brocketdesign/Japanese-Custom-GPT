@@ -346,6 +346,7 @@
                     <div class="settings-field-header">
                         <label class="settings-label fw-semibold mb-0">
                             {{chatToolSettingsTranslations.autoImageGeneration}}
+                            <i class="bi bi-crown-fill premium-icon ms-1 text-warning" id="auto-image-premium-icon" style="display: none;"></i>
                         </label>
                         <div class="settings-switch-container">
                             <label class="settings-switch">
@@ -356,6 +357,12 @@
                     </div>
                     <div class="settings-description text-muted small mt-2">
                         {{chatToolSettingsTranslations.autoImageGenerationDescription}}
+                    </div>
+                    <div id="auto-image-premium-indicator" class="premium-feature-indicator" style="display: none;">
+                        <small class="text-warning d-block mt-2">
+                            <i class="bi bi-star-fill me-1"></i> 
+                            {{chatToolSettingsTranslations.autoImagePremiumFeature}}
+                        </small>
                     </div>
                 </div>
             </div>

@@ -561,7 +561,7 @@ const chatGoalSchema = z.object({
 });
 
 // Function to generate chat goals based on character and persona
-const generateChatGoal = async (chatDescription, personaInfo = null, userSettings = null, language = 'en') => {
+const generateChatGoal = async (chatDescription, personaInfo = null, userSettings = null, subscriptionStatus = null, language = 'en') => {
   try {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     
@@ -574,7 +574,7 @@ const generateChatGoal = async (chatDescription, personaInfo = null, userSetting
         relationship += `${relationshipInstructions[userSettings.relationshipType]}`;
     }
     // Randomly select a goal type from the available types
-    const goalTypes =  ['activity', 'image request'];
+    const goalTypes =  subscriptionStatus ? ['activity', 'image request'] : ['image request'];
     const randomIndex = Math.floor(Math.random() * goalTypes.length);
     const selectedGoalType = goalTypes[randomIndex];
     const systemPrompt = `You are a chat goal generator that creates engaging conversation objectives for AI character interactions.
@@ -588,7 +588,7 @@ const generateChatGoal = async (chatDescription, personaInfo = null, userSetting
     
     Goal type for this request: ${selectedGoalType}
     Other possible goal types:
-    - activity: Doing something together (games, roleplay, etc.)
+    ${!subscriptionStatus ? '' : '- activity: Doing something together (games, roleplay, etc.)'}
     - image request: User needs to ask for a specific image
 
     Use the character description and persona context to tailor the goal.

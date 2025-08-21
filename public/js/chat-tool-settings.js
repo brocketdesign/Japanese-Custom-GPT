@@ -153,6 +153,24 @@ class ChatToolSettings {
         const autoImageGenerationSwitch = document.getElementById('auto-image-generation-switch');
         if (autoImageGenerationSwitch) {
             autoImageGenerationSwitch.addEventListener('change', (e) => {
+                const user = window.user || {};
+                const subscriptionStatus = user.subscriptionStatus === 'active';
+                
+                // Check if user is trying to enable auto image generation without subscription
+                if (!subscriptionStatus && e.target.checked) {
+                    // Reset to false and show upgrade popup
+                    e.target.checked = false;
+                    this.settings.autoImageGeneration = false;
+                    
+                    // Show plan page for upgrade
+                    if (typeof loadPlanPage === 'function') {
+                        loadPlanPage();
+                    } else {
+                        window.location.href = '/plan';
+                    }
+                    return;
+                }
+                
                 this.settings.autoImageGeneration = e.target.checked;
             });
         }
@@ -401,6 +419,33 @@ class ChatToolSettings {
             if (autoMergeFaceSwitch) {
                 autoMergeFaceSwitch.disabled = false;
                 autoMergeFaceSwitch.style.opacity = '1';
+            }
+        }
+
+        // Auto Image Generation premium indicator
+        const autoImageIcon = document.getElementById('auto-image-premium-icon');
+        const autoImageIndicator = document.getElementById('auto-image-premium-indicator');
+        const autoImageGenerationSwitch = document.getElementById('auto-image-generation-switch');
+
+        if (!subscriptionStatus) {
+            if (autoImageIcon) autoImageIcon.style.display = 'inline';
+            if (autoImageIndicator) autoImageIndicator.style.display = 'block';
+            
+            if (autoImageGenerationSwitch) {
+                this.settings.autoImageGeneration = false;
+                autoImageGenerationSwitch.checked = false;
+                autoImageGenerationSwitch.disabled = true;
+                autoImageGenerationSwitch.style.opacity = '0.6';
+            }
+            
+            this.autoSaveCorrection();
+        } else {
+            if (autoImageIcon) autoImageIcon.style.display = 'none';
+            if (autoImageIndicator) autoImageIndicator.style.display = 'none';
+            
+            if (autoImageGenerationSwitch) {
+                autoImageGenerationSwitch.disabled = false;
+                autoImageGenerationSwitch.style.opacity = '1';
             }
         }
 
@@ -976,6 +1021,10 @@ class ChatToolSettings {
                 this.settings.autoMergeFace = false;
                 this.autoSaveCorrection();
             }
+            if (this.settings.autoImageGeneration) {
+                this.settings.autoImageGeneration = false;
+                this.autoSaveCorrection();
+            }
             // Auto-correct premium models
             const premiumModels = ['llama', 'gemma', 'deepseek'];
             if (premiumModels.includes(this.settings.selectedModel)) {
@@ -1098,7 +1147,16 @@ class ChatToolSettings {
         // Update auto image generation switch
         const autoImageGenerationSwitch = document.getElementById('auto-image-generation-switch');
         if (autoImageGenerationSwitch) {
-            autoImageGenerationSwitch.checked = this.settings.autoImageGeneration !== undefined ? this.settings.autoImageGeneration : true;
+            autoImageGenerationSwitch.checked = this.settings.autoImageGeneration !== undefined ? this.settings.autoImageGeneration : !subscriptionStatus;
+            
+            // Disable for non-premium users
+            if (!subscriptionStatus) {
+                autoImageGenerationSwitch.disabled = true;
+                autoImageGenerationSwitch.style.opacity = '0.6';
+            } else {
+                autoImageGenerationSwitch.disabled = false;
+                autoImageGenerationSwitch.style.opacity = '1';
+            }
         }
 
         // Update suggestions enable switch

@@ -11,6 +11,13 @@ async function routes(fastify, options) {
                 return reply.status(400).send({ error: 'Invalid user ID' });
             }
 
+            // Check user subscription status
+            const usersCollection = fastify.mongo.db.collection('users');
+            const user = await usersCollection.findOne({ 
+                _id: new ObjectId(userId) 
+            });
+            const isPremium = user?.subscriptionStatus === 'active';
+
             const collection = fastify.mongo.db.collection('chatToolSettings');
             const settings = await collection.findOne({ 
                 userId: new ObjectId(userId),
@@ -25,20 +32,25 @@ async function routes(fastify, options) {
                     characterTone: 'casual',
                     relationshipType: 'companion',
                     selectedVoice: 'nova',
-                    voiceProvider: 'openai', // new field
-                    evenLabVoice: 'sakura', // new field
-                    autoMergeFace: true, // new field
-                    selectedModel: 'mistral', // new field
-                    suggestionsEnabled: true, // new field
-                    autoImageGeneration: true // new field
+                    voiceProvider: 'openai',
+                    evenLabVoice: 'sakura',
+                    autoMergeFace: true,
+                    selectedModel: 'mistral',
+                    suggestionsEnabled: true,
+                    autoImageGeneration: isPremium // Premium feature - disabled by default for non-premium
                 };
-                return reply.send({ success: true, settings: defaultSettings });
+                return reply.send({ success: true, settings: defaultSettings, isPremium });
             }
 
             // Remove MongoDB specific fields from response
             const { _id, userId: userIdField, createdAt, updatedAt, ...userSettings } = settings;
             
-            reply.send({ success: true, settings: userSettings });
+            // Override autoImageGeneration for non-premium users
+            if (!isPremium) {
+                userSettings.autoImageGeneration = false;
+            }
+            
+            reply.send({ success: true, settings: userSettings, isPremium });
             
         } catch (error) {
             console.error('Error fetching chat tool settings:', error);
@@ -65,6 +77,13 @@ async function routes(fastify, options) {
                 return reply.status(400).send({ error: 'Invalid chat ID' });
             }
 
+            // Check user subscription status
+            const usersCollection = fastify.mongo.db.collection('users');
+            const user = await usersCollection.findOne({ 
+                _id: new ObjectId(userId) 
+            });
+            const isPremium = user?.subscriptionStatus === 'active';
+
             // Validate settings structure
             const validSettings = {
                 minImages: Number(settings.minImages) || 3,
@@ -77,7 +96,7 @@ async function routes(fastify, options) {
                 autoMergeFace: Boolean(settings.autoMergeFace !== undefined ? settings.autoMergeFace : true),
                 selectedModel: String(settings.selectedModel || 'mistral'),
                 suggestionsEnabled: Boolean(settings.suggestionsEnabled !== undefined ? settings.suggestionsEnabled : true),
-                autoImageGeneration: Boolean(settings.autoImageGeneration !== undefined ? settings.autoImageGeneration : true)
+                autoImageGeneration: isPremium ? Boolean(settings.autoImageGeneration !== undefined ? settings.autoImageGeneration : false) : false // Premium feature
             };
 
             // Validate ranges and constraints
@@ -121,7 +140,8 @@ async function routes(fastify, options) {
                 success: true, 
                 message: chatId ? 'Chat-specific settings saved successfully' : 'Settings saved successfully',
                 settings: validSettings,
-                isChatSpecific: !!chatId
+                isChatSpecific: !!chatId,
+                isPremium
             });
             
         } catch (error) {
@@ -143,6 +163,13 @@ async function routes(fastify, options) {
             if (chatId && !ObjectId.isValid(chatId)) {
                 return reply.status(400).send({ error: 'Invalid chat ID' });
             }
+
+            // Check user subscription status
+            const usersCollection = fastify.mongo.db.collection('users');
+            const user = await usersCollection.findOne({ 
+                _id: new ObjectId(userId) 
+            });
+            const isPremium = user?.subscriptionStatus === 'active';
 
             const collection = fastify.mongo.db.collection('chatToolSettings');
             const query = { userId: new ObjectId(userId) };
@@ -166,14 +193,15 @@ async function routes(fastify, options) {
                 autoMergeFace: true,
                 selectedModel: 'mistral',
                 suggestionsEnabled: true,
-                autoImageGeneration: true
+                autoImageGeneration: isPremium // Premium feature
             };
 
             reply.send({ 
                 success: true, 
                 message: chatId ? 'Chat-specific settings reset to default' : 'Settings reset to default',
                 settings: defaultSettings,
-                isChatSpecific: !!chatId
+                isChatSpecific: !!chatId,
+                isPremium
             });
             
         } catch (error) {
@@ -191,6 +219,13 @@ async function routes(fastify, options) {
                 return reply.status(400).send({ error: 'Invalid user ID or chat ID' });
             }
 
+            // Check user subscription status
+            const usersCollection = fastify.mongo.db.collection('users');
+            const user = await usersCollection.findOne({ 
+                _id: new ObjectId(userId) 
+            });
+            const isPremium = user?.subscriptionStatus === 'active';
+
             const collection = fastify.mongo.db.collection('chatToolSettings');
             
             // First try to get chat-specific settings
@@ -201,7 +236,11 @@ async function routes(fastify, options) {
 
             if (chatSettings) {
                 const { _id, userId: userIdField, chatId: chatIdField, createdAt, updatedAt, ...settings } = chatSettings;
-                return reply.send({ success: true, settings, isChatSpecific: true });
+                // Override autoImageGeneration for non-premium users
+                if (!isPremium) {
+                    settings.autoImageGeneration = false;
+                }
+                return reply.send({ success: true, settings, isChatSpecific: true, isPremium });
             }
 
             // Fallback to user default settings
@@ -212,7 +251,11 @@ async function routes(fastify, options) {
 
             if (userSettings) {
                 const { _id, userId: userIdField, createdAt, updatedAt, ...settings } = userSettings;
-                return reply.send({ success: true, settings, isChatSpecific: false });
+                // Override autoImageGeneration for non-premium users
+                if (!isPremium) {
+                    settings.autoImageGeneration = false;
+                }
+                return reply.send({ success: true, settings, isChatSpecific: false, isPremium });
             }
 
             // Return default settings if none exist
@@ -227,10 +270,10 @@ async function routes(fastify, options) {
                 autoMergeFace: true,
                 selectedModel: 'mistral',
                 suggestionsEnabled: true,
-                autoImageGeneration: true
+                autoImageGeneration: isPremium // Premium feature
             };
 
-            reply.send({ success: true, settings: defaultSettings, isChatSpecific: false });
+            reply.send({ success: true, settings: defaultSettings, isChatSpecific: false, isPremium });
             
         } catch (error) {
             console.error('Error fetching chat-specific settings:', error);

@@ -238,7 +238,6 @@ async function routes(fastify, options) {
             const chatDocument = await getChatDocument(request, db, chatId);
             const nsfw = chatDocument.nsfw || false;
             const characterNsfw = chatDocument?.nsfw || false;
-            console.log(`[api/openai-chat-completion] Character NSFW setting: ${characterNsfw}`);
             const chatDescription = chatDataToString(chatDocument);
             const characterDescription = await checkImageDescription(db, chatId, chatDocument);
             const language = getLanguageName(userInfo.lang);
@@ -290,7 +289,7 @@ async function routes(fastify, options) {
             if (goalsEnabled) {
                 const goalResult = await handleChatGoals(
                     db, userData, userChatId, chatDescription, personaInfo, 
-                    userSettings, language, request, fastify, userId, chatId
+                    userSettings, subscriptionStatus, language, request, fastify, userId, chatId
                 );
                 chatGoal = goalResult.chatGoal;
                 goalCompletion = goalResult.goalCompletion;

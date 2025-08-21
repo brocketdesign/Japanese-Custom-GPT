@@ -1609,8 +1609,8 @@
   "freeUserBenefits": {
     "title": "無料ユーザー特典",
     "benefit1": {
-      "title": "毎日5枚の無料画像",
-      "description": "毎日最大5枚のAI画像を無料で生成できます"
+      "title": "毎日新しい画像",
+      "description": "毎日無料でカスタム画像を生成できます"
     },
     "benefit2": {
       "title": "デイリーログインボーナス",

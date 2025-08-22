@@ -34,106 +34,255 @@
           <!-- Profile Tab -->
           <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-tab">
             <!-- User Info Form -->
-            <form id="user-info-form">
-              <div class="row mb-3">
-                <div id="profileSection" data-user-id="{{userData._id}}" class="text-center mb-4">
-                  <div class="mx-auto p-auto text-center d-flex align-items-center justify-content-center position-relative">
-                    <img id="profileImage" src="/img/avatar.png" alt="chat Thumbnail" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover; object-position: top; cursor: pointer;">
-                    <i class="bi bi-pencil position-absolute" 
-                    style="bottom: 5px; font-size: 10px; color: white; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; padding: 5px 8px;cursor:pointer;"></i>
-                  </div>
-                  <!-- imageModerationFlagged -->
-                  <div class="alert alert-warning mt-2" role="alert" id="imageModerationFlagged" style="display: none;">
-                    {{translations.setting.imageModerationFlagged}}
-                  </div>
+            <form id="user-info-form" class="settings-form">
+              
+              <!-- Profile Picture Section -->
+              <div class="settings-section">
+                <div class="settings-section-header mb-4">
+                  <h5 class="settings-section-title mb-1">
+                    <i class="bi bi-person-circle me-2 text-primary"></i>
+                    {{translations.setting.profilePicture}}
+                  </h5>
+                  <p class="settings-section-subtitle text-muted mb-0">
+                    {{translations.setting.profilePictureDescription}}
+                  </p>
                 </div>
-              </div>
-
-              <div class="mb-3 mx-3" id="thumbnailInputContainer" style="display: none;">
-                <label for="profileImageInput" class="form-label">{{translations.setting.uploadThumbnail}}</label>
-                <input type="file" class="form-control" id="profileImageInput" name="profileImageInput" accept="image/*">
-              </div>
-
-              <h6>{{translations.setting.userInfo}}</h6>
-              <div class="mb-3">
-                <label for="nickname" class="form-label">{{translations.setting.nickname}}</label>
-                <input type="text" id="nickname" class="form-control" placeholder="" />
-              </div>
-
-              <div class="mb-3">
-                <label for="inputEmail4" class="form-label">{{translations.setting.email}}</label>
-                <input type="email" class="form-control" id="inputEmail4" placeholder="" />
-              </div>
-
-              <!-- Age Range Display -->
-              <div class="mb-3" id="ageRangeSection" style="display: none;">
-                <label class="form-label">{{translations.setting.ageRange}}</label>
-                <div class="form-control-plaintext" id="userAgeRange"></div>
-              </div>
-
-              <div class="row mb-3">
-                <div class="col-auto">
-                  <label for="gender" class="form-label"><i class="fas fa-user"></i> {{translations.setting.gender}}:</label>
-                  <select class="form-select w-auto" id="gender" name="gender">
-                    <option value="female" selected>{{translations.setting.female}}</option>
-                    <option value="male">{{translations.setting.male}}</option>
-                  </select>
-                </div>
-                <div class="col-auto">
-                  <!-- Language Dropdown -->
-                  <label for="lang" class="form-label"><i class="fas fa-user"></i> {{translations.setting.language}}:</label>
-                    <div class="dropdown">
-                      <button data-user-lang="{{user.lang}}" class="btn btn-light dropdown-toggle" type="button" id="languageDropdownMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                          <i class="bi bi-globe2"></i>
-                      </button>
-                      <ul class="dropdown-menu position-absolute dropdown-menu-end" aria-labelledby="languageDropdownMenu">
-                          <li><a class="dropdown-item language-select" href="#" data-lang="ja">{{translations.setting.japanese}}</a></li>
-                          <li><a class="dropdown-item language-select" href="#" data-lang="en">{{translations.setting.english}}</a></li>
-                          <li><a class="dropdown-item language-select" href="#" data-lang="fr">{{translations.setting.french}}</a></li>
-                      </ul>
-                  </div>
-                </div>
-
-              </div>
-
-              <!-- NSFW Toggle -->
-              <div class="mb-3">
-                <div class="d-flex align-items-center justify-content-between">
-                  <div>
-                    <label for="nsfw-toggle" class="form-check-label fw-bold">{{translations.setting.showNSFW}}</label>
-                    <div class="form-text" style="font-size: 12px;">{{translations.setting.showNSFWDescription}}</div>
-                  </div>
-                  <label class="settings-switch">
-                    <input type="checkbox" id="nsfw-toggle">
-                    <span class="settings-switch-slider"></span>
-                  </label>
-                </div>
-              </div>
-
-              <!-- Bio textarea -->
-              <div class="mb-3">
-                <label for="bio" class="form-label">{{translations.setting.bio}}</label>
-                <textarea class="form-control" id="bio" name="bio" rows="5" maxlength="400"></textarea>
-              </div>
-              {{#if isAdmin}}
-              <!-- Onboarding restart option -->
-              <div class="settings-section mb-4 border-top pt-4">
-                <h6 class="fw-bold mb-3">{{translations.personalSettings}}</h6>
                 
-                <div class="d-flex justify-content-between align-items-center py-2 border rounded p-3 bg-light">
-                  <div>
-                    <div class="fw-semibold">{{translations.restartOnboarding}}</div>
-                    <small class="text-muted">{{translations.restartOnboardingDesc}}</small>
+                <div class="row">
+                  <div class="col-12">
+                    <div id="profileSection" data-user-id="{{userData._id}}" class="profile-picture-container">
+                      <div class="profile-picture-wrapper">
+                        <img id="profileImage" src="/img/avatar.png" alt="Profile Picture" class="profile-image">
+                        <div class="profile-picture-overlay">
+                          <i class="bi bi-camera-fill"></i>
+                          <span>{{translations.setting.changePhoto}}</span>
+                        </div>
+                      </div>
+                      
+                      <!-- Image Moderation Warning -->
+                      <div class="alert alert-warning mt-3" role="alert" id="imageModerationFlagged" style="display: none;">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        {{translations.setting.imageModerationFlagged}}
+                      </div>
+                    </div>
+                    
+                    <div class="mb-3 mt-3" id="thumbnailInputContainer" style="display: none;">
+                      <input type="file" class="form-control" id="profileImageInput" name="profileImageInput" accept="image/*">
+                    </div>
                   </div>
-                  <button type="button" id="restart-onboarding" class="btn btn-outline-primary btn-sm">
-                    <i class="bi bi-arrow-clockwise"></i> {{translations.restart}}
-                  </button>
+                </div>
+              </div>
+
+              <hr class="settings-divider">
+
+              <!-- Personal Information Section -->
+              <div class="settings-section">
+                <div class="settings-section-header mb-4">
+                  <h5 class="settings-section-title mb-1">
+                    <i class="bi bi-person-lines-fill me-2 text-primary"></i>
+                    {{translations.setting.personalInformation}}
+                  </h5>
+                  <p class="settings-section-subtitle text-muted mb-0">
+                    {{translations.setting.personalInformationDescription}}
+                  </p>
+                </div>
+
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <div class="form-floating">
+                      <input type="text" id="nickname" class="form-control" placeholder="{{translations.setting.nickname}}" />
+                      <label for="nickname">
+                        <i class="bi bi-person me-1"></i>
+                        {{translations.setting.nickname}}
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="form-floating">
+                      <input type="email" class="form-control" id="inputEmail4" placeholder="{{translations.setting.email}}" />
+                      <label for="inputEmail4">
+                        <i class="bi bi-envelope me-1"></i>
+                        {{translations.setting.email}}
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Age Range Display -->
+                  <div class="col-md-6" id="ageRangeSection" style="display: none;">
+                    <div class="form-control h-auto py-3 bg-light">
+                      <div class="d-flex align-items-center">
+                        <i class="bi bi-calendar-range me-2 text-muted"></i>
+                        <div>
+                          <small class="text-muted d-block">{{translations.setting.ageRange}}</small>
+                          <span class="fw-semibold" id="userAgeRange"></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="form-floating">
+                      <select class="form-select" id="gender" name="gender">
+                        <option value="female" selected>{{translations.setting.female}}</option>
+                        <option value="male">{{translations.setting.male}}</option>
+                      </select>
+                      <label for="gender">
+                        <i class="bi bi-gender-ambiguous me-1"></i>
+                        {{translations.setting.gender}}
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="settings-field">
+                      <label class="form-label mb-2">
+                        <i class="bi bi-globe2 me-1"></i>
+                        {{translations.setting.language}}
+                      </label>
+                      <div class="dropdown w-100">
+                        <button data-user-lang="{{user.lang}}" class="btn btn-outline-secondary dropdown-toggle w-100 text-start" type="button" id="languageDropdownMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                          <i class="bi bi-globe2 me-2"></i>
+                          <span class="language-text">{{translations.setting.selectLanguage}}</span>
+                        </button>
+                        <ul class="dropdown-menu w-100" aria-labelledby="languageDropdownMenu">
+                          <li><a class="dropdown-item language-select" href="#" data-lang="ja">
+                            <i class="bi bi-flag me-2"></i>{{translations.setting.japanese}}
+                          </a></li>
+                          <li><a class="dropdown-item language-select" href="#" data-lang="en">
+                            <i class="bi bi-flag me-2"></i>{{translations.setting.english}}
+                          </a></li>
+                          <li><a class="dropdown-item language-select" href="#" data-lang="fr">
+                            <i class="bi bi-flag me-2"></i>{{translations.setting.french}}
+                          </a></li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <hr class="settings-divider">
+
+              <!-- Content Preferences Section -->
+              <div class="settings-section">
+                <div class="settings-section-header mb-4">
+                  <h5 class="settings-section-title mb-1">
+                    <i class="bi bi-sliders me-2 text-primary"></i>
+                    {{translations.setting.contentPreferences}}
+                  </h5>
+                  <p class="settings-section-subtitle text-muted mb-0">
+                    {{translations.setting.contentPreferencesDescription}}
+                  </p>
+                </div>
+
+                <!-- NSFW Toggle -->
+                <div class="settings-preference-item">
+                  <div class="d-flex align-items-start justify-content-between">
+                    <div class="preference-info">
+                      <div class="preference-title">
+                        <i class="bi bi-eye me-2"></i>
+                        {{translations.setting.showNSFW}}
+                        <i class="bi bi-crown-fill premium-icon ms-1 text-warning" id="nsfw-premium-icon" style="display: none;"></i>
+                      </div>
+                      <div class="preference-description text-muted">
+                        {{translations.setting.showNSFWDescription}}
+                      </div>
+                      <div id="nsfw-premium-indicator" class="premium-feature-indicator mt-2" style="display: none;">
+                        <small class="text-warning d-flex align-items-center">
+                          <i class="bi bi-star-fill me-1"></i> 
+                          Premium feature required to view adult content
+                        </small>
+                      </div>
+                    </div>
+                    <div class="preference-control">
+                      <label class="settings-switch">
+                        <input type="checkbox" id="nsfw-toggle">
+                        <span class="settings-switch-slider"></span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <hr class="settings-divider">
+
+              <!-- About You Section -->
+              <div class="settings-section">
+                <div class="settings-section-header mb-4">
+                  <h5 class="settings-section-title mb-1">
+                    <i class="bi bi-chat-quote me-2 text-primary"></i>
+                    {{translations.setting.aboutYou}}
+                  </h5>
+                  <p class="settings-section-subtitle text-muted mb-0">
+                    {{translations.setting.aboutYouDescription}}
+                  </p>
+                </div>
+
+                <div class="form-floating">
+                  <textarea class="form-control bio-textarea" id="bio" name="bio" rows="5" maxlength="400" placeholder="{{translations.setting.bioPlaceholder}}"></textarea>
+                  <label for="bio">
+                    <i class="bi bi-chat-quote me-1"></i>
+                    {{translations.setting.bio}}
+                  </label>
+                  <div class="form-text mt-2">
+                    <div class="d-flex justify-content-between">
+                      <span>{{translations.setting.bioHint}}</span>
+                      <span class="character-count text-muted">
+                        <span id="bio-char-count">0</span>/400
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {{#if isAdmin}}
+              <hr class="settings-divider">
+
+              <!-- Advanced Settings Section -->
+              <div class="settings-section">
+                <div class="settings-section-header mb-4">
+                  <h5 class="settings-section-title mb-1">
+                    <i class="bi bi-gear me-2 text-primary"></i>
+                    {{translations.setting.advancedSettings}}
+                  </h5>
+                  <p class="settings-section-subtitle text-muted mb-0">
+                    {{translations.setting.advancedSettingsDescription}}
+                  </p>
+                </div>
+                
+                <div class="advanced-setting-card">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div class="advanced-setting-info">
+                      <div class="advanced-setting-title">
+                        <i class="bi bi-arrow-clockwise me-2"></i>
+                        {{translations.restartOnboarding}}
+                      </div>
+                      <div class="advanced-setting-description text-muted">
+                        {{translations.restartOnboardingDesc}}
+                      </div>
+                    </div>
+                    <button type="button" id="restart-onboarding" class="btn btn-outline-primary btn-sm">
+                      <i class="bi bi-arrow-clockwise me-1"></i> 
+                      {{translations.restart}}
+                    </button>
+                  </div>
                 </div>
               </div>
               {{/if}}
 
-              <div class="col">
-                <button type="submit" class="btn custom-gradient-bg">{{translations.setting.saveUserInfo}}</button>
+              <!-- Form Actions -->
+              <div class="settings-form-actions mt-5">
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                  <button type="button" class="btn btn-outline-secondary me-md-2" onclick="location.reload()">
+                    <i class="bi bi-arrow-clockwise me-1"></i>
+                    {{translations.setting.reset}}
+                  </button>
+                  <button type="submit" class="btn btn-primary btn-lg px-4">
+                    <i class="bi bi-check-circle me-2"></i>
+                    {{translations.setting.saveUserInfo}}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -202,6 +351,247 @@
     </div>
   </div>
 </div>
+
+<style>
+.settings-form {
+  background: #fff;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.settings-section {
+  margin-bottom: 2.5rem;
+}
+
+.settings-section-header {
+  padding-bottom: 1rem;
+}
+
+.settings-section-title {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.settings-section-subtitle {
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.settings-divider {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+  margin: 2.5rem 0;
+}
+
+.profile-picture-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.profile-picture-wrapper {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 4px solid #f8f9fa;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.profile-picture-wrapper:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+
+.profile-picture-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  font-size: 0.85rem;
+}
+
+.profile-picture-wrapper:hover .profile-picture-overlay {
+  opacity: 1;
+}
+
+.profile-picture-overlay i {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.settings-preference-item {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid #e9ecef;
+}
+
+.preference-title {
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.preference-description {
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.settings-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+}
+
+.settings-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.settings-switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #cbd5e0;
+  transition: .3s;
+  border-radius: 28px;
+}
+
+.settings-switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.settings-switch input:checked + .settings-switch-slider {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+}
+
+.settings-switch input:checked + .settings-switch-slider:before {
+  transform: translateX(22px);
+}
+
+.settings-switch.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.bio-textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.character-count {
+  font-size: 0.8rem;
+}
+
+.advanced-setting-card {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid #e9ecef;
+}
+
+.advanced-setting-title {
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+}
+
+.advanced-setting-description {
+  font-size: 0.9rem;
+}
+
+.settings-form-actions {
+  padding-top: 2rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.premium-feature-indicator {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .settings-form {
+    padding: 1.5rem;
+  }
+  
+  .profile-picture-wrapper {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .settings-section-title {
+    font-size: 1rem;
+  }
+}
+</style>
+
+<script>
+// Character count for bio
+document.addEventListener('DOMContentLoaded', function() {
+  const bioTextarea = document.getElementById('bio');
+  const charCount = document.getElementById('bio-char-count');
+  
+  if (bioTextarea && charCount) {
+    function updateCharCount() {
+      const count = bioTextarea.value.length;
+      charCount.textContent = count;
+      
+      if (count > 350) {
+        charCount.style.color = '#dc3545';
+      } else if (count > 300) {
+        charCount.style.color = '#ffc107';
+      } else {
+        charCount.style.color = '#6c757d';
+      }
+    }
+    
+    bioTextarea.addEventListener('input', updateCharCount);
+    updateCharCount(); // Initial count
+  }
+});
+</script>
 
 </body>
 </html>

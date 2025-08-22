@@ -236,7 +236,7 @@ async function routes(fastify, options) {
 
             const isAdmin = await checkUserAdmin(fastify, userId);
             const chatDocument = await getChatDocument(request, db, chatId);
-            const nsfw = chatDocument.nsfw || false;
+            const nsfw = chatDocument?.nsfw || false;
             const characterNsfw = chatDocument?.nsfw || false;
             const chatDescription = chatDataToString(chatDocument);
             const characterDescription = await checkImageDescription(db, chatId, chatDocument);
@@ -368,7 +368,7 @@ async function routes(fastify, options) {
             const selectedModel = userSettings.selectedModel || customModel;
             const isPremium = subscriptionStatus;
 
-            console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
+            //console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
             generateCompletion(messagesForCompletion, 600, selectedModel, language, selectedModel, isPremium).then(async (completion) => {
                 if (completion) {
                     fastify.sendNotificationToUser(userId, 'displayCompletionMessage', { message: completion, uniqueId });

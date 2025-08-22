@@ -1,11 +1,54 @@
 $(document).ready(function() {
-  // NSFW toggle logic
+  // NSFW toggle logic with premium check
   const nsfwToggle = $('#nsfw-toggle');
     
   nsfwToggle.prop('checked', window.showNSFW);
 
-  // Save toggle state to session storage on change
+  // Check subscription status and setup premium restrictions
+  const user = window.user || {};
+  const subscriptionStatus = user.subscriptionStatus === 'active';
+  
+  if (!subscriptionStatus) {
+    // Non-premium users: disable toggle and show premium indicator
+    nsfwToggle.prop('disabled', true);
+    nsfwToggle.closest('.settings-switch').addClass('disabled');
+    $('#nsfw-premium-icon').show();
+    $('#nsfw-premium-indicator').show();
+    
+    // Force NSFW to false for non-premium users
+    if (window.showNSFW) {
+      nsfwToggle.prop('checked', false);
+      updateNSFWPreference(false);
+    }
+    
+    // Show upgrade popup when clicked
+    nsfwToggle.closest('.settings-switch').on('click', function(e) {
+      e.preventDefault();
+      if (typeof loadPlanPage === 'function') {
+        loadPlanPage();
+      } else {
+        window.location.href = '/plan';
+      }
+    });
+  } else {
+    // Premium users: enable toggle normally
+    $('#nsfw-premium-icon').hide();
+    $('#nsfw-premium-indicator').hide();
+  }
+
+  // Save toggle state to session storage on change (only for premium users)
   nsfwToggle.on('change', function() {
+    if (!subscriptionStatus && this.checked) {
+      // Prevent non-premium users from enabling NSFW
+      this.checked = false;
+      if (typeof loadPlanPage === 'function') {
+        loadPlanPage();
+      } else {
+        window.location.href = '/plan';
+      }
+      return;
+    }
+    
     toggleNSFWContent();
     updateNSFWPreference(this.checked); // Call the new function here
   });
@@ -334,7 +377,6 @@ $(document).ready(function() {
       }
     });
   });
-});
   $('#restart-onboarding').on('click', function() {
     const userId = user._id;
     
@@ -372,3 +414,4 @@ $(document).ready(function() {
       }
     });
   });
+});

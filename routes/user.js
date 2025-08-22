@@ -423,7 +423,6 @@ async function routes(fastify, options) {
         return reply.status(400).send({ error: 'No data to update' });
       }
 
-      console.log('Updating user info:', updateData);
       const usersCollection = fastify.mongo.db.collection('users');
       const updateResult = await usersCollection.updateOne(
         { _id: new fastify.mongo.ObjectId(currentUserId) },

@@ -1021,6 +1021,49 @@ Sitemap: ${baseUrl}/sitemap.xml`;
   return reply.send(robotsTxt);
 });
 
+// Add legal routes before the existing routes
+fastify.get('/terms', async (request, reply) => {
+  try {
+    const { translations, legalTranslations, lang } = request;
+    
+    return reply.renderWithGtm('legal/terms.hbs', {
+      title: `${legalTranslations.terms?.title || 'Terms of Service'} | ${translations.seo.title}`,
+      seo: [
+        { name: 'description', content: `${legalTranslations.terms?.title || 'Terms of Service'} - ${translations.seo.description}` },
+        { name: 'keywords', content: `terms, service, legal, ${translations.seo.keywords}` },
+        { property: 'og:title', content: `${legalTranslations.terms?.title || 'Terms of Service'} | ${translations.seo.title}` },
+        { property: 'og:description', content: `${legalTranslations.terms?.title || 'Terms of Service'} - ${translations.seo.description}` },
+        { property: 'og:image', content: '/img/share.png' },
+        { property: 'og:url', content: 'https://chatlamix/terms' },
+      ],
+    });
+  } catch (error) {
+    console.error('[/terms] Error:', error);
+    return reply.status(500).send({ error: 'Internal Server Error' });
+  }
+});
+
+fastify.get('/privacy', async (request, reply) => {
+  try {
+    const { translations, legalTranslations, lang } = request;
+    
+    return reply.renderWithGtm('legal/privacy.hbs', {
+      title: `${legalTranslations.privacy?.title || 'Privacy Policy'} | ${translations.seo.title}`,
+      seo: [
+        { name: 'description', content: `${legalTranslations.privacy?.title || 'Privacy Policy'} - ${translations.seo.description}` },
+        { name: 'keywords', content: `privacy, policy, legal, ${translations.seo.keywords}` },
+        { property: 'og:title', content: `${legalTranslations.privacy?.title || 'Privacy Policy'} | ${translations.seo.title}` },
+        { property: 'og:description', content: `${legalTranslations.privacy?.title || 'Privacy Policy'} - ${translations.seo.description}` },
+        { property: 'og:image', content: '/img/share.png' },
+        { property: 'og:url', content: 'https://chatlamix/privacy' },
+      ],
+    });
+  } catch (error) {
+    console.error('[/privacy] Error:', error);
+    return reply.status(500).send({ error: 'Internal Server Error' });
+  }
+});
+
 const start = async () => {
   try {
     const port = process.env.PORT || 3000;

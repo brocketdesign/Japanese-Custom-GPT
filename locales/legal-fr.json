@@ -1,0 +1,109 @@
+{
+  "lastUpdated": "Dernière mise à jour",
+  "backToHome": "Retour à l'accueil",
+  "terms": {
+    "title": "Conditions d'utilisation",
+    "article1": {
+      "title": "Article 1 (Application)",
+      "content1": "Ces conditions s'appliquent à toutes les relations concernant l'utilisation de cette application entre les utilisateurs et la Société.",
+      "content2": "La Société peut établir des conditions supplémentaires pour l'utilisation de cette application en plus de ces conditions. Dans de tels cas, ces conditions supplémentaires constituent une partie de ces conditions."
+    },
+    "article2": {
+      "title": "Article 2 (Inscription d'utilisateur)",
+      "content1": "Dans cette application, l'inscription d'utilisateur est terminée lorsque les utilisateurs acceptent ces conditions et effectuent l'inscription par la méthode prescrite. La Société peut refuser d'approuver les demandes d'inscription si elle détermine que le demandeur a l'une des raisons suivantes, et ne sera pas obligée de divulguer ces raisons.",
+      "condition1": "Lorsque de fausses informations sont fournies dans la demande d'inscription",
+      "condition2": "Lorsque la demande provient de quelqu'un qui a violé ces conditions auparavant",
+      "condition3": "Lorsque la Société détermine autrement que l'inscription d'utilisateur n'est pas appropriée"
+    },
+    "article3": {
+      "title": "Article 3 (Gestion de l'ID utilisateur et du mot de passe)",
+      "content1": "Les utilisateurs doivent gérer correctement leur ID utilisateur et mot de passe pour cette application sous leur propre responsabilité.",
+      "content2": "Les utilisateurs ne peuvent pas transférer ou prêter leur ID utilisateur et mot de passe à des tiers en aucune circonstance. La Société considérera l'utilisation par l'utilisateur qui a enregistré l'ID utilisateur lorsque la connexion est effectuée avec une combinaison d'ID utilisateur et de mot de passe qui correspond aux informations enregistrées."
+    },
+    "article4": {
+      "title": "Article 4 (Actes interdits)",
+      "intro": "Les utilisateurs ne doivent pas s'engager dans les actes suivants lors de l'utilisation de cette application :",
+      "prohibition1": "Actes qui violent les lois ou l'ordre public et les mœurs",
+      "prohibition2": "Actes liés aux activités criminelles",
+      "prohibition3": "Actes qui détruisent ou interfèrent avec les fonctions des serveurs ou réseaux de la Société",
+      "prohibition4": "Actes qui peuvent interférer avec le fonctionnement de cette application",
+      "prohibition5": "Actes de collecte ou d'accumulation d'informations personnelles sur d'autres utilisateurs",
+      "prohibition6": "Actes d'usurpation d'identité d'autres utilisateurs",
+      "prohibition7": "Actes de fourniture directe ou indirecte d'avantages aux forces antisociales en relation avec les services de la Société",
+      "prohibition8": "Autres actes que la Société juge inappropriés"
+    },
+    "article5": {
+      "title": "Article 5 (Suspension de la fourniture de service)",
+      "intro": "La Société peut suspendre ou interrompre la fourniture de tout ou partie de cette application sans préavis aux utilisateurs si elle détermine qu'une des raisons suivantes existe :",
+      "reason1": "Lors de l'exécution de la maintenance ou des mises à jour des systèmes informatiques liés à cette application",
+      "reason2": "Lorsque la fourniture de cette application devient difficile en raison de force majeure telle qu'incendie, panne de courant ou catastrophes naturelles",
+      "reason3": "Lorsque les ordinateurs ou lignes de communication s'arrêtent à cause d'accidents",
+      "reason4": "Lorsque la Société détermine autrement que la fourniture de cette application est difficile"
+    },
+    "article6": {
+      "title": "Article 6 (Restrictions d'utilisation et suppression d'inscription)",
+      "content": "La Société peut restreindre tout ou partie de l'utilisation de cette application ou supprimer l'inscription d'utilisateur sans préavis si les utilisateurs violent toute disposition de ces conditions."
+    },
+    "article7": {
+      "title": "Article 7 (Retrait)",
+      "content": "Les utilisateurs peuvent se retirer de cette application par les procédures de retrait prescrites par la Société."
+    },
+    "article8": {
+      "title": "Article 8 (Clause de non-responsabilité)",
+      "content1": "La Société ne garantit pas que cette application soit exempte de défauts factuels ou légaux (y compris mais sans s'y limiter la sécurité, la fiabilité, l'exactitude, l'exhaustivité, l'efficacité, l'adéquation à des fins spécifiques, la sécurité, etc.).",
+      "content2": "La Société n'assume aucune responsabilité pour tout dommage subi par les utilisateurs découlant de cette application. Cependant, cette clause de non-responsabilité ne s'applique pas lorsque le contrat entre la Société et les utilisateurs concernant cette application (y compris ces conditions) constitue un contrat de consommateur tel que défini par la Loi sur les contrats de consommateur."
+    },
+    "article9": {
+      "title": "Article 9 (Modifications des conditions)",
+      "content": "La Société peut modifier ces conditions à tout moment sans préavis aux utilisateurs lorsque jugé nécessaire."
+    },
+    "article10": {
+      "title": "Article 10 (Droit applicable et juridiction)",
+      "content": "Le droit japonais sera le droit applicable pour l'interprétation de ces conditions. En cas de litiges concernant cette application, le tribunal ayant juridiction sur le siège social de la Société aura la juridiction exclusive convenue."
+    }
+  },
+  "privacy": {
+    "title": "Politique de confidentialité",
+    "section1": {
+      "title": "Collecte d'informations personnelles",
+      "content": "La Société collecte les informations personnelles par des moyens appropriés et équitables."
+    },
+    "section2": {
+      "title": "Finalité d'utilisation des informations personnelles",
+      "content1": "La Société utilise les informations personnelles collectées aux fins suivantes :",
+      "item1": "Pour fournir et exploiter ce service",
+      "item2": "Pour répondre aux demandes des utilisateurs",
+      "item3": "Pour identifier les utilisateurs qui violent les conditions d'utilisation ou tentent d'utiliser le service à des fins illégales ou inappropriées",
+      "item4": "Pour des fins accessoires aux fins d'utilisation ci-dessus"
+    },
+    "section3": {
+      "title": "Modifications de la finalité d'utilisation",
+      "content1": "La Société ne modifiera la finalité d'utilisation des informations personnelles que lorsqu'il est raisonnablement reconnu que la finalité d'utilisation est liée à la finalité précédente. Lorsque des modifications de la finalité d'utilisation sont apportées, les utilisateurs seront notifiés ou les informations seront publiées sur ce site web par les méthodes suivantes :",
+      "purpose1": "Pour fournir des informations sur nos services",
+      "purpose2": "Pour répondre aux demandes des clients",
+      "purpose3": "Pour fournir des notifications et campagnes concernant nos produits et services",
+      "purpose4": "Pour contacter les utilisateurs si nécessaire pour la maintenance, les avis importants, etc."
+    },
+    "section4": {
+      "title": "Fourniture d'informations personnelles à des tiers",
+      "content": "La Société ne fournira pas d'informations personnelles à des tiers sans consentement préalable de l'utilisateur, sauf dans les cas suivants. Cependant, les cas autorisés par la Loi sur la protection des informations personnelles et autres lois sont exclus."
+    },
+    "section5": {
+      "title": "Divulgation d'informations personnelles",
+      "content": "Lorsque des individus demandent la divulgation d'informations personnelles, la Société divulguera ces informations à l'individu sans délai. Cependant, si la divulgation relèverait de l'un des cas suivants, tout ou partie des informations peuvent ne pas être divulguées, et si une décision de ne pas divulguer est prise, cela sera notifié sans délai."
+    },
+    "section6": {
+      "title": "Correction et suppression d'informations personnelles",
+      "content": "Les utilisateurs peuvent demander la correction, l'ajout ou la suppression (ci-après dénommés 'correction, etc.') d'informations personnelles détenues par la Société par les procédures établies par la Société lorsque ces informations personnelles sont incorrectes."
+    },
+    "section7": {
+      "title": "Modifications de la politique de confidentialité",
+      "content": "Le contenu de cette politique peut être modifié sans préavis aux utilisateurs, sauf pour les questions séparément prévues par la loi ou dans cette politique. Sauf spécification contraire de la Société, la politique de confidentialité modifiée prendra effet dès sa publication sur ce site web."
+    },
+    "contact": {
+      "title": "Informations de contact",
+      "content": "Pour les demandes concernant cette politique, veuillez contacter ce qui suit :",
+      "email": "Contact : support@lamix.co.jp"
+    }
+  }
+}

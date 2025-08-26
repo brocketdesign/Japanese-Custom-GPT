@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="{{lang}}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{legalTranslations.terms.title}} | {{translations.seo.title}}</title>
+    {{> translations}}
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        .legal-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4rem 0;
+        }
+        
+        .legal-content {
+            padding: 3rem 0;
+        }
+        
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            margin: 2rem 0;
+            border-radius: 1px;
+        }
+        
+        .article-card {
+            border: none;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .article-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        
+        .article-title {
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .legal-list ul, .legal-list ol {
+            padding-left: 1.5rem;
+        }
+        
+        .legal-list li {
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        
+        .last-updated-badge {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="legal-hero">
+        <div class="container">
+            <div class="row justify-content-center text-center">
+                <div class="col-lg-8">
+                    <h1 class="display-4 fw-bold mb-3">
+                        <i class="fas fa-file-contract me-3"></i>
+                        {{legalTranslations.terms.title}}
+                    </h1>
+                    <p class="lead mb-4">{{translations.seo.description}}</p>
+                    <div class="last-updated-badge d-inline-block">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        {{legalTranslations.lastUpdated}}: <strong>2024-01-01</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="legal-content">
+        <div class="container">
+            <div class="row">
+                <!-- Navigation Sidebar -->
+                <div class="col-lg-3 mb-4">
+                    <div class="card sticky-top" style="top: 2rem;">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">
+                                <i class="fas fa-list me-2"></i>
+                                Table of Contents
+                            </h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <nav class="nav flex-column">
+                                <a class="nav-link text-sm" href="#article1">{{legalTranslations.terms.article1.title}}</a>
+                                <a class="nav-link text-sm" href="#article2">{{legalTranslations.terms.article2.title}}</a>
+                                <a class="nav-link text-sm" href="#article3">{{legalTranslations.terms.article3.title}}</a>
+                                <a class="nav-link text-sm" href="#article4">{{legalTranslations.terms.article4.title}}</a>
+                                <a class="nav-link text-sm" href="#article5">{{legalTranslations.terms.article5.title}}</a>
+                                <a class="nav-link text-sm" href="#article6">{{legalTranslations.terms.article6.title}}</a>
+                                <a class="nav-link text-sm" href="#article7">{{legalTranslations.terms.article7.title}}</a>
+                                <a class="nav-link text-sm" href="#article8">{{legalTranslations.terms.article8.title}}</a>
+                                <a class="nav-link text-sm" href="#article9">{{legalTranslations.terms.article9.title}}</a>
+                                <a class="nav-link text-sm" href="#article10">{{legalTranslations.terms.article10.title}}</a>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Area -->
+                <div class="col-lg-9">
+                    <!-- Article 1 -->
+                    <div class="card article-card mb-4" id="article1">
+                        <div class="card-body p-4">
+                            <h3 class="article-title mb-3">
+                                <i class="fas fa-gavel me-2"></i>
+                                {{legalTranslations.terms.article1.title}}
+                            </h3>
+                            <div class="section-divider mb-3"></div>
+                            <p class="mb-3">{{legalTranslations.terms.article1.content1}}</p>
+                            <p class="mb-0">{{legalTranslations.terms.article1.content2}}</p>
+                        </div>
+                    </div>
+
+                    <!-- Article 2 -->
+                    <div class="card article-card mb-4" id="article2">
+                        <div class="card-body p-4">
+                            <h3 class="article-title mb-3">
+                                <i class="fas fa-user-plus me-2"></i>
+                                {{legalTranslations.terms.article2.title}}
+                            </h3>
+                            <div class="section-divider mb-3"></div>
+                            <p class="mb-3">{{legalTranslations.terms.article2.content1}}</p>
+                            <div class="legal-list">
+                                <ul class="list-unstyled">
+                                    <li class="d-flex mb-2">
+                                        <i class="fas fa-circle text-primary me-2 mt-2" style="font-size: 0.5rem;"></i>
+                                        {{legalTranslations.terms.article2.condition1}}
+                                    </li>
+                                    <li class="d-flex mb-2">
+                                        <i class="fas fa-circle text-primary me-2 mt-2" style="font-size: 0.5rem;"></i>
+                                        {{legalTranslations.terms.article2.condition2}}
+                                    </li>
+                                    <li class="d-flex mb-2">
+                                        <i class="fas fa-circle text-primary me-2 mt-2" style="font-size: 0.5rem;"></i>
+                                        {{legalTranslations.terms.article2.condition3}}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Article 3 -->
+                    <div class="card article-card mb-4" id="article3">
+                        <div class="card-body p-4">
+                            <h3 class="article-title mb-3">
+                                <i class="fas fa-key me-2"></i>
+                                {{legalTranslations.terms.article3.title}}
+                            </h3>
+                            <div class="section-divider mb-3"></div>
+                            <p class="mb-3">{{legalTranslations.terms.article3.content1}}</p>
+                            <p class="mb-0">{{legalTranslations.terms.article3.content2}}</p>
+                        </div>
+                    </div>
+
+                    <!-- Article 4 -->
+                    <div class="card article-card mb-4" id="article4">
+                        <div class="card-body p-4">
+                            <h3 class="article-title mb-3">
+                                <i class="fas fa-ban me-2"></i>
+                                {{legalTranslations.terms.article4.title}}
+                            </h3>
+                            <div class="section-divider mb-3"></div>
+                            <p class="mb-3">{{legalTranslations.terms.article4.intro}}</p>
+                            <div class="legal-list">
+                                <ol class="list-unstyled">
+                                    <li class="d-flex mb-2">
+                                        <span class="badge bg-danger me-3 mt-1">1</span>
+                                        {{legalTranslations.terms.article4.prohibition1}}
+                                    </li>
+                                    <li class="d-flex mb-2">
+                                        <span class="badge bg-danger me-3 mt-1">2</span>
+                                        {{legalTranslations.terms.article4.prohibition2}}
+                                    </li>
+                                    <li class="d-flex mb-2">
+                                        <span class="badge bg-danger me-3 mt-1">3</span>
+                                        {{legalTranslations.terms.article4.prohibition3}}
+                                    </li>
+                                    <li class="d-flex mb-2">
+                                        <span class="badge bg-danger me-3 mt-1">4</span>
+                                        {{legalTranslations.terms.article4.prohibition4}}
+                                    </li>
+                                    <li class="d-flex mb-2">
+                                        <span class="badge bg-danger me-3 mt-1">5</span>
+                                        {{legalTranslations.terms.article4.prohibition5}}
+                                    </li>
+                                    <li class="d-flex mb-2">
+                                        <span class="badge bg-danger me-3 mt-1">6</span>
+                                        {{legalTranslations.terms.article4.prohibition6}}
+                                    </li>
+                                    <li class="d-flex mb-2">
+                                        <span class="badge bg-danger me-3 mt-1">7</span>
+                                        {{legalTranslations.terms.article4.prohibition7}}
+                                    </li>
+                                    <li class="d-flex mb-2">
+                                        <span class="badge bg-danger me-3 mt-1">8</span>
+                                        {{legalTranslations.terms.article4.prohibition8}}
+                                    </li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Article 5 -->
+                    <div class="card article-card mb-4" id="article5">
+                        <div class="card-body p-4">
+                            <h3 class="article-title mb-3">
+                                <i class="fas fa-pause-circle me-2"></i>
+                                {{legalTranslations.terms.article5.title}}
+                            </h3>
+                            <div class="section-divider mb-3"></div>
+                            <p class="mb-3">{{legalTranslations.terms.article5.intro}}</p>
+                            <div class="legal-list">
+                                <ol class="list-unstyled">
+                                    <li class="d-flex mb-2">
+                                        <span class="badge bg-warning me-3 mt-1">1</span>
+                                        {{legalTranslations.terms.article5.reason1}}
+                                    </li>
+                                    <li class="d-flex mb-2">
+                                        <span class="badge bg-warning me-3 mt-1">2</span>
+                                        {{legalTranslations.terms.article5.reason2}}
+                                    </li>
+                                    <li class="d-flex mb-2">
+                                        <span class="badge bg-warning me-3 mt-1">3</span>
+                                        {{legalTranslations.terms.article5.reason3}}
+                                    </li>
+                                    <li class="d-flex mb-2">
+                                        <span class="badge bg-warning me-3 mt-1">4</span>
+                                        {{legalTranslations.terms.article5.reason4}}
+                                    </li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Article 6 -->
+                    <div class="card article-card mb-4" id="article6">
+                        <div class="card-body p-4">
+                            <h3 class="article-title mb-3">
+                                <i class="fas fa-user-times me-2"></i>
+                                {{legalTranslations.terms.article6.title}}
+                            </h3>
+                            <div class="section-divider mb-3"></div>
+                            <p class="mb-0">{{legalTranslations.terms.article6.content}}</p>
+                        </div>
+                    </div>
+
+                    <!-- Article 7 -->
+                    <div class="card article-card mb-4" id="article7">
+                        <div class="card-body p-4">
+                            <h3 class="article-title mb-3">
+                                <i class="fas fa-sign-out-alt me-2"></i>
+                                {{legalTranslations.terms.article7.title}}
+                            </h3>
+                            <div class="section-divider mb-3"></div>
+                            <p class="mb-0">{{legalTranslations.terms.article7.content}}</p>
+                        </div>
+                    </div>
+
+                    <!-- Article 8 -->
+                    <div class="card article-card mb-4" id="article8">
+                        <div class="card-body p-4">
+                            <h3 class="article-title mb-3">
+                                <i class="fas fa-shield-alt me-2"></i>
+                                {{legalTranslations.terms.article8.title}}
+                            </h3>
+                            <div class="section-divider mb-3"></div>
+                            <p class="mb-3">{{legalTranslations.terms.article8.content1}}</p>
+                            <p class="mb-0">{{legalTranslations.terms.article8.content2}}</p>
+                        </div>
+                    </div>
+
+                    <!-- Article 9 -->
+                    <div class="card article-card mb-4" id="article9">
+                        <div class="card-body p-4">
+                            <h3 class="article-title mb-3">
+                                <i class="fas fa-edit me-2"></i>
+                                {{legalTranslations.terms.article9.title}}
+                            </h3>
+                            <div class="section-divider mb-3"></div>
+                            <p class="mb-0">{{legalTranslations.terms.article9.content}}</p>
+                        </div>
+                    </div>
+
+                    <!-- Article 10 -->
+                    <div class="card article-card mb-4" id="article10">
+                        <div class="card-body p-4">
+                            <h3 class="article-title mb-3">
+                                <i class="fas fa-balance-scale me-2"></i>
+                                {{legalTranslations.terms.article10.title}}
+                            </h3>
+                            <div class="section-divider mb-3"></div>
+                            <p class="mb-0">{{legalTranslations.terms.article10.content}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Section -->
+            <div class="row mt-5">
+                <div class="col-12 text-center">
+                    <div class="section-divider"></div>
+                    <a href="/" class="back-btn">
+                        <i class="fas fa-home me-2"></i>
+                        {{legalTranslations.backToHome}}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Smooth scrolling for navigation -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-link[href^="#"]');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

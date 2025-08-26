@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="{{lang}}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{legalTranslations.privacy.title}} | {{translations.seo.title}}</title>
+    {{> translations}}
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        .legal-hero {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 4rem 0;
+        }
+        
+        .legal-content {
+            padding: 3rem 0;
+        }
+        
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(to right, #11998e, #38ef7d);
+            margin: 2rem 0;
+            border-radius: 1px;
+        }
+        
+        .privacy-card {
+            border: none;
+            border-left: 4px solid #11998e;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .privacy-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        
+        .section-title {
+            color: #11998e;
+            font-weight: 600;
+        }
+        
+        .legal-list ul {
+            padding-left: 1.5rem;
+        }
+        
+        .legal-list li {
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4);
+            color: white;
+        }
+        
+        .last-updated-badge {
+            background: rgba(17, 153, 142, 0.1);
+            color: #11998e;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .contact-card {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="legal-hero">
+        <div class="container">
+            <div class="row justify-content-center text-center">
+                <div class="col-lg-8">
+                    <h1 class="display-4 fw-bold mb-3">
+                        <i class="fas fa-shield-alt me-3"></i>
+                        {{legalTranslations.privacy.title}}
+                    </h1>
+                    <p class="lead mb-4">{{translations.seo.description}}</p>
+                    <div class="last-updated-badge d-inline-block">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        {{legalTranslations.lastUpdated}}: <strong>2024-01-01</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="legal-content">
+        <div class="container">
+            <div class="row">
+                <!-- Navigation Sidebar -->
+                <div class="col-lg-3 mb-4">
+                    <div class="card sticky-top" style="top: 2rem;">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">
+                                <i class="fas fa-list me-2"></i>
+                                Table of Contents
+                            </h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <nav class="nav flex-column">
+                                <a class="nav-link text-sm" href="#section1">{{legalTranslations.privacy.section1.title}}</a>
+                                <a class="nav-link text-sm" href="#section2">{{legalTranslations.privacy.section2.title}}</a>
+                                <a class="nav-link text-sm" href="#section3">{{legalTranslations.privacy.section3.title}}</a>
+                                <a class="nav-link text-sm" href="#section4">{{legalTranslations.privacy.section4.title}}</a>
+                                <a class="nav-link text-sm" href="#section5">{{legalTranslations.privacy.section5.title}}</a>
+                                <a class="nav-link text-sm" href="#section6">{{legalTranslations.privacy.section6.title}}</a>
+                                <a class="nav-link text-sm" href="#section7">{{legalTranslations.privacy.section7.title}}</a>
+                                <a class="nav-link text-sm" href="#contact">{{legalTranslations.privacy.contact.title}}</a>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Area -->
+                <div class="col-lg-9">
+                    <!-- Section 1 -->
+                    <div class="card privacy-card mb-4" id="section1">
+                        <div class="card-body p-4">
+                            <h3 class="section-title mb-3">
+                                <i class="fas fa-download me-2"></i>
+                                {{legalTranslations.privacy.section1.title}}
+                            </h3>
+                            <div class="section-divider mb-3"></div>
+                            <p class="mb-0">{{legalTranslations.privacy.section1.content}}</p>
+                        </div>
+                    </div>
+
+                    <!-- Section 2 -->
+                    <div class="card privacy-card mb-4" id="section2">
+                        <div class="card-body p-4">
+                            <h3 class="section-title mb-3">
+                                <i class="fas fa-bullseye me-2"></i>
+                                {{legalTranslations.privacy.section2.title}}
+                            </h3>
+                            <div class="section-divider mb-3"></div>
+                            <p class="mb-3">{{legalTranslations.privacy.section2.content1}}</p>
+                            <div class="legal-list">
+                                <ul class="list-unstyled">
+                                    <li class="d-flex mb-2">
+                                        <i class="fas fa-check-circle text-success me-2 mt-1"></i>
+                                        {{legalTranslations.privacy.section2.item1}}
+                                    </li>
+                                    <li class="d-flex mb-2">
+                                        <i class="fas fa-check-circle text-success me-2 mt-1"></i>
+                                        {{legalTranslations.privacy.section2.item2}}
+                                    </li>
+                                    <li class="d-flex mb-2">
+                                        <i class="fas fa-check-circle text-success me-2 mt-1"></i>
+                                        {{legalTranslations.privacy.section2.item3}}
+                                    </li>
+                                    <li class="d-flex mb-2">
+                                        <i class="fas fa-check-circle text-success me-2 mt-1"></i>
+                                        {{legalTranslations.privacy.section2.item4}}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3 -->
+                    <div class="card privacy-card mb-4" id="section3">
+                        <div class="card-body p-4">
+                            <h3 class="section-title mb-3">
+                                <i class="fas fa-sync-alt me-2"></i>
+                                {{legalTranslations.privacy.section3.title}}
+                            </h3>
+                            <div class="section-divider mb-3"></div>
+                            <p class="mb-3">{{legalTranslations.privacy.section3.content1}}</p>
+                            <div class="legal-list">
+                                <ul class="list-unstyled">
+                                    <li class="d-flex mb-2">
+                                        <i class="fas fa-arrow-right text-primary me-2 mt-1"></i>
+                                        {{legalTranslations.privacy.section3.purpose1}}
+                                    </li>
+                                    <li class="d-flex mb-2">
+                                        <i class="fas fa-arrow-right text-primary me-2 mt-1"></i>
+                                        {{legalTranslations.privacy.section3.purpose2}}
+                                    </li>
+                                    <li class="d-flex mb-2">
+                                        <i class="fas fa-arrow-right text-primary me-2 mt-1"></i>
+                                        {{legalTranslations.privacy.section3.purpose3}}
+                                    </li>
+                                    <li class="d-flex mb-2">
+                                        <i class="fas fa-arrow-right text-primary me-2 mt-1"></i>
+                                        {{legalTranslations.privacy.section3.purpose4}}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 4 -->
+                    <div class="card privacy-card mb-4" id="section4">
+                        <div class="card-body p-4">
+                            <h3 class="section-title mb-3">
+                                <i class="fas fa-user-shield me-2"></i>
+                                {{legalTranslations.privacy.section4.title}}
+                            </h3>
+                            <div class="section-divider mb-3"></div>
+                            <p class="mb-0">{{legalTranslations.privacy.section4.content}}</p>
+                        </div>
+                    </div>
+
+                    <!-- Section 5 -->
+                    <div class="card privacy-card mb-4" id="section5">
+                        <div class="card-body p-4">
+                            <h3 class="section-title mb-3">
+                                <i class="fas fa-eye me-2"></i>
+                                {{legalTranslations.privacy.section5.title}}
+                            </h3>
+                            <div class="section-divider mb-3"></div>
+                            <p class="mb-0">{{legalTranslations.privacy.section5.content}}</p>
+                        </div>
+                    </div>
+
+                    <!-- Section 6 -->
+                    <div class="card privacy-card mb-4" id="section6">
+                        <div class="card-body p-4">
+                            <h3 class="section-title mb-3">
+                                <i class="fas fa-edit me-2"></i>
+                                {{legalTranslations.privacy.section6.title}}
+                            </h3>
+                            <div class="section-divider mb-3"></div>
+                            <p class="mb-0">{{legalTranslations.privacy.section6.content}}</p>
+                        </div>
+                    </div>
+
+                    <!-- Section 7 -->
+                    <div class="card privacy-card mb-4" id="section7">
+                        <div class="card-body p-4">
+                            <h3 class="section-title mb-3">
+                                <i class="fas fa-clipboard-list me-2"></i>
+                                {{legalTranslations.privacy.section7.title}}
+                            </h3>
+                            <div class="section-divider mb-3"></div>
+                            <p class="mb-0">{{legalTranslations.privacy.section7.content}}</p>
+                        </div>
+                    </div>
+
+                    <!-- Contact Section -->
+                    <div class="card contact-card mb-4" id="contact">
+                        <div class="card-body p-4 text-center">
+                            <h3 class="mb-3">
+                                <i class="fas fa-envelope me-2"></i>
+                                {{legalTranslations.privacy.contact.title}}
+                            </h3>
+                            <div class="section-divider mb-3" style="background: rgba(255,255,255,0.3);"></div>
+                            <p class="mb-3">{{legalTranslations.privacy.contact.content}}</p>
+                            <div class="d-flex justify-content-center align-items-center">
+                                <i class="fas fa-mail-bulk me-2 fs-5"></i>
+                                <strong>{{legalTranslations.privacy.contact.email}}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Section -->
+            <div class="row mt-5">
+                <div class="col-12 text-center">
+                    <div class="section-divider"></div>
+                    <a href="/" class="back-btn">
+                        <i class="fas fa-home me-2"></i>
+                        {{legalTranslations.backToHome}}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Smooth scrolling for navigation -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-link[href^="#"]');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

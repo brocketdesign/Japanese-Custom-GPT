@@ -1,0 +1,109 @@
+{
+  "lastUpdated": "Last Updated",
+  "backToHome": "Back to Home",
+  "terms": {
+    "title": "Terms of Service",
+    "article1": {
+      "title": "Article 1 (Application)",
+      "content1": "These terms shall apply to all relationships regarding the use of this application between users and the Company.",
+      "content2": "The Company may establish conditions etc. for the use of this application in addition to these terms. In such cases, these conditions etc. shall constitute part of these terms."
+    },
+    "article2": {
+      "title": "Article 2 (User Registration)",
+      "content1": "In this application, user registration is completed when users agree to these terms and perform user registration by the prescribed method. The Company may refuse to approve user registration applications if it determines that the applicant has any of the following reasons, and shall bear no obligation to disclose such reasons.",
+      "condition1": "When false information is provided in the user registration application",
+      "condition2": "When the application is from someone who has violated these terms before",
+      "condition3": "When the Company otherwise determines that user registration is not appropriate"
+    },
+    "article3": {
+      "title": "Article 3 (Management of User ID and Password)",
+      "content1": "Users shall properly manage their user ID and password for this application at their own responsibility.",
+      "content2": "Users may not transfer or lend their user ID and password to third parties under any circumstances. The Company shall consider use by the user who registered the user ID when login is performed with a combination of user ID and password that matches the registered information."
+    },
+    "article4": {
+      "title": "Article 4 (Prohibited Acts)",
+      "intro": "Users shall not engage in the following acts when using this application:",
+      "prohibition1": "Acts that violate laws or public order and morals",
+      "prohibition2": "Acts related to criminal activities",
+      "prohibition3": "Acts that destroy or interfere with the functions of the Company's servers or networks",
+      "prohibition4": "Acts that may interfere with the operation of this application",
+      "prohibition5": "Acts of collecting or accumulating personal information about other users",
+      "prohibition6": "Acts of impersonating other users",
+      "prohibition7": "Acts of directly or indirectly providing benefits to antisocial forces in relation to the Company's services",
+      "prohibition8": "Other acts that the Company deems inappropriate"
+    },
+    "article5": {
+      "title": "Article 5 (Suspension of Service Provision)",
+      "intro": "The Company may suspend or interrupt the provision of all or part of this application without prior notice to users if it determines that any of the following reasons exist:",
+      "reason1": "When performing maintenance or updates of computer systems related to this application",
+      "reason2": "When provision of this application becomes difficult due to force majeure such as fire, power outage, or natural disasters",
+      "reason3": "When computers or communication lines stop due to accidents",
+      "reason4": "When the Company otherwise determines that provision of this application is difficult"
+    },
+    "article6": {
+      "title": "Article 6 (Usage Restrictions and Registration Deletion)",
+      "content": "The Company may restrict all or part of the use of this application or delete user registration without prior notice if users violate any provisions of these terms."
+    },
+    "article7": {
+      "title": "Article 7 (Withdrawal)",
+      "content": "Users may withdraw from this application through the withdrawal procedures prescribed by the Company."
+    },
+    "article8": {
+      "title": "Article 8 (Disclaimer)",
+      "content1": "The Company does not guarantee that this application is free from factual or legal defects (including but not limited to safety, reliability, accuracy, completeness, effectiveness, fitness for specific purposes, security, etc.).",
+      "content2": "The Company assumes no responsibility for any damages incurred by users arising from this application. However, this disclaimer does not apply when the contract between the Company and users regarding this application (including these terms) constitutes a consumer contract as defined by the Consumer Contract Act."
+    },
+    "article9": {
+      "title": "Article 9 (Changes to Terms)",
+      "content": "The Company may change these terms at any time without notice to users when deemed necessary."
+    },
+    "article10": {
+      "title": "Article 10 (Governing Law and Jurisdiction)",
+      "content": "Japanese law shall be the governing law for the interpretation of these terms. In case of disputes regarding this application, the court with jurisdiction over the Company's head office location shall have exclusive agreed jurisdiction."
+    }
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "section1": {
+      "title": "Collection of Personal Information",
+      "content": "The Company collects personal information through appropriate and fair means."
+    },
+    "section2": {
+      "title": "Purpose of Use of Personal Information",
+      "content1": "The Company uses collected personal information for the following purposes:",
+      "item1": "To provide and operate this service",
+      "item2": "To respond to inquiries from users",
+      "item3": "To identify users who violate the terms of use or attempt to use the service for illegal or improper purposes",
+      "item4": "For purposes incidental to the above purposes of use"
+    },
+    "section3": {
+      "title": "Changes to Purpose of Use",
+      "content1": "The Company shall change the purpose of use of personal information only when it is reasonably recognized that the purpose of use is related to the previous purpose. When changes to the purpose of use are made, users will be notified or the information will be published on this website through the following methods:",
+      "purpose1": "To provide information about our services",
+      "purpose2": "To respond to customer inquiries",
+      "purpose3": "To provide notifications and campaigns regarding our products and services",
+      "purpose4": "To contact users as necessary for maintenance, important notices, etc."
+    },
+    "section4": {
+      "title": "Third-Party Provision of Personal Information",
+      "content": "The Company will not provide personal information to third parties without prior user consent, except in the following cases. However, cases permitted by the Personal Information Protection Act and other laws are excluded."
+    },
+    "section5": {
+      "title": "Disclosure of Personal Information",
+      "content": "When requested by individuals to disclose personal information, the Company will disclose this information to the individual without delay. However, if disclosure would fall under any of the following cases, all or part of the information may not be disclosed, and if a decision is made not to disclose, this will be notified without delay."
+    },
+    "section6": {
+      "title": "Correction and Deletion of Personal Information",
+      "content": "Users may request correction, addition, or deletion (hereinafter referred to as 'correction, etc.') of personal information held by the Company through procedures established by the Company when such personal information is incorrect."
+    },
+    "section7": {
+      "title": "Changes to Privacy Policy",
+      "content": "The contents of this policy may be changed without notice to users, except for matters separately provided for by law or in this policy. Unless otherwise specified by the Company, the changed privacy policy shall take effect from the time it is posted on this website."
+    },
+    "contact": {
+      "title": "Contact Information",
+      "content": "For inquiries regarding this policy, please contact the following:",
+      "email": "Contact: support@lamix.co.jp"
+    }
+  }
+}

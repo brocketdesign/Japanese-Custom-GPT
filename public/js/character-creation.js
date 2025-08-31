@@ -137,19 +137,60 @@
     if (subscriptionStatus) {
         $('#basic_nsfw').prop('disabled', false);
         $('#nsfwPremiumPrompt').hide();
+        updateNsfwToggleState(false); 
     } else {
         $('#basic_nsfw').prop('disabled', true).prop('checked', false);
         $('#nsfwPremiumPrompt').show();
+        updateNsfwToggleState(false); 
     }
     
-    // Handle NSFW toggle click for non-premium users
-    $('#basic_nsfw').on('click', function() {
+    // Handle NSFW toggle click - both checkbox and slider
+    $('#basic_nsfw, .nsfw-switch-slider').on('click', function(e) {
+        // If clicked on slider, toggle the checkbox
+        if ($(this).hasClass('nsfw-switch-slider')) {
+            const $checkbox = $('#basic_nsfw');
+            if (!$checkbox.prop('disabled')) {
+                $checkbox.prop('checked', !$checkbox.prop('checked')).trigger('change');
+            }
+            return;
+        }
+        
+        // Handle checkbox click for non-premium users
         if (!subscriptionStatus && $(this).is(':checked')) {
             $(this).prop('checked', false);
             showUpgradePopup('nsfw-content');
             return false;
         }
     });
+
+    // Handle NSFW toggle state change
+    $('#basic_nsfw').on('change', function() {
+        const isChecked = $(this).is(':checked');
+        updateNsfwToggleState(isChecked);
+    });
+
+    // Function to update NSFW toggle visual state
+    function updateNsfwToggleState(isEnabled) {
+        const $container = $('#nsfwToggleContainer');
+        const $statusIndicator = $('#nsfwStatusIndicator');
+        
+        if (isEnabled) {
+            $container.removeClass('nsfw-disabled').addClass('enabled');
+            $statusIndicator.removeClass('disabled').addClass('enabled');
+            $statusIndicator.text(translations.newCharacter.nsfw || 'NSFW');
+        } else {
+            $container.removeClass('enabled').addClass('nsfw-disabled');
+            $statusIndicator.removeClass('enabled').addClass('disabled');
+            $statusIndicator.text(translations.newCharacter.sfw || 'SFW');
+        }
+    }
+
+    // Prevent default behavior on slider to avoid double-triggering
+    $('.nsfw-switch').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    });
+
 
     $('input, textarea').val('');
 
@@ -191,6 +232,306 @@
             element.style.height = 'auto';
         }
     }
+
+
+
+    // Initialize keyword cloud after DOM is ready
+    $(document).ready(function() {
+        // Add delay to ensure translations are loaded
+        setTimeout(function() {
+            initializeKeywordCloud();
+        }, 500);
+    });
+
+    // Initialize the keyword cloud
+    function initializeKeywordCloud() {
+        // Check if translations are available
+        if (typeof translations === 'undefined' || !translations.newCharacter?.keywordSections) {
+            console.log('Translations not yet loaded, retrying...');
+            setTimeout(initializeKeywordCloud, 1000);
+            return;
+        }
+
+        const keywordSections = ['personality', 'occupation', 'hobbies', 'style', 'traits', 'relationship'];
+        
+        keywordSections.forEach(section => {
+            const sectionContainer = $(`.keyword-tags[data-section="${section}"]`);
+            const keywords = translations.newCharacter?.keywords?.[section];
+            
+            if (keywords && sectionContainer.length) {
+                // Clear existing content
+                sectionContainer.empty();
+                
+                // Add keywords as clickable tags
+                Object.keys(keywords).forEach(key => {
+                    const keyword = keywords[key];
+                    const keywordTag = $(`
+                        <span class="keyword-tag" 
+                            data-section="${section}" 
+                            data-keyword="${key}"
+                            data-value="${keyword}">
+                            ${keyword}
+                        </span>
+                    `);
+                    
+                    sectionContainer.append(keywordTag);
+                });
+
+                // Add section counter display
+                const sectionTitle = sectionContainer.closest('.keyword-section').find('.keyword-section-title');
+                if (sectionTitle.length && !sectionTitle.find('.keyword-counter').length) {
+                    sectionTitle.append(`<span class="keyword-counter ms-2 text-muted">(0/3)</span>`);
+                }
+            }
+        });
+
+        // Update section titles with translations
+        $('.keyword-section-title [data-translate]').each(function() {
+            const key = $(this).data('translate');
+            const translation = getTranslationByKey(key);
+            if (translation) {
+                $(this).text(translation);
+            }
+        });
+
+        // Update "Selected Keywords" text
+        $('.selected-keywords-container h6').html(
+            `<i class="bi bi-check-circle me-2"></i>${translations.newCharacter?.selectedKeywords || 'Selected Keywords:'}`
+        );
+
+        // Update placeholder text
+        $('#selectedKeywords .text-muted').text(
+            translations.newCharacter?.clickKeywordsPlaceholder || 'Click keywords above to add them...'
+        );
+    }
+
+    // Helper function to get nested translation
+    function getTranslationByKey(key) {
+        const keys = key.split('.');
+        let value = translations;
+        
+        for (const k of keys) {
+            if (value && value[k]) {
+                value = value[k];
+            } else {
+                return null;
+            }
+        }
+        
+        return value;
+    }
+
+    // Handle keyword tag clicks
+    $(document).on('click', '.keyword-tag', function() {
+        const $tag = $(this);
+        const keyword = $tag.data('value');
+        const section = $tag.data('section');
+        const isSelected = $tag.hasClass('selected');
+        const isDisabled = $tag.hasClass('disabled');
+        
+        // Don't allow clicking on disabled tags
+        if (isDisabled && !isSelected) {
+            // Show a brief message about the limit
+            showLimitMessage($tag, section);
+            return;
+        }
+        
+        if (isSelected) {
+            // Remove keyword
+            $tag.removeClass('selected');
+            removeKeywordFromPurpose(keyword);
+        } else {
+            // Check if we can add more keywords to this section
+            const selectedCount = getSelectedKeywordsCountInSection(section);
+            if (selectedCount >= 3) {
+                showLimitMessage($tag, section);
+                return;
+            }
+            
+            // Add keyword
+            $tag.addClass('selected');
+            addKeywordToPurpose(keyword);
+        }
+        
+        // Update counters and availability for this section
+        updateSectionCounter(section);
+        updateSectionAvailability(section);
+        
+        updateSelectedKeywordsDisplay();
+        updateChatPurposeTextarea();
+    });
+
+    // Add keyword to the purpose
+    function addKeywordToPurpose(keyword) {
+        const currentPurpose = $('#chatPurpose').val();
+        const keywords = currentPurpose ? currentPurpose.split(', ').filter(k => k.trim()) : [];
+        
+        if (!keywords.includes(keyword)) {
+            keywords.push(keyword);
+            $('#chatPurpose').val(keywords.join(', '));
+        }
+    }
+
+    // Remove keyword from the purpose  
+    function removeKeywordFromPurpose(keyword) {
+        const currentPurpose = $('#chatPurpose').val();
+        const keywords = currentPurpose ? currentPurpose.split(', ').filter(k => k.trim()) : [];
+        const filteredKeywords = keywords.filter(k => k !== keyword);
+        
+        $('#chatPurpose').val(filteredKeywords.join(', '));
+    }
+
+    // Update the visual display of selected keywords
+    function updateSelectedKeywordsDisplay() {
+        const selectedKeywordsBySection = {};
+        const keywordSections = ['personality', 'occupation', 'hobbies', 'style', 'traits', 'relationship'];
+        
+        // Group selected keywords by section
+        $('.keyword-tag.selected').each(function() {
+            const section = $(this).data('section');
+            const keyword = $(this).data('value');
+            
+            if (!selectedKeywordsBySection[section]) {
+                selectedKeywordsBySection[section] = [];
+            }
+            selectedKeywordsBySection[section].push(keyword);
+        });
+        
+        const $display = $('#selectedKeywords');
+        
+        if (Object.keys(selectedKeywordsBySection).length === 0) {
+            const placeholderText = translations.newCharacter?.clickKeywordsPlaceholder || 'Click keywords above to add them...';
+            $display.html(`<span class="text-muted">${placeholderText}</span>`);
+        } else {
+            let html = '';
+            
+            keywordSections.forEach(section => {
+                if (selectedKeywordsBySection[section] && selectedKeywordsBySection[section].length > 0) {
+                    const sectionName = getTranslationByKey(`newCharacter.keywordSections.${section}`) || section;
+                    const sectionKeywords = selectedKeywordsBySection[section];
+                    
+                    html += `<div class="selected-section mb-2">
+                        <small class="section-label text-muted fw-bold">${sectionName}:</small><br>
+                        ${sectionKeywords.map(keyword => 
+                            `<span class="selected-keyword">${keyword}</span>`
+                        ).join(' ')}
+                    </div>`;
+                }
+            });
+            
+            $display.html(html);
+        }
+    }
+
+    // Update the hidden textarea
+    function updateChatPurposeTextarea() {
+        const selectedKeywords = [];
+        $('.keyword-tag.selected').each(function() {
+            selectedKeywords.push($(this).data('value'));
+        });
+        
+        $('#chatPurpose').val(selectedKeywords.join(', '));
+    }
+
+    // Helper function to count selected keywords in a section
+    function getSelectedKeywordsCountInSection(section) {
+        return $(`.keyword-tag[data-section="${section}"].selected`).length;
+    }
+
+    // Helper function to update section counter
+    function updateSectionCounter(section) {
+        const count = getSelectedKeywordsCountInSection(section);
+        const counter = $(`.keyword-tags[data-section="${section}"]`).closest('.keyword-section').find('.keyword-counter');
+        if (counter.length) {
+            counter.text(`(${count}/3)`);
+            // Change color based on limit
+            if (count >= 3) {
+                counter.removeClass('text-muted').addClass('text-warning fw-bold');
+            } else {
+                counter.removeClass('text-warning fw-bold').addClass('text-muted');
+            }
+        }
+    }
+
+    // Helper function to update section availability
+    function updateSectionAvailability(section) {
+        const selectedCount = getSelectedKeywordsCountInSection(section);
+        const sectionContainer = $(`.keyword-tags[data-section="${section}"]`);
+        
+        // If 3 keywords are selected, disable non-selected keywords in this section
+        if (selectedCount >= 3) {
+            sectionContainer.find('.keyword-tag:not(.selected)').addClass('disabled');
+        } else {
+            sectionContainer.find('.keyword-tag').removeClass('disabled');
+        }
+    }
+
+    // Function to show limit message
+    function showLimitMessage($tag, section) {
+        // Get section name from translations
+        const sectionName = getTranslationByKey(`newCharacter.keywordSections.${section}`) || section;
+        const message = `Maximum 3 keywords per section (${sectionName})`;
+        
+        // Create temporary tooltip
+        const tooltip = $(`<div class="keyword-limit-tooltip">${message}</div>`);
+        tooltip.css({
+            position: 'absolute',
+            background: '#dc3545',
+            color: 'white',
+            padding: '6px 12px',
+            borderRadius: '4px',
+            fontSize: '12px',
+            zIndex: 1000,
+            whiteSpace: 'nowrap',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+        });
+        
+        // Position tooltip near the clicked tag
+        const tagOffset = $tag.offset();
+        tooltip.css({
+            top: tagOffset.top - 40,
+            left: tagOffset.left + ($tag.width() / 2) - (tooltip.width() / 2)
+        });
+        
+        $('body').append(tooltip);
+        
+        // Add visual feedback to the tag
+        $tag.addClass('limit-reached');
+        
+        // Remove tooltip and visual feedback after 2 seconds
+        setTimeout(() => {
+            tooltip.fadeOut(200, () => tooltip.remove());
+            $tag.removeClass('limit-reached');
+        }, 2000);
+    }
+    // Load existing keywords when editing a character
+    function loadExistingKeywords(chatPurpose) {
+        if (!chatPurpose) return;
+        
+        const keywords = chatPurpose.split(', ').map(k => k.trim()).filter(k => k);
+        
+        // Clear all selections first
+        $('.keyword-tag').removeClass('selected disabled');
+        
+        // Reset all counters
+        $('.keyword-counter').text('(0/3)').removeClass('text-warning fw-bold').addClass('text-muted');
+        
+        // Select matching keywords
+        keywords.forEach(keyword => {
+            const $tag = $(`.keyword-tag[data-value="${keyword}"]`);
+            if ($tag.length) {
+                $tag.addClass('selected');
+                const section = $tag.data('section');
+                updateSectionCounter(section);
+                updateSectionAvailability(section);
+            }
+        });
+        
+        updateSelectedKeywordsDisplay();
+    }
+
+    // Update the existing fetchchatCreationData function to load keywords
+    const originalFetchchatCreationData = window.fetchchatCreationData || fetchchatCreationData;
 
     function fetchchatCreationData(chatCreationId, callback) {
         $.ajax({
@@ -261,8 +602,6 @@
         });
     }
 
-
-
     function saveModeration(moderationResult, chatCreationId, callback) {
 
         $.ajax({
@@ -294,9 +633,7 @@
 
         // Disable regenerate button during generation
         $button.prop('disabled', true);
-        $button.html(`<div class="me-2 spinner-border spinner-border-sm" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>${translations.newCharacter.regenerating_images}`);
+        $button.html(`<i class="bi bi-arrow-clockwise spin"></i>${translations.newCharacter.regenerating_images}`);
 
         // Also disable main generate button
         $generateButton.prop('disabled', true);

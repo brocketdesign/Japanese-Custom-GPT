@@ -72,7 +72,7 @@ async function routes(fastify, options) {
         
         const imageDescription = await checkImageDescription(db, chatId);
         newPrompt = await createPrompt(customPrompt, imageDescription, nsfw);
-      } else if( Id) {
+      } else if( giftId ) {
         // New gift handling logic
         const giftData = await getGiftById(db, giftId);
         if (!giftData) {

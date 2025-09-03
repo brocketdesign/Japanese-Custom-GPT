@@ -185,41 +185,46 @@ const createModelChatGenerationTask = (fastify) => {
  * Process background image generation tasks every minute
  * @param {Object} fastify - Fastify instance
  */
+
 const processBackgroundTasks = (fastify) => async () => {
   const db = fastify.mongo.db;
   const tasksCollection = db.collection('tasks');
-  const backgroundTasks = await tasksCollection.find({ status: 'background' }).toArray();
+  
+  // Get tasks that are truly background and not already processed
+  const backgroundTasks = await tasksCollection.find({ 
+    status: 'background',
+    processedAt: { $exists: false } // Only process tasks that haven't been processed yet
+  }).toArray();
+  
   if (!backgroundTasks.length) return;
+  
   console.log(`[processBackgroundTasks] Processing ${backgroundTasks.length} background tasks...`);
+  
   for (const task of backgroundTasks) {
     try {
-      // Try to poll the task status again (reuse pollTaskStatus from imagen.js)
+      // Mark as being processed to prevent duplicate processing
+      await tasksCollection.updateOne(
+        { _id: task._id },
+        { $set: { processedAt: new Date() } }
+      );
+      
       const taskStatus = await checkTaskStatus(task.taskId, fastify);
-
-      if (taskStatus && taskStatus.status === 'background') {
-        console.log(`[processBackgroundTasks] Task ${task.taskId} still in background, skipping...`);
-        continue;
-      }
-      // If successful, pollTaskStatus will update the task and notify the user
-      // If completed, handle notifications and image saving
       if (taskStatus && taskStatus.status === 'completed') {
-        const userDoc = await db.collection('users').findOne({ _id: task.userId });
-        const translations = fastify.getTranslations(userDoc.language || 'en');
-        
-        await handleTaskCompletion(
-          { ...taskStatus, userId: task.userId, userChatId: task.userChatId },
-          fastify,
-          {
-            chatCreation: task.chatCreation, // <-- use the value from the task document
-            translations,
-            userId: task.userId.toString(),
-            chatId: task.chatId.toString(),
-            placeholderId: task.placeholderId // <-- pass the correct placeholderId
-          }
-        );
+        await handleTaskCompletion(taskStatus, fastify, {
+          chatCreation: task.chatCreation,
+          translations: fastify.translations?.en || {},
+          userId: task.userId.toString(),
+          chatId: task.chatId.toString(),
+          placeholderId: task.placeholderId
+        });
       }
-    } catch (err) {
-      console.log(`[processBackgroundTasks] Task ${task.taskId}:`, err?.message || err);
+    } catch (error) {
+      console.error(`[processBackgroundTasks] Error processing task ${task.taskId}:`, error);
+      // Remove the processedAt flag so it can be retried
+      await tasksCollection.updateOne(
+        { _id: task._id },
+        { $unset: { processedAt: 1 } }
+      );
     }
   }
 };

@@ -1,8 +1,9 @@
 // Replace the showImagePreview function starting around line 400
-
-window.showImagePreview = function(el) {
-    if($(el).hasClass('isBlurred')){
+window.showImagePreview = function(el) { 
+    if($(el).hasClass('isBlurred') && !subscriptionStatus){
         loadPlanPage();
+        return;
+    }else if($(el).hasClass('isBlurred') && subscriptionStatus){
         return;
     }
 

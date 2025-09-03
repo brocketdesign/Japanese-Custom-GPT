@@ -4,7 +4,15 @@
  */
 class PromptManager {
     constructor() {
+        this.activeGenerations = new Map(); // Track active generations with metadata
+        this.pollInterval = null;
         this.bindEvents();
+        this.startPolling();
+    }
+
+    // Helper function to check if we're in development mode
+    isDevelopmentMode() {
+        return window.MODE === 'development' || window.location.hostname === 'localhost';
     }
 
     bindEvents() {
@@ -107,15 +115,145 @@ class PromptManager {
 
     // Send the selected prompt to generate an image
     sendPromptImageDirectly(promptId, imageNsfw, imagePreview) {
-        const placeholderId = new Date().getTime() + "_" + promptId;
+        const placeholderId = `${new Date().getTime()}_${Math.random().toString(36).substring(2, 8)}_${promptId}`;
+        
+        // Check if this prompt is already being generated
+        if (this.activeGenerations.has(promptId)) {
+            if (this.isDevelopmentMode()) {
+                console.warn(`Prompt ${promptId} is already being generated`);
+            }
+            showNotification('Image generation for this prompt is already in progress', 'warning');
+            return;
+        }
+        
+        // Store generation metadata
+        this.activeGenerations.set(promptId, {
+            placeholderId,
+            startTime: Date.now(),
+            userChatId: sessionStorage.getItem('userChatId') || window.userChatId,
+            imagePreview
+        });
+        
         displayOrRemoveImageLoader(placeholderId, 'show', imagePreview);
+        
         const chatId = sessionStorage.getItem('chatId') || window.chatId;
         const userChatId = sessionStorage.getItem('userChatId') || window.userChatId;
-        novitaImageGeneration(window.user._id, chatId, userChatId, { placeholderId, imageNsfw, promptId, customPrompt: true })
-            .catch(error => {
-                console.error('Error:', error);
-                displayOrRemoveImageLoader(placeholderId, 'remove');
-            });
+        
+        novitaImageGeneration(window.user._id, chatId, userChatId, { 
+            placeholderId, 
+            imageNsfw, 
+            promptId, 
+            customPrompt: true 
+        })
+        .then(() => {
+            if (this.isDevelopmentMode()) {
+                console.log(`[PromptManager] Image generation started for prompt ${promptId}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            displayOrRemoveImageLoader(placeholderId, 'remove');
+            this.activeGenerations.delete(promptId);
+        });
+    }
+
+    // Start polling for completed tasks
+    startPolling() {
+        // Poll every 30 seconds if there are active generations
+        this.pollInterval = setInterval(() => {
+            if (this.activeGenerations.size > 0) {
+                if (this.isDevelopmentMode()) {
+                    console.log(`[PromptManager] Polling for ${this.activeGenerations.size} active generations`);
+                }
+                this.checkActiveGenerations();
+            }
+        }, 30000); // 30 seconds
+    }
+
+    // Check for completed tasks
+    async checkActiveGenerations() {
+        const userChatId = sessionStorage.getItem('userChatId') || window.userChatId;
+        
+        if (!userChatId) {
+            if (this.isDevelopmentMode()) {
+                console.warn('[PromptManager] No userChatId found for polling');
+            }
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/background-tasks/${userChatId}`);
+            if (!response.ok) {
+                console.error('[PromptManager] Failed to fetch background tasks');
+                return;
+            }
+
+            const data = await response.json();
+            const completedTasks = data.tasks || [];
+
+            for (const [promptId, metadata] of this.activeGenerations.entries()) {
+                // Check if task has been running for more than 5 minutes (timeout)
+                if (Date.now() - metadata.startTime > 5 * 60 * 1000) {
+                    if (this.isDevelopmentMode()) {
+                        console.warn(`[PromptManager] Task for prompt ${promptId} timed out, cleaning up`);
+                    }
+                    displayOrRemoveImageLoader(metadata.placeholderId, 'remove');
+                    this.activeGenerations.delete(promptId);
+                    continue;
+                }
+
+                // Check if this prompt's generation is completed
+                const completedTask = completedTasks.find(task => 
+                    task.placeholderId === metadata.placeholderId || 
+                    task.customPromptId === promptId
+                );
+
+                if (completedTask && completedTask.status === 'completed') {
+                    if (this.isDevelopmentMode()) {
+                        console.log(`[PromptManager] Found completed task for prompt ${promptId}:`, completedTask);
+                    }
+                    
+                    // Remove the loader
+                    displayOrRemoveImageLoader(metadata.placeholderId, 'remove');
+                    
+                    // Process completed images
+                    if (completedTask.result?.images && Array.isArray(completedTask.result.images)) {
+                        for (const image of completedTask.result.images) {
+                            if (this.isDevelopmentMode()) {
+                                console.log(`[PromptManager] Processing completed image:`, image);
+                            }
+                            
+                            // Generate the image using the existing generateImage function
+                            await generateImage({
+                                imageId: image._id,
+                                imageUrl: image.imageUrl,
+                                userChatId: metadata.userChatId,
+                                prompt: image.prompt,
+                                title: image.title,
+                                nsfw: image.nsfw,
+                                isUpscaled: image.isUpscaled,
+                                isMerged: image.isMerged
+                            });
+                        }
+                    }
+                    
+                    // Clean up
+                    this.activeGenerations.delete(promptId);
+                }
+            }
+        } catch (error) {
+            console.error('[PromptManager] Error checking active generations:', error);
+        }
+    }
+
+    // Clean up method for when WebSocket reconnects
+    handleWebSocketReconnect() {
+        if (this.isDevelopmentMode()) {
+            console.log('[PromptManager] WebSocket reconnected, checking for missed completions');
+        }
+        if (this.activeGenerations.size > 0) {
+            this.checkActiveGenerations();
+        }
     }
 
     // Remove prompt image from the message input area
@@ -126,6 +264,13 @@ class PromptManager {
         userMessage.removeAttr('data-prompt-id');
         userMessage.removeAttr('data-nsfw');
         userMessage.attr('placeholder', window.translations?.sendMessage || 'Send a message...'); 
+    }
+
+    // Cleanup method
+    destroy() {
+        if (this.pollInterval) {
+            clearInterval(this.pollInterval);
+        }
     }
 }
 

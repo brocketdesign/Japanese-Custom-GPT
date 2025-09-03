@@ -30,6 +30,12 @@ function initializeWebSocket(onConnectionResult = null) {
       }, reconnectInterval);
     }
     isConnected = true;
+
+    // After successful WebSocket reconnection, check for missed prompt completions
+    if (window.promptManager) {
+      window.promptManager.handleWebSocketReconnect();
+    }
+
     // Notify reconnection attempt of success
     if (onConnectionResult) {
       onConnectionResult(true);
@@ -349,12 +355,16 @@ window.showReconnectPrompt = function() {
         try {
             initializeWebSocket((success) => {
                 if (success) {
-                    // Successfully reconnected, close modal
-                    reconnectModal.hide();
-                    window.showNotification(window.translations.reconnect.success, 'success');
+                  // Successfully reconnected, check for missed prompt completions
+                  if (window.promptManager) {
+                    window.promptManager.handleWebSocketReconnect();
+                  }
+                  // Successfully reconnected, close modal
+                  reconnectModal.hide();
+                  window.showNotification(window.translations.reconnect.success, 'success');
                 } else {
-                    // Connection failed, try again after delay
-                    setTimeout(attemptReconnection, 2000);
+                  // Connection failed, try again after delay
+                  setTimeout(attemptReconnection, 2000);
                 }
             });
             

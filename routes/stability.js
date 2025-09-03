@@ -405,7 +405,6 @@ async function saveGiftIdToChat(db, chatId, userChatId, giftId) {
 
       return updateResult;
     }
-  // ...existing code...
 
   fastify.get('/api/background-tasks/:userChatId', async (request, reply) => {
       try {
@@ -416,10 +415,12 @@ async function saveGiftIdToChat(db, chatId, userChatId, giftId) {
               return reply.status(400).send({ error: 'Invalid userChatId' });
           }
           
+          // Find completed tasks for this user chat
           const tasks = await db.collection('tasks').find({
-              userChatId: new ObjectId(userChatId),
-              status: { $in: ['pending', 'processing', 'background'] }
-          }).toArray();
+              userChatId: new fastify.mongo.ObjectId(userChatId),
+              status: 'completed',
+              createdAt: { $gte: new Date(Date.now() - 60 * 60 * 1000) }
+          }).sort({ createdAt: -1 }).limit(50).toArray();
           
           // Just return the tasks with their existing customPromptId
           const tasksWithPrompts = tasks.map(task => {

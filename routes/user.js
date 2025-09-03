@@ -219,7 +219,6 @@ async function routes(fastify, options) {
         const subscriptionInfo = await fastify.mongo.db.collection('users').findOne({
           _id: new ObjectId(user._id)
         });
-        console.log(`[user/clerk-update] Subscription info for user ${user._id}:`, subscriptionInfo.subscriptionStatus);
         if (subscriptionInfo && subscriptionInfo.subscriptionStatus === 'active') {
           updateData.subscriptionStatus = 'active';
         } else {
@@ -230,10 +229,6 @@ async function routes(fastify, options) {
           { clerkId },
           { $set: updateData }
         );
-
-        if (result.modifiedCount === 0) {
-          console.warn(`User with clerkId ${clerkId} not updated`);
-        } 
 
         // If user has updated their nickname in our system, update it in Clerk too
         if (user.nickname && user.nickname !== clerkUserData.username) {

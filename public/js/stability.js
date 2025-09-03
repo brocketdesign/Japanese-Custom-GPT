@@ -160,15 +160,19 @@ window.handleRegenSpin = function (imageId, spin) {
 
 // Display and remove image loader with provided data-id
 window.displayOrRemoveImageLoader = function (imageId, action, imagePreview) {
+    
     if (action === 'remove') {
-        $(`#chat-recommend [data-id=${imageId}]`).remove();
+        const existingElement = $(`#chat-recommend [data-id=${imageId}]`);
+        existingElement.remove();
     } else {
+        // Check if placeholder already exists
+        const existingPlaceholder = $(`#chat-recommend [data-id=${imageId}]`);
+        if (existingPlaceholder.length > 0) {
+            return;
+        }
+        
         const loadingSpinerGif = "/img/image-placeholder.gif";
-        
-        // Check if imagePreview is provided (custom prompt case)
         const hasCustomPrompt = imagePreview && imagePreview.trim() !== '';
-        
-        // Build the background style
         const backgroundStyle = hasCustomPrompt 
             ? `background-image:url(${imagePreview});border:4px solid white;background-size:cover;` 
             : 'border:4px solid white;';

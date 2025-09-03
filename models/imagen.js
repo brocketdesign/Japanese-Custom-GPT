@@ -778,7 +778,8 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
     console.error('fastify.sendNotificationToUser is not a function');
     return;
   }
-
+  
+  console.log(`[handleTaskCompletion] Processing completion for placeholderId: ${placeholderId}, images: ${images?.length}`);
   fastify.sendNotificationToUser(userId, 'handleLoader', { imageId: placeholderId, action: 'remove' });
   fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId: placeholderId, spin: false });
   fastify.sendNotificationToUser(userId, 'updateImageCount', { chatId, count: images.length });
@@ -1414,7 +1415,6 @@ async function fetchNovitaMagic(data, flux = false) {
     
     // For non-FLUX, return just the task ID for polling
     const taskId = response.data.task_id;
-    console.log(`Novita task created with ID: ${taskId}`);
     return taskId;
     
   } catch (error) {
@@ -1645,7 +1645,8 @@ async function getImageSeed(db, imageId) {
 async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title, slug, imageUrl, aspectRatio, seed, blurredImageUrl = null, nsfw = false, fastify, isMerged = false, originalImageUrl = null, mergeId = null, shouldAutoMerge = false}) {
     
   const db = fastify.mongo.db;
-    
+  console.log(`[saveImageToDB] Attempting to save image for taskId: ${taskId}, imageUrl: ${imageUrl}`);
+
   try {
     const chatsGalleryCollection = db.collection('gallery');
 
@@ -1653,20 +1654,25 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
     const existingImage = await chatsGalleryCollection.findOne({
       userId: new ObjectId(userId),
       chatId: new ObjectId(chatId),
+      'images.taskId': taskId,
       'images.imageUrl': imageUrl
     });
-    
+
     if (existingImage) {
-      const image = existingImage.images.find(img => img.imageUrl === imageUrl);
-      console.log('[saveImageToDB] Image already exists, returning existing data');
-      return { 
-        imageId: image._id, 
-        imageUrl: image.imageUrl,
-        prompt: image.prompt,
-        title: image.title,
-        nsfw: image.nsfw,
-        isMerged: image.isMerged || false
-      };
+      const image = existingImage.images.find(img => 
+        img.imageUrl === imageUrl && img.taskId === taskId
+      );
+      if (image) {
+        console.log('[saveImageToDB] Image already exists for this task, returning existing data');
+        return { 
+          imageId: image._id, 
+          imageUrl: image.imageUrl,
+          prompt: image.prompt,
+          title: image.title,
+          nsfw: image.nsfw,
+          isMerged: image.isMerged || false
+        };
+      }
     }
 
     // Generate slug if not provided

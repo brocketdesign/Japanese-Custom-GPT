@@ -686,23 +686,18 @@ async function pollTaskStatus(taskId, fastify) {
   let zeroProgressAttempts = 0;
   const maxZeroProgressAttempts = 0;
 
-  console.log(`[pollTaskStatus] Starting to poll task: ${taskId}`);
-
   return new Promise((resolve, reject) => {
     const intervalId = setInterval(async () => {
       try {
         const taskStatus = await checkTaskStatus(taskId, fastify);
-        console.log(`[pollTaskStatus] Task ${taskId} - Status: ${taskStatus?.status}, Progress: ${taskStatus?.progress}, Attempts: ${zeroProgressAttempts}`);
         
         if(!taskStatus){
-          console.log(`[pollTaskStatus] Task ${taskId} not found`);
           clearInterval(intervalId);
           reject('Task not found');
           return;
         }
         
         if(taskStatus.status === 'failed') {
-          console.log(`[pollTaskStatus] Task ${taskId} failed`);
           clearInterval(intervalId);
           const taskRec = await db.collection('tasks').findOne({ taskId });
           const userDoc = await db.collection('users').findOne({ _id: taskRec.userId });
@@ -712,7 +707,6 @@ async function pollTaskStatus(taskId, fastify) {
         }
         
         if (taskStatus.status === 'processing' && !taskStarted) {
-          console.log(`[pollTaskStatus] Task ${taskId} started processing`);
           startTime = Date.now();
           taskStarted = true;
         }
@@ -720,22 +714,15 @@ async function pollTaskStatus(taskId, fastify) {
         // Check for zero progress attempts
         if (taskStatus.status === 'processing' && (taskStatus.progress === 0 || taskStatus.progress === undefined)) {
           zeroProgressAttempts++;
-          console.log(`[pollTaskStatus] Task ${taskId} - Zero progress attempt ${zeroProgressAttempts}/${maxZeroProgressAttempts}`);
           
           if (zeroProgressAttempts >= maxZeroProgressAttempts) {
-            console.log(`[pollTaskStatus] Task ${taskId} - Moving to background due to zero progress`);
             clearInterval(intervalId);
-            
-            const taskRec = await db.collection('tasks').findOne({ taskId });
-            console.log(`[pollTaskStatus] Task ${taskId} - Current task record:`, taskRec?.status);
             
             const updateResult = await db.collection('tasks').updateOne(
               { taskId }, 
               { $set: { status: 'background', updatedAt: new Date() } }
             );
             
-            console.log(`[pollTaskStatus] Task ${taskId} - Update result:`, updateResult);
-            console.log(`[pollTaskStatus] Task ${taskId} moved to background`);
             resolve({ status: 'background', taskId });
             return;
           }
@@ -744,42 +731,32 @@ async function pollTaskStatus(taskId, fastify) {
         }
 
         if (taskStatus.status === 'completed') {
-          console.log(`[pollTaskStatus] Task ${taskId} completed`);
           clearInterval(intervalId);
           if (!completedTasks.has(taskId)) {
             completedTasks.add(taskId);
             const task = await db.collection('tasks').findOne({ taskId });
             if (task) {
               saveAverageTaskTime(db, Date.now() - startTime, task.model_name);
-              console.log(`[pollTaskStatus] Task ${taskId} completed in ${Date.now() - startTime} ms`);
             }
             resolve(taskStatus);
           } 
         } else if (Date.now() - startTime > timeout && taskStarted) {
-          console.log(`[pollTaskStatus] Task ${taskId} - Timeout reached, moving to background`);
           clearInterval(intervalId);
-          
-          const taskRec = await db.collection('tasks').findOne({ taskId });
-          console.log(`[pollTaskStatus] Task ${taskId} - Current status before timeout:`, taskRec?.status);
           
           const updateResult = await db.collection('tasks').updateOne(
             { taskId }, 
             { $set: { status: 'background', updatedAt: new Date() } }
           );
           
-          console.log(`[pollTaskStatus] Task ${taskId} - Timeout update result:`, updateResult);
-          console.log(`[pollTaskStatus] Task ${taskId} moved to background due to timeout`);
           resolve({ status: 'background', taskId });
         }
       } catch (error) {
-        console.error(`[pollTaskStatus] Error polling task ${taskId}:`, error);
         clearInterval(intervalId);
         reject(error);
       }
     }, interval);
   });
 }
-
 // Handle task completion: send notifications and save images as needed
 async function handleTaskCompletion(taskStatus, fastify, options = {}) {
   const { chatCreation, translations, userId, chatId, placeholderId } = options;

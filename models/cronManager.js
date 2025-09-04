@@ -617,10 +617,10 @@ const initializeCronJobs = async (fastify) => {
       modelChatGenerationTask
     );
 
-    // Add background task processor (every minute)
+    // Add background task processor (every 20 seconds)
     configureCronJob(
       'backgroundTaskProcessor',
-      '*/1 * * * *',
+      '*/20 * * * * *',
       true,
       processBackgroundTasks(fastify)
     );

@@ -150,8 +150,6 @@ $(document).ready(function() {
       contentType: false,
       success: async function(response) {
         showNotification(translations.info_updated_successfully, 'success');
-        user = await fetchUser();
-        // Update user object with new showNSFW preference
         user.showNSFW = $('#nsfw-toggle').is(':checked');
       },
       error: function(jqXHR) {

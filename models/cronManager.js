@@ -187,45 +187,87 @@ const createModelChatGenerationTask = (fastify) => {
  */
 
 const processBackgroundTasks = (fastify) => async () => {
-  const db = fastify.mongo.db;
-  const tasksCollection = db.collection('tasks');
+  const startTime = Date.now();
+  console.log(`\n[processBackgroundTasks] ===== STARTING BACKGROUND TASK PROCESSING ${new Date().toISOString()} =====`);
   
-  // Get tasks that are truly background and not already processed
-  const backgroundTasks = await tasksCollection.find({ 
-    status: 'background',
-    processedAt: { $exists: false } // Only process tasks that haven't been processed yet
-  }).toArray();
-  
-  if (!backgroundTasks.length) return;
-  
-  console.log(`[processBackgroundTasks] Processing ${backgroundTasks.length} background tasks...`);
-  
-  for (const task of backgroundTasks) {
-    try {
-      // Mark as being processed to prevent duplicate processing
-      await tasksCollection.updateOne(
-        { _id: task._id },
-        { $set: { processedAt: new Date() } }
-      );
-      
-      const taskStatus = await checkTaskStatus(task.taskId, fastify);
-      if (taskStatus && taskStatus.status === 'completed') {
-        await handleTaskCompletion(taskStatus, fastify, {
-          chatCreation: task.chatCreation,
-          translations: fastify.translations?.en || {},
-          userId: task.userId.toString(),
-          chatId: task.chatId.toString(),
-          placeholderId: task.placeholderId
-        });
-      }
-    } catch (error) {
-      console.error(`[processBackgroundTasks] Error processing task ${task.taskId}:`, error);
-      // Remove the processedAt flag so it can be retried
-      await tasksCollection.updateOne(
-        { _id: task._id },
-        { $unset: { processedAt: 1 } }
-      );
+  try {
+    const db = fastify.mongo.db;
+    
+    if (!db) {
+      console.error('[processBackgroundTasks] Database not available');
+      return;
     }
+
+    const tasksCollection = db.collection('tasks');
+    
+    // Get tasks that are truly background and not already processed recently
+    const backgroundTasks = await tasksCollection.find({ 
+      status: 'background',
+      $or: [
+        { processedAt: { $exists: false } },
+        { processedAt: { $lt: new Date(Date.now() - 5 * 60 * 1000) } } // Reprocess tasks older than 5 minutes
+      ]
+    }).toArray();
+    
+    console.log(`[processBackgroundTasks] Found ${backgroundTasks.length} background tasks to process`);
+    
+    if (!backgroundTasks.length) {
+      console.log('[processBackgroundTasks] No background tasks found');
+      return;
+    }
+    
+    for (const task of backgroundTasks) {
+      console.log(`[processBackgroundTasks] Processing task: ${task.taskId}`);
+      
+      try {
+        // Mark as being processed to prevent duplicate processing
+        await tasksCollection.updateOne(
+          { _id: task._id },
+          { $set: { processedAt: new Date() } }
+        );
+        
+        const taskStatus = await checkTaskStatus(task.taskId, fastify);
+        
+        if (taskStatus && taskStatus.status === 'completed') {
+          console.log(`[processBackgroundTasks] Task ${task.taskId} is completed, handling completion`);
+          await handleTaskCompletion(taskStatus, fastify, {
+            chatCreation: task.chatCreation,
+            translations: fastify.translations?.en || {},
+            userId: task.userId.toString(),
+            chatId: task.chatId.toString(),
+            placeholderId: task.placeholderId
+          });
+          
+          // Mark task as completed in database
+          await tasksCollection.updateOne(
+            { _id: task._id },
+            { $set: { status: 'completed', updatedAt: new Date() } }
+          );
+          
+          console.log(`[processBackgroundTasks] Task ${task.taskId} completion handled successfully`);
+        } else {
+          console.log(`[processBackgroundTasks] Task ${task.taskId} is not completed yet, status: ${taskStatus?.status || 'unknown'}`);
+          // Remove processedAt flag so it can be retried later
+          await tasksCollection.updateOne(
+            { _id: task._id },
+            { $unset: { processedAt: 1 } }
+          );
+        }
+      } catch (error) {
+        console.error(`[processBackgroundTasks] Error processing task ${task.taskId}:`, error);
+        // Remove the processedAt flag so it can be retried
+        await tasksCollection.updateOne(
+          { _id: task._id },
+          { $unset: { processedAt: 1 } }
+        );
+      }
+    }
+    
+    const endTime = Date.now();
+    console.log(`[processBackgroundTasks] ===== COMPLETED BACKGROUND TASK PROCESSING in ${endTime - startTime}ms =====\n`);
+    
+  } catch (error) {
+    console.error('[processBackgroundTasks] Critical error in background task processing:', error);
   }
 };
 

@@ -1213,6 +1213,7 @@
   "character_is_sfw_only": "This character is SFW only and cannot generate adult content",
   "upgrade_now": "Upgrade Now",
   "newCharacter": {
+    "imageCompletionDone_message": "Your new character image is available.",
     "ai_generate_if_empty": "AI generate if empty",
     "selectedKeywords": "Selected Keywords:",
     "clickKeywordsPlaceholder": "Click keywords above to add them...",

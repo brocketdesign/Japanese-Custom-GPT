@@ -1198,6 +1198,7 @@
   "character_is_sfw_only": "このキャラクターはSFW専用で、成人向けコンテンツを生成することはできません。",
   "upgrade_now": "今すぐアップグレード",
   "newCharacter": {
+    "imageCompletionDone_message": "画像の補完が完了しました！",
     "ai_generate_if_empty": "空欄の場合、AIで生成",
     "selectedKeywords": "選択されたキーワード:",
     "clickKeywordsPlaceholder": "上記のキーワードをクリックして追加してください...",

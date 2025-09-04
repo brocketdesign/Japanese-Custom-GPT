@@ -681,82 +681,108 @@ async function centerCropImage(base64Image, targetWidth, targetHeight) {
   // Module to check the status of a task at regular intervals
   const completedTasks = new Set();
 
-    async function pollTaskStatus(taskId, fastify) {
-      let startTime = Date.now();
-      const interval = 3000;
-      const timeout = 2 * 60 * 1000; // 2 minutes
-      let taskStarted = false;
-      const db = fastify.mongo.db;
-      let zeroProgressAttempts = 0;
-      const maxZeroProgressAttempts = 0;
 
-      return new Promise((resolve, reject) => {
-        const intervalId = setInterval(async () => {
-          try {
-            const taskStatus = await checkTaskStatus(taskId, fastify);
-            //console.log (`[pollTaskStatus] ${taskStatus.progress != undefined ? `progress_percent: ${taskStatus.progress};`:''} status: ${taskStatus.status}; attempts: ${zeroProgressAttempts +1}/${maxZeroProgressAttempts}`);
-            if(!taskStatus){
-              clearInterval(intervalId);
-              reject('Task not found');
-              return;
-            }
-            if(taskStatus.status === 'failed') {
-              clearInterval(intervalId);
-              const taskRec = await db.collection('tasks').findOne({ taskId });
-              const userDoc = await db.collection('users').findOne({ _id: taskRec.userId });
-              await db.collection('tasks').updateOne({ taskId }, { $set: { status: 'failed', updatedAt: new Date() } });
-              reject({ status: 'failed', taskId });
-              return;
-            }
-            if (taskStatus.status === 'processing' && !taskStarted) {
-              console.log(`[pollTaskStatus] Task ${taskId} started`);
-              startTime = Date.now();
-              taskStarted = true;
-            }
+  async function pollTaskStatus(taskId, fastify) {
+    let startTime = Date.now();
+    const interval = 3000;
+    const timeout = 2 * 60 * 1000; // 2 minutes
+    let taskStarted = false;
+    const db = fastify.mongo.db;
+    let zeroProgressAttempts = 0;
+    const maxZeroProgressAttempts = 0;
 
-            // Check for zero progress attempts
-            if (taskStatus.status === 'processing' && (taskStatus.progress === 0 || taskStatus.progress === undefined)) {
-              zeroProgressAttempts++;
-              if (zeroProgressAttempts >= maxZeroProgressAttempts) {
-                clearInterval(intervalId);
-                // notify user and move to background processing
-                const taskRec = await db.collection('tasks').findOne({ taskId });
-                const userDoc = await db.collection('users').findOne({ _id: taskRec.userId });
-                await db.collection('tasks').updateOne({ taskId }, { $set: { status: 'background', updatedAt: new Date() } });
-                resolve({ status: 'background', taskId });
-                return;
-              }
-            } else if (taskStatus.status === 'processing') {
-              zeroProgressAttempts = 0; // Reset if progress moves
-            }
+    return new Promise((resolve, reject) => {
+      const intervalId = setInterval(async () => {
+        try {
+          const taskStatus = await checkTaskStatus(taskId, fastify);
+          //console.log (`[pollTaskStatus] ${taskStatus.progress != undefined ? `progress_percent: ${taskStatus.progress};`:''} status: ${taskStatus.status}; attempts: ${zeroProgressAttempts +1}/${maxZeroProgressAttempts}`);
+          if(!taskStatus){
+            clearInterval(intervalId);
+            reject('Task not found');
+            return;
+          }
+          if(taskStatus.status === 'failed') {
+            clearInterval(intervalId);
+            const taskRec = await db.collection('tasks').findOne({ taskId });
+            const userDoc = await db.collection('users').findOne({ _id: taskRec.userId });
+            await db.collection('tasks').updateOne({ taskId }, { $set: { status: 'failed', updatedAt: new Date() } });
+            reject({ status: 'failed', taskId });
+            return;
+          }
+          if (taskStatus.status === 'processing' && !taskStarted) {
+            console.log(`[pollTaskStatus] Task ${taskId} started`);
+            startTime = Date.now();
+            taskStarted = true;
+          }
 
-            if (taskStatus.status === 'completed') {
-              clearInterval(intervalId);
-              if (!completedTasks.has(taskId)) {
-                completedTasks.add(taskId);
-                // Access requestData from the scope where it's defined
-                const task = await db.collection('tasks').findOne({ taskId });
-                if (task) {
-                  saveAverageTaskTime(db, Date.now() - startTime, task.model_name);
-                  console.log(`[pollTaskStatus] Task ${taskId} completed in ${Date.now() - startTime} ms`);
-                }
-                resolve(taskStatus);
-              } 
-            } else if (Date.now() - startTime > timeout && taskStarted) {
+          // Check for zero progress attempts
+          if (taskStatus.status === 'processing' && (taskStatus.progress === 0 || taskStatus.progress === undefined)) {
+            zeroProgressAttempts++;
+            if (zeroProgressAttempts >= maxZeroProgressAttempts) {
               clearInterval(intervalId);
               // notify user and move to background processing
               const taskRec = await db.collection('tasks').findOne({ taskId });
               const userDoc = await db.collection('users').findOne({ _id: taskRec.userId });
-              await db.collection('tasks').updateOne({ taskId }, { $set: { status: 'background', updatedAt: new Date() } });
+              
+              const updateResult = await db.collection('tasks').updateOne(
+                { taskId }, 
+                { $set: { status: 'background', updatedAt: new Date() } }
+              );
+
               resolve({ status: 'background', taskId });
+              return;
             }
-          } catch (error) {
-            clearInterval(intervalId);
-            reject(error);
+          } else if (taskStatus.status === 'processing') {
+            zeroProgressAttempts = 0; // Reset if progress moves
           }
-        }, interval);
-      });
-    }
+
+          if (taskStatus.status === 'completed') {
+            clearInterval(intervalId);
+            if (!completedTasks.has(taskId)) {
+              completedTasks.add(taskId);
+              // Access requestData from the scope where it's defined
+              const task = await db.collection('tasks').findOne({ taskId });
+              if (task) {
+                saveAverageTaskTime(db, Date.now() - startTime, task.model_name);
+                console.log(`[pollTaskStatus] Task ${taskId} completed in ${Date.now() - startTime} ms`);
+              }
+              resolve(taskStatus);
+            } 
+          } else if (Date.now() - startTime > timeout && taskStarted) {
+            clearInterval(intervalId);
+            
+            // ENHANCED DEBUGGING: Same for timeout case
+            const taskRec = await db.collection('tasks').findOne({ taskId });
+            const userDoc = await db.collection('users').findOne({ _id: taskRec.userId });
+            
+            console.log(`[pollTaskStatus] TIMEOUT - MOVING TASK TO BACKGROUND:`);
+            console.log(`[pollTaskStatus] TaskID: ${taskId}, Current status:`, taskRec?.status);
+            
+            const updateResult = await db.collection('tasks').updateOne(
+              { taskId }, 
+              { $set: { status: 'background', updatedAt: new Date() } }
+            );
+            
+            console.log(`[pollTaskStatus] TIMEOUT UPDATE RESULT:`, updateResult);
+            
+            // Verify the update worked
+            const updatedTask = await db.collection('tasks').findOne({ taskId });
+            console.log(`[pollTaskStatus] TIMEOUT TASK AFTER UPDATE:`, {
+              taskId: updatedTask?.taskId,
+              status: updatedTask?.status,
+              updatedAt: updatedTask?.updatedAt,
+              chatCreation: updatedTask?.chatCreation
+            });
+            
+            resolve({ status: 'background', taskId });
+          }
+        } catch (error) {
+          clearInterval(intervalId);
+          reject(error);
+        }
+      }, interval);
+    });
+  }
 
 // Handle task completion: send notifications and save images as needed
 async function handleTaskCompletion(taskStatus, fastify, options = {}) {
@@ -803,6 +829,7 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
       const { userId: taskUserId, userChatId } = taskStatus;
       
       if (chatCreation) {
+        console.log(`[handleTaskCompletion] Character creation - sending characterImageGenerated for image ${index + 1}/${images.length}`);
         fastify.sendNotificationToUser(userId, 'characterImageGenerated', { imageUrl, nsfw, chatId });
         if (index === 0) {
           await saveChatImageToDB(fastify.mongo.db, chatId, imageUrl);
@@ -827,6 +854,7 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
   }
 
   if (chatCreation) {
+    console.log(`[handleTaskCompletion] Character creation completed - sending resetCharacterForm and notifications`);
     fastify.sendNotificationToUser(userId, 'resetCharacterForm');
     fastify.sendNotificationToUser(userId, 'showNotification', {
       message: translations.newCharacter.imageCompletionDone_message,
@@ -1641,37 +1669,63 @@ async function getImageSeed(db, imageId) {
     }
   }
 }
-
 async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title, slug, imageUrl, aspectRatio, seed, blurredImageUrl = null, nsfw = false, fastify, isMerged = false, originalImageUrl = null, mergeId = null, shouldAutoMerge = false}) {
     
   const db = fastify.mongo.db;
-  console.log(`[saveImageToDB] Attempting to save image for taskId: ${taskId}, imageUrl: ${imageUrl}`);
+  console.log(`[saveImageToDB] Attempting to save image for taskId: ${taskId}, imageUrl: ${imageUrl}, isMerged: ${isMerged}`);
 
   try {
     const chatsGalleryCollection = db.collection('gallery');
 
-    // Check if the image has already been saved for this task
-    const existingImage = await chatsGalleryCollection.findOne({
-      userId: new ObjectId(userId),
-      chatId: new ObjectId(chatId),
-      'images.taskId': taskId,
-      'images.imageUrl': imageUrl
-    });
+    // More flexible duplicate check for character creation and merged images
+    let existingImage;
+    
+    if (isMerged && mergeId) {
+      // For merged images, check by mergeId to avoid duplicates
+      existingImage = await chatsGalleryCollection.findOne({
+        userId: new ObjectId(userId),
+        chatId: new ObjectId(chatId),
+        'images.mergeId': mergeId
+      });
+      
+      if (existingImage) {
+        const image = existingImage.images.find(img => img.mergeId === mergeId);
+        if (image) {
+          console.log(`[saveImageToDB] Merged image already exists with mergeId: ${mergeId}, returning existing data`);
+          return { 
+            imageId: image._id, 
+            imageUrl: image.imageUrl,
+            prompt: image.prompt,
+            title: image.title,
+            nsfw: image.nsfw,
+            isMerged: image.isMerged || false
+          };
+        }
+      }
+    } else {
+      // For regular images, check by taskId and imageUrl
+      existingImage = await chatsGalleryCollection.findOne({
+        userId: new ObjectId(userId),
+        chatId: new ObjectId(chatId),
+        'images.taskId': taskId,
+        'images.imageUrl': imageUrl
+      });
 
-    if (existingImage) {
-      const image = existingImage.images.find(img => 
-        img.imageUrl === imageUrl && img.taskId === taskId
-      );
-      if (image) {
-        console.log('[saveImageToDB] Image already exists for this task, returning existing data');
-        return { 
-          imageId: image._id, 
-          imageUrl: image.imageUrl,
-          prompt: image.prompt,
-          title: image.title,
-          nsfw: image.nsfw,
-          isMerged: image.isMerged || false
-        };
+      if (existingImage) {
+        const image = existingImage.images.find(img => 
+          img.imageUrl === imageUrl && img.taskId === taskId
+        );
+        if (image) {
+          console.log(`[saveImageToDB] Image already exists for this task: ${taskId}, returning existing data`);
+          return { 
+            imageId: image._id, 
+            imageUrl: image.imageUrl,
+            prompt: image.prompt,
+            title: image.title,
+            nsfw: image.nsfw,
+            isMerged: image.isMerged || false
+          };
+        }
       }
     }
 
@@ -1717,6 +1771,8 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       if (mergeId) {
         imageDocument.mergeId = mergeId;
       }
+    } else {
+      imageDocument.isMerged = false;
     }
 
     await chatsGalleryCollection.updateOne(
@@ -1731,6 +1787,8 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       },
       { upsert: true }
     );
+
+    console.log(`[saveImageToDB] Successfully saved image: ${imageId}, isMerged: ${isMerged}, mergeId: ${mergeId || 'none'}`);
 
     // Update counters
     const chatsCollection = db.collection('chats');
@@ -1881,7 +1939,10 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       ? (title.en || title.ja || title.fr || '') 
       : (title || '');
     
-    const shouldAddMessage = !shouldAutoMerge || (shouldAutoMerge && isMerged);
+    // FIXED: For character creation, we should always add the message
+    // The shouldAutoMerge logic was preventing character creation images from being added
+    const isCharacterCreation = !userChatId; // Character creation typically doesn't have userChatId
+    const shouldAddMessage = isCharacterCreation || !shouldAutoMerge || (shouldAutoMerge && isMerged);
     
     if (shouldAddMessage && isMerged) {
       const imageMessage = {
@@ -1907,7 +1968,8 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       }
 
       await updateOriginalMessageWithMerge(imageMessage);
-    } else {
+    } else if (userChatId) {
+      // Only add to chat if we have a valid userChatId
       await addImageMessageToChat(
         userId, 
         userChatId, 

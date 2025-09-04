@@ -1207,8 +1207,7 @@
       "occupation": "職業",
       "hobbies": "趣味",
       "style": "スタイル",
-      "traits": "特徴",
-      "relationship": "関係性"
+      "traits": "特徴"
     },
     "keywords": {
       "personality": {
@@ -1270,18 +1269,6 @@
         "patient": "忍耐強い",
         "energetic": "エネルギッシュ",
         "thoughtful": "思いやりがある"
-      },
-      "relationship": {
-        "friend": "友達",
-        "mentor": "メンター",
-        "companion": "仲間",
-        "partner": "パートナー",
-        "rival": "ライバル",
-        "helper": "助手",
-        "protector": "守護者",
-        "student": "生徒",
-        "guide": "案内人",
-        "confidant": "相談相手"
       }
     },
     "nsfw": "NSFW（成人向け）",

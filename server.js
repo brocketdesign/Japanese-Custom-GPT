@@ -938,6 +938,31 @@ fastify.get('/dashboard', async (request, reply) => {
   }
 });
 
+fastify.get('/debug/tasks-status', async (request, reply) => {
+  const db = fastify.mongo.db;
+  
+  const recentTasks = await db.collection('tasks').find({
+    createdAt: { $gte: new Date(Date.now() - 30 * 60 * 1000) } // Last 30 minutes
+  }).sort({ createdAt: -1 }).toArray();
+  
+  const pendingTasks = await db.collection('tasks').find({ status: 'pending' }).toArray();
+  const backgroundTasks = await db.collection('tasks').find({ status: 'background' }).toArray();
+  
+  return {
+    recentTasks: recentTasks.length,
+    pendingTasks: pendingTasks.length,
+    backgroundTasks: backgroundTasks.length,
+    tasks: recentTasks.map(task => ({
+      taskId: task.taskId,
+      status: task.status,
+      chatCreation: task.chatCreation,
+      createdAt: task.createdAt,
+      updatedAt: task.updatedAt,
+      processedAt: task.processedAt
+    }))
+  };
+});
+
 fastify.get('/settings', async (request, reply) => {
   try {
     const db = fastify.mongo.db;

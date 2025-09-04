@@ -128,7 +128,7 @@
     let isAutoGen = false
 
     if (subscriptionStatus) {
-        $('.is-premium').each(function() {
+        $('#characterCreationModal .is-premium').each(function() {
             $(this).toggleClass('d-none')
         })
     }
@@ -252,7 +252,7 @@
             return;
         }
 
-        const keywordSections = ['personality', 'occupation', 'hobbies', 'style', 'traits', 'relationship'];
+        const keywordSections = ['personality', 'occupation', 'hobbies', 'style', 'traits'];
         
         keywordSections.forEach(section => {
             const sectionContainer = $(`.keyword-tags[data-section="${section}"]`);
@@ -384,7 +384,7 @@
     // Update the visual display of selected keywords
     function updateSelectedKeywordsDisplay() {
         const selectedKeywordsBySection = {};
-        const keywordSections = ['personality', 'occupation', 'hobbies', 'style', 'traits', 'relationship'];
+        const keywordSections = ['personality', 'occupation', 'hobbies', 'style', 'traits'];
         
         // Group selected keywords by section
         $('.keyword-tag.selected').each(function() {

@@ -202,21 +202,24 @@ const processBackgroundTasks = (fastify) => async () => {
     
     // Get tasks that are truly background and not already processed recently
     const backgroundTasks = await tasksCollection.find({ 
-      status: 'background',
-      $or: [
-        { processedAt: { $exists: false } },
-        { processedAt: { $lt: new Date(Date.now() - 5 * 60 * 1000) } } // Reprocess tasks older than 5 minutes
-      ]
+      status: 'background'
     }).toArray();
-    
-    console.log(`[processBackgroundTasks] Found ${backgroundTasks.length} background tasks to process`);
-    
-    if (!backgroundTasks.length) {
+
+    // Filter out recently processed tasks in JavaScript instead
+    const unprocessedTasks = backgroundTasks.filter(task => {
+      if (!task.processedAt) return true;
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      return task.processedAt < fiveMinutesAgo;
+    });
+
+    console.log(`[processBackgroundTasks] Found ${unprocessedTasks.length} unprocessed background tasks out of ${backgroundTasks.length} total`);
+
+    if (!unprocessedTasks.length) {
       console.log('[processBackgroundTasks] No background tasks found');
       return;
     }
-    
-    for (const task of backgroundTasks) {
+
+    for (const task of unprocessedTasks) {
       console.log(`[processBackgroundTasks] Processing task: ${task.taskId}`);
       
       try {

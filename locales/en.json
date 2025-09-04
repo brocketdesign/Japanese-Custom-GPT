@@ -1213,7 +1213,6 @@
   "character_is_sfw_only": "This character is SFW only and cannot generate adult content",
   "upgrade_now": "Upgrade Now",
   "newCharacter": {
-    "imageCompletionDone_message": "Your new character image is available.",
     "ai_generate_if_empty": "AI generate if empty",
     "selectedKeywords": "Selected Keywords:",
     "clickKeywordsPlaceholder": "Click keywords above to add them...",
@@ -1222,8 +1221,7 @@
       "occupation": "Occupation", 
       "hobbies": "Hobbies",
       "style": "Style",
-      "traits": "Traits",
-      "relationship": "Relationship"
+      "traits": "Traits"
     },
     "keywords": {
       "personality": {
@@ -1285,18 +1283,6 @@
         "patient": "Patient",
         "energetic": "Energetic",
         "thoughtful": "Thoughtful"
-      },
-      "relationship": {
-        "friend": "Friend",
-        "mentor": "Mentor",
-        "companion": "Companion",
-        "partner": "Partner",
-        "rival": "Rival",
-        "helper": "Helper",
-        "protector": "Protector",
-        "student": "Student",
-        "guide": "Guide",
-        "confidant": "Confidant"
       }
     },
     "nsfw": "NSFW (Not Safe for Work)",

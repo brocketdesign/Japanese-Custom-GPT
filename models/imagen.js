@@ -475,9 +475,6 @@ async function generateImg({
       requestData.image_base64 = croppedImage;
     }
 
-    // [DEBUG] Log the request data
-    console.log(`[generateImg] Request data for image generation:`, requestData);
-
     // Find modelId style
     const imageStyle = modelData ? modelData.style : 'anime';
     chat.imageStyle = chat.imageStyle || imageStyle; // Use chat image style or default to model style
@@ -621,7 +618,6 @@ async function generateImg({
     pollTaskStatus(novitaTaskId, fastify) 
     .then(taskStatus => {
       if (taskStatus.status === 'background') {
-        console.log(`[pollTaskStatus] Task ${taskStatus.taskId} moved to background`);
         return;
       }
     })
@@ -681,108 +677,108 @@ async function centerCropImage(base64Image, targetWidth, targetHeight) {
   // Module to check the status of a task at regular intervals
   const completedTasks = new Set();
 
+async function pollTaskStatus(taskId, fastify) {
+  let startTime = Date.now();
+  const interval = 3000;
+  const timeout = 2 * 60 * 1000; // 2 minutes
+  let taskStarted = false;
+  const db = fastify.mongo.db;
+  let zeroProgressAttempts = 0;
+  const maxZeroProgressAttempts = 0;
 
-  async function pollTaskStatus(taskId, fastify) {
-    let startTime = Date.now();
-    const interval = 3000;
-    const timeout = 2 * 60 * 1000; // 2 minutes
-    let taskStarted = false;
-    const db = fastify.mongo.db;
-    let zeroProgressAttempts = 0;
-    const maxZeroProgressAttempts = 0;
+  console.log(`[pollTaskStatus] Starting to poll task: ${taskId}`);
 
-    return new Promise((resolve, reject) => {
-      const intervalId = setInterval(async () => {
-        try {
-          const taskStatus = await checkTaskStatus(taskId, fastify);
-          //console.log (`[pollTaskStatus] ${taskStatus.progress != undefined ? `progress_percent: ${taskStatus.progress};`:''} status: ${taskStatus.status}; attempts: ${zeroProgressAttempts +1}/${maxZeroProgressAttempts}`);
-          if(!taskStatus){
-            clearInterval(intervalId);
-            reject('Task not found');
-            return;
-          }
-          if(taskStatus.status === 'failed') {
-            clearInterval(intervalId);
-            const taskRec = await db.collection('tasks').findOne({ taskId });
-            const userDoc = await db.collection('users').findOne({ _id: taskRec.userId });
-            await db.collection('tasks').updateOne({ taskId }, { $set: { status: 'failed', updatedAt: new Date() } });
-            reject({ status: 'failed', taskId });
-            return;
-          }
-          if (taskStatus.status === 'processing' && !taskStarted) {
-            console.log(`[pollTaskStatus] Task ${taskId} started`);
-            startTime = Date.now();
-            taskStarted = true;
-          }
+  return new Promise((resolve, reject) => {
+    const intervalId = setInterval(async () => {
+      try {
+        const taskStatus = await checkTaskStatus(taskId, fastify);
+        console.log(`[pollTaskStatus] Task ${taskId} - Status: ${taskStatus?.status}, Progress: ${taskStatus?.progress}, Attempts: ${zeroProgressAttempts}`);
+        
+        if(!taskStatus){
+          console.log(`[pollTaskStatus] Task ${taskId} not found`);
+          clearInterval(intervalId);
+          reject('Task not found');
+          return;
+        }
+        
+        if(taskStatus.status === 'failed') {
+          console.log(`[pollTaskStatus] Task ${taskId} failed`);
+          clearInterval(intervalId);
+          const taskRec = await db.collection('tasks').findOne({ taskId });
+          const userDoc = await db.collection('users').findOne({ _id: taskRec.userId });
+          await db.collection('tasks').updateOne({ taskId }, { $set: { status: 'failed', updatedAt: new Date() } });
+          reject({ status: 'failed', taskId });
+          return;
+        }
+        
+        if (taskStatus.status === 'processing' && !taskStarted) {
+          console.log(`[pollTaskStatus] Task ${taskId} started processing`);
+          startTime = Date.now();
+          taskStarted = true;
+        }
 
-          // Check for zero progress attempts
-          if (taskStatus.status === 'processing' && (taskStatus.progress === 0 || taskStatus.progress === undefined)) {
-            zeroProgressAttempts++;
-            if (zeroProgressAttempts >= maxZeroProgressAttempts) {
-              clearInterval(intervalId);
-              // notify user and move to background processing
-              const taskRec = await db.collection('tasks').findOne({ taskId });
-              const userDoc = await db.collection('users').findOne({ _id: taskRec.userId });
-              
-              const updateResult = await db.collection('tasks').updateOne(
-                { taskId }, 
-                { $set: { status: 'background', updatedAt: new Date() } }
-              );
-
-              resolve({ status: 'background', taskId });
-              return;
-            }
-          } else if (taskStatus.status === 'processing') {
-            zeroProgressAttempts = 0; // Reset if progress moves
-          }
-
-          if (taskStatus.status === 'completed') {
-            clearInterval(intervalId);
-            if (!completedTasks.has(taskId)) {
-              completedTasks.add(taskId);
-              // Access requestData from the scope where it's defined
-              const task = await db.collection('tasks').findOne({ taskId });
-              if (task) {
-                saveAverageTaskTime(db, Date.now() - startTime, task.model_name);
-                console.log(`[pollTaskStatus] Task ${taskId} completed in ${Date.now() - startTime} ms`);
-              }
-              resolve(taskStatus);
-            } 
-          } else if (Date.now() - startTime > timeout && taskStarted) {
+        // Check for zero progress attempts
+        if (taskStatus.status === 'processing' && (taskStatus.progress === 0 || taskStatus.progress === undefined)) {
+          zeroProgressAttempts++;
+          console.log(`[pollTaskStatus] Task ${taskId} - Zero progress attempt ${zeroProgressAttempts}/${maxZeroProgressAttempts}`);
+          
+          if (zeroProgressAttempts >= maxZeroProgressAttempts) {
+            console.log(`[pollTaskStatus] Task ${taskId} - Moving to background due to zero progress`);
             clearInterval(intervalId);
             
-            // ENHANCED DEBUGGING: Same for timeout case
             const taskRec = await db.collection('tasks').findOne({ taskId });
-            const userDoc = await db.collection('users').findOne({ _id: taskRec.userId });
-            
-            console.log(`[pollTaskStatus] TIMEOUT - MOVING TASK TO BACKGROUND:`);
-            console.log(`[pollTaskStatus] TaskID: ${taskId}, Current status:`, taskRec?.status);
+            console.log(`[pollTaskStatus] Task ${taskId} - Current task record:`, taskRec?.status);
             
             const updateResult = await db.collection('tasks').updateOne(
               { taskId }, 
               { $set: { status: 'background', updatedAt: new Date() } }
             );
             
-            console.log(`[pollTaskStatus] TIMEOUT UPDATE RESULT:`, updateResult);
-            
-            // Verify the update worked
-            const updatedTask = await db.collection('tasks').findOne({ taskId });
-            console.log(`[pollTaskStatus] TIMEOUT TASK AFTER UPDATE:`, {
-              taskId: updatedTask?.taskId,
-              status: updatedTask?.status,
-              updatedAt: updatedTask?.updatedAt,
-              chatCreation: updatedTask?.chatCreation
-            });
-            
+            console.log(`[pollTaskStatus] Task ${taskId} - Update result:`, updateResult);
+            console.log(`[pollTaskStatus] Task ${taskId} moved to background`);
             resolve({ status: 'background', taskId });
+            return;
           }
-        } catch (error) {
-          clearInterval(intervalId);
-          reject(error);
+        } else if (taskStatus.status === 'processing') {
+          zeroProgressAttempts = 0; // Reset if progress moves
         }
-      }, interval);
-    });
-  }
+
+        if (taskStatus.status === 'completed') {
+          console.log(`[pollTaskStatus] Task ${taskId} completed`);
+          clearInterval(intervalId);
+          if (!completedTasks.has(taskId)) {
+            completedTasks.add(taskId);
+            const task = await db.collection('tasks').findOne({ taskId });
+            if (task) {
+              saveAverageTaskTime(db, Date.now() - startTime, task.model_name);
+              console.log(`[pollTaskStatus] Task ${taskId} completed in ${Date.now() - startTime} ms`);
+            }
+            resolve(taskStatus);
+          } 
+        } else if (Date.now() - startTime > timeout && taskStarted) {
+          console.log(`[pollTaskStatus] Task ${taskId} - Timeout reached, moving to background`);
+          clearInterval(intervalId);
+          
+          const taskRec = await db.collection('tasks').findOne({ taskId });
+          console.log(`[pollTaskStatus] Task ${taskId} - Current status before timeout:`, taskRec?.status);
+          
+          const updateResult = await db.collection('tasks').updateOne(
+            { taskId }, 
+            { $set: { status: 'background', updatedAt: new Date() } }
+          );
+          
+          console.log(`[pollTaskStatus] Task ${taskId} - Timeout update result:`, updateResult);
+          console.log(`[pollTaskStatus] Task ${taskId} moved to background due to timeout`);
+          resolve({ status: 'background', taskId });
+        }
+      } catch (error) {
+        console.error(`[pollTaskStatus] Error polling task ${taskId}:`, error);
+        clearInterval(intervalId);
+        reject(error);
+      }
+    }, interval);
+  });
+}
 
 // Handle task completion: send notifications and save images as needed
 async function handleTaskCompletion(taskStatus, fastify, options = {}) {
@@ -857,12 +853,12 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
     console.log(`[handleTaskCompletion] Character creation completed - sending resetCharacterForm and notifications`);
     fastify.sendNotificationToUser(userId, 'resetCharacterForm');
     fastify.sendNotificationToUser(userId, 'showNotification', {
-      message: translations.newCharacter.imageCompletionDone_message,
+      message: translations?.newCharacter?.imageCompletionDone_message || 'Your image has been generated successfully.',
       icon: 'success'
     });
     const notification = {
-      title: translations.newCharacter.imageCompletionDone_title,
-      message: translations.newCharacter.imageCompletionDone_message,
+      title: translations?.newCharacter?.imageCompletionDone_title || 'Image generation completed',
+      message: translations?.newCharacter?.imageCompletionDone_message || 'Your image has been generated successfully.',
       link: `/chat/edit/${chatId}`,
       ico: 'success'
     };

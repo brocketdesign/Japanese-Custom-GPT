@@ -1151,8 +1151,7 @@
       "occupation": "Profession",
       "hobbies": "Loisirs",
       "style": "Style",
-      "traits": "Traits",
-      "relationship": "Relation"
+      "traits": "Traits"
     },
     "keywords": {
       "personality": {
@@ -1214,18 +1213,6 @@
         "patient": "Patient",
         "energetic": "Énergique",
         "thoughtful": "Attentionné"
-      },
-      "relationship": {
-        "friend": "Ami",
-        "mentor": "Mentor",
-        "companion": "Compagnon",
-        "partner": "Partenaire",
-        "rival": "Rival",
-        "helper": "Assistant",
-        "protector": "Protecteur",
-        "student": "Élève",
-        "guide": "Guide",
-        "confidant": "Confident"
       }
     },
     "nsfw": "NSFW (Non Sûr Pour le Travail)",

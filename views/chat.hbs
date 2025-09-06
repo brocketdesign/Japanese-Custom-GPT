@@ -25,7 +25,6 @@
                 <div class="container-fluid">
                     <div class="d-flex align-items-center justify-content-center">
                         <div style="position: absolute;left: 20px;top: 10px;">
-
                             <button 
                             class="btn shadow-0 onchat-on" 
                             style="display: none;"
@@ -41,7 +40,7 @@
                             </div>
                         </div>
                         <div class="d-flex flex-row " style="cursor: pointer; min-height: 40px;" onclick="showDiscovery()">
-                            <div class="brand-logo me-3 onchat-off">
+                            <div class="brand-logo me-3 onchat-off" style="display: flex; position: absolute; left: 10px;">
                                 <i class="bi bi-chat-heart-fill text-white fs-3"></i>
                             </div>
                         </div>  
@@ -60,7 +59,7 @@
             <section id="chat-discovery" class="onchat-off mt-5 pt-3" style="display: block;">
 
                 <!-- Card menu title & description -->
-                <section class="animate__animated m-3 p-3" style="overflow-x: hidden;" data-animate="animate__fadeInLeft" data-delay="0.3s">
+                <section class="animate__animated mt-5 m-3 pt-5 p-3" style="overflow-x: hidden;" data-animate="animate__fadeInLeft" data-delay="0.3s">
                     <div class="container text-center mb-3 animate__animated" data-animate="animate__fadeInLeft" data-delay="0.3s">
                         <h2 class="fw-bold u-color-grad">{{translations.promo.title}}</h2>
                         <p class="text-muted">{{translations.exploreCharactersDescription}}</p>
@@ -168,7 +167,7 @@
                 
                 <!-- Card menu -->
                 <div class="is-premium card-menu-container mb-3 px-0" style="display: none;">
-                    <div class="d-flex overflow-auto px-3 py-5" style="scrollbar-width: thin;justify-content: space-between;">
+                    <div class="d-flex overflow-auto px-3 pb-5" style="scrollbar-width: thin;justify-content: space-between;">
                         <!-- Create Character Card -->
                         <div class="character-create-card shadow-sm rounded p-3 text-center mx-2 flex-shrink-0" 
                              onclick="loadCharacterCreationPage()"

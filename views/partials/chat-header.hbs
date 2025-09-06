@@ -1,4 +1,21 @@
-
+<!-- Horizontal Chat Menu -->
+<div id="horizontal-chat-menu" class="onchat-off sticky-top bg-transparent shadow-0 border-0 w-100 d-none" style="z-index: 1020;">
+    <div class="container-fluid pt-4">
+        <div class="d-flex align-items-center">
+            <h6 class="mb-0 me-3 text-muted small flex-shrink-0">{{translations.recent_chats}}</h6>
+            <div id="horizontal-chat-loading" class="d-flex align-items-center justify-content-center py-3" style="display: none !important;">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <small class="text-muted">Loading chats...</small>
+            </div>
+            <div id="horizontal-chat-list" class="d-flex overflow-auto flex-nowrap flex-grow-1" style="scroll-behavior: smooth; scrollbar-width: none; -ms-overflow-style: none;">
+                <!-- Chat thumbnails will be inserted here -->
+            </div>
+        </div>
+    </div>
+</div>
 <div id="chat-recommend" class="onchat-on px-4 text-white rounded d-flex align-items-center justify-content-start scroll-horizontal" style="min-height: 70px;padding: 15px 0px;overflow-x: auto;overflow-y: hidden;white-space: nowrap;">
     <div class="characters" style="display: flex;flex-direction: row;overflow-x: scroll;"></div>
+</div>
 </div>

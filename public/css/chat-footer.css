@@ -249,9 +249,9 @@
     background: white;
     border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-    max-width: 80vw;
+    max-width: 100vw;
     width: 90%;
-    max-height: 80vh;
+    max-height: 90vh;
     overflow-y: auto;
     transform: scale(0.9) translateY(20px);
     transition: all 0.3s ease;
@@ -299,7 +299,7 @@
 }
 
 .settings-modal-body {
-    padding: 20px 30px 30px;
+    padding: 20px 10px 30px;
 }
 
 .settings-section {
@@ -703,8 +703,7 @@
         margin: 10px;
     }
     
-    .settings-modal-header,
-    .settings-modal-body {
+    .settings-modal-header{
         padding: 20px;
     }
     

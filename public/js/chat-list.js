@@ -1296,10 +1296,10 @@ function handleChatThumbClick(el) {
         return;
     }
     // Navigate to chat page
-    fetchChatData(selectChatId, userId);
-
-    // Move the thumbnail to the front
-    $el.prependTo($el.parent());
+    fetchChatData(selectChatId, userId, null, function() {
+        // Move the thumbnail to the front
+        $el.prependTo($el.parent());
+    });
 }
 
 // Update horizontal chat menu when current chat changes

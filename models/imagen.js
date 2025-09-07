@@ -1952,6 +1952,26 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
         title,
       );
     }
+      
+    // Send WebSocket notification for auto-generated images (non-character creation)
+    if (fastify.sendNotificationToUser && userChatId && !shouldAutoMerge) {
+      console.log(`[saveImageToDB] Sending WebSocket notification for image: ${imageId}`);
+      
+      const notificationData = {
+        id: imageId.toString(),
+        imageId: imageId.toString(),
+        imageUrl,
+        userChatId: userChatId.toString(),
+        title,
+        prompt,
+        nsfw,
+        isMergeFace: isMerged || false,
+        isAutoMerge: isMerged || false,
+        url: imageUrl
+      };
+      
+      fastify.sendNotificationToUser(userId.toString(), 'imageGenerated', notificationData);
+    }
 
     return { 
       imageId, 

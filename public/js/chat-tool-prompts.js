@@ -4,7 +4,8 @@
  */
 class PromptManager {
     constructor() {
-        this.activeGenerations = new Map(); // Track active generations with metadata
+        this.activeGenerations = new Map();
+        this.autoGenerations = new Map(); 
         this.pollInterval = null;
         this.bindEvents();
         this.startPolling();
@@ -169,8 +170,27 @@ class PromptManager {
             }
         }, 30000); // 30 seconds
     }
+    
+    bindAutoGenerationEvents() {
+        // Listen for auto-generation registration from WebSocket
+        if (window.addEventListener) {
+            window.addEventListener('registerAutoGeneration', (event) => {
+                const { taskId, placeholderId, userChatId, startTime } = event.detail;
+                this.autoGenerations.set(taskId, {
+                    placeholderId,
+                    startTime,
+                    userChatId,
+                    isAutoGeneration: true
+                });
+                
+                if (this.isDevelopmentMode()) {
+                    console.log(`[PromptManager] Registered auto-generation: ${taskId}`);
+                }
+            });
+        }
+    }
 
-    // Check for completed tasks
+    // Update checkActiveGenerations to include auto-generations
     async checkActiveGenerations() {
         const userChatId = sessionStorage.getItem('userChatId') || window.userChatId;
         
@@ -191,26 +211,31 @@ class PromptManager {
             const data = await response.json();
             const completedTasks = data.tasks || [];
 
-            for (const [promptId, metadata] of this.activeGenerations.entries()) {
+            // Check both prompt generations and auto-generations
+            const allGenerations = new Map([...this.activeGenerations, ...this.autoGenerations]);
+
+            for (const [generationId, metadata] of allGenerations.entries()) {
                 // Check if task has been running for more than 5 minutes (timeout)
                 if (Date.now() - metadata.startTime > 5 * 60 * 1000) {
                     if (this.isDevelopmentMode()) {
-                        console.warn(`[PromptManager] Task for prompt ${promptId} timed out, cleaning up`);
+                        console.warn(`[PromptManager] Task ${generationId} timed out, cleaning up`);
                     }
                     displayOrRemoveImageLoader(metadata.placeholderId, 'remove');
-                    this.activeGenerations.delete(promptId);
+                    this.activeGenerations.delete(generationId);
+                    this.autoGenerations.delete(generationId);
                     continue;
                 }
 
-                // Check if this prompt's generation is completed
+                // Check if this generation is completed
                 const completedTask = completedTasks.find(task => 
                     task.placeholderId === metadata.placeholderId || 
-                    task.customPromptId === promptId
+                    task.customPromptId === generationId ||
+                    task.taskId === generationId // Add taskId matching for auto-generations
                 );
 
                 if (completedTask && completedTask.status === 'completed') {
                     if (this.isDevelopmentMode()) {
-                        console.log(`[PromptManager] Found completed task for prompt ${promptId}:`, completedTask);
+                        console.log(`[PromptManager] Found completed task for ${generationId}:`, completedTask);
                     }
                     
                     // Remove the loader
@@ -237,15 +262,16 @@ class PromptManager {
                         }
                     }
                     
-                    // Clean up
-                    this.activeGenerations.delete(promptId);
+                    // Clean up from both maps
+                    this.activeGenerations.delete(generationId);
+                    this.autoGenerations.delete(generationId);
                 }
             }
         } catch (error) {
             console.error('[PromptManager] Error checking active generations:', error);
         }
     }
-
+    
     // Clean up method for when WebSocket reconnects
     handleWebSocketReconnect() {
         if (this.isDevelopmentMode()) {

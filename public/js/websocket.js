@@ -136,6 +136,31 @@ function initializeWebSocket(onConnectionResult = null) {
             handleRegenSpin(imageId, spin);
             break;
           }
+          case 'registerAutoGeneration': {
+            const { taskId, placeholderId, userChatId, startTime } = data.notification;
+            
+            // Register with PromptManager if available
+            if (window.promptManager && window.promptManager.autoGenerations) {
+                window.promptManager.autoGenerations.set(taskId, {
+                    placeholderId,
+                    startTime,
+                    userChatId,
+                    isAutoGeneration: true
+                });
+                
+                if (window.MODE === 'development') {
+                    console.log(`[WebSocket] Registered auto-generation: ${taskId}`);
+                }
+            }
+            
+            // Dispatch custom event for other listeners
+            if (window.dispatchEvent) {
+                window.dispatchEvent(new CustomEvent('registerAutoGeneration', {
+                    detail: { taskId, placeholderId, userChatId, startTime }
+                }));
+            }
+            break;
+          }
           case 'imageGenerated': {
             const { userChatId, imageId, imageUrl, title, prompt, nsfw, isUpscaled, isMergeFace } = data.notification;
             generateImage({

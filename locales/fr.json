@@ -188,6 +188,20 @@
     "failed": "Échec de la connexion. Veuillez rafraîchir la page."
   },
   "personas": {
+    "customPersona": {
+      "name": "Nom",
+      "namePlaceholder": "Entrez le nom de la persona",
+      "ageRange": "Tranche d'âge",
+      "selectAge": "Sélectionnez la tranche d'âge",
+      "description": "Description",
+      "descriptionHelper": "Décrivez la personnalité, le parcours et les caractéristiques de votre persona personnalisée",
+      "descriptionPlaceholder": "Écrivez une description détaillée de la personnalité, du parcours, des intérêts de votre persona et de son comportement attendu...",
+      "createPersona": "Créer une persona",
+      "allFieldsRequired": "Tous les champs sont obligatoires",
+      "personaCreated": "Persona personnalisée créée avec succès !",
+      "errorCreating": "Erreur lors de la création de la persona. Veuillez réessayer."
+    },
+    "createCustomPersona": "Créer une persona personnalisée",
     "noPersonas": "Aucune persona trouvée",
     "noPersonasDescription": "Vous n'avez pas encore ajouté de personas.",
     "selectPersona": "Sélectionner une persona",

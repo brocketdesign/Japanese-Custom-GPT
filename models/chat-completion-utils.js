@@ -59,7 +59,7 @@ function chatDataToString(data) {
     const system_prompt = data?.system_prompt;
     const details_description = data?.details_description;
     const personality = details_description?.personality;
-
+    
     return `
         Name: ${data.name || "Unknown"}
         Short Introduction: ${data.short_intro || ""}
@@ -82,6 +82,17 @@ function chatDataToString(data) {
 // Converts user details to string format
 function userDetailsToString(user) {
     let userDetails = '';
+
+    // Handle custom personas
+    if (user.isCustomPersona) {
+        return `
+            Name: ${user.name || "Unknown"}
+            Age Range: ${user.ageRange || "Not specified"}
+            Type: Custom Persona
+            Short Introduction: ${user.short_intro || ""}
+        `.trim();
+    }
+
     // Check if persona
     if(user.imageModel){
         // Prepare user details

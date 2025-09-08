@@ -149,6 +149,15 @@
                 <div id="personas-list" class="row mx-0 mb-5">
                     <h4 class="text-center w-100 mt-2">{{translations.personas.selectPersona}}</h4>
                     <p class="text-center text-muted w-100">{{translations.personas.selectPersona_description}}</p>
+                    
+                    <!-- Add Custom Persona Button -->
+                    <div class="w-100 text-center mb-3">
+                        <button type="button" class="btn btn-outline-primary" id="create-custom-persona-btn">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            {{translations.personas.createCustomPersona}}
+                        </button>
+                    </div>
+                    
                     <div id="persona-activated-counter" class="d-none text-center fw-bold my-2"></div>
                     <div class="loading-spinner text-center mt-4">
                         <div class="spinner-border" role="status">
@@ -275,6 +284,71 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Custom Persona Creation Modal -->
+<div class="modal fade" id="custom-persona-modal" tabindex="-1" aria-labelledby="customPersonaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="customPersonaModalLabel">
+                    <i class="bi bi-person-plus me-2"></i>
+                    {{translations.personas.createCustomPersona}}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="custom-persona-form">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="custom-persona-name">
+                            {{translations.personas.customPersona.name}}
+                        </label>
+                        <input type="text" id="custom-persona-name" class="form-control" 
+                               placeholder="{{translations.personas.customPersona.namePlaceholder}}" 
+                               maxlength="50" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="custom-persona-age">
+                            {{translations.personas.customPersona.ageRange}}
+                        </label>
+                        <select id="custom-persona-age" class="form-select" required>
+                            <option value="">{{translations.personas.customPersona.selectAge}}</option>
+                            <option value="18-25">18-25</option>
+                            <option value="26-35">26-35</option>
+                            <option value="36-45">36-45</option>
+                            <option value="46-55">46-55</option>
+                            <option value="56+">56+</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="custom-persona-description">
+                            {{translations.personas.customPersona.description}}
+                        </label>
+                        <div class="text-muted mb-2 small">
+                            {{translations.personas.customPersona.descriptionHelper}}
+                        </div>
+                        <textarea id="custom-persona-description" class="form-control" 
+                                  rows="4" 
+                                  placeholder="{{translations.personas.customPersona.descriptionPlaceholder}}" 
+                                  maxlength="500" required></textarea>
+                        <div class="form-text">
+                            <span id="description-char-count">0</span>/500 {{translations.characters}}
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    {{translations.cancel}}
+                </button>
+                <button type="submit" form="custom-persona-form" class="btn btn-primary" id="custom-persona-save-btn">
+                    <i class="bi bi-check-circle me-2"></i>
+                    {{translations.personas.customPersona.createPersona}}
+                </button>
             </div>
         </div>
     </div>

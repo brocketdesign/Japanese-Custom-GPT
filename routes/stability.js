@@ -424,7 +424,6 @@ async function saveGiftIdToChat(db, chatId, userChatId, giftId) {
           
           // Just return the tasks with their existing customPromptId
           const tasksWithPrompts = tasks.map(task => {
-              console.log(`[tasksWithPrompts] Custom prompt ID for task ${task.taskId}:`, task.customPromptId);
               return {
                   ...task,
                   customPromptId: task.customPromptId || null

@@ -2,7 +2,8 @@
 const PersonaModule = {
     currentUserChatId: sessionStorage.getItem('userChatId') || null,
     isFloatingContainerVisible: false,
-    personaWasSelected: false, // Track if a persona was selected
+    personaWasSelected: false,
+    isCustomPersonaModalVisible: false,
     CACHE_KEY: 'userPersonasCache',
     CACHE_TIMESTAMP_KEY: 'userPersonasCacheTimestamp',
     CACHE_DURATION: 5 * 60 * 1000, // 5 minutes in milliseconds
@@ -28,10 +29,44 @@ const PersonaModule = {
         // Save character as persona button
         $(document).on('click', '.save-as-persona', this.handleSaveAsPersona.bind(this));
         
+        // Custom persona modal events
+        $(document).on('click', '#create-custom-persona-btn', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[PersonaModule] Create custom persona button clicked'); // Debug log
+            
+            // Check if user is logged in
+            const isTemporary = !!user?.isTemporary;
+            if (isTemporary) { 
+                openLoginForm(); 
+                return; 
+            }
+            
+            this.showCustomPersonaModal();
+        });
+        
+        // Handle modal hidden event
+        $('#custom-persona-modal').on('hidden.bs.modal', () => {
+            this.isCustomPersonaModalVisible = false;
+            this.resetCustomPersonaForm();
+        });
+        
+        // Handle modal shown event
+        $('#custom-persona-modal').on('shown.bs.modal', () => {
+            this.isCustomPersonaModalVisible = true;
+            // Focus on name field
+            $('#custom-persona-name').focus();
+        });
+        
+        $(document).on('submit', '#custom-persona-form', this.handleCustomPersonaSubmit.bind(this));
+        $(document).on('input', '#custom-persona-description', this.updateCharacterCount.bind(this));
+        
         // Close container on escape key
         $(document).on('keydown', (e) => {
-            if (e.key === 'Escape' && this.isFloatingContainerVisible) {
-                this.hideFloatingContainer();
+            if (e.key === 'Escape') {
+                if (this.isFloatingContainerVisible) {
+                    this.hideFloatingContainer();
+                }
             }
         });
     },
@@ -467,6 +502,135 @@ const PersonaModule = {
         }
     },
 
+    // Custom Persona Modal Methods
+    showCustomPersonaModal() {
+        console.log('[PersonaModule] Showing custom persona modal'); // Debug log
+        
+        // Use Bootstrap 5 modal
+        const modal = new bootstrap.Modal(document.getElementById('custom-persona-modal'), {
+            backdrop: 'static',
+            keyboard: true
+        });
+        
+        this.resetCustomPersonaForm();
+        modal.show();
+        
+        console.log('[PersonaModule] Bootstrap modal.show() called'); // Debug log
+    },
+
+    hideCustomPersonaModal() {
+        console.log('[PersonaModule] Hiding custom persona modal'); // Debug log
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('custom-persona-modal'));
+        if (modal) {
+            modal.hide();
+        }
+    },
+
+    resetCustomPersonaForm() {
+        $('#custom-persona-form')[0].reset();
+        $('#description-char-count').text('0');
+        $('#custom-persona-save-btn').prop('disabled', false).html(`
+            <i class="bi bi-check-circle me-2"></i>
+            ${window.translations?.personas?.customPersona?.createPersona || 'Create Persona'}
+        `);
+    },
+
+    updateCharacterCount() {
+        const text = $('#custom-persona-description').val();
+        const count = text.length;
+        $('#description-char-count').text(count);
+        
+        // Change color as approaching limit
+        const $counter = $('#description-char-count').parent();
+        if (count > 450) {
+            $counter.removeClass('text-muted text-warning').addClass('text-danger');
+        } else if (count > 350) {
+            $counter.removeClass('text-muted text-danger').addClass('text-warning');
+        } else {
+            $counter.removeClass('text-warning text-danger').addClass('text-muted');
+        }
+    },
+
+    async handleCustomPersonaSubmit(e) {
+        e.preventDefault();
+        
+        const name = $('#custom-persona-name').val().trim();
+        const ageRange = $('#custom-persona-age').val();
+        const description = $('#custom-persona-description').val().trim();
+        
+        if (!name || !ageRange || !description) {
+            showNotification(
+                window.translations?.personas?.customPersona?.allFieldsRequired || 
+                'All fields are required', 
+                'error'
+            );
+            return;
+        }
+        
+        // Disable submit button and show loading
+        const $submitBtn = $('#custom-persona-save-btn');
+        $submitBtn.prop('disabled', true).html(`
+            <div class="spinner-border spinner-border-sm me-2" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            ${window.translations?.creating || 'Creating...'}
+        `);
+        
+        try {
+            const response = await fetch('/api/user/custom-persona', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name,
+                    ageRange,
+                    description
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification(
+                    window.translations?.personas?.customPersona?.personaCreated || 
+                    'Custom persona created successfully!', 
+                    'success'
+                );
+                
+                // Clear cache and refresh personas
+                this.clearPersonasCache();
+                this.hideCustomPersonaModal();
+                
+                // Reload personas in the container
+                if (this.isFloatingContainerVisible) {
+                    this.loadUserPersonas();
+                }
+                
+                // Add to user.personas array if it exists
+                if (user && Array.isArray(user.personas)) {
+                    user.personas.push(data.personaId);
+                }
+                
+            } else {
+                throw new Error(data.error || 'Unknown error occurred');
+            }
+        } catch (error) {
+            console.error('Error creating custom persona:', error);
+            showNotification(
+                window.translations?.personas?.customPersona?.errorCreating || 
+                'Error creating persona. Please try again.', 
+                'error'
+            );
+        } finally {
+            // Re-enable submit button
+            $submitBtn.prop('disabled', false).html(`
+                <i class="bi bi-check-circle me-2"></i>
+                ${window.translations?.personas?.customPersona?.createPersona || 'Create Persona'}
+            `);
+        }
+    },
     showError(message) {
         $('#personas-grid').html(`
             <div class="error-message">

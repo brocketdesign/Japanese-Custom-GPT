@@ -148,5 +148,109 @@ async function routes(fastify, options) {
             res.status(500).send({ success: false, error: 'Internal server error' });
         }
     });
+
+
+    // Create custom persona
+    fastify.post('/api/user/custom-persona', async (req, res) => {
+        try {
+            const userId = req.user._id;
+            const { name, ageRange, description } = req.body;
+            
+            // Validation
+            if (!name || !ageRange || !description) {
+                return res.status(400).send({ 
+                    success: false, 
+                    error: 'All fields (name, ageRange, description) are required' 
+                });
+            }
+            
+            // Validate input lengths
+            if (name.length > 50) {
+                return res.status(400).send({ 
+                    success: false, 
+                    error: 'Name must be 50 characters or less' 
+                });
+            }
+            
+            if (description.length > 500) {
+                return res.status(400).send({ 
+                    success: false, 
+                    error: 'Description must be 500 characters or less' 
+                });
+            }
+            
+            // Validate age range
+            const validAgeRanges = ['18-25', '26-35', '36-45', '46-55', '56+'];
+            if (!validAgeRanges.includes(ageRange)) {
+                return res.status(400).send({ 
+                    success: false, 
+                    error: 'Invalid age range' 
+                });
+            }
+            
+            const db = fastify.mongo.db;
+            
+            // Create the custom persona document
+            const customPersona = {
+                name: name.trim(),
+                character: 'custom',
+                isCustomPersona: true,
+                createdBy: new ObjectId(userId),
+                ageRange,
+                short_intro: `A custom persona created by user. Age: ${ageRange}`,
+                system_prompt: `You are ${name.trim()}, a ${ageRange} year old person. ${description.trim()}`,
+                details_description: {
+                    personality: {
+                        personality: description.trim(),
+                        background: `Custom persona in the ${ageRange} age range`,
+                        occupation: 'Not specified',
+                        hobbies: [],
+                        interests: [],
+                        likes: [],
+                        dislikes: [],
+                        specialAbilities: [],
+                        reference_character: name.trim()
+                    }
+                },
+                chatImageUrl: '/img/custom-persona-avatar.png', // Default avatar for custom personas
+                messagesCount: 0,
+                nsfw: false, // Custom personas are SFW by default
+                tags: ['custom', 'user-created'],
+                createdAt: new Date(),
+                updatedAt: new Date()
+            };
+            
+            // Insert the custom persona into the chats collection
+            const result = await db.collection('chats').insertOne(customPersona);
+            const personaId = result.insertedId.toString();
+            
+            // Add the persona to the user's personas array
+            await db.collection('users').updateOne(
+                { _id: new ObjectId(userId) },
+                { $push: { personas: personaId } }
+            );
+            
+            console.log(`[POST /api/user/custom-persona] Created custom persona ${personaId} for user ${userId}`);
+            
+            res.send({ 
+                success: true, 
+                message: 'Custom persona created successfully',
+                personaId: personaId,
+                persona: {
+                    _id: personaId,
+                    name: customPersona.name,
+                    chatImageUrl: customPersona.chatImageUrl,
+                    character: customPersona.character
+                }
+            });
+            
+        } catch (error) {
+            console.error('[POST /api/user/custom-persona] Error:', error);
+            res.status(500).send({ 
+                success: false, 
+                error: 'Internal server error while creating custom persona' 
+            });
+        }
+    });
 }
 module.exports = routes;

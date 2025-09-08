@@ -238,6 +238,20 @@
     "failed": "Connection failed. Please refresh the page."
   },
   "personas": {
+    "customPersona": {
+      "name": "Name",
+      "namePlaceholder": "Enter persona name",
+      "ageRange": "Age Range",
+      "selectAge": "Select age range",
+      "description": "Description",
+      "descriptionHelper": "Describe the personality, background, and characteristics of your custom persona",
+      "descriptionPlaceholder": "Write a detailed description of your persona's personality, background, interests, and how they should behave...",
+      "createPersona": "Create Persona",
+      "allFieldsRequired": "All fields are required",
+      "personaCreated": "Custom persona created successfully!",
+      "errorCreating": "Error creating persona. Please try again."
+    },
+    "createCustomPersona": "Create Custom Persona",
     "noPersonas": "No personas available",
     "noPersonasDescription": "You have not added any personas yet.",
     "selectPersona": "Select a persona",

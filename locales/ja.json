@@ -188,6 +188,20 @@
     "failed": "接続に失敗しました。ページをリフレッシュしてください。"
   },
   "personas": {
+    "customPersona": {
+      "name": "名前",
+      "namePlaceholder": "ペルソナ名を入力",
+      "ageRange": "年齢範囲",
+      "selectAge": "年齢範囲を選択",
+      "description": "説明",
+      "descriptionHelper": "カスタムペルソナの性格、背景、特徴を説明してください",
+      "descriptionPlaceholder": "ペルソナの性格、背景、興味、振る舞い方などを詳しく記入してください...",
+      "createPersona": "ペルソナを作成",
+      "allFieldsRequired": "すべての項目が必須です",
+      "personaCreated": "カスタムペルソナが正常に作成されました！",
+      "errorCreating": "ペルソナの作成中にエラーが発生しました。再試行してください。"
+    },
+    "createCustomPersona": "カスタムペルソナを作成",
     "enabled": "有効",
     "disabled": "無効",
     "enabled_notification": "目標が有効になりました",

@@ -1,0 +1,33 @@
+{
+  "speechToText": {
+    "startRecording": "Commencer l'enregistrement vocal",
+    "stopRecording": "Arrêter l'enregistrement",
+    "listening": "À l'écoute...",
+    "speakNow": "Parlez maintenant, je vous écoute !",
+    "processing": "Traitement en cours...",
+    "processingAudio": "Conversion de la parole en texte...",
+    "success": "Succès !",
+    "speechRecognized": "Reconnaissance vocale réussie",
+    "error": "Erreur",
+    "errorOccurred": "Une erreur s'est produite pendant la reconnaissance vocale",
+    "cancel": "Annuler",
+    "selectLanguage": "Sélectionner la langue :",
+    "notSupported": "La reconnaissance vocale n'est pas prise en charge par ce navigateur",
+    "permissionDenied": "Autorisation du microphone refusée. Veuillez autoriser l'accès au microphone et réessayer.",
+    "noAudioDetected": "Aucun audio détecté. Veuillez parler plus fort ou vérifier votre microphone.",
+    "networkError": "Erreur réseau. Veuillez vérifier votre connexion et réessayer.",
+    "serviceUnavailable": "Le service de reconnaissance vocale est actuellement indisponible.",
+    "fileTooLarge": "Le fichier audio est trop volumineux. Veuillez essayer un enregistrement plus court.",
+    "autoSendEnabled": "Envoi automatique activé - les messages seront envoyés automatiquement après la reconnaissance vocale",
+    "autoSendDisabled": "Envoi automatique désactivé - vous devrez envoyer manuellement les messages après la reconnaissance vocale",
+    "keyboardShortcut": "Appuyez sur Ctrl+Shift+M (Cmd+Shift+M sur Mac) pour démarrer la reconnaissance vocale",
+    "settings": {
+      "title": "Paramètres de reconnaissance vocale",
+      "description": "Configurez le fonctionnement de la reconnaissance vocale dans votre chat",
+      "autoSend": "Envoi automatique des messages",
+      "autoSendDescription": "Envoyer automatiquement les messages après la reconnaissance vocale",
+      "enabled": "Reconnaissance vocale activée",
+      "enabledDescription": "Activer ou désactiver la fonctionnalité de reconnaissance vocale"
+    }
+  }
+}

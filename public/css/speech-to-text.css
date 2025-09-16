@@ -1,0 +1,257 @@
+/* Speech to Text Feature Styles */
+
+.speech-btn {
+    position: relative;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    border: none;
+    color: white;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+}
+
+.speech-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+    background: linear-gradient(135deg, #0056b3 0%, #007bff 100%);
+}
+
+.speech-btn:active {
+    transform: translateY(0);
+}
+
+.speech-btn.recording {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    animation: pulse 1.5s infinite;
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+}
+
+.speech-btn.processing {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    animation: spin 1s linear infinite;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 25px rgba(220, 53, 69, 0.6);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+    }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Recording Wave Animation */
+.recording-waves {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px;
+    height: 80px;
+    pointer-events: none;
+}
+
+.wave {
+    position: absolute;
+    border: 2px solid rgba(220, 53, 69, 0.3);
+    border-radius: 50%;
+    animation: wave 1.5s linear infinite;
+}
+
+.wave:nth-child(1) { animation-delay: 0s; }
+.wave:nth-child(2) { animation-delay: 0.5s; }
+.wave:nth-child(3) { animation-delay: 1s; }
+
+@keyframes wave {
+    0% {
+        width: 50px;
+        height: 50px;
+        opacity: 1;
+    }
+    100% {
+        width: 80px;
+        height: 80px;
+        opacity: 0;
+    }
+}
+
+/* Speech Status Modal */
+.speech-status-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.speech-status-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.speech-status-content {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.speech-status-modal.show .speech-status-content {
+    transform: scale(1);
+}
+
+.speech-status-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.speech-status-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.speech-status-description {
+    color: #666;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.speech-cancel-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.speech-cancel-btn:hover {
+    background: #5a6268;
+}
+
+/* Language Selector */
+.speech-language-selector {
+    margin: 15px 0;
+}
+
+.speech-language-btn {
+    display: inline-block;
+    padding: 5px 15px;
+    margin: 3px;
+    border: 2px solid #007bff;
+    background: transparent;
+    color: #007bff;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.speech-language-btn:hover,
+.speech-language-btn.active {
+    background: #007bff;
+    color: white;
+}
+
+/* Audio Visualizer */
+.audio-visualizer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    margin: 20px 0;
+}
+
+.audio-bar {
+    width: 4px;
+    height: 20px;
+    background: #007bff;
+    border-radius: 2px;
+    animation: audiowave 1s ease-in-out infinite;
+}
+
+.audio-bar:nth-child(1) { animation-delay: 0.1s; }
+.audio-bar:nth-child(2) { animation-delay: 0.2s; }
+.audio-bar:nth-child(3) { animation-delay: 0.3s; }
+.audio-bar:nth-child(4) { animation-delay: 0.4s; }
+.audio-bar:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes audiowave {
+    0%, 100% {
+        height: 20px;
+        background: #007bff;
+    }
+    50% {
+        height: 40px;
+        background: #0056b3;
+    }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .speech-status-content {
+        padding: 20px;
+        margin: 20px;
+    }
+    
+    .speech-status-icon {
+        font-size: 2.5rem;
+    }
+    
+    .speech-status-title {
+        font-size: 1.3rem;
+    }
+}
+
+/* Error States */
+.speech-error {
+    color: #dc3545;
+}
+
+.speech-error .speech-status-icon {
+    color: #dc3545;
+}
+
+/* Success States */
+.speech-success {
+    color: #28a745;
+}
+
+.speech-success .speech-status-icon {
+    color: #28a745;
+}

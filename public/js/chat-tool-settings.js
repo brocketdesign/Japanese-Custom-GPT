@@ -10,7 +10,9 @@ class ChatToolSettings {
             autoMergeFace: true,
             suggestionsEnabled: true,
             selectedModel: 'mistral',
-            autoImageGeneration: true
+            autoImageGeneration: true,
+            speechRecognitionEnabled: true,
+            speechAutoSend: false
         };
         
         this.isLoading = false;
@@ -21,11 +23,31 @@ class ChatToolSettings {
         this.isPremium = false;
         this.translations = window.chatToolSettingsTranslations || {};
         this.onFirstTimeClose = null;
+        this.speechToTextTranslations = window.speechToTextTranslations || {};
         
         this.init();
         this.loadSettings();
     }
 
+    // Add speech-to-text translation method
+    speechT(key, fallback = key) {
+        if (key.includes('.')) {
+            const keys = key.split('.');
+            let value = this.speechToTextTranslations;
+            
+            for (const k of keys) {
+                if (value && typeof value === 'object' && k in value) {
+                    value = value[k];
+                } else {
+                    return fallback;
+                }
+            }
+            
+            return value || fallback;
+        }
+        
+        return this.speechToTextTranslations[key] || fallback;
+    }   
     // Translation method
     t(key, fallback = key) {
         if (key.includes('.')) {
@@ -204,8 +226,61 @@ class ChatToolSettings {
                 this.settings.suggestionsEnabled = e.target.checked;
             });
         }
+        
+        // Speech recognition enable switch
+        const speechRecognitionEnableSwitch = document.getElementById('speech-recognition-enable-switch');
+        if (speechRecognitionEnableSwitch) {
+            speechRecognitionEnableSwitch.addEventListener('change', (e) => {
+                this.settings.speechRecognitionEnabled = e.target.checked;
+                this.toggleSpeechButton();
+            });
+        }
+
+        // Speech auto-send switch
+        const speechAutoSendSwitch = document.getElementById('speech-auto-send-switch');
+        if (speechAutoSendSwitch) {
+            speechAutoSendSwitch.addEventListener('change', (e) => {
+                this.settings.speechAutoSend = e.target.checked;
+                this.updateAutoSendFeedback();
+            });
+        }
     }
 
+    toggleSpeechButton() {
+        const speechBtn = document.getElementById('speech-to-text-btn');
+        if (speechBtn) {
+            if (this.settings.speechRecognitionEnabled) {
+                speechBtn.style.display = 'inline-block';
+                speechBtn.disabled = false;
+            } else {
+                speechBtn.style.display = 'none';
+                speechBtn.disabled = true;
+            }
+        }
+    }
+
+    updateAutoSendFeedback() {
+        // Show a brief notification about auto-send status
+        const message = this.settings.speechAutoSend ? 
+            this.speechT('autoSendEnabled') : 
+            this.speechT('autoSendDisabled');
+        
+        if (typeof showNotification === 'function') {
+            showNotification(message, 'info');
+        }
+    }
+
+    // Getter methods for speech settings
+    getSpeechRecognitionEnabled() {
+        return this.settings.speechRecognitionEnabled !== undefined ? 
+            this.settings.speechRecognitionEnabled : true;
+    }
+
+    getSpeechAutoSend() {
+        return this.settings.speechAutoSend !== undefined ? 
+            this.settings.speechAutoSend : false;
+    }
+    
     // Model selection method
     selectModel(selectedOption) {
         // Check if this is a premium model and user is not premium
@@ -1164,6 +1239,23 @@ class ChatToolSettings {
         if (suggestionsEnableSwitch) {
             suggestionsEnableSwitch.checked = this.settings.suggestionsEnabled !== undefined ? this.settings.suggestionsEnabled : true;
         }
+
+        // Update speech recognition enable switch
+        const speechRecognitionEnableSwitch = document.getElementById('speech-recognition-enable-switch');
+        if (speechRecognitionEnableSwitch) {
+            speechRecognitionEnableSwitch.checked = this.settings.speechRecognitionEnabled !== undefined ? 
+                this.settings.speechRecognitionEnabled : true;
+        }
+
+        // Update speech auto-send switch
+        const speechAutoSendSwitch = document.getElementById('speech-auto-send-switch');
+        if (speechAutoSendSwitch) {
+            speechAutoSendSwitch.checked = this.settings.speechAutoSend !== undefined ? 
+                this.settings.speechAutoSend : false;
+        }
+
+        // Apply initial speech button state
+        this.toggleSpeechButton();
 
         // Update premium indicators
         this.setupPremiumIndicators(subscriptionStatus);

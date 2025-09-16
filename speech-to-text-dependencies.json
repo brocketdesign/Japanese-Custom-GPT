@@ -1,0 +1,14 @@
+{
+  "name": "speech-to-text-dependencies",
+  "description": "Required dependencies for speech-to-text feature",
+  "dependencies": {
+    "node-fetch": "^2.6.7",
+    "form-data": "^4.0.0"
+  },
+  "devDependencies": {},
+  "notes": {
+    "node-fetch": "For making HTTP requests to OpenAI API", 
+    "form-data": "For constructing FormData for OpenAI API requests",
+    "multipart": "Fastify has built-in multipart support via @fastify/multipart"
+  }
+}

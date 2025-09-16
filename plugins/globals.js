@@ -29,7 +29,8 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     const chatSuggestionsTranslationsCache = {}; // Add cache for chat suggestions translations
     const onboardingTranslationsCache = {}; // Add cache for onboarding translations
     const legalTranslationsCache = {}; // Add cache for legal translations
-
+    const speechToTextTranslationsCache = {}; // Add cache for speech-to-text translations
+    
     // Decorate Fastify with user, lang, and translations functions
     fastify.decorate('getUser', getUser);
     fastify.decorate('getLang', getLang);
@@ -45,6 +46,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorate('getChatSuggestionsTranslations', getChatSuggestionsTranslations); // Add chat suggestions translations decorator
     fastify.decorate('getOnboardingTranslations', getOnboardingTranslations); // Add onboarding translations decorator
     fastify.decorate('getLegalTranslations', getLegalTranslations); // Add legal translations decorator
+    fastify.decorate('getSpeechToTextTranslations', getSpeechToTextTranslations); // Add speech-to-text translations decorator
     
     // Attach `lang` and `user` dynamically
     Object.defineProperty(fastify, 'lang', {
@@ -73,6 +75,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorateRequest('chatSuggestionsTranslations', null); // Add chat suggestions translations to request
     fastify.decorateRequest('onboardingTranslations', null); // Add onboarding translations to request
     fastify.decorateRequest('legalTranslations', null); // Add legal translations to request
+    fastify.decorateRequest('speechToTextTranslations', null); // Add speech-to-text translations to request
 
     // Pre-handler to set user, lang, and translations
     fastify.addHook('preHandler', async (request, reply) => {
@@ -91,6 +94,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         request.chatSuggestionsTranslations = getChatSuggestionsTranslations(request.lang); // Load chat suggestions translations
         request.onboardingTranslations = getOnboardingTranslations(request.lang); // Load onboarding translations
         request.legalTranslations = getLegalTranslations(request.lang); // Load legal translations
+        request.speechToTextTranslations = getSpeechToTextTranslations(request.lang); // Load speech-to-text translations
    
         // Make translations available in Handlebars templates
         reply.locals = {
@@ -107,6 +111,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             chatSuggestionsTranslations: request.chatSuggestionsTranslations, // Make chat suggestions translations available
             onboardingTranslations: request.onboardingTranslations, // Make onboarding translations available
             legalTranslations: request.legalTranslations, // Make legal translations available
+            speechToTextTranslations: request.speechToTextTranslations, // Make speech-to-text translations available
             user: request.user, // Make user available
             isUserAdmin: request.isUserAdmin, // Make admin status available
             mode: process.env.MODE,
@@ -424,6 +429,26 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         return legalTranslationsCache[currentLang];
     }
 
+    /** Load SpeechToTextTranslations for a specific language (cached for performance) */
+    function getSpeechToTextTranslations(currentLang) {
+        if (!currentLang) currentLang = 'en';
+        
+        if (!speechToTextTranslationsCache[currentLang]) {
+            const speechToTextTranslationFile = path.join(__dirname, '..', 'locales', `speech-to-text-${currentLang}.json`);
+            if (fs.existsSync(speechToTextTranslationFile)) {
+                try {
+                    speechToTextTranslationsCache[currentLang] = JSON.parse(fs.readFileSync(speechToTextTranslationFile, 'utf-8'));
+                } catch (e) {
+                    fastify.log.error(`Error reading speech-to-text translations for ${currentLang}:`, e);
+                    speechToTextTranslationsCache[currentLang] = {};
+                }
+            } else {
+                speechToTextTranslationsCache[currentLang] = {}; // Fallback to empty object if translation file is missing
+            }
+        }
+        return speechToTextTranslationsCache[currentLang];
+    }
+
     /** Middleware: Set request language and user */
     async function setRequestLangAndUser(request, reply) {
         request.user = await fastify.getUser(request, reply);
@@ -440,6 +465,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         request.chatSuggestionsTranslations = fastify.getChatSuggestionsTranslations(request.lang);
         request.onboardingTranslations = fastify.getOnboardingTranslations(request.lang);
         request.legalTranslations = fastify.getLegalTranslations(request.lang);
+        request.speechToTextTranslations = fastify.getSpeechToTextTranslations(request.lang);
         request.isAdmin = await checkUserAdmin(fastify, request.user._id) || false;
 
         // Add onboarding status check
@@ -468,6 +494,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             chatSuggestionsTranslations: request.chatSuggestionsTranslations, // Add chat suggestions translations to locals
             onboardingTranslations: request.onboardingTranslations, // Add onboarding translations to locals
             legalTranslations: request.legalTranslations, // Add legal translations to locals
+            speechToTextTranslations: request.speechToTextTranslations, // Add speech-to-text translations to locals
             lang: request.lang,
             user: request.user,
             isAdmin: request.isAdmin

@@ -1,0 +1,31 @@
+{
+    "startRecording": "Start voice recording",
+    "stopRecording": "Stop recording", 
+    "listening": "Listening...",
+    "speakNow": "Speak now, I'm listening!",
+    "processing": "Processing...",
+    "processingAudio": "Converting speech to text...",
+    "success": "Success!",
+    "speechRecognized": "Speech recognized successfully",
+    "error": "Error",
+    "errorOccurred": "An error occurred during speech recognition",
+    "cancel": "Cancel",
+    "selectLanguage": "Select Language:",
+    "notSupported": "Speech recognition is not supported in this browser",
+    "permissionDenied": "Microphone permission denied. Please allow microphone access and try again.",
+    "noAudioDetected": "No audio detected. Please speak louder or check your microphone.",
+    "networkError": "Network error. Please check your connection and try again.",
+    "serviceUnavailable": "Speech recognition service is currently unavailable.",
+    "fileTooLarge": "Audio file is too large. Please try a shorter recording.",
+    "autoSendEnabled": "Auto-send enabled - messages will be sent automatically after speech recognition",
+    "autoSendDisabled": "Auto-send disabled - you'll need to manually send messages after speech recognition",
+    "keyboardShortcut": "Press Ctrl+Shift+M (Cmd+Shift+M on Mac) to start speech recognition",
+    "settings": {
+      "title": "Speech Recognition Settings",
+      "description": "Configure how speech-to-text works in your chat",
+      "autoSend": "Auto-send Messages",
+      "autoSendDescription": "Automatically send messages after speech recognition completes",
+      "enabled": "Speech Recognition Enabled",
+      "enabledDescription": "Enable or disable speech-to-text functionality"
+    }
+  }

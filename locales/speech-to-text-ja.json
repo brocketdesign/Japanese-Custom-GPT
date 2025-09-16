@@ -1,0 +1,33 @@
+{
+  "speechToText": {
+    "startRecording": "音声録音を開始",
+    "stopRecording": "録音を停止",
+    "listening": "聞いています...",
+    "speakNow": "今話してください、聞いています！",
+    "processing": "処理中...",
+    "processingAudio": "音声をテキストに変換しています...",
+    "success": "成功！",
+    "speechRecognized": "音声認識が成功しました",
+    "error": "エラー",
+    "errorOccurred": "音声認識中にエラーが発生しました",
+    "cancel": "キャンセル",
+    "selectLanguage": "言語を選択:",
+    "notSupported": "このブラウザでは音声認識がサポートされていません",
+    "permissionDenied": "マイクのアクセス許可が拒否されました。マイクへのアクセスを許可して再試行してください。",
+    "noAudioDetected": "音声が検出されませんでした。もっと大きな声で話すか、マイクを確認してください。",
+    "networkError": "ネットワークエラーです。接続を確認して再試行してください。",
+    "serviceUnavailable": "音声認識サービスは現在利用できません。",
+    "fileTooLarge": "音声ファイルが大きすぎます。短い録音で試してください。",
+    "autoSendEnabled": "自動送信が有効 - 音声認識後にメッセージが自動的に送信されます",
+    "autoSendDisabled": "自動送信が無効 - 音声認識後に手動でメッセージを送信する必要があります",
+    "keyboardShortcut": "Ctrl+Shift+M（MacではCmd+Shift+M）を押して音声認識を開始",
+    "settings": {
+      "title": "音声認識設定",
+      "description": "チャットでの音声認識の動作を設定します",
+      "autoSend": "メッセージ自動送信",
+      "autoSendDescription": "音声認識完了後に自動的にメッセージを送信します",
+      "enabled": "音声認識を有効化",
+      "enabledDescription": "音声認識機能の有効/無効を切り替えます"
+    }
+  }
+}

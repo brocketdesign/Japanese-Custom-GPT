@@ -138,7 +138,7 @@ fastify.register(require('@fastify/cors'), {
 });
 fastify.register(fastifyMultipart, {
   limits: {
-    fileSize: 10 * 1024 * 1024,
+    fileSize: 25 * 1024 * 1024, // 25MB to match OpenAI Whisper API limit
   },
 });
 

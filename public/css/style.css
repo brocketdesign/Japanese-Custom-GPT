@@ -2511,7 +2511,31 @@ opacity: 0.8;
 .settings-switch input:checked + .settings-switch-slider:before {
     transform: translateX(35px);
 }
+.settings-info-box {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+}
 
+.settings-info-box i {
+    color: #6c757d;
+    font-size: 16px;
+}
+
+.dark-mode .settings-info-box {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #a0aec0;
+}
+
+.dark-mode .settings-info-box i {
+    color: #a0aec0;
+}
 /* Enhanced Settings Modal Styles */
 .settings-modal-overlay {
     position: fixed;

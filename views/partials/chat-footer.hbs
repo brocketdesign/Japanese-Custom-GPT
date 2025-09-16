@@ -116,7 +116,7 @@
                             <i class="bi bi-arrow-left"></i>
                         </button>
                         <div class="input-group w-100">
-                            <textarea id="userMessage" class="form-control py-2 border-0 me-1" style="max-height: 80px; background-image: none; min-height: auto; padding-top: 5px !important; padding-left: 10px !important; padding-bottom: 0 !important;" placeholder="チャットしよう"></textarea>
+                            <textarea id="userMessage" class="form-control py-2 border-0 me-1" style="height: 50px;max-height: 80px; background-image: none; min-height: auto; padding-top: 5px !important; padding-left: 10px !important; padding-bottom: 0 !important;" placeholder="チャットしよう"></textarea>
                             <button id="sendImageMessage" class="btn btn-light px-3 border-0 rounded me-1" type="button">
                                 <i class="bi bi-image"></i>
                             </button>
@@ -618,6 +618,59 @@
                 </div>
             </div>
 
+            <!-- Speech Recognition Settings -->
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    <div class="settings-section-title">
+                        <i class="bi bi-mic-fill me-2"></i>
+                        {{speechToTextTranslations.settings.title}}
+                    </div>
+                </div>
+                <div class="settings-description text-muted mb-4">
+                    {{speechToTextTranslations.settings.description}}
+                </div>
+                
+                <!-- Enable Speech Recognition Switch -->
+                <div class="settings-field">
+                    <div class="settings-field-header">
+                        <label class="settings-label fw-semibold mb-0">{{speechToTextTranslations.settings.enabled}}</label>
+                        <div class="settings-switch-container">
+                            <label class="settings-switch">
+                                <input type="checkbox" id="speech-recognition-enable-switch" checked>
+                                <span class="settings-switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="settings-description text-muted small mt-2">
+                        {{speechToTextTranslations.settings.enabledDescription}}
+                    </div>
+                </div>
+
+                <!-- Auto Send Messages Switch -->
+                <div class="settings-field">
+                    <div class="settings-field-header">
+                        <label class="settings-label fw-semibold mb-0">{{speechToTextTranslations.settings.autoSend}}</label>
+                        <div class="settings-switch-container">
+                            <label class="settings-switch">
+                                <input type="checkbox" id="speech-auto-send-switch">
+                                <span class="settings-switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="settings-description text-muted small mt-2">
+                        {{speechToTextTranslations.settings.autoSendDescription}}
+                    </div>
+                </div>
+
+                <!-- Keyboard Shortcut Info -->
+                <div class="settings-field">
+                    <div class="settings-info-box">
+                        <i class="bi bi-keyboard me-2"></i>
+                        <span>{{speechToTextTranslations.keyboardShortcut}}</span>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Chat Suggestions Settings -->
             <div class="settings-section">
                 <div class="settings-section-header">
@@ -680,6 +733,7 @@
 </div>
 
 <script>
+
 // Ensure toolbar scrolling works properly on mobile
 document.addEventListener('DOMContentLoaded', function() {
     const toolbarContainer = document.getElementById('toolbar-main');

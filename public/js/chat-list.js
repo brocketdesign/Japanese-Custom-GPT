@@ -65,9 +65,27 @@ $(document).on('click','#toggle-chat-list',function(){
     $('#chat-list').show();
     $('.onchat-off, .onchat-on').hide();
 
+    $('.goBackButton')
+    .removeClass('d-none')
+    .css('opacity', 1)
+    .css('pointer-events', 'auto')
+    .css('visibility', 'visible')
+    .show();
+
     displayChatList(null, userId);
 });
 
+// Close chat list when clicking #close-chat-list-btn
+$(document).on('click','#close-chat-list-btn',function(){
+    $('#chat-list').hide();
+    $('.onchat-off').show();
+    $('.onchat-on').hide();
+    hideNavbarChatActions();
+    if ($('#horizontal-chat-menu').length) {
+        $('#horizontal-chat-menu').removeClass('d-none');
+        displayHorizontalChatList(userId);
+    }
+});
 // if the  url is like '/chat/?list=true'
 if (window.location.pathname === '/chat/' && window.location.search === '?list=true') {
     setTimeout(() => {

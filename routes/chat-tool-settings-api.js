@@ -37,7 +37,9 @@ async function routes(fastify, options) {
                     autoMergeFace: true,
                     selectedModel: 'mistral',
                     suggestionsEnabled: true,
-                    autoImageGeneration: isPremium // Premium feature - disabled by default for non-premium
+                    autoImageGeneration: isPremium,
+                    speechRecognitionEnabled: true,
+                    speechAutoSend: false
                 };
                 return reply.send({ success: true, settings: defaultSettings, isPremium });
             }
@@ -96,7 +98,9 @@ async function routes(fastify, options) {
                 autoMergeFace: Boolean(settings.autoMergeFace !== undefined ? settings.autoMergeFace : true),
                 selectedModel: String(settings.selectedModel || 'mistral'),
                 suggestionsEnabled: Boolean(settings.suggestionsEnabled !== undefined ? settings.suggestionsEnabled : true),
-                autoImageGeneration: isPremium ? Boolean(settings.autoImageGeneration !== undefined ? settings.autoImageGeneration : false) : false // Premium feature
+                autoImageGeneration: isPremium ? Boolean(settings.autoImageGeneration !== undefined ? settings.autoImageGeneration : false) : false, // Premium feature
+                speechRecognitionEnabled: Boolean(settings.speechRecognitionEnabled !== undefined ? settings.speechRecognitionEnabled : true),
+                speechAutoSend: Boolean(settings.speechAutoSend !== undefined ? settings.speechAutoSend : false)
             };
 
             // Validate ranges and constraints
@@ -193,7 +197,8 @@ async function routes(fastify, options) {
                 autoMergeFace: true,
                 selectedModel: 'mistral',
                 suggestionsEnabled: true,
-                autoImageGeneration: isPremium // Premium feature
+                speechRecognitionEnabled: true,
+                speechAutoSend: false
             };
 
             reply.send({ 
@@ -270,7 +275,9 @@ async function routes(fastify, options) {
                 autoMergeFace: true,
                 selectedModel: 'mistral',
                 suggestionsEnabled: true,
-                autoImageGeneration: isPremium // Premium feature
+                autoImageGeneration: isPremium,
+                speechRecognitionEnabled: true,
+                speechAutoSend: false
             };
 
             reply.send({ success: true, settings: defaultSettings, isChatSpecific: false, isPremium });

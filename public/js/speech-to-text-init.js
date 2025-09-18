@@ -52,10 +52,10 @@ document.addEventListener('DOMContentLoaded', function() {
             messageInput.value = text;
             
             // Trigger input event to update any listeners
-            messageInput.dispatchEvent(new Event('input', { bubbles: true }));
+            //messageInput.dispatchEvent(new Event('input', { bubbles: true }));
             
             // Focus the input
-            messageInput.focus();
+            //messageInput.focus();
             
             if (isLocalMode) {
                 console.log('[Speech-to-Text Init] Text inserted into message input successfully');

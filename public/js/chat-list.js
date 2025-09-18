@@ -1,5 +1,6 @@
 var chatsPerPage = 10;
 let initChatList = false;
+let initHorizontalChatMenu = false;
 
 // Cache object structure
 let chatCache = {
@@ -656,7 +657,7 @@ function initializeHorizontalChatMenu() {
 // Display chats in horizontal menu (similar to displayImageThumb)
 function displayHorizontalChatList(userId) {
     if (!userId || $('#horizontal-chat-list').length === 0) return;
-    
+
     // Show loading spinner
     $('#horizontal-chat-loading').show();
     $('#horizontal-chat-list').hide();
@@ -680,6 +681,7 @@ function displayHorizontalChatList(userId) {
 
 // Display chat thumbnails in horizontal menu (similar to displayImageThumb)
 function displayChatThumbs(chats, userId) {
+    console.log('Rendering horizontal chat thumbnails');
     const horizontalChatList = $('#horizontal-chat-list');
     
     // Hide loading spinner
@@ -1156,6 +1158,9 @@ function initializeHorizontalChatMenu() {
 function displayHorizontalChatList(userId) {
     if (!userId || $('#horizontal-chat-list').length === 0) return;
     
+    if (initHorizontalChatMenu) return;
+    initHorizontalChatMenu = true;
+    
     // Show loading spinner
     $('#horizontal-chat-loading').show();
     $('#horizontal-chat-list').hide();
@@ -1179,6 +1184,7 @@ function displayHorizontalChatList(userId) {
 
 // Display chat thumbnails in horizontal menu (similar to displayImageThumb)
 function displayChatThumbs(chats, userId) {
+    console.log('Rendering horizontal chat thumbnails');
     const horizontalChatList = $('#horizontal-chat-list');
     
     // Hide loading spinner

@@ -1,5 +1,4 @@
 {
-  "speechToText": {
     "startRecording": "Commencer l'enregistrement vocal",
     "stopRecording": "Arrêter l'enregistrement",
     "listening": "À l'écoute...",
@@ -29,5 +28,4 @@
       "enabled": "Reconnaissance vocale activée",
       "enabledDescription": "Activer ou désactiver la fonctionnalité de reconnaissance vocale"
     }
-  }
 }

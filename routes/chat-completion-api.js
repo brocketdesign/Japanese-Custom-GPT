@@ -362,13 +362,21 @@ async function routes(fastify, options) {
                     ...userMessages
                 ];
             }
+            // add a message to make sure the assistant answers in the correct language
+            messagesForCompletion.push({
+                role: 'user',
+                name: 'master',
+                content: `You must answer in ${language} if the user speaks unless explicitly asked to change language.`
+            });
 
             // Generate completion
             const customModel = (language === 'ja' || language === 'japanese') ? 'deepseek' : 'mistral';
             const selectedModel = userSettings.selectedModel || customModel;
             const isPremium = subscriptionStatus;
-
+            
+            //console.log(`[/api/openai-chat-completion] Using model: ${selectedModel}, Language: ${language}, Premium: ${isPremium}`);
             //console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
+            //console.log(`[/api/openai-chat-completion] Messages for completion:`, messagesForCompletion);
             generateCompletion(messagesForCompletion, 600, selectedModel, language, selectedModel, isPremium).then(async (completion) => {
                 if (completion) {
                     fastify.sendNotificationToUser(userId, 'displayCompletionMessage', { message: completion, uniqueId });

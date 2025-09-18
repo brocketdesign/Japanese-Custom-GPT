@@ -1,5 +1,4 @@
 {
-  "speechToText": {
     "startRecording": "音声録音を開始",
     "stopRecording": "録音を停止",
     "listening": "聞いています...",
@@ -29,5 +28,4 @@
       "enabled": "音声認識を有効化",
       "enabledDescription": "音声認識機能の有効/無効を切り替えます"
     }
-  }
 }

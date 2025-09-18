@@ -32,7 +32,8 @@ const {
     updateMessagesCount,
     updateChatLastMessage,
     updateUserChat,
-    handleGalleryImage
+    handleGalleryImage,
+    getLanguageDirectiveMessage
 } = require('../models/chat-completion-utils');
 
 // Fetches chat document from 'chats' collection
@@ -333,6 +334,10 @@ async function routes(fastify, options) {
                     `Continue working toward this goal.`;
             }
             
+            // Generate the langugage directive message
+            const languageDirective = getLanguageDirectiveMessage(language);
+            console.log(`[/api/openai-chat-completion] Language directive:`, languageDirective);
+
             // Add user points and prepare messages
             enhancedSystemContent = enhancedSystemContent.replace(/{{userPoints}}/g, userPoints.toString());
             const userDetails = userDetailsToString(userInfo_or_persona);
@@ -353,21 +358,17 @@ async function routes(fastify, options) {
                 
                 messagesForCompletion = [
                     ...systemMsg,
+                    ...languageDirective,
                     ...userMessages,
                     ...imgMessage
                 ];
             } else {
                 messagesForCompletion = [
                     ...systemMsg, 
+                    ...languageDirective,
                     ...userMessages
                 ];
             }
-            // add a message to make sure the assistant answers in the correct language
-            messagesForCompletion.push({
-                role: 'user',
-                name: 'master',
-                content: `You must answer in ${language} if the user speaks unless explicitly asked to change language.`
-            });
 
             // Generate completion
             const customModel = (language === 'ja' || language === 'japanese') ? 'deepseek' : 'mistral';
@@ -377,6 +378,7 @@ async function routes(fastify, options) {
             //console.log(`[/api/openai-chat-completion] Using model: ${selectedModel}, Language: ${language}, Premium: ${isPremium}`);
             //console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
             //console.log(`[/api/openai-chat-completion] Messages for completion:`, messagesForCompletion);
+            
             generateCompletion(messagesForCompletion, 600, selectedModel, language, selectedModel, isPremium).then(async (completion) => {
                 if (completion) {
                     fastify.sendNotificationToUser(userId, 'displayCompletionMessage', { message: completion, uniqueId });

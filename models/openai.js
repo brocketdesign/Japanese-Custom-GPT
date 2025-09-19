@@ -16,7 +16,7 @@ const apiDetails = {
     key: process.env.NOVITA_API_KEY,
     models: {
       llama: 'meta-llama/llama-3-70b-instruct',
-      gemma: 'google/gemma-2-9b-it',
+      gemma: 'google/gemma-3-12b-it',
       deepseek: 'deepseek/deepseek-v3-turbo',
       mistral: 'mistralai/mistral-nemo',
     }
@@ -55,7 +55,7 @@ const modelConfig = {
     gemma: {
       provider: 'novita',
       modelName: 'gemma',
-      displayName: 'Gemma 2 9B',
+      displayName: 'Gemma 3 12B',
       description: 'Google\'s efficient language model'
     },
     deepseek: {

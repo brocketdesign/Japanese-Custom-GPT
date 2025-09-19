@@ -143,7 +143,7 @@
             "provider": "Titan Intelligence",
             "speed": "Moyen",
             "quality": "Excellent"
-        },
+        }, 
         "gemma": {
             "name": "Crystal",
             "description": "Spécialiste en communication claire et efficace",

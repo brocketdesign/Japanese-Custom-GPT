@@ -16,7 +16,6 @@ const apiDetails = {
     key: process.env.NOVITA_API_KEY,
     models: {
       llama: 'meta-llama/llama-3-70b-instruct',
-      gemma: 'google/gemma-3-12b-it',
       deepseek: 'deepseek/deepseek-v3-turbo',
       mistral: 'mistralai/mistral-nemo',
     }
@@ -51,12 +50,6 @@ const modelConfig = {
       modelName: 'llama',
       displayName: 'Llama 3 70B',
       description: 'Large-scale reasoning and analysis'
-    },
-    gemma: {
-      provider: 'novita',
-      modelName: 'gemma',
-      displayName: 'Gemma 3 12B',
-      description: 'Google\'s efficient language model'
     },
     deepseek: {
       provider: 'novita',
@@ -141,7 +134,7 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
       modelConfig.provider = model;
       modelConfig.modelName = null;
     } else {
-      // Specific model like 'gemma', 'deepseek'
+      // Specific model like 'deepseek'
       for (const provider in apiDetails) {
         if (apiDetails[provider].models && apiDetails[provider].models[model]) {
           modelConfig.provider = provider;

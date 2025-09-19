@@ -176,7 +176,7 @@
                 <!-- Prompts will be dynamically generated here -->
                 {{#each promptData}}
                     <div 
-                        class="prompt-card col-6 col-sm-4 col-md-3 border-0 shadow-0 mb-3 position-relative d-flex justify-content-center align-items-center"
+                        class="prompt-card nsfw-{{eq nsfw 'on'}} col-6 col-sm-4 col-md-3 border-0 shadow-0 mb-3 position-relative d-flex justify-content-center align-items-center"
                         data-id="{{_id}}" 
                         data-nsfw="{{eq nsfw 'on'}}" 
                         data-cost="{{cost}}"
@@ -222,7 +222,7 @@
                 <p class="text-center text-muted w-100">{{translations.gifts.selectGift_description}}</p>
                 <!-- Gifts will be dynamically generated here -->
                 {{#each giftData}}
-                    <div class="gift-card col-6 col-sm-4 col-md-3 border-0 shadow-0 mb-3 position-relative d-flex justify-content-center align-items-center"
+                    <div class="gift-card nsfw-{{eq nsfw 'on'}} col-6 col-sm-4 col-md-3 border-0 shadow-0 mb-3 position-relative d-flex justify-content-center align-items-center"
                         data-id="{{_id}}" 
                         data-nsfw="{{eq nsfw 'on'}}" 
                         data-cost="{{cost}}"

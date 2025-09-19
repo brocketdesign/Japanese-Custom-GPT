@@ -427,7 +427,10 @@ $(document).ready(async function() {
     
 function setupChatInterface(chat, character) {
     const gender = determineChatGender(chat);
+    const chatNsfw = chat.nsfw || false;
     $('#chat-container').attr('data-genre', gender);
+    $('#promptContainer').attr('data-nsfw', chatNsfw).removeClass('nsfw').addClass(chatNsfw ? 'nsfw' : 'sfw');
+    $('#giftsList').attr('data-nsfw', chatNsfw).removeClass('nsfw').addClass(chatNsfw ? 'nsfw' : 'sfw');
     if(gender === 'female'){
         $('#showPrompts').show();
         $('#userMessage').removeClass('male').addClass('female');

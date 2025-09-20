@@ -39,7 +39,7 @@ async function routes(fastify, options) {
                     suggestionsEnabled: true,
                     autoImageGeneration: isPremium,
                     speechRecognitionEnabled: true,
-                    speechAutoSend: false
+                    speechAutoSend: true
                 };
                 return reply.send({ success: true, settings: defaultSettings, isPremium });
             }
@@ -198,7 +198,7 @@ async function routes(fastify, options) {
                 selectedModel: 'mistral',
                 suggestionsEnabled: true,
                 speechRecognitionEnabled: true,
-                speechAutoSend: false
+                speechAutoSend: true
             };
 
             reply.send({ 
@@ -277,7 +277,7 @@ async function routes(fastify, options) {
                 suggestionsEnabled: true,
                 autoImageGeneration: isPremium,
                 speechRecognitionEnabled: true,
-                speechAutoSend: false
+                speechAutoSend: true
             };
 
             reply.send({ success: true, settings: defaultSettings, isChatSpecific: false, isPremium });

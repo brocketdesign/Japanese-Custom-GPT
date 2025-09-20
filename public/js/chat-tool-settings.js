@@ -12,7 +12,7 @@ class ChatToolSettings {
             selectedModel: 'mistral',
             autoImageGeneration: true,
             speechRecognitionEnabled: true,
-            speechAutoSend: false
+            speechAutoSend: true
         };
         
         this.isLoading = false;
@@ -278,7 +278,7 @@ class ChatToolSettings {
 
     getSpeechAutoSend() {
         return this.settings.speechAutoSend !== undefined ? 
-            this.settings.speechAutoSend : false;
+            this.settings.speechAutoSend : true;
     }
     
     // Model selection method
@@ -1251,7 +1251,7 @@ class ChatToolSettings {
         const speechAutoSendSwitch = document.getElementById('speech-auto-send-switch');
         if (speechAutoSendSwitch) {
             speechAutoSendSwitch.checked = this.settings.speechAutoSend !== undefined ? 
-                this.settings.speechAutoSend : false;
+                this.settings.speechAutoSend : true;
         }
 
         // Apply initial speech button state

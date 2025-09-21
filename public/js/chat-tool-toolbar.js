@@ -99,7 +99,7 @@ function getImageTools({chatId, imageId, isLiked = false, title, prompt = false,
                         <i class="bi ${upscaleIcon}"></i>${upscaleLabel}
                     </span>
                     
-                    <span class="${nsfw ? 'd-none' : ''} ${videoBadgeClass} image-tool-badge img2video-btn" 
+                    <span class="${nsfw ? 'd-none-test' : ''} ${videoBadgeClass} image-tool-badge img2video-btn" 
                           onclick="${!hasVideoAction && subscriptionStatus ? `generateVideoFromImage('${imageId}', '${chatId}', '${userChatId}')` : hasVideoAction ? '' : 'loadPlanPage()'}" 
                           data-id="${imageId}" 
                           data-chat-id="${chatId}"

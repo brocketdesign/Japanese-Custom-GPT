@@ -34,7 +34,7 @@
     display: none !important; /* Hide NSFW content */
   }
   body.nsfw-mode .nsfw-content {
-    display: block !important; /* Or any other appropriate display value */
+    display: block ; /* Or any other appropriate display value */
   }
 
   .cursor-pointer {

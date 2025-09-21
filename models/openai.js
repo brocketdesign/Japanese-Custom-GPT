@@ -439,6 +439,9 @@ async function generatePromptTitle(prompt,language) {
               role: "user",
               content: `Be creative. \n Imagine you are the character in the prompt and write a comment as if you were the character.`.replace(/^\s+/gm, '').trim()
           },
+          { role: "user",
+              content: `You must answer in ${language}. \n Provide a short comment (one sentence) that is relevant to the prompt from the character perspective.`.replace(/^\s+/gm, '').trim()
+          }
     ]
 
     const completionMessage = await generateCompletion(messages, 600, 'mistral');

@@ -60,20 +60,33 @@ const default_prompt = {
     }
   };    
   
-  const params = {
-    model_name: "novaAnimeXL_ponyV20_461138.safetensors",
-    prompt: '',
-    negative_prompt: '',
-    width: 701,
-    height: 1024,
-    sampler_name: "Euler a",
-    guidance_scale: 7,
-    steps: 30,
-    image_num: 1,
-    clip_skip: 0,
-    strength: 0.65,
-    loras: [],
-  } 
+const params = {
+  model_name: "novaAnimeXL_ponyV20_461138.safetensors",
+  prompt: '',
+  negative_prompt: '',
+  width: 701,
+  height: 1024,
+  sampler_name: "Euler a",
+  guidance_scale: 7,
+  steps: 30,
+  image_num: 1,
+  clip_skip: 0,
+  strength: 0.65,
+  loras: [],
+} 
+
+function getTitleForLang(title, lang = 'en') {
+  if (!title) return '';
+  if (typeof title === 'string') return title;
+  const map = {
+    english: 'en',
+    japanese: 'ja',
+    french: 'fr'
+  };
+  const key = (lang && typeof lang === 'string') ? (map[lang.toLowerCase()] || lang.toLowerCase()) : 'en';
+  return title[key] || title.en || title.ja || title.fr || Object.values(title).find(v => !!v) || '';
+}
+
 /**
  * Handle FLUX immediate completion processing
  * @param {Object} params - All parameters needed for FLUX processing
@@ -343,7 +356,7 @@ async function generateImg({
     enableMergeFace = false
 }) {
     const db = fastify.mongo.db;
-    
+
     // Validate required parameters (prompt)
     if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
         fastify.sendNotificationToUser(userId, 'showNotification', {
@@ -813,14 +826,14 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
           imageId,
           imageUrl,
           userChatId,
-          title,
+          title: getTitleForLang(title, translations?.lang || 'en'),
           prompt,
           nsfw,
           isMergeFace: isMerged || false,
           isAutoMerge: isMerged || false,
           url: imageUrl // Add url field for compatibility
         };
-        
+        console.log(`[handleTaskCompletion] notificationData for image ${index + 1}/${images.length}:`, notificationData);
         fastify.sendNotificationToUser(userId, 'imageGenerated', notificationData);
       }
     }
@@ -1969,7 +1982,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
         isAutoMerge: isMerged || false,
         url: imageUrl
       };
-      
+      console.log(`[saveImageToDB] Notification data:`, notificationData);
       fastify.sendNotificationToUser(userId.toString(), 'imageGenerated', notificationData);
     }
 

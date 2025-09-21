@@ -14,13 +14,14 @@ const { uploadToS3 } = require('../models/tool');
  */
 async function generateVideoFromImage({ imageUrl, prompt, userId, chatId, placeholderId }) {
   const novitaApiKey = process.env.NOVITA_API_KEY;
-  const apiUrl = 'https://api.novita.ai/v3/async/kling-v1.6-i2v';
+  const apiUrl = 'https://api.novita.ai/v3/async/kling-v2.1-i2v';
 
   const requestData = {
     image_url: imageUrl,
+    image: imageUrl, // For backward compatibility
     prompt: prompt || 'Generate a dynamic video from this image',
     negative_prompt: 'blurry, low quality, distorted',
-    duration: 5,
+    duration: "5",
     guidance_scale: 0.5,
   };
   console.log(`[generateVideoFromImage] RequestData: ${JSON.stringify(requestData)}`);

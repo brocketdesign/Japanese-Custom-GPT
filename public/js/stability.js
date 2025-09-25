@@ -230,12 +230,19 @@ window.generateImage = async function(data) {
         isMergeFace = data.isMergeFace || data.isMerged 
     } = data;
     
+    const clientLang = window.lang || (window.user && window.user.lang) || 'en';
+    const titleObj = data.title;
+    const titleText =
+      (titleObj && (titleObj[clientLang] || titleObj.en || titleObj.ja || titleObj.fr)) ||
+      (typeof titleObj === 'string' ? titleObj : '') ||
+      (data.prompt || '') ||
+      'Generated Image';
     
     sentImageIds.add(imageId);
 
     const img = document.createElement('img');
     img.setAttribute('src', imageUrl);
-    img.setAttribute('alt', data.title && data.title[lang] ? data.title[lang] : 'Generated Image');
+    img.setAttribute('alt', titleText);
     img.setAttribute('data-prompt', imagePrompt || '');
     img.setAttribute('class', 'm-auto');
     img.setAttribute('data-id', imageId);

@@ -104,7 +104,7 @@ async function img2videoRoutes(fastify) {
                 const systemPrompt = [
                     {
                         role: 'system',
-                        content: `You are an AI assistant that generates videos prompt from an image prompt.
+                        content: `You are an AI assistant that generates 5 seconds videos prompt from an image prompt.
                                   Use the provided image prompt to create a dynamic video prompt. 
                                   Ensure the video prompt is engaging and visually appealing.
                                   Your response should be a clear and concise instruction for the video generation process.
@@ -117,8 +117,9 @@ async function img2videoRoutes(fastify) {
                         content: `Here is a description of the image: ${image.prompt || 'No description provided'}`
                     }
                 ]
-                // Add user defaul prompt if available
+                // Add user default prompt if available
                 const userVideoPrompt = await getUserVideoPrompt(fastify.mongo.db, userId, chatId);
+
                 if (userVideoPrompt && userVideoPrompt.trim() !== '') {
                     systemPrompt.push({
                         role: 'user',
@@ -131,12 +132,12 @@ async function img2videoRoutes(fastify) {
                         content:`Here is the desired video: ${prompt}`
                     });
                 }
-                const instructionPrompt = await generateCompletion(systemPrompt, 600, 'mistral');
+                //const instructionPrompt = await generateCompletion(systemPrompt, 600, 'mistral');
 
                 // Start video generation
                 const videoTask = await generateVideoFromImage({
                     imageUrl,
-                    prompt: instructionPrompt,
+                    prompt: prompt,
                     userId,
                     chatId,
                     placeholderId

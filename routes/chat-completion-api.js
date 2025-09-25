@@ -336,7 +336,6 @@ async function routes(fastify, options) {
             
             // Generate the langugage directive message
             const languageDirective = getLanguageDirectiveMessage(language);
-            console.log(`[/api/openai-chat-completion] Language directive:`, languageDirective);
 
             // Add user points and prepare messages
             enhancedSystemContent = enhancedSystemContent.replace(/{{userPoints}}/g, userPoints.toString());

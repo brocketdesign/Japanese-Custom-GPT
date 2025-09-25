@@ -117,13 +117,13 @@ window.displayLatestVideoChats = function(videoChatsData, targetGalleryId) {
     videoChatsData.forEach(videoChat => {
         const isOwner = videoChat.chat.userId === currentUserId;
         const isPremiumChat = false; // video chats don't have premium status
-        const isNSFW = videoChat.chat.nsfw || false;
+        const isNSFW = videoChat.nsfw || false;
         const genderClass = videoChat.chat.gender ? `chat-gender-${videoChat.chat.gender.toLowerCase()}` : '';
         const styleClass = videoChat.chat.imageStyle ? `chat-style-${videoChat.chat.imageStyle.toLowerCase()}` : '';
 
         // Video card with thumbnail and play button
         htmlContent += `
-            <div class="video-chat-card flex-shrink-0" data-chat-id="${videoChat.chatId}" style="width: 200px; cursor: pointer;" onclick="redirectToChat('${videoChat.chatId}')">
+            <div class="video-chat-card flex-shrink-0 ${isNSFW ? 'nsfw-content' : ''}" data-chat-id="${videoChat.chatId}" data-nsfw="${isNSFW}" style="width: 200px; cursor: pointer;" onclick="redirectToChat('${videoChat.chatId}')">
                 <div class="card shadow-sm border-0 h-100 position-relative overflow-hidden">
                     <!-- Video thumbnail with play button -->
                     <div class="video-thumbnail-wrapper position-relative" style="aspect-ratio: 9/16; background: #f8f9fa;">
@@ -186,6 +186,17 @@ window.displayLatestVideoChats = function(videoChatsData, targetGalleryId) {
                                 <i class="bi bi-person-fill"></i>
                             </span>
                         ` : ''}
+                        ${window.isAdmin ? `
+                            <button 
+                                class="btn btn-sm btn-outline-secondary ms-1 video-nsfw-toggle ${isNSFW ? 'nsfw' : 'sfw'}" 
+                                data-id="${videoChat.videoId || videoChat._id}" 
+                                data-nsfw="${isNSFW}" 
+                                onclick="toggleVideoNSFW(this); event.stopPropagation();" 
+                                title="${isNSFW ? 'Marked NSFW' : 'Mark NSFW'}"
+                                style="padding: 0.2em 0.4em !important; font-size: 0.7rem;">
+                                <i class="bi ${isNSFW ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
             </div>
@@ -212,9 +223,9 @@ window.playVideoModal = function(videoUrl, chatName) {
                             <h5 class="modal-title text-white" id="videoPlayModalLabel"></h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="modal-body p-0 text-center">
+                        <div class="modal-body p-0 text-center bg-dark" style="display: flex;justify-content: center;align-items: center;border-radius: 0 0 25px 25px !important;">
                             <video id="modalVideo" class="w-auto" loop autoplay muted 
-                            style="max-height: 70vh; border-radius: 0 0 0.5em 0.5em; max-width: 90vw;">
+                            style="max-height: 70vh; max-width: 90vw;">
                                 <source src="" type="video/mp4">
                                 Your browser does not support the video tag.
                             </video>
@@ -603,6 +614,58 @@ if(!isTemporary){
     initializePersonaStats(personas)
 }
 
+window.toggleVideoNSFW = function(el) {
+  event.stopPropagation();
+  const $this = $(el);
+  const videoId = $this.data('id');
+  const currentNsfw = $this.data('nsfw') === true || $this.hasClass('nsfw') || $this.data('nsfw') === 'true';
+  const newNsfw = !currentNsfw;
+
+  // Optimistic UI update
+  $this.toggleClass('nsfw', newNsfw).toggleClass('sfw', !newNsfw);
+  $this.html(`<i class="bi ${newNsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>`);
+  $this.data('nsfw', newNsfw);
+  const $card = $this.closest('.video-chat-card');
+  if ($card.length) {
+    $card.attr('data-nsfw', newNsfw);
+    $card.toggleClass('nsfw-content', newNsfw);
+  }
+
+  $.ajax({
+    url: `/api/video/${videoId}/nsfw`,
+    method: 'PUT',
+    xhrFields: { withCredentials: true },
+    contentType: 'application/json',
+    data: JSON.stringify({ nsfw: newNsfw }),
+    success: function(response) {
+      if (response && response.success) {
+        showNotification(newNsfw ? window.translations?.setNsfw || 'NSFW set' : window.translations?.unsetNsfw || 'NSFW unset', 'success');
+      } else {
+        // Revert on failure
+        $this.toggleClass('nsfw', !newNsfw).toggleClass('sfw', newNsfw);
+        $this.html(`<i class="bi ${currentNsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>`);
+        $this.data('nsfw', currentNsfw);
+        if ($card.length) {
+          $card.attr('data-nsfw', currentNsfw);
+          $card.toggleClass('nsfw-content', currentNsfw);
+        }
+        showNotification(window.translations?.errorOccurred || 'Error updating NSFW', 'error');
+      }
+    },
+    error: function(err) {
+      console.error('Failed to toggle video nsfw:', err);
+      // Revert optimistic UI
+      $this.toggleClass('nsfw', !newNsfw).toggleClass('sfw', newNsfw);
+      $this.html(`<i class="bi ${currentNsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>`);
+      $this.data('nsfw', currentNsfw);
+      if ($card.length) {
+        $card.attr('data-nsfw', currentNsfw);
+        $card.toggleClass('nsfw-content', currentNsfw);
+      }
+      showNotification(window.translations?.errorOccurred || 'Error updating NSFW', 'error');
+    }
+  });
+}
 window.togglePostFavorite = function(el) {
   const isTemporary = !!user.isTemporary;
   if (isTemporary) { openLoginForm(); return; }

@@ -11,6 +11,7 @@ const {
 } = require('../models/chat-tool-settings-utils');
 const { generateCompletion } = require('../models/openai')
 const { removeUserPoints } = require('../models/user-points-utils');
+const { checkUserAdmin } = require('../models/tool');
 /**
  * Image to Video API Routes
  * @param {Object} fastify - Fastify instance
@@ -24,7 +25,7 @@ async function img2videoRoutes(fastify) {
     fastify.post('/api/img2video/generate', async (request, reply) => {
         console.log('[img2video] POST /api/img2video/generate called');
         try {
-            const { imageId, prompt, chatId, userChatId, placeholderId } = request.body;
+            const { imageId, prompt, nsfw, chatId, userChatId, placeholderId } = request.body;
             const userId = request?.user?._id;
             console.log(`[img2video] Request body:`, request.body);
             console.log(`[img2video] User ID: ${userId}`);
@@ -157,6 +158,7 @@ async function img2videoRoutes(fastify) {
                     imageId,
                     imageUrl: image.imageUrl,
                     prompt: prompt || image.prompt,
+                    nsfw,
                     placeholderId,
                     fastify
                 });
@@ -169,7 +171,8 @@ async function img2videoRoutes(fastify) {
                     userChatId,
                     placeholderId,
                     imageId,
-                    prompt: prompt || image.prompt
+                    prompt: prompt || image.prompt,
+                    nsfw
                 });
                 console.log(`[img2video] Started polling for video task: ${videoTask.taskId}`);
 
@@ -449,6 +452,63 @@ async function img2videoRoutes(fastify) {
 
         } catch (error) {
             console.error('Error fetching video:', error);
+            return reply.status(500).send({ error: 'Internal server error' });
+        }
+    });
+
+    /**
+     * PUT /api/video/:videoId/nsfw
+     * Toggle NSFW flag on a generated video (admin or owner)
+     */
+    fastify.put('/api/video/:videoId/nsfw', async (request, reply) => {
+        try {
+            const { videoId } = request.params;
+            const { nsfw } = request.body;
+            const userId = request?.user?._id;
+
+            console.log('[img2video] PUT /api/video/:videoId/nsfw called', { videoId, nsfw, userId });
+
+            if (!userId) {
+                console.warn('[img2video] Unauthorized access attempt to toggle video nsfw');
+                return reply.status(401).send({ error: 'Unauthorized' });
+            }
+            if (typeof nsfw !== 'boolean') {
+                return reply.status(400).send({ error: 'Invalid nsfw value' });
+            }
+
+            const db = fastify.mongo.db;
+            const video = await db.collection('videos').findOne({ _id: new ObjectId(videoId) });
+
+            if (!video) {
+                console.warn(`[img2video] Video not found: ${videoId}`);
+                return reply.status(404).send({ error: 'Video not found' });
+            }
+
+            // Only owner or admin can toggle
+            const isOwner = video.userId.toString() === userId.toString();
+            const isAdmin = await checkUserAdmin(fastify, userId);
+
+            if (!isOwner && !isAdmin) {
+                console.warn(`[img2video] Access denied for user ${userId} toggling nsfw on video ${videoId}`);
+                return reply.status(403).send({ error: 'Access denied' });
+            }
+
+            await db.collection('videos').updateOne(
+                { _id: video._id },
+                { $set: { nsfw: nsfw, updatedAt: new Date() } }
+            );
+
+            // Also update related task/result if exists
+            await db.collection('tasks').updateMany(
+                { type: 'img2video', 'result.videoId': video._id },
+                { $set: { 'result.nsfw': nsfw, updatedAt: new Date() } }
+            );
+
+            console.log(`[img2video] Video ${videoId} nsfw updated to ${nsfw}`);
+            return reply.send({ success: true, nsfw });
+
+        } catch (err) {
+            console.error('[img2video] Error toggling video nsfw:', err);
             return reply.status(500).send({ error: 'Internal server error' });
         }
     });

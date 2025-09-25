@@ -553,52 +553,98 @@ fastify.post('/api/init-chat', async (request, reply) => {
     
     fastify.get('/api/chat-list/:userId', async (request, reply) => {
         try {
-            const userId = request.params.userId || request.user._id;
-            const page = request.query.page ? parseInt(request.query.page) : 1;
-            const limit = request.query.limit ? parseInt(request.query.limit) : 10;
-    
-            if (!userId) {
-                const user = request.user;
-                userId = user._id;
+            let userIdParam = request.params.userId || request.user._id;
+            const page = Math.max(1, parseInt(request.query.page || '1', 10));
+            const limit = parseInt(request.query.limit || '10', 10);
+            const skip = (page - 1) * limit;
+
+            if (!fastify.mongo.ObjectId.isValid(userIdParam)) {
+                userIdParam = request.user._id;
             }
-    
-            const userChatCollection = fastify.mongo.db.collection('userChat');
-            const chatsCollection = fastify.mongo.db.collection('chats');
-            const chatLastMessageCollection = fastify.mongo.db.collection('chatLastMessage');
-    
-            // Fetch chatIds from userChat collection
-            const userChats = await userChatCollection.find({
-                userId: new fastify.mongo.ObjectId(userId)
-            }).sort({ _id: -1 }).toArray();
-    
-            const chatIds = userChats.map(userChat => new fastify.mongo.ObjectId(userChat.chatId));
-    
-            // Fetch chats based on chatIds with pagination
-            const totalChats = await chatsCollection.countDocuments({
-                _id: { $in: chatIds },
-                name: { $exists: true }
+            const userObjectId = new fastify.mongo.ObjectId(userIdParam);
+
+            const userChatColl = fastify.mongo.db.collection('userChat');
+            const chatLastMessageColl = fastify.mongo.db.collection('chatLastMessage');
+            
+            const pipeline = [
+                // Match chats for this user
+                { $match: { userId: userObjectId } },
+
+                // Sort by user's last interaction (most recent first)
+                { $sort: { updatedAt: -1, _id: -1 } },
+
+                // Join with the chats collection
+                {
+                    $lookup: {
+                        from: 'chats',
+                        localField: 'chatId',
+                        foreignField: '_id',
+                        as: 'chat'
+                    }
+                },
+                { $unwind: '$chat' },
+
+                // Merge chat fields with userChat metadata
+                {
+                    $replaceRoot: {
+                        newRoot: {
+                            $mergeObjects: [
+                                '$chat',
+                                {
+                                    userChatId: '$_id',
+                                    userChatUpdatedAt: '$updatedAt'
+                                }
+                            ]
+                        }
+                    }
+                },
+
+                // Only include chats that have a name
+                { $match: { name: { $exists: true, $ne: '' } } },
+
+                // Deduplicate by chat._id, keeping the most recent userChat (first after filter)
+                {
+                    $group: {
+                        _id: '$_id', // Group by chat._id
+                        doc: { $first: '$$ROOT' }
+                    }
+                },
+                { $replaceRoot: { newRoot: '$doc' } },
+
+                // Re-sort after deduplication to maintain order
+                { $sort: { userChatUpdatedAt: -1, _id: -1 } },
+
+                // Pagination
+                { $skip: skip },
+                { $limit: limit }
+            ];
+
+            const chats = await userChatColl.aggregate(pipeline, { allowDiskUse: true }).toArray();
+
+            const chatIds = chats.map(chat => chat._id);
+            const lastMessages = await chatLastMessageColl.find({
+                chatId: { $in: chatIds },
+                userId: userObjectId
+            }).toArray();
+
+            const lastMessageMap = {};
+            lastMessages.forEach(msg => {
+                lastMessageMap[msg.chatId.toString()] = msg.lastMessage;
             });
-    
-            const chats = await chatsCollection.find({
-                _id: { $in: chatIds },
-                name: { $exists: true }
-            }).sort({ _id: -1 })
-            .skip((page - 1) * limit)
-            .limit(limit)
-            .toArray();
-    
-            // For each chat, fetch the last message
-            for (let chat of chats) {
-                const lastMessage = await chatLastMessageCollection.findOne(
-                    { chatId: new fastify.mongo.ObjectId(chat._id), userId: new fastify.mongo.ObjectId(userId) },
-                    { projection: { lastMessage: 1, _id: 0 } }
-                );
-                chat.lastMessage = lastMessage ? lastMessage.lastMessage : null;
-            }
-    
+
+            // Convert ObjectIds to strings for front-end
+            const chatsWithStrings = chats.map(chat => ({
+                ...chat,
+                _id: chat._id.toString(),
+                userChatId: chat.userChatId.toString(),
+                lastMessage: lastMessageMap[chat._id.toString()] || null
+            }));
+
+            const totalChats = await userChatColl.countDocuments({ userId: userObjectId });
+
             return reply.send({
-                chats,
-                userId,
+                chats: chatsWithStrings,
+                userId: userIdParam.toString(),
                 pagination: {
                     total: totalChats,
                     page,
@@ -607,7 +653,7 @@ fastify.post('/api/init-chat', async (request, reply) => {
                 }
             });
         } catch (error) {
-            console.log(error);
+            console.error('Error in /api/chat-list/:userId', error);
             return reply.code(500).send({ error: 'An error occurred' });
         }
     });
@@ -1580,6 +1626,7 @@ fastify.post('/api/init-chat', async (request, reply) => {
                         createdAt: '$latestVideo.createdAt',
                         chatId: '$latestVideo.chatId',
                         userId: '$latestVideo.userId',
+                        nsfw: '$latestVideo.nsfw',
                         chat: {
                             _id: '$latestVideo.chat._id',
                             name: '$latestVideo.chat.name',
@@ -1621,6 +1668,7 @@ fastify.post('/api/init-chat', async (request, reply) => {
                         prompt: video.prompt,
                         createdAt: video.createdAt,
                         chatId: video.chatId,
+                        nsfw: video.nsfw || false,
                         chat: {
                             _id: video.chat._id,
                             name: video.chat.name,

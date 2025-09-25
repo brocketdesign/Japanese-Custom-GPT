@@ -103,6 +103,7 @@ function getImageTools({chatId, imageId, isLiked = false, title, prompt = false,
                           onclick="${!hasVideoAction && subscriptionStatus ? `generateVideoFromImage('${imageId}', '${chatId}', '${userChatId}')` : hasVideoAction ? '' : 'loadPlanPage()'}" 
                           data-id="${imageId}" 
                           data-chat-id="${chatId}"
+                          ${nsfw ? 'data-nsfw="true"' : ''}
                           ${videoDisabled}
                           title="${videoTooltip}">
                         <i class="bi ${videoIcon}"></i>${videoLabel}

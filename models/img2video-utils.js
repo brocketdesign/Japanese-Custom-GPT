@@ -154,6 +154,7 @@ async function saveVideoTask({
   imageId,
   imageUrl,
   prompt,
+  nsfw,
   placeholderId,
   fastify
 }) {
@@ -168,6 +169,7 @@ async function saveVideoTask({
     imageId: new ObjectId(imageId),
     imageUrl,
     prompt,
+    nsfw,
     placeholderId,
     type: 'img2video',
     status: 'pending',
@@ -241,6 +243,7 @@ async function saveVideoToDB({
   videoUrl,
   duration,
   prompt,
+  nsfw,
   fastify
 }) {
   const db = fastify.mongo.db;
@@ -273,6 +276,7 @@ async function saveVideoToDB({
     videoUrl,
     duration,
     prompt,
+    nsfw: !!nsfw,
     createdAt: new Date()
   };
 
@@ -412,7 +416,7 @@ async function pollVideoTaskStatus(taskId, fastify, options = {}) {
  * @param {Object} options - Additional options
  */
 async function handleVideoTaskCompletion(taskStatus, fastify, options = {}) {
-  const { userId, chatId, userChatId, placeholderId, imageId, prompt } = options;
+  const { userId, chatId, userChatId, placeholderId, imageId, prompt, nsfw } = options;
   
   console.log(`[handleVideoTaskCompletion] Starting completion handler for task ${taskStatus.taskId} and placeholderId ${placeholderId}`);
   console.log(`[handleVideoTaskCompletion] Options:`, JSON.stringify(options, null, 2));
@@ -450,6 +454,7 @@ async function handleVideoTaskCompletion(taskStatus, fastify, options = {}) {
         videoUrl: taskStatus.result.videoUrl,
         duration: taskStatus.result.duration,
         prompt,
+        nsfw: options.nsfw,
         fastify
       });
 
@@ -493,6 +498,7 @@ async function handleVideoTaskCompletion(taskStatus, fastify, options = {}) {
         duration: taskStatus.result.duration,
         userChatId,
         placeholderId,
+        nsfw: !!options.nsfw,
         taskId: taskStatus.taskId
       };
       console.log(`[handleVideoTaskCompletion] Video notification data:`, JSON.stringify(videoNotificationData, null, 2));

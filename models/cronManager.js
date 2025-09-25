@@ -395,7 +395,8 @@ const processBackgroundVideoTasks = (fastify) => async () => {
               userChatId: task.userChatId,
               placeholderId: task.placeholderId,
               imageId: task.imageId.toString(),
-              prompt: task.prompt
+              prompt: task.prompt,
+              nsfw: task.nsfw
             }
           );
           

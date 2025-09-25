@@ -61,6 +61,10 @@ window.generateVideoFromImage = async function(imageId, chatId, userChatId, prom
         // Show loader with consistent ID
         displayVideoLoader(placeholderId, imageId);
 
+        // Get NSFW status from data attribute
+        const imageElement = $(`.img2video-btn[data-id="${imageId}"]`);
+        const nsfw = !!imageElement.data('nsfw') || false;
+        
         // Call API to start video generation
         const response = await fetch('/api/img2video/generate', {
             method: 'POST',
@@ -73,6 +77,7 @@ window.generateVideoFromImage = async function(imageId, chatId, userChatId, prom
                 chatId,
                 userChatId,
                 prompt: userPrompt || prompt,
+                nsfw,
                 placeholderId
             })
         });

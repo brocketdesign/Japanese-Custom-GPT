@@ -1222,7 +1222,7 @@ function displayChatThumbs(chats, userId) {
     
     chats.forEach(function(chat, index) {
         const chatThumb = $(`
-            <div class="chat-thumb-container flex-shrink-0 me-2 animate__animated" 
+            <div class="chat-thumb-container flex-shrink-0 me-2 animate__animated ${chat.nsfw ? 'nsfw-content' : ''}" 
                  data-id="${chat._id}" 
                  data-user-id="${chat.userId}"
                  onclick="handleChatThumbClick(this)"

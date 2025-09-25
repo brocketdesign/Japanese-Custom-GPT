@@ -800,6 +800,12 @@ $(document).ready(function(){
     <script>
         // Open authenticate page in a modal
         window.openLoginForm = function() {
+            // Check if user is already signed in
+            if (window.Clerk && window.Clerk.user) {
+                // User is already signed in, redirect to chat
+                window.location.href = '/chat';
+                return;
+            }
             // Check if url as a language subdomain https://ja.chatlamix.com/
             const langUrl = window.location.hostname.split('.')[0];
             // Use Clerk's provided method instead of direct URL navigation

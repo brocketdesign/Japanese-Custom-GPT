@@ -188,7 +188,7 @@ window.displayLatestVideoChats = function(videoChatsData, targetGalleryId) {
                         ` : ''}
                         ${window.isAdmin ? `
                             <button 
-                                class="btn btn-sm btn-outline-secondary ms-1 video-nsfw-toggle ${isNSFW ? 'nsfw' : 'sfw'}" 
+                                class="btn btn-dark ms-1 mt-2 video-nsfw-toggle ${isNSFW ? 'nsfw' : 'sfw'}" 
                                 data-id="${videoChat.videoId || videoChat._id}" 
                                 data-nsfw="${isNSFW}" 
                                 onclick="toggleVideoNSFW(this); event.stopPropagation();" 
@@ -319,6 +319,21 @@ $(document).ready(async function() {
     const priceId = urlParams.get('priceId');
     const paymentFalse = urlParams.get('payment') == 'false';
 
+    // If another tab flagged that latest video chats need refresh, clear cache and reload
+    try {
+      if (localStorage.getItem('latestVideoChatsNeedsRefresh')) {
+        sessionStorage.removeItem(LATEST_VIDEO_CHATS_CACHE_KEY);
+        sessionStorage.removeItem(LATEST_VIDEO_CHATS_CACHE_TIME_KEY);
+        localStorage.removeItem('latestVideoChatsNeedsRefresh');
+        if ($('#latest-video-chats-gallery').length && typeof loadLatestVideoChats === 'function') {
+          $('#latest-video-chats-gallery').empty();
+          loadLatestVideoChats(1, true);
+        }
+      }
+    } catch (e) {
+      console.warn('[dashboard] failed to apply latestVideoChats refresh flag', e);
+    }
+    
     if(isTemporary){
         let formShown = false;
         $(document).scroll(function() {
@@ -639,6 +654,21 @@ window.toggleVideoNSFW = function(el) {
     data: JSON.stringify({ nsfw: newNsfw }),
     success: function(response) {
       if (response && response.success) {
+        // Clear cached latest video chats so changes are reflected on refresh
+        try {
+          sessionStorage.removeItem(LATEST_VIDEO_CHATS_CACHE_KEY);
+          sessionStorage.removeItem(LATEST_VIDEO_CHATS_CACHE_TIME_KEY);
+          // mark for reload on other tabs / next load
+          localStorage.setItem('latestVideoChatsNeedsRefresh', Date.now().toString());
+        } catch (e) {
+          console.warn('[toggleVideoNSFW] cache clear failed', e);
+        }
+
+        // Optionally refresh the current list immediately
+        if (typeof loadLatestVideoChats === 'function') {
+          // reload first page and force reload from server
+          loadLatestVideoChats(1, true);
+        }
         showNotification(newNsfw ? window.translations?.setNsfw || 'NSFW set' : window.translations?.unsetNsfw || 'NSFW unset', 'success');
       } else {
         // Revert on failure

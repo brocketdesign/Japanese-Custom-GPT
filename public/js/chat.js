@@ -851,7 +851,7 @@ function setupChatInterface(chat, character) {
                 } else {
                     const isHidden = chatMessage?.hidden === true || chatMessage.content.startsWith("[Hidden]") ;
                     if (chatMessage.content && !isHidden) {
-                        let message = removeContentBetweenStars(chatMessage.content);
+                        let message = formatMessageText(chatMessage.content);
                         
                         // Check if this is the last assistant message
                         const isLastMessage = i === userChat.length - 1 && chatMessage.role === "assistant";
@@ -1268,10 +1268,11 @@ function setupChatInterface(chat, character) {
     }
 
     
-    function removeContentBetweenStars(str) {
+    function formatMessageText(str) {
         if (!str) { return str; }
-        return str.replace(/\*.*?\*/g, '').replace(/"/g, '');
-    }   
+        // Text between * in bold
+        return str.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
+    }
 
     // Add a global variable to track active rendering processes
     const activeRenderProcesses = new Set();
@@ -1369,7 +1370,7 @@ function setupChatInterface(chat, character) {
     }
 
     function afterStreamEnd(uniqueId, markdownContent) {
-        let msg = removeContentBetweenStars(markdownContent);
+        let msg = formatMessageText(markdownContent);
         $(`#play-${uniqueId}`).attr('data-content', msg);
         $(`#play-${uniqueId}`).closest('.audio-controller').show();
         

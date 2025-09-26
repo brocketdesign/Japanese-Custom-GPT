@@ -40,6 +40,13 @@
   "loadMore": "さらに読み込む",
   "close": "閉じる",
   "analytics_title": "分析ダッシュボード",
+  "suggestions": {
+    "title": "提案",
+    "description": "タップして送信",
+    "chat": "チャット",
+    "feelings": "感情",
+    "image_request": "画像リクエスト"
+  },
   "settings": {
     "suggestionsSettings": "提案設定",
     "enableSuggestions": "チャット提案を有効にする",

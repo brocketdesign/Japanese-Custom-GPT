@@ -117,6 +117,10 @@ $(document).ready(function() {
                 feelings: {
                     emoji: '💭',
                     title: translations.suggestions?.feelings || 'Feelings'
+                },
+                image_request: {
+                    emoji: '🖼️',
+                    title: translations.suggestions?.image_request || 'Image Requests'
                 }
             };
             

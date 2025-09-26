@@ -357,6 +357,10 @@ async function generatePromptSuggestions(messages, chatDescription, language, mo
     feelings: z.array(z.string()).length(3)
   });
 
+  const image_requestSchema = z.object({
+    image_request: z.array(z.string()).length(3)
+  });
+
   // Create separate request functions for each category using OpenAI
   const generateCategory = async (categoryName, categoryPrompt, schema) => {
     try {
@@ -367,12 +371,14 @@ async function generatePromptSuggestions(messages, chatDescription, language, mo
         messages: [
           { 
             role: "system", 
-            content: `Generate exactly 3 ${categoryName} suggestions in ${language}. ${categoryPrompt} Be creative and engaging. Include emojis for visual appeal. From the user point of view.` 
+            content: `Generate exactly 3 ${categoryName} suggestions in ${language}. ${categoryPrompt} Be creative and engaging. Include emojis for visual appeal. From the user point of view. You start your sentence with "I ...".` 
           },
+          ...lastUserMessagesContent,
           { 
             role: "user", 
-            content: `Character context: ${chatDescription}\n\nGenerate 3 unique ${categoryName} suggestions that fit this character's personality.` 
+            content: `I need suggestion to converse with the following character: ${chatDescription}\n\nGenerate 3 unique ${categoryName} suggestions that fit the provided character description and the conversation. From the user point of view.` 
           },
+
           {
             role: 'user',
             content: 'Provide concise suggestions. One short sentence. Use first person for your sentence. The user is sending the messages.'
@@ -398,21 +404,24 @@ async function generatePromptSuggestions(messages, chatDescription, language, mo
     const categoryPrompts = {
       chat: "Conversation starters or dialogue suggestions that would engage the user.",
       feelings: "Emotional expressions or mood-based interactions the character might show.",
+      image_request: "Creative ideas for images the user might request from the character.",
     };
 
     // Generate all categories in parallel using OpenAI
-    const [chat, feelings] = await Promise.all([
+    const [chat, feelings, image_request] = await Promise.all([
       generateCategory('chat', categoryPrompts.chat, chatSchema),
       generateCategory('feelings', categoryPrompts.feelings, feelingsSchema),
+      generateCategory('image_request', categoryPrompts.image_request, image_requestSchema),
     ]);
 
-    const total = chat.length + feelings.length ;
+    const total = chat.length + feelings.length + image_request.length;
     console.log(`[generatePromptSuggestions] Complete: ${total} total suggestions`);
 
     // Ensure we have fallbacks if any category failed
     return {
       chat: chat.length > 0 ? chat : ["How was your day?", "What are you thinking about?", "Tell me something interesting"],
       feelings: feelings.length > 0 ? feelings : ["Happy and cheerful", "Curious and playful", "Warm and caring"],
+      image_request: image_request.length > 0 ? image_request : ["A beautiful sunset over the mountains", "A cozy cabin in the snowy woods", "A futuristic cityscape at night"]
     };
     
   } catch (error) {

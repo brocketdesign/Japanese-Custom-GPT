@@ -40,6 +40,13 @@
   "loadMore": "Charger plus",
   "close": "Fermer",
   "analytics_title": "Tableau de bord d'analyse",
+  "suggestions": {
+    "title": "Suggestions",
+    "description": "Appuyez pour envoyer",
+    "chat": "Discussion",
+    "feelings": "Sentiments",
+    "image_request": "Demandes d'image"
+  },
   "settings": {
     "suggestionsSettings": "Paramètres de suggestions",
     "enableSuggestions": "Activer les suggestions de chat",

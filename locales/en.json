@@ -91,6 +91,13 @@
   "retry": "Retry",
   "loadMore": "Load More",
   "close": "Close",
+  "suggestions": {
+    "title": "Suggestions",
+    "description": "Tap to send",
+    "chat": "Chat",
+    "feelings": "Feelings",
+    "image_request": "Image Requests"
+  },
   "settings": {
     "suggestionsSettings": "Suggestions Settings",
     "enableSuggestions": "Enable Chat Suggestions",

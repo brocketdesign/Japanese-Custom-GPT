@@ -407,7 +407,7 @@ async function routes(fastify, options) {
                     const newUserPointsBalance = await getUserPoints(db, userId);
                     const autoImageGenerationEnabled = await getAutoImageGenerationSetting(db, userId, chatId);
 
-                    if( messagesForCompletion.length > 3 && newUserPointsBalance >= 10 && autoImageGenerationEnabled ) {
+                    if( messagesForCompletion.length > 4 && newUserPointsBalance >= 10 && autoImageGenerationEnabled ) {
                         const assistantImageRequest = await checkImageRequest(newAssistantMessage.content, lastUserMessage.content);
                         //console.log(`[/api/openai-chat-completion] Image request detected:`, assistantImageRequest);
                         if (assistantImageRequest && assistantImageRequest.image_request) {
@@ -429,7 +429,7 @@ async function routes(fastify, options) {
                     fastify.sendNotificationToUser(userId, 'hideCompletionMessage', { uniqueId });
                 }
 
-                // Handle gallery image sending
+                // Handle sendImage from gallery on startup
                 await handleGalleryImage(db, lastUserMessage, userData, userChatId, userId, fastify);
             });
 

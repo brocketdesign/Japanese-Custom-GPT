@@ -99,6 +99,7 @@ function initializeWebSocket(onConnectionResult = null) {
             break;
           case 'handleLoader': {
             const {imageId, action } = data.notification;
+            console.log(`[WebSocket] handleLoader action: ${action} for imageId: ${imageId}`);
             displayOrRemoveImageLoader(imageId, action);
             break;
           }

@@ -284,7 +284,7 @@ async function handleImageGeneration(db, currentUserMessage, lastUserMessage, ge
 
     let imgMessage = [{ role: 'user', name: 'master' }];
 
-    if(genImage.canAfford) {
+    if(genImage.image_request && genImage.canAfford) {
         if(userInfo.subscriptionStatus == 'active'){
             const imageId = Math.random().toString(36).substr(2, 9);
             const pending_tasks = await getTasks(db, 'pending', userId);

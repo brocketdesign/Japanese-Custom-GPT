@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 {{> dashboard-header}}
-<link rel="stylesheet" href="/css/landingpage.css">
+<link rel="stylesheet" href="/css/landingpage-influencer.css">
 
 <body>
     {{> dashboard-nav}}
@@ -92,40 +92,40 @@
     </section>
 
     <!-- Affiliate Program Highlight -->
-    <section class="py-5 affiliate-gradient-bg text-white">
+    <section class="py-5 bg-gradient-primary text-white">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-6 mb-4 mb-lg-0" data-aos="fade-right">
-                    <div class="affiliate-icon-container mb-4">
-                        <i class="bi bi-cash-coin display-1 text-white"></i>
+                    <div class="affiliate-icon-container">
+                        <i class="bi bi-cash-coin display-1 mb-3"></i>
                     </div>
-                    <h2 class="display-5 fw-bold mb-3 text-white">Earn $5 Per Conversion</h2>
-                    <p class="lead mb-4 text-white">
+                    <h2 class="display-5 fw-bold mb-3">Earn $5 Per Conversion</h2>
+                    <p class="lead mb-4">
                         Share your AI influencers and earn money through our generous affiliate program. Every user who signs up through your link earns you $5 instantly.
                     </p>
-                    <ul class="list-unstyled fs-5 text-white">
-                        <li class="mb-3 text-white"><i class="bi bi-check-circle-fill me-2 text-white"></i>Instant payouts</li>
-                        <li class="mb-3 text-white"><i class="bi bi-check-circle-fill me-2 text-white"></i>No minimum threshold</li>
-                        <li class="mb-3 text-white"><i class="bi bi-check-circle-fill me-2 text-white"></i>Lifetime commissions</li>
-                        <li class="mb-3 text-white"><i class="bi bi-check-circle-fill me-2 text-white"></i>Real-time tracking dashboard</li>
+                    <ul class="list-unstyled fs-5">
+                        <li class="mb-3"><i class="bi bi-check-circle-fill me-2"></i>Instant payouts</li>
+                        <li class="mb-3"><i class="bi bi-check-circle-fill me-2"></i>No minimum threshold</li>
+                        <li class="mb-3"><i class="bi bi-check-circle-fill me-2"></i>Lifetime commissions</li>
+                        <li class="mb-3"><i class="bi bi-check-circle-fill me-2"></i>Real-time tracking dashboard</li>
                     </ul>
                 </div>
                 <div class="col-lg-6" data-aos="fade-left">
-                    <div class="card shadow-2xl border-0 bg-white">
+                    <div class="card shadow-2xl border-0 bg-white text-dark">
                         <div class="card-body p-5">
-                            <h4 class="fw-bold mb-4 text-center text-dark">Calculate Your Earnings</h4>
+                            <h4 class="fw-bold mb-4 text-center">Calculate Your Earnings</h4>
                             <div class="mb-4">
-                                <label class="form-label fw-semibold text-dark">Referrals per month</label>
+                                <label class="form-label fw-semibold">Referrals per month</label>
                                 <input type="range" class="form-range" min="1" max="100" value="20" id="referralSlider">
                                 <div class="d-flex justify-content-between">
-                                    <small class="text-muted">1</small>
+                                    <small>1</small>
                                     <small class="fw-bold text-primary" id="referralCount">20</small>
-                                    <small class="text-muted">100+</small>
+                                    <small>100+</small>
                                 </div>
                             </div>
-                            <div class="earnings-display-box rounded-3 p-4 text-center">
-                                <small class="d-block mb-2 text-white">Potential Monthly Earnings</small>
-                                <h2 class="display-4 fw-bold text-white mb-0">$<span id="earnings">100</span></h2>
+                            <div class="bg-light rounded-3 p-4 text-center">
+                                <small class="text-muted d-block mb-2">Potential Monthly Earnings</small>
+                                <h2 class="display-4 fw-bold text-primary mb-0">$<span id="earnings">100</span></h2>
                             </div>
                             <div class="mt-4 text-center">
                                 <a href="#" onclick="openLoginForm()" class="btn btn-primary btn-lg px-5 rounded-pill">
@@ -140,75 +140,75 @@
     </section>
 
     <!-- Features Section -->
-    <section class="py-5 features-gradient-bg">
+    <section class="py-5 bg-light">
         <div class="container">
             <div class="text-center mb-5" data-aos="fade-up">
-                <h2 class="display-5 fw-bold mb-3 text-white">Everything You Need to Succeed</h2>
-                <p class="lead text-white">Powerful tools to create, customize, and monetize your AI influencers</p>
+                <h2 class="display-5 fw-bold mb-3">Everything You Need to Succeed</h2>
+                <p class="lead text-muted">Powerful tools to create, customize, and monetize your AI influencers</p>
             </div>
             <div class="row g-4">
                 <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100">
-                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift bg-white">
-                        <div class="card-body p-4 text-center">
-                            <div class="feature-icon-circle bg-primary bg-opacity-10 mx-auto mb-3">
-                                <i class="bi bi-magic fs-1 text-primary"></i>
+                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="feature-icon bg-primary bg-opacity-10 rounded-circle p-3 mb-3 d-inline-flex">
+                                <i class="bi bi-magic fs-2 text-primary"></i>
                             </div>
-                            <h4 class="fw-bold mb-3 text-dark">AI-Powered Creation</h4>
+                            <h4 class="fw-bold mb-3">AI-Powered Creation</h4>
                             <p class="text-muted">Generate stunning, realistic AI influencers in seconds with our advanced AI technology. No design skills required.</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="200">
-                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift bg-white">
-                        <div class="card-body p-4 text-center">
-                            <div class="feature-icon-circle bg-success bg-opacity-10 mx-auto mb-3">
-                                <i class="bi bi-palette fs-1 text-success"></i>
+                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="feature-icon bg-success bg-opacity-10 rounded-circle p-3 mb-3 d-inline-flex">
+                                <i class="bi bi-palette fs-2 text-success"></i>
                             </div>
-                            <h4 class="fw-bold mb-3 text-dark">Full Customization</h4>
+                            <h4 class="fw-bold mb-3">Full Customization</h4>
                             <p class="text-muted">Customize every aspect of your AI influencer - personality, appearance, voice, and behavior to match your brand.</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="300">
-                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift bg-white">
-                        <div class="card-body p-4 text-center">
-                            <div class="feature-icon-circle bg-warning bg-opacity-10 mx-auto mb-3">
-                                <i class="bi bi-share fs-1 text-warning"></i>
+                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="feature-icon bg-warning bg-opacity-10 rounded-circle p-3 mb-3 d-inline-flex">
+                                <i class="bi bi-share fs-2 text-warning"></i>
                             </div>
-                            <h4 class="fw-bold mb-3 text-dark">Easy Sharing</h4>
+                            <h4 class="fw-bold mb-3">Easy Sharing</h4>
                             <p class="text-muted">Share your AI influencer with one click. Get a unique affiliate link and start earning immediately.</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="400">
-                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift bg-white">
-                        <div class="card-body p-4 text-center">
-                            <div class="feature-icon-circle bg-danger bg-opacity-10 mx-auto mb-3">
-                                <i class="bi bi-graph-up-arrow fs-1 text-danger"></i>
+                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="feature-icon bg-danger bg-opacity-10 rounded-circle p-3 mb-3 d-inline-flex">
+                                <i class="bi bi-graph-up-arrow fs-2 text-danger"></i>
                             </div>
-                            <h4 class="fw-bold mb-3 text-dark">Analytics Dashboard</h4>
+                            <h4 class="fw-bold mb-3">Analytics Dashboard</h4>
                             <p class="text-muted">Track performance, engagement, and earnings in real-time with our comprehensive analytics dashboard.</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="500">
-                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift bg-white">
-                        <div class="card-body p-4 text-center">
-                            <div class="feature-icon-circle bg-info bg-opacity-10 mx-auto mb-3">
-                                <i class="bi bi-shield-check fs-1 text-info"></i>
+                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="feature-icon bg-info bg-opacity-10 rounded-circle p-3 mb-3 d-inline-flex">
+                                <i class="bi bi-shield-check fs-2 text-info"></i>
                             </div>
-                            <h4 class="fw-bold mb-3 text-dark">100% Secure</h4>
+                            <h4 class="fw-bold mb-3">100% Secure</h4>
                             <p class="text-muted">Your data and earnings are protected with bank-level security. GDPR compliant and fully encrypted.</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="600">
-                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift bg-white">
-                        <div class="card-body p-4 text-center">
-                            <div class="feature-icon-circle bg-purple bg-opacity-10 mx-auto mb-3">
-                                <i class="bi bi-lightning-charge fs-1 text-purple"></i>
+                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="feature-icon bg-purple bg-opacity-10 rounded-circle p-3 mb-3 d-inline-flex">
+                                <i class="bi bi-lightning-charge fs-2 text-purple"></i>
                             </div>
-                            <h4 class="fw-bold mb-3 text-dark">Lightning Fast</h4>
+                            <h4 class="fw-bold mb-3">Lightning Fast</h4>
                             <p class="text-muted">Create and deploy your AI influencer in under 5 minutes. Start earning from day one.</p>
                         </div>
                     </div>
@@ -280,22 +280,22 @@
     </section>
 
     <!-- Testimonials Section -->
-    <section class="py-5 testimonials-gradient-bg">
+    <section class="py-5 bg-light">
         <div class="container">
             <div class="text-center mb-5" data-aos="fade-up">
-                <h2 class="display-5 fw-bold mb-3 text-white">What Creators Are Saying</h2>
-                <p class="lead text-white">Join thousands of successful creators</p>
+                <h2 class="display-5 fw-bold mb-3">What Creators Are Saying</h2>
+                <p class="lead text-muted">Join thousands of successful creators</p>
             </div>
             <div class="row g-4">
                 <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
-                    <div class="testimonial-card card border-0 shadow-sm h-100 hover-lift bg-white">
+                    <div class="testimonial-card card border-0 shadow-sm h-100 hover-lift">
                         <div class="card-body p-4">
                             <div class="d-flex align-items-center mb-3">
                                 <div class="avatar-circle bg-primary bg-opacity-10 rounded-circle p-2 me-3">
                                     <i class="bi bi-person-fill fs-4 text-primary"></i>
                                 </div>
                                 <div>
-                                    <h5 class="mb-0 fw-bold text-dark">Sarah Johnson</h5>
+                                    <h5 class="mb-0 fw-bold">Sarah Johnson</h5>
                                     <div class="text-warning">★★★★★</div>
                                 </div>
                             </div>
@@ -305,14 +305,14 @@
                     </div>
                 </div>
                 <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
-                    <div class="testimonial-card card border-0 shadow-sm h-100 hover-lift bg-white">
+                    <div class="testimonial-card card border-0 shadow-sm h-100 hover-lift">
                         <div class="card-body p-4">
                             <div class="d-flex align-items-center mb-3">
                                 <div class="avatar-circle bg-success bg-opacity-10 rounded-circle p-2 me-3">
                                     <i class="bi bi-person-fill fs-4 text-success"></i>
                                 </div>
                                 <div>
-                                    <h5 class="mb-0 fw-bold text-dark">Mike Chen</h5>
+                                    <h5 class="mb-0 fw-bold">Mike Chen</h5>
                                     <div class="text-warning">★★★★★</div>
                                 </div>
                             </div>
@@ -322,14 +322,14 @@
                     </div>
                 </div>
                 <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
-                    <div class="testimonial-card card border-0 shadow-sm h-100 hover-lift bg-white">
+                    <div class="testimonial-card card border-0 shadow-sm h-100 hover-lift">
                         <div class="card-body p-4">
                             <div class="d-flex align-items-center mb-3">
                                 <div class="avatar-circle bg-warning bg-opacity-10 rounded-circle p-2 me-3">
                                     <i class="bi bi-person-fill fs-4 text-warning"></i>
                                 </div>
                                 <div>
-                                    <h5 class="mb-0 fw-bold text-dark">Emma Rodriguez</h5>
+                                    <h5 class="mb-0 fw-bold">Emma Rodriguez</h5>
                                     <div class="text-warning">★★★★★</div>
                                 </div>
                             </div>
@@ -419,12 +419,12 @@
     </section>
 
     <!-- Final CTA Section -->
-    <section class="py-5 cta-gradient-bg text-white">
+    <section class="py-5 bg-gradient-primary text-white">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-8 mx-auto text-center" data-aos="zoom-in">
-                    <h2 class="display-4 fw-bold mb-4 text-white">Ready to Start Earning?</h2>
-                    <p class="lead mb-4 fs-4 text-white">Join thousands of creators who are already making money with AI influencers</p>
+                    <h2 class="display-4 fw-bold mb-4">Ready to Start Earning?</h2>
+                    <p class="lead mb-4 fs-4">Join thousands of creators who are already making money with AI influencers</p>
                     <div class="d-flex flex-wrap gap-3 justify-content-center">
                         <a href="#" onclick="openLoginForm()" class="btn btn-light btn-lg px-5 py-3 rounded-pill shadow-lg cta-pulse">
                             <i class="bi bi-rocket-takeoff me-2"></i>Create Your First AI Influencer
@@ -434,7 +434,7 @@
                         </a>
                     </div>
                     <div class="mt-4">
-                        <small class="d-block text-white opacity-75">✓ Free Forever Plan  ✓ No Credit Card Required  ✓ Start Earning Today</small>
+                        <small class="d-block opacity-75">✓ Free Forever Plan  ✓ No Credit Card Required  ✓ Start Earning Today</small>
                     </div>
                 </div>
             </div>

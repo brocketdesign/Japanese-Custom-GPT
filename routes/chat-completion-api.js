@@ -386,6 +386,7 @@ async function routes(fastify, options) {
                         role: 'assistant', 
                         content: completion, 
                         timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }),
+                        createdAt: new Date(),
                         custom_relation: custom_relation ? custom_relation : 'Casual' 
                     };
                     

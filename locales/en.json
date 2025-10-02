@@ -738,6 +738,7 @@
   "admin": {
     "system_prompts": "System Prompts",
     "users": "Users",
+    "user_analytics": "User Analytics",
     "prompts": "Prompts",
     "notifications": "Notifications",
     "models": "Models",

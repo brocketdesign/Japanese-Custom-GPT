@@ -780,6 +780,7 @@
   "admin": {
     "system_prompts": "システムプロンプト",
     "users": "ユーザー",
+    "user_analytics": "ユーザー分析",
     "prompts": "プロンプト",
     "notifications": "通知",
     "models": "モデル",

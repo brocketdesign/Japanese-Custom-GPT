@@ -724,6 +724,7 @@
   "admin": {
     "system_prompts": "Prompts système",
     "users": "Utilisateurs",
+    "user_analytics": "Analytique utilisateur",
     "prompts": "Invites",
     "notifications": "Notifications",
     "models": "Models",

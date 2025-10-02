@@ -136,3 +136,9 @@ handlebars.registerHelper('or', function(...args) {
   }
   return false;
 });
+handlebars.registerHelper('substring', function(str, start, end) {
+  if (typeof str !== 'string') {
+    return '';
+  }
+  return str.substring(start, end);
+});

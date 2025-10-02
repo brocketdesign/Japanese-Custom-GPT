@@ -307,7 +307,8 @@ async function saveVideoToDB({
       videoId: result.insertedId, 
       videoUrl, 
       duration, 
-      prompt 
+      prompt,
+      createdAt: new Date() 
     };
     
     await userDataCollection.updateOne(

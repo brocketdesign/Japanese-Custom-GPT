@@ -15,7 +15,7 @@ const {
 const { checkUserAdmin, getUserData, updateCounter, fetchTags } = require('./models/tool');
 const { deleteOldTasks } = require('./models/imagen');
 const { cronJobs, cacheSitemapDataTask, configureCronJob, initializeCronJobs } = require('./models/cronManager');
-
+const {initializeAnalyticsCron} = require('./models/cronUserAnalytics');
 // Expose cron jobs and configuration to routes
 fastify.decorate('cronJobs', cronJobs);
 fastify.decorate('configureCronJob', configureCronJob);
@@ -48,7 +48,9 @@ fastify.ready(async () => {
   });
 
   // Initialize configured cron jobs
-  await initializeCronJobs(fastify);
+  initializeCronJobs(fastify);
+  // Initialize user analytics cron job
+  initializeAnalyticsCron(fastify);
 });
 
 // Every 3 cron jobs for cleanup and maintenance

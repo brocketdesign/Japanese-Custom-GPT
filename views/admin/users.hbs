@@ -1,250 +1,447 @@
 <!DOCTYPE html>
 <html lang="ja">
     {{> dashboard-header}}
-<body>
-    {{> dashboard-nav}} 
-<!-- Template to List Users -->
-<div class="container mt-5">
-    <h2 class="mb-4">{{title}}</h2>
-    <div class="d-flex justify-content-between">
-        <div class="d-flex align-items-center mb-3">
-            <a href="/admin/users" class="btn btn-outline-dark me-2">{{translations.admin_user.recent_users}}</a>
-            <a href="/admin/users/registered" class="btn btn-outline-dark me-2">{{translations.admin_user.registered_users}}</a>
-            <!-- Button to open modal -->
-            <span id="openCsvModal" class="btn btn-primary">{{translations.admin_user.export_csv}}</span>
-            <!-- New Button for Bulk Clerk Add -->
-            <button id="bulkAddToClerk" class="btn btn-success ms-2">
-                <i class="bi bi-people-fill me-1"></i> Add All to Clerk
-            </button>
-        </div>
-        <div>
-            <span class="badge bg-dark"><i class="bi bi-people me-2"></i>{{users.length}}</span>
-            <span class="badge bg-danger"><i class="bi bi-gender-female me-2"></i>{{femaleCount}}人 ({{femalePercentage}}%)</span>
-            <span class="badge bg-primary"><i class="bi bi-gender-male me-2"></i>{{maleCount}}人 ({{malePercentage}}%)</span>
+    <link rel="stylesheet" href="/css/user-analytics.css">
+<body class="bg-light">
+    {{> dashboard-nav}}
+    
+    <div class="analytics-wrapper">
+        <div class="container-fluid px-4 py-4">
+            <!-- Header Section -->
+            <div class="dashboard-header-section mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="page-title-wrapper">
+                            <div class="icon-wrapper">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                            <div>
+                                <h1 class="dashboard-title mb-1">{{title}}</h1>
+                                <p class="text-muted mb-0">Manage and monitor user accounts</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                        <a href="/admin/users/analytics" class="btn btn-primary btn-shadow me-2">
+                            <i class="bi bi-graph-up me-2"></i>Analytics
+                        </a>
+                        <button id="openCsvModal" class="btn btn-success btn-shadow">
+                            <i class="bi bi-download me-2"></i>Export CSV
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards Section -->
+            <div class="section-header mb-3">
+                <h5 class="section-title">
+                    <i class="bi bi-speedometer2 me-2"></i>Quick Stats
+                </h5>
+            </div>
+            
+            <div class="row g-3 g-lg-4 mb-4">
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stat-card stat-card-primary">
+                        <div class="stat-card-body">
+                            <div class="stat-card-content">
+                                <div class="stat-info">
+                                    <div class="stat-label-wrapper">
+                                        <span class="stat-label">Total Users</span>
+                                    </div>
+                                    <h2 class="stat-value mb-2">{{users.length}}</h2>
+                                    <p class="stat-change mb-0 text-white-50">
+                                        <i class="bi bi-people-fill me-1"></i>
+                                        <span class="change-period">All registered users</span>
+                                    </p>
+                                </div>
+                                <div class="stat-icon-wrapper">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-people-fill"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stat-card stat-card-success">
+                        <div class="stat-card-body">
+                            <div class="stat-card-content">
+                                <div class="stat-info">
+                                    <div class="stat-label-wrapper">
+                                        <span class="stat-label">Female Users</span>
+                                    </div>
+                                    <h2 class="stat-value mb-2">{{femaleCount}}</h2>
+                                    <p class="stat-change mb-0 text-white-50">
+                                        <i class="bi bi-gender-female me-1"></i>
+                                        <span class="change-value">{{femalePercentage}}%</span>
+                                        <span class="change-period">of total</span>
+                                    </p>
+                                </div>
+                                <div class="stat-icon-wrapper">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-gender-female"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stat-card stat-card-info">
+                        <div class="stat-card-body">
+                            <div class="stat-card-content">
+                                <div class="stat-info">
+                                    <div class="stat-label-wrapper">
+                                        <span class="stat-label">Male Users</span>
+                                    </div>
+                                    <h2 class="stat-value mb-2">{{maleCount}}</h2>
+                                    <p class="stat-change mb-0 text-white-50">
+                                        <i class="bi bi-gender-male me-1"></i>
+                                        <span class="change-value">{{malePercentage}}%</span>
+                                        <span class="change-period">of total</span>
+                                    </p>
+                                </div>
+                                <div class="stat-icon-wrapper">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-gender-male"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stat-card stat-card-warning">
+                        <div class="stat-card-body">
+                            <div class="stat-card-content">
+                                <div class="stat-info">
+                                    <div class="stat-label-wrapper">
+                                        <span class="stat-label">Quick Actions</span>
+                                    </div>
+                                    <div class="d-flex flex-column gap-2 mt-3">
+                                        <button id="bulkAddToClerk" class="btn btn-light btn-sm">
+                                            <i class="bi bi-key me-1"></i> Bulk Add to Clerk
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="stat-icon-wrapper">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-lightning-charge-fill"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons Section -->
+            <div class="section-header mb-3 mt-4">
+                <h5 class="section-title">
+                    <i class="bi bi-filter me-2"></i>Filter & View Options
+                </h5>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="chart-card card-shadow">
+                        <div class="chart-card-body p-3">
+                            <div class="d-flex flex-wrap gap-2">
+                                <a href="/admin/users" class="btn btn-outline-dark">
+                                    <i class="bi bi-clock-history me-1"></i>{{translations.admin_user.recent_users}}
+                                </a>
+                                <a href="/admin/users/registered" class="btn btn-outline-dark">
+                                    <i class="bi bi-person-check me-1"></i>{{translations.admin_user.registered_users}}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Table Section -->
+            <div class="section-header mb-3">
+                <h5 class="section-title">
+                    <i class="bi bi-table me-2"></i>User Management
+                </h5>
+            </div>
+
+            <div class="chart-card card-shadow">
+                <div class="chart-card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-bottom: 2px solid #dee2e6;">
+                                <tr>
+                                    <th class="px-4 py-3" style="font-weight: 600; color: #2c3e50;">#</th>
+                                    <th class="py-3" style="font-weight: 600; color: #2c3e50;">{{translations.admin_user.avatar}}</th>
+                                    <th class="py-3" style="font-weight: 600; color: #2c3e50;">{{translations.admin_user.date}}</th>
+                                    <th class="py-3" style="font-weight: 600; color: #2c3e50;">{{translations.admin_user.email}}</th>
+                                    <th class="py-3" style="font-weight: 600; color: #2c3e50;">{{translations.admin_user.gender}}</th>
+                                    <th class="py-3" style="font-weight: 600; color: #2c3e50;">{{translations.admin_user.language}}</th>
+                                    <th class="py-3" style="font-weight: 600; color: #2c3e50;">{{translations.admin_user.subscription}}</th>
+                                    <th class="py-3" style="font-weight: 600; color: #2c3e50;">{{translations.admin_user.actions}}</th>
+                                    <th class="py-3" style="font-weight: 600; color: #2c3e50;">{{translations.admin_user.profile}}</th>
+                                    <th class="py-3" style="font-weight: 600; color: #2c3e50;">Clerk</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each users}}
+                                <tr data-user-id="{{this._id}}" style="border-bottom: 1px solid #f0f0f0;">
+                                    <td class="px-4 py-3">{{increment @index}}</td>
+                                    <td class="py-3">
+                                        <a href="/user/{{this._id}}" target="_blank">
+                                            <div class="d-flex flex-column justify-content-center align-items-center">
+                                                {{#if this.profileUrl}}
+                                                    <img src="{{this.profileUrl}}" alt="{{this.nickname}}" class="rounded-circle shadow-sm" style="width: 45px;height: 45px;object-fit: cover;border: 2px solid #e9ecef;">
+                                                {{else}}
+                                                    <div class="rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 45px;height: 45px;background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);color: white;font-weight: 600;">
+                                                        {{substring this.nickname 0 1}}
+                                                    </div>
+                                                {{/if}}
+                                                <span class="nickname mt-1" style="font-size: 11px;font-weight: 500;">{{this.nickname}}</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                    <td class="jp-d py-3" style="font-size: 0.875rem;">{{this.createdAt}}</td>
+                                    <td class="py-3" style="font-size: 0.875rem;">{{this.email}}</td>
+                                    <td class="py-3">
+                                        {{#if (eq this.gender "female")}}
+                                            <span class="badge" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 0.4rem 0.8rem; border-radius: 12px;">
+                                                <i class="bi bi-gender-female me-1"></i>Female
+                                            </span>
+                                        {{else}}
+                                            <span class="badge" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 0.4rem 0.8rem; border-radius: 12px;">
+                                                <i class="bi bi-gender-male me-1"></i>Male
+                                            </span>
+                                        {{/if}}
+                                    </td>
+                                    <td class="py-3">
+                                        <span class="badge bg-secondary" style="padding: 0.4rem 0.8rem; border-radius: 12px;">{{this.lang}}</span>
+                                    </td>
+                                    <td class="subscriptionStatus py-3">
+                                        {{#if (eq this.subscriptionStatus "premium")}}
+                                            <span class="badge" style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); color: white; padding: 0.4rem 0.8rem; border-radius: 12px;">
+                                                <i class="bi bi-star-fill me-1"></i>Premium
+                                            </span>
+                                        {{else}}
+                                            <span class="badge bg-light text-dark" style="padding: 0.4rem 0.8rem; border-radius: 12px;">Free</span>
+                                        {{/if}}
+                                    </td>
+                                    <td class="py-3">
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton{{this._id}}" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 10px;">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu shadow-lg" aria-labelledby="dropdownMenuButton{{this._id}}" style="border-radius: 12px; border: none;">
+                                                <li>
+                                                    <button class="dropdown-item subscriptionToggle" data-user-id="{{this._id}}">
+                                                        <i class="bi bi-pencil-square me-2 text-primary"></i> {{../translations.admin_user.toggle_subscription}}
+                                                    </button>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" href="/admin/chat/{{this._id}}">
+                                                        <i class="bi bi-chat-dots me-2 text-info"></i> {{../translations.admin_user.chat}}
+                                                    </a>
+                                                </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <button class="dropdown-item delete-user" data-user-id="{{this._id}}">
+                                                        <i class="bi bi-trash me-2 text-danger"></i> {{../translations.admin_user.delete}}
+                                                    </button>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                    <td class="py-3">
+                                        <a href="/user/{{this._id}}" target="_blank" class="btn btn-sm btn-primary" style="border-radius: 10px;">
+                                            <i class="bi bi-box-arrow-up-right"></i>
+                                        </a>
+                                    </td>
+                                    <td class="py-3">
+                                        {{#if this.clerkId}}
+                                            <button class="btn btn-sm btn-success check-clerk-status" data-user-id="{{this._id}}" data-user-email="{{this.email}}" data-clerk-id="{{this.clerkId}}" style="border-radius: 10px;">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                            </button>
+                                        {{else}}
+                                            <button class="btn btn-sm btn-outline-info check-clerk-status" data-user-id="{{this._id}}" data-user-email="{{this.email}}" style="border-radius: 10px;">
+                                                <i class="bi bi-key-fill"></i>
+                                            </button>
+                                        {{/if}}
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Modal -->
+    <!-- CSV Modal -->
     <div class="modal fade" id="csvModal" tabindex="-1" aria-labelledby="csvModalLabel" aria-hidden="true">
-    <div class="modal-dialog mx-0">
-        <div class="modal-content mx-auto">
-        <div class="modal-header">
-            <h5 class="modal-title" id="csvModalLabel">{{translations.admin_user.column_csv}}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-            <div class="d-flex flex-wrap justify-content-center">
-                <button type="button" class="btn btn-outline-primary m-2 field-btn" data-field="createdAt">{{translations.admin_user.date}}</button>
-                <button type="button" class="btn btn-outline-primary m-2 field-btn" data-field="email">{{translations.admin_user.email}}</button>
-                <button type="button" class="btn btn-outline-primary m-2 field-btn" data-field="nickname">{{translations.admin_user.name}}</button>
-                <button type="button" class="btn btn-outline-primary m-2 field-btn" data-field="gender">{{translations.admin_user.gender}}</button>
-                <button type="button" class="btn btn-outline-primary m-2 field-btn" data-field="subscriptionStatus">{{translations.admin_user.subscription}}</button>
+        <div class="modal-dialog">
+            <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
+                <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 20px 20px 0 0;">
+                    <h5 class="modal-title" id="csvModalLabel">
+                        <i class="bi bi-file-earmark-spreadsheet me-2"></i>{{translations.admin_user.column_csv}}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="d-flex flex-wrap justify-content-center gap-2">
+                        <button type="button" class="btn btn-outline-primary field-btn" data-field="createdAt" style="border-radius: 12px;">
+                            <i class="bi bi-calendar-event me-1"></i>{{translations.admin_user.date}}
+                        </button>
+                        <button type="button" class="btn btn-outline-primary field-btn" data-field="email" style="border-radius: 12px;">
+                            <i class="bi bi-envelope me-1"></i>{{translations.admin_user.email}}
+                        </button>
+                        <button type="button" class="btn btn-outline-primary field-btn" data-field="nickname" style="border-radius: 12px;">
+                            <i class="bi bi-person me-1"></i>{{translations.admin_user.name}}
+                        </button>
+                        <button type="button" class="btn btn-outline-primary field-btn" data-field="gender" style="border-radius: 12px;">
+                            <i class="bi bi-gender-ambiguous me-1"></i>{{translations.admin_user.gender}}
+                        </button>
+                        <button type="button" class="btn btn-outline-primary field-btn" data-field="subscriptionStatus" style="border-radius: 12px;">
+                            <i class="bi bi-star me-1"></i>{{translations.admin_user.subscription}}
+                        </button>
+                    </div>
+                    <input type="hidden" id="selectedFields" name="fields">
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid #f0f0f0;">
+                    <button id="submitCsv" type="button" class="btn btn-success" style="border-radius: 12px;">
+                        <i class="bi bi-download me-2"></i>{{translations.admin_user.download_csv}}
+                    </button>
+                </div>
             </div>
-            <input type="hidden" id="selectedFields" name="fields">
-        </div>
-        <div class="modal-footer">
-            <button id="submitCsv" type="button" class="btn btn-success">{{translations.admin_user.download_csv}}</button>
-        </div>
         </div>
     </div>
-    </div>
-    <!-- Modal for delete confirmation -->
+
+    <!-- Delete User Modal -->
     <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
         <div class="modal-dialog">
-            <div class="modal-content mx-auto">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteUserModalLabel">{{translations.admin_user.delete}}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
+                <div class="modal-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border-radius: 20px 20px 0 0;">
+                    <h5 class="modal-title" id="deleteUserModalLabel">
+                        <i class="bi bi-exclamation-triangle me-2"></i>{{translations.admin_user.delete}}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <p>{{translations.admin_user.delete_confirm}}</p>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{translations.admin_user.cancel}}</button>
-                    <button type="button" class="btn btn-danger" id="confirmDeleteUser">{{translations.admin_user.delete}}</button>
+                <div class="modal-footer" style="border-top: 1px solid #f0f0f0;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 12px;">{{translations.admin_user.cancel}}</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteUser" style="border-radius: 12px;">{{translations.admin_user.delete}}</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal for adding user to Clerk -->
+    <!-- Add to Clerk Modal -->
     <div class="modal fade" id="addToClerkModal" tabindex="-1" aria-labelledby="addToClerkModalLabel" aria-hidden="true">
         <div class="modal-dialog">
-            <div class="modal-content mx-auto">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addToClerkModalLabel">Add User to Clerk</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
+                <div class="modal-header" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border-radius: 20px 20px 0 0;">
+                    <h5 class="modal-title" id="addToClerkModalLabel">
+                        <i class="bi bi-key me-2"></i>Add User to Clerk
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <p>Add <span id="clerkUserEmail" class="fw-bold"></span> to Clerk authentication system?</p>
                     <div class="mb-3">
                         <input type="hidden" id="clerkUserId">
-                        <div class="form-check mb-2">
+                        <div class="form-check mb-3 p-3" style="background: #f8f9fa; border-radius: 12px;">
                             <input class="form-check-input" type="checkbox" value="" id="sendEmailInvite" checked>
-                            <label class="form-check-label" for="sendEmailInvite">
-                                Send email invitation invitation
+                            <label class="form-check-label fw-bold" for="sendEmailInvite">
+                                Send email invitation
                             </label>
+                            <small class="form-text text-muted d-block mt-1">
+                                Clerk will automatically send an invitation email to the user
+                            </small>
                         </div>
-                        <small class="form-text text-muted d-block">
-                            Clerk will automatically send an invitation email to the user
-                        </small>
-                        <div class="form-check">
+                        <div class="form-check p-3" style="background: #f8f9fa; border-radius: 12px;">
                             <input class="form-check-input" type="checkbox" value="" id="skipPasswordCreation">
-                            <label class="form-check-label" for="skipPasswordCreation">
+                            <label class="form-check-label fw-bold" for="skipPasswordCreation">
                                 Skip password creation
                             </label>
-                            <small class="form-text text-muted d-block">
+                            <small class="form-text text-muted d-block mt-1">
                                 When checked, users can sign in using OAuth only (Google, etc.)
                             </small>
                         </div>
                     </div>
-                    <div id="clerkAddStatus" class="alert d-none"></div>
+                    <div id="clerkAddStatus" class="alert d-none" style="border-radius: 12px;"></div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="confirmAddToClerk">Add to Clerk</button>
+                <div class="modal-footer" style="border-top: 1px solid #f0f0f0;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 12px;">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmAddToClerk" style="border-radius: 12px;">Add to Clerk</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal for bulk adding users to Clerk -->
+    <!-- Bulk Add to Clerk Modal -->
     <div class="modal fade" id="bulkAddToClerkModal" tabindex="-1" aria-labelledby="bulkAddToClerkModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content mx-auto">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="bulkAddToClerkModalLabel">Bulk Add to Clerk</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
+                <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 20px 20px 0 0;">
+                    <h5 class="modal-title" id="bulkAddToClerkModalLabel">
+                        <i class="bi bi-people-fill me-2"></i>Bulk Add to Clerk
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <p>This will check all users and add those not in Clerk to the Clerk authentication system.</p>
                     <div class="mb-3">
-                        <div class="form-check mb-2">
+                        <div class="form-check mb-3 p-3" style="background: #f8f9fa; border-radius: 12px;">
                             <input class="form-check-input" type="checkbox" value="" id="bulkSendEmailInvite" checked>
-                            <label class="form-check-label" for="bulkSendEmailInvite">
+                            <label class="form-check-label fw-bold" for="bulkSendEmailInvite">
                                 Have Clerk send email invitations
                             </label>
-                            <small class="form-text text-muted d-block">
+                            <small class="form-text text-muted d-block mt-1">
                                 When checked, Clerk will automatically send invitation emails to users
                             </small>
                         </div>
-                        <div class="form-check">
+                        <div class="form-check p-3" style="background: #f8f9fa; border-radius: 12px;">
                             <input class="form-check-input" type="checkbox" value="" id="bulkSkipPasswordCreation">
-                            <label class="form-check-label" for="bulkSkipPasswordCreation">
+                            <label class="form-check-label fw-bold" for="bulkSkipPasswordCreation">
                                 Skip password creation
                             </label>
-                            <small class="form-text text-muted d-block">
+                            <small class="form-text text-muted d-block mt-1">
                                 When checked, users can sign in using OAuth only (Google, etc.)
                             </small>
                         </div>
                     </div>
-                    <div class="alert alert-info">
+                    <div class="alert alert-info" style="border-radius: 12px; border: none; background: linear-gradient(135deg, #d4e9ff 0%, #e8f4ff 100%);">
+                        <i class="bi bi-info-circle me-2"></i>
                         <small>
-                            <i class="bi bi-info-circle me-1"></i>
                             You can add users to Clerk without sending invitation emails by unchecking the first option. 
                             Users will still be able to sign in if they visit your application, but won't receive an automatic invitation.
                         </small>
                     </div>
-                    <div id="bulkAddProgress" class="progress d-none">
-                        <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                    <div id="bulkAddProgress" class="progress d-none" style="height: 25px; border-radius: 12px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
                     </div>
                     <div id="bulkAddStatus" class="mt-3"></div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="confirmBulkAddToClerk">Start Process</button>
+                <div class="modal-footer" style="border-top: 1px solid #f0f0f0;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 12px;">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmBulkAddToClerk" style="border-radius: 12px;">
+                        <i class="bi bi-play-fill me-1"></i>Start Process
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>{{translations.admin_user.avatar}}</th>
-                    <th>{{translations.admin_user.date}}</th>
-                    <th>{{translations.admin_user.email}}</th>
-                    <th>{{translations.admin_user.gender}}</th>
-                    <th>{{translations.admin_user.language}}</th>
-                    <th>{{translations.admin_user.subscription}}</th>
-                    <th>{{translations.admin_user.actions}}</th>
-                    <th>{{translations.admin_user.profile}}</th>
-                    <th>Clerk</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{#each users}}
-                <tr data-user-id="{{this._id}}">
-                    <td>{{increment @index}}</td>
-                    <td>
-                        <a href="/user/{{this._id}}" target="_blank">
-                            <div class="d-flex flex-column justify-content-center align-items-center">
-                                {{#if this.profileUrl}}
-                                    <img src="{{this.profileUrl}}" alt="{{this.nickname}}" class="rounded-circle" style="width: 40px;height: 40px;object-fit: cover;">
-                                {{/if}}
-                                <span class="nickname" style="font-size: 12px;">{{this.nickname}}</span>
-                            </div>
-                        </a>
-                    </td>
-                    <td class="jp-d">{{this.createdAt}}</td>
-                    <td>{{this.email}}</td>
-                    <td><i class="bi bi-gender-{{this.gender}} me-2"></i></td>
-                    <td>{{this.lang}}</td>
-                    <td class="subscriptionStatus">{{this.subscriptionStatus}}</td>
-                    <td>
-                        <div class="dropdown">
-                            <button class="btn btn-secondary dropdown-toggle shadow-0" type="button" id="dropdownMenuButton{{this._id}}" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-three-dots-vertical"></i>
-                            </button>
-                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{this._id}}">
-                                <li>
-                                    <button class="dropdown-item subscriptionToggle" data-user-id="{{this._id}}">
-                                        <i class="bi bi-pencil-square me-2"></i> {{../translations.admin_user.toggle_subscription}}
-                                    </button>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="/admin/chat/{{this._id}}">
-                                        <i class="bi bi-chat-dots me-2"></i> {{../translations.admin_user.chat}}
-                                    </a>
-                                </li>
-                                <li>
-                                    <button class="dropdown-item delete-user" data-user-id="{{this._id}}">
-                                        <i class="bi bi-trash me-2"></i> {{../translations.admin_user.delete}}
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
-                    </td>
-                    <td>
-                        <a href="/user/{{this._id}}" target="_blank" class="btn btn-primary">
-                            <i class="bi bi-box-arrow-up-right"></i>
-                        </a>
-                    </td>
-                    <!-- New column for Clerk actions -->
-                    <td>
-                        {{#if this.clerkId}}
-                            <button class="btn btn-success check-clerk-status" data-user-id="{{this._id}}" data-user-email="{{this.email}}" data-clerk-id="{{this.clerkId}}">
-                                <i class="bi bi-check"></i>
-                            </button>
-                        {{else}}
-                            <button class="btn btn-outline-info check-clerk-status" data-user-id="{{this._id}}" data-user-email="{{this.email}}">
-                                <i class="bi bi-key"></i>
-                            </button>
-                        {{/if}}
-                    </td>
-                </tr>
-                {{/each}}
-            </tbody>
-        </table>
-    </div>
-</div>
-<style>
-  .sticky-bottom {display:none;}
-</style>
+    <style>.sticky-bottom, #footer-toolbar {display:none;}</style>
     {{> dashboard-footer}}
-</body>
+    
     <script>
     $(document).ready(function(){
         $("#openCsvModal").click(function(){
@@ -563,4 +760,5 @@
         });
     });
     </script>
+</body>
 </html>

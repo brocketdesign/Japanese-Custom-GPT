@@ -1899,6 +1899,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
           title,
           nsfw,
           isMerged: isMerged || false,
+          createdAt: new Date(),
           timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }),
         };
 

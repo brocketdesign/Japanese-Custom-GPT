@@ -88,6 +88,19 @@ async function routes(fastify, options) {
     }
   });
 
+  fastify.get('/admin/users/analytics', async (request, reply) => {
+    const user = request.user;
+    const isAdmin = await checkUserAdmin(fastify, user._id);
+    if (!isAdmin) return reply.status(403).send({ error: 'Access denied' });
+
+    const db = fastify.mongo.db;
+    const analyticsCollection = db.collection('userAnalytics');
+
+    const analyticsData = await analyticsCollection.find().toArray();
+
+    return reply.view('/admin/users-analytics', { analytics: analyticsData });
+  });
+
   fastify.put('/admin/users/:userId/subscription', async (request, reply) => {
     try {
       const isAdmin = await checkUserAdmin(fastify, request.user._id);

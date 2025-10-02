@@ -227,7 +227,8 @@ fastify.post('/api/init-chat', async (request, reply) => {
                 }
             }
         }
-
+        startMessage.createdAt = new Date();
+        
         userChatDocument = {
             userId: new fastify.mongo.ObjectId(userId),
             chatId: new fastify.mongo.ObjectId(chatId),
@@ -453,13 +454,15 @@ fastify.post('/api/init-chat', async (request, reply) => {
             newMessage.timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
             userData.messages.push(newMessage);
             userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-    
+            newMessage.createdAt = new Date();
+
             const result = await collectionUserChat.updateOne(
                 { _id: new fastify.mongo.ObjectId(userChatId) },
                 { $set: { messages: userData.messages, updatedAt: userData.updatedAt } }
             );
     
             if (result.modifiedCount === 1) {
+                console.log(`Adding new message to chat ${chatId} for userChat ${userChatId}, messageObject:`, newMessage);
                 reply.send({ success: true, message: 'Message added successfully' });
             } else {
                 reply.status(500).send({ error: 'Failed to add message' });

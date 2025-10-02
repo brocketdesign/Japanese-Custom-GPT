@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ja">
+    {{> dashboard-header}}
+    <link rel="stylesheet" href="/css/user-analytics.css">
+<body class="bg-light">
+    {{> dashboard-nav}}
+    
+    <div class="analytics-wrapper">
+        <div class="container-fluid px-4 py-4">
+            <!-- Header Section -->
+            <div class="dashboard-header-section mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="page-title-wrapper">
+                            <div class="icon-wrapper">
+                                <i class="bi bi-graph-up-arrow"></i>
+                            </div>
+                            <div>
+                                <h1 class="dashboard-title mb-1">Analytics Dashboard</h1>
+                                <p class="text-muted mb-0">Real-time insights and performance metrics</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                        <a href="/admin/users" class="btn btn-outline-secondary me-2">
+                            <i class="bi bi-arrow-left me-2"></i>Back to Users
+                        </a>
+                        <button id="refreshData" class="btn btn-primary btn-shadow">
+                            <i class="bi bi-arrow-clockwise me-2"></i>Refresh Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="loadingSpinner" class="loading-container">
+                <div class="loading-card">
+                    <div class="spinner-border text-primary mb-3" style="width: 3.5rem; height: 3.5rem;" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5 class="text-muted">Loading analytics data...</h5>
+                    <p class="text-muted small mb-0">Please wait while we gather the insights</p>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div id="dashboardContent" style="display: none;">
+                <!-- Stats Cards Section -->
+                <div class="section-header mb-3">
+                    <h5 class="section-title">
+                        <i class="bi bi-speedometer2 me-2"></i>Key Metrics
+                    </h5>
+                </div>
+                
+                <div class="row g-3 g-lg-4 mb-4">
+                    <div class="col-xl-3 col-lg-6 col-md-6">
+                        <div class="stat-card stat-card-primary">
+                            <div class="stat-card-body">
+                                <div class="stat-card-content">
+                                    <div class="stat-info">
+                                        <div class="stat-label-wrapper">
+                                            <span class="stat-label">Total Users</span>
+                                        </div>
+                                        <h2 class="stat-value mb-2" id="totalUsers">0</h2>
+                                        <p class="stat-change mb-0" id="userChange">
+                                            <i class="bi bi-arrow-up me-1"></i>
+                                            <span class="change-value">0%</span>
+                                            <span class="change-period">from last week</span>
+                                        </p>
+                                    </div>
+                                    <div class="stat-icon-wrapper">
+                                        <div class="stat-icon">
+                                            <i class="bi bi-people-fill"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-lg-6 col-md-6">
+                        <div class="stat-card stat-card-success">
+                            <div class="stat-card-body">
+                                <div class="stat-card-content">
+                                    <div class="stat-info">
+                                        <div class="stat-label-wrapper">
+                                            <span class="stat-label">Images Generated</span>
+                                        </div>
+                                        <h2 class="stat-value mb-2" id="totalImages">0</h2>
+                                        <p class="stat-change mb-0" id="imageChange">
+                                            <i class="bi bi-arrow-up me-1"></i>
+                                            <span class="change-value">0%</span>
+                                            <span class="change-period">from last week</span>
+                                        </p>
+                                    </div>
+                                    <div class="stat-icon-wrapper">
+                                        <div class="stat-icon">
+                                            <i class="bi bi-image-fill"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-lg-6 col-md-6">
+                        <div class="stat-card stat-card-warning">
+                            <div class="stat-card-body">
+                                <div class="stat-card-content">
+                                    <div class="stat-info">
+                                        <div class="stat-label-wrapper">
+                                            <span class="stat-label">Total Messages</span>
+                                        </div>
+                                        <h2 class="stat-value mb-2" id="totalMessages">0</h2>
+                                        <p class="stat-change mb-0" id="messageChange">
+                                            <i class="bi bi-arrow-up me-1"></i>
+                                            <span class="change-value">0%</span>
+                                            <span class="change-period">from last week</span>
+                                        </p>
+                                    </div>
+                                    <div class="stat-icon-wrapper">
+                                        <div class="stat-icon">
+                                            <i class="bi bi-chat-dots-fill"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-lg-6 col-md-6">
+                        <div class="stat-card stat-card-info">
+                            <div class="stat-card-body">
+                                <div class="stat-card-content">
+                                    <div class="stat-info">
+                                        <div class="stat-label-wrapper">
+                                            <span class="stat-label">Avg Messages/User</span>
+                                        </div>
+                                        <h2 class="stat-value mb-2" id="avgMessages">0</h2>
+                                        <p class="stat-change mb-0 text-white-50">
+                                            <i class="bi bi-bar-chart-fill me-1"></i>
+                                            <span class="change-period">Overall average</span>
+                                        </p>
+                                    </div>
+                                    <div class="stat-icon-wrapper">
+                                        <div class="stat-icon">
+                                            <i class="bi bi-graph-up-arrow"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="section-header mb-3 mt-5">
+                    <h5 class="section-title">
+                        <i class="bi bi-bar-chart-line me-2"></i>Growth Analytics
+                    </h5>
+                </div>
+
+                <div class="row g-3 g-lg-4 mb-4">
+                    <div class="col-xl-8 col-lg-7">
+                        <div class="chart-card card-shadow">
+                            <div class="chart-card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="chart-card-title mb-1">User Growth Trend</h5>
+                                        <p class="chart-card-subtitle mb-0">New user registrations over the last 7 days</p>
+                                    </div>
+                                    <div class="chart-badge">
+                                        <i class="bi bi-calendar-week me-1"></i>7 Days
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart-card-body">
+                                <canvas id="userGrowthChart" height="80"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-4 col-lg-5">
+                        <div class="chart-card card-shadow">
+                            <div class="chart-card-header">
+                                <div>
+                                    <h5 class="chart-card-title mb-1">Gender Distribution</h5>
+                                    <p class="chart-card-subtitle mb-0">User demographics breakdown</p>
+                                </div>
+                            </div>
+                            <div class="chart-card-body">
+                                <canvas id="genderChart" height="80"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Charts -->
+                <div class="section-header mb-3 mt-5">
+                    <h5 class="section-title">
+                        <i class="bi bi-pie-chart me-2"></i>Distribution & Trends
+                    </h5>
+                </div>
+
+                <div class="row g-3 g-lg-4 mb-4">
+                    <div class="col-xl-6 col-lg-6">
+                        <div class="chart-card card-shadow">
+                            <div class="chart-card-header">
+                                <div>
+                                    <h5 class="chart-card-title mb-1">Top Nationalities</h5>
+                                    <p class="chart-card-subtitle mb-0">Distribution by language preference</p>
+                                </div>
+                            </div>
+                            <div class="chart-card-body">
+                                <canvas id="nationalityChart" height="80"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-6 col-lg-6">
+                        <div class="chart-card card-shadow">
+                            <div class="chart-card-header">
+                                <div>
+                                    <h5 class="chart-card-title mb-1">Content Generation Trends</h5>
+                                    <p class="chart-card-subtitle mb-0">Images and messages over time</p>
+                                </div>
+                            </div>
+                            <div class="chart-card-body">
+                                <canvas id="contentTrendsChart" height="80"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Stats -->
+                <div class="section-header mb-3 mt-5">
+                    <h5 class="section-title">
+                        <i class="bi bi-award me-2"></i>Engagement Metrics
+                    </h5>
+                </div>
+
+                <div class="row g-3 g-lg-4 mb-4">
+                    <div class="col-xl-4 col-md-6">
+                        <div class="info-card card-shadow">
+                            <div class="info-card-body">
+                                <div class="info-card-header">
+                                    <div class="info-icon bg-warning-soft">
+                                        <i class="bi bi-coin text-warning"></i>
+                                    </div>
+                                    <h6 class="info-card-title mb-0">Premium Users</h6>
+                                </div>
+                                <div class="info-card-content">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h2 class="info-value mb-0" id="premiumUsers">0</h2>
+                                        <span class="badge badge-warning" id="premiumPercentage">0%</span>
+                                    </div>
+                                    <div class="progress-wrapper">
+                                        <div class="progress">
+                                            <div class="progress-bar bg-warning" role="progressbar" id="premiumProgress" style="width: 0%"></div>
+                                        </div>
+                                        <small class="progress-label text-muted mt-2">of total user base</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-4 col-md-6">
+                        <div class="info-card card-shadow">
+                            <div class="info-card-body">
+                                <div class="info-card-header">
+                                    <div class="info-icon bg-danger-soft">
+                                        <i class="bi bi-heart-fill text-danger"></i>
+                                    </div>
+                                    <h6 class="info-card-title mb-0">Total Likes</h6>
+                                </div>
+                                <div class="info-card-content">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h2 class="info-value mb-0" id="totalLikes">0</h2>
+                                        <span class="badge badge-danger" id="likesPerUser">0/user</span>
+                                    </div>
+                                    <div class="info-detail">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        <small class="text-muted">Average likes per user</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-4 col-md-6">
+                        <div class="info-card card-shadow">
+                            <div class="info-card-body">
+                                <div class="info-card-header">
+                                    <div class="info-icon bg-primary-soft">
+                                        <i class="bi bi-image-fill text-primary"></i>
+                                    </div>
+                                    <h6 class="info-card-title mb-0">Avg Images/User</h6>
+                                </div>
+                                <div class="info-card-content">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h2 class="info-value mb-0" id="avgImagesPerUser">0</h2>
+                                        <span class="badge badge-primary" id="activeGenerators">0 active</span>
+                                    </div>
+                                    <div class="info-detail">
+                                        <i class="bi bi-people me-1"></i>
+                                        <small class="text-muted">Users who generated images</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Last Updated Footer -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="update-card card-shadow">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="update-icon me-3">
+                                        <i class="bi bi-clock-history"></i>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block mb-1">Last Updated</small>
+                                        <strong id="lastUpdated" class="text-dark">Never</strong>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="auto-refresh-badge">
+                                        <i class="bi bi-arrow-repeat me-2"></i>
+                                        <span>Auto-refresh every hour</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>.sticky-bottom, #footer-toolbar {display:none;}</style>
+    {{> dashboard-footer}}
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="/js/admin/user-analytics.js"></script>
+</body>
+</html>

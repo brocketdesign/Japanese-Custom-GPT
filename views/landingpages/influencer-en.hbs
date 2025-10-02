@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+{{> dashboard-header}}
+<link rel="stylesheet" href="/css/landingpage.css">
+
+<body>
+    {{> dashboard-nav}}
+
+    <!-- Hero Section with Animated Gradient Background -->
+    <section id="hero-section" class="position-relative overflow-hidden">
+        <div class="animated-gradient-bg"></div>
+        <div class="container py-5">
+            <div class="row align-items-center min-vh-100">
+                <div class="col-lg-6 text-white position-relative z-index-2" data-aos="fade-right">
+                    <div class="badge bg-white text-primary mb-3 px-3 py-2 rounded-pill">
+                        <i class="bi bi-stars me-2"></i>Create AI Influencers in Minutes
+                    </div>
+                    <h1 class="display-3 fw-bold mb-4 hero-title">
+                        Build Your AI Influencer.<br/>
+                        <span class="gradient-text">Earn While You Sleep.</span>
+                    </h1>
+                    <p class="lead mb-4 fs-4">
+                        Create stunning AI influencers, share them with the world, and earn <strong>$5 per conversion</strong> through our affiliate program. No coding required.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3 mb-4">
+                        <a href="#" onclick="openLoginForm()" class="btn btn-light btn-lg px-5 py-3 rounded-pill shadow-lg cta-pulse">
+                            <i class="bi bi-rocket-takeoff me-2"></i>Start Creating Free
+                        </a>
+                        <a href="#how-it-works" class="btn btn-outline-light btn-lg px-5 py-3 rounded-pill">
+                            <i class="bi bi-play-circle me-2"></i>See How It Works
+                        </a>
+                    </div>
+                    <div class="d-flex align-items-center gap-4 flex-wrap">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-check-circle-fill text-success fs-5 me-2"></i>
+                            <span>No Credit Card Required</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-check-circle-fill text-success fs-5 me-2"></i>
+                            <span>Free Forever Plan</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 position-relative" data-aos="fade-left" data-aos-delay="200">
+                    <div class="hero-image-container">
+                        <img src="/img/lpbanner2/main-{{bannerNumber}}.png" 
+                             class="img-fluid rounded-4 shadow-2xl floating-image" 
+                             alt="AI Influencer Example">
+                        <div class="floating-card card-1" data-aos="zoom-in" data-aos-delay="400">
+                            <i class="bi bi-currency-dollar fs-3 text-success"></i>
+                            <div class="ms-2">
+                                <small class="d-block text-muted">Earnings Today</small>
+                                <strong class="fs-5">$127.50</strong>
+                            </div>
+                        </div>
+                        <div class="floating-card card-2" data-aos="zoom-in" data-aos-delay="600">
+                            <i class="bi bi-people fs-3 text-primary"></i>
+                            <div class="ms-2">
+                                <small class="d-block text-muted">Active Users</small>
+                                <strong class="fs-5">2,341</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trust Bar -->
+    <section class="py-4 bg-white border-bottom">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-12 text-center">
+                    <p class="text-muted mb-3 fw-semibold">TRUSTED BY CREATORS WORLDWIDE</p>
+                    <div class="d-flex justify-content-center align-items-center gap-4 flex-wrap">
+                        <div class="trust-stat" data-aos="fade-up">
+                            <h3 class="fw-bold text-primary mb-0">10,000+</h3>
+                            <small class="text-muted">AI Influencers Created</small>
+                        </div>
+                        <div class="trust-stat" data-aos="fade-up" data-aos-delay="100">
+                            <h3 class="fw-bold text-primary mb-0">$50K+</h3>
+                            <small class="text-muted">Paid to Affiliates</small>
+                        </div>
+                        <div class="trust-stat" data-aos="fade-up" data-aos-delay="200">
+                            <h3 class="fw-bold text-primary mb-0">4.9/5</h3>
+                            <small class="text-muted">User Rating</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Affiliate Program Highlight -->
+    <section class="py-5 affiliate-gradient-bg text-white">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 mb-4 mb-lg-0" data-aos="fade-right">
+                    <div class="affiliate-icon-container mb-4">
+                        <i class="bi bi-cash-coin display-1 text-white"></i>
+                    </div>
+                    <h2 class="display-5 fw-bold mb-3 text-white">Earn $5 Per Conversion</h2>
+                    <p class="lead mb-4 text-white">
+                        Share your AI influencers and earn money through our generous affiliate program. Every user who signs up through your link earns you $5 instantly.
+                    </p>
+                    <ul class="list-unstyled fs-5 text-white">
+                        <li class="mb-3 text-white"><i class="bi bi-check-circle-fill me-2 text-white"></i>Instant payouts</li>
+                        <li class="mb-3 text-white"><i class="bi bi-check-circle-fill me-2 text-white"></i>No minimum threshold</li>
+                        <li class="mb-3 text-white"><i class="bi bi-check-circle-fill me-2 text-white"></i>Lifetime commissions</li>
+                        <li class="mb-3 text-white"><i class="bi bi-check-circle-fill me-2 text-white"></i>Real-time tracking dashboard</li>
+                    </ul>
+                </div>
+                <div class="col-lg-6" data-aos="fade-left">
+                    <div class="card shadow-2xl border-0 bg-white">
+                        <div class="card-body p-5">
+                            <h4 class="fw-bold mb-4 text-center text-dark">Calculate Your Earnings</h4>
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold text-dark">Referrals per month</label>
+                                <input type="range" class="form-range" min="1" max="100" value="20" id="referralSlider">
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">1</small>
+                                    <small class="fw-bold text-primary" id="referralCount">20</small>
+                                    <small class="text-muted">100+</small>
+                                </div>
+                            </div>
+                            <div class="earnings-display-box rounded-3 p-4 text-center">
+                                <small class="d-block mb-2 text-white">Potential Monthly Earnings</small>
+                                <h2 class="display-4 fw-bold text-white mb-0">$<span id="earnings">100</span></h2>
+                            </div>
+                            <div class="mt-4 text-center">
+                                <a href="#" onclick="openLoginForm()" class="btn btn-primary btn-lg px-5 rounded-pill">
+                                    Start Earning Now
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-5 features-gradient-bg">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="display-5 fw-bold mb-3 text-white">Everything You Need to Succeed</h2>
+                <p class="lead text-white">Powerful tools to create, customize, and monetize your AI influencers</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100">
+                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift bg-white">
+                        <div class="card-body p-4 text-center">
+                            <div class="feature-icon-circle bg-primary bg-opacity-10 mx-auto mb-3">
+                                <i class="bi bi-magic fs-1 text-primary"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3 text-dark">AI-Powered Creation</h4>
+                            <p class="text-muted">Generate stunning, realistic AI influencers in seconds with our advanced AI technology. No design skills required.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="200">
+                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift bg-white">
+                        <div class="card-body p-4 text-center">
+                            <div class="feature-icon-circle bg-success bg-opacity-10 mx-auto mb-3">
+                                <i class="bi bi-palette fs-1 text-success"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3 text-dark">Full Customization</h4>
+                            <p class="text-muted">Customize every aspect of your AI influencer - personality, appearance, voice, and behavior to match your brand.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="300">
+                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift bg-white">
+                        <div class="card-body p-4 text-center">
+                            <div class="feature-icon-circle bg-warning bg-opacity-10 mx-auto mb-3">
+                                <i class="bi bi-share fs-1 text-warning"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3 text-dark">Easy Sharing</h4>
+                            <p class="text-muted">Share your AI influencer with one click. Get a unique affiliate link and start earning immediately.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="400">
+                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift bg-white">
+                        <div class="card-body p-4 text-center">
+                            <div class="feature-icon-circle bg-danger bg-opacity-10 mx-auto mb-3">
+                                <i class="bi bi-graph-up-arrow fs-1 text-danger"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3 text-dark">Analytics Dashboard</h4>
+                            <p class="text-muted">Track performance, engagement, and earnings in real-time with our comprehensive analytics dashboard.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="500">
+                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift bg-white">
+                        <div class="card-body p-4 text-center">
+                            <div class="feature-icon-circle bg-info bg-opacity-10 mx-auto mb-3">
+                                <i class="bi bi-shield-check fs-1 text-info"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3 text-dark">100% Secure</h4>
+                            <p class="text-muted">Your data and earnings are protected with bank-level security. GDPR compliant and fully encrypted.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="600">
+                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift bg-white">
+                        <div class="card-body p-4 text-center">
+                            <div class="feature-icon-circle bg-purple bg-opacity-10 mx-auto mb-3">
+                                <i class="bi bi-lightning-charge fs-1 text-purple"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3 text-dark">Lightning Fast</h4>
+                            <p class="text-muted">Create and deploy your AI influencer in under 5 minutes. Start earning from day one.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="py-5">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="display-5 fw-bold mb-3">How It Works</h2>
+                <p class="lead text-muted">Get started in 3 simple steps</p>
+            </div>
+
+            <!-- Slider -->
+            <div class="row justify-content-center mb-5">
+                <div class="col-12 col-lg-10">
+                    <div id="howto-slider" class="d-flex justify-content-center align-items-center overflow-auto flex-nowrap gap-3 pb-3" 
+                         style="scroll-snap-type: x mandatory; overflow-x: auto;" data-aos="fade-up">
+                        {{#each (range 1 4)}}
+                            <img src="/img/lpbanner2/slide-{{this}}.png"
+                                 class="img-fluid shadow-lg hover-lift"
+                                 alt="Step {{this}}"
+                                 style="max-height: 300px; width: auto; scroll-snap-align: center; border-radius: 15px;">
+                        {{/each}}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Steps -->
+            <div class="row g-4">
+                <div class="col-lg-4" data-aos="fade-up" data-aos-delay="100">
+                    <div class="text-center position-relative">
+                        <div class="step-number bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                            <span class="fs-3 fw-bold">1</span>
+                        </div>
+                        <h4 class="fw-bold mb-3">Create Your AI Influencer</h4>
+                        <p class="text-muted">Use our intuitive AI generator to create your unique influencer. Customize appearance, personality, and voice in minutes.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4" data-aos="fade-up" data-aos-delay="200">
+                    <div class="text-center position-relative">
+                        <div class="step-number bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                            <span class="fs-3 fw-bold">2</span>
+                        </div>
+                        <h4 class="fw-bold mb-3">Share Your Link</h4>
+                        <p class="text-muted">Get your unique affiliate link and share it on social media, blogs, or with friends. Every sign-up earns you money.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4" data-aos="fade-up" data-aos-delay="300">
+                    <div class="text-center position-relative">
+                        <div class="step-number bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                            <span class="fs-3 fw-bold">3</span>
+                        </div>
+                        <h4 class="fw-bold mb-3">Earn Money</h4>
+                        <p class="text-muted">Watch your earnings grow as users sign up through your link. Get paid $5 per conversion, instantly to your account.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-5" data-aos="fade-up">
+                <a href="#" onclick="openLoginForm()" class="btn btn-primary btn-lg px-5 py-3 rounded-pill shadow-lg cta-pulse">
+                    <i class="bi bi-rocket-takeoff me-2"></i>Start Creating Now
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="py-5 testimonials-gradient-bg">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="display-5 fw-bold mb-3 text-white">What Creators Are Saying</h2>
+                <p class="lead text-white">Join thousands of successful creators</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                    <div class="testimonial-card card border-0 shadow-sm h-100 hover-lift bg-white">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="avatar-circle bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                                    <i class="bi bi-person-fill fs-4 text-primary"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-0 fw-bold text-dark">Sarah Johnson</h5>
+                                    <div class="text-warning">★★★★★</div>
+                                </div>
+                            </div>
+                            <p class="text-muted mb-3">"I've earned over $2,000 in just two months! The platform is incredibly easy to use, and the affiliate program is a game-changer."</p>
+                            <small class="text-muted">Content Creator, USA</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                    <div class="testimonial-card card border-0 shadow-sm h-100 hover-lift bg-white">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="avatar-circle bg-success bg-opacity-10 rounded-circle p-2 me-3">
+                                    <i class="bi bi-person-fill fs-4 text-success"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-0 fw-bold text-dark">Mike Chen</h5>
+                                    <div class="text-warning">★★★★★</div>
+                                </div>
+                            </div>
+                            <p class="text-muted mb-3">"Creating AI influencers has never been this easy. I love how I can customize everything and start earning immediately."</p>
+                            <small class="text-muted">Digital Marketer, Canada</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+                    <div class="testimonial-card card border-0 shadow-sm h-100 hover-lift bg-white">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="avatar-circle bg-warning bg-opacity-10 rounded-circle p-2 me-3">
+                                    <i class="bi bi-person-fill fs-4 text-warning"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-0 fw-bold text-dark">Emma Rodriguez</h5>
+                                    <div class="text-warning">★★★★★</div>
+                                </div>
+                            </div>
+                            <p class="text-muted mb-3">"The passive income potential is incredible. I share my AI influencers on social media and the earnings keep coming in."</p>
+                            <small class="text-muted">Social Media Manager, UK</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="display-5 fw-bold mb-3">Frequently Asked Questions</h2>
+                <p class="lead text-muted">Everything you need to know</p>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-lg-8" data-aos="fade-up">
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item border-0 shadow-sm mb-3">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                    How does the affiliate program work?
+                                </button>
+                            </h2>
+                            <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    When you create an AI influencer, you get a unique affiliate link. Share this link anywhere - social media, blogs, or with friends. Every time someone signs up through your link, you earn $5 instantly. There's no limit to how much you can earn!
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item border-0 shadow-sm mb-3">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                    Is it really free to start?
+                                </button>
+                            </h2>
+                            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Yes! You can start creating AI influencers completely free. No credit card required. Our free plan includes basic features and affiliate earning potential. Upgrade anytime for advanced features.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item border-0 shadow-sm mb-3">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                    When do I get paid?
+                                </button>
+                            </h2>
+                            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Payments are processed instantly when a user signs up through your link. You can withdraw your earnings anytime with no minimum threshold. We support PayPal, Stripe, and bank transfers.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item border-0 shadow-sm mb-3">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                    Do I need technical skills?
+                                </button>
+                            </h2>
+                            <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Not at all! Our platform is designed to be user-friendly. You can create professional AI influencers in minutes without any coding or design experience. If you can use social media, you can use our platform.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item border-0 shadow-sm">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                                    Can I create multiple AI influencers?
+                                </button>
+                            </h2>
+                            <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Absolutely! Create as many AI influencers as you want. Each one gets its own unique affiliate link, multiplying your earning potential. The more you create and share, the more you earn.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA Section -->
+    <section class="py-5 cta-gradient-bg text-white">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8 mx-auto text-center" data-aos="zoom-in">
+                    <h2 class="display-4 fw-bold mb-4 text-white">Ready to Start Earning?</h2>
+                    <p class="lead mb-4 fs-4 text-white">Join thousands of creators who are already making money with AI influencers</p>
+                    <div class="d-flex flex-wrap gap-3 justify-content-center">
+                        <a href="#" onclick="openLoginForm()" class="btn btn-light btn-lg px-5 py-3 rounded-pill shadow-lg cta-pulse">
+                            <i class="bi bi-rocket-takeoff me-2"></i>Create Your First AI Influencer
+                        </a>
+                        <a href="#how-it-works" class="btn btn-outline-light btn-lg px-5 py-3 rounded-pill">
+                            <i class="bi bi-info-circle me-2"></i>Learn More
+                        </a>
+                    </div>
+                    <div class="mt-4">
+                        <small class="d-block text-white opacity-75">✓ Free Forever Plan  ✓ No Credit Card Required  ✓ Start Earning Today</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <style>
+        #footer-toolbar { display: none; }
+        .sticky-bottom { display: none; }
+        footer { display: inline !important; }
+    </style>
+
+    {{> dashboard-footer}}
+
+    <!-- AOS Animation Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 100
+        });
+
+        // Earnings Calculator
+        const slider = document.getElementById('referralSlider');
+        const referralCount = document.getElementById('referralCount');
+        const earnings = document.getElementById('earnings');
+
+        slider.addEventListener('input', function() {
+            const value = this.value;
+            referralCount.textContent = value;
+            earnings.textContent = (value * 5).toLocaleString();
+        });
+    </script>
+</body>
+</html>

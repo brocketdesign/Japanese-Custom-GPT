@@ -463,6 +463,18 @@ fastify.get('/character', async (request, reply) => {
   }
 });
 
+fastify.get('/landingpage/:pageid', async (request, reply) => {
+  try {
+    const { pageid } = request.params;
+    return reply.view(`landingpages/${pageid}.hbs`, {
+      bannerNumber: 0,
+      title: 'Landing Page',
+    });
+  } catch (error) {
+    console.log(error);
+    return reply.code(500).send('Internal Server Error');
+  }
+});
 
 // Helper function to tokenize a prompt string
 function tokenizePrompt(promptText) {

@@ -191,7 +191,7 @@ class PromptManager {
     }
 
     // Update checkActiveGenerations to include auto-generations
-    async checkActiveGenerations() {
+   async checkActiveGenerations() {
         const userChatId = sessionStorage.getItem('userChatId') || window.userChatId;
         
         if (!userChatId) {
@@ -234,30 +234,51 @@ class PromptManager {
                 );
 
                 if (completedTask && completedTask.status === 'completed') {
-                    if (this.isDevelopmentMode()) {
-                        console.log(`[PromptManager] Found completed task for ${generationId}:`, completedTask);
-                    }
+                    console.log(`[PromptManager] ✅ Found completed task for ${generationId}:`, completedTask);
                     
                     // Remove the loader
                     displayOrRemoveImageLoader(metadata.placeholderId, 'remove');
                     
-                    // Process completed images
+                    // Process completed images - NEW BATCHED LOGIC
                     if (completedTask.result?.images && Array.isArray(completedTask.result.images)) {
-                        for (const image of completedTask.result.images) {
-                            if (this.isDevelopmentMode()) {
-                                console.log(`[PromptManager] Processing completed image:`, image);
-                            }
+                        
+                        // Check if multiple images - send as batch
+                        if (completedTask.result.images.length > 1) {
+                            console.log(`[PromptManager] 🎨 Sending batched payload: ${completedTask.result.images.length} images`);
                             
-                            // Generate the image using the existing generateImage function
-                            await generateImage({
-                                imageId: image._id,
-                                imageUrl: image.imageUrl,
+                            generateImage({
+                                images: completedTask.result.images.map(img => ({
+                                    imageId: img._id?.toString() || img.imageId,
+                                    id: img._id?.toString() || img.imageId,
+                                    imageUrl: img.imageUrl,
+                                    url: img.imageUrl,
+                                    prompt: img.prompt || completedTask.prompt,
+                                    title: img.title || completedTask.title,
+                                    nsfw: img.nsfw || false,
+                                    isMergeFace: img.isMerged || false,
+                                    isUpscaled: img.isUpscaled || false
+                                })),
                                 userChatId: metadata.userChatId,
-                                prompt: image.prompt,
-                                title: image.title,
-                                nsfw: image.nsfw,
-                                isUpscaled: image.isUpscaled,
-                                isMerged: image.isMerged
+                                title: completedTask.title,
+                                prompt: completedTask.prompt,
+                                totalImages: completedTask.result.images.length
+                            });
+                        } else {
+                            // Single image - existing behavior
+                            const image = completedTask.result.images[0];
+                            console.log('[PromptManager] 🖼️ Processing single completed image:', image);
+                            
+                            generateImage({
+                                imageId: image._id?.toString() || image.imageId,
+                                id: image._id?.toString() || image.imageId,
+                                imageUrl: image.imageUrl,
+                                url: image.imageUrl,
+                                userChatId: metadata.userChatId,
+                                prompt: image.prompt || completedTask.prompt,
+                                title: image.title || completedTask.title,
+                                nsfw: image.nsfw || false,
+                                isMergeFace: image.isMerged || false,
+                                isUpscaled: image.isUpscaled || false
                             });
                         }
                     }

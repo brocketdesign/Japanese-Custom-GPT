@@ -2644,3 +2644,73 @@ body.keyboard-open #chatInput {
         }
     }
 }
+
+/* Swiper container styling */
+.chat-image-swiper-wrapper {
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+.chat-swiper-container {
+    position: relative;
+}
+
+/* Swiper navigation buttons */
+.swiper-button-next,
+.swiper-button-prev {
+    color: #fff;
+    background: rgba(0, 0, 0, 0.5);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.swiper-button-next:after,
+.swiper-button-prev:after {
+    font-size: 20px;
+}
+
+/* Swiper pagination */
+.swiper-pagination {
+    bottom: 10px !important;
+}
+
+.swiper-pagination-bullet {
+    background: #fff;
+    opacity: 0.7;
+}
+
+.swiper-pagination-bullet-active {
+    background: #007bff;
+    opacity: 1;
+}
+
+/* Generated images in swiper */
+.generated-multi-image {
+    border-radius: 8px;
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Swiper slide centering */
+.swiper-slide {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Swiper tools container */
+.swiper-tools-container {
+    margin-top: 10px;
+}
+
+/* Make sure image tools work with swiper */
+.swiper-tools-container .image-tools {
+    width: 100%;
+}
+
+/* Swiper slide images should support double-tap */
+.swiper-slide img {
+    cursor: pointer;
+}

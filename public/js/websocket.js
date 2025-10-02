@@ -163,18 +163,39 @@ function initializeWebSocket(onConnectionResult = null) {
             break;
           }
           case 'imageGenerated': {
-            const { userChatId, imageId, imageUrl, title, prompt, nsfw, isUpscaled, isMergeFace } = data.notification;
-            generateImage({
-              userChatId,
-              url: imageUrl,
-              id:imageId,
-              title,
-              prompt,
-              imageId, 
-              nsfw, 
-              isUpscaled,
-              isMergeFace
-            });
+            console.log('[WebSocket] imageGenerated received:', data.notification);
+            
+            // Check if this is a batched multi-image payload
+            if (Array.isArray(data.notification.images) && data.notification.images.length > 0) {
+              console.log(`[WebSocket] 🎨 Batched multi-image payload detected: ${data.notification.images.length} images`);
+              
+              // Pass the entire notification object with images array
+              generateImage({
+                images: data.notification.images,
+                userChatId: data.notification.userChatId,
+                title: data.notification.title,
+                prompt: data.notification.prompt,
+                totalImages: data.notification.totalImages
+              });
+            } else {
+              // Single image handling
+              console.log('[WebSocket] 🖼️ Single image notification');
+              
+              const { userChatId, imageId, imageUrl, title, prompt, nsfw, isUpscaled, isMergeFace, totalImages, currentImageIndex } = data.notification;
+              generateImage({
+                userChatId,
+                url: imageUrl,
+                id: imageId,
+                title,
+                prompt,
+                imageId, 
+                nsfw, 
+                isUpscaled,
+                isMergeFace,
+                totalImages,
+                currentImageIndex
+              });
+            }
             break;
           }
           case 'updateChatData': {

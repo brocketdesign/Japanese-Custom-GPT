@@ -525,26 +525,6 @@ function setupChatInterface(chat, character) {
     }
     
 
-    function displayImageThumb(imageUrl, origineUserChatId = null, shouldBlur = false){
-        if(shouldBlur){
-            return;
-        }
-        const messageContainer = $(`#chatContainer[data-id=${origineUserChatId}]`)
-        if(origineUserChatId && messageContainer.length == 0){
-            return
-        }
-        var card = $(`
-            <div 
-            onclick="showImagePreview(this)"
-            class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 mx-1 col-auto" style="cursor:pointer;" data-src="${imageUrl}">
-                <div style="background-image:url(${imageUrl});border:4px solid white;" class="card-img-top rounded-avatar position-relative m-auto">
-                </div>
-            </div>
-        `);
-        $('#chat-recommend').append(card);
-    }
-
-
     function displayThankMessage(){
         const customPrompt = {
             systemContent: "あなたの役割は、常にキャラクターとして行動し、ユーザーに対して優しく丁寧な対応をすることです。今回は、ログインしてくれたユーザーに感謝の気持ちを伝える必要があります。ユーザーが戻ってきたことを嬉しく思っていることを、短くて優しい言葉で伝えてください。",
@@ -654,7 +634,66 @@ function setupChatInterface(chat, character) {
         });
     }
 
+    function updateSwiperTools(swiperId, activeIndex, images) {
+        console.log(`[updateSwiperTools] Updating tools for swiper ${swiperId}, slide ${activeIndex}`);
+        
+        const toolsContainer = $(`.swiper-tools-container[data-swiper-id="${swiperId}"]`);
+        if (!toolsContainer.length) {
+            console.warn('[updateSwiperTools] Tools container not found');
+            return;
+        }
+        
+        const currentImage = images[activeIndex];
+        if (!currentImage) {
+            console.warn('[updateSwiperTools] No image data for index', activeIndex);
+            return;
+        }
+        
+        const chatId = sessionStorage.getItem('chatId') || window.chatId;
+        const imgId = currentImage.imageId || currentImage.id;
+        const imgUrl = currentImage.imageUrl || currentImage.url;
+        
+        const toolsHtml = getImageTools({
+            chatId: chatId,
+            imageId: imgId,
+            isLiked: false,
+            title: currentImage.title || '',
+            prompt: currentImage.prompt || '',
+            nsfw: currentImage.nsfw || false,
+            imageUrl: imgUrl,
+            isMergeFace: currentImage.isMerged || false
+        });
+        
+        toolsContainer.html(toolsHtml);
+        console.log(`[updateSwiperTools] ✅ Tools updated for image ${imgId}`);
+    }
 
+    // Handle double-tap on swiper images
+    $(document).on('dblclick', '.swiper-slide img', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const imageId = $(this).data('id');
+        console.log('[Double-tap] Image:', imageId);
+        
+        // Find the like button for this image in the tools container
+        const $likeBtn = $(`.image-tools[data-id="${imageId}"] .like-image-btn`);
+        if ($likeBtn.length) {
+            $likeBtn.click();
+        }
+    });
+
+    // Show image preview on single tap/click
+    $(document).on('click', '.swiper-slide img', function(e) {
+        // Only trigger if not a double-click
+        if (e.detail === 1) {
+            setTimeout(() => {
+                if (e.detail === 1) {
+                    showImagePreview(this);
+                }
+            }, 200);
+        }
+    });
     async function displayChat(userChat, persona, callback) {
         $('body').css('overflow', 'hidden');
         $('#stability-gen-button').show();
@@ -776,11 +815,99 @@ function setupChatInterface(chat, character) {
                 } else if (isImage) {
                     const imageId = chatMessage?.imageId || chatMessage.content.replace("[Image]", "").replace("[image]", "").trim();
                     
-                    // Skip if this image has already been displayed
                     if (displayedImageIds.has(imageId)) {
                         continue;
                     }
                     
+                    // NEW: Handle multiple images in chat history
+                    if (Array.isArray(chatMessage.images) && chatMessage.images.length > 1) {
+                        console.log(`[displayChat] 🎨 Multi-image message found: ${chatMessage.images.length} images`);
+                        
+                        const uniqueSwiperId = `chat-history-swiper-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                        
+                        const slidesHtml = chatMessage.images.map((img, idx) => {
+                            const imgUrl = img.imageUrl || img.url;
+                            const imgId = img.imageId || img.id || `${imageId || 'hist'}-${idx}`;
+                            const alt = (chatMessage.title && typeof chatMessage.title === 'object') 
+                                ? (chatMessage.title[lang] || chatMessage.title.en || '') 
+                                : (chatMessage.title || 'Generated Image');
+                            
+                            displayedImageIds.add(imgId);
+                            
+                            return `
+                                <div class="swiper-slide">
+                                    <img id="image-${imgId}" 
+                                         data-id="${imgId}" 
+                                         src="${imgUrl}" 
+                                         alt="${alt}" 
+                                         data-prompt="${img.prompt || ''}"
+                                         data-nsfw="${img.nsfw || false}"
+                                         data-isMergeFace="${img.isMerged || false}"
+                                         style="max-width: 100%; height: auto; margin: 0 auto; display: block;">
+                                </div>
+                            `;
+                        }).join('');
+
+                        messageHtml = `
+                            <div id="container-${designStep}">
+                                <div class="d-flex flex-row justify-content-start mb-4 message-container">
+                                    <img src="${thumbnail || '/img/logo.webp'}" 
+                                         alt="avatar" 
+                                         class="rounded-circle chatbot-image-chat" 
+                                         data-id="${chatId}" 
+                                         style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;"
+                                         onclick="openCharacterInfoModal('${chatId}', event)">
+                                    <div class="ms-3 position-relative">
+                                        <div id="${uniqueSwiperId}" class="swiper" style="max-width:420px;">
+                                            <div class="swiper-wrapper">
+                                                ${slidesHtml}
+                                            </div>
+                                            <div class="swiper-button-prev"></div>
+                                            <div class="swiper-button-next"></div>
+                                            <div class="swiper-pagination"></div>
+                                        </div>
+                                        <div class="swiper-tools-container" data-swiper-id="${uniqueSwiperId}"></div>
+                                    </div>
+                                </div>
+                            </div>`;
+
+                        // Initialize swiper and tools after append
+                        setTimeout(() => {
+                            try {
+                                const swiperEl = document.getElementById(uniqueSwiperId);
+                                if (swiperEl && typeof Swiper === 'function' && !swiperEl.dataset.initialized) {
+                                    const swiperInstance = new Swiper(`#${uniqueSwiperId}`, {
+                                        loop: false,
+                                        slidesPerView: 1,
+                                        spaceBetween: 10,
+                                        navigation: {
+                                            nextEl: `#${uniqueSwiperId} .swiper-button-next`,
+                                            prevEl: `#${uniqueSwiperId} .swiper-button-prev`,
+                                        },
+                                        pagination: { 
+                                            el: `#${uniqueSwiperId} .swiper-pagination`, 
+                                            clickable: true,
+                                            dynamicBullets: true
+                                        },
+                                        on: {
+                                            slideChange: function() {
+                                                updateSwiperTools(uniqueSwiperId, this.activeIndex, chatMessage.images);
+                                            }
+                                        }
+                                    });
+                                    swiperEl.dataset.initialized = 'true';
+                                    console.log('[displayChat] ✅ History swiper initialized:', uniqueSwiperId);
+                                    
+                                    // Initialize tools for first slide
+                                    updateSwiperTools(uniqueSwiperId, 0, chatMessage.images);
+                                }
+                            } catch (e) {
+                                console.error('[displayChat] ❌ Error initializing history swiper:', e);
+                            }
+                        }, 150);
+
+                        displayImageThumb(chatMessage.images[0].imageUrl || chatMessage.images[0].url);
+                    }
                     // Check if this is actually a merged image stored as regular image
                     if (chatMessage.isMerged && chatMessage.imageUrl) {
                         // This is a merged image stored in the database, display it directly
@@ -1471,29 +1598,111 @@ function setupChatInterface(chat, character) {
             }
         } 
     
+        
         else if (messageClass === 'bot-image' && message instanceof HTMLElement) {
-            const imageId = message.getAttribute('data-id');
-            const imageNsfw = message.getAttribute('data-nsfw') == 'true';
-            const title = message.getAttribute('alt');
-            const prompt = message.getAttribute('data-prompt');
-            const imageUrl = message.getAttribute('src');
+            
+            // Check if this is a multi-image swiper wrapper
+            if (message.classList.contains('chat-image-swiper-wrapper')) {
+                const swiperId = message.getAttribute('data-swiper-id');
+                
+                console.log('[displayMessage] 🎨 Multi-image swiper detected:', swiperId);
+                
+                messageElement = $(`
+                    <div class="d-flex flex-row justify-content-start mb-4 message-container ${messageClass} ${animationClass}">
+                        <img src="${thumbnail || '/img/logo.webp'}" 
+                             alt="avatar" 
+                             class="rounded-circle chatbot-image-chat" 
+                             data-id="${chatId}" 
+                             style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;" 
+                             onclick="openCharacterInfoModal('${chatId}', event)">
+                        <div class="ms-3 position-relative">
+                            <div class="chat-swiper-container"></div>
+                            <div class="swiper-tools-container" data-swiper-id="${swiperId}"></div>
+                        </div>
+                    </div>
+                `).hide();
+    
+                const $container = messageElement.find('.chat-swiper-container');
+                $container.append(message);
+    
+                $('#chatContainer').append(messageElement);
+                messageElement.addClass(animationClass).fadeIn();
+    
+                // Initialize swiper after DOM insertion
+                setTimeout(() => {
+                    try {
+                        const swiperEl = document.getElementById(swiperId);
+                        if (swiperEl && typeof Swiper === 'function' && !swiperEl.dataset.initialized) {
+                            
+                            // Get images data from the wrapper
+                            const imagesData = [];
+                            swiperEl.querySelectorAll('.swiper-slide img').forEach(img => {
+                                imagesData.push({
+                                    imageId: img.getAttribute('data-id'),
+                                    id: img.getAttribute('data-id'),
+                                    imageUrl: img.src,
+                                    url: img.src,
+                                    prompt: img.getAttribute('data-prompt'),
+                                    title: img.alt,
+                                    nsfw: img.getAttribute('data-nsfw') === 'true',
+                                    isMerged: img.getAttribute('data-isMergeFace') === 'true'
+                                });
+                            });
+                            
+                            const swiperInstance = new Swiper(`#${swiperId}`, {
+                                loop: false,
+                                slidesPerView: 1,
+                                spaceBetween: 10,
+                                pagination: { 
+                                    el: `#${swiperId} .swiper-pagination`, 
+                                    clickable: true,
+                                    dynamicBullets: true
+                                },
+                                navigation: {
+                                    nextEl: `#${swiperId} .swiper-button-next`,
+                                    prevEl: `#${swiperId} .swiper-button-prev`,
+                                },
+                                centeredSlides: true,
+                                on: {
+                                    slideChange: function() {
+                                        updateSwiperTools(swiperId, this.activeIndex, imagesData);
+                                    }
+                                }
+                            });
+                            swiperEl.dataset.initialized = 'true';
+                            console.log('[displayMessage] ✅ Swiper initialized:', swiperId);
+                            
+                            // Initialize tools for first slide
+                            updateSwiperTools(swiperId, 0, imagesData);
+                        }
+                    } catch (e) {
+                        console.error('[displayMessage] ❌ Swiper init error:', e);
+                    }
+                }, 100);
+                
+                console.log('[displayMessage] ⏭️ Skipping thumbnail (already handled by generateImage)');
+                
+                return;
+            }
+            
+            // Single image handling (existing code)
+            const imageId = message.getAttribute('data-id') || null;
+            const imageNsfw = (message.getAttribute('data-nsfw') == 'true') || false;
+            const title = message.getAttribute('alt') || '';
+            const prompt = message.getAttribute('data-prompt') || '';
+            const imageUrl = message.getAttribute('src') || null;
             const isUpscaled = message.getAttribute('data-isUpscaled') == 'true'
             const isMergeFace = message.getAttribute('data-isMergeFace') == 'true'
-
-            // Create a mock item for NSFW checking
+    
             const item = { nsfw: imageNsfw };
             const subscriptionStatus = user.subscriptionStatus === 'active';
             
-            // Use the helper function to determine if content should be blurred
             const shouldBlur = shouldBlurNSFW(item, subscriptionStatus);
             const displayMode = getNSFWDisplayMode(item, subscriptionStatus);
 
             if (shouldBlur) {
-                // Remove src attribute to prevent loading the image
                 message.removeAttribute('src');
-                // Set data-src attribute to generate the blurry image
                 message.setAttribute('data-src', imageUrl);
-                // add class img-blur
                 message.classList.add('img-blur');
             }
 
@@ -1515,21 +1724,16 @@ function setupChatInterface(chat, character) {
                 </div>      
             `).hide();
 
-            messageContainer.append(messageElement);
+            $('#chatContainer').append(messageElement);
             messageElement.addClass(animationClass).fadeIn();
             
-            // Apply blur effect if needed
             if (shouldBlur || displayMode !== 'show') {
                 $(`.image-tools[data-id="${imageId}"]`).hide();
                 messageElement.find('.img-blur').each(function() {
                     blurImage(this);
                 });
             }
-
-            if (subscriptionStatus || !imageNsfw) {
-                displayImageThumb(imageUrl, origineUserChatId, shouldBlur);
-            }
-        } 
+        }
 
         else if (messageClass.startsWith('new-image-') && message instanceof HTMLElement) {
             const imageId = message.getAttribute('data-id');
@@ -1551,7 +1755,6 @@ function setupChatInterface(chat, character) {
             $(`#${messageId}`).find('.load').remove()
             $(`#${messageId}`).append(messageElement);
             messageElement.addClass(animationClass).fadeIn();
-            displayImageThumb(imageUrl)
         } 
     
         else if (messageClass === 'assistant' && typeof message === 'string' && message.trim() !== '') {
@@ -1621,6 +1824,26 @@ function setupChatInterface(chat, character) {
     }
 });
 
+
+
+window.displayImageThumb = function(imageUrl, origineUserChatId = null, shouldBlur = false) {
+    if (shouldBlur) {
+        return;
+    }
+    const messageContainer = $(`#chatContainer[data-id=${origineUserChatId}]`);
+    if (origineUserChatId && messageContainer.length == 0) {
+        return;
+    }
+    var card = $(`
+        <div 
+        onclick="showImagePreview(this)"
+        class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 mx-1 col-auto" style="cursor:pointer;" data-src="${imageUrl}">
+            <div style="background-image:url(${imageUrl});border:4px solid white;" class="card-img-top rounded-avatar position-relative m-auto">
+            </div>
+        </div>
+    `);
+    $('#chat-recommend').append(card);
+};
 
 //.reset-chat,.new-chat
 window.handleChatReset = function(el) {

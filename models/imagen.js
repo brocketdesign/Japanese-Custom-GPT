@@ -238,48 +238,53 @@ async function handleFluxCompletion({
   for (let arrayIndex = 0; arrayIndex < processedImages.length; arrayIndex++) {
     const imageData = processedImages[arrayIndex];
     
-    let nsfw = imageType === 'nsfw';
+    let nsfw = task.type === 'nsfw';
+    if (imageData.nsfw_detection_result && imageData.nsfw_detection_result.valid && imageData.nsfw_detection_result.confidence >= 50) {
+      nsfw = true;
+    }
     
-    let uniqueSlug = taskSlug;
+    let uniqueSlug = task.slug;
     if (processedImages.length > 1) {
-      uniqueSlug = `${taskSlug}-${arrayIndex + 1}`;
+      uniqueSlug = `${task.slug}-${arrayIndex + 1}`;
     }
 
     const imageResult = await saveImageToDB({
-      taskId: novitaResult.taskId,
-      userId: new ObjectId(userId),
-      chatId: new ObjectId(chatId),
-      userChatId: userChatId ? new ObjectId(userChatId) : null,
-      prompt: prompt,
-      title: newTitle,
+      taskId: task.taskId,
+      userId: task.userId,
+      chatId: task.chatId,
+      userChatId: task.userChatId,
+      prompt: task.prompt,
+      title: task.title,
       slug: uniqueSlug,
       imageUrl: imageData.imageUrl,
-      aspectRatio: aspectRatio,
-      seed: imageData.seed || 0,
-      blurredImageUrl: null, // FLUX doesn't support blurred images
+      aspectRatio: task.aspectRatio,
+      seed: imageData.seed,
+      blurredImageUrl: imageData.blurredImageUrl,
       nsfw: nsfw,
       fastify,
-      isMerged: imageData.isMerged || false,
+      isMerged: imageData.isMerged,
       originalImageUrl: imageData.originalImageUrl,
       mergeId: imageData.mergeId,
-      shouldAutoMerge: shouldAutoMerge
+      shouldAutoMerge: task.shouldAutoMerge,
+      isMultiImage: processedImages.length > 1,
+      imageIndex: arrayIndex,
+      totalImages: processedImages.length
     });
 
-    // Handle merge face relationships for FLUX
-    if (shouldAutoMerge && imageData.isMerged && imageData.mergeId) {
+    if (task.shouldAutoMerge && imageData.isMerged && imageData.mergeId) {
       try {
         const { saveMergedFaceToDB } = require('./merge-face-utils');
         await saveMergedFaceToDB({
           originalImageId: imageResult.imageId,
           mergedImageUrl: imageData.imageUrl,
-          userId: new ObjectId(userId),
-          chatId: new ObjectId(chatId),
-          userChatId: userChatId ? new ObjectId(userChatId) : null,
+          userId: task.userId,
+          chatId: task.chatId,
+          userChatId: task.userChatId,
           fastify
         });
-        console.log(`[handleFluxCompletion] Created merge relationship: ${imageData.mergeId}`);
+        console.log(`[checkTaskStatus] Created merge relationship for auto-merged image: ${imageData.mergeId}`);
       } catch (error) {
-        console.error(`[handleFluxCompletion] Error creating merge relationship:`, error);
+        console.error(`[checkTaskStatus] Error creating merge relationship:`, error);
       }
     }
 
@@ -287,6 +292,54 @@ async function handleFluxCompletion({
       ...imageResult,
       status: 'completed'
     });
+
+    if (arrayIndex < processedImages.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  }
+
+  // NEW: After saving all images, create the multi-image message if needed
+  if (task.userChatId && processedImages.length > 1 && !task.shouldAutoMerge) {
+    try {
+      console.log(`[checkTaskStatus] 📝 Creating multi-image message for ${savedImages.length} images`);
+      
+      const db = fastify.mongo.db;
+      const userDataCollection = db.collection('userChat');
+      
+      const firstAvailableTitle = (task.title && typeof task.title === 'object') 
+        ? (task.title.en || task.title.ja || task.title.fr || '') 
+        : (task.title || '');
+      
+      const multiImageMessage = {
+        role: "assistant",
+        content: firstAvailableTitle || task.prompt,
+        type: "image",
+        hidden: true,
+        prompt: task.prompt,
+        title: task.title,
+        nsfw: task.type === 'nsfw',
+        timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }),
+        images: savedImages.map(img => ({
+          imageUrl: img.imageUrl,
+          imageId: img.imageId.toString(),
+          prompt: img.prompt || task.prompt,
+          title: img.title || task.title,
+          nsfw: img.nsfw,
+          isMerged: img.isMerged || false,
+          mergeId: img.mergeId,
+          originalImageUrl: img.originalImageUrl
+        }))
+      };
+
+      await userDataCollection.updateOne(
+        { userId: new ObjectId(task.userId), _id: new ObjectId(task.userChatId) },
+        { $push: { messages: multiImageMessage } }
+      );
+
+      console.log(`[checkTaskStatus] ✅ Multi-image message created with ${savedImages.length} images`);
+    } catch (error) {
+      console.error('[checkTaskStatus] ❌ Error creating multi-image message:', error);
+    }
   }
 
   // Update task with saved images
@@ -771,8 +824,11 @@ async function pollTaskStatus(taskId, fastify) {
   });
 }
 // Handle task completion: send notifications and save images as needed
+
 async function handleTaskCompletion(taskStatus, fastify, options = {}) {
   const { chatCreation, translations, userId, chatId, placeholderId } = options;
+  
+  console.log('[handleTaskCompletion] 🚀 Starting completion handler');
   
   // CRITICAL FIX: Always use the images from the current task result
   let images = [];
@@ -786,61 +842,113 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
     images = [taskStatus.result.images];
   }
 
+  console.log(`[handleTaskCompletion] 📦 Processing ${images.length} images for task`);
+
   if (typeof fastify.sendNotificationToUser !== 'function') {
-    console.error('fastify.sendNotificationToUser is not a function');
+    console.error('[handleTaskCompletion] ❌ sendNotificationToUser not available');
     return;
   }
   
-  console.log(`[handleTaskCompletion] Processing completion for placeholderId: ${placeholderId}, images: ${images?.length}`);
+  console.log(`[handleTaskCompletion] 🧹 Cleanup: removing loader ${placeholderId}`);
   fastify.sendNotificationToUser(userId, 'handleLoader', { imageId: placeholderId, action: 'remove' });
   fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId: placeholderId, spin: false });
   fastify.sendNotificationToUser(userId, 'updateImageCount', { chatId, count: images.length });
 
-  if (Array.isArray(images)) {
+  if (Array.isArray(images) && images.length > 0) {
 
     try {
-      // Increment image generation count once per task, not per image
+      // Increment image generation count once per task
       await fastify.mongo.db.collection('images_generated').updateOne(
         { userId: new ObjectId(taskStatus.userId), chatId: chatId ? new ObjectId(chatId) : null },
-        { $inc: { generationCount: images.length } }, // Increment by the number of images
+        { $inc: { generationCount: images.length } },
         { upsert: true }
       );
+      console.log(`[handleTaskCompletion] ✅ Updated generation count: +${images.length}`);
     } catch (error) {
-      console.error('[handleTaskCompletion] Error incrementing image generation count:', error);
+      console.error('[handleTaskCompletion] ❌ Error incrementing count:', error);
     }
 
-    for (let index = 0; index < images.length; index++) {
-      const image = images[index];
-      const { imageId, imageUrl, prompt, title, nsfw, isMerged } = image;
-      const { userId: taskUserId, userChatId } = taskStatus;
+    // CRITICAL FIX: Send ONLY batched notification for multi-image, skip individual loop entirely
+    if (!chatCreation && images.length > 1) {
+      console.log(`[handleTaskCompletion] 📤 Sending BATCHED notification for ${images.length} images`);
       
-      if (chatCreation) {
-        console.log(`[handleTaskCompletion] Character creation - sending characterImageGenerated for image ${index + 1}/${images.length}`);
-        fastify.sendNotificationToUser(userId, 'characterImageGenerated', { imageUrl, nsfw, chatId });
-        if (index === 0) {
-          await saveChatImageToDB(fastify.mongo.db, chatId, imageUrl);
-        }
-      } else {
-        const notificationData = {
-          id: imageId,
-          imageId,
-          imageUrl,
-          userChatId,
-          title: getTitleForLang(title, translations?.lang || 'en'),
-          prompt,
-          nsfw,
-          isMergeFace: isMerged || false,
-          isAutoMerge: isMerged || false,
-          url: imageUrl // Add url field for compatibility
+      try {
+        const imagesPayload = images.map((image, idx) => {
+          return {
+            id: image.imageId,
+            imageId: image.imageId,
+            imageUrl: image.imageUrl,
+            title: image.title,
+            prompt: image.prompt,
+            nsfw: image.nsfw || false,
+            isMergeFace: image.isMerged || false,
+            isAutoMerge: image.isMerged || false,
+            url: image.imageUrl
+          };
+        });
+
+        const batchedNotification = {
+          images: imagesPayload,
+          userChatId: taskStatus.userChatId || null,
+          title: images[0]?.title,
+          prompt: images[0]?.prompt,
+          totalImages: images.length
         };
-        console.log(`[handleTaskCompletion] notificationData for image ${index + 1}/${images.length}:`, notificationData);
-        fastify.sendNotificationToUser(userId, 'imageGenerated', notificationData);
+        
+        console.log('[handleTaskCompletion] 📨 Batched payload:', { 
+          taskId: taskStatus.taskId, 
+          totalImages: images.length,
+          userChatId: taskStatus.userChatId,
+          imageIds: imagesPayload.map(i => i.imageId)
+        });
+        
+        fastify.sendNotificationToUser(userId, 'imageGenerated', batchedNotification);
+        console.log('[handleTaskCompletion] ✅ Batched notification sent successfully');
+        
+      } catch (err) {
+        console.error('[handleTaskCompletion] ❌ Error sending batched notification:', err);
       }
+    } 
+    // Single image OR character creation: send individual notifications
+    else if (images.length === 1 || chatCreation) {
+      console.log(`[handleTaskCompletion] 📤 Sending ${chatCreation ? 'CHARACTER CREATION' : 'SINGLE IMAGE'} notifications`);
+      
+      for (let index = 0; index < images.length; index++) {
+        const image = images[index];
+        const { imageId, imageUrl, prompt, title, nsfw, isMerged } = image;
+        
+        if (chatCreation) {
+          console.log(`[handleTaskCompletion] 👤 Character creation image ${index + 1}/${images.length}`);
+          fastify.sendNotificationToUser(userId, 'characterImageGenerated', { imageUrl, nsfw, chatId });
+          if (index === 0) {
+            await saveChatImageToDB(fastify.mongo.db, chatId, imageUrl);
+          }
+        } else {
+          // Single image notification
+          const notificationData = {
+            id: imageId,
+            imageId,
+            imageUrl,
+            userChatId: taskStatus.userChatId || null,
+            title: getTitleForLang(title, translations?.lang || 'en'),
+            prompt,
+            nsfw,
+            isMergeFace: isMerged || false,
+            isAutoMerge: isMerged || false,
+            url: imageUrl,
+            totalImages: 1,
+            currentImageIndex: 1
+          };
+          console.log(`[handleTaskCompletion] 🖼️ Single image notification:`, notificationData);
+          fastify.sendNotificationToUser(userId, 'imageGenerated', notificationData);
+        }
+      }
+      console.log('[handleTaskCompletion] ✅ Individual notifications sent');
     }
   }
 
   if (chatCreation) {
-    console.log(`[handleTaskCompletion] Character creation completed - sending resetCharacterForm and notifications`);
+    console.log(`[handleTaskCompletion] 👤 Character creation completed - sending final notifications`);
     fastify.sendNotificationToUser(userId, 'resetCharacterForm');
     fastify.sendNotificationToUser(userId, 'showNotification', {
       message: translations?.newCharacter?.imageCompletionDone_message || 'Your image has been generated successfully.',
@@ -857,9 +965,8 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
     });
   }
 
-  console.log('[handleTaskCompletion] Task completion handling finished');
+  console.log('[handleTaskCompletion] ✅ Task completion handling finished');
 }
-
 /**
  * Perform auto merge face with base64 image data (for character creation)
  * @param {Object} originalImage - Original generated image object
@@ -1655,19 +1762,20 @@ async function getImageSeed(db, imageId) {
     }
   }
 }
-async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title, slug, imageUrl, aspectRatio, seed, blurredImageUrl = null, nsfw = false, fastify, isMerged = false, originalImageUrl = null, mergeId = null, shouldAutoMerge = false}) {
+
+
+async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title, slug, imageUrl, aspectRatio, seed, blurredImageUrl = null, nsfw = false, fastify, isMerged = false, originalImageUrl = null, mergeId = null, shouldAutoMerge = false, isMultiImage = false, imageIndex = 0, totalImages = 1}) {
     
   const db = fastify.mongo.db;
-  console.log(`[saveImageToDB] Attempting to save image for taskId: ${taskId}, imageUrl: ${imageUrl}, isMerged: ${isMerged}`);
+  console.log(`[saveImageToDB] Starting save - taskId: ${taskId}, isMultiImage: ${isMultiImage}, imageIndex: ${imageIndex}/${totalImages}, isMerged: ${isMerged}`);
 
   try {
     const chatsGalleryCollection = db.collection('gallery');
 
-    // More flexible duplicate check for character creation and merged images
+    // Check for duplicates
     let existingImage;
     
     if (isMerged && mergeId) {
-      // For merged images, check by mergeId to avoid duplicates
       existingImage = await chatsGalleryCollection.findOne({
         userId: new ObjectId(userId),
         chatId: new ObjectId(chatId),
@@ -1677,7 +1785,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       if (existingImage) {
         const image = existingImage.images.find(img => img.mergeId === mergeId);
         if (image) {
-          console.log(`[saveImageToDB] Merged image already exists with mergeId: ${mergeId}, returning existing data`);
+          console.log(`[saveImageToDB] ❌ Merged image already exists with mergeId: ${mergeId}`);
           return { 
             imageId: image._id, 
             imageUrl: image.imageUrl,
@@ -1689,7 +1797,6 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
         }
       }
     } else {
-      // For regular images, check by taskId and imageUrl
       existingImage = await chatsGalleryCollection.findOne({
         userId: new ObjectId(userId),
         chatId: new ObjectId(chatId),
@@ -1702,7 +1809,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
           img.imageUrl === imageUrl && img.taskId === taskId
         );
         if (image) {
-          console.log(`[saveImageToDB] Image already exists for this task: ${taskId}, returning existing data`);
+          console.log(`[saveImageToDB] ❌ Image already exists for taskId: ${taskId}`);
           return { 
             imageId: image._id, 
             imageUrl: image.imageUrl,
@@ -1715,7 +1822,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       }
     }
 
-    // Generate slug if not provided
+    // Generate slug if needed
     if (!slug) {
       if (title && typeof title === 'object') {
         const firstAvailableTitle = title.en || title.ja || title.fr || '';
@@ -1750,7 +1857,6 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       createdAt: new Date()
     };
 
-    // Add merge-specific fields if this is a merged image
     if (isMerged) {
       imageDocument.isMerged = true;
       imageDocument.originalImageUrl = originalImageUrl;
@@ -1774,7 +1880,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       { upsert: true }
     );
 
-    console.log(`[saveImageToDB] Successfully saved image: ${imageId}, isMerged: ${isMerged}, mergeId: ${mergeId || 'none'}`);
+    console.log(`[saveImageToDB] ✅ Image saved to gallery: ${imageId}`);
 
     // Update counters
     const chatsCollection = db.collection('chats');
@@ -1792,10 +1898,11 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
     try {
       await awardImageMilestoneReward(db, userId, fastify);
     } catch (error) {
-      console.error('Error awarding image generation points:', error);
+      console.error('[saveImageToDB] Error awarding points:', error);
     }
     
     if (!userChatId || !ObjectId.isValid(userChatId)) {
+      console.log(`[saveImageToDB] No userChatId, skipping message creation`);
       return { 
         imageId, 
         imageUrl,
@@ -1816,159 +1923,62 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       throw new Error('User data not found');
     }
 
-    // filepath: models/imagen.js
-    function normalizeImageUrl(url) {
-      // Extract the hash from the image URL
-      const match = url.match(/([a-f0-9]{32})_novita_result_image\.png/);
-      if (match) {
-        return match[1];
+    // CRITICAL FIX: Skip individual message creation for multi-image tasks
+    // The multi-image message will be created in checkTaskStatus after all images are saved
+    if (isMultiImage && totalImages > 1) {
+      console.log(`[saveImageToDB] 🔄 Multi-image task (${imageIndex + 1}/${totalImages}) - skipping individual message, will create batch message later`);
+      
+      // Still handle WebSocket for real-time updates, but NOT message creation
+      if (fastify.sendNotificationToUser && !shouldAutoMerge) {
+        console.log(`[saveImageToDB] 📤 Sending WebSocket notification (no message) for image ${imageIndex + 1}/${totalImages}`);
       }
-      const match2 = url.match(/([a-f0-9]{32})\/novita_result_image\.png/);
-        if (match2) {
-          return match2[1];
-        }
-      return url; // Return original URL if no match
+      
+      return { 
+        imageId, 
+        imageUrl,
+        prompt,
+        title,
+        nsfw,
+        isMerged: isMerged || false
+      };
     }
 
-    const updateOriginalMessageWithMerge = async (mergeMessage) => {
-      try {
-        const userChatData = await userDataCollection.findOne({
-          userId: new ObjectId(userId),
-          _id: new ObjectId(userChatId),
-        });
-        
-        // Find the index of the original message for merge
-        const originalIndex = userChatData.messages.findIndex(msg => {
-          if (msg.imageUrl && msg.role === 'assistant' && msg.type === 'image') {
-            const isImageMatch = normalizeImageUrl(msg.imageUrl) === normalizeImageUrl(mergeMessage.originalImageUrl);
-            console.log(`[updateOriginalMessageWithMerge] Checking message: imageUrl: ${msg.imageUrl}, originalImageUrl: ${mergeMessage.originalImageUrl}, isImageMatch: ${isImageMatch}`);
-            return isImageMatch && msg.role === 'assistant' && msg.type === 'image';
-          }
-        });
-
-        if (originalIndex !== -1) {
-          // Combine originalMessage with mergeMessage
-          const originalMessage = userChatData.messages[originalIndex];
-          const resultMessage = {
-            ...originalMessage,
-            imageUrl: mergeMessage.imageUrl,
-            imageId: mergeMessage.imageId,
-            type: "mergeFace",
-            role: "assistant",
-            hidden: true,
-            isMerged: true,
-            mergeId: mergeMessage.mergeId,
-            originalImageUrl: mergeMessage.originalImageUrl,
-          };
-          console.log(`[updateOriginalMessageWithMerge] Updating message at index ${originalIndex} with resultMessage:`, resultMessage);
-
-          // Use atomic operation to update the specific message
-          await userDataCollection.updateOne(
-            {
-              userId: new ObjectId(userId),
-              _id: new ObjectId(userChatId),
-            },
-            {
-              $set: { [`messages.${originalIndex}`]: resultMessage },
-            }
-          );
-          console.log(`[updateOriginalMessageWithMerge] Message updated successfully`);
-        } else {
-          console.log(`[updateOriginalMessageWithMerge] No matching message found for merge`);
-        }
-      } catch (error) {
-        console.error('Error updating original message with merge:', error.message);
-      }
-    };
+    // Single image flow - create message immediately
+    console.log(`[saveImageToDB] 📝 Single image task - creating individual message`);
     
-    const addImageMessageToChat = async (userId, userChatId, imageUrl, imageId, prompt, title) => {
-      try {
-        // Get the title for the message
-        const firstAvailableTitle = (title && typeof title === 'object') 
-          ? (title.en || title.ja || title.fr || '') 
-          : (title || '');
-        
-        const imageMessage = {
-          role: "assistant",
-          content: firstAvailableTitle || prompt,
-          imageUrl,
-          imageId: imageId.toString(),
-          type: isMerged ? "mergeFace" : "image",
-          hidden: true,
-          prompt,
-          title,
-          nsfw,
-          isMerged: isMerged || false,
-          timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }),
-        };
-
-        // Add merge-specific fields if applicable
-        if (isMerged) {
-          imageMessage.mergeId = mergeId;
-          imageMessage.originalImageUrl = originalImageUrl;
-        }
-
-        // Use atomic operation to add message
-        await userDataCollection.updateOne(
-          { userId: new ObjectId(userId), _id: new ObjectId(userChatId) },
-          { $push: { messages: imageMessage } }
-        );
-
-        console.log(`[addImageMessageToChat] Added image message to user chat: ${imageId}`);
-        
-      } catch (error) {
-        console.error('Error adding image message to chat:', error.message);
-      }
-    };
-
     const firstAvailableTitle = (title && typeof title === 'object') 
       ? (title.en || title.ja || title.fr || '') 
       : (title || '');
     
-    // FIXED: For character creation, we should always add the message
-    // The shouldAutoMerge logic was preventing character creation images from being added
-    const isCharacterCreation = !userChatId; // Character creation typically doesn't have userChatId
-    const shouldAddMessage = isCharacterCreation || !shouldAutoMerge || (shouldAutoMerge && isMerged);
-    
-    if (shouldAddMessage && isMerged) {
-      const imageMessage = {
-        role: "assistant", 
-        content: isMerged ? `[MergeFace] ${mergeId}` : `${firstAvailableTitle}`, 
-        hidden: true, 
-        type: isMerged ? "mergeFace" : "image", 
-        imageId: isMerged ? mergeId : imageId.toString(), 
-        imageUrl,
-        prompt, 
-        slug, 
-        aspectRatio, 
-        seed, 
-        nsfw,
-      };
+    const imageMessage = {
+      role: "assistant",
+      content: firstAvailableTitle || prompt,
+      imageUrl,
+      imageId: imageId.toString(),
+      type: isMerged ? "mergeFace" : "image",
+      hidden: true,
+      prompt,
+      title,
+      nsfw,
+      isMerged: isMerged || false,
+      timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }),
+    };
 
-      // Add merge-specific fields consistently
-      if (isMerged) {
-        imageMessage.isMerged = true;
-        imageMessage.mergeId = mergeId;
-        imageMessage.originalImageUrl = originalImageUrl;
-        imageMessage.originalImageId = imageId.toString();
-      }
-
-      await updateOriginalMessageWithMerge(imageMessage);
-    } else if (userChatId) {
-      // Only add to chat if we have a valid userChatId
-      await addImageMessageToChat(
-        userId, 
-        userChatId, 
-        imageUrl, 
-        imageId, 
-        prompt, 
-        title,
-      );
+    if (isMerged) {
+      imageMessage.mergeId = mergeId;
+      imageMessage.originalImageUrl = originalImageUrl;
     }
+
+    await userDataCollection.updateOne(
+      { userId: new ObjectId(userId), _id: new ObjectId(userChatId) },
+      { $push: { messages: imageMessage } }
+    );
+
+    console.log(`[saveImageToDB] ✅ Message created in chat for single image: ${imageId}`);
       
-    // Send WebSocket notification for auto-generated images (non-character creation)
+    // Send WebSocket for single images
     if (fastify.sendNotificationToUser && userChatId && !shouldAutoMerge) {
-      console.log(`[saveImageToDB] Sending WebSocket notification for image: ${imageId}`);
+      console.log(`[saveImageToDB] 📤 Sending WebSocket for single image: ${imageId}`);
       
       const notificationData = {
         id: imageId.toString(),
@@ -1982,7 +1992,6 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
         isAutoMerge: isMerged || false,
         url: imageUrl
       };
-      console.log(`[saveImageToDB] Notification data:`, notificationData);
       fastify.sendNotificationToUser(userId.toString(), 'imageGenerated', notificationData);
     }
 
@@ -1996,11 +2005,10 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
     };
     
   } catch (error) {
-    console.log('Error saving image to DB:', error.message);
+    console.error('[saveImageToDB] ❌ Error:', error.message);
     return false;
   }
 }
-
   module.exports = {
     generateImg,
     getPromptById,

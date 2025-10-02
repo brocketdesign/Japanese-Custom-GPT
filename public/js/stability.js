@@ -201,27 +201,138 @@ window.updateImageCount = function(chatId, count) {
     }
 };
 
-// Example usage: debugUpdateImageCount(5); // This will update the image count badge for the last chat session
 const sentImageIds = new Set();
+
+
 window.generateImage = async function(data) {
+    console.log('[generateImage] Called with data:', data);
+    
     // Validate essential data
-    if (!data || !data.userChatId || (!data.imageUrl && !data.url)) {
-        console.error('[generateImage] Missing essential data:', {
-            hasData: !!data,
-            hasUserChatId: !!(data && data.userChatId),
-            hasImageUrl: !!(data && data.imageUrl),
-            hasUrl: !!(data && data.url)
+    if (!data || !data.userChatId) {
+        console.error('[generateImage] ❌ Missing userChatId:', data);
+        return;
+    }
+
+    // Check if this is a batched multi-image payload
+    if (Array.isArray(data.images) && data.images.length > 0) {
+        console.log(`[generateImage] 🎨 Processing batched payload: ${data.images.length} images`);
+        
+        // Check for duplicates
+        const newImages = data.images.filter(img => {
+            const id = img.imageId || img.id;
+            return id && !sentImageIds.has(id);
         });
+        
+        if (newImages.length === 0) {
+            console.log('[generateImage] ⚠️ All images already displayed, skipping');
+            return;
+        }
+        
+        console.log(`[generateImage] ✅ ${newImages.length} new images to display`);
+        
+        // Mark as sent
+        newImages.forEach(img => {
+            const id = img.imageId || img.id;
+            if (id) {
+                sentImageIds.add(id);
+                console.log(`[generateImage] 📌 Marked image as sent: ${id}`);
+            }
+        });
+        
+        // Create unique swiper ID
+        const uniqueSwiperId = `chat-swiper-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        console.log(`[generateImage] 🔧 Creating swiper with ID: ${uniqueSwiperId}`);
+        
+        // Build swiper container
+        const wrapper = document.createElement('div');
+        wrapper.className = 'chat-image-swiper-wrapper';
+        wrapper.setAttribute('data-user-chat-id', data.userChatId);
+        wrapper.setAttribute('data-swiper-id', uniqueSwiperId);
+        
+        const swiperContainer = document.createElement('div');
+        swiperContainer.id = uniqueSwiperId;
+        swiperContainer.className = 'swiper';
+        swiperContainer.style.maxWidth = '420px';
+        swiperContainer.style.margin = '0 auto';
+        
+        const swiperWrapper = document.createElement('div');
+        swiperWrapper.className = 'swiper-wrapper';
+        
+        // Add slides
+        newImages.forEach((imgObj, idx) => {
+            console.log(`[generateImage] 🖼️ Adding slide ${idx + 1}/${newImages.length}:`, imgObj.imageUrl);
+            
+            const slide = document.createElement('div');
+            slide.className = 'swiper-slide';
+            
+            const imgEl = document.createElement('img');
+            imgEl.src = imgObj.imageUrl || imgObj.url;
+            imgEl.alt = imgObj.title || 'Generated Image';
+            imgEl.className = 'm-auto generated-multi-image';
+            imgEl.setAttribute('data-id', imgObj.imageId || imgObj.id);
+            imgEl.setAttribute('data-prompt', imgObj.prompt || '');
+            imgEl.setAttribute('data-nsfw', imgObj.nsfw || false);
+            imgEl.setAttribute('data-isMergeFace', imgObj.isMergeFace || false);
+            imgEl.style.maxWidth = '100%';
+            imgEl.style.height = 'auto';
+            
+            slide.appendChild(imgEl);
+            swiperWrapper.appendChild(slide);
+        });
+        
+        swiperContainer.appendChild(swiperWrapper);
+        
+        // Navigation buttons
+        const prevButton = document.createElement('div');
+        prevButton.className = 'swiper-button-prev';
+        const nextButton = document.createElement('div');
+        nextButton.className = 'swiper-button-next';
+        swiperContainer.appendChild(prevButton);
+        swiperContainer.appendChild(nextButton);
+        
+        // Pagination
+        const pagination = document.createElement('div');
+        pagination.className = 'swiper-pagination';
+        swiperContainer.appendChild(pagination);
+        
+        wrapper.appendChild(swiperContainer);
+        
+        console.log('[generateImage] 📤 Passing wrapper to displayMessage');
+        
+        // Pass to displayMessage
+        displayMessage('bot-image', wrapper, data.userChatId);
+        
+        // Add first image thumbnail
+        if (newImages[0]) {
+            const firstImgUrl = newImages[0].imageUrl || newImages[0].url;
+            if (firstImgUrl) {
+                console.log('[generateImage] 🖼️ Adding thumbnail for first image');
+                displayImageThumb(firstImgUrl);
+            }
+        }
+        
+        console.log('[generateImage] ✅ Multi-image processing complete');
         return;
     }
     
-    // Use either imageUrl or url for backward compatibility
+    // Single image handling (legacy)
+    console.log('[generateImage] 🖼️ Processing single image');
+    
     const imageUrl = data.imageUrl || data.url;
     const imageId = data.imageId || data.id;
     
-    if (!imageId || sentImageIds.has(imageId)) {
+    if (!imageUrl || !imageId) {
+        console.error('[generateImage] ❌ Missing imageUrl or imageId for single image');
         return;
     }
+    
+    if (sentImageIds.has(imageId)) {
+        console.log('[generateImage] ⚠️ Image already displayed:', imageId);
+        return;
+    }
+    
+    sentImageIds.add(imageId);
+    console.log(`[generateImage] 📌 Marked single image as sent: ${imageId}`);
     
     const { 
         nsfw: imageNsfw = data.nsfw, 
@@ -238,8 +349,6 @@ window.generateImage = async function(data) {
       (data.prompt || '') ||
       'Generated Image';
     
-    sentImageIds.add(imageId);
-
     const img = document.createElement('img');
     img.setAttribute('src', imageUrl);
     img.setAttribute('alt', titleText);
@@ -250,5 +359,13 @@ window.generateImage = async function(data) {
     img.setAttribute('data-isUpscaled', !!isUpscaled);
     img.setAttribute('data-isMergeFace', !!isMergeFace);
 
+    console.log('[generateImage] 📤 Passing single image to displayMessage');
     displayMessage('bot-image', img, data.userChatId);
+    
+    if (imageUrl) {
+        console.log('[generateImage] 🖼️ Adding thumbnail for single image');
+        displayImageThumb(imageUrl);
+    }
+    
+    console.log('[generateImage] ✅ Single image processing complete');
 };

@@ -147,29 +147,29 @@ function createSystemPayloadChatRule(purpose, gender, name, details, language) {
         },
     ];
 }
-
 // Enhanced image prompt generation with structured details
 function createSystemPayload(prompt, gender, details, imageType) {
     const detailsString = flattenDetailsForPrompt(details);
-    
+
     return [
         {
             role: 'system',
             content: `You are an expert Stable Diffusion prompt engineer.
             Generate a detailed, keyword-based image prompt (under 1000 characters) for character visualization.
-            
+
             Requirements:
+            - The image must be a face portrait of the desired character, exclusively (no full body, no background, only the face and head/shoulders)
             - Use comma-separated descriptive keywords in English
-            - Include physical appearance, emotion, style, and environment
-            - Optimize for high-quality, detailed character generation
+            - Include facial features, emotion, hairstyle, and style
+            - Optimize for high-quality, detailed character face generation
             - Maintain consistency with provided character details
             - NO complete sentences, only relevant keywords
-            - ${gender === 'female' ? 
-                'Include feminine features like breast size, body curves, and feminine clothing styles. Avoid masculine traits. Avoid muscular builds if not explicitly desired. Provide beautiful and elegant poses. Beautiful make up.' : 'Include masculine features like broad shoulders, muscular build, and masculine clothing styles. Avoid feminine traits. Provide strong and confident poses.'}
-            ${imageType === 'nsfw' ? '- Include explicit content descriptors for a NSFW result' : '- Make sure the prompt is suitable for a general audience'}
-            
+            - The prompt must be strictly SFW (safe for work), no explicit or NSFW content
+            - ${gender === 'female' ?
+                'Include feminine facial features, elegant makeup, and feminine hairstyle. Avoid masculine traits.' : 'Include masculine facial features, confident expression, and masculine hairstyle. Avoid feminine traits.'}
+
             Respond with the enhanced prompt only in English.
-            
+
             You need to be concise.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
         },
         {
@@ -177,27 +177,29 @@ function createSystemPayload(prompt, gender, details, imageType) {
             content: `Base prompt: ${prompt}
             Gender: ${gender}
             ${detailsString ? `Character details: ${detailsString}` : ''}
-            
-            Create a comprehensive image prompt that captures all visual elements.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
+
+            Create a comprehensive image prompt that captures all visual facial elements. Only generate a face portrait, no full body or background.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
         },
         {
             role: 'user',
             content: `Include these essential elements:
             - Age, skin tone, hair (color, length, style), eye details
-            - Facial expression, body type, physique characteristics
-            ${gender === 'female' ? 
-                '- Breast size, body curves, feminine features' : 
-                gender === 'male' ? 
-                '- Chest build, shoulder width, masculine features' : 
-                '- Gender-appropriate physical characteristics'
+            - Facial expression, face shape, facial features
+            ${gender === 'female' ?
+                '- Feminine facial features, elegant makeup, hairstyle' :
+                gender === 'male' ?
+                '- Masculine facial features, confident expression, hairstyle' :
+                '- Gender-appropriate facial characteristics'
             }
-            - Clothing style, accessories, background setting
-            - Art style, lighting, image quality descriptors`
+            - Clothing style (only visible around neck/shoulders if relevant), accessories (earrings, glasses, etc. if relevant)
+            - Art style, lighting, image quality descriptors
+            - Only face portrait, no background, no full body`
         },
         {
             role: 'user',
             content: `Ensure the prompt is under 1000 characters and formatted for Stable Diffusion.
-            Avoid any extraneous information or context.`
+            Avoid any extraneous information or context.
+            The image must be strictly SFW and only a face portrait.`
         }
     ];
 }
@@ -328,9 +330,8 @@ async function routes(fastify, options) {
 
             // Step 2: Generate enhanced prompt
             let enhancedPrompt = prompt || null;
-            let checkIfDetailledPrompt = prompt.toLowerCase().includes("score_")  ;
 
-            if(enableEnhancedPrompt && !checkIfDetailledPrompt) {
+            if(enableEnhancedPrompt) {
                 console.log(`[API/generate-character-comprehensive] Step 2: Generating ${finalImageType} enhanced prompt`);
 
                 const systemPayload = createSystemPayload(prompt, gender, extractedDetails, finalImageType);

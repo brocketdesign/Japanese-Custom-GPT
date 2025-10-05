@@ -1370,8 +1370,7 @@ function setupChatInterface(chat, character) {
     }
 
     function afterStreamEnd(uniqueId, markdownContent) {
-        let msg = formatMessageText(markdownContent);
-        $(`#play-${uniqueId}`).attr('data-content', msg);
+        $(`#play-${uniqueId}`).attr('data-content', markdownContent);
         $(`#play-${uniqueId}`).closest('.audio-controller').show();
         
         // Add message tools after streaming is complete
@@ -1379,7 +1378,12 @@ function setupChatInterface(chat, character) {
         if (messageContainer.length) {
             // Get the current message index (count of all messages in the chat)
             const currentMessageIndex = $('#chatContainer .assistant-chat-box').length - 1;
-            
+            const currentMessageText = $(`#completion-${uniqueId}`).text().trim();
+
+            // Update the message text with formatted content
+            let updatedMessage = formatMessageText(currentMessageText);
+            $(`#completion-${uniqueId}`).html(marked.parse(updatedMessage));
+
             // Check if this is the last message (should be true for new messages)
             const isLastMessage = true;
         

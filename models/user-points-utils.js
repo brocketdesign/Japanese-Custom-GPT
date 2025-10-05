@@ -187,6 +187,19 @@ async function awardFirstLoginBonus(db, userId, fastify = null) {
     };
   }
 
+  // Check if user already has 10000 or more points
+  const currentPoints = user.points || 0;
+  const MAX_POINTS_CAP = 10000;
+  
+  if (currentPoints >= MAX_POINTS_CAP) {
+    return {
+      success: false,
+      message: userPointsTranslations.first_login_bonus_max_cap || 'You have reached the maximum points cap',
+      reason: 'max_cap_reached',
+      currentPoints
+    };
+  }
+
   // Use UTC for date calculations
   const now = new Date();
   const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
@@ -205,8 +218,11 @@ async function awardFirstLoginBonus(db, userId, fastify = null) {
     };
   }
 
-  // Award 100 points for first login bonus
-  const pointsAwarded = 100;
+  // Award 1000 points for first login bonus, but cap at 10000 total
+  let pointsAwarded = 1000;
+  if (currentPoints + pointsAwarded > MAX_POINTS_CAP) {
+    pointsAwarded = MAX_POINTS_CAP - currentPoints;
+  }
   
   const result = await addUserPoints(
     db,

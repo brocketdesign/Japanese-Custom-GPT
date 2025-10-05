@@ -258,7 +258,7 @@ function displayChatList(reset, userId) {
 function updateNavbarChatActions(chat) {
     const dropdown = $('#chat-actions-dropdown');
     const dropdownMenu = dropdown.find('.dropdown-menu');
-    
+
     if (!chat) {
         dropdown.hide();
         return;
@@ -288,6 +288,16 @@ function updateNavbarChatActions(chat) {
                 <span>${window.translations.newChat}</span>
             </button>
         </li>
+        ${window.isAdmin ? `
+        <li><hr class="dropdown-divider"></li>
+        <li>
+            <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start text-warning" 
+                    onclick="logFullConversation('${chat._id}')">
+                <i class="bi bi-terminal me-2"></i>
+                <span>Log Full Conversation</span>
+            </button>
+        </li>
+        ` : ''}
         <li><hr class="dropdown-divider"></li>
         <li class="d-none">
             <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start text-danger" onclick="deleteChatHandler('${chat._id}')">
@@ -305,6 +315,7 @@ function updateNavbarChatActions(chat) {
 function hideNavbarChatActions() {
     $('#chat-actions-dropdown').hide();
 }
+
 // Function to update current chat in the list
 function updateCurrentChat(chatId, userId) {
     if(!chatId) {
@@ -319,505 +330,10 @@ function updateCurrentChat(chatId, userId) {
     } else {
         fetchChatDataInfo(chatId);
     }
-}
 
-// Function to fetch chat data info
-function fetchChatDataInfo(chatId) {
-    $.ajax({
-        type: 'GET',
-        url: `/api/chat-data/${chatId}`,
-        success: function(data) {
-            updateChatListDisplay(data);
-        },
-        error: function(xhr, status, error) {
-            console.log(error);
-        }
-    });
-}
-
-// Function to update chat list display
-function updateChatListDisplay(currentChat) {
-    chatCache.data = chatCache.data.filter(chat => chat._id !== currentChat._id);
-    chatCache.data.unshift(currentChat);
-    chatCache.data.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-    saveCache();
-
-    // remove all active class 
-    $('#chat-list').find('.chat-list.item').removeClass('active');
-    // remove all occurrence of chat from list
-    const currentChatObjs = $(document).find('#chat-list').find(`.chat-list.item[data-id="${currentChat._id}"]`);
-    if(currentChatObjs.length >= 1){
-        currentChatObjs.each(function(){
-            const chatName = $(this).find('.chat-list-title h6').text();
-            $(this).remove();
-        });
-    }
-
-    let chatHtml = constructChatItemHtml(currentChat, true);
-    $('#chat-list').prepend(chatHtml);
-
-    // Update navbar dropdown
-    updateNavbarChatActions(currentChat);
-}
-
-// Enhanced function to construct chat item HTML with ultra-compact design for 260px sidebar
-function constructChatItemHtml(chat, isActive) {
-    const isOwner = chat.userId === userId;
-    const lang = window.lang
-    let lastMessageTime
-    switch (lang) {
-        case 'ja':
-            lastMessageTime = chat.updatedAt ? new Date(chat.updatedAt).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' }) : '';
-            break;
-        case 'en':
-            lastMessageTime = chat.updatedAt ? new Date(chat.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
-            break;
-        case 'fr':
-            lastMessageTime = chat.updatedAt ? new Date(chat.updatedAt).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' }) : '';
-            break;
-        default:
-            lastMessageTime = chat.updatedAt ? new Date(chat.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
-            break;
-    }
-
-    return `
-        <div class="list-group-item list-group-item-action border-0 p-0 ${isActive ? 'active bg-primary bg-opacity-10' : ''} chat-list item user-chat chat-item-enhanced" 
-            data-id="${chat._id}" style="position: relative;">
-            <div class="d-flex align-items-center w-100 px-2 py-1">
-                <div class="user-chat-content d-flex align-items-center flex-grow-1"
-                onclick="handleChatListItemClick(this)" style="cursor: pointer; min-width: 0;">
-                    <div class="chat-avatar-container position-relative me-2">
-                        <img class="chat-avatar rounded-circle border" 
-                             src="${chat.chatImageUrl || '/img/logo.webp'}" 
-                             alt="${chat.name}"
-                             style="width: 32px; height: 32px; object-fit: cover;">
-                        ${isActive ? '<div class="position-absolute top-0 end-0 bg-primary rounded-circle" style="width: 8px; height: 8px; border: 1px solid white;"></div>' : ''}
-                    </div>
-                    <div class="chat-content flex-grow-1 min-w-0">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <h6 class="chat-name mb-0 fw-semibold text-truncate" style="max-width: 120px; font-size: 0.8rem; line-height: 1.1;">${chat.name}</h6>
-                            <small class="chat-time text-muted flex-shrink-0 ms-1" style="font-size: 0.65rem;">${lastMessageTime}</small>
-                        </div>
-                        <div class="mt-1">
-                            <p class="chat-preview mb-0 text-muted small text-truncate ${chat.lastMessage ? '' : 'd-none'}" 
-                               style="max-width: 130px; font-size: 0.7rem; line-height: 1.2;">
-                                ${chat.lastMessage ? chat.lastMessage.content : ''}
-                            </p>
-                            ${!chat.lastMessage ? `<small class="text-muted fst-italic" style="font-size: 0.7rem;">${translations.newChat}</small>` : ''}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-// Enhanced function to display user chat history in modal with compact design
-function displayUserChatHistoryInModal(userChat) {
-    const chatHistoryList = $('#chat-history-list');
-    chatHistoryList.empty();
-
-    if (userChat && userChat.length > 0) {
-        const userChats = userChat.filter(chat => !chat.isWidget);
-        
-        if (userChats.length === 0) {
-            chatHistoryList.html(`
-                <div class="text-center py-4">
-                    <i class="bi bi-chat-square-dots display-5 text-muted mb-2"></i>
-                    <p class="text-muted small">${translations.noChatHistory}</p>
-                </div>
-            `);
-            return;
-        }
-
-        userChats.forEach(chat => {
-            const chatDate = new Date(chat.updatedAt);
-            const formattedDate = chatDate.toLocaleDateString('ja-JP', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                weekday: 'short'
-            });
-            const formattedTime = chatDate.toLocaleTimeString('ja-JP', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-
-            const historyItem = $(`
-                <div class="list-group-item list-group-item-action border-0 p-2 user-chat-history"
-                     data-id="${chat.chatId}" 
-                     data-chat="${chat._id}" 
-                     onclick="handleUserChatHistoryClick(this)"
-                     style="cursor: pointer; border-radius: 8px; margin-bottom: 0.25rem;">
-                    <div class="d-flex align-items-center justify-content-between w-100">
-                        <div class="d-flex align-items-center flex-grow-1 min-w-0">
-                            <div class="chat-history-icon me-2">
-                                <i class="bi bi-chat-dots-fill text-primary" style="font-size: 1.2rem;"></i>
-                            </div>
-                            <div class="chat-history-content min-w-0">
-                                <div class="chat-history-date fw-semibold text-dark mb-0" style="font-size: 0.8rem;">${formattedDate}</div>
-                                <small class="text-muted" style="font-size: 0.7rem;">${formattedTime}</small>
-                            </div>
-                        </div>
-                        <div class="chat-history-actions">
-                            <div onclick="enableToggleDropdown(this); event.stopPropagation();" class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary border-0 rounded-circle" 
-                                        type="button" 
-                                        id="historyDropdown_${chat._id}" 
-                                        data-mdb-toggle="dropdown" 
-                                        aria-expanded="false"
-                                        style="width: 24px; height: 24px; z-index: 1000; font-size: 0.7rem;">
-                                    <i class="bi bi-three-dots-vertical"></i>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow border-0" 
-                                    aria-labelledby="historyDropdown_${chat._id}"
-                                    style="z-index: 1050; font-size: 0.75rem;">
-                                    <li>
-                                        <button class="dropdown-item d-flex align-items-center py-1 border-0 bg-transparent w-100 text-start text-danger" 
-                                                onclick="deleteChatHistoryHandler('${chat._id}')">
-                                            <i class="bi bi-trash me-2" style="width: 16px; font-size: 0.7rem;"></i>
-                                            <span style="font-size: 0.75rem;">${translations.delete}</span>
-                                        </button>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `);
-
-            chatHistoryList.append(historyItem);
-        });
-    } else {
-        chatHistoryList.html(`
-            <div class="text-center py-4">
-                <i class="bi bi-chat-square-dots display-5 text-muted mb-2"></i>
-                <p class="text-muted small">${translations.noChatHistory}</p>
-            </div>
-        `);
-    }
-}
-
-// Enhanced function to render chat dropdown with compact design
-function renderChatDropdown(chat) {
-    const chatId = chat._id;
-    const dropdownHtml = `
-        <div class="d-inline-block align-items-center">
-            <div onclick="enableToggleDropdown(this)" class="dropdown pe-2">
-                <button class="btn btn-sm btn-outline-secondary border-0 rounded-circle" 
-                        type="button" 
-                        id="dropdownMenuButton_${chatId}" 
-                        data-mdb-toggle="dropdown" 
-                        aria-expanded="false"
-                        style="width: 30px; height: 30px; z-index: 1000;">
-                    <i class="bi bi-three-dots-vertical"></i>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0" 
-                    aria-labelledby="dropdownMenuButton_${chatId}"
-                    style="z-index: 1050;">
-                    <li>
-                        <span onclick="deleteChatHistoryHandler('${chatId}')" 
-                              class="dropdown-item d-flex align-items-center py-2 text-danger" 
-                              style="cursor:pointer">
-                            <i class="bi bi-trash me-3"></i>
-                            <span>${translations.delete}</span>
-                        </span>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    `;
-
-    return dropdownHtml;
-}
-
-async function getUserChatHistory(chatId) {
-    try {
-        const response = await fetch(`/api/chat-history/${chatId}`);
-        const data = await response.json();
-        displayUserChatHistoryInModal(data);
-        const lastChat = data.find(chat => !chat.isWidget);
-        if (lastChat) {
-            const userChatId = lastChat._id;
-            sessionStorage.setItem('userChatId', userChatId);
-            return lastChat;
-        }
-    } catch (error) {
-        console.error('Error fetching user chat history:', error);
-    }
-    return null;
-}
-
-
-//.user-chat-history
-function handleUserChatHistoryClick(el) {
-    if (userChatId == $(el).data('chat')) {
-        return;
-    }
-    chatId = $(el).data('id');
-    userChatId = $(el).data('chat');
-    postChatData(chatId, userId, userChatId, false, null);
-};
-
-//.chat-list.item.user-chat .user-chat-content
-function handleChatListItemClick(el) {
-    const $el = $(el);
-    if ($el.hasClass('loading')) return;
-    
-    $el.addClass('loading');
-    const selectChatId = $el.closest('.user-chat').data('id');
-    const chatImageUrl = $el.find('img').attr('src');
-    
-    // Make sure we have a valid chatId
-    if (!selectChatId) {
-        console.error('No chat ID found in clicked element');
-        $el.removeClass('loading');
-        return;
-    }
-    
-    $el.closest('.chat-list.item').addClass('active').siblings().removeClass('active');
-    //$('#chat-wrapper').css('background-image', `url(${chatImageUrl})`);
-    
-    // Update global chatId variable before calling fetchChatData
-    window.chatId = selectChatId;
-    
-    fetchChatData(selectChatId, userId, null, function() {
-        $el.removeClass('loading');
-        // Update current chat after successful fetch
-        updateCurrentChat(selectChatId, userId);
-    });
-};
-
-// Show chat history modal (fixed with proper modal management)
-function showChatHistory(chatId) {
-    // Close all other modals first
-    if (typeof window.closeAllModals === 'function') {
-        window.closeAllModals();
-    }
-    
-    // Wait a moment for other modals to close
-    setTimeout(async () => {
-        try {
-            // Show modal with proper Bootstrap 5 API and high z-index
-            const modalElement = document.getElementById('chatHistoryModal');
-            if (!modalElement) {
-                console.error('Chat history modal element not found');
-                return;
-            }
-            
-            // Ensure modal has high z-index
-            modalElement.style.zIndex = '1060';
-            
-            const modal = new bootstrap.Modal(modalElement, {
-                backdrop: true,
-                keyboard: true,
-                focus: true
-            });
-            
-            modal.show();
-            
-            // Show loading state
-            $('#chat-history-list').html(`
-                <div class="text-center py-5">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">${translations.loading}</span>
-                    </div>
-                    <p class="text-muted mt-3">${translations.loadingHistory}</p>
-                </div>
-            `);
-            
-            // Fetch and display chat history
-            const response = await fetch(`/api/chat-history/${chatId}`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch chat history');
-            }
-            
-            const data = await response.json();
-            displayUserChatHistoryInModal(data);
-            
-        } catch (error) {
-            console.error('Error loading chat history:', error);
-            $('#chat-history-list').html(`
-                <div class="text-center py-5">
-                    <i class="bi bi-exclamation-triangle display-4 text-warning mb-3"></i>
-                    <p class="text-muted">${translations.historyLoadError}</p>
-                    <button class="btn btn-outline-primary btn-sm" onclick="location.reload()">${translations.retry}</button>
-                </div>
-            `);
-        }
-    }, 200); // Small delay to ensure other modals are closed
-}
-
-// Initialize horizontal chat menu on index page
-$(document).ready(function() {
-    // Only initialize on /chat page
-    if (window.location.pathname.includes('/chat')) {
-        initializeHorizontalChatMenu();
-    }
-});
-
-// Initialize horizontal chat menu
-function initializeHorizontalChatMenu() {
-    if ($('#horizontal-chat-menu').length === 0) return;
-    
-    // Add styles to head
-    if ($('#horizontal-chat-styles').length === 0) {
-        $('head').append('<div id="horizontal-chat-styles">' + horizontalChatStyles + '</div>');
-    }
-    
-    // Show the menu
-    $('#horizontal-chat-menu').removeClass('d-none');
-    
-    // Load latest chats for horizontal display
-    displayHorizontalChatList(userId);
-}
-
-// Display chats in horizontal menu (similar to displayImageThumb)
-function displayHorizontalChatList(userId) {
-    if (!userId || $('#horizontal-chat-list').length === 0) return;
-
-    // Show loading spinner
-    $('#horizontal-chat-loading').show();
-    $('#horizontal-chat-list').hide();
-    
-    $.ajax({
-        type: 'GET',
-        url: '/api/chat-list/' + userId,
-        data: { page: 1, limit: 20 }, // Get latest 20 chats
-        success: function(data) {
-            const { chats } = data;
-            displayChatThumbs(chats, userId);
-        },
-        error: function(xhr, status, error) {
-            console.error('Error fetching horizontal chat list:', error);
-            // Hide loading spinner on error
-            $('#horizontal-chat-loading').hide().remove();
-            $('#horizontal-chat-list').show();
-        }
-    });
-}
-
-// Display chat thumbnails in horizontal menu (similar to displayImageThumb)
-function displayChatThumbs(chats, userId) {
-    console.log('Rendering horizontal chat thumbnails');
-    const horizontalChatList = $('#horizontal-chat-list');
-    
-    // Hide loading spinner
-    $('#horizontal-chat-loading').hide().remove();
-    $('#horizontal-chat-list').show();
-    
-    if (!chats || chats.length === 0) {
-        horizontalChatList.html(`
-            <div class="text-center py-2 px-3">
-                <small class="text-muted">${translations.noChats || 'No chats available'}</small>
-            </div>
-        `);
-        return;
-    }
-    
-    horizontalChatList.empty();
-    
-    chats.forEach(function(chat, index) {
-        const chatThumb = $(`
-            <div class="chat-thumb-container flex-shrink-0 me-2 animate__animated" 
-                 data-id="${chat._id}" 
-                 data-user-id="${chat.userId}"
-                 onclick="handleChatThumbClick(this)"
-                 style="cursor: pointer; opacity: 0; animation-delay: ${index * 0.1}s;">
-                <div class="chat-thumb-card rounded-circle border border-2 border-light shadow-sm position-relative" 
-                     style="width: 60px; height: 60px; background-image: url('${chat.chatImageUrl || '/img/logo.webp'}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
-                    ${chat._id === chatId ? '<div class="position-absolute top-0 end-0 bg-primary rounded-circle" style="width: 12px; height: 12px; border: 2px solid white;"></div>' : ''}
-                </div>
-                <div class="chat-thumb-name text-center mt-1 d-none">
-                    <small class="text-dark fw-medium text-truncate d-block" 
-                           style="font-size: 0.7rem; max-width: 60px; line-height: 1.1;">
-                        ${chat.name}
-                    </small>
-                </div>
-            </div>
-        `);
-        
-        horizontalChatList.append(chatThumb);
-    });
-    
-    // Trigger bouncing animation for each thumbnail with staggered timing
-    horizontalChatList.find('.chat-thumb-container').each(function(index) {
-        const $thumb = $(this);
-        setTimeout(() => {
-            $thumb.addClass('animate__bounceIn').css('opacity', '1');
-            
-            // Remove animation class after animation completes to allow re-animation
-            setTimeout(() => {
-                $thumb.removeClass('animate__bounceIn');
-            }, 1000);
-        }, index * 100); // 100ms delay between each thumbnail
-    });
-}
-
-// Function to update navbar chat actions dropdown
-function updateNavbarChatActions(chat) {
-    const dropdown = $('#chat-actions-dropdown');
-    const dropdownMenu = dropdown.find('.dropdown-menu');
-    
-    if (!chat) {
-        dropdown.hide();
-        return;
-    }
-    
-    const isOwner = chat.userId === userId;
-    
-    const dropdownItems = `
-        <li>
-            <a href="#" class="dropdown-item d-flex align-items-center py-2" 
-               onclick="${!isOwner ? `loadCharacterCreationPage('${chat._id}')` : `loadCharacterUpdatePage('${chat._id}')`}">
-                <i class="bi bi-pencil me-2 text-primary"></i>
-                <span>${!isOwner ? window.translations.edit : window.translations.update}</span>
-            </a>
-        </li>
-        <li>
-            <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start" onclick="showChatHistory('${chat._id}')">
-                <i class="bi bi-clock-history me-2 text-info"></i>
-                <span>${window.translations.chatHistory}</span>
-            </button>
-        </li>
-        <li>
-            <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start" 
-                    onclick="handleChatReset(this)"
-                    data-id="${chat._id}">
-                <i class="bi bi-plus-square me-2 text-success"></i>
-                <span>${window.translations.newChat}</span>
-            </button>
-        </li>
-        <li><hr class="dropdown-divider"></li>
-        <li class="d-none">
-            <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start text-danger" onclick="deleteChatHandler('${chat._id}')">
-                <i class="bi bi-trash me-2"></i>
-                <span>${window.translations.delete}</span>
-            </button>
-        </li>
-    `;
-    
-    dropdownMenu.html(dropdownItems);
-    dropdown.show();
-}
-
-// Function to hide navbar chat actions
-function hideNavbarChatActions() {
-    $('#chat-actions-dropdown').hide();
-}
-// Function to update current chat in the list
-function updateCurrentChat(chatId, userId) {
-    if(!chatId) {
-        hideNavbarChatActions();
-        return;
-    }
-    let currentChat = chatCache.data.find(chat => chat._id === chatId);
-
-    if (currentChat) {
-        updateChatListDisplay(currentChat);
-        updateNavbarChatActions(currentChat);
-    } else {
-        fetchChatDataInfo(chatId);
+    // Update horizontal chat menu if on index page
+    if (window.location.pathname === '/' && $('#horizontal-chat-menu').length > 0) {
+        updateHorizontalChatMenu(chatId);
     }
 }
 
@@ -1257,58 +773,6 @@ function displayChatThumbs(chats, userId) {
     });
 }
 
-// Function to update navbar chat actions dropdown
-function updateNavbarChatActions(chat) {
-    const dropdown = $('#chat-actions-dropdown');
-    const dropdownMenu = dropdown.find('.dropdown-menu');
-    
-    if (!chat) {
-        dropdown.hide();
-        return;
-    }
-    
-    const isOwner = chat.userId === userId;
-    
-    const dropdownItems = `
-        <li>
-            <a href="#" class="dropdown-item d-flex align-items-center py-2" 
-               onclick="${!isOwner ? `loadCharacterCreationPage('${chat._id}')` : `loadCharacterUpdatePage('${chat._id}')`}">
-                <i class="bi bi-pencil me-2 text-primary"></i>
-                <span>${!isOwner ? window.translations.edit : window.translations.update}</span>
-            </a>
-        </li>
-        <li>
-            <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start" onclick="showChatHistory('${chat._id}')">
-                <i class="bi bi-clock-history me-2 text-info"></i>
-                <span>${window.translations.chatHistory}</span>
-            </button>
-        </li>
-        <li>
-            <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start" 
-                    onclick="handleChatReset(this)"
-                    data-id="${chat._id}">
-                <i class="bi bi-plus-square me-2 text-success"></i>
-                <span>${window.translations.newChat}</span>
-            </button>
-        </li>
-        <li><hr class="dropdown-divider"></li>
-        <li class="d-none">
-            <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start text-danger" onclick="deleteChatHandler('${chat._id}')">
-                <i class="bi bi-trash me-2"></i>
-                <span>${window.translations.delete}</span>
-            </button>
-        </li>
-    `;
-    
-    dropdownMenu.html(dropdownItems);
-    dropdown.show();
-}
-
-// Function to hide navbar chat actions
-function hideNavbarChatActions() {
-    $('#chat-actions-dropdown').hide();
-}
-
 // Handle click on chat thumbnail
 function handleChatThumbClick(el) {
     const $el = $(el);
@@ -1346,26 +810,48 @@ function updateHorizontalChatMenu(currentChatId) {
     }
 }
 
-// Function to update current chat in the list
-function updateCurrentChat(chatId, userId) {
-    if(!chatId) {
-        hideNavbarChatActions();
+window.logFullConversation = function(chatId) {
+
+    const userChatId = localStorage.getItem('userChatId') || sessionStorage.getItem('userChatId');
+    if (!userChatId) {
+        showNotification('No user chat ID found', 'error');
         return;
     }
-    let currentChat = chatCache.data.find(chat => chat._id === chatId);
 
-    if (currentChat) {
-        updateChatListDisplay(currentChat);
-        updateNavbarChatActions(currentChat);
-    } else {
-        fetchChatDataInfo(chatId);
+    if (!window.isAdmin) {
+        console.warn('Unauthorized: Admin access required');
+        return;
     }
 
-    // Update horizontal chat menu if on index page
-    if (window.location.pathname === '/' && $('#horizontal-chat-menu').length > 0) {
-        updateHorizontalChatMenu(chatId);
+    if (!chatId) {
+        showNotification('Invalid chat ID', 'error');
+        return;
     }
-}
+
+    // Show loading notification
+    showNotification('Fetching conversation...', 'info');
+
+    $.ajax({
+        url: `/api/log-conversation/${chatId}/${userChatId}`,
+        method: 'POST',
+        xhrFields: {
+            withCredentials: true
+        },
+        success: function(response) {
+            if (response.success) {
+                showNotification('Conversation logged to server console', 'success');
+                console.log('Conversation logged successfully:', response.message);
+            } else {
+                showNotification('Failed to log conversation', 'error');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error logging conversation:', error);
+            showNotification('Error logging conversation', 'error');
+        }
+    });
+};
+
 
 // Add CSS styles for horizontal chat menu
 const horizontalChatStyles = `

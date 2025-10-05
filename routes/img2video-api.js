@@ -132,12 +132,12 @@ async function img2videoRoutes(fastify) {
                         content:`Here is the desired video: ${prompt}`
                     });
                 }
-                //const instructionPrompt = await generateCompletion(systemPrompt, 600, 'mistral');
+                const instructionPrompt = prompt && prompt.trim() !== '' ? prompt : await generateCompletion(systemPrompt, 600, 'mistral');
 
                 // Start video generation
                 const videoTask = await generateVideoFromImage({
                     imageUrl,
-                    prompt: prompt,
+                    prompt: instructionPrompt,
                     userId,
                     chatId,
                     placeholderId

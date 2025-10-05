@@ -1882,6 +1882,108 @@ fastify.post('/api/init-chat', async (request, reply) => {
             return reply.status(500).send({ error: 'Internal server error while fetching custom prompts' });
         }
     });
+
+    fastify.post('/api/log-conversation/:chatId/:userChatId', async (request, reply) => {
+        try {
+            const { chatId, userChatId } = request.params;
+            const user = request.user;
+            const userId = user._id;
+
+            // Check if user is admin
+            const isAdmin = await checkUserAdmin(fastify, new fastify.mongo.ObjectId(userId));
+            if (!isAdmin) {
+                return reply.status(403).send({ error: 'Unauthorized: Admin access required' });
+            }
+
+            if (!fastify.mongo.ObjectId.isValid(chatId)) {
+                return reply.status(400).send({ error: 'Invalid chat ID format' });
+            }
+
+            const db = fastify.mongo.db;
+            const chatsCollection = db.collection('chats');
+            const userChatCollection = db.collection('userChat');
+
+            // Fetch chat document
+            const chat = await chatsCollection.findOne({ 
+                _id: new fastify.mongo.ObjectId(chatId) 
+            });
+
+            if (!chat) {
+                return reply.status(404).send({ error: 'Chat not found' });
+            }
+
+            // Fetch all user chats for this chat
+            const userChats = await userChatCollection.find({
+                _id: new fastify.mongo.ObjectId(userChatId)
+            }).toArray();
+
+            // Log to server console
+            console.log('\n=================================');
+            console.log('FULL CONVERSATION LOG');
+            console.log('=================================');
+            console.log('Chat ID:', chatId);
+            console.log('Chat Name:', chat.name);
+            console.log('Created At:', chat.createdAt);
+            console.log('User ID:', chat.userId);
+            console.log('Language:', chat.language);
+            console.log('=================================');
+            console.log('CHAT DETAILS:');
+            console.log(JSON.stringify({
+                name: chat.name,
+                system_prompt: chat.system_prompt,
+                details_description: chat.details_description,
+                tags: chat.tags,
+                gender: chat.gender,
+                nsfw: chat.nsfw
+            }, null, 2));
+            console.log('=================================');
+            console.log(`TOTAL USER CHATS: ${userChats.length}`);
+            console.log('=================================\n');
+
+            userChats.forEach((userChat, index) => {
+                console.log(`\n--- User Chat #${index + 1} ---`);
+                console.log('User Chat ID:', userChat._id);
+                console.log('User ID:', userChat.userId);
+                console.log('Created At:', userChat.createdAt);
+                console.log('Updated At:', userChat.updatedAt);
+                console.log(`Messages (${userChat.messages?.length || 0}):`);
+                
+                if (userChat.messages && userChat.messages.length > 0) {
+                    userChat.messages.forEach((msg, msgIndex) => {
+                        console.log(`\n  Message #${msgIndex + 1}:`);
+                        console.log(`  Role: ${msg.role}`);
+                        console.log(`  Name: ${msg.name || 'N/A'}`);
+                        console.log(`  Content: ${msg.content}`);
+                        console.log(`  Timestamp: ${msg.timestamp || msg.createdAt || 'N/A'}`);
+                        console.log(`  Hidden: ${msg.hidden || false}`);
+                        console.log(`  Image Request: ${msg.image_request || false}`);
+                    });
+                } else {
+                    console.log('  No messages in this chat');
+                }
+                console.log('\n' + '-'.repeat(50));
+            });
+
+            console.log('\n=================================');
+            console.log('END OF CONVERSATION LOG');
+            console.log('=================================\n');
+
+            return reply.send({
+                success: true,
+                message: 'Conversation logged to server console',
+                chatId: chatId,
+                totalUserChats: userChats.length,
+                totalMessages: userChats.reduce((sum, uc) => sum + (uc.messages?.length || 0), 0)
+            });
+
+        } catch (error) {
+            console.error('Error logging conversation:', error);
+            return reply.status(500).send({ 
+                error: 'Failed to log conversation',
+                details: error.message 
+            });
+        }
+    });
 }
 
 module.exports = routes;

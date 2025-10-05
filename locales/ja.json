@@ -586,7 +586,7 @@
   "premium": " 💎 プレミアム",
   "discount": "70%オフ",
   "new_user_discount": "💎 新規ユーザーに70%割引",
-  "new_user_points_bonus": "🪙 1000ポイントボーナス（新規プレミアムユーザー向け）",
+  "new_user_points_bonus": "🪙 毎日1000ポイントをゲット（新規プレミアムユーザー向け）",
   "plan_page": {
     "unlock_everything": "すべてのプレミアム機能を解除",
     "choose_your_plan_description": "あなたに最適なプランを選択してください。100%匿名。いつでもキャンセル可能。",
@@ -645,7 +645,10 @@
     "subscription_start_date": "サブスクリプション開始日",
     "subscription_end_date": "サブスクリプション終了日",
     "subscription_renewal_date": "サブスクリプション更新日",
-    "subscription": "サブスクリプション"
+    "subscription": "サブスクリプション",
+    "or_try_first": "または最初に試す",
+    "try_before_commit": "契約前にお試しください",
+    "try_before_commit_desc": "まだ確信が持てませんか？24時間パスですべてのプレミアム機能をテスト - コミットメント不要！"
   },
   "error": "エラー",
   "lp": {

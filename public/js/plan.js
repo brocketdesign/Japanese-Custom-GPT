@@ -11,11 +11,14 @@ $(document).ready(function() {
   function fetchPlans() {
     $.ajax({
       type: 'GET',
-      url: `/plan/list?lang=${lang}`,//?update=true
+      url: `/plan/list?lang=${lang}`,
       dataType: 'json',
       success: function({plans,features}) {
-        renderPlans(plans);
-        // renderFeaturesList(features); // This function seems to be unused in the new layout, plan cards will have features
+        // Separate day pass from subscription plans
+        const dayPassPlans = plans.filter(plan => plan.isOneTime);
+        const subscriptionPlans = plans.filter(plan => !plan.isOneTime);
+        
+        renderPlans(subscriptionPlans, dayPassPlans);
         renderComparisonTable(features, plans); // Call to render comparison table
       },
       error: function(xhr, status, error) {
@@ -24,100 +27,121 @@ $(document).ready(function() {
     });
   }
 
-// Function to render plans with improved styling and info
-function renderPlans(plans) {
+// Function to render plans with improved styling and separation
+function renderPlans(subscriptionPlans, dayPassPlans) {
   const planCardsContainer = $('#planCards');
+  const dayPassContainer = $('#dayPassCards');
   planCardsContainer.empty();
+  dayPassContainer.empty();
   
-  plans.forEach((plan, index) => {
-    let gradientClass = 'standard-gradient'; // Default
-    let ctaButtonClass = 'standard';
-    let isPremium = false;
-    let isOneDay = false;
-    let popularBadge = '';
-    let oneDayBadgeHTML = '';
-
-    // Determine plan type and apply specific classes/badges
-    if (plan.name.toLowerCase().includes('premium')) {
-      gradientClass = 'premium-gradient';
-      ctaButtonClass = 'premium';
-      isPremium = true;
-      popularBadge = `<span class="popular-badge">${translations.plan_page.most_popular}</span>`;
-    } else if (plan.isOneTime) {
-      gradientClass = 'oneday-gradient';
-      ctaButtonClass = 'oneday';
-      isOneDay = true;
-      oneDayBadgeHTML = `<div class="safe-test-badge">
-                           <i class="bi bi-shield-check-fill"></i> ${translations.plan_page.safe_test}
-                         </div>`;
-    } else if (index === 0 && plans.length > 2) { // Assuming the first of multiple non-premium, non-onetime is 'basic'
-        gradientClass = 'basic-gradient';
-        ctaButtonClass = 'basic';
-    }
-    // If only one non-premium, non-onetime plan, it might be 'standard' or 'basic' depending on your naming.
-    // The logic above tries to assign basic, standard, premium, oneday gradients.
-
-    const isOneTimeBadge = plan.isOneTime ? `<span class="badge bg-info ms-2">${translations.one_time}</span>` : '';
-    const priceSuffix = plan.isOneTime ? '' : `<span class="text-muted" style="font-size:11px;">${translations.currency}${translations.monthly}</span>`;
-    
-    // Features list specific to plan type - using Bootstrap icons
-    let featuresHTML = '';
-    if (!isOneDay) {
-      featuresHTML = `
-        <ul class="plan-features">
-          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.premium_feature_1}</li>
-          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.premium_feature_2}</li>
-          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.premium_feature_3}</li>
-          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.premium_feature_4_new || 'Early Access to New Features'}</li>
-        </ul>`;
-    } else if (isOneDay) {
-      featuresHTML = `
-        <ul class="plan-features">
-          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.oneday_feature_1}</li>
-          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.oneday_feature_2}</li>
-          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.oneday_feature_3}</li>
-          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.oneday_feature_4_new || 'Full Access for 24 Hours'}</li>
-        </ul>`;
-    } else { // For Basic or Standard plans
-      featuresHTML = `
-        <ul class="plan-features">
-          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.standard_feature_1}</li>
-          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.standard_feature_2}</li>
-          <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.standard_feature_3}</li>
-        </ul>`;
-    }
-    
-    const planCardHTML = `
-      <div class="col-lg-4 col-md-6">
-        <div class="plan-card p-4 text-white cursor-pointer ${gradientClass}" style="border-radius: 15px; height: 100%;" data-plan-id="${plan.id}" data-billing-cycle="${plan.id}">
-          ${popularBadge}
-          <div>
-            <div class="d-flex justify-content-start align-items-center mb-2">
-              <h5 class="mb-0 me-2 fw-bold">${plan.name}</h5>
-              <span class="badge" style="background-color: #FF5E7E;">${plan.discount}</span>
-              ${isOneTimeBadge}
-            </div>
-            <div class="mb-3">
-              <h2 class="fw-bold mb-0">${plan.price}${priceSuffix}</h2>
-              <small class="text-decoration-line-through" style="opacity: 0.8;">${plan.originalPrice}${translations.currency}${plan.isOneTime ? '' : translations.monthly}</small>
-              ${oneDayBadgeHTML}
-            </div>
-            ${featuresHTML}
-          </div>
-          <button class="cta-button ${ctaButtonClass}">
-            ${translations.plan_page.get_started} <i class="bi bi-arrow-right-short ms-1"></i>
-          </button>
-        </div>
-      </div>
-    `;
-    
-    planCardsContainer.append(planCardHTML);
-  });  
+  // Render subscription plans
+  subscriptionPlans.forEach((plan, index) => {
+    const planHTML = renderPlanCard(plan, index, false);
+    planCardsContainer.append(planHTML);
+  });
   
+  // Render day pass plans separately
+  dayPassPlans.forEach((plan, index) => {
+    const planHTML = renderPlanCard(plan, index, true);
+    dayPassContainer.append(planHTML);
+  });
+  
+  // Add click handler with visual feedback
   $('.plan-card').on('click', function() {
+    const $card = $(this);
+    $card.css('transform', 'scale(0.98)');
+    setTimeout(() => {
+      $card.css('transform', '');
+    }, 150);
+    
     const billingCycle = $(this).data('billing-cycle');
     createCheckoutSession(billingCycle);
   });
+}
+
+// Helper function to render individual plan card
+function renderPlanCard(plan, index, isDayPass) {
+  let gradientClass = 'standard-gradient';
+  let ctaButtonClass = 'standard';
+  let isPremium = false;
+  let isOneDay = false;
+  let popularBadge = '';
+  let oneDayBadgeHTML = '';
+
+  // Determine plan type and apply specific classes/badges
+  if (plan.name.toLowerCase().includes('premium')) {
+    gradientClass = 'premium-gradient';
+    ctaButtonClass = 'premium';
+    isPremium = true;
+    popularBadge = `<span class="popular-badge">${translations.plan_page.most_popular}</span>`;
+  } else if (plan.isOneTime) {
+    gradientClass = 'oneday-gradient';
+    ctaButtonClass = 'oneday';
+    isOneDay = true;
+    oneDayBadgeHTML = `<div class="safe-test-badge">
+                         <i class="bi bi-shield-check-fill"></i> ${translations.plan_page.safe_test}
+                       </div>`;
+  } else if (index === 0) {
+    gradientClass = 'basic-gradient';
+    ctaButtonClass = 'basic';
+  }
+
+  const isOneTimeBadge = plan.isOneTime ? `<span class="badge bg-info ms-2">${translations.one_time}</span>` : '';
+  const priceSuffix = plan.isOneTime ? '' : `<span class="text-muted" style="font-size:11px;">${translations.currency}${translations.monthly}</span>`;
+  
+  // Features list specific to plan type
+  let featuresHTML = '';
+  if (isPremium) {
+    featuresHTML = `
+      <ul class="plan-features">
+        <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.premium_feature_1}</li>
+        <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.premium_feature_2}</li>
+        <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.premium_feature_3}</li>
+        <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.premium_feature_4_new}</li>
+      </ul>`;
+  } else if (isOneDay) {
+    featuresHTML = `
+      <ul class="plan-features">
+        <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.oneday_feature_1}</li>
+        <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.oneday_feature_2}</li>
+        <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.oneday_feature_3}</li>
+        <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.oneday_feature_4_new}</li>
+      </ul>`;
+  } else {
+    featuresHTML = `
+      <ul class="plan-features">
+        <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.standard_feature_1}</li>
+        <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.standard_feature_2}</li>
+        <li><i class="bi bi-check-circle-fill"></i> ${translations.plan_page.standard_feature_3}</li>
+      </ul>`;
+  }
+  
+  // Use full width for day pass, keep col-lg-4 for subscriptions
+  const colClass = isDayPass ? 'col-12' : 'col-lg-4 col-md-6';
+  
+  return `
+    <div class="${colClass}">
+      <div class="plan-card p-4 text-white cursor-pointer ${gradientClass}" data-plan-id="${plan.id}" data-billing-cycle="${plan.id}">
+        ${popularBadge}
+        <div>
+          <div class="d-flex justify-content-start align-items-center mb-2">
+            <h5 class="mb-0 me-2 fw-bold">${plan.name}</h5>
+            <span class="badge" style="background-color: #FF5E7E;">${plan.discount}</span>
+            ${isOneTimeBadge}
+          </div>
+          <div class="mb-3">
+            <h2 class="fw-bold mb-0">${plan.price}${priceSuffix}</h2>
+            <small class="text-decoration-line-through" style="opacity: 0.8;">${plan.originalPrice}${translations.currency}${plan.isOneTime ? '' : translations.monthly}</small>
+            ${oneDayBadgeHTML}
+          </div>
+          ${featuresHTML}
+        </div>
+        <button class="cta-button ${ctaButtonClass}">
+          ${translations.plan_page.get_started} <i class="bi bi-arrow-right-short ms-1"></i>
+        </button>
+      </div>
+    </div>
+  `;
 }
 
 // Function to render comparison table

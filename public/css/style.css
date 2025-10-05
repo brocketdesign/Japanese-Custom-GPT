@@ -3909,9 +3909,11 @@ opacity: 0.8;
 #goals-enable-toggle[data-enabled="false"] .bi-toggle-on:before {
     content: "\f235"; /* toggle-off icon */
 }
-
+/* Hide NSFW prompts and gifts when SFW mode is enabled */
+/*
 #promptContainer.sfw .prompt-card.nsfw-true, #giftsList.sfw .gift-card.nsfw-true {
     display: none !important;
     visibility: hidden;
     opacity: 0;
 }
+*/

@@ -27,11 +27,6 @@ async function routes(fastify, options) {
       
       const subscriptionStatus = freshUserData?.subscriptionStatus;
 
-      if(subscriptionStatus !== 'active'){
-        fastify.sendNotificationToUser(userId, 'loadPlanPage')
-        return reply.status(500).send({ error: 'You reached the limit of the free usage' });
-      }
-
       const pending_taks =  await getTasks(db, 'pending', userId)
       if(pending_taks.length > 10){
         fastify.sendNotificationToUser(userId, 'showNotification', { message:request.translations.too_many_pending_images , icon:'warning' })
@@ -62,7 +57,8 @@ async function routes(fastify, options) {
         savePromptIdtoChat(db, chatId, userChatId, promptId)
         .then((response) => {
           if(subscriptionStatus !== 'active'){
-            fastify.sendNotificationToUser(userId, 'updateCustomPrompt', { promptId: promptId })
+            // [DEPRECIATED] All prompt are available with points now
+            //fastify.sendNotificationToUser(userId, 'updateCustomPrompt', { promptId: promptId })
           }
         })
         const customPrompt = promptData.prompt;

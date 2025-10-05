@@ -566,7 +566,7 @@
   "premium": " 💎 Premium",
   "discount": "70% off",
   "new_user_discount": "💎 70% de réduction pour les nouveaux utilisateurs",
-  "new_user_points_bonus": "🪙 1000 points bonus pour les nouveaux utilisateurs premium",
+  "new_user_points_bonus": "🪙 1000 points bonus pour les utilisateurs premium tous les jours",
   "plan_page": {
     "unlock_everything": "Débloquez toutes les fonctionnalités Premium",
     "choose_your_plan_description": "Choisissez le plan parfait pour vos besoins. 100% anonyme. Annulez à tout moment.",
@@ -625,7 +625,10 @@
     "subscription_start_date": "Date de début d'abonnement",
     "subscription_end_date": "Date de fin d'abonnement",
     "subscription_renewal_date": "Date de renouvellement d'abonnement",
-    "subscription": "Abonnement"
+    "subscription": "Abonnement",
+    "or_try_first": "Ou Essayez D'abord",
+    "try_before_commit": "Essayez Avant de Vous Engager",
+    "try_before_commit_desc": "Pas encore sûr? Testez toutes les fonctionnalités premium avec notre pass 24 heures - aucun engagement requis!"
   },
   "error": "Erreur",
   "lp": {

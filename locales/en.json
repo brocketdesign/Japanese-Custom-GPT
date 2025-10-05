@@ -580,7 +580,7 @@
   "premium": " 💎 Premium",
   "discount": "70% off",
   "new_user_discount": "💎 70% off for new users",
-  "new_user_points_bonus": "🪙 1000 points bonus for new premium users",
+  "new_user_points_bonus": "🪙 1000 points bonus for premium users daily",
   "new_user_points_bonus_description": "Get 1000 bonus points when you upgrade to premium for the first time. Use these points to create more images and chat with characters.",
   "plan_page": {
     "unlock_everything": "Unlock All Premium Features",
@@ -640,7 +640,10 @@
     "subscription_start_date": "Subscription Start Date",
     "subscription_end_date": "Subscription End Date",
     "subscription_renewal_date": "Subscription Renewal Date",
-    "subscription": "Subscription"
+    "subscription": "Subscription",
+    "or_try_first": "Or Try First",
+    "try_before_commit": "Try Before You Commit",
+    "try_before_commit_desc": "Not sure yet? Test all premium features with our 24-hour pass - no commitment required!"
   },
   "lp": {
     "old_login_page": "Login with mail",

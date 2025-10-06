@@ -1888,7 +1888,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
           }
 
           // Pick a random sample image
-          const randomSampleImage = sampleImages[Math.floor(Math.random() * sampleImages.length)];
+          const randomSampleImage = chat.chatImageUrl || sampleImages[Math.floor(Math.random() * sampleImages.length)];
 
           // --- End: Random sample image selection logic ---
           htmlContent += `

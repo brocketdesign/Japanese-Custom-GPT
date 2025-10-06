@@ -117,7 +117,7 @@ function createSystemPayloadChatRule(purpose, gender, name, details, language) {
             
             Character Requirements:
             - name: ${name && name.trim() !== '' ? name : `Provide an authentic ${language} name that matches the character's gender and background`}
-            - short_intro: A compelling 2-sentence self-introduction showcasing personality
+            - short_intro: A compelling 1 sentence that captures the essence of the character. Example: "A brave warrior from the mountains, seeking redemption."
             - system_prompt: Start with "I want you to act as..." and define their specific role/archetype
             - first_message: Demonstrate their unique speech pattern and personality
             - tags: 5 relevant tags for character discovery
@@ -271,7 +271,6 @@ async function routes(fastify, options) {
             const finalImageType = allowNsfw ? imageType : 'sfw';
             
             console.log(`[API/generate-character-comprehensive] NSFW settings - isPremium: ${isPremium}, requested: ${nsfw}, allowed: ${allowNsfw}`);
-        
             console.log(`[API/generate-character-comprehensive] Input parameters - chatId: ${chatId || 'undefined'}, gender: ${gender || 'undefined'}, language: ${language}, prompt: ${prompt ? prompt.substring(0, 50) + '...' : 'undefined'}, name: ${name || 'undefined'}, hasImageBase64: ${!!image_base64}, enableMergeFace: ${!!enableMergeFace}`);
             console.log(`Translations Language: ${request.translations.lang}`);
 
@@ -333,6 +332,7 @@ async function routes(fastify, options) {
 
             if(enableEnhancedPrompt) {
                 console.log(`[API/generate-character-comprehensive] Step 2: Generating ${finalImageType} enhanced prompt`);
+                console.log(`[API/generate-character-comprehensive] Gender for prompt: ${gender}`);
 
                 const systemPayload = createSystemPayload(prompt, gender, extractedDetails, finalImageType);
                 enhancedPrompt = await generateCompletion(systemPayload, 600, 'mistral');
@@ -372,7 +372,7 @@ async function routes(fastify, options) {
                     userId: userId,
                     chatId: chatId,
                     userChatId: null,
-                    image_num: 4,
+                    image_num: 1,
                     imageType,
                     image_base64: image_base64 || null,
                     chatCreation: true,
@@ -431,6 +431,7 @@ async function routes(fastify, options) {
             chatData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
             chatData.nsfw = allowNsfw;
             chatData.imageType = finalImageType;
+            chatData.thumbIsPortrait = true;
             
             const collectionChats = fastify.mongo.db.collection('chats');
 

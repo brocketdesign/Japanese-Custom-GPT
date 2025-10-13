@@ -1343,6 +1343,7 @@ opacity: 0.8;
   overflow:hidden;
   text-overflow:ellipsis;
   display:-webkit-box;
+  line-clamp:3;
   -webkit-line-clamp:3;
   -webkit-box-orient:vertical;
   font-size:13px
@@ -1562,6 +1563,7 @@ opacity: 0.8;
   
   .lines-paragraph {
   display:-webkit-box;
+  line-clamp:3;
   -webkit-line-clamp:3;
   -webkit-box-orient:vertical;
   overflow:hidden
@@ -1750,6 +1752,7 @@ opacity: 0.8;
   
   .profile-card .card-title {
     background: linear-gradient(90deg, #6E20F4 0%, #9161fc 100%);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     font-weight: bold;
@@ -1905,18 +1908,47 @@ opacity: 0.8;
 }
 
 .gallery-image-wrapper {
+  position: relative;
   transition: background-size 0.3s, background-position 0.3s;
   overflow: hidden;
 }
 
+.gallery-img-primary,
+.gallery-img-secondary {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.gallery-img-secondary {
+  opacity: 0;
+  z-index: 2;
+  transition: opacity 0.45s ease;
+}
+
+.gallery-img-primary {
+  z-index: 1;
+  opacity: 1;
+  transition: opacity 0.45s ease;
+}
+
 .gallery-img {
-  transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1), filter 0.3s;
-  will-change: transform;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), filter 0.4s ease, opacity 0.45s ease;
+  will-change: transform, opacity;
 }
 
 .card.gallery-hover:hover .gallery-img {
   transform: scale(1.08);
   filter: brightness(1.08) saturate(1.1);
+}
+
+.card.gallery-hover:hover .gallery-img-secondary {
+  opacity: 1;
+}
+
+.card.gallery-hover:hover .gallery-img-primary {
+  opacity: 0;
 }
 
 /* Optional: subtle shadow on image overlay */
@@ -3109,6 +3141,8 @@ opacity: 0.8;
 .footer-section {
   position: relative;
   z-index: 1;
+  opacity: 1;
+  transition: opacity 0.45s ease;
 }
 
 .footer-heading {

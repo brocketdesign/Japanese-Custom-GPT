@@ -1861,36 +1861,36 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
             const finalNsfwResult = nsfw || moderationFlagged;
             chat.premium = false //(chat.premium || finalNsfwResult);
             const isOwner = chat.userId === user._id;
-          // --- Begin: Random sample image selection logic ---
+          // --- Begin: Sample image selection logic ---
           let sampleImages = [];
           // Prefer chat.sampleImages if present (from backend cache), fallback to empty array
           if (Array.isArray(chat.sampleImages) && chat.sampleImages.length > 0) {
             sampleImages = chat.sampleImages
-              .filter(img => img && img.imageUrl) // filter valid images
+              .filter(img => img && img.imageUrl)
               .map(img => img.imageUrl);
           }
           if (Array.isArray(chat.images) && chat.images.length > 0) {
             sampleImages = sampleImages.concat(
               chat.images
-                .filter(img => img && img.imageUrl) // filter valid images
+                .filter(img => img && img.imageUrl)
                 .map(img => img.imageUrl)
             );
           }
           // Always include chatImageUrl if present
           if (chat.chatImageUrl) {
-            sampleImages.push(chat.chatImageUrl);
+            sampleImages.unshift(chat.chatImageUrl);
           }
           // Remove duplicates and falsy values
           sampleImages = [...new Set(sampleImages.filter(Boolean))];
-          // If nothing, fallback to default
+          // Ensure we have at least one image
           if (sampleImages.length === 0) {
             sampleImages = ['/img/logo.webp'];
           }
 
-          // Pick a random sample image
-          const randomSampleImage = chat.chatImageUrl || sampleImages[Math.floor(Math.random() * sampleImages.length)];
+          const primaryImage = sampleImages[0];
+          const secondaryImage = sampleImages.find((img) => img !== primaryImage) || primaryImage;
 
-          // --- End: Random sample image selection logic ---
+          // --- End: Sample image selection logic ---
           htmlContent += `
                   <div class="gallery-card col-6 col-sm-6 col-lg-3 mb-4 ${finalNsfwResult ? "nsfw-content":''} ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} ${chat.imageStyle ? 'chat-style-'+chat.imageStyle : ''} nsfw-${finalNsfwResult}" data-id="${chat._id}" style="cursor:pointer;">
                     <div class="card shadow border-0 h-100 position-relative gallery-hover" style="overflow: hidden;">
@@ -1898,11 +1898,19 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                       <div class="gallery-image-wrapper position-relative chat-card-clickable-area" style="aspect-ratio: 4/5; background: #f8f9fa; cursor: pointer;"
                         onclick="${chat.premium ? `(window.user && window.user.subscriptionStatus === 'active' ? redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}') : loadPlanPage())` : `redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')`}">
                         <img 
-                          src="${randomSampleImage}" 
+                          src="${primaryImage}" 
                           alt="${chat.name || chat.chatName}" 
-                          class="card-img-top gallery-img transition rounded-top"
+                          class="card-img-top gallery-img gallery-img-primary transition rounded-top"
                           style="object-fit: cover; width: 100%; height: 100%; min-height: 220px;"
                           loading="lazy"
+                        >
+                        <img 
+                          src="${secondaryImage}" 
+                          alt="${chat.name || chat.chatName} preview"
+                          class="card-img-top gallery-img gallery-img-secondary transition rounded-top"
+                          style="object-fit: cover; width: 100%; height: 100%; min-height: 220px;"
+                          loading="lazy"
+                          aria-hidden="true"
                         >
                         <!-- Chat icon on top right -->
                         <div class="position-absolute top-0 end-0 m-2 d-flex align-items-center gap-1" style="z-index: 3;">

@@ -55,7 +55,7 @@
   "total_images": "Total des images",
   "first_login_bonus": "Bonus de première connexion (abonné)",
   "first_login_bonus_already_claimed": "Le bonus de première connexion a déjà été réclamé aujourd'hui",
-  "claim_first_login_bonus": "Réclamer le bonus d'abonné +100",
+  "claim_first_login_bonus": "Réclamer le bonus d'abonné +1000",
   "first_login_bonus_claimed": "Bonus d'abonné réclamé ! +{points} points",
   "failed_claim_first_login_bonus": "Échec de la réclamation du bonus d'abonné",
   "error_claiming_first_login_bonus": "Erreur lors de la réclamation du bonus d'abonné",

@@ -58,7 +58,7 @@
   "total_images": "Total images",
   "first_login_bonus": "First Login Bonus (Subscriber)",
   "first_login_bonus_already_claimed": "First login bonus already claimed today",
-  "claim_first_login_bonus": "Claim +100 Subscriber Bonus",
+  "claim_first_login_bonus": "Claim +1000 Subscriber Bonus",
   "first_login_bonus_claimed": "Subscriber bonus claimed! +{points} points",
   "failed_claim_first_login_bonus": "Failed to claim subscriber bonus",
   "error_claiming_first_login_bonus": "Error claiming subscriber bonus",

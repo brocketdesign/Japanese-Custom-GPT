@@ -53,7 +53,7 @@
   "image_generation_reward": "画像生成完了！+{points}ポイント",
   "total_likes": "合計いいね数",
   "total_images": "合計画像数",
-  "claim_first_login_bonus": "サブスクボーナス+100を受け取る",
+  "claim_first_login_bonus": "サブスクボーナス+1000を受け取る",
   "first_login_bonus_claimed": "サブスクボーナス受取完了！+{points}ポイント",
   "failed_claim_first_login_bonus": "サブスクボーナスの受取に失敗しました",
   "error_claiming_first_login_bonus": "サブスクボーナス受取エラー",

@@ -1145,7 +1145,7 @@ class UserPointsManager {
         $firstLoginBonusSection.show();
         $firstLoginBonusBtn.prop('disabled', false)
           .removeClass('bonus-claimed')
-          .text(this.translations.claim_first_login_bonus || 'Claim +100 Subscriber Bonus');
+          .text(this.translations.claim_first_login_bonus || 'Claim +1000 Subscriber Bonus');
       } else {
         $firstLoginBonusSection.hide();
       }

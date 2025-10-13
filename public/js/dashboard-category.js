@@ -152,6 +152,8 @@ window.handleCategoryClick = function(category) {
 $(document).ready(function() {
   // Load category cards if the container exists
   if ($('#category-cards-container').length > 0) {
-    loadCategoryCards();
+    // [Commented out to prevent automatic loading, can be enabled if needed]
+    //loadCategoryCards();
+    $('#category-cards-container').remove(); // Remove container if not used
   }
 });

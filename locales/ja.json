@@ -1705,7 +1705,9 @@
     "info": "情報",
     "share": "共有",
     "download": "ダウンロード",
-    "update_image": "画像を更新"
+    "update_image": "画像を更新",
+    "added_to_chat": "画像がチャットに追加されました",
+    "add_to_chat_failed": "画像をチャットに追加できませんでした"
   },
   "video_already_generated": "すでに動画が生成されています",
   "convert_to_video": "動画に変換",

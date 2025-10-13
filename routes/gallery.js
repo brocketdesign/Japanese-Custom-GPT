@@ -1,6 +1,13 @@
 const { ObjectId } = require('mongodb');
 const { getLanguageName } = require('../models/tool');
 const { removeUserPoints, awardLikeMilestoneReward, awardLikeActionReward } = require('../models/user-points-utils');
+const {
+  getGalleryImageById,
+  buildChatImageMessage,
+  appendMessageToUserChat,
+  getUserChatForUser,
+  toObjectId
+} = require('../models/gallery-utils');
 
 
 async function routes(fastify, options) {
@@ -179,6 +186,97 @@ async function routes(fastify, options) {
     } catch (err) {
       console.error('Error in like-toggle endpoint:', err);
       reply.code(500).send('Internal Server Error');
+    }
+  });
+
+  fastify.post('/gallery/:imageId/add-to-chat', async (request, reply) => {
+    try {
+      const { imageId } = request.params;
+      const { chatId, userChatId } = request.body || {};
+      const user = request.user;
+
+      if (!user) {
+        return reply.code(401).send({ error: 'Unauthorized' });
+      }
+
+      if (!chatId || !userChatId) {
+        return reply.code(400).send({ error: 'chatId and userChatId are required' });
+      }
+
+      const db = fastify.mongo.db;
+      const currentUserId = toObjectId(user._id);
+      let targetChatId;
+      let targetUserChatId;
+
+      try {
+        targetChatId = toObjectId(chatId);
+        targetUserChatId = toObjectId(userChatId);
+      } catch (conversionError) {
+        return reply.code(400).send({ error: 'Invalid identifier format' });
+      }
+
+      const [userChat, galleryImage] = await Promise.all([
+        getUserChatForUser(db, targetUserChatId, currentUserId),
+        getGalleryImageById(db, imageId)
+      ]);
+
+      if (!userChat) {
+        return reply.code(404).send({ error: 'Conversation not found' });
+      }
+
+      const userChatTargetId = userChat.chatId instanceof ObjectId ? userChat.chatId : toObjectId(userChat.chatId);
+      if (userChatTargetId.toString() !== targetChatId.toString()) {
+        return reply.code(403).send({ error: 'Chat mismatch' });
+      }
+
+      if (!galleryImage || !galleryImage.image || !galleryImage.image.imageUrl) {
+        return reply.code(404).send({ error: 'Image not found' });
+      }
+
+      const { image, chatId: sourceChatId, chatSlug } = galleryImage;
+
+      const chatMessage = buildChatImageMessage(image, { fromGallery: true });
+      chatMessage.targetChatId = targetChatId.toString();
+
+  const updateResult = await appendMessageToUserChat(db, targetUserChatId, chatMessage);
+
+      if (!updateResult.modifiedCount) {
+        return reply.code(500).send({ error: 'Failed to add image to chat' });
+      }
+
+      const isLiked = Array.isArray(image.likedBy)
+        ? image.likedBy.some(likedUserId => likedUserId.toString() === currentUserId.toString())
+        : false;
+
+      const responsePayload = {
+        _id: image._id.toString(),
+        imageUrl: image.imageUrl || image.url,
+        prompt: image.prompt || '',
+        title: image.title || null,
+        nsfw: !!image.nsfw,
+        slug: image.slug || null,
+        aspectRatio: image.aspectRatio || null,
+        seed: typeof image.seed !== 'undefined' ? image.seed : null,
+        isUpscaled: !!image.isUpscaled,
+        actions: chatMessage.actions,
+        chatId: targetChatId.toString(),
+        sourceChatId: sourceChatId ? sourceChatId.toString() : null,
+        chatSlug: chatSlug || image.chatSlug || null,
+        isLiked,
+        mergeId: image.mergeId || null,
+        isMergeFace: !!(image.isMerged || image.type === 'mergeFace'),
+        originalImageUrl: image.originalImageUrl || null,
+      };
+
+      return reply.send({
+        success: true,
+        message: 'Image added to chat',
+        image: responsePayload
+      });
+
+    } catch (error) {
+      console.error('Error in /gallery/:imageId/add-to-chat:', error);
+      return reply.code(500).send({ error: 'Internal Server Error' });
     }
   });
   

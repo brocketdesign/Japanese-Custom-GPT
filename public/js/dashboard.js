@@ -2649,7 +2649,7 @@ function gridLayout(selector) {
   }
   
   // Determine current grid size by examining the first item's classes
-  let currentValue = 3; // Default to 3 per row
+  let currentValue = 2; // Default to 2 per row
   const $firstItem = $items.first();
   if ($firstItem.attr('class')) {
     const classList = $firstItem.attr('class').split(/\s+/);
@@ -2719,10 +2719,10 @@ function gridLayout(selector) {
     let effectiveValue = parseInt(value);
     const screenWidth = window.innerWidth;
 
-    // On small screens (<768px), cap at 3 columns max
-    if (screenWidth < 768 && effectiveValue > 3) {
-      effectiveValue = 3;
-      $sizeDisplay.text(`3 ${translations?.perRow || 'per row'} (max on small screens)`);
+    // On small screens (<768px), cap at 2 columns max
+    if (screenWidth < 768 && effectiveValue > 2) {
+      effectiveValue = 2;
+      $sizeDisplay.text(`2 ${translations?.perRow || 'per row'} (max on small screens)`);
     }
 
     // Remove ALL Bootstrap grid classes and custom col-20p class

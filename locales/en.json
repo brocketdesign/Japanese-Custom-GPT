@@ -1649,7 +1649,9 @@
     "info": "Info",
     "share": "Share",
     "download": "Download",
-    "update_image": "Update Image"
+    "update_image": "Update Image",
+    "added_to_chat": "Image added to chat",
+    "add_to_chat_failed": "Failed to add image to chat"
   },
   "video_already_generated": "Video already generated",
   "convert_to_video": "Convert to Video",

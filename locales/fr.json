@@ -1655,7 +1655,9 @@
     "info": "Infos",
     "share": "Partager",
     "download": "Télécharger",
-    "update_image": "Mettre à jour l'image"
+    "update_image": "Mettre à jour l'image",
+    "added_to_chat": "Image ajoutée au chat",
+    "add_to_chat_failed": "Échec de l'ajout de l'image au chat"
   },
   "video_already_generated": "Vidéo déjà générée",
   "convert_to_video": "Convertir en vidéo",

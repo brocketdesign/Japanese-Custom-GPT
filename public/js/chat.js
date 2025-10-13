@@ -1271,7 +1271,8 @@ function setupChatInterface(chat, character) {
     function formatMessageText(str) {
         if (!str) { return str; }
         // Text between * in bold
-        return str.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
+        const updatedStr = str.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        return updatedStr.trim().length > 10 ? updatedStr : str;
     }
 
     // Add a global variable to track active rendering processes

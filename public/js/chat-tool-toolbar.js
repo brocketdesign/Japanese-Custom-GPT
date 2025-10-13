@@ -165,7 +165,7 @@ function getImageTools({chatId, imageId, isLiked = false, title, prompt = false,
                     }).join('')}
                 </div>` : ''}
             </div>
-            <div class="title assistant-chat-box py-1 px-3 ${title && title !== 'undefined' ? '': 'd-none'}" style="border-radius: 0px 0px 15px 15px;max-width: 200px;">
+            <div class="title assistant-chat-box py-1 px-3 ${title && title !== 'undefined' ? '': 'd-none'}" data-id="${imageId}" style="border-radius: 0px 0px 15px 15px;max-width: 200px;">
                 <p class="text-white" style="font-size: 12px;">${title}</p>
             </div>
             ${window.isAdmin ? `

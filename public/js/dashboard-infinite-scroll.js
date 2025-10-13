@@ -353,10 +353,24 @@ async function renderImages(images, id, type) {
 function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedIndex, id, type) {
     const chatId = type === 'chat' ? id : item.chatId;
     const linkUrl = item.chatSlug ? `/character/slug/${item.chatSlug}?imageSlug=${item.slug}` : `/character/${chatId}`;
+    const addToChatLabel = window.translations?.image_tools?.add_to_chat || 'Add to Chat';
+    const addToChatButton = `
+        <div class="position-absolute top-0 end-0 m-1" style="z-index:3;">
+            <span class="btn btn-light image-add-to-chat" 
+                  data-image-id="${item._id}" 
+                  data-chat-id="${chatId || ''}"
+                  data-source-type="${type}"
+                  title="${addToChatLabel}"
+                  aria-label="${addToChatLabel}"
+                  onclick="addGalleryImageToChat(this)">
+                <i class="bi bi-chat-square-text"></i>
+            </span>
+        </div>`;
     
     return `
         <div class="image-card col-6 col-md-3 col-lg-2 mb-2" data-image-id="${item._id}">
-            <div class="card shadow-0">
+            <div class="card shadow-0 position-relative">
+                ${!isBlur ? `${addToChatButton}` : ''}
                 ${isBlur ? 
                     `<div class="position-relative">
                         <div type="button" onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary})">
@@ -506,6 +520,200 @@ function showLoadingIndicator(show, type = 'chat') {
         }
     }
 }
+
+function resolveImageTitle(title) {
+    if (!title) {
+        return '';
+    }
+
+    if (typeof title === 'string') {
+        return title;
+    }
+
+    if (typeof title === 'object') {
+        const preferredLangs = [];
+        if (typeof window.lang === 'string') {
+            preferredLangs.push(window.lang.toLowerCase());
+        }
+        if (window.user && typeof window.user.lang === 'string') {
+            preferredLangs.push(window.user.lang.toLowerCase());
+        }
+        preferredLangs.push('en', 'ja', 'fr');
+
+        for (const lang of preferredLangs) {
+            if (title[lang]) {
+                return title[lang];
+            }
+        }
+
+        const fallback = Object.values(title).find(value => !!value);
+        if (fallback) {
+            return fallback;
+        }
+    }
+
+    return '';
+}
+
+function refreshImageToolsState(imageData, chatId) {
+    if (typeof getImageTools !== 'function') {
+        return;
+    }
+
+    const imageId = imageData._id;
+    const toolsContainer = $(`.image-tools[data-id="${imageId}"]`).last();
+
+    if (!toolsContainer.length) {
+        return;
+    }
+
+    toolsContainer
+        .nextAll(`.title.assistant-chat-box[data-id="${imageId}"]`)
+        .first()
+        .remove();
+
+    const toolsMarkup = getImageTools({
+        chatId,
+        imageId,
+        isLiked: !!imageData.isLiked,
+        title: resolveImageTitle(imageData.title),
+        prompt: imageData.prompt || '',
+        nsfw: !!imageData.nsfw,
+        imageUrl: imageData.imageUrl,
+        actions: Array.isArray(imageData.actions) ? imageData.actions : []
+    });
+
+    toolsContainer.replaceWith(toolsMarkup);
+
+    if (typeof shouldBlurNSFW === 'function') {
+        const subscriptionStatus = window.user?.subscriptionStatus === 'active';
+        const shouldHideTools = shouldBlurNSFW({ nsfw: !!imageData.nsfw }, subscriptionStatus);
+        if (shouldHideTools) {
+            $(`.image-tools[data-id="${imageId}"]`).hide();
+        }
+    }
+}
+
+window.addGalleryImageToChat = function(el) {
+    const isTemporary = !!window.user?.isTemporary;
+    if (isTemporary) {
+        if (typeof openLoginForm === 'function') {
+            openLoginForm();
+        }
+        return;
+    }
+
+    const $button = $(el);
+    if ($button.data('loading')) {
+        return;
+    }
+
+    const imageId = $button.data('image-id');
+    let chatId = $button.data('chat-id');
+    if (!chatId || chatId === 'null' || chatId === 'undefined') {
+        chatId = window.chatId || sessionStorage.getItem('lastChatId') || sessionStorage.getItem('chatId');
+    }
+    if (chatId === 'null' || chatId === 'undefined') {
+        chatId = null;
+    }
+
+    let userChatId = window.userChatId || $('#chatContainer').attr('data-id') || sessionStorage.getItem('userChatId');
+    if (userChatId === 'null' || userChatId === 'undefined') {
+        userChatId = null;
+    }
+
+    if (!imageId || !chatId || !userChatId) {
+        if (typeof showNotification === 'function') {
+            showNotification(window.translations?.image_tools?.chat_not_ready || 'Chat session is not ready.', 'error');
+        }
+        return;
+    }
+
+    const originalHtml = $button.html();
+    $button
+        .data('loading', true)
+        .attr('disabled', true)
+        .addClass('disabled')
+        .html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="width: 17px !important; height: 17px !important; font-size: 12px;"></span>');
+
+    $.ajax({
+        url: `/gallery/${imageId}/add-to-chat`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ chatId, userChatId }),
+        xhrFields: { withCredentials: true },
+        success: function(response) {
+            const imageData = response?.image;
+            if (!response?.success || !imageData || !imageData.imageUrl) {
+                console.error('Invalid response when adding image to chat:', response);
+                if (typeof showNotification === 'function') {
+                    showNotification(window.translations?.image_tools?.add_to_chat_failed || 'Unable to add image to chat.', 'error');
+                }
+                $button
+                    .html(originalHtml)
+                    .attr('disabled', false)
+                    .removeClass('disabled');
+                return;
+            }
+
+            const imgEl = document.createElement('img');
+            imgEl.setAttribute('src', imageData.imageUrl);
+            imgEl.setAttribute('alt', resolveImageTitle(imageData.title));
+            imgEl.setAttribute('data-id', imageData._id);
+            imgEl.setAttribute('data-prompt', imageData.prompt || '');
+            imgEl.setAttribute('data-nsfw', imageData.nsfw ? 'true' : 'false');
+            if (imageData.isUpscaled) {
+                imgEl.setAttribute('data-isUpscaled', 'true');
+            }
+            if (imageData.isMergeFace || imageData.mergeId) {
+                imgEl.setAttribute('data-isMergeFace', 'true');
+            }
+
+            displayMessage('bot-image', imgEl, userChatId);
+            refreshImageToolsState(imageData, chatId);
+
+            if (Array.isArray(window.loadedImages)) {
+                const alreadyStored = window.loadedImages.some(stored => stored && stored._id === imageData._id);
+                if (!alreadyStored) {
+                    window.loadedImages.push({
+                        _id: imageData._id,
+                        imageUrl: imageData.imageUrl,
+                        prompt: imageData.prompt,
+                        title: imageData.title,
+                        nsfw: imageData.nsfw,
+                        chatId,
+                        chatSlug: imageData.chatSlug,
+                        actions: imageData.actions || []
+                    });
+                }
+            }
+
+            if (typeof showNotification === 'function') {
+                showNotification(window.translations?.image_tools?.added_to_chat || 'Image added to chat.', 'success');
+            }
+
+            $button
+                .removeClass('btn-light')
+                .addClass('btn-success')
+                .html('<i class="bi bi-check-lg"></i>')
+                .attr('title', window.translations?.image_tools?.added_to_chat || 'Added to chat')
+                .attr('aria-label', window.translations?.image_tools?.added_to_chat || 'Added to chat');
+        },
+        error: function(error) {
+            console.error('Failed to add image to chat:', error);
+            if (typeof showNotification === 'function') {
+                showNotification(window.translations?.image_tools?.add_to_chat_failed || 'Unable to add image to chat.', 'error');
+            }
+            $button
+                .html(originalHtml)
+                .attr('disabled', false)
+                .removeClass('disabled');
+        },
+        complete: function() {
+            $button.data('loading', false);
+        }
+    });
+};
 
 /**
  * Clear cache for a specific item

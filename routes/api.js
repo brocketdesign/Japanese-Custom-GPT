@@ -895,205 +895,173 @@ fastify.post('/api/init-chat', async (request, reply) => {
             return reply.status(500).send({ error: 'Error generating completion' });
         }
     });      
+    fastify.get('/api/chats', async (request, reply) => {
+        try {
+            const escapeForRegex = str => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-fastify.get('/api/chats', async (request, reply) => {
-  try {
-    const escapeForRegex = str => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const {
+                page: rawPage = '1',
+                style,
+                model,
+                q: rawQ,
+                userId,
+                skipDeduplication
+            } = request.query;
 
-    const {
-      page: rawPage = '1',
-      style,
-      model,
-      q: rawQ,
-      userId,
-      skipDeduplication
-    } = request.query;
+            const page        = Math.max(1, parseInt(rawPage, 10) || 1);
+            const limit       = 12;
+            const skip        = (page - 1) * limit;
+            const language    = request.lang;
+            const searchQuery = rawQ && rawQ !== 'false' ? rawQ : null;
+            const hasValidUserId = fastify.mongo.ObjectId.isValid(userId);
 
-    const page        = Math.max(1, parseInt(rawPage, 10) || 1);
-    const limit       = 12;
-    const skip        = (page - 1) * limit;
-    const language    = request.lang;
-    const searchQuery = rawQ && rawQ !== 'false' ? rawQ : null;
-    const hasValidUserId = fastify.mongo.ObjectId.isValid(userId);
+            const filters = [{ chatImageUrl: { $exists: true, $ne: '' } }];
 
-    console.log('[GET /api/chats] query params:', request.query);
-    console.log('[GET /api/chats] resolved page/limit/skip:', { page, limit, skip });
-    console.log('[GET /api/chats] language from request:', language);
+            if (language && !hasValidUserId) {
+                filters.push({ language });
+            }
 
-    const filters = [{ chatImageUrl: { $exists: true, $ne: '' } }];
+            if (hasValidUserId) {
+                filters.push({ userId: new fastify.mongo.ObjectId(userId) });
+            }
 
-    if (language && !hasValidUserId) {
-      filters.push({ language });
-      console.log('[GET /api/chats] filter by language:', language);
-    }
+            if (style) {
+                const safeStyle = escapeForRegex(style);
+                filters.push({
+                    $or: [
+                        { imageStyle: { $regex: new RegExp(safeStyle, 'i') } },
+                        { imageStyle: { $exists: false } }
+                    ]
+                });
+            }
 
-    if (hasValidUserId) {
-      filters.push({ userId: new fastify.mongo.ObjectId(userId) });
-      console.log('[GET /api/chats] filter by userId:', userId);
-    } else if (userId) {
-      console.warn('[GET /api/chats] invalid userId supplied:', userId);
-    }
+            if (model) {
+                const baseModel = escapeForRegex(model.replace(/\.safetensors$/, ''));
+                const pattern   = new RegExp(`^${baseModel}(\\.safetensors)?$`);
+                filters.push({ imageModel: { $regex: pattern } });
+            }
 
-    if (style) {
-      const safeStyle = escapeForRegex(style);
-      filters.push({
-        $or: [
-          { imageStyle: { $regex: new RegExp(safeStyle, 'i') } },
-          { imageStyle: { $exists: false } }
-        ]
-      });
-      console.log('[GET /api/chats] filter by style regex:', safeStyle);
-    }
+            if (searchQuery) {
+                const words = searchQuery
+                    .split(/\s+/)
+                    .map(w => w.replace(/[^\w\s]/g, ''))
+                    .filter(Boolean);
 
-    if (model) {
-      const baseModel = escapeForRegex(model.replace(/\.safetensors$/, ''));
-      const pattern   = new RegExp(`^${baseModel}(\\.safetensors)?$`);
-      filters.push({ imageModel: { $regex: pattern } });
-      console.log('[GET /api/chats] filter by model regex:', pattern);
-    }
+                const orClauses = words.flatMap(word => {
+                    const rx = new RegExp(escapeForRegex(word), 'i');
+                    return [
+                        { tags:            { $regex: rx } },
+                        { characterPrompt: { $regex: rx } },
+                        { enhancedPrompt:  { $regex: rx } },
+                        { imageDescription:{ $regex: rx } },
+                    ];
+                });
 
-    if (searchQuery) {
-      const words = searchQuery
-        .split(/\s+/)
-        .map(w => w.replace(/[^\w\s]/g, ''))
-        .filter(Boolean);
+                if (orClauses.length) {
+                    filters.push({ $or: orClauses });
+                }
+            }
 
-      const orClauses = words.flatMap(word => {
-        const rx = new RegExp(escapeForRegex(word), 'i');
-        return [
-          { tags:            { $regex: rx } },
-          { characterPrompt: { $regex: rx } },
-          { enhancedPrompt:  { $regex: rx } },
-          { imageDescription:{ $regex: rx } },
-        ];
-      });
+            filters.push({
+                $or: [
+                    { characterPrompt: { $exists: true, $ne: '' } },
+                    { enhancedPrompt:  { $exists: true, $ne: '' } }
+                ]
+            });
 
-      if (orClauses.length) {
-        filters.push({ $or: orClauses });
-        console.log('[GET /api/chats] search words:', words);
-      } else {
-        console.log('[GET /api/chats] search query produced no clauses:', searchQuery);
-      }
-    }
+            let pipeline = [
+                { $match: { $and: filters } },
+                {
+                    $lookup: {
+                        from:         'gallery',
+                        localField:   '_id',
+                        foreignField: 'chatId',
+                        as:           'gallery'
+                    }
+                },
+                {
+                    $addFields: {
+                        imageCount: {
+                            $cond: [
+                                { $gt: [ { $size: '$gallery' }, 0 ] },
+                                { $size: { $ifNull: [ { $arrayElemAt: [ '$gallery.images', 0 ] }, [] ] } },
+                                0
+                            ]
+                        }
+                    }
+                }
+            ];
 
-    filters.push({
-      $or: [
-        { characterPrompt: { $exists: true, $ne: '' } },
-        { enhancedPrompt:  { $exists: true, $ne: '' } }
-      ]
+            if (!skipDeduplication) {
+                pipeline = pipeline.concat([
+                    { $sort: { imageModel: 1, imageCount: -1, _id: -1 } },
+                    { $group: { _id: '$imageModel', doc: { $first: '$$ROOT' } } },
+                    { $replaceRoot: { newRoot: '$doc' } }
+                ]);
+            }
+
+            pipeline = pipeline.concat([
+                { $sort: { imageCount: -1, _id: -1 } },
+                { $skip: skip },
+                { $limit: limit }
+            ]);
+
+            const chats = await fastify.mongo.db
+                .collection('chats')
+                .aggregate(pipeline, { allowDiskUse: true })
+                .toArray();
+
+            if (chats.length === 0) {
+                return reply.code(404).send({ recent: [], page, totalPages: 0 });
+            }
+
+            const usersColl = fastify.mongo.db.collection('users');
+            const galleryColl = fastify.mongo.db.collection('gallery');
+
+            const recentWithUserAndSamples = await Promise.all(
+                chats.map(async chat => {
+                    const chatUserId = chat.userId;
+                    const userDoc = fastify.mongo.ObjectId.isValid(chatUserId)
+                        ? await usersColl.findOne({ _id: new fastify.mongo.ObjectId(chatUserId) })
+                        : null;
+
+                    const galleryDoc = await galleryColl.findOne({ chatId: new ObjectId(chat._id) });
+                    let sampleImages = [];
+                    if (galleryDoc?.images) {
+                        sampleImages = galleryDoc.images.filter(img => !img?.nsfw).slice(0, 5);
+                    }
+
+                    return {
+                        ...chat,
+                        nickname:   userDoc?.nickname   || null,
+                        profileUrl: userDoc?.profileUrl || null,
+                        sampleImages
+                    };
+                })
+            );
+
+            const totalCount = await fastify.mongo.db
+                .collection('chats')
+                .aggregate([
+                    { $match: { $and: filters } },
+                    { $group: { _id: '$imageModel' } },
+                    { $count: 'count' }
+                ], { allowDiskUse: true })
+                .toArray()
+                .then(res => res[0]?.count || 0);
+
+            const totalPages = Math.ceil(totalCount / limit);
+
+            reply.send({
+                recent:     recentWithUserAndSamples,
+                page,
+                totalPages
+            });
+
+        } catch (err) {
+            reply.code(500).send('Internal Server Error');
+        }
     });
-
-    console.log('[GET /api/chats] final filters:', JSON.stringify(filters, null, 2));
-
-    let pipeline = [
-      { $match: { $and: filters } },
-      {
-        $lookup: {
-          from:         'gallery',
-          localField:   '_id',
-          foreignField: 'chatId',
-          as:           'gallery'
-        }
-      },
-      {
-        $addFields: {
-          imageCount: {
-            $cond: [
-              { $gt: [ { $size: '$gallery' }, 0 ] },
-              { $size: { $ifNull: [ { $arrayElemAt: [ '$gallery.images', 0 ] }, [] ] } },
-              0
-            ]
-          }
-        }
-      }
-    ];
-
-    if (!skipDeduplication) {
-      pipeline = pipeline.concat([
-        { $sort: { imageModel: 1, imageCount: -1, _id: -1 } },
-        { $group: { _id: '$imageModel', doc: { $first: '$$ROOT' } } },
-        { $replaceRoot: { newRoot: '$doc' } }
-      ]);
-      console.log('[GET /api/chats] deduplication enabled');
-    } else {
-      console.log('[GET /api/chats] deduplication skipped');
-    }
-
-    pipeline = pipeline.concat([
-      { $sort: { imageCount: -1, _id: -1 } },
-      { $skip: skip },
-      { $limit: limit }
-    ]);
-
-    console.log('[GET /api/chats] aggregation pipeline:', JSON.stringify(pipeline, null, 2));
-
-    const chats = await fastify.mongo.db
-      .collection('chats')
-      .aggregate(pipeline, { allowDiskUse: true })
-      .toArray();
-
-    console.log('[GET /api/chats] aggregation result count:', chats.length);
-
-    if (chats.length === 0) {
-      console.warn('[GET /api/chats] no documents matched filters');
-      return reply.code(404).send({ recent: [], page, totalPages: 0 });
-    }
-
-    const usersColl = fastify.mongo.db.collection('users');
-    const galleryColl = fastify.mongo.db.collection('gallery');
-
-    const recentWithUserAndSamples = await Promise.all(
-      chats.map(async chat => {
-        const chatUserId = chat.userId;
-        if (!fastify.mongo.ObjectId.isValid(chatUserId)) {
-          console.warn('[GET /api/chats] chat has invalid userId:', chat._id, chatUserId);
-        }
-        const userDoc = fastify.mongo.ObjectId.isValid(chatUserId)
-          ? await usersColl.findOne({ _id: new fastify.mongo.ObjectId(chatUserId) })
-          : null;
-
-        const galleryDoc = await galleryColl.findOne({ chatId: new ObjectId(chat._id) });
-        let sampleImages = [];
-        if (galleryDoc?.images) {
-          sampleImages = galleryDoc.images.filter(img => !img?.nsfw).slice(0, 5);
-        }
-
-        return {
-          ...chat,
-          nickname:   userDoc?.nickname   || null,
-          profileUrl: userDoc?.profileUrl || null,
-          sampleImages
-        };
-      })
-    );
-
-    console.log('[GET /api/chats] enriched result count:', recentWithUserAndSamples.length);
-
-    const totalCount = await fastify.mongo.db
-      .collection('chats')
-      .aggregate([
-        { $match: { $and: filters } },
-        { $group: { _id: '$imageModel' } },
-        { $count: 'count' }
-      ], { allowDiskUse: true })
-      .toArray()
-      .then(res => res[0]?.count || 0);
-
-    const totalPages = Math.ceil(totalCount / limit);
-
-    console.log('[GET /api/chats] totalCount:', totalCount, 'totalPages:', totalPages);
-
-    reply.send({
-      recent:     recentWithUserAndSamples,
-      page,
-      totalPages
-    });
-
-  } catch (err) {
-    console.error('[GET /api/chats] error:', err);
-    reply.code(500).send('Internal Server Error');
-  }
-});
 
     // Route to get translations
     fastify.post('/api/user/translations', async (request, reply) => {

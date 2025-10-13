@@ -459,11 +459,11 @@ async function routes(fastify, options) {
       const streakDays = [];
       for (let day = 1; day <= 30; day++) {
         // Calculate reward amount for each streak day
-        const baseReward = 10;
+        const baseReward = 100;
         const streakBonus = Math.min(day, 10);
-        const milestoneBonus = (day % 7 === 0) ? 15 : 0; // Weekly milestone
-        const superMilestoneBonus = (day === 30) ? 50 : 0; // 30-day milestone
-        const rewardAmount = baseReward + streakBonus + milestoneBonus + superMilestoneBonus;
+        const milestoneBonus = (day % 7 === 0) ? 500 : 0; // Weekly milestone
+        const superMilestoneBonus = (day === 30) ? 1000 : 0; // 30-day milestone
+        const rewardAmount = baseReward + (streakBonus * 10) + milestoneBonus + superMilestoneBonus;
 
         // Determine status
         let status = 'future'; // Default
@@ -602,24 +602,24 @@ async function routes(fastify, options) {
       for (let i = 1; i <= days; i++) {
         const futureDate = new Date(today);
         futureDate.setUTCDate(today.getUTCDate() + i);
-        
+
         const day = futureDate.getUTCDate();
         const potentialStreak = currentStreak + i;
-        
-        // Calculate reward amount
-        const baseReward = 10;
-        const streakBonus = Math.min(Math.floor(potentialStreak / 2), 10) * 2;
-        const milestoneBonus = (day % 7 === 0) ? 15 : 0;
-        const weekendBonus = (futureDate.getUTCDay() === 0 || futureDate.getUTCDay() === 6) ? 5 : 0;
-        const rewardAmount = baseReward + streakBonus + milestoneBonus + weekendBonus;
+
+        const baseReward = 100;
+        const streakBonus = Math.min(potentialStreak, 10) * 10;
+        const milestoneBonus = potentialStreak % 7 === 0 ? 500 : 0;
+        const superMilestoneBonus = potentialStreak === 30 ? 1000 : 0;
+        const weekendBonus = futureDate.getUTCDay() === 0 || futureDate.getUTCDay() === 6 ? 0 : 0;
+        const rewardAmount = baseReward + streakBonus + milestoneBonus + superMilestoneBonus + weekendBonus;
 
         upcomingRewards.push({
           date: futureDate.toISOString().split('T')[0],
-          day: day,
+          day,
           points: rewardAmount,
           streak: potentialStreak,
           isWeekend: futureDate.getUTCDay() === 0 || futureDate.getUTCDay() === 6,
-          isMilestone: day % 7 === 0,
+          isMilestone: potentialStreak % 7 === 0 || potentialStreak === 30,
           daysFromNow: i
         });
       }

@@ -280,7 +280,7 @@ async function awardFirstLoginBonus(db, userId, fastify = null) {
  * @param {string|ObjectId} userId - User ID
  * @returns {Object} Result of the operation
  */
-async function awardDailyLoginBonus(db, userId) {
+async function awardDailyLoginBonus(db, userId, fastify = null) {
   const usersCollection = db.collection('users');
   const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
 
@@ -288,13 +288,13 @@ async function awardDailyLoginBonus(db, userId) {
     throw new Error('User not found');
   }
 
-  // Use UTC for date calculations
   const now = new Date();
   const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-
   const lastBonus = user.lastDailyBonus ? new Date(user.lastDailyBonus) : null;
-  const lastBonusUTC = lastBonus ? new Date(Date.UTC(lastBonus.getUTCFullYear(), lastBonus.getUTCMonth(), lastBonus.getUTCDate())) : null;
-  
+  const lastBonusUTC = lastBonus
+    ? new Date(Date.UTC(lastBonus.getUTCFullYear(), lastBonus.getUTCMonth(), lastBonus.getUTCDate()))
+    : null;
+
   if (lastBonusUTC && lastBonusUTC.getTime() === today.getTime()) {
     const nextBonus = new Date(today.getTime() + 24 * 60 * 60 * 1000);
     return {
@@ -306,24 +306,25 @@ async function awardDailyLoginBonus(db, userId) {
 
   const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
   let currentStreak = user.loginStreak || 0;
-
   if (lastBonusUTC && lastBonusUTC.getTime() === yesterday.getTime()) {
     currentStreak++;
   } else {
-    currentStreak = 1; // Reset streak
+    currentStreak = 1;
   }
 
-  // Calculate points - base 10 + streak bonus (1 point per day up to 10)
-  const basePoints = 10;
-  const streakBonus = Math.min(currentStreak, 10);
-  const pointsAwarded = basePoints + streakBonus;
+  const baseReward = 100;
+  const streakBonus = Math.min(currentStreak, 10) * 10;
+  const milestoneBonus = currentStreak % 7 === 0 ? 500 : 0;
+  const superMilestoneBonus = currentStreak === 30 ? 1000 : 0;
+  const pointsAwarded = baseReward + streakBonus + milestoneBonus + superMilestoneBonus;
 
   const result = await addUserPoints(
     db,
     userId,
     pointsAwarded,
     `Daily Login Bonus (Day ${currentStreak})`,
-    'daily_bonus'
+    'daily_bonus',
+    fastify
   );
 
   if (result.success) {
@@ -345,12 +346,12 @@ async function awardDailyLoginBonus(db, userId) {
       user: result.user,
       nextBonus
     };
-  } else {
-    return {
-      success: false,
-      message: 'Failed to award points'
-    };
   }
+
+  return {
+    success: false,
+    message: 'Failed to award points'
+  };
 }
 
 /**

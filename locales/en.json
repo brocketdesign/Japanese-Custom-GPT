@@ -294,6 +294,7 @@
     "disabled": "Disabled"
   },
   "characterUpdate": {
+    "viewCharacter": "View Character",
     "title": "Character Update",
     "lastModified": "Last Modified",
     "loading": "Loading...",

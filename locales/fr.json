@@ -225,6 +225,7 @@
     "errorOccurred": "Une erreur s'est produite"
   },
   "characterUpdate": {
+    "viewCharacter": "Voir le personnage",
     "title": "Mise à jour du personnage",
     "lastModified": "Dernière modification",
     "physicalAppearance": "Apparence physique",

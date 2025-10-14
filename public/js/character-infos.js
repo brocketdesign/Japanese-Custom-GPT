@@ -43,6 +43,7 @@ $(document).ready(function() {
     // Populate character information in the modal
     function populateCharacterInfo(chatData) {
         // Basic header information
+        $('#charInfoLink').attr('href', `/character/slug/${chatData.slug}`);
         $('#charInfoName').text(chatData.name || 'Unnamed Character');
         $('#charInfoGender').text(chatData.gender || 'Not specified');
         $('#charInfoUpdatedAt').text(chatData.updatedAt || 'Never');

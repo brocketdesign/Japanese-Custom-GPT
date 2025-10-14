@@ -1363,7 +1363,10 @@ window.loadChatUsers = async function (chatId, page = 1) {
       });
 
       $('#chat-users-gallery').append(chatUsersHtml);
-      
+      // If no users found update the frontend by removing the section
+      if(data.users.length === 0 && page === 1){
+        $('#chat-users-gallery').closest('section').remove();
+      }
       // Generate pagination if needed
       if ($('#chat-users-pagination-controls').length > 0) {
         generateChatUserPagination(data.page, data.totalPages, chatId);

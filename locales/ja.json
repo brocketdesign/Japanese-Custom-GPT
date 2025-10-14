@@ -230,6 +230,7 @@
     "errorOccurred": "エラーが発生しました"
   },
   "characterUpdate": {
+    "viewCharacter": "キャラクターを見る",
     "title": "キャラクター更新",
     "lastModified": "最終更新",
     "physicalAppearance": "外見",

@@ -72,6 +72,7 @@
       </div>
     </section>
 
+  {{#if user.isTemporary}}
     <!-- About Character Section -->
     <section class="section-padding shadow-sm">
       <div class="container">
@@ -153,7 +154,8 @@
         </div>
       </div>
     </section>
-
+  {{/if}}
+  {{#if user.isTemporary}}
     <!-- Why Chat With This Character Section -->
     <section class="section-padding bg-light shadow-sm">
         <div class="container text-center">
@@ -179,7 +181,8 @@
             </div>
         </div>
     </section>
-
+  {{/if}}
+  {{#if user.isTemporary}}
     <!-- How to Start Chatting Section -->
     <section class="section-padding shadow-sm">
         <div class="container text-center">
@@ -228,7 +231,7 @@
             </div>
         </div>
     </section>
-
+  {{/if}}
     <!-- Users in Chat Section -->
     <section class="section-padding bg-light shadow-sm">
         <div class="container">

@@ -55,13 +55,15 @@ function saveCacheToStorage(cacheId, pages, currentPage, totalPages) {
  * @returns {Promise}
  */
 window.loadChatImages = function(chatId, page = 1, reload = false, isModal = false) {
-    // Validate chat ID against session storage
-    if (!validateChatIdWithSession(chatId)) {
+    // Check if we are on the character profile page
+    const onCharacterPage = !!document.querySelector('#characterProfilePage');
+    // Only skip if not on character page and chat ID does not match session
+    if (!onCharacterPage && !validateChatIdWithSession(chatId)) {
         console.warn(`[loadChatImages] Chat ID ${chatId} does not match session storage`);
         return Promise.resolve();
     }
     
-    return loadImages('chat', chatId, page, reload, isModal, `/chat/${chatId}/images`);
+    return loadImages('chat', chatId, page, reload, isModal, `/chat/${chatId}/images`, onCharacterPage);
 };
 
 /**
@@ -87,12 +89,12 @@ function validateChatIdWithSession(chatId) {
 /**
  * Generic function to load images with infinite scroll
  */
-function loadImages(type, id, page = 1, reload = false, isModal = false, endpoint) {
+function loadImages(type, id, page = 1, reload = false, isModal = false, endpoint, onCharacterPage = false) {
     const manager = window.chatImageManager;
     const cacheKey = `${type}_${id}`;
     
     // For chat images, validate session alignment before proceeding
-    if (type === 'chat' && !validateChatIdWithSession(id)) {
+    if (type === 'chat' && !onCharacterPage && !validateChatIdWithSession(id)) {
         console.warn(`[loadImages] Chat ID ${id} does not match session storage, skipping load`);
         return Promise.resolve();
     }

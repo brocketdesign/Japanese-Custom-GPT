@@ -10,6 +10,8 @@ if (typeof chatImageManager === 'undefined') {
     };
 }
 
+const VIDEO_PROMPT_MAX_LENGTH = 160;
+
 /**
  * Load cache from localStorage for a specific key
  */
@@ -47,6 +49,22 @@ function saveCacheToStorage(cacheId, pages, currentPage, totalPages) {
 }
 
 /**
+ * Get gallery configuration based on type
+ */
+function getGalleryConfig(type) {
+    switch (type) {
+        case 'chat':
+            return { gallery: '#chat-images-gallery', controls: '#chat-images-pagination-controls', empty: null, dataAttr: 'data-chat-id' };
+        case 'chatVideo':
+            return { gallery: '#chat-videos-gallery', controls: '#chat-videos-pagination-controls', empty: '#chat-videos-empty', dataAttr: 'data-chat-id' };
+        case 'user':
+            return { gallery: '#user-images-gallery', controls: '#images-pagination-controls', empty: null };
+        default:
+            return {};
+    }
+}
+
+/**
  * Main function to load chat images with infinite scroll
  * @param {string} chatId - The chat ID
  * @param {number} page - Page number to load
@@ -55,15 +73,29 @@ function saveCacheToStorage(cacheId, pages, currentPage, totalPages) {
  * @returns {Promise}
  */
 window.loadChatImages = function(chatId, page = 1, reload = false, isModal = false) {
-    // Check if we are on the character profile page
     const onCharacterPage = !!document.querySelector('#characterProfilePage');
-    // Only skip if not on character page and chat ID does not match session
     if (!onCharacterPage && !validateChatIdWithSession(chatId)) {
         console.warn(`[loadChatImages] Chat ID ${chatId} does not match session storage`);
         return Promise.resolve();
     }
-    
-    return loadImages('chat', chatId, page, reload, isModal, `/chat/${chatId}/images`, onCharacterPage);
+    return loadImages('chat', chatId, page, reload, isModal, `/chat/${chatId}/images`, onCharacterPage, 'image');
+};
+
+/**
+ * Main function to load chat videos with infinite scroll
+ * @param {string} chatId - The chat ID
+ * @param {number} page - Page number to load
+ * @param {boolean} reload - Whether to reload from cache
+ * @param {boolean} isModal - Whether loading in modal context
+ * @returns {Promise}
+ */
+window.loadChatVideos = function(chatId, page = 1, reload = false, isModal = false) {
+    const onCharacterPage = !!document.querySelector('#characterProfilePage');
+    if (!onCharacterPage && !validateChatIdWithSession(chatId)) {
+        console.warn(`[loadChatVideos] Chat ID ${chatId} does not match session storage`);
+        return Promise.resolve();
+    }
+    return loadImages('chatVideo', chatId, page, reload, isModal, `/chat/${chatId}/videos`, onCharacterPage, 'video');
 };
 
 /**
@@ -89,9 +121,10 @@ function validateChatIdWithSession(chatId) {
 /**
  * Generic function to load images with infinite scroll
  */
-function loadImages(type, id, page = 1, reload = false, isModal = false, endpoint, onCharacterPage = false) {
+function loadImages(type, id, page = 1, reload = false, isModal = false, endpoint, onCharacterPage = false, mediaType = 'image') {
     const manager = window.chatImageManager;
     const cacheKey = `${type}_${id}`;
+    const config = getGalleryConfig(type);
     
     // For chat images, validate session alignment before proceeding
     if (type === 'chat' && !onCharacterPage && !validateChatIdWithSession(id)) {
@@ -122,7 +155,7 @@ function loadImages(type, id, page = 1, reload = false, isModal = false, endpoin
         try {
             // Handle reload scenario
             if (reload) {
-                const hasCache = await handleReload(id, cacheKey, type);
+                const hasCache = await handleReload(id, cacheKey, type, mediaType);
                 
                 // Always setup infinite scroll after reload
                 setupInfiniteScroll(id, isModal, type);
@@ -147,8 +180,8 @@ function loadImages(type, id, page = 1, reload = false, isModal = false, endpoin
             
             // Check if page is already cached and not reloading
             if (manager.cache.get(cacheKey).has(page) && !reload) {
-                const cachedImages = manager.cache.get(cacheKey).get(page);
-                await renderImages(cachedImages, id, type);
+                const cachedItems = manager.cache.get(cacheKey).get(page);
+                await renderMedia(cachedItems, id, type, mediaType, page);
                 manager.currentPages.set(cacheKey, Math.max(manager.currentPages.get(cacheKey), page));
                 setupInfiniteScroll(id, isModal, type);
                 resolve();
@@ -174,7 +207,7 @@ function loadImages(type, id, page = 1, reload = false, isModal = false, endpoin
             }
             
             // Fetch from server
-            await fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type);
+            await fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type, mediaType);
             resolve();
             
         } catch (error) {
@@ -188,28 +221,30 @@ function loadImages(type, id, page = 1, reload = false, isModal = false, endpoin
 /**
  * Handle reload scenario by rendering all cached pages
  */
-async function handleReload(id, cacheKey, type) {
+async function handleReload(id, cacheKey, type, mediaType) {
     const manager = window.chatImageManager;
     const cache = manager.cache.get(cacheKey);
     const cachedPages = Array.from(cache.keys()).sort((a, b) => a - b);
+    const config = getGalleryConfig(type);
+    const gallerySelector = config.gallery || '#chat-images-gallery';
     
     // Clear existing content
-    const gallerySelector = type === 'chat' ? '#chat-images-gallery' : '#user-images-gallery';
     $(gallerySelector).empty();
-    
-    // Set data attribute for chat galleries to track which chat is being rendered
-    if (type === 'chat') {
-        $(gallerySelector).attr('data-chat-id', id);
+    if (config.empty) {
+        $(config.empty).addClass('d-none');
     }
-    
-    window.loadedImages = [];
+    if (type === 'chat') {
+        window.loadedImages = [];
+    } else if (type === 'chatVideo') {
+        window.loadedVideos = [];
+    }
     
     // If we have cached pages, render them
     if (cachedPages.length > 0) {
         // Render all cached pages in order
         for (const pageNum of cachedPages) {
-            const images = cache.get(pageNum);
-            await renderImages(images, id, type);
+            const items = cache.get(pageNum);
+            await renderMedia(items, id, type, mediaType, pageNum);
         }
         
         // Properly set the current page to the maximum cached page
@@ -227,7 +262,7 @@ async function handleReload(id, cacheKey, type) {
 /**
  * Fetch images from server and handle caching
  */
-async function fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type) {
+async function fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type, mediaType) {
     const manager = window.chatImageManager;
     
     // Validate page number again
@@ -255,8 +290,9 @@ async function fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type
             return;
         }
         
+        const items = mediaType === 'video' ? response.videos || [] : response.images || [];
         // Cache the response
-        manager.cache.get(cacheKey).set(response.page, response.images || []);
+        manager.cache.get(cacheKey).set(response.page, items);
         manager.totalPages.set(cacheKey, response.totalPages || 1);
         manager.currentPages.set(cacheKey, response.page);
         
@@ -269,7 +305,7 @@ async function fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type
         );
         
         // Render images
-        await renderImages(response.images || [], id, type);
+        await renderMedia(items, id, type, mediaType, response.page);
         
         // Setup infinite scroll
         setupInfiniteScroll(id, isModal, type);
@@ -284,12 +320,24 @@ async function fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type
 }
 
 /**
+ * Render media items (images or videos) to the gallery
+ */
+function renderMedia(items, id, type, mediaType, page) {
+    if (mediaType === 'video') {
+        return renderVideos(items, id, type, page);
+    }
+    return renderImages(items, id, type);
+}
+
+/**
  * Render images to the gallery with consistent grid layout
  */
 async function renderImages(images, id, type) {
     if (!images || images.length === 0) {
         return;
     }
+    
+    const gallerySelector = getGalleryConfig(type)?.gallery || '#chat-images-gallery';
     
     // Set data attribute for chat galleries to track which chat is being rendered
     if (type === 'chat') {
@@ -336,14 +384,13 @@ async function renderImages(images, id, type) {
     });
     
     // Append all cards at once for better performance
-    const gallerySelector = type === 'chat' ? '#chat-images-gallery' : '#user-images-gallery';
     const gallery = document.querySelector(gallerySelector);
     if (gallery && fragment.hasChildNodes()) {
         gallery.appendChild(fragment);
         
         // Apply grid layout after DOM update
         requestAnimationFrame(() => {
-            applyGridLayout();
+            applyGridLayout(gallerySelector);
             handleBlurredImages();
         });
     }
@@ -410,6 +457,112 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedInde
 }
 
 /**
+ * Render videos to the gallery
+ */
+function renderVideos(videos, id, type, page = 1) {
+    const config = getGalleryConfig(type);
+    const gallerySelector = config?.gallery;
+    if (!gallerySelector) {
+        return;
+    }
+
+    const emptyState = config.empty ? document.querySelector(config.empty) : null;
+    if (!videos || videos.length === 0) {
+        if (page === 1 && emptyState) {
+            emptyState.classList.remove('d-none');
+        }
+        return;
+    }
+
+    if (emptyState) {
+        emptyState.classList.add('d-none');
+    }
+
+    if (!window.loadedVideos) {
+        window.loadedVideos = [];
+    }
+
+    const fragment = document.createDocumentFragment();
+    const subscriptionStatus = window.user?.subscriptionStatus === 'active';
+    const isTemporary = !!window.user?.isTemporary;
+
+    videos.forEach(video => {
+        if (document.querySelector(`[data-video-id="${video._id}"]`)) {
+            return;
+        }
+        const isBlur = shouldBlurNSFW(video, subscriptionStatus);
+        if (!isBlur && !window.loadedVideos.some(v => v._id === video._id)) {
+            window.loadedVideos.push(video);
+        }
+        const cardHtml = createVideoCard(video, isBlur, isTemporary);
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = cardHtml;
+        fragment.appendChild(tempDiv.firstElementChild);
+    });
+
+    const gallery = document.querySelector(gallerySelector);
+    if (gallery && fragment.hasChildNodes()) {
+        gallery.appendChild(fragment);
+        requestAnimationFrame(() => applyGridLayout(gallerySelector));
+    }
+}
+
+function truncateText(text, maxLength) {
+    if (typeof text !== 'string') {
+        return '';
+    }
+    const trimmed = text.trim();
+    if (trimmed.length <= maxLength) {
+        return trimmed;
+    }
+    const sliceLength = Math.max(0, maxLength - 3);
+    return `${trimmed.slice(0, sliceLength).trimEnd()}...`;
+}
+
+/**
+ * Create HTML for individual video card
+ */
+function createVideoCard(video, isBlur, isTemporary) {
+    const promptLabel = window.translations?.prompt || 'Prompt';
+    const createdLabel = window.translations?.videos?.created || 'Created';
+    const durationLabel = window.translations?.videos?.duration || 'Duration';
+    const unlockLabel = window.translations?.galleryTabs?.unlockVideo || 'Unlock video';
+    const promptText = video.prompt ? truncateText(video.prompt, VIDEO_PROMPT_MAX_LENGTH) : '';
+
+    const metadata = `
+        <div class="small text-muted">
+            ${video.duration ? `<span><i class="bi bi-stopwatch me-1"></i>${durationLabel}: ${video.duration}s</span>` : ''}
+            ${video.createdAt ? `<span class="ms-2"><i class="bi bi-calendar-event me-1"></i><span class="jp-date">${video.createdAt}</span></span>` : ''}
+        </div>
+    `;
+
+    const lockedMarkup = `
+        <div class="card-img-top d-flex flex-column justify-content-center align-items-center position-relative overflow-hidden" style="border-radius:0.75rem 0.75rem 0 0;background-color:#000;min-height:260px;">
+            <i class="bi bi-lock-fill fs-1 text-white-50 mb-3"></i>
+            <button type="button" class="btn btn-primary" onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary});">
+                <i class="bi bi-unlock-fill me-2"></i>${unlockLabel}
+            </button>
+        </div>
+    `;
+
+    const videoMarkup = `
+        <video src="${video.videoUrl}#t=0.1" preload="metadata" controls class="card-img-top video-card-media" style="width:100%;height:auto;display:block;border-radius:0.75rem 0.75rem 0 0;background-color:#000;" playsinline muted controlsList="nodownload"></video>
+    `;
+
+    return `
+        <div class="video-card col-12 col-sm-6 col-lg-4 col-xl-3 mb-3" data-video-id="${video._id}">
+            <div class="card shadow-0 position-relative h-100">
+                ${isBlur ? lockedMarkup : videoMarkup}
+                <div class="card-body pt-2">
+                    ${promptText ? `<p class="card-text small text-muted mb-2" style="font-size:0.85rem; max-height:4.5em; overflow:hidden;">${promptLabel}: ${promptText}</p>` : ''}
+                    ${metadata}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
  * Setup infinite scroll with optimized event handling
  */
 function setupInfiniteScroll(id, isModal = false, type = 'chat') {
@@ -422,6 +575,7 @@ function setupInfiniteScroll(id, isModal = false, type = 'chat') {
     }
     
     const scrollContainer = isModal ? $('#characterModal .modal-body') : $(window);
+    const config = getGalleryConfig(type);
     const cacheKey = `${type}_${id}`;
     
     // Use namespaced events to avoid conflicts with other scroll handlers
@@ -449,12 +603,18 @@ function setupInfiniteScroll(id, isModal = false, type = 'chat') {
  */
 function handleScroll(id, isModal, cacheKey, type) {
     const manager = window.chatImageManager;
-    
+    const config = getGalleryConfig(type);
+
     // Skip if already loading
     if (manager.loadingStates.get(cacheKey)) {
         return;
     }
     
+    // Check if gallery is visible
+    if (config?.gallery && !isGalleryVisible(config.gallery)) {
+        return;
+    }
+
     const currentPage = manager.currentPages.get(cacheKey);
     const totalPages = manager.totalPages.get(cacheKey);
     
@@ -486,11 +646,22 @@ function handleScroll(id, isModal, cacheKey, type) {
 /**
  * Apply consistent grid layout
  */
-function applyGridLayout() {
-    const gallery = $('#chat-images-gallery');
+function applyGridLayout(selector = '#chat-images-gallery') {
+    const gallery = $(selector);
     if (gallery.length && typeof gridLayout === 'function') {
-        gridLayout('#chat-images-gallery');
+        gridLayout(selector);
     }
+}
+
+function isGalleryVisible(selector) {
+    if (!selector) {
+        return true;
+    }
+    const $el = $(selector);
+    if (!$el.length) {
+        return true;
+    }
+    return $el.is(':visible');
 }
 
 /**
@@ -510,7 +681,7 @@ function handleBlurredImages() {
  * Show/hide loading indicator
  */
 function showLoadingIndicator(show, type = 'chat') {
-    const controlsSelector = type === 'chat' ? '#chat-images-pagination-controls' : '#images-pagination-controls';
+    const controlsSelector = getGalleryConfig(type)?.controls || '#chat-images-pagination-controls';
     const controlsContainer = $(controlsSelector);
     
     if (show) {

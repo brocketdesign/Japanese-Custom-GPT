@@ -1,5 +1,17 @@
 {
   "lang": "ja",
+  "galleryTabs": {
+    "images": "画像",
+    "videos": "動画",
+    "imagesDescription": "このキャラクターと生成した画像を閲覧できます。",
+    "videosDescription": "このキャラクターと生成された動画を視聴できます。",
+    "videosEmpty": "まだ動画がありません。",
+    "unlockVideo": "動画をアンロック"
+  },
+  "videos": {
+    "created": "作成日",
+    "duration": "再生時間"
+  },
   "restart": "再起動",
   "personalSettings": "個人設定",
   "restartOnboarding": "オンボーディングを再起動",

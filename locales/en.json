@@ -1,5 +1,17 @@
 {
   "lang": "en",
+  "galleryTabs": {
+    "images": "Images",
+    "videos": "Videos",
+    "imagesDescription": "Browse the latest images shared by this character.",
+    "videosDescription": "Watch the videos generated with this character.",
+    "videosEmpty": "No videos available yet.",
+    "unlockVideo": "Unlock video"
+  },
+  "videos": {
+    "created": "Created",
+    "duration": "Duration"
+  },
   "restart": "Restart",
   "personalSettings": "Personal Settings",
   "restartOnboarding": "Restart Onboarding",

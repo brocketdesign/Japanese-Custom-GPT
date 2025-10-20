@@ -357,15 +357,15 @@ async function routes(fastify, options) {
                 
                 messagesForCompletion = [
                     ...systemMsg,
-                    ...languageDirective,
                     ...userMessages,
-                    ...imgMessage
+                    ...imgMessage,
+                    ...languageDirective
                 ];
             } else {
                 messagesForCompletion = [
                     ...systemMsg, 
-                    ...languageDirective,
-                    ...userMessages
+                    ...userMessages,
+                    ...languageDirective
                 ];
             }
 

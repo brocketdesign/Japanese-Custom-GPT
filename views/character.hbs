@@ -271,12 +271,35 @@
       <div class="container">
         <div class="row">
           <div class="col-12 mt-4">
-            <h4 class="text-center">{{translations.other_images_of_character}}</h4>
-            <p class="text-center text-muted mb-4">{{translations.other_images_description}}</p>
-            <hr class="w-25 mx-auto">
-            <div class="container-none">
-              <div class="row mx-0" id="chat-images-gallery"></div>
-              <div class="d-flex justify-content-center mt-4" id="chat-images-pagination-controls"></div>
+            <ul class="nav nav-pills justify-content-center mb-4" id="characterMediaTabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="images-tab" data-bs-toggle="tab" data-bs-target="#image-gallery-tab" type="button" role="tab" aria-controls="image-gallery-tab" aria-selected="true">
+                  <i class="bi bi-images me-2"></i>{{translations.galleryTabs.images}}
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="videos-tab" data-bs-toggle="tab" data-bs-target="#video-gallery-tab" type="button" role="tab" aria-controls="video-gallery-tab" aria-selected="false">
+                  <i class="bi bi-camera-video-fill me-2"></i>{{translations.galleryTabs.videos}}
+                </button>
+              </li>
+            </ul>
+
+            <div class="tab-content" id="characterMediaTabsContent">
+              <div class="tab-pane fade show active" id="image-gallery-tab" role="tabpanel" aria-labelledby="images-tab">
+                <p class="text-center text-muted mb-4">{{translations.galleryTabs.imagesDescription}}</p>
+                <hr class="w-25 mx-auto">
+                <div class="container-none">
+                  <div class="row mx-0" id="chat-images-gallery"></div>
+                  <div class="d-flex justify-content-center mt-4" id="chat-images-pagination-controls"></div>
+                </div>
+              </div>
+              <div class="tab-pane fade" id="video-gallery-tab" role="tabpanel" aria-labelledby="videos-tab">
+                <p class="text-center text-muted mb-4">{{translations.galleryTabs.videosDescription}}</p>
+                <hr class="w-25 mx-auto">
+                <div class="alert alert-info d-none" id="chat-videos-empty">{{translations.galleryTabs.videosEmpty}}</div>
+                <div class="row mx-0" id="chat-videos-gallery"></div>
+                <div class="d-flex justify-content-center mt-4" id="chat-videos-pagination-controls"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -663,6 +686,14 @@
     backToTopButton.on("click", function(e) {
       e.preventDefault();
       $("html, body").animate({ scrollTop: 0 }, "slow");
+    });
+
+    let videosLoaded = false;
+    $('button[data-bs-target="#video-gallery-tab"]').on('shown.bs.tab', function () {
+      if (!videosLoaded && chatId && chatId.trim() !== '') {
+        loadChatVideos(chatId, 1, true);
+        videosLoaded = true;
+      }
     });
   });
 </script>

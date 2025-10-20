@@ -1,9 +1,21 @@
 {
-      "lang": "fr",
-      "restart": "Redémarrer",
-      "personalSettings": "Paramètres personnels",
-      "restartOnboarding": "Redémarrer l'intégration",
-      "restartOnboardingDesc": "Voir à nouveau le guide d'introduction.",
+  "lang": "fr",
+  "galleryTabs": {
+    "images": "Images",
+    "videos": "Vidéos",
+    "imagesDescription": "Parcourez les dernières images partagées avec ce personnage.",
+    "videosDescription": "Regardez les vidéos générées avec ce personnage.",
+    "videosEmpty": "Aucune vidéo disponible pour le moment.",
+    "unlockVideo": "Déverrouiller la vidéo"
+  },
+  "videos": {
+    "created": "Créé le",
+    "duration": "Durée"
+  },
+  "restart": "Redémarrer",
+  "personalSettings": "Paramètres personnels",
+  "restartOnboarding": "Redémarrer l'intégration",
+  "restartOnboardingDesc": "Voir à nouveau le guide d'introduction.",
   "follow": {
     "following": "Abonné",
     "followed": "Abonné !",

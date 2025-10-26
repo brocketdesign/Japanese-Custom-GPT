@@ -7,7 +7,6 @@ class ChatToolSettings {
             selectedVoice: 'nova',
             voiceProvider: 'standard',
             premiumVoice: 'Thandiwe',
-            minimaxVoice: 'Wise_Woman',
             autoMergeFace: true,
             suggestionsEnabled: true,
             selectedModel: 'mistral',
@@ -18,7 +17,7 @@ class ChatToolSettings {
         
         this.isLoading = false;
         this.userId = window.userId || window.user?.id;
-    this.minimaxVoices = [];
+        this.evenLabVoices = [];
         this.premiumVoices = [];
         this.availableModels = {};
         this.isPremium = false;
@@ -112,6 +111,13 @@ class ChatToolSettings {
         document.addEventListener('click', (e) => {
             if (e.target.closest('.settings-model-option')) {
                 this.selectModel(e.target.closest('.settings-model-option'));
+            }
+        });
+
+        // EvenLab voice selection - Use event delegation to handle dynamic content
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.settings-evenlab-voice-option')) {
+                this.selectEvenLabVoice(e.target.closest('.settings-evenlab-voice-option'));
             }
         });
 
@@ -674,6 +680,21 @@ class ChatToolSettings {
         this.settings.selectedVoice = selectedOption.dataset.voice;
     }
 
+    selectEvenLabVoice(selectedOption) {
+        // Remove selected class from all EvenLab voice options
+        document.querySelectorAll('.settings-evenlab-voice-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked option
+        selectedOption.classList.add('selected');
+        
+        // Update settings
+        this.settings.evenLabVoice = selectedOption.dataset.voice;
+        
+        console.log('EvenLab voice selected:', this.settings.evenLabVoice);
+    }
+
     selectPremiumVoice(selectedOption) {
         const user = window.user || {};
         const subscriptionStatus = user.subscriptionStatus === 'active';
@@ -696,11 +717,10 @@ class ChatToolSettings {
         // Add selected class to clicked option
         selectedOption.classList.add('selected');
         
-    // Update settings
-    this.settings.minimaxVoice = selectedOption.dataset.voice;
-    this.settings.premiumVoice = selectedOption.dataset.voice;
+        // Update settings
+        this.settings.premiumVoice = selectedOption.dataset.voice;
         
-    console.log('Premium voice selected:', this.settings.minimaxVoice);
+        console.log('Premium voice selected:', this.settings.premiumVoice);
     }
 
     selectRelationshipTone(selectedOption) {
@@ -739,9 +759,67 @@ class ChatToolSettings {
         console.log('Relationship tone selected:', this.settings.relationshipType);
     }
 
+    // Voice loading methods
+    async loadEvenLabVoices() {
+        try {
+            const response = await fetch('/api/evenlab-voices');
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                this.evenLabVoices = data.voices;
+                this.renderEvenLabVoices();
+            } else {
+                console.error('Failed to load EvenLab voices:', data.error);
+                this.showEvenLabVoicesError();
+            }
+        } catch (error) {
+            console.error('Error loading EvenLab voices:', error);
+            this.showEvenLabVoicesError();
+        }
+    }
+
+    renderEvenLabVoices() {
+        const grid = document.getElementById('evenlab-voices-grid');
+        if (!grid || !this.evenLabVoices.length) return;
+
+        grid.innerHTML = '';
+        
+        this.evenLabVoices.forEach(voice => {
+            const voiceOption = document.createElement('div');
+            voiceOption.className = 'settings-evenlab-voice-option';
+            voiceOption.setAttribute('data-voice', voice.key);
+            
+            if (voice.key === this.settings.evenLabVoice) {
+                voiceOption.classList.add('selected');
+            }
+            
+            voiceOption.innerHTML = `
+                <div class="settings-voice-name">${this.t(voice.name)}</div>
+                <div class="settings-voice-description">${this.t(voice.description)}</div>
+            `;
+            
+            grid.appendChild(voiceOption);
+        });
+    }
+
+    showEvenLabVoicesError() {
+        const grid = document.getElementById('evenlab-voices-grid');
+        if (!grid) return;
+        
+        grid.innerHTML = `
+            <div class="voice-error text-center text-muted">
+                <i class="bi bi-exclamation-triangle"></i>
+                <div>${this.t('failedToLoadEvenLabVoices')}</div>
+                <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="window.chatToolSettings.loadEvenLabVoices()">
+                    ${this.t('retry')}
+                </button>
+            </div>
+        `;
+    }
+
     async loadPremiumVoices() {
         try {
-            const response = await fetch('/api/minimax-voices');
+            const response = await fetch('/api/evenlab-voices');
             const data = await response.json();
             
             if (response.ok && data.success) {
@@ -771,7 +849,7 @@ class ChatToolSettings {
             voiceOption.className = 'settings-premium-voice-option settings-voice-option';
             voiceOption.setAttribute('data-voice', voice.key);
             
-            if (voice.key === this.settings.minimaxVoice) {
+            if (voice.key === this.settings.premiumVoice) {
                 voiceOption.classList.add('selected');
             }
 
@@ -1008,21 +1086,6 @@ class ChatToolSettings {
         const user = window.user || {};
         const subscriptionStatus = user.subscriptionStatus === 'active';
         
-        if (!this.settings.minimaxVoice && this.settings.premiumVoice) {
-            this.settings.minimaxVoice = this.settings.premiumVoice;
-        }
-
-        if (!this.settings.voiceProvider) {
-            this.settings.voiceProvider = 'standard';
-        } else {
-            const provider = String(this.settings.voiceProvider).toLowerCase();
-            if (provider === 'openai') {
-                this.settings.voiceProvider = 'standard';
-            } else if (provider === 'evenlab') {
-                this.settings.voiceProvider = 'premium';
-            }
-        }
-
         // Auto-correct settings for non-premium users before applying to UI
         if (!subscriptionStatus) {
             if (this.settings.minImages > 1) {
@@ -1082,9 +1145,8 @@ class ChatToolSettings {
         });
 
         // Update premium voice selection
-        const activePremiumVoice = this.settings.minimaxVoice || this.settings.premiumVoice;
         document.querySelectorAll('.settings-premium-voice-option').forEach(option => {
-            option.classList.toggle('selected', option.dataset.voice === activePremiumVoice);
+            option.classList.toggle('selected', option.dataset.voice === this.settings.premiumVoice);
             
             // Disable for non-premium users
             if (!subscriptionStatus) {
@@ -1297,11 +1359,8 @@ class ChatToolSettings {
         return this.settings.voiceProvider;
     }
 
-    getMinimaxVoice() {
-        if (!this.settings.minimaxVoice && this.settings.premiumVoice) {
-            this.settings.minimaxVoice = this.settings.premiumVoice;
-        }
-        return this.settings.minimaxVoice || 'Wise_Woman';
+    getEvenLabVoice() {
+        return this.settings.evenLabVoice;
     }
 
     getAutoMergeFace() {

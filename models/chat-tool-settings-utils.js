@@ -8,6 +8,8 @@ const DEFAULT_SETTINGS = {
     videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
     relationshipType: 'companion',
     selectedVoice: 'nova',
+    minimaxVoice: 'Wise_Woman',
+    voiceProvider: 'standard',
     autoMergeFace: true,
     autoImageGeneration: true
 };
@@ -124,35 +126,33 @@ async function getVoiceSettings(db, userId, chatId = null) {
         const settings = await getUserChatToolSettings(db, userId, chatId);
         console.log(`[getVoiceSettings] User settings:`, settings);
         
-        const voiceProvider = settings.voiceProvider || 'openai';
-        
-        if (voiceProvider === 'evenlab') {
-            // Return EvenLab voice configuration
-            const evenLabVoice = settings.evenLabVoice || 'sakura';
+        const voiceProviderRaw = settings.voiceProvider || 'standard';
+        const normalizedProvider = String(voiceProviderRaw).toLowerCase();
+
+        if (normalizedProvider === 'premium' || normalizedProvider === 'minimax' || normalizedProvider === 'evenlab') {
+            const minimaxVoice = settings.minimaxVoice || settings.evenLabVoice || DEFAULT_SETTINGS.minimaxVoice;
             return {
-                provider: 'evenlab',
-                voice: evenLabVoice,
-                voiceName: evenLabVoice
-            };
-        } else {
-            // Return OpenAI voice configuration
-            const selectedVoice = settings.selectedVoice || 'nova';
-            
-            // Map voice names to TTS configurations using supported OpenAI voices
-            const voiceConfig = {
-                alloy: { voice: 'alloy', gender: 'neutral' },
-                fable: { voice: 'fable', gender: 'neutral' },
-                nova: { voice: 'nova', gender: 'female' },
-                shimmer: { voice: 'shimmer', gender: 'female' }
-            };
-            
-            const voiceConfig_ = voiceConfig[selectedVoice] || voiceConfig.default;
-            
-            return {
-                provider: 'openai',
-                ...voiceConfig_
+                provider: 'minimax',
+                voice: minimaxVoice,
+                voiceName: minimaxVoice
             };
         }
+
+        const selectedVoice = settings.selectedVoice || 'nova';
+
+        const voiceConfig = {
+            alloy: { voice: 'alloy', gender: 'neutral' },
+            fable: { voice: 'fable', gender: 'neutral' },
+            nova: { voice: 'nova', gender: 'female' },
+            shimmer: { voice: 'shimmer', gender: 'female' }
+        };
+
+        const voiceConfigEntry = voiceConfig[selectedVoice] || voiceConfig.nova;
+
+        return {
+            provider: 'openai',
+            ...voiceConfigEntry
+        };
         
     } catch (error) {
         console.error('[getVoiceSettings] Error getting voice settings:', error);

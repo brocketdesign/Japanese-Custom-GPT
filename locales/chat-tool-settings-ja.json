@@ -85,25 +85,73 @@
             "name": "Fable",
             "description": "深く物語性のある声"
         },
-        "Thandiwe": {
-            "name": "Thandiwe Dlamini",
-            "description": "南アフリカの戦略的ブランドリーダー"
+        "Wise_Woman": {
+            "name": "賢女",
+            "description": "落ち着いた自然なリズムの成熟した日本人女性の声"
         },
-        "Miranda": {
-            "name": "Miranda",
-            "description": "甘くて陽気な若い女性"
+        "Friendly_Person": {
+            "name": "フレンドリーな人物",
+            "description": "親しみやすく明瞭なトーンの声"
         },
-        "Nana": {
-            "name": "Nana-chan",
-            "description": "若々しい女性の声、可愛らしく元気"
+        "Inspirational_girl": {
+            "name": "インスピレーションガール",
+            "description": "前向きで励ましてくれる若々しい声"
         },
-        "Sophia": {
-            "name": "Sophia",
-            "description": "優しいトーンで静かに話すアメリカの女の子"
+        "Deep_Voice_Man": {
+            "name": "低音ボイス男性",
+            "description": "落ち着いた低音で安定した話し方"
         },
-        "Fena": {
-            "name": "Fena - Character",
-            "description": "若くて生意気な女の子キャラクター"
+        "Calm_Woman": {
+            "name": "穏やかな女性",
+            "description": "柔らかくゆったりとした口調でリラックスできる声"
+        },
+        "Casual_Guy": {
+            "name": "カジュアルな男性",
+            "description": "気さくでフレンドリーな会話トーン"
+        },
+        "Lively_Girl": {
+            "name": "元気な女の子",
+            "description": "勢いのある生き生きとしたテンポの声"
+        },
+        "Patient_Man": {
+            "name": "忍耐強い男性",
+            "description": "安心感のある穏やかなペースの声"
+        },
+        "Young_Knight": {
+            "name": "若き騎士",
+            "description": "自信に満ちたヒロイックな若い声"
+        },
+        "Determined_Man": {
+            "name": "決意の男性",
+            "description": "力強く意志のこもった語り口"
+        },
+        "Lovely_Girl": {
+            "name": "愛らしい女の子",
+            "description": "柔らかくチャーミングなトーン"
+        },
+        "Decent_Boy": {
+            "name": "礼儀正しい少年",
+            "description": "丁寧で温かみのある少年声"
+        },
+        "Imposing_Manner": {
+            "name": "威厳ある話し方",
+            "description": "重厚で存在感のある語り"
+        },
+        "Elegant_Man": {
+            "name": "エレガントな男性",
+            "description": "洗練された滑らかな口調"
+        },
+        "Abbess": {
+            "name": "修道院長",
+            "description": "静かで慈愛に満ちた威厳のある声"
+        },
+        "Sweet_Girl_2": {
+            "name": "スウィートガール2",
+            "description": "愛情たっぷりの明るい少女の声"
+        },
+        "Exuberant_Girl": {
+            "name": "エネルギッシュな女の子",
+            "description": "高揚感あふれる勢いある話し方"
         }
     },
     "suggestionsSettings": "チャット提案",

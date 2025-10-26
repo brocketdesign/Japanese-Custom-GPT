@@ -2,6 +2,35 @@
 const audioCache = new Map();
 const audioPool = [];
 let audioPermissionGranted = true;
+let sharedAudioContext = null;
+
+function promiseWithTimeout(promise, timeoutMs, timeoutMessage = 'Operation timed out') {
+    return new Promise((resolve, reject) => {
+        let settled = false;
+        const timer = setTimeout(() => {
+            if (!settled) {
+                settled = true;
+                reject(new Error(timeoutMessage));
+            }
+        }, timeoutMs);
+
+        promise
+            .then(value => {
+                if (!settled) {
+                    settled = true;
+                    clearTimeout(timer);
+                    resolve(value);
+                }
+            })
+            .catch(error => {
+                if (!settled) {
+                    settled = true;
+                    clearTimeout(timer);
+                    reject(error);
+                }
+            });
+    });
+}
 
 /**
  * Initialize audio functionality
@@ -65,13 +94,23 @@ function stopAllAudios() {
     audioPool.forEach(audio => {
         if (!audio.paused) {
             audio.pause();
-            audio.currentTime = 0;
-            
-            // Update the UI for the control element if it exists
-            if (audio.controlElement) {
-                const duration = audio.controlElement.attr('data-audio-duration') || 0;
-                audio.controlElement.html(`► ${Math.round(duration)}"`);
+        }
+
+        audio.currentTime = 0;
+
+        if (typeof audio.cleanup === 'function') {
+            try {
+                audio.cleanup();
+            } catch (cleanupError) {
+                console.warn('Error cleaning up audio resource:', cleanupError);
             }
+            audio.cleanup = null;
+        }
+
+        if (audio.controlElement) {
+            const storedDuration = Number(audio.controlElement.attr('data-audio-duration'));
+            const displayDuration = formatDurationForDisplay(storedDuration);
+            audio.controlElement.html(displayDuration ? `► ${displayDuration}"` : '►');
         }
     });
 }
@@ -85,9 +124,123 @@ function getAvailableAudio() {
         return idleAudio;
     } else {
         const newAudio = new Audio();
+        newAudio.preload = 'auto';
         audioPool.push(newAudio);
         return newAudio;
     }
+}
+
+function getSharedAudioContext() {
+    if (sharedAudioContext) {
+        return sharedAudioContext;
+    }
+
+    const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextCtor) {
+        console.warn('[txt2speech] Web Audio API is unavailable; duration decoding skipped.');
+        return null;
+    }
+
+    sharedAudioContext = new AudioContextCtor();
+    return sharedAudioContext;
+}
+
+function decodeAudioBuffer(audioContext, arrayBuffer) {
+    if (!audioContext) {
+        return Promise.reject(new Error('AudioContext is not available'));
+    }
+
+    if (audioContext.decodeAudioData.length === 1) {
+        return audioContext.decodeAudioData(arrayBuffer);
+    }
+
+    return new Promise((resolve, reject) => {
+        audioContext.decodeAudioData(arrayBuffer, resolve, reject);
+    });
+}
+
+async function computeAudioDuration(blob) {
+    try {
+        const audioContext = getSharedAudioContext();
+        if (!audioContext) {
+            return null;
+        }
+
+        const decodeTask = (async () => {
+            if (audioContext.state === 'suspended') {
+                try {
+                    await audioContext.resume();
+                } catch (resumeError) {
+                    console.warn('[txt2speech] Unable to resume AudioContext before decoding:', resumeError);
+                }
+            }
+
+            const arrayBuffer = await blob.arrayBuffer();
+            const audioBuffer = await decodeAudioBuffer(audioContext, arrayBuffer);
+            return audioBuffer.duration;
+        })();
+
+        return await promiseWithTimeout(decodeTask, 2000, 'Audio decode timed out');
+    } catch (error) {
+        console.warn('[txt2speech] Failed to decode audio duration:', error);
+        return null;
+    }
+}
+
+function formatDurationForDisplay(duration) {
+    if (!Number.isFinite(duration) || duration <= 0) {
+        return null;
+    }
+
+    return Math.max(1, Math.round(duration));
+}
+
+function createPlaybackSource(entry) {
+    if (!entry) {
+        return null;
+    }
+
+    if (typeof entry === 'string') {
+        return {
+            url: entry,
+            duration: null,
+            cleanup: null
+        };
+    }
+
+    if (entry.type === 'blob' && entry.blob instanceof Blob) {
+        if (!entry.objectUrl) {
+            entry.objectUrl = URL.createObjectURL(entry.blob);
+        }
+
+        return {
+            url: entry.objectUrl,
+            duration: entry.duration ?? null,
+            durationPromise: entry.durationPromise ?? null,
+            cleanup: null
+        };
+    }
+
+    if (entry.type === 'url' && entry.url) {
+        return {
+            url: entry.url,
+            duration: entry.duration ?? null,
+            durationPromise: entry.durationPromise ?? null,
+            cleanup: null
+        };
+    }
+
+    if (entry.url) {
+        return {
+            url: entry.url,
+            duration: entry.duration ?? null,
+            durationPromise: entry.durationPromise ?? null,
+            cleanup: null
+        };
+    }
+
+    console.warn('[txt2speech] Invalid audio cache entry:', entry);
+    return null;
 }
 
 /**
@@ -105,44 +258,72 @@ function initAudio($el, message) {
         }
         
         // Check if audio is already cached
-        const cachedUrl = audioCache.get(message);
-        
-        if (cachedUrl) {
-            // Audio already cached, play it directly
+        const cachedEntry = audioCache.get(message);
+
+        if (cachedEntry) {
+            const playbackSource = createPlaybackSource(cachedEntry);
+            if (!playbackSource) {
+                console.warn('[initAudio] Cached audio entry invalid, removing from cache.');
+                audioCache.delete(message);
+                return $el.html('►');
+            }
+
             const audio = getAvailableAudio();
-            playAudio($el, audio, cachedUrl, message);
-        } else {
-            // Audio not cached, show loading state and fetch
-            $el.html('<div class="spinner-grow spinner-grow-sm" role="status"><span class="visually-hidden">Loading...</span></div>');
+            playAudio($el, audio, playbackSource, message);
+            return;
+        }
+
+        // Audio not cached, show loading state and fetch
+        $el.html('<div class="spinner-grow spinner-grow-sm" role="status"><span class="visually-hidden">Loading...</span></div>');
+        try {
+            const cacheEntry = await generateTextToSpeech(message);
+            if (!cacheEntry) {
+                throw new Error('No audio data returned from text-to-speech provider.');
+            }
+            audioCache.set(message, cacheEntry);
+
+            const playbackSource = createPlaybackSource(cacheEntry);
+            if (!playbackSource) {
+                throw new Error('Unable to prepare audio playback source.');
+            }
+
+            const audio = getAvailableAudio();
+            playAudio($el, audio, playbackSource, message);
+        } catch (error) {
+            console.error('Error generating audio:', error);
+            // Reset UI to original state to allow retry
+            $el.html('►');
+            // Fallback to original voice URL method if Minimax fails
             try {
-                const audioUrl = await generateTextToSpeech(message);
-                audioCache.set(message, audioUrl);
-                const audio = getAvailableAudio();
-                playAudio($el, audio, audioUrl, message);
-            } catch (error) {
-                console.error('Error generating audio:', error);
-                // Reset UI to original state to allow retry
-                $el.html('►');
-                // Fallback to original voice URL method if EvenLab fails
-                try {
-                    const fallbackUrl = await getVoiceUrl(message);
-                    const response = await fetch(fallbackUrl, {
-                        method: 'POST',
-                        credentials: 'omit'
-                    });
-                    const result = await response.json();
-                    if (result.errno === 0) {
-                        const audioUrl = result.data.audio_url;
-                        audioCache.set(message, audioUrl);
+                const fallbackUrl = await getVoiceUrl(message);
+                const response = await fetch(fallbackUrl, {
+                    method: 'POST',
+                    credentials: 'omit'
+                });
+                const result = await response.json();
+                if (result.errno === 0 && result.data && result.data.audio_url) {
+                    const fallbackDurationRaw = Number(result.data.duration);
+                    const fallbackDuration = Number.isFinite(fallbackDurationRaw) && fallbackDurationRaw > 0 ? fallbackDurationRaw : null;
+                    const fallbackEntry = {
+                        type: 'url',
+                        url: result.data.audio_url,
+                        duration: fallbackDuration,
+                        durationPromise: fallbackDuration ? Promise.resolve(fallbackDuration) : null
+                    };
+                    audioCache.set(message, fallbackEntry);
+
+                    const playbackSource = createPlaybackSource(fallbackEntry);
+                    if (playbackSource) {
                         const audio = getAvailableAudio();
-                        playAudio($el, audio, audioUrl, message);
-                    } else {
-                        $el.html('►');
+                        playAudio($el, audio, playbackSource, message);
+                        return;
                     }
-                } catch (fallbackError) {
-                    console.error('Fallback audio generation failed:', fallbackError);
-                    $el.html('►');
                 }
+
+                $el.html('►');
+            } catch (fallbackError) {
+                console.error('Fallback audio generation failed:', fallbackError);
+                $el.html('►');
             }
         }
     }).catch(error => {
@@ -158,16 +339,16 @@ function initAudio($el, message) {
 async function generateTextToSpeech(message) {
     try {
         // Get voice provider settings
-        const voiceProvider = window.chatToolSettings?.getVoiceProvider() || 'openai';
+        const voiceProvider = window.chatToolSettings?.getVoiceProvider() || 'standard';
         
         console.log('[generateTextToSpeech] Using provider:', voiceProvider);
         
-        if (voiceProvider === 'evenlab') {
-            // Use EvenLab API
-            const evenLabVoice = window.chatToolSettings?.getEvenLabVoice() || 'sakura';
-            console.log('[generateTextToSpeech] Using EvenLab voice:', evenLabVoice);
-            
-            const response = await fetch('/api/eventlab/text-to-speech', {
+        if (voiceProvider === 'minimax' || voiceProvider === 'premium') {
+            // Use Minimax API
+            const minimaxVoice = window.chatToolSettings?.getMinimaxVoice?.() || 'Wise_Woman';
+            console.log('[generateTextToSpeech] Using Minimax voice:', minimaxVoice);
+
+            const response = await fetch('/api/minimax/text-to-speech', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -176,19 +357,40 @@ async function generateTextToSpeech(message) {
                     text: message,
                     userId: typeof userId !== 'undefined' ? userId : null,
                     chatId: typeof chatId !== 'undefined' ? chatId : null,
-                    voiceName: evenLabVoice,
+                    voiceName: minimaxVoice,
                     language: typeof language !== 'undefined' ? language : 'ja'
                 })
             });
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                console.error('[generateTextToSpeech] EvenLab API error:', errorData);
-                throw new Error(`EvenLab API error! status: ${response.status}`);
+                console.error('[generateTextToSpeech] Minimax API error:', errorData);
+                throw new Error(`Minimax API error! status: ${response.status}`);
             }
 
             const audioBlob = await response.blob();
-            return URL.createObjectURL(audioBlob);
+
+            const cacheEntry = {
+                type: 'blob',
+                blob: audioBlob,
+                duration: null,
+                durationPromise: null
+            };
+
+            cacheEntry.durationPromise = computeAudioDuration(audioBlob)
+                .then(duration => {
+                    if (Number.isFinite(duration) && duration > 0) {
+                        cacheEntry.duration = duration;
+                        return duration;
+                    }
+                    return null;
+                })
+                .catch(error => {
+                    console.warn('[generateTextToSpeech] Unable to compute Minimax audio duration:', error);
+                    return null;
+                });
+
+            return cacheEntry;
         } else {
             // Use OpenAI API
             const openAIVoice = window.chatToolSettings?.getSelectedVoice() || 'nova';
@@ -218,7 +420,15 @@ async function generateTextToSpeech(message) {
             // OpenAI API returns JSON with audio_url field pointing to a file
             const result = await response.json();
             if (result.errno === 0 && result.data && result.data.audio_url) {
-                return result.data.audio_url; // Return the file path directly
+                const reportedDuration = Number(result.data.duration);
+                const normalizedDuration = Number.isFinite(reportedDuration) && reportedDuration > 0 ? reportedDuration : null;
+
+                return {
+                    type: 'url',
+                    url: result.data.audio_url,
+                    duration: normalizedDuration,
+                    durationPromise: normalizedDuration ? Promise.resolve(normalizedDuration) : null
+                };
             } else {
                 throw new Error('Invalid response from OpenAI API: ' + JSON.stringify(result));
             }
@@ -284,73 +494,170 @@ function generateMD5(text) {
 /**
  * Play audio with UI controls
  */
-function playAudio($el, audio, audioUrl, message) {
-    // Track the current playing audio element to support toggling
-    const currentlyPlaying = audio.src === audioUrl && !audio.paused;
-    
-    // Mute all other audios
-    audioPool.forEach(a => {
-        if (a !== audio) {
-            a.muted = true;
-            a.pause();
-        }
-    });
-    
-    if (currentlyPlaying) {
-        // If this audio is already playing, pause it
-        audio.pause();
-        audio.currentTime = 0;
-        const duration = $el.attr('data-audio-duration') || 0;
-        $el.html(`► ${Math.round(duration)}"`);
-        return;
-    }
-    
-    // Log for debugging
-    console.log('[playAudio] Setting audio source:', audioUrl);
-    
-    // Otherwise, set up and play
-    if (audio.src !== audioUrl) {
-        audio.src = audioUrl;
-        
-        // Wait for the audio to be ready before playing
-        audio.addEventListener('canplaythrough', () => {
-            console.log('[playAudio] Audio ready to play');
-        }, { once: true });
-    }
-    
-    audio.muted = false;
-    
-    // Handle audio play errors with more detailed logging
-    audio.play().catch(error => {
-        console.error('Error playing audio:', error);
-        console.error('Audio source:', audio.src);
-        console.error('Audio readyState:', audio.readyState);
-        console.error('Audio networkState:', audio.networkState);
+function playAudio($el, audio, source, message) {
+    const playbackSource = source && source.url ? source : createPlaybackSource(source);
+
+    if (!playbackSource || !playbackSource.url) {
+        console.error('[playAudio] No audio source provided for playback.');
         $el.html('►');
         return;
-    });
-    
-    audio.onloadedmetadata = () => {
-        const duration = audio.duration;
-        console.log('[playAudio] Audio metadata loaded, duration:', duration);
-        $el.attr('data-audio-duration', duration)
-        .html(`❚❚ ${Math.round(duration)}"`);
-        
-        // Store which element is controlling this audio
-        audio.controlElement = $el;
     }
-    
+
+    const { url, duration, cleanup, durationPromise } = playbackSource;
+    const currentlyPlaying = audio.src === url && !audio.paused && audio.readyState > 0;
+
+    let cleaned = false;
+    let isSourceActive = true;
+    const safeCleanup = () => {
+        if (!cleaned && typeof cleanup === 'function') {
+            cleanup();
+            cleaned = true;
+        }
+        isSourceActive = false;
+    };
+
+    if (currentlyPlaying) {
+        audio.pause();
+        audio.currentTime = 0;
+        const storedDuration = Number($el.attr('data-audio-duration'));
+        const displayDuration = formatDurationForDisplay(storedDuration);
+        $el.html(displayDuration ? `► ${displayDuration}"` : '►');
+        safeCleanup();
+        audio.cleanup = null;
+        return;
+    }
+
+    if (typeof audio.cleanup === 'function') {
+        try {
+            audio.cleanup();
+        } catch (cleanupError) {
+            console.warn('[playAudio] Previous audio cleanup failed:', cleanupError);
+        }
+    }
+    audio.cleanup = safeCleanup;
+
+    audioPool.forEach(a => {
+        if (a !== audio) {
+            if (!a.paused) {
+                a.pause();
+            }
+            a.muted = true;
+            a.currentTime = 0;
+            if (typeof a.cleanup === 'function') {
+                try {
+                    a.cleanup();
+                } catch (cleanupError) {
+                    console.warn('[playAudio] Cleanup failed for other audio:', cleanupError);
+                }
+                a.cleanup = null;
+            }
+            if (a.controlElement) {
+                const previousDuration = Number(a.controlElement.attr('data-audio-duration'));
+                const displayDuration = formatDurationForDisplay(previousDuration);
+                a.controlElement.html(displayDuration ? `► ${displayDuration}"` : '►');
+            }
+        }
+    });
+
+    const updateControlState = (rawDuration, isPlaying) => {
+        const displayDuration = formatDurationForDisplay(rawDuration);
+        if (displayDuration) {
+            $el.attr('data-audio-duration', rawDuration);
+            $el.html(isPlaying ? `❚❚ ${displayDuration}"` : `► ${displayDuration}"`);
+        } else {
+            $el.removeAttr('data-audio-duration');
+            $el.html(isPlaying ? '❚❚' : '►');
+        }
+    };
+
+    const targetDuration = Number.isFinite(duration) && duration > 0 ? duration : null;
+    if (targetDuration) {
+        updateControlState(targetDuration, true);
+    } else {
+        $el.html('❚❚');
+    }
+
+    if (!targetDuration && durationPromise && typeof durationPromise.then === 'function') {
+        durationPromise
+            .then(resolvedDuration => {
+                if (!Number.isFinite(resolvedDuration) || resolvedDuration <= 0) {
+                    return;
+                }
+                if (!isSourceActive) {
+                    return;
+                }
+                const isPlayingSameSource = audio.controlElement === $el && audio.src === url;
+                updateControlState(resolvedDuration, isPlayingSameSource && !audio.paused);
+            })
+            .catch(error => {
+                console.warn('[playAudio] Deferred duration resolution failed:', error);
+            });
+    }
+
+    if (audio.src !== url) {
+        console.log('[playAudio] Setting audio source:', url);
+        audio.src = url;
+        try {
+            audio.load();
+        } catch (loadError) {
+            console.warn('[playAudio] audio.load() failed:', loadError);
+        }
+    } else {
+        try {
+            audio.currentTime = 0;
+        } catch (timeError) {
+            console.warn('[playAudio] Unable to reset currentTime:', timeError);
+        }
+    }
+
+    audio.muted = false;
+    audio.controlElement = $el;
+
+    audio.addEventListener('canplaythrough', () => {
+        console.log('[playAudio] Audio ready to play');
+    }, { once: true });
+
+    audio.onloadedmetadata = () => {
+        const metaDuration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : targetDuration;
+        if (metaDuration) {
+            console.log('[playAudio] Audio metadata loaded, duration:', metaDuration);
+            updateControlState(metaDuration, true);
+        } else {
+            console.log('[playAudio] Audio metadata loaded but duration unavailable.');
+        }
+    };
+
     audio.onerror = (event) => {
         console.error('Audio error occurred:', event);
         console.error('Audio error details:', audio.error);
         console.error('Audio source at error:', audio.src);
-        $el.html('►');
-    }
-    
+        updateControlState(null, false);
+        safeCleanup();
+        audio.cleanup = null;
+    };
+
     audio.onended = () => {
-        $el.html(`► ${Math.round(audio.duration)}"`);
+        const storedDuration = Number($el.attr('data-audio-duration'));
+        const finalDuration = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : (targetDuration ?? storedDuration);
+        updateControlState(finalDuration, false);
+        audio.currentTime = 0;
+        safeCleanup();
+        audio.cleanup = null;
+    };
+
+    const playPromise = audio.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(error => {
+            console.error('Error playing audio:', error);
+            console.error('Audio source:', audio.src);
+            console.error('Audio readyState:', audio.readyState);
+            console.error('Audio networkState:', audio.networkState);
+            updateControlState(null, false);
+            safeCleanup();
+            audio.cleanup = null;
+        });
     }
-    
+
     // Set up message container click handling
     setupMessageContainerClickHandling($el, audio, message);
 }
@@ -363,18 +670,26 @@ function setupMessageContainerClickHandling($el, audio, message) {
     $el.off('click').on('click', function(event) {
         event.stopPropagation();
         
-        const audioDuration = $el.attr('data-audio-duration');
+        const audioDuration = Number($el.attr('data-audio-duration'));
+        const displayDuration = formatDurationForDisplay(audioDuration);
         
         if (audio.paused) {
             // Resume playback
             audio.muted = false;
-            audio.play();
-            $el.html(`❚❚ ${Math.round(audioDuration)}"`);
+            const playPromise = audio.play();
+            if (playPromise && typeof playPromise.catch === 'function') {
+                playPromise.catch(error => {
+                    console.error('Error resuming audio:', error);
+                    const fallbackDuration = formatDurationForDisplay(Number($el.attr('data-audio-duration')));
+                    $el.html(fallbackDuration ? `► ${fallbackDuration}"` : '►');
+                });
+            }
+            $el.html(displayDuration ? `❚❚ ${displayDuration}"` : '❚❚');
         } else {
             // Pause playback
             audio.pause();
             audio.currentTime = 0;
-            $el.html(`► ${Math.round(audioDuration)}"`);
+            $el.html(displayDuration ? `► ${displayDuration}"` : '►');
         }
     });
     
@@ -387,7 +702,9 @@ function setupMessageContainerClickHandling($el, audio, message) {
                 // If playing, stop it
                 audio.pause();
                 audio.currentTime = 0;
-                $el.html(`► ${Math.round($el.attr('data-audio-duration'))}"`);
+                const storedDuration = Number($el.attr('data-audio-duration'));
+                const displayDuration = formatDurationForDisplay(storedDuration);
+                $el.html(displayDuration ? `► ${displayDuration}"` : '►');
             }
         }
     });
@@ -444,7 +761,9 @@ $(document).ready(function() {
             // If audio is playing, stop it
             audio.pause();
             audio.currentTime = 0;
-            $el.html(`► ${Math.round($el.attr('data-audio-duration') || 0)}"`);
+            const storedDuration = Number($el.attr('data-audio-duration'));
+            const displayDuration = formatDurationForDisplay(storedDuration);
+            $el.html(displayDuration ? `► ${displayDuration}"` : '►');
             return;
         }
         
@@ -453,8 +772,9 @@ $(document).ready(function() {
 
         // Update duration display if available
         (function() {
-            const duration = $el.attr('data-audio-duration');
-            if (duration) $el.html('► ' + Math.round(duration) + '"');
+            const duration = Number($el.attr('data-audio-duration'));
+            const displayDuration = formatDurationForDisplay(duration);
+            if (displayDuration) $el.html(`► ${displayDuration}"`);
         })();
 
         initAudio($el, message);

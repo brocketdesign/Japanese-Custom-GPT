@@ -25,74 +25,10 @@
     "following": "Abonné",
     "followed": "Abonné !",
     "follow": "Suivre",
-    "unfollowed": "Désabonné !",
-    "requestFailed": "La requête a échoué."
-  },
-  "requestFailed": "La requête a échoué",
-  "image_leaderboard_title": "Classement des images",
-  "chat_goal_completed": "Objectif de chat atteint, reçu {{points}} points !",
-  "setNsfw": "Définir comme NSFW",
-  "unsetNsfw": "Définir comme non NSFW",
-  "browseByCategory": "Parcourir par catégorie",
-  "scrollForMore": "Faites défiler pour plus de personnages",
-  "exploreRestriction": "Passez à la version supérieure pour explorer les personnages NSFW",
-  "userRestriction": "Gagnez des points pour créer plus d'images",
-  "loadingMoreCharacters": "Chargement de plus de personnages...",
-  "cardMenuTitle": "Explorer les personnages IA",
-  "cardMenuDescription": "Découvrez et interagissez avec une variété de personnages IA.",
-  "createCharacterRestriction": "Passez à la version supérieure pour créer plus de personnages",
-  "refresh": "Rafraîchir",
-  "latestVideoChatsHeader": "Derniers chats vidéo",
-  "upgrade": "Mettre à niveau",
-  "loadingChats": "Chargement des discussions...",
-  "pleaseWait": "Veuillez patienter",
-  "loading": "Chargement...",
-  "newChat": "Nouvelle discussion",
-  "noChatHistory": "Aucun historique de discussion",
-  "chatHistory": "Historique des conversations",
-  "widgetChatHistory": "Historique des discussions du widget",
-  "loadingHistory": "Chargement de l'historique...",
-  "historyLoadError": "Échec du chargement de l'historique",
-  "retry": "Réessayer",
-  "loadMore": "Charger plus",
-  "close": "Fermer",
-  "analytics_title": "Tableau de bord d'analyse",
-  "suggestions": {
-    "title": "Suggestions",
-    "description": "Appuyez pour envoyer",
-    "chat": "Discussion",
-    "feelings": "Sentiments",
-    "image_request": "Demandes d'image"
-  },
-  "settings": {
-    "suggestionsSettings": "Paramètres de suggestions",
-    "enableSuggestions": "Activer les suggestions de chat",
-    "suggestionsDescription": "Afficher automatiquement les suggestions de réponse IA",
-    "saveSettings": "Enregistrer les paramètres",
-    "title": "Paramètres",
-    "imageSettings": "Paramètres d'image",
-    "minImagesToSend": "Nombre minimum d'images à envoyer",
-    "videoSettings": "Paramètres vidéo",
-    "defaultVideoPrompt": "Invite vidéo par défaut",
-    "videoPromptPlaceholder": "Entrez l'invite de génération de vidéo...",
-    "defaultVideoPromptText": "Générez une courte vidéo engageante avec des transitions fluides et des couleurs vibrantes.",
-    "characterTone": "Personnage & Ton",
-    "characterToneLabel": "Ton du personnage",
-    "relationshipType": "Type de relation",
-    "voiceSettings": "Paramètres de voix",
-    "voiceProvider": "Fournisseur de voix",
-    "openAI": "OpenAI",
-    "evenLabs": "EvenLabs",
-    "selectOpenAIVoice": "Sélectionner une voix OpenAI",
-    "selectEvenLabsVoice": "Sélectionner une voix EvenLabs",
-    "selectVoice": "Sélectionner une voix",
-    "tones": {
-      "friendly": "Amical",
-      "casual": "Décontracté",
-      "professional": "Professionnel",
-      "playful": "Enjoué",
-      "romantic": "Romantique",
-      "mysterious": "Mystérieux"
+      "Fena": {
+        "name": "Fena - Personnage",
+        "description": "Jeune fille impertinente"
+      }
     },
     "relationships": {
       "friend": "Ami",
@@ -171,6 +107,70 @@
         "name": "Nana-chan",
         "description": "Voix féminine jeune, mignonne"
       },
+      "Friendly_Person": {
+        "name": "Personne amicale",
+        "description": "Voix chaleureuse et accueillante avec une articulation claire"
+      },
+      "Inspirational_girl": {
+        "name": "Fille inspirante",
+        "description": "Voix jeune et motivante qui insuffle de l'énergie"
+      },
+      "Deep_Voice_Man": {
+        "name": "Homme à la voix grave",
+        "description": "Baryton profond au rythme régulier"
+      },
+      "Calm_Woman": {
+        "name": "Femme calme",
+        "description": "Parole douce et posée idéale pour les échanges détendus"
+      },
+      "Casual_Guy": {
+        "name": "Homme décontracté",
+        "description": "Ton conversationnel facile et sympathique"
+      },
+      "Lively_Girl": {
+        "name": "Fille pleine d'énergie",
+        "description": "Voix animée et dynamique pleine d'enthousiasme"
+      },
+      "Patient_Man": {
+        "name": "Homme patient",
+        "description": "Timbre rassurant et régulier pour un dialogue apaisant"
+      },
+      "Young_Knight": {
+        "name": "Jeune chevalier",
+        "description": "Voix jeune et confiante avec une touche héroïque"
+      },
+      "Determined_Man": {
+        "name": "Homme déterminé",
+        "description": "Voix résolue avec une forte accentuation"
+      },
+      "Lovely_Girl": {
+        "name": "Fille adorable",
+        "description": "Voix douce et charmante aux intonations délicates"
+      },
+      "Decent_Boy": {
+        "name": "Garçon respectable",
+        "description": "Timbre adolescent chaleureux et poli"
+      },
+      "Imposing_Manner": {
+        "name": "Allure imposante",
+        "description": "Présence vocale autoritaire et projetée"
+      },
+      "Elegant_Man": {
+        "name": "Homme élégant",
+        "description": "Diction raffinée au rythme maîtrisé"
+      },
+      "Abbess": {
+        "name": "Abbesse",
+        "description": "Tonalité sereine portant une douce autorité"
+      },
+      "Sweet_Girl_2": {
+        "name": "Fille douce 2",
+        "description": "Voix juvénile lumineuse pleine de tendresse"
+      },
+      "Exuberant_Girl": {
+        "name": "Fille exubérante",
+        "description": "Élocution très énergique débordante d'enthousiasme"
+      },
       "Sophia": {
         "name": "Sophia",
         "description": "Une Américaine parlant doucement"
@@ -181,8 +181,7 @@
       }
     },
     "autoMergeFace": "Fusion automatique du visage",
-    "autoMergeFaceDescription": "Fusionnez automatiquement votre visage avec des images photoréalistes générées"
-  },
+    "autoMergeFaceDescription": "Fusionnez automatiquement votre visage avec des images photoréalistes générées",
   "gifts": {
     "selectGift": "Sélectionner un cadeau",
     "selectGift_description": "Choisissez un cadeau à offrir au personnage."

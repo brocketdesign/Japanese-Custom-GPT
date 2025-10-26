@@ -71,7 +71,7 @@
     "voices": {
         "nova": {
             "name": "Nova",
-            "description": "Voix féminine vive et énergique"
+            "description": "Voix féminine lumineuse et énergique"
         },
         "alloy": {
             "name": "Alloy",
@@ -83,27 +83,75 @@
         },
         "fable": {
             "name": "Fable",
-            "description": "Voix profonde et narrative"
+            "description": "Voix grave qui raconte des histoires"
         },
-        "Thandiwe": {
-            "name": "Thandiwe Dlamini",
-            "description": "Une leader stratégique de marque sud-africaine"
+        "Wise_Woman": {
+            "name": "Femme Sage",
+            "description": "Voix féminine japonaise apaisante et mature avec un rythme naturel"
         },
-        "Miranda": {
-            "name": "Miranda",
-            "description": "Une jeune femme douce et pétillante"
+        "Friendly_Person": {
+            "name": "Personne amicale",
+            "description": "Voix chaleureuse et accueillante avec une articulation claire"
         },
-        "Nana": {
-            "name": "Nana-chan",
-            "description": "Une voix féminine jeune, mignonne et joyeuse"
+        "Inspirational_girl": {
+            "name": "Fille inspirante",
+            "description": "Voix jeune et motivante qui insuffle de l'énergie"
         },
-        "Sophia": {
-            "name": "Sophia",
-            "description": "Une fille américaine parlant doucement avec un ton délicat"
+        "Deep_Voice_Man": {
+            "name": "Homme à la voix grave",
+            "description": "Baryton profond au rythme régulier"
         },
-        "Fena": {
-            "name": "Fena - Character",
-            "description": "Jeune personnage de fille impertinente"
+        "Calm_Woman": {
+            "name": "Femme calme",
+            "description": "Parole douce et posée idéale pour les échanges détendus"
+        },
+        "Casual_Guy": {
+            "name": "Homme décontracté",
+            "description": "Ton conversationnel facile et sympathique"
+        },
+        "Lively_Girl": {
+            "name": "Fille pleine d'énergie",
+            "description": "Voix animée et dynamique pleine d'enthousiasme"
+        },
+        "Patient_Man": {
+            "name": "Homme patient",
+            "description": "Timbre rassurant et régulier pour un dialogue apaisant"
+        },
+        "Young_Knight": {
+            "name": "Jeune chevalier",
+            "description": "Voix jeune et confiante avec une touche héroïque"
+        },
+        "Determined_Man": {
+            "name": "Homme déterminé",
+            "description": "Voix résolue avec une forte accentuation"
+        },
+        "Lovely_Girl": {
+            "name": "Fille adorable",
+            "description": "Voix douce et charmante aux intonations délicates"
+        },
+        "Decent_Boy": {
+            "name": "Garçon respectable",
+            "description": "Timbre adolescent chaleureux et poli"
+        },
+        "Imposing_Manner": {
+            "name": "Allure imposante",
+            "description": "Présence vocale autoritaire et projetée"
+        },
+        "Elegant_Man": {
+            "name": "Homme élégant",
+            "description": "Diction raffinée au rythme maîtrisé"
+        },
+        "Abbess": {
+            "name": "Abbesse",
+            "description": "Tonalité sereine portant une douce autorité"
+        },
+        "Sweet_Girl_2": {
+            "name": "Fille douce 2",
+            "description": "Voix juvénile lumineuse pleine de tendresse"
+        },
+        "Exuberant_Girl": {
+            "name": "Fille exubérante",
+            "description": "Élocution très énergique débordante d'enthousiasme"
         }
     },
     "suggestionsSettings": "Suggestions de chat",

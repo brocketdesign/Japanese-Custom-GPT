@@ -32,8 +32,8 @@ async function routes(fastify, options) {
                     characterTone: 'casual',
                     relationshipType: 'companion',
                     selectedVoice: 'nova',
-                    voiceProvider: 'openai',
-                    evenLabVoice: 'sakura',
+                    voiceProvider: 'standard',
+                    minimaxVoice: 'Wise_Woman',
                     autoMergeFace: true,
                     selectedModel: 'mistral',
                     suggestionsEnabled: true,
@@ -46,6 +46,15 @@ async function routes(fastify, options) {
 
             // Remove MongoDB specific fields from response
             const { _id, userId: userIdField, createdAt, updatedAt, ...userSettings } = settings;
+
+            if (!userSettings.minimaxVoice && userSettings.evenLabVoice) {
+                userSettings.minimaxVoice = userSettings.evenLabVoice;
+            }
+            delete userSettings.evenLabVoice;
+
+            if (!userSettings.voiceProvider) {
+                userSettings.voiceProvider = 'standard';
+            }
             
             // Override autoImageGeneration for non-premium users
             if (!isPremium) {
@@ -87,18 +96,21 @@ async function routes(fastify, options) {
             const isPremium = user?.subscriptionStatus === 'active';
 
             // Validate settings structure
+            const requestedProvider = String(settings.voiceProvider || 'standard').toLowerCase();
+            const normalizedProvider = ['premium', 'minimax', 'evenlab'].includes(requestedProvider) ? 'premium' : 'standard';
+
             const validSettings = {
                 minImages: Number(settings.minImages) || 3,
                 videoPrompt: String(settings.videoPrompt || 'Generate a short, engaging video with smooth transitions and vibrant colors.'),
                 characterTone: String(settings.characterTone || 'casual'),
                 relationshipType: String(settings.relationshipType || 'companion'),
                 selectedVoice: String(settings.selectedVoice || 'nova'),
-                voiceProvider: String(settings.voiceProvider || 'openai'),
-                evenLabVoice: String(settings.evenLabVoice || 'sakura'),
+                voiceProvider: normalizedProvider,
+                minimaxVoice: String(settings.minimaxVoice || settings.evenLabVoice || 'Wise_Woman'),
                 autoMergeFace: Boolean(settings.autoMergeFace !== undefined ? settings.autoMergeFace : true),
                 selectedModel: String(settings.selectedModel || 'mistral'),
                 suggestionsEnabled: Boolean(settings.suggestionsEnabled !== undefined ? settings.suggestionsEnabled : true),
-                autoImageGeneration: isPremium ? Boolean(settings.autoImageGeneration !== undefined ? settings.autoImageGeneration : false) : false, // Premium feature
+                autoImageGeneration: isPremium ? Boolean(settings.autoImageGeneration !== undefined ? settings.autoImageGeneration : false) : false,
                 speechRecognitionEnabled: Boolean(settings.speechRecognitionEnabled !== undefined ? settings.speechRecognitionEnabled : true),
                 speechAutoSend: Boolean(settings.speechAutoSend !== undefined ? settings.speechAutoSend : false)
             };
@@ -192,8 +204,8 @@ async function routes(fastify, options) {
                 characterTone: 'casual',
                 relationshipType: 'companion',
                 selectedVoice: 'nova',
-                voiceProvider: 'openai',
-                evenLabVoice: 'sakura',
+                voiceProvider: 'standard',
+                minimaxVoice: 'Wise_Woman',
                 autoMergeFace: true,
                 selectedModel: 'mistral',
                 suggestionsEnabled: true,
@@ -245,6 +257,16 @@ async function routes(fastify, options) {
                 if (!isPremium) {
                     settings.autoImageGeneration = false;
                 }
+                
+                if (!settings.minimaxVoice && settings.evenLabVoice) {
+                    settings.minimaxVoice = settings.evenLabVoice;
+                }
+                delete settings.evenLabVoice;
+
+                if (!settings.voiceProvider) {
+                    settings.voiceProvider = 'standard';
+                }
+
                 return reply.send({ success: true, settings, isChatSpecific: true, isPremium });
             }
 
@@ -260,6 +282,16 @@ async function routes(fastify, options) {
                 if (!isPremium) {
                     settings.autoImageGeneration = false;
                 }
+                
+                if (!settings.minimaxVoice && settings.evenLabVoice) {
+                    settings.minimaxVoice = settings.evenLabVoice;
+                }
+                delete settings.evenLabVoice;
+
+                if (!settings.voiceProvider) {
+                    settings.voiceProvider = 'standard';
+                }
+
                 return reply.send({ success: true, settings, isChatSpecific: false, isPremium });
             }
 
@@ -270,8 +302,8 @@ async function routes(fastify, options) {
                 characterTone: 'casual',
                 relationshipType: 'companion',
                 selectedVoice: 'nova',
-                voiceProvider: 'openai',
-                evenLabVoice: 'sakura',
+                voiceProvider: 'standard',
+                minimaxVoice: 'Wise_Woman',
                 autoMergeFace: true,
                 selectedModel: 'mistral',
                 suggestionsEnabled: true,

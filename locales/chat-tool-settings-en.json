@@ -85,25 +85,73 @@
             "name": "Fable",
             "description": "Deep and storytelling voice"
         },
-        "Thandiwe": {
-            "name": "Thandiwe Dlamini",
-            "description": "A South African strategic brand leader"
+        "Wise_Woman": {
+            "name": "Wise Woman",
+            "description": "Calming, mature Japanese female voice with a natural cadence"
         },
-        "Miranda": {
-            "name": "Miranda",
-            "description": "A sweet and bubbly young woman"
+        "Friendly_Person": {
+            "name": "Friendly Person",
+            "description": "Upbeat, approachable tone with clear articulation"
         },
-        "Nana": {
-            "name": "Nana-chan",
-            "description": "A youthful female voice, cute and cheerful"
+        "Inspirational_girl": {
+            "name": "Inspirational Girl",
+            "description": "Motivating youthful voice that lifts the conversation"
         },
-        "Sophia": {
-            "name": "Sophia",
-            "description": "An American girl talking softly with a gentle tone"
+        "Deep_Voice_Man": {
+            "name": "Deep Voice Man",
+            "description": "Resonant baritone delivery with steady pacing"
         },
-        "Fena": {
-            "name": "Fena - Character",
-            "description": "Young, sassy girl character"
+        "Calm_Woman": {
+            "name": "Calm Woman",
+            "description": "Soft, measured speech ideal for relaxed chats"
+        },
+        "Casual_Guy": {
+            "name": "Casual Guy",
+            "description": "Easygoing conversational voice with friendly inflection"
+        },
+        "Lively_Girl": {
+            "name": "Lively Girl",
+            "description": "Animated and energetic tone full of enthusiasm"
+        },
+        "Patient_Man": {
+            "name": "Patient Man",
+            "description": "Reassuring, steady cadence suited for supportive dialogue"
+        },
+        "Young_Knight": {
+            "name": "Young Knight",
+            "description": "Confident youthful voice with heroic flair"
+        },
+        "Determined_Man": {
+            "name": "Determined Man",
+            "description": "Purposeful delivery with strong emphasis"
+        },
+        "Lovely_Girl": {
+            "name": "Lovely Girl",
+            "description": "Gentle and charming voice with soft intonation"
+        },
+        "Decent_Boy": {
+            "name": "Decent Boy",
+            "description": "Warm adolescent tone that stays polite and composed"
+        },
+        "Imposing_Manner": {
+            "name": "Imposing Manner",
+            "description": "Commanding presence with deep projection"
+        },
+        "Elegant_Man": {
+            "name": "Elegant Man",
+            "description": "Refined, sophisticated delivery with smooth pacing"
+        },
+        "Abbess": {
+            "name": "Abbess",
+            "description": "Serene tone that carries gentle authority"
+        },
+        "Sweet_Girl_2": {
+            "name": "Sweet Girl 2",
+            "description": "Bright youthful voice brimming with affection"
+        },
+        "Exuberant_Girl": {
+            "name": "Exuberant Girl",
+            "description": "High-energy delivery bursting with excitement"
         }
     },
     "suggestionsSettings": "Chat Suggestions",

@@ -356,7 +356,7 @@ async function generateImg({
     enableMergeFace = false
 }) {
     const db = fastify.mongo.db;
-
+    
     // Validate required parameters (prompt)
     if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
         fastify.sendNotificationToUser(userId, 'showNotification', {
@@ -428,6 +428,7 @@ async function generateImg({
     let image_request;
     if (flux) {
         // FLUX-specific request structure
+        const seed = typeof imageSeed === 'number' && imageSeed >= 0 ? imageSeed : selectedStyle[imageType].seed;
         image_request = {
             type: imageType,
             prompt: (selectedStyle[imageType].prompt ? selectedStyle[imageType].prompt + prompt : prompt).replace(/^\s+/gm, '').trim(),
@@ -436,6 +437,7 @@ async function generateImg({
             seed: imageSeed || selectedStyle[imageType].seed,
             steps: 4, // FLUX uses fewer steps
             blur: false, // FLUX doesn't support blurring
+            ...(typeof seed === 'number' && seed >= 0 ? { seed } : {}),
         };
     } else {
         // Regular model request structure

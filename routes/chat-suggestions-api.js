@@ -79,7 +79,7 @@ async function routes(fastify, options) {
 
             // Get user's language preference
             const language = getLanguageName(userInfo.lang) || 'japanese';
-
+            console.log(`[Chat Suggestions] Generating suggestions in language: ${language}`);
             // Generate suggestions
             const suggestions = await generateChatSuggestions(
                 db,

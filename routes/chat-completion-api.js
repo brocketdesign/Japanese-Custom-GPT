@@ -358,14 +358,14 @@ async function routes(fastify, options) {
                 messagesForCompletion = [
                     ...systemMsg,
                     ...userMessages,
+                    ...languageDirective,
                     ...imgMessage,
-                    ...languageDirective
                 ];
             } else {
                 messagesForCompletion = [
                     ...systemMsg, 
+                    ...languageDirective,
                     ...userMessages,
-                    ...languageDirective
                 ];
             }
 
@@ -413,7 +413,10 @@ async function routes(fastify, options) {
                         //console.log(`[/api/openai-chat-completion] Image request detected:`, assistantImageRequest);
                         if (assistantImageRequest && assistantImageRequest.image_request) {
                             lastUserMessage.content += ' ' + newAssistantMessage.content;
+                            // [OVERWRITE] Use the character nsfw setting for auto image generation
+                            assistantImageRequest.nsfw = nsfw;
 
+                            // [FIND FIX] Duplication of the parameters assistantImageRequest; it should be currentUserMessage
                             const imageResult = await handleImageGeneration(
                                 db, assistantImageRequest, lastUserMessage, assistantImageRequest, userData,
                                 userInfo, isAdmin, characterDescription, nsfw, userChatId, chatId, userId, request.translations, fastify

@@ -348,17 +348,17 @@ async function handleImageGeneration(db, currentUserMessage, lastUserMessage, ge
                         fastify.sendNotificationToUser(userId, 'handleLoader', { imageId: placeholderId, action: 'remove' });
                     });
                 
-                imgMessage[0].content = `\n\nI activated the image generation feature for this prompt.\n The image will be generated shortly.`.trim();
+                imgMessage[0].content = `\n\n${translations.image_generation?.activated || 'I activated the image generation feature for this prompt.\n The image will be generated shortly.'}`.trim();
                 currentUserMessage.name = 'context';
             }
         } else {
             genImage.image_request = false;
-            imgMessage[0].content = `\n\n I asked for an other image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premium in order to receive unlimited images, even hot images. Provide a concise answer to inform me of that and tell me if I want to subscribe there is 70% promotion right now. Stay in your character, keep the same tone as previously. Respond in the language we were talking until now.`.trim();
+            imgMessage[0].content = `\n\n${translations.image_generation?.not_subscribed || 'I asked for an other image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premium...'}`.trim();
             currentUserMessage.name = 'context';
         }
     } else {
         genImage.image_request = false;
-        imgMessage[0].content = `\n\n I asked for an other image but I do not have enough points.\n Tell me that I need to earn more points by chatting with you or by subscribing to Lamix Premium in order to receive unlimited images, even hot images. Provide a concise answer to inform me of that and tell me if I want to subscribe there is 70% promotion right now. Stay in your character, keep the same tone as previously. Respond in the language we were talking until now.`.trim();
+        imgMessage[0].content = `\n\n${translations.image_generation?.insufficient_points || 'I asked for an other image but I do not have enough points.\n Tell me that I need to earn more points by chatting with you or by subscribing to Lamix Premium in order to receive unlimited images, even hot images. Provide a concise answer to inform me of that and tell me if I want to subscribe there is 70% promotion right now. Stay in your character, keep the same tone as previously. Respond in the language we were talking until now.'}`.trim();
         currentUserMessage.name = 'context';
     }
 

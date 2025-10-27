@@ -252,7 +252,9 @@
     max-width: 100vw;
     width: 90%;
     max-height: 90vh;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     transform: scale(0.9) translateY(20px);
     transition: all 0.3s ease;
     border: 1px solid rgba(137, 83, 253, 0.1);
@@ -299,7 +301,48 @@
 }
 
 .settings-modal-body {
-    padding: 20px 10px 30px;
+    padding: 20px 30px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.settings-quick-nav {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.settings-quick-nav-btn {
+    border: 1px solid rgba(110, 32, 244, 0.15);
+    border-radius: 14px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, rgba(110, 32, 244, 0.05) 0%, rgba(139, 76, 248, 0.08) 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #5a2ccf;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.settings-quick-nav-btn i {
+    font-size: 20px;
+}
+
+.settings-quick-nav-btn span {
+    line-height: 1.2;
+}
+
+.settings-quick-nav-btn:hover,
+.settings-quick-nav-btn.active {
+    border-color: rgba(110, 32, 244, 0.4);
+    background: linear-gradient(135deg, rgba(110, 32, 244, 0.12) 0%, rgba(139, 76, 248, 0.18) 100%);
+    box-shadow: 0 8px 20px rgba(110, 32, 244, 0.12);
 }
 
 .settings-section {
@@ -510,6 +553,15 @@
     box-shadow: 0 8px 25px rgba(110, 32, 244, 0.3);
 }
 
+.settings-chat-footer {
+    padding: 20px 30px 25px;
+    background: white;
+    border-top: 1px solid rgba(137, 83, 253, 0.12);
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+}
+
 /* Voice Provider Switch Styles */
 .settings-switch-container {
     display: flex;
@@ -708,9 +760,27 @@
         width: 95%;
         margin: 10px;
     }
-    
+
     .settings-modal-header{
         padding: 20px;
+    }
+
+    .settings-modal-body {
+        padding: 16px 20px;
+    }
+
+    .settings-quick-nav {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 10px;
+    }
+
+    .settings-quick-nav-btn {
+        padding: 12px 10px;
+        font-size: 12px;
+    }
+
+    .settings-chat-footer {
+        padding: 16px 20px 20px;
     }
     
     .settings-tone-grid,

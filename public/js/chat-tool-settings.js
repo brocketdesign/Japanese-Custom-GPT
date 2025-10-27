@@ -103,6 +103,35 @@ class ChatToolSettings {
             saveBtn.addEventListener('click', () => this.saveSettings());
         }
 
+        // Quick navigation buttons
+        document.addEventListener('click', (e) => {
+            const navBtn = e.target.closest('.settings-quick-nav-btn');
+            if (!navBtn) {
+                return;
+            }
+
+            e.preventDefault();
+
+            const targetSelector = navBtn.dataset.target;
+            const modalBody = document.querySelector('.settings-modal-body');
+            if (!modalBody || !targetSelector) {
+                return;
+            }
+
+            const targetSection = modalBody.querySelector(targetSelector);
+            if (!targetSection) {
+                return;
+            }
+
+            document.querySelectorAll('.settings-quick-nav-btn').forEach(btn => btn.classList.remove('active'));
+            navBtn.classList.add('active');
+
+            modalBody.scrollTo({
+                top: targetSection.offsetTop - 12,
+                behavior: 'smooth'
+            });
+        });
+
         // Voice selection
         document.querySelectorAll('.settings-voice-option').forEach(option => {
             option.addEventListener('click', () => this.selectVoice(option));

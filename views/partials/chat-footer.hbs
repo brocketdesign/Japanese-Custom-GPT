@@ -367,8 +367,39 @@
             </button>
         </div>
         <div class="settings-modal-body">
+            <div class="settings-quick-nav">
+                <button type="button" class="settings-quick-nav-btn active" data-target="#image-settings">
+                    <i class="bi bi-image"></i>
+                    <span>{{chatToolSettingsTranslations.imageSettings}}</span>
+                </button>
+                <button type="button" class="settings-quick-nav-btn" data-target="#video-settings">
+                    <i class="bi bi-camera-video"></i>
+                    <span>{{chatToolSettingsTranslations.videoSettings}}</span>
+                </button>
+                <button type="button" class="settings-quick-nav-btn" data-target="#relationship-settings">
+                    <i class="bi bi-heart"></i>
+                    <span>{{chatToolSettingsTranslations.relationshipType}}</span>
+                </button>
+                <button type="button" class="settings-quick-nav-btn" data-target="#voice-settings">
+                    <i class="bi bi-mic"></i>
+                    <span>{{chatToolSettingsTranslations.voiceSettings}}</span>
+                </button>
+                <button type="button" class="settings-quick-nav-btn" data-target="#speech-settings">
+                    <i class="bi bi-mic-fill"></i>
+                    <span>{{speechToTextTranslations.settings.title}}</span>
+                </button>
+                <button type="button" class="settings-quick-nav-btn" data-target="#suggestions-settings">
+                    <i class="bi bi-lightbulb"></i>
+                    <span>{{chatToolSettingsTranslations.suggestionsSettings}}</span>
+                </button>
+                <button type="button" class="settings-quick-nav-btn" data-target="#model-settings">
+                    <i class="bi bi-cpu"></i>
+                    <span>{{chatToolSettingsTranslations.modelSettings}}</span>
+                </button>
+            </div>
+
             <!-- Image Settings -->
-            <div class="settings-section">
+            <div class="settings-section" id="image-settings">
                 <div class="settings-section-header">
                     <div class="settings-section-title">
                         <i class="bi bi-image me-2"></i>
@@ -442,7 +473,7 @@
             </div>
 
             <!-- Video Settings -->
-            <div class="settings-section">
+            <div class="settings-section" id="video-settings">
                 <div class="settings-section-header">
                     <div class="settings-section-title">
                         <i class="bi bi-camera-video me-2"></i>
@@ -470,7 +501,7 @@
             </div>
 
             <!-- Relationship Settings -->
-            <div class="settings-section">
+            <div class="settings-section" id="relationship-settings">
                 <div class="settings-section-header">
                     <div class="settings-section-title">
                         <i class="bi bi-heart me-2"></i>
@@ -542,7 +573,7 @@
             </div>
 
             <!-- Voice Settings -->
-            <div class="settings-section">
+            <div class="settings-section" id="voice-settings">
                 <div class="settings-section-header">
                     <div class="settings-section-title">
                         <i class="bi bi-mic me-2"></i>
@@ -619,7 +650,7 @@
             </div>
 
             <!-- Speech Recognition Settings -->
-            <div class="settings-section">
+            <div class="settings-section" id="speech-settings">
                 <div class="settings-section-header">
                     <div class="settings-section-title">
                         <i class="bi bi-mic-fill me-2"></i>
@@ -672,7 +703,7 @@
             </div>
             
             <!-- Chat Suggestions Settings -->
-            <div class="settings-section">
+            <div class="settings-section" id="suggestions-settings">
                 <div class="settings-section-header">
                     <div class="settings-section-title">
                         <i class="bi bi-lightbulb me-2"></i>
@@ -697,7 +728,7 @@
                 </div>
             </div>
             <!-- Model Settings -->
-            <div class="settings-section">
+            <div class="settings-section" id="model-settings">
                 <div class="settings-section-header">
                     <div class="settings-section-title">
                         <i class="bi bi-cpu me-2"></i>
@@ -722,12 +753,12 @@
                 </div>
             </div>
             
-            <div class="settings-chat-footer mt-4 pt-4 border-top">
-                <button type="button" class="settings-save-btn" id="settings-save-btn">
-                    <i class="bi bi-check-circle me-2"></i>
-                    {{chatToolSettingsTranslations.saveSettings}}
-                </button>
-            </div>
+        </div>
+        <div class="settings-chat-footer mt-4 pt-4 border-top">
+            <button type="button" class="settings-save-btn" id="settings-save-btn">
+                <i class="bi bi-check-circle me-2"></i>
+                {{chatToolSettingsTranslations.saveSettings}}
+            </button>
         </div>
     </div>
 </div>

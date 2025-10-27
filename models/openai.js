@@ -346,7 +346,7 @@ async function generatePromptSuggestions(messages, chatDescription, language, mo
     .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system')
     .slice(-5);
 
-  console.log(`[generatePromptSuggestions] Using OpenAI gpt-4o-mini for stable structured output`);
+  console.log(`[generatePromptSuggestions] Using OpenAI gpt-4o-mini for stable structured output in language: ${language}`);
 
   // Define Zod schemas for each category
   const chatSchema = z.object({
@@ -370,18 +370,17 @@ async function generatePromptSuggestions(messages, chatDescription, language, mo
         model: 'gpt-4o-mini',
         messages: [
           { 
-            role: "system", 
-            content: `Generate exactly 3 ${categoryName} suggestions in ${language}. ${categoryPrompt} Be creative and engaging. Include emojis for visual appeal. From the user point of view. You start your sentence with "I ...".` 
+        role: "system", 
+        content: `Generate exactly 3 ${categoryName} suggestions in ${language}. ${categoryPrompt} Be creative and engaging. Include emojis for visual appeal. From the user point of view. You start your sentence with "I ...".` 
           },
           ...lastUserMessagesContent,
           { 
-            role: "user", 
-            content: `I need suggestion to converse with the following character: ${chatDescription}\n\nGenerate 3 unique ${categoryName} suggestions that fit the provided character description and the conversation. From the user point of view.` 
+        role: "user", 
+        content: `I need suggestion to converse with the following character: ${chatDescription}\n\nGenerate 3 unique ${categoryName} suggestions that fit the provided character description and the conversation. From the user point of view.` 
           },
-
           {
-            role: 'user',
-            content: 'Provide concise suggestions. One short sentence. Use first person for your sentence. The user is sending the messages.'
+        role: 'user',
+        content: `Provide concise suggestions in ${language}. One short sentence. Use first person for your sentence. The user is sending the messages.`
           }
         ],
         max_completion_tokens: 800,

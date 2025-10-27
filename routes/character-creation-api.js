@@ -158,7 +158,7 @@ function createSystemPayload(prompt, gender, details, imageType) {
             Generate a detailed, keyword-based image prompt (under 1000 characters) for character visualization.
 
             Requirements:
-            - The image must be a face portrait of the desired character, exclusively (no full body, no background, only the face and head/shoulders)
+            - The image must be a face and upper body of the desired character, exclusively (no full body, no background, only the face and head/shoulders/bust upper body)
             - Use comma-separated descriptive keywords in English
             - Include facial features, emotion, hairstyle, and style
             - Optimize for high-quality, detailed character face generation
@@ -335,6 +335,8 @@ async function routes(fastify, options) {
                 console.log(`[API/generate-character-comprehensive] Gender for prompt: ${gender}`);
 
                 const systemPayload = createSystemPayload(prompt, gender, extractedDetails, finalImageType);
+                console.log('[API/generate-character-comprehensive] System payload for enhanced prompt created');
+                console.log(systemPayload)
                 enhancedPrompt = await generateCompletion(systemPayload, 600, 'mistral');
                 
                 console.log('[API/generate-character-comprehensive] Enhanced prompt generated:', enhancedPrompt.substring(0, 100) + '...');

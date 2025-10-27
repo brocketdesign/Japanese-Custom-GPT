@@ -337,6 +337,11 @@ async function renderImages(images, id, type) {
         return;
     }
     
+    // Ensure the global image cache is initialized before usage
+    if (!Array.isArray(window.loadedImages)) {
+        window.loadedImages = [];
+    }
+
     const gallerySelector = getGalleryConfig(type)?.gallery || '#chat-images-gallery';
     
     // Set data attribute for chat galleries to track which chat is being rendered

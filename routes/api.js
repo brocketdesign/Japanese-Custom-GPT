@@ -139,10 +139,11 @@ fastify.post('/api/init-chat', async (request, reply) => {
         userId = authenticatedUser._id;
       }
 
-      const user = request.user;
-      let language = getLanguageName(user?.lang);
+            const user = request.user;
+            let language = getLanguageName(user?.lang);
       
-      const today = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo' });
+            const now = new Date();
+            const nowIsoString = now.toISOString();
 
       // Retrieve chat and user-chat documents
       let userChatDocument = await collectionUserChat.findOne({ 
@@ -224,13 +225,14 @@ fastify.post('/api/init-chat', async (request, reply) => {
                 }
             }
         }
-        startMessage.createdAt = new Date();
+        startMessage.createdAt = nowIsoString;
+        startMessage.timestamp = nowIsoString;
         
         userChatDocument = {
             userId: new fastify.mongo.ObjectId(userId),
             chatId: new fastify.mongo.ObjectId(chatId),
-            createdAt: today,
-            updatedAt: today,
+            createdAt: now,
+            updatedAt: now,
             messages: [startMessage],
         };
     }
@@ -379,6 +381,29 @@ fastify.post('/api/init-chat', async (request, reply) => {
             });
 
             if (userChatDocument) {
+                const now = new Date();
+                const nowIsoString = now.toISOString();
+                await collectionUserChat.updateOne(
+                    {
+                        _id: userChatDocument._id
+                    },
+                    {
+                        $set: {
+                            updatedAt: now
+                        }
+                    }
+                );
+                await collection.updateOne(
+                    {
+                        _id: new fastify.mongo.ObjectId(chatId)
+                    },
+                    {
+                        $set: {
+                            updatedAt: now
+                        }
+                    }
+                );
+                userChatDocument.updatedAt = now;
                 response.userChat = userChatDocument;
                 response.isNew = false;
                 // check for a persona id
@@ -448,15 +473,27 @@ fastify.post('/api/init-chat', async (request, reply) => {
             newMessage.name = name || null;
             newMessage.hidden = hidden || false;
             newMessage.image_request = image_request || false;
-            newMessage.timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+            const now = new Date();
+            const nowIsoString = now.toISOString();
+            newMessage.timestamp = nowIsoString;
+            newMessage.createdAt = nowIsoString;
             userData.messages.push(newMessage);
-            userData.updatedAt = new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
-            newMessage.createdAt = new Date();
+            userData.updatedAt = now;
 
             const result = await collectionUserChat.updateOne(
                 { _id: new fastify.mongo.ObjectId(userChatId) },
-                { $set: { messages: userData.messages, updatedAt: userData.updatedAt } }
+                { $set: { messages: userData.messages, updatedAt: now } }
             );
+
+            try {
+                const chatsCollection = fastify.mongo.db.collection('chats');
+                await chatsCollection.updateOne(
+                    { _id: new fastify.mongo.ObjectId(chatId) },
+                    { $set: { updatedAt: now } }
+                );
+            } catch (chatUpdateError) {
+                console.warn('Failed to update chat updatedAt timestamp:', chatUpdateError);
+            }
     
             if (result.modifiedCount === 1) {
                 console.log(`Adding new message to chat ${chatId} for userChat ${userChatId}, messageObject:`, newMessage);
@@ -592,10 +629,315 @@ fastify.post('/api/init-chat', async (request, reply) => {
                                 '$chat',
                                 {
                                     userChatId: '$_id',
-                                    userChatUpdatedAt: '$updatedAt'
+                                    userChatUpdatedAt: '$updatedAt',
+                                    userChatCreatedAt: '$createdAt'
                                 }
                             ]
                         }
+                    }
+                },
+
+                {
+                    $set: {
+                        userChatUpdatedAt: {
+                            $ifNull: [
+                                '$userChatUpdatedAt',
+                                '$updatedAt',
+                                '$createdAt'
+                            ]
+                        },
+                        updatedAt: {
+                            $ifNull: [
+                                '$updatedAt',
+                                '$userChatUpdatedAt',
+                                '$createdAt'
+                            ]
+                        },
+                        createdAt: {
+                            $ifNull: [
+                                '$userChatCreatedAt',
+                                '$createdAt'
+                            ]
+                        }
+                    }
+                },
+
+                {
+                    $set: {
+                        _sortCandidates: [
+                            {
+                                $let: {
+                                    vars: {
+                                        value: '$userChatUpdatedAt',
+                                        valueType: { $type: '$userChatUpdatedAt' }
+                                    },
+                                    in: {
+                                        $cond: [
+                                            { $in: ['$$valueType', ['date', 'timestamp']] },
+                                            { $toLong: '$$value' },
+                                            {
+                                                $cond: [
+                                                    { $eq: ['$$valueType', 'string'] },
+                                                    {
+                                                        $let: {
+                                                            vars: {
+                                                                parsedIso: {
+                                                                    $dateFromString: {
+                                                                        dateString: '$$value',
+                                                                        onError: null,
+                                                                        onNull: null
+                                                                    }
+                                                                },
+                                                                parsedIsoSpace: {
+                                                                    $dateFromString: {
+                                                                        dateString: '$$value',
+                                                                        format: '%Y-%m-%d %H:%M:%S',
+                                                                        onError: null,
+                                                                        onNull: null
+                                                                    }
+                                                                },
+                                                                parsedUs: {
+                                                                    $dateFromString: {
+                                                                        dateString: '$$value',
+                                                                        format: '%m/%d/%Y',
+                                                                        onError: null,
+                                                                        onNull: null
+                                                                    }
+                                                                }
+                                                            },
+                                                            in: {
+                                                                $cond: [
+                                                                    { $ne: ['$$parsedIso', null] },
+                                                                    { $toLong: '$$parsedIso' },
+                                                                    {
+                                                                        $cond: [
+                                                                                { $ne: ['$$parsedIsoSpace', null] },
+                                                                                { $toLong: '$$parsedIsoSpace' },
+                                                                                {
+                                                                                    $cond: [
+                                                                                        { $ne: ['$$parsedUs', null] },
+                                                                                        { $toLong: '$$parsedUs' },
+                                                                                        null
+                                                                                    ]
+                                                                                }
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    null
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                $let: {
+                                    vars: {
+                                        value: '$updatedAt',
+                                        valueType: { $type: '$updatedAt' }
+                                    },
+                                    in: {
+                                        $cond: [
+                                            { $in: ['$$valueType', ['date', 'timestamp']] },
+                                            { $toLong: '$$value' },
+                                            {
+                                                $cond: [
+                                                    { $eq: ['$$valueType', 'string'] },
+                                                    {
+                                                        $let: {
+                                                            vars: {
+                                                                parsedIso: {
+                                                                    $dateFromString: {
+                                                                        dateString: '$$value',
+                                                                        onError: null,
+                                                                        onNull: null
+                                                                    }
+                                                                },
+                                                                parsedIsoSpace: {
+                                                                    $dateFromString: {
+                                                                        dateString: '$$value',
+                                                                        format: '%Y-%m-%d %H:%M:%S',
+                                                                        onError: null,
+                                                                        onNull: null
+                                                                    }
+                                                                },
+                                                                parsedUs: {
+                                                                    $dateFromString: {
+                                                                        dateString: '$$value',
+                                                                        format: '%m/%d/%Y',
+                                                                        onError: null,
+                                                                        onNull: null
+                                                                    }
+                                                                }
+                                                            },
+                                                            in: {
+                                                                $cond: [
+                                                                    { $ne: ['$$parsedIso', null] },
+                                                                    { $toLong: '$$parsedIso' },
+                                                                    {
+                                                                        $cond: [
+                                                                                { $ne: ['$$parsedIsoSpace', null] },
+                                                                                { $toLong: '$$parsedIsoSpace' },
+                                                                                {
+                                                                                    $cond: [
+                                                                                        { $ne: ['$$parsedUs', null] },
+                                                                                        { $toLong: '$$parsedUs' },
+                                                                                        null
+                                                                                    ]
+                                                                                }
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    null
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                $let: {
+                                    vars: {
+                                        value: '$userChatCreatedAt',
+                                        valueType: { $type: '$userChatCreatedAt' }
+                                    },
+                                    in: {
+                                        $cond: [
+                                            { $in: ['$$valueType', ['date', 'timestamp']] },
+                                            { $toLong: '$$value' },
+                                            {
+                                                $cond: [
+                                                    { $eq: ['$$valueType', 'string'] },
+                                                    {
+                                                        $let: {
+                                                            vars: {
+                                                                parsedIso: {
+                                                                    $dateFromString: {
+                                                                        dateString: '$$value',
+                                                                        onError: null,
+                                                                        onNull: null
+                                                                    }
+                                                                },
+                                                                parsedIsoSpace: {
+                                                                    $dateFromString: {
+                                                                        dateString: '$$value',
+                                                                        format: '%Y-%m-%d %H:%M:%S',
+                                                                        onError: null,
+                                                                        onNull: null
+                                                                    }
+                                                                },
+                                                                parsedUs: {
+                                                                    $dateFromString: {
+                                                                        dateString: '$$value',
+                                                                        format: '%m/%d/%Y',
+                                                                        onError: null,
+                                                                        onNull: null
+                                                                    }
+                                                                }
+                                                            },
+                                                            in: {
+                                                                $cond: [
+                                                                    { $ne: ['$$parsedIso', null] },
+                                                                    { $toLong: '$$parsedIso' },
+                                                                    {
+                                                                        $cond: [
+                                                                                { $ne: ['$$parsedIsoSpace', null] },
+                                                                                { $toLong: '$$parsedIsoSpace' },
+                                                                                {
+                                                                                    $cond: [
+                                                                                        { $ne: ['$$parsedUs', null] },
+                                                                                        { $toLong: '$$parsedUs' },
+                                                                                        null
+                                                                                    ]
+                                                                                }
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    null
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                $let: {
+                                    vars: {
+                                        value: '$createdAt',
+                                        valueType: { $type: '$createdAt' }
+                                    },
+                                    in: {
+                                        $cond: [
+                                            { $in: ['$$valueType', ['date', 'timestamp']] },
+                                            { $toLong: '$$value' },
+                                            {
+                                                $cond: [
+                                                    { $eq: ['$$valueType', 'string'] },
+                                                    {
+                                                        $let: {
+                                                            vars: {
+                                                                parsedIso: {
+                                                                    $dateFromString: {
+                                                                        dateString: '$$value',
+                                                                        onError: null,
+                                                                        onNull: null
+                                                                    }
+                                                                },
+                                                                parsedIsoSpace: {
+                                                                    $dateFromString: {
+                                                                        dateString: '$$value',
+                                                                        format: '%Y-%m-%d %H:%M:%S',
+                                                                        onError: null,
+                                                                        onNull: null
+                                                                    }
+                                                                },
+                                                                parsedUs: {
+                                                                    $dateFromString: {
+                                                                        dateString: '$$value',
+                                                                        format: '%m/%d/%Y',
+                                                                        onError: null,
+                                                                        onNull: null
+                                                                    }
+                                                                }
+                                                            },
+                                                            in: {
+                                                                $cond: [
+                                                                    { $ne: ['$$parsedIso', null] },
+                                                                    { $toLong: '$$parsedIso' },
+                                                                    {
+                                                                        $cond: [
+                                                                                { $ne: ['$$parsedIsoSpace', null] },
+                                                                                { $toLong: '$$parsedIsoSpace' },
+                                                                                {
+                                                                                    $cond: [
+                                                                                        { $ne: ['$$parsedUs', null] },
+                                                                                        { $toLong: '$$parsedUs' },
+                                                                                        null
+                                                                                    ]
+                                                                                }
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    null
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
                     }
                 },
 
@@ -612,7 +954,22 @@ fastify.post('/api/init-chat', async (request, reply) => {
                 { $replaceRoot: { newRoot: '$doc' } },
 
                 // Re-sort after deduplication to maintain order
-                { $sort: { userChatUpdatedAt: -1, _id: -1 } },
+                {
+                    $set: {
+                        _chatSortKey: {
+                            $max: {
+                                $filter: {
+                                    input: '$_sortCandidates',
+                                    as: 'candidate',
+                                    cond: { $ne: ['$$candidate', null] }
+                                }
+                            }
+                        }
+                    }
+                },
+                { $project: { _sortCandidates: 0 } },
+                { $sort: { _chatSortKey: -1, _id: -1 } },
+                { $project: { _chatSortKey: 0 } },
 
                 // Pagination
                 { $skip: skip },
@@ -632,12 +989,59 @@ fastify.post('/api/init-chat', async (request, reply) => {
                 lastMessageMap[msg.chatId.toString()] = msg.lastMessage;
             });
 
+            const normalizeDateValue = (value) => {
+                if (!value) {
+                    return null;
+                }
+                if (value instanceof Date) {
+                    return value.toISOString();
+                }
+                if (typeof value === 'string') {
+                    const parsed = Date.parse(value);
+                    if (!Number.isNaN(parsed)) {
+                        return new Date(parsed).toISOString();
+                    }
+                    return value;
+                }
+                return value;
+            };
+
+            const normalizeObjectIdValue = (value) => {
+                if (!value) {
+                    return value;
+                }
+
+                if (typeof value === 'string') {
+                    return value;
+                }
+
+                if (value instanceof fastify.mongo.ObjectId) {
+                    return value.toHexString();
+                }
+
+                if (typeof value === 'object') {
+                    if (typeof value.toHexString === 'function') {
+                        return value.toHexString();
+                    }
+                    if (typeof value.$oid === 'string') {
+                        return value.$oid;
+                    }
+                }
+
+                return value;
+            };
+
             // Convert ObjectIds to strings for front-end
             const chatsWithStrings = chats.map(chat => ({
                 ...chat,
                 _id: chat._id.toString(),
                 userChatId: chat.userChatId.toString(),
-                lastMessage: lastMessageMap[chat._id.toString()] || null
+                userId: normalizeObjectIdValue(chat.userId),
+                lastMessage: lastMessageMap[chat._id.toString()] || null,
+                updatedAt: normalizeDateValue(chat.updatedAt),
+                createdAt: normalizeDateValue(chat.createdAt),
+                userChatUpdatedAt: normalizeDateValue(chat.userChatUpdatedAt),
+                userChatCreatedAt: normalizeDateValue(chat.userChatCreatedAt)
             }));
 
             const totalChats = await userChatColl.countDocuments({ userId: userObjectId });

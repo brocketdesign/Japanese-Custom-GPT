@@ -452,7 +452,7 @@ async function generatePromptTitle(prompt,language) {
           }
     ]
 
-    const completionMessage = await generateCompletion(messages, 600, 'mistral');
+    const completionMessage = await generateCompletion(messages, 600, 'openai');
     return completionMessage.replace(/['"]+/g, '');
     
 }

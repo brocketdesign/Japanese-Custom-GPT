@@ -595,9 +595,16 @@ function setupChatInterface(chat, character) {
                 <div id="starter-${uniqueId}" class="starter-on">
                     <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
                         <img src="${ thumbnail ? thumbnail : '/img/logo.webp' }" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;cursor:pointer;" onclick="openCharacterInfoModal('${chatId}', event)">
-                        <div class="audio-controller">
+                        <div class="audio-controller bg-dark">
                             <button id="play-${uniqueId}" 
                             class="audio-content badge bg-dark rounded-pill shadow-sm border-light">►</button>
+                            <button id="download-${uniqueId}"
+                            class="audio-download badge bg-dark rounded-pill shadow-sm border-light ms-2"
+                            aria-label="音声をダウンロード"
+                            title="音声をダウンロード"
+                            disabled>
+                                <i class="bi bi-download"></i>
+                            </button>
                         </div>
                         <div id="completion-${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box">
                             <img src="/img/load-dot.gif" width="50px">
@@ -861,9 +868,16 @@ function setupChatInterface(chat, character) {
                             <div id="container-${designStep}">
                                 <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
                                     <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%;object-fit: cover;object-position:top;" onclick="openCharacterInfoModal('${chatId}', event)">
-                                    <div class="audio-controller">
+                                    <div class="audio-controller bg-dark">
                                         <button id="play-${designStep}" 
                                         class="audio-content badge bg-dark rounded-pill shadow-sm border-light" data-content="${message}">►</button>
+                                        <button id="download-${designStep}"
+                                        class="audio-download badge bg-dark rounded-pill shadow-sm border-light ms-2"
+                                        data-content="${message}"
+                                        aria-label="音声をダウンロード"
+                                        title="音声をダウンロード">
+                                            <i class="bi bi-download"></i>
+                                        </button>
                                     </div>
                                     <div id="message-${designStep}" class="p-3 ms-3 text-start assistant-chat-box position-relative">
                                         ${marked.parse(chatMessage.content)}
@@ -1355,9 +1369,16 @@ function setupChatInterface(chat, character) {
             <div id="container-${uniqueId}">
                 <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container">
                     <img src="${thumbnail ? thumbnail : '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width:45px;width:45px;height:45px;border-radius:15%;object-fit:cover;object-position:top;cursor:pointer;" onclick="openCharacterInfoModal('${chatId}', event)">
-                    <div class="audio-controller">
+                    <div class="audio-controller bg-dark">
                         <button id="play-${uniqueId}" 
                         class="audio-content badge bg-dark rounded-pill shadow-sm border-light">►</button>
+                        <button id="download-${uniqueId}"
+                        class="audio-download badge bg-dark rounded-pill shadow-sm border-light ms-2"
+                        aria-label="音声をダウンロード"
+                        title="音声をダウンロード"
+                        disabled>
+                            <i class="bi bi-download"></i>
+                        </button>
                     </div>
                     <div class="ms-3 p-3 text-start assistant-chat-box flex-grow-1 position-relative">
                         <div id="completion-${uniqueId}""><img src="/img/load-dot.gif" width="50px"></div>
@@ -1371,8 +1392,10 @@ function setupChatInterface(chat, character) {
     }
 
     function afterStreamEnd(uniqueId, markdownContent) {
-        $(`#play-${uniqueId}`).attr('data-content', markdownContent);
-        $(`#play-${uniqueId}`).closest('.audio-controller').show();
+    $(`#play-${uniqueId}`).attr('data-content', markdownContent);
+    $(`#download-${uniqueId}`).attr('data-content', markdownContent);
+    $(`#download-${uniqueId}`).prop('disabled', false).removeClass('disabled');
+    $(`#play-${uniqueId}`).closest('.audio-controller').show();
         
         // Add message tools after streaming is complete
         const messageContainer = $(`#container-${uniqueId}`);
@@ -1564,10 +1587,17 @@ function setupChatInterface(chat, character) {
             messageElement = $(`
                 <div class="d-flex flex-row justify-content-start position-relative mb-4 message-container ${animationClass}">
                     <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top; cursor:pointer;" onclick="openCharacterInfoModal('${chatId}', event)">
-                    <div class="audio-controller">
+                    <div class="audio-controller bg-dark">
                         <button id="play-${uniqueId}" 
                         class="audio-content badge bg-dark rounded-pill shadow-sm border-light" 
                         data-content="${message}">►</button>
+                        <button id="download-${uniqueId}" 
+                        class="audio-download badge bg-dark rounded-pill shadow-sm border-light ms-2" 
+                        data-content="${message}"
+                        aria-label="音声をダウンロード"
+                        title="音声をダウンロード">
+                            <i class="bi bi-download"></i>
+                        </button>
                     </div>
                     <div id="${uniqueId}" class="p-3 ms-3 text-start assistant-chat-box position-relative">
                         ${marked.parse(message)}

@@ -14,7 +14,7 @@ const { uploadToS3 } = require('../models/tool');
  */
 async function generateVideoFromImage({ imageUrl, prompt, userId, chatId, placeholderId }) {
   const novitaApiKey = process.env.NOVITA_API_KEY;
-  const apiUrl = 'https://api.novita.ai/v3/async/kling-v2.1-i2v';
+  const apiUrl = 'https://api.novita.ai/v3/async/kling-2.5-turbo-i2v';
 
   const requestData = {
     image_url: imageUrl,

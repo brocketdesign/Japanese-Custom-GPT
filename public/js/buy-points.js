@@ -50,11 +50,11 @@ $(document).ready(function() {
         : '';
 
       const cardHTML = `
-        <div class="col-12 col-md-6 col-lg-3 mb-3">
+        <div class="col-12 col-md-6 col-lg-6 mb-3">
           <div class="card buy-points-card h-100 cursor-pointer position-relative" data-package-id="${pkg.id}" style="border: 2px solid #e9ecef; transition: all 0.3s ease;">
             ${popularBadge}
             <div class="card-body d-flex flex-column">
-              <h5 class="card-title text-center fw-bold">${pkg.points} ${window.buyPointsTranslations.buy_points.points || 'Points'}</h5>
+              <h5 class="card-title text-center fw-bold">${pkg.points} <i class="bi bi-coin"></i></h5>
               <p class="text-center text-muted small mb-2">${pkg.description}</p>
               
               <div class="my-3">

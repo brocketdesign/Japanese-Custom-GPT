@@ -12,7 +12,7 @@ const { uploadToS3 } = require('../models/tool');
  * @param {string} params.placeholderId - Placeholder ID for tracking
  * @returns {Object} Task result from Novita API
  */
-async function generateVideoFromImage({ imageUrl, prompt, userId, chatId, placeholderId }) {
+async function generateVideoFromImage({ imageUrl, nsfw, prompt, userId, chatId, placeholderId }) {
   const novitaApiKey = process.env.NOVITA_API_KEY;
   const apiUrl = 'https://api.novita.ai/v3/async/kling-2.5-turbo-i2v';
 
@@ -24,6 +24,7 @@ async function generateVideoFromImage({ imageUrl, prompt, userId, chatId, placeh
     duration: "5",
     guidance_scale: 0.5,
   };
+  
   console.log(`[generateVideoFromImage] RequestData: ${JSON.stringify(requestData)}`);
 
   try {

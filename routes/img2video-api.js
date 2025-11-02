@@ -157,6 +157,7 @@ async function img2videoRoutes(fastify) {
                 // Start video generation
                 const videoTask = await generateVideoFromImage({
                     imageUrl,
+                    nsfw,
                     prompt: instructionPrompt,
                     userId,
                     chatId,

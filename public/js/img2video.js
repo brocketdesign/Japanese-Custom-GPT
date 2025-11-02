@@ -362,6 +362,39 @@ function displayGeneratedVideo(videoData) {
     }
 }
 /**
+ * Download video file
+ * @param {string} videoUrl - Video URL
+ * @param {string} videoId - Video ID
+ */
+window.downloadVideo = async function(videoUrl, videoId) {
+    try {
+        const response = await fetch(videoUrl, {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to download video');
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `generated_video_${videoId}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        showNotification(window.img2videoTranslations?.download_started || 'Download started', 'success');
+    } catch (error) {
+        console.error('Error downloading video:', error);
+        showNotification(window.img2videoTranslations?.download_failed || 'Failed to download video', 'error');
+    }
+};
+
+/**
  * Get video tools (download, share, etc.)
  * @param {string} videoUrl - Video URL
  * @param {number} duration - Video duration
@@ -372,10 +405,8 @@ window.getVideoTools = function(videoUrl, duration, videoId) {
         return `
         <div class="bg-white py-2 d-flex justify-content-around video-tools">
             <div class="d-flex justify-content-around w-100">
-                <span class="badge bg-white text-secondary download-video" style="cursor: pointer;">
-                    <a href="${videoUrl}" download="generated_video_${videoId}.mp4" style="color:inherit; text-decoration: none;">
-                        <i class="bi bi-download"></i>
-                    </a>
+                <span class="badge bg-white text-secondary download-video" style="cursor: pointer;" onclick="downloadVideo('${videoUrl}', '${videoId}')">
+                    <i class="bi bi-download"></i>
                 </span>
                 <span class="badge bg-white text-secondary share-video" 
                       onclick="shareVideo('${videoUrl}')" 

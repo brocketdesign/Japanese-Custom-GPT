@@ -21,5 +21,7 @@
   "generated_video": "Generated Video",
   "video_link_copied": "Video link copied to clipboard",
   "share_failed": "Failed to share video",
-  "regeneration_failed": "Failed to regenerate video"
+  "regeneration_failed": "Failed to regenerate video",
+  "download_started": "Video download started",
+  "download_failed": "Failed to download video"
 }

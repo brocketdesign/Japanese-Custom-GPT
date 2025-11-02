@@ -21,5 +21,7 @@
   "generated_video": "Vidéo générée",
   "video_link_copied": "Lien vidéo copié dans le presse-papiers",
   "share_failed": "Échec du partage de la vidéo",
-  "regeneration_failed": "Échec de la régénération de la vidéo"
+  "regeneration_failed": "Échec de la régénération de la vidéo",
+  "download_started": "Téléchargement de la vidéo en cours",
+  "download_failed": "Échec du téléchargement de la vidéo"
 }

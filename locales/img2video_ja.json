@@ -21,5 +21,7 @@
   "generated_video": "生成された動画",
   "video_link_copied": "動画リンクをクリップボードにコピーしました",
   "share_failed": "動画の共有に失敗しました",
-  "regeneration_failed": "動画の再生成に失敗しました"
+  "regeneration_failed": "動画の再生成に失敗しました",
+  "download_started": "動画のダウンロードが開始されました",
+  "download_failed": "動画のダウンロードに失敗しました"
 }

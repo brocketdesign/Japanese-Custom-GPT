@@ -496,9 +496,12 @@ function renderVideos(videos, id, type, page = 1) {
             return;
         }
         const isBlur = shouldBlurNSFW(video, subscriptionStatus);
-        if (!isBlur && !window.loadedVideos.some(v => v._id === video._id)) {
+        
+        // Store all videos so they can be unlocked if needed
+        if (!window.loadedVideos.some(v => v._id === video._id)) {
             window.loadedVideos.push(video);
         }
+        
         const cardHtml = createVideoCard(video, isBlur, isTemporary);
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = cardHtml;
@@ -544,7 +547,7 @@ function createVideoCard(video, isBlur, isTemporary) {
     const lockedMarkup = `
         <div class="card-img-top d-flex flex-column justify-content-center align-items-center position-relative overflow-hidden" style="border-radius:0.75rem 0.75rem 0 0;background-color:#000;min-height:260px;">
             <i class="bi bi-lock-fill fs-1 text-white-50 mb-3"></i>
-            <button type="button" class="btn btn-primary" onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary});">
+            <button type="button" class="btn btn-primary unlock-video-btn" data-video-id="${video._id}" onclick="event.stopPropagation();handleUnlockVideo(this,${isTemporary});">
                 <i class="bi bi-unlock-fill me-2"></i>${unlockLabel}
             </button>
         </div>
@@ -970,4 +973,78 @@ window.getChatImageCacheStats = function(chatId) {
  */
 window.getUserImageCacheStats = function(userId) {
     return getImageCacheStats('user', userId);
+};
+
+/**
+ * Handle video unlock for premium users
+ */
+window.handleUnlockVideo = function(button, isTemporary) {
+    if (isTemporary) {
+        // Temporary users should be prompted to log in/register
+        if (typeof openLoginForm === 'function') {
+            openLoginForm();
+        }
+        return;
+    }
+    
+    const subscribed = window.user && window.user.subscriptionStatus === 'active';
+    if (!subscribed) {
+        // Non-subscribed users should be directed to payment
+        if (typeof loadPlanPage === 'function') {
+            loadPlanPage();
+        }
+        return;
+    }
+    
+    // Premium user - unlock the video by replacing the locked markup with video
+    const videoCard = button.closest('.video-card');
+    if (!videoCard) {
+        return;
+    }
+    
+    const videoId = videoCard.getAttribute('data-video-id');
+    const cardBody = videoCard.querySelector('.card');
+    
+    if (!cardBody) {
+        return;
+    }
+    
+    // Find the locked markup div and replace it with video markup
+    const lockedMarkup = cardBody.querySelector('.card-img-top');
+    if (!lockedMarkup) {
+        return;
+    }
+    
+    // We need to find the video data from the page or re-fetch it
+    // For now, we'll add a class to trigger showing the video through CSS
+    // or we can rebuild the video element
+    const videoMarkup = document.createElement('video');
+    videoMarkup.setAttribute('preload', 'metadata');
+    videoMarkup.setAttribute('controls', '');
+    videoMarkup.setAttribute('class', 'card-img-top video-card-media');
+    videoMarkup.setAttribute('style', 'width:100%;height:auto;display:block;border-radius:0.75rem 0.75rem 0 0;background-color:#000;');
+    videoMarkup.setAttribute('playsinline', '');
+    videoMarkup.setAttribute('muted', '');
+    videoMarkup.setAttribute('controlsList', 'nodownload');
+    
+    // The video data should be available - we need to extract it from localStorage or find it
+    // For now, try to get it from the page's state
+    const allVideos = window.loadedVideos || [];
+    const video = allVideos.find(v => v._id === videoId);
+    
+    if (video && video.videoUrl) {
+        videoMarkup.setAttribute('src', `${video.videoUrl}#t=0.1`);
+        lockedMarkup.replaceWith(videoMarkup);
+        
+        if (typeof showNotification === 'function') {
+            showNotification(window.translations?.videos?.unlocked || 'Video unlocked!', 'success');
+        }
+    } else {
+        // If we don't have the video URL, we need to fetch it from the server
+        // This shouldn't normally happen, but handle it gracefully
+        console.warn(`[handleUnlockVideo] Video data not found for ${videoId}, attempting to fetch from server`);
+        if (typeof showNotification === 'function') {
+            showNotification(window.translations?.videos?.unlock_error || 'Unable to unlock video at this time.', 'error');
+        }
+    }
 };

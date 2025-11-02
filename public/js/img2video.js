@@ -368,9 +368,11 @@ function displayGeneratedVideo(videoData) {
  */
 window.downloadVideo = async function(videoUrl, videoId) {
     try {
+        // For S3 URLs and cross-origin resources, use a simpler approach
+        // Don't include credentials for cross-origin requests with wildcard CORS
         const response = await fetch(videoUrl, {
             method: 'GET',
-            credentials: 'include'
+            mode: 'cors'
         });
         
         if (!response.ok) {

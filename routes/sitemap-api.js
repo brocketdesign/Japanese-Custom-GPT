@@ -1,5 +1,11 @@
 const { getCachedSitemapData, cacheSitemapData } = require('../models/sitemap-utils');
 
+const getBaseUrl = (request) => {
+  const forwardedProto = request.headers['x-forwarded-proto'];
+  const protocol = (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) || request.protocol || 'https';
+  return `${protocol}://${request.hostname}`;
+};
+
 async function routes(fastify, options) {
   
   // Get sitemap data (from cache or generate new)
@@ -85,9 +91,7 @@ async function routes(fastify, options) {
         return reply.status(404).send('Sitemap data not found');
       }
 
-      const baseUrl = process.env.MODE === 'local' ? 
-        `http://${require('ip').address()}:3000` : 
-        'https://app.chatlamix.com';
+      const baseUrl = getBaseUrl(request);
 
       // Calculate number of pages needed (50,000 URLs per sitemap recommended)
       const urlsPerSitemap = 10000;
@@ -124,9 +128,7 @@ async function routes(fastify, options) {
   // Static pages sitemap
   fastify.get('/sitemap-static.xml', async (request, reply) => {
     try {
-      const baseUrl = process.env.MODE === 'local' ? 
-        `http://${require('ip').address()}:3000` : 
-        'https://app.chatlamix.com';
+      const baseUrl = getBaseUrl(request);
 
       const staticPages = [
         { url: '', priority: '1.0', changefreq: 'daily' },
@@ -180,9 +182,7 @@ async function routes(fastify, options) {
         return reply.status(404).send('Sitemap data not found');
       }
 
-      const baseUrl = process.env.MODE === 'local' ? 
-        `http://${require('ip').address()}:3000` : 
-        'https://app.chatlamix.com';
+      const baseUrl = getBaseUrl(request);
 
       const urlsPerSitemap = 10000;
       const startIndex = (page - 1) * urlsPerSitemap;
@@ -205,16 +205,7 @@ async function routes(fastify, options) {
       });
 
       // Add tag URLs
-      (sitemapData.tags || []).forEach(tag => {
-        if (tag.name) {
-          allUrls.push({
-            url: `/search?q=${encodeURIComponent(tag.name)}`,
-            lastmod: new Date(),
-            changefreq: 'weekly',
-            priority: '0.6'
-          });
-        }
-      });
+      // Tags remain available for API consumers, but search URLs are excluded to respect robots rules
 
       // Get URLs for this page
       const pageUrls = allUrls.slice(startIndex, startIndex + urlsPerSitemap);

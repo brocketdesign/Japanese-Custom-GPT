@@ -634,6 +634,61 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
       }
     }
 
+    // Build canonical and alternate URLs for SEO
+    const forwardedProto = request.headers['x-forwarded-proto'];
+    const protocol = (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) || request.protocol || 'https';
+    const host = request.hostname;
+    const isLocalHost = host.includes('localhost') || host.includes('127.0.0.1') || host.includes('0.0.0.0');
+    const baseDomain = process.env.PUBLIC_BASE_DOMAIN || (isLocalHost ? host : host.split('.').slice(-2).join('.')) || 'chatlamix.com';
+    const supportsLocaleSubdomains = !isLocalHost && baseDomain === 'chatlamix.com';
+    const localeDomainMap = supportsLocaleSubdomains
+      ? {
+          en: `en.${baseDomain}`,
+          fr: `fr.${baseDomain}`,
+          ja: `ja.${baseDomain}`,
+        }
+      : {};
+
+  const fallbackHost = supportsLocaleSubdomains ? baseDomain : (host.replace(/^app\./, '') || baseDomain);
+    const activeDomain = isLocalHost
+      ? host
+      : (supportsLocaleSubdomains && localeDomainMap[lang]) || host || fallbackHost;
+    const canonicalUrl = `${isLocalHost ? `${protocol}://${activeDomain}` : `https://${activeDomain}`}/character/slug/${chat.slug}`;
+
+  const alternates = supportsLocaleSubdomains ? [] : null;
+  if (supportsLocaleSubdomains) {
+      ['en', 'fr', 'ja'].forEach(locale => {
+        alternates.push({
+          hreflang: locale,
+          href: `https://${localeDomainMap[locale]}/character/slug/${chat.slug}`
+        });
+      });
+      alternates.push({
+        hreflang: 'x-default',
+        href: `https://${fallbackHost}/character/slug/${chat.slug}`
+      });
+    }
+
+    const imageSource = image?.imageUrl || chat.chatImageUrl || '/img/share.png';
+    const ogImage = /^https?:\/\//i.test(imageSource)
+      ? imageSource
+      : `${protocol}://${host}${imageSource.startsWith('/') ? imageSource : `/${imageSource}`}`;
+
+    const structuredData = {
+      '@context': 'https://schema.org',
+      '@type': 'Person',
+      name: chat.name,
+      url: canonicalUrl,
+      image: ogImage,
+      description: image?.title?.[lang] || chat.description || chat.short_intro,
+      inLanguage: lang,
+      alternateName: chat.slug,
+      keywords: Array.isArray(chat.tags) && chat.tags.length ? chat.tags.join(', ') : undefined,
+      gender: chat.gender || undefined,
+      dateModified: chat.updatedAt || undefined,
+      dateCreated: chat.createdAt || undefined
+    };
+
     // Render immediately
     const template = isModal ? 'character-modal.hbs' : 'character.hbs';
     const response = reply.renderWithGtm(template, {
@@ -644,13 +699,16 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
       isBlur,
       similarChats: [], // Will be populated via websocket
       user: currentUserData,
+      canonicalUrl,
+      alternates,
+      structuredData: JSON.stringify(structuredData, null, 2),
       seo: [
         { name: 'description', content: ` ${image?.title?.[request.lang] ?? chat.description ?? ''} | ${translations.seo.description_character}` },
         { name: 'keywords', content: translations.seo.keywords },
         { property: 'og:title', content: `${chat.name} | ${translations.seo.title_character}` },
         { property: 'og:description', content: `${image?.title?.[request.lang] ?? chat.description ?? ''} | ${translations.seo.description_character}` },
-        { property: 'og:image', content: chat.chatImageUrl || '/img/share.png' },
-        { property: 'og:url', content: `https://chatlamix/character/${chatIdParam}` },
+        { property: 'og:image', content: ogImage },
+        { property: 'og:url', content: canonicalUrl },
       ],
     });
     
@@ -1041,10 +1099,10 @@ fastify.get('/sitemap', async (request, reply) => {
 
 // Add robots.txt route before the existing routes
 fastify.get('/robots.txt', async (request, reply) => {
-  const baseUrl = process.env.MODE === 'local' ? 
-    `http://${ip.address()}:3000` : 
-    'https://chatlamix.com';
-    
+  const forwardedProto = request.headers['x-forwarded-proto'];
+  const protocol = (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) || request.protocol || 'https';
+  const baseUrl = `${protocol}://${request.hostname}`;
+  
   const robotsTxt = `User-agent: *
 Disallow: /api/
 Disallow: /admin/

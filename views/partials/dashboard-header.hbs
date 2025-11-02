@@ -13,6 +13,17 @@
     {{#each seo}}
     <meta {{#if name}}name="{{name}}"{{/if}} {{#if property}}property="{{property}}"{{/if}} content="{{content}}">
     {{/each}}
+    {{#if canonicalUrl}}
+    <link rel="canonical" href="{{canonicalUrl}}">
+    {{/if}}
+    {{#if alternates}}
+    {{#each alternates}}
+    <link rel="alternate" hreflang="{{this.hreflang}}" href="{{this.href}}">
+    {{/each}}
+    {{/if}}
+    {{#if structuredData}}
+    <script type="application/ld+json">{{{structuredData}}}</script>
+    {{/if}}
     {{#if gtmId}}
     <!-- Google Tag Manager -->
     <script async src="https://www.googletagmanager.com/gtag/js?id={{gtmId}}"></script>

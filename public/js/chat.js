@@ -436,6 +436,7 @@ function setupChatInterface(chat, character) {
         $('#userMessage').removeClass('male').addClass('female');
     }else{
         $('#showPrompts').hide();
+        $('#giftsList').hide();
         $('#userMessage').removeClass('female').addClass('male');
     }
     updateChatBackgroundImage(thumbnail);

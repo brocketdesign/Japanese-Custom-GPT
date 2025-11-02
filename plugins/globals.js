@@ -30,6 +30,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     const onboardingTranslationsCache = {}; // Add cache for onboarding translations
     const legalTranslationsCache = {}; // Add cache for legal translations
     const speechToTextTranslationsCache = {}; // Add cache for speech-to-text translations
+    const buyPointsTranslationsCache = {}; // Add cache for buy-points translations
     
     // Decorate Fastify with user, lang, and translations functions
     fastify.decorate('getUser', getUser);
@@ -47,6 +48,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorate('getOnboardingTranslations', getOnboardingTranslations); // Add onboarding translations decorator
     fastify.decorate('getLegalTranslations', getLegalTranslations); // Add legal translations decorator
     fastify.decorate('getSpeechToTextTranslations', getSpeechToTextTranslations); // Add speech-to-text translations decorator
+    fastify.decorate('getBuyPointsTranslations', getBuyPointsTranslations); // Add buy-points translations decorator
     
     // Attach `lang` and `user` dynamically
     Object.defineProperty(fastify, 'lang', {
@@ -76,6 +78,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorateRequest('onboardingTranslations', null); // Add onboarding translations to request
     fastify.decorateRequest('legalTranslations', null); // Add legal translations to request
     fastify.decorateRequest('speechToTextTranslations', null); // Add speech-to-text translations to request
+    fastify.decorateRequest('buyPointsTranslations', null); // Add buy-points translations to request
 
     // Pre-handler to set user, lang, and translations
     fastify.addHook('preHandler', async (request, reply) => {
@@ -95,6 +98,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         request.onboardingTranslations = getOnboardingTranslations(request.lang); // Load onboarding translations
         request.legalTranslations = getLegalTranslations(request.lang); // Load legal translations
         request.speechToTextTranslations = getSpeechToTextTranslations(request.lang); // Load speech-to-text translations
+        request.buyPointsTranslations = getBuyPointsTranslations(request.lang); // Load buy-points translations
    
         // Make translations available in Handlebars templates
         reply.locals = {
@@ -112,6 +116,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             onboardingTranslations: request.onboardingTranslations, // Make onboarding translations available
             legalTranslations: request.legalTranslations, // Make legal translations available
             speechToTextTranslations: request.speechToTextTranslations, // Make speech-to-text translations available
+            buyPointsTranslations: request.buyPointsTranslations, // Make buy-points translations available
             user: request.user, // Make user available
             isUserAdmin: request.isUserAdmin, // Make admin status available
             mode: process.env.MODE,
@@ -495,6 +500,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             onboardingTranslations: request.onboardingTranslations, // Add onboarding translations to locals
             legalTranslations: request.legalTranslations, // Add legal translations to locals
             speechToTextTranslations: request.speechToTextTranslations, // Add speech-to-text translations to locals
+            buyPointsTranslations: request.buyPointsTranslations, // Add buy-points translations to locals
             lang: request.lang,
             user: request.user,
             isAdmin: request.isAdmin
@@ -564,5 +570,25 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         const ip = request.ip;
         const userAgent = request.headers['user-agent'] || 'unknown';
         return `${ip}-${userAgent}`;
+    }
+
+    /** Load BuyPointsTranslations for a specific language (cached for performance) */
+    function getBuyPointsTranslations(currentLang) {
+        if (!currentLang) currentLang = 'en';
+        
+        if (!buyPointsTranslationsCache[currentLang]) {
+            const buyPointsTranslationFile = path.join(__dirname, '..', 'locales', `buy-points-${currentLang}.json`);
+            if (fs.existsSync(buyPointsTranslationFile)) {
+                try {
+                    buyPointsTranslationsCache[currentLang] = JSON.parse(fs.readFileSync(buyPointsTranslationFile, 'utf-8'));
+                } catch (e) {
+                    fastify.log.error(`Error reading buy-points translations for ${currentLang}:`, e);
+                    buyPointsTranslationsCache[currentLang] = {};
+                }
+            } else {
+                buyPointsTranslationsCache[currentLang] = {}; // Fallback to empty object if translation file is missing
+            }
+        }
+        return buyPointsTranslationsCache[currentLang];
     }
 });

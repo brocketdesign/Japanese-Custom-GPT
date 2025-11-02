@@ -169,6 +169,7 @@
 <script src="/js/personas.js"></script>
 <script src="/js/dashboard.js"></script>
 <script src="/js/user-points.js"></script>
+<script src="/js/buy-points.js"></script>
 <script src="/js/dashboard-infinite-scroll.js"></script>
 <script src="/js/stability.js"></script>
 <script src="/js/notifications.js"></script>
@@ -781,6 +782,7 @@ $(document).ready(function(){
 <script>
      // Parse the URL and get query parameters
     const urlParams = new URLSearchParams(window.location.search);
+    
     // Check if 'payment_status' parameter is true
     if (urlParams.get('payment_status') === 'cancelled') {
         // Display notification in Japanese
@@ -795,6 +797,71 @@ $(document).ready(function(){
         if($('#chat-widget-container').length == 0){
             window.history.replaceState({ path: newUrl }, '', newUrl);
         }
+    }
+
+    // Handle points purchase success
+    if (urlParams.get('points_purchase') === 'success') {
+        const points = urlParams.get('points');
+        const packageId = urlParams.get('packageId');
+        
+        if (points && packageId) {
+            const message = window.buyPointsTranslations?.buy_points?.points_added_message
+                .replace('{points}', points);
+            window.showNotification(message, 'success');
+            if (typeof refreshUserPoints === 'function') {
+                setTimeout(() => refreshUserPoints(), 500);
+            }
+        }
+        
+        // Clean up URL
+        const cleanUrl = window.location.href.split('?')[0];
+        window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+    }
+
+    // Handle points purchase cancellation
+    if (urlParams.get('points_purchase') === 'cancelled') {
+        const reason = urlParams.get('reason') || 'unknown';
+        
+        // Show cancellation notification
+        const message = window.buyPointsTranslations?.buy_points?.purchase_cancelled_message || 'Points purchase was cancelled. Please try again.';
+        window.showNotification(message, 'warning');
+        
+        console.log(`[Points Purchase] Cancelled: ${reason}`);
+        
+        // Clean up URL
+        const cleanUrl = window.location.href.split('?')[0];
+        window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+    }
+
+    // Handle points purchase failure
+    if (urlParams.get('points_purchase') === 'failed') {
+        const reason = urlParams.get('reason') || 'unknown';
+        
+        // Show error notification with reason
+        let errorMessage = window.buyPointsTranslations?.buy_points?.purchase_failed_message || 'Points purchase failed.';
+        
+        // Add specific error message based on reason
+        const reasonMessages = {
+            'no_session': 'Session information missing',
+            'not_authenticated': 'Not authenticated',
+            'session_not_found': 'Session not found',
+            'payment_not_completed': 'Payment was not completed',
+            'invalid_metadata': 'Invalid purchase data',
+            'add_points_failed': 'Failed to add points to account',
+            'server_error': 'Server error occurred'
+        };
+        
+        if (reasonMessages[reason]) {
+            errorMessage = errorMessage + ' (' + reasonMessages[reason] + ')';
+        }
+        
+        window.showNotification(errorMessage, 'error');
+        
+        console.error(`[Points Purchase] Failed: ${reason}`);
+        
+        // Clean up URL
+        const cleanUrl = window.location.href.split('?')[0];
+        window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
     }
 </script>
     <script>

@@ -249,7 +249,10 @@ fastify.get('/my-plan', async (request, reply) => {
 });
 
 fastify.get('/chat', (request, reply) => {
-  reply.redirect('/chat/');
+  const queryString = Object.keys(request.query).length > 0 
+    ? `?${new URLSearchParams(request.query).toString()}` 
+    : '';
+  reply.redirect(`/chat/${queryString}`);
 });
  
 fastify.get('/chat/:chatId', async (request, reply) => {

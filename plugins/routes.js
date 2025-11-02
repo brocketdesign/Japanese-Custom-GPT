@@ -7,6 +7,7 @@ async function registerRoutes(fastify) {
   fastify.register(require('../routes/stability'));
   fastify.register(require('../routes/img2video-api'));
   fastify.register(require('../routes/plan'));
+  fastify.register(require('../routes/buy-points-api'));
   fastify.register(require('../routes/user'));
   fastify.register(require('../routes/admin'));
   fastify.register(require('../routes/civitai-api'));

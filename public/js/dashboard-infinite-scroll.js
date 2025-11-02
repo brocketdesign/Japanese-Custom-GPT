@@ -631,16 +631,33 @@ function handleScroll(id, isModal, cacheKey, type) {
         return;
     }
     
-    // Calculate scroll position
-    const scrollContainer = isModal ? $('#characterModal .modal-body') : $(window);
-    const scrollTop = scrollContainer.scrollTop();
-    const containerHeight = scrollContainer.height();
-    const contentHeight = isModal ? scrollContainer[0].scrollHeight : $(document).height();
+    // Get the gallery element
+    const gallerySelector = config?.gallery || '#chat-images-gallery';
+    const gallery = document.querySelector(gallerySelector);
+    if (!gallery) {
+        return;
+    }
     
-    const scrollPercentage = (scrollTop + containerHeight) / contentHeight;
+    // Get the scroll container
+    const scrollContainer = isModal ? document.querySelector('#characterModal .modal-body') : window;
     
-    // Trigger loading when 85% scrolled
-    if (scrollPercentage >= 0.85) {
+    // Get the last element in the gallery
+    const lastElement = gallery.lastElementChild;
+    if (!lastElement) {
+        return;
+    }
+    
+    // Use Intersection Observer API for more reliable detection
+    // Check if the last element is near the viewport
+    const rect = lastElement.getBoundingClientRect();
+    const containerRect = scrollContainer instanceof Window ? window : scrollContainer.getBoundingClientRect();
+    
+    // Calculate the bottom of the visible area (with 300px buffer for early loading)
+    const visibleBottom = scrollContainer instanceof Window ? window.innerHeight : containerRect.bottom;
+    const triggerOffset = 300; // Start loading when user is 300px away from last element
+    
+    // Trigger loading when the last element is within the trigger offset
+    if (rect.top < visibleBottom + triggerOffset) {
         const nextPage = currentPage + 1;
         
         const loadFunction = type === 'chat' ? loadChatImages : loadUserImages;

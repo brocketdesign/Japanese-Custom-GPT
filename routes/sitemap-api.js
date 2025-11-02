@@ -94,10 +94,10 @@ async function routes(fastify, options) {
       const baseUrl = getBaseUrl(request);
 
       // Calculate number of pages needed (50,000 URLs per sitemap recommended)
+      // Only count character URLs (tags are excluded from sitemap per robots.txt)
       const urlsPerSitemap = 10000;
       const totalCharacters = sitemapData.totalCharacters || 0;
-      const totalTags = sitemapData.totalTags || 0;
-      const totalPages = Math.ceil((totalCharacters + totalTags) / urlsPerSitemap);
+      const totalPages = Math.ceil(totalCharacters / urlsPerSitemap) || 1;
 
       let sitemapIndex = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

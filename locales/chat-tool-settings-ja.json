@@ -207,6 +207,14 @@
             "provider": "Quantum Mind",
             "speed": "非常に高速",
             "quality": "優秀"
+        },
+        "hermes": {
+            "name": "エルメス",
+            "description": "迅速で知的なメッセンジャー、正確な応答を提供",
+            "category": "プレミアム",
+            "provider": "私たちの研究",
+            "speed": "非常に速い",
+            "quality": "優秀"
         }
     }
 }

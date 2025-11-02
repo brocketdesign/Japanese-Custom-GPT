@@ -8,7 +8,7 @@ const { sanitizeMessages } = require('./tool')
 const apiDetails = {
   openai: {
     apiUrl: 'https://api.openai.com/v1/chat/completions',
-    model: 'gpt-4o-mini',
+    model: 'gpt-4o',
     key: process.env.OPENAI_API_KEY
   },
   novita: {
@@ -18,14 +18,15 @@ const apiDetails = {
       llama: 'meta-llama/llama-3-70b-instruct',
       deepseek: 'deepseek/deepseek-v3-turbo',
       mistral: 'mistralai/mistral-nemo',
+      hermes: 'nousresearch/hermes-2-pro-llama-3-8b'
     }
   },
 };
 
 // Default model config
 let currentModelConfig = {
-  provider: 'novita',
-  modelName: 'mistral'
+  provider: 'openai',
+  modelName: 'gpt-4o'
 };
 
 // Enhanced model config with categorization
@@ -56,6 +57,12 @@ const modelConfig = {
       modelName: 'deepseek',
       displayName: 'DeepSeek V3 Turbo',
       description: 'Advanced coding and reasoning'
+    },
+    hermes: {
+      provider: 'novita',
+      modelName: 'hermes',
+      displayName: 'Hermes 2 Pro',
+      description: 'Balanced performance and speed'
     }
   }
 };

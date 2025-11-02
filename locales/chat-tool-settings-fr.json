@@ -207,6 +207,14 @@
             "provider": "Quantum Mind",
             "speed": "Très rapide",
             "quality": "Excellent"
+        },
+        "hermes": {
+            "name": "Hermès",
+            "description": "Messager rapide et intelligent avec des réponses précises",
+            "category": "premium",
+            "provider": "Nous Research",
+            "speed": "Très rapide",
+            "quality": "Excellent"
         }
     }
 }

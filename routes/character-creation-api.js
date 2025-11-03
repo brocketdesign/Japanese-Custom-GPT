@@ -158,7 +158,7 @@ function createSystemPayload(prompt, gender, details, imageType) {
             Generate a detailed, keyword-based image prompt (under 1000 characters) for character visualization.
 
             Requirements:
-            - The image must be a face and upper body of the desired character, exclusively (no full body, no background, only the face and head/shoulders/bust upper body)
+            - The image must be a face and upper body of the desired character, exclusively (no full body, no background, only upper body)
             - Use comma-separated descriptive keywords in English
             - Include facial features, emotion, hairstyle, and style
             - Optimize for high-quality, detailed character face generation
@@ -168,7 +168,7 @@ function createSystemPayload(prompt, gender, details, imageType) {
             - ${gender === 'female' ?
                 'Include feminine facial features, elegant makeup, and feminine hairstyle. Avoid masculine traits.' : 'Include masculine facial features, confident expression, and masculine hairstyle. Avoid feminine traits.'}
 
-            Respond with the enhanced prompt only in English.
+            Respond with the enhanced prompt only in English. Do not include any explanations or additional text.
 
             You need to be concise.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
         },
@@ -178,28 +178,13 @@ function createSystemPayload(prompt, gender, details, imageType) {
             Gender: ${gender}
             ${detailsString ? `Character details: ${detailsString}` : ''}
 
-            Create a comprehensive image prompt that captures all visual facial elements. Only generate a face portrait, no full body or background.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
-        },
-        {
-            role: 'user',
-            content: `Include these essential elements:
-            - Age, skin tone, hair (color, length, style), eye details
-            - Facial expression, face shape, facial features
-            ${gender === 'female' ?
-                '- Feminine facial features, elegant makeup, hairstyle' :
-                gender === 'male' ?
-                '- Masculine facial features, confident expression, hairstyle' :
-                '- Gender-appropriate facial characteristics'
-            }
-            - Clothing style (only visible around neck/shoulders if relevant), accessories (earrings, glasses, etc. if relevant)
-            - Art style, lighting, image quality descriptors
-            - Only face portrait, no background, no full body`
+            Create a comprehensive image prompt that captures all aspect of the given base prompt. Only generate an upper body portrait, no full body or background.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
         },
         {
             role: 'user',
             content: `Ensure the prompt is under 1000 characters and formatted for Stable Diffusion.
             Avoid any extraneous information or context.
-            The image must be strictly SFW and only a face portrait.`
+            The image must be strictly SFW and only an upper body portrait.`
         }
     ];
 }
@@ -335,10 +320,8 @@ async function routes(fastify, options) {
                 console.log(`[API/generate-character-comprehensive] Gender for prompt: ${gender}`);
 
                 const systemPayload = createSystemPayload(prompt, gender, extractedDetails, finalImageType);
-                enhancedPrompt = await generateCompletion(systemPayload, 600, 'mistral');
+                enhancedPrompt = await generateCompletion(systemPayload, 600, 'llama');
                 
-                console.log('[API/generate-character-comprehensive] Enhanced prompt generated:', enhancedPrompt.substring(0, 100) + '...');
-
                 fastify.sendNotificationToUser(userId, 'showNotification', { 
                     message: request.translations.newCharacter.enhancedPrompt_complete, 
                     icon: 'success' 
@@ -365,7 +348,7 @@ async function routes(fastify, options) {
                 const placeholderId = new fastify.mongo.ObjectId().toString();
 
                 // Trigger image generation asynchronously with enhanced prompt
-                console.log(`[API/generate-character-comprehensive] Generating image with enhanced prompt: ${enhancedPrompt.substring(0, 50)}...`);
+                console.log(`[API/generate-character-comprehensive] Generating image with enhanced prompt: ${enhancedPrompt.substring(0, 100)}...`);
                 generateImg({
                     prompt: enhancedPrompt,
                     negativePrompt: negativePrompt || null,
@@ -373,7 +356,7 @@ async function routes(fastify, options) {
                     chatId: chatId,
                     userChatId: null,
                     image_num: 1,
-                    imageType,
+                    imageType: 'sfw', // All character profile images are SFW
                     image_base64: image_base64 || null,
                     chatCreation: true,
                     placeholderId: placeholderId,

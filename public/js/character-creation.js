@@ -8,6 +8,37 @@
     if (typeof isTemporaryChat === 'undefined') {
         window.isTemporaryChat = true;
     }
+    
+    // Initialize data-chat-creation-id attribute at page load
+    setTimeout(function() {
+        const $imageContainer = $(document).find('#imageContainer');
+        if ($imageContainer.length) {
+            const currentDataId = $imageContainer.attr('data-chat-creation-id');
+            if (!currentDataId || currentDataId === '') {
+                $imageContainer.attr('data-chat-creation-id', window.chatCreationId);
+                console.log(`[Init] Set initial data-chat-creation-id to: ${window.chatCreationId}`);
+            }
+            
+            // Process any pending character images that arrived before the container was ready
+            console.log(`[Init] Checking for pending character images...`);
+            if (window.pendingCharacterImages && window.pendingCharacterImages.length > 0) {
+                console.log(`[Init] Found ${window.pendingCharacterImages.length} pending images, processing...`);
+                while (window.pendingCharacterImages.length > 0) {
+                    const { imageUrl, nsfw, chatId } = window.pendingCharacterImages.shift();
+                    console.log(`[Init] Processing pending image - chatId: ${chatId}`);
+                    
+                    // Sync if needed
+                    if (chatId && chatId !== window.chatCreationId) {
+                        if (window.syncChatCreationId) {
+                            window.syncChatCreationId(chatId);
+                        }
+                    }
+                    
+                    generateCharacterImage(imageUrl, nsfw, chatId);
+                }
+            }
+        }
+    }, 100);
 
     // Show/hide spinner overlay
     function showImageSpinner() {
@@ -38,6 +69,87 @@
     window.showImageSpinner = showImageSpinner;
     window.hideImageSpinner = hideImageSpinner;
     window.resetCharacterForm = resetCharacterForm;
+
+    // Helper function to sync chatCreationId with data-chat-creation-id attribute
+    function syncChatCreationId(newId) {
+        const oldId = window.chatCreationId;
+        window.chatCreationId = newId;
+        $(document).find('#imageContainer').attr('data-chat-creation-id', newId);
+        
+        if (oldId !== newId) {
+            console.log(`[chatCreationId] Synced: ${oldId} → ${newId}`);
+        }
+        
+        return newId;
+    }
+    
+    // Helper function to verify and fix sync between chatCreationId and data-chat-creation-id
+    function verifyChatIdSync() {
+        const windowId = window.chatCreationId;
+        const $imageContainer = $(document).find('#imageContainer');
+        const attributeId = $imageContainer.attr('data-chat-creation-id');
+        
+        const isSynced = windowId === attributeId;
+        const status = isSynced ? '✓ SYNCED' : '✗ OUT OF SYNC';
+        
+        console.log(`[verifyChatIdSync] ${status}`);
+        console.log(`  window.chatCreationId: ${windowId}`);
+        console.log(`  data-chat-creation-id: ${attributeId}`);
+        
+        if (!isSynced) {
+            console.log(`[verifyChatIdSync] Fixing sync...`);
+            syncChatCreationId(windowId);
+            console.log(`[verifyChatIdSync] Sync fixed`);
+        }
+        
+        return isSynced;
+    }
+    
+    window.syncChatCreationId = syncChatCreationId;
+    window.verifyChatIdSync = verifyChatIdSync;
+    
+    // Monitor for dynamic container creation (handles post-refresh scenarios)
+    const containerObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length) {
+                // Check if #imageContainer was added
+                let containerAdded = false;
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.id === 'imageContainer' || (node.querySelectorAll && node.querySelectorAll('#imageContainer').length > 0)) {
+                        containerAdded = true;
+                    }
+                });
+                
+                if (containerAdded && window.pendingCharacterImages && window.pendingCharacterImages.length > 0) {
+                    console.log(`[MutationObserver] #imageContainer detected in DOM, processing ${window.pendingCharacterImages.length} pending images`);
+                    
+                    // Small delay to ensure container is fully rendered
+                    setTimeout(function() {
+                        while (window.pendingCharacterImages && window.pendingCharacterImages.length > 0) {
+                            const { imageUrl, nsfw, chatId } = window.pendingCharacterImages.shift();
+                            console.log(`[MutationObserver] Processing queued image - chatId: ${chatId}`);
+                            
+                            if (chatId && chatId !== window.chatCreationId) {
+                                if (window.syncChatCreationId) {
+                                    window.syncChatCreationId(chatId);
+                                }
+                            }
+                            
+                            if (window.generateCharacterImage) {
+                                generateCharacterImage(imageUrl, nsfw, chatId);
+                            }
+                        }
+                    }, 100);
+                }
+            }
+        });
+    });
+    
+    // Start observing the document for container additions
+    containerObserver.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
 
 
     // Add a small delay before accessing DOM elements
@@ -767,7 +879,8 @@
         let newchatId = await checkChat(chatCreationId)
 
         if (newchatId) {
-            chatCreationId = newchatId
+            syncChatCreationId(newchatId);
+            
             $(document).on('click', '#redirectToChat', function() {
                 if (!$('#chatContainer').length) {
                     window.location.href = `/chat/${newchatId}`;
@@ -776,9 +889,6 @@
                 closeAllModals();
                 callFetchChatData(newchatId, userId);
             });
-
-            // Update chatCreationId globally
-            $(document).find('#imageContainer').attr('data-chat-creation-id', chatCreationId);
         }
 
         const prompt = characterPrompt = $('#characterPrompt').val().trim();
@@ -875,7 +985,7 @@
     window.showMobileRightColumn = showMobileRightColumn;
 
 
-    function previewImage(event) {
+    window.previewImage = function(event) {
         const file = event.target.files[0];
         if (file && file.type.startsWith('image/')) {
             if (file.size > 5 * 1024 * 1024) { // 5MB limit
@@ -969,11 +1079,68 @@
         });
     }
     window.generateCharacterImage = function(url, nsfw, receivedChatCreationId) {
-        const $imageContainer = $(document).find('#imageContainer[data-chat-creation-id="' + receivedChatCreationId + '"]');
+        console.log(`[generateCharacterImage] CALLED with url, nsfw: ${nsfw}, receivedChatCreationId: ${receivedChatCreationId}`);
+        console.log(`[generateCharacterImage] Current state - window.chatCreationId: ${window.chatCreationId}`);
+        
+        // Ensure data-chat-creation-id is in sync with the current chatCreationId
+        const currentId = window.chatCreationId || '';
+        
+        if (receivedChatCreationId !== currentId && currentId) {
+            console.warn(`[generateCharacterImage] Chat ID mismatch. Received: ${receivedChatCreationId}, Current: ${currentId}. Syncing received ID.`);
+            syncChatCreationId(receivedChatCreationId);
+        }
+        
+        // Try to find container by received ID first
+        let $imageContainer = $(document).find('#imageContainer[data-chat-creation-id="' + receivedChatCreationId + '"]');
+        
         if (!$imageContainer.length) {
-            console.error('Image container not found for chat creation ID:', receivedChatCreationId);
+            console.warn(`[generateCharacterImage] Container not found for received ID: ${receivedChatCreationId}`);
+            
+            // Fallback 1: Try finding by current window ID
+            if (currentId && currentId !== receivedChatCreationId) {
+                console.log(`[generateCharacterImage] Attempting fallback with current ID: ${currentId}`);
+                $imageContainer = $(document).find('#imageContainer[data-chat-creation-id="' + currentId + '"]');
+                
+                if ($imageContainer.length) {
+                    console.log(`[generateCharacterImage] Found container using current ID, syncing both`);
+                    syncChatCreationId(receivedChatCreationId);
+                    // Re-query to ensure attribute is updated
+                    $imageContainer = $(document).find('#imageContainer[data-chat-creation-id="' + receivedChatCreationId + '"]');
+                }
+            }
+            
+            // Fallback 2: Try finding any #imageContainer (last resort)
+            if (!$imageContainer.length) {
+                console.log(`[generateCharacterImage] Using fallback - finding any #imageContainer`);
+                const $anyContainer = $(document).find('#imageContainer');
+                
+                if ($anyContainer.length) {
+                    console.log(`[generateCharacterImage] Found generic container, syncing ID`);
+                    syncChatCreationId(receivedChatCreationId);
+                    // Re-query with synced ID
+                    $imageContainer = $(document).find('#imageContainer[data-chat-creation-id="' + receivedChatCreationId + '"]');
+                    
+                    if (!$imageContainer.length) {
+                        $imageContainer = $anyContainer;
+                    }
+                }
+            }
+        }
+        
+        if (!$imageContainer.length) {
+            console.error(`[generateCharacterImage] CRITICAL: Image container not found for chat ID: ${receivedChatCreationId}, current: ${currentId}`);
+            console.error(`[generateCharacterImage] Available containers:`, $(document).find('#imageContainer').length);
             return;
         }
+        
+        console.log(`[generateCharacterImage] Successfully found container for ID: ${receivedChatCreationId}`);
+        generateImageInContainer($imageContainer, url);
+    };
+    
+    // Helper function to generate image in a container
+    function generateImageInContainer($imageContainer, url) {
+        console.log(`[generateImageInContainer] Called with container data-chat-creation-id: ${$imageContainer.attr('data-chat-creation-id')}`);
+        
         // Clear the container
         $imageContainer.find('#generatedImage').remove();
         $imageContainer.find('#imageGenerationDescription').hide();
@@ -995,8 +1162,10 @@
             // Save the selected image
             saveSelectedImage(url, function(error, response) {
                 if (error) {
+                    console.error(`[generateImageInContainer] Error saving image:`, error);
                     showNotification(translations.imageForm.image_save_failed, 'error');
                 } else {
+                    console.log(`[generateImageInContainer] Image saved successfully`);
                     showNotification(translations.imageForm.image_saved, 'success');
                     resetChatList();
                 }
@@ -1005,11 +1174,12 @@
 
         colDiv.append(imgElement);
         $imageContainer.append(colDiv);
+        
+        console.log(`[generateImageInContainer] Image element appended to container`);
 
         $('.regenerateImages').show();
         $('#regenerateImagesButton').show();
         $('#navigateToImageButton').show();
-        //getTimer(chatCreationId)
     }
 
     // Add character update functionality

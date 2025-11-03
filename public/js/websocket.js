@@ -192,12 +192,68 @@ function initializeWebSocket(onConnectionResult = null) {
             break;
           }
           case 'characterImageGenerated':
+            const { imageUrl, nsfw, chatId} = data.notification;
+            console.log(`[WebSocket] characterImageGenerated received - chatId: ${chatId}, current window.chatCreationId: ${window.chatCreationId}`);
+            console.log(`[WebSocket] #imageContainer exists: ${$('#imageContainer').length > 0}`);
+            
             if ($('#imageContainer').length > 0) {
-              const { imageUrl, nsfw, chatId} = data.notification;
+              console.log(`[WebSocket] Container found, processing image generation`);
+              
               if (window.hideImageSpinner) {
                 window.hideImageSpinner();
               }
-              generateCharacterImage(imageUrl,nsfw, chatId);
+              
+              // Ensure sync before calling generateCharacterImage
+              if (chatId && chatId !== window.chatCreationId) {
+                console.log(`[WebSocket] Chat ID mismatch detected, syncing...`);
+                if (window.syncChatCreationId) {
+                  window.syncChatCreationId(chatId);
+                }
+              }
+              
+              generateCharacterImage(imageUrl, nsfw, chatId);
+            } else {
+              console.warn(`[WebSocket] Container not yet available, queuing for retry...`);
+              
+              // Queue the notification for processing once container is ready
+              if (!window.pendingCharacterImages) {
+                window.pendingCharacterImages = [];
+              }
+              
+              window.pendingCharacterImages.push({ imageUrl, nsfw, chatId });
+              console.log(`[WebSocket] Queued image. Total queued: ${window.pendingCharacterImages.length}`);
+              
+              // Retry checking for container every 500ms for up to 10 seconds
+              let retryCount = 0;
+              const maxRetries = 20;
+              const retryInterval = setInterval(() => {
+                retryCount++;
+                console.log(`[WebSocket] Retry ${retryCount}/${maxRetries} - checking for #imageContainer`);
+                
+                if ($('#imageContainer').length > 0) {
+                  clearInterval(retryInterval);
+                  console.log(`[WebSocket] Container now available! Processing queued images...`);
+                  
+                  // Process all queued images
+                  while (window.pendingCharacterImages && window.pendingCharacterImages.length > 0) {
+                    const { imageUrl: queuedUrl, nsfw: queuedNsfw, chatId: queuedChatId } = window.pendingCharacterImages.shift();
+                    console.log(`[WebSocket] Processing queued image - chatId: ${queuedChatId}`);
+                    
+                    // Sync if needed
+                    if (queuedChatId && queuedChatId !== window.chatCreationId) {
+                      if (window.syncChatCreationId) {
+                        window.syncChatCreationId(queuedChatId);
+                      }
+                    }
+                    
+                    generateCharacterImage(queuedUrl, queuedNsfw, queuedChatId);
+                  }
+                } else if (retryCount >= maxRetries) {
+                  clearInterval(retryInterval);
+                  console.error(`[WebSocket] Container still not found after ${retryCount} retries. Discarding queued images.`);
+                  window.pendingCharacterImages = [];
+                }
+              }, 500);
             }
             break;
           case 'resetCharacterForm':

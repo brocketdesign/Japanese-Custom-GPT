@@ -776,6 +776,15 @@ async function pollTaskStatus(taskId, fastify) {
 async function handleTaskCompletion(taskStatus, fastify, options = {}) {
   const { chatCreation, translations, userId, chatId, placeholderId } = options;
   
+  console.log(`[handleTaskCompletion] CALLED with:`, {
+    chatCreation,
+    userId,
+    chatId,
+    placeholderId,
+    taskStatusStatus: taskStatus?.status,
+    hasImages: !!taskStatus?.result?.images
+  });
+  
   // CRITICAL FIX: Always use the images from the current task result
   let images = [];
   
@@ -793,7 +802,7 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
     return;
   }
   
-  console.log(`[handleTaskCompletion] Processing completion for placeholderId: ${placeholderId}, images: ${images?.length}`);
+  console.log(`[handleTaskCompletion] Processing completion for placeholderId: ${placeholderId}, images: ${images?.length}, chatCreation: ${chatCreation}`);
   fastify.sendNotificationToUser(userId, 'handleLoader', { imageId: placeholderId, action: 'remove' });
   fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId: placeholderId, spin: false });
   fastify.sendNotificationToUser(userId, 'updateImageCount', { chatId, count: images.length });
@@ -818,6 +827,7 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
       
       if (chatCreation) {
         console.log(`[handleTaskCompletion] Character creation - sending characterImageGenerated for image ${index + 1}/${images.length}`);
+        console.log(`[handleTaskCompletion] Sending notification with chatId: ${chatId}, imageUrl: ${imageUrl?.substring(0, 50)}...`);
         fastify.sendNotificationToUser(userId, 'characterImageGenerated', { imageUrl, nsfw, chatId });
         if (index === 0) {
           await saveChatImageToDB(fastify.mongo.db, chatId, imageUrl);
@@ -1100,6 +1110,14 @@ async function checkTaskStatus(taskId, fastify) {
   const task = await tasksCollection.findOne({ taskId });
   const chat = await db.collection('chats').findOne({ _id: task.chatId });
 
+  console.log(`[checkTaskStatus] Checking task ${taskId}:`, {
+    exists: !!task,
+    status: task?.status,
+    chatCreation: task?.chatCreation,
+    hasResult: !!task?.result,
+    createdAt: task?.createdAt
+  });
+
   let processingPercent = 0;
 
   if (!task) {
@@ -1109,30 +1127,38 @@ async function checkTaskStatus(taskId, fastify) {
 
   // CRITICAL: If task is already completed, return it immediately 
   if (task.status === 'completed') {
+    console.log(`[checkTaskStatus] Task ${taskId} is already completed, returning cached result`);
     // Check if the existing result has proper merge information
     if (task.result && task.result.images) {
       const hasProperMergeInfo = task.result.images.some(img => img.isMerged !== undefined);
       
       if (hasProperMergeInfo) {
+        console.log(`[checkTaskStatus] Task ${taskId} has proper merge info, returning as-is`);
         return task;
       } else {
         // Continue with reprocessing to add merge information
+        console.log(`[checkTaskStatus] Task ${taskId} needs merge info reprocessing`);
       }
     }
   }
 
   if (task.status === 'failed') {
+    console.log(`[checkTaskStatus] Task ${taskId} has failed status`);
     return task;
   }
 
+  console.log(`[checkTaskStatus] Fetching Novita result for task ${taskId}...`);
   const result = await fetchNovitaResult(task.taskId);
+  console.log(`[checkTaskStatus] Novita result for ${taskId}:`, { status: result?.status, error: result?.error });
 
   if (result && result.status === 'processing') {
     processingPercent = result.progress;
+    console.log(`[checkTaskStatus] Task ${taskId} is still processing, progress: ${processingPercent}%`);
     return { taskId: task.taskId, status: 'processing', progress: processingPercent};
   }
   
   if(result.error){
+    console.log(`[checkTaskStatus] Task ${taskId} returned error: ${result.error}`);
     await tasksCollection.updateOne(
       { taskId: task.taskId },
       { $set: { status: 'failed', result: { error: result.error }, updatedAt: new Date() } }
@@ -1140,7 +1166,8 @@ async function checkTaskStatus(taskId, fastify) {
     return false
   }
 
-const images = Array.isArray(result) ? result : [result];
+  console.log(`[checkTaskStatus] Task ${taskId} completed, processing ${Array.isArray(result) ? result.length : 1} image(s)`);
+  const images = Array.isArray(result) ? result : [result];
   
   // Process auto merge for ALL images if enabled
   let processedImages = images;

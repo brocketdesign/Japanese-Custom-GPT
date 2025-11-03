@@ -509,7 +509,7 @@ async function createPrompt(customPrompt, imageDescription, nsfw) {
     }
   ];
 
-  let response = await generateCompletion(messages, 700, nsfw ? 'deepseek' : 'openai');
+  let response = await generateCompletion(messages, 700, nsfw ? 'deepseek' : 'llama');
   if (!response) return null;
   
   response = response.replace(/['"]+/g, '');

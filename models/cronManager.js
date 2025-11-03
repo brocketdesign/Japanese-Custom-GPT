@@ -200,39 +200,48 @@ const processBackgroundTasks = (fastify) => async () => {
 
     const tasksCollection = db.collection('tasks');
     
-    // Get tasks that are truly background and not already processed recently
+    // Get tasks that are background or incomplete (pending/processing) and not already processed recently
     const backgroundTasks = await tasksCollection.find({ 
-      status: 'background'
+      status: { $in: ['background', 'pending', 'processing'] },
+      createdAt: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Only tasks created in last 24 hours
     }).toArray();
 
-    // Filter out recently processed tasks in JavaScript instead
-    const unprocessedTasks = backgroundTasks.filter(task => {
-      if (!task.processedAt) return true;
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-      return task.processedAt < fiveMinutesAgo;
+    console.log(`[processBackgroundTasks] Found ${backgroundTasks.length} total tasks with status in [background, pending, processing]`);
+    backgroundTasks.forEach(t => {
+      console.log(`[processBackgroundTasks] Task: ${t.taskId}, status: ${t.status}, processedAt: ${t.processedAt}, chatCreation: ${t.chatCreation}, createdAt: ${t.createdAt}`);
     });
 
-    console.log(`[processBackgroundTasks] Found ${unprocessedTasks.length} unprocessed background tasks out of ${backgroundTasks.length} total`);
+    // Process all incomplete tasks - they will naturally complete when ready
+    // We don't filter by processedAt because we remove that flag when task is still processing
+    const unprocessedTasks = backgroundTasks;
+
+    console.log(`[processBackgroundTasks] Found ${unprocessedTasks.length} tasks to process`);
 
     if (!unprocessedTasks.length) {
-      console.log('[processBackgroundTasks] No background tasks found');
+      console.log('[processBackgroundTasks] No unprocessed background tasks found');
       return;
     }
 
     for (const task of unprocessedTasks) {
-      console.log(`[processBackgroundTasks] Processing task: ${task.taskId}`);
+      console.log(`[processBackgroundTasks] Processing task: ${task.taskId}, status: ${task.status}, chatCreation: ${task.chatCreation}`);
       
       try {
-        // Mark as being processed to prevent duplicate processing
-        await tasksCollection.updateOne(
-          { _id: task._id },
-          { $set: { processedAt: new Date() } }
-        );
+        // Only mark as being processed to prevent duplicate processing within THIS cron cycle
+        // Don't use processedAt for skipping tasks - that causes them to be skipped forever
+        const processingMarker = `${task.taskId}_processing_${Date.now()}`;
         
         const taskStatus = await checkTaskStatus(task.taskId, fastify);
         
+        console.log(`[processBackgroundTasks] checkTaskStatus returned for ${task.taskId}:`, {
+          status: taskStatus?.status,
+          userId: taskStatus?.userId,
+          userChatId: taskStatus?.userChatId,
+          hasImages: !!taskStatus?.result?.images,
+          imagesCount: taskStatus?.result?.images?.length || 0
+        });
+        
         if (taskStatus && taskStatus.status === 'completed') {
-          console.log(`[processBackgroundTasks] Task ${task.taskId} is completed, handling completion`);
+          console.log(`[processBackgroundTasks] Task ${task.taskId} is completed, handling completion with chatCreation: ${task.chatCreation}`);
           await handleTaskCompletion(taskStatus, fastify, {
             chatCreation: task.chatCreation,
             translations: fastify.translations?.en || {},
@@ -249,20 +258,12 @@ const processBackgroundTasks = (fastify) => async () => {
           
           console.log(`[processBackgroundTasks] Task ${task.taskId} completion handled successfully`);
         } else {
-          console.log(`[processBackgroundTasks] Task ${task.taskId} is not completed yet, status: ${taskStatus?.status || 'unknown'}`);
-          // Remove processedAt flag so it can be retried later
-          await tasksCollection.updateOne(
-            { _id: task._id },
-            { $unset: { processedAt: 1 } }
-          );
+          console.log(`[processBackgroundTasks] Task ${task.taskId} is not completed yet, status: ${taskStatus?.status || 'unknown'}, will retry next cycle`);
+          // Don't set processedAt - let it be reprocessed next cycle
         }
       } catch (error) {
-        console.error(`[processBackgroundTasks] Error processing task ${task.taskId}:`, error);
-        // Remove the processedAt flag so it can be retried
-        await tasksCollection.updateOne(
-          { _id: task._id },
-          { $unset: { processedAt: 1 } }
-        );
+        console.error(`[processBackgroundTasks] Error processing task ${task.taskId}:`, error.message, error.stack);
+        // Don't update anything - let it be retried next cycle
       }
     }
     

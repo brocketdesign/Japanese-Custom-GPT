@@ -1820,16 +1820,44 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
 
     // filepath: models/imagen.js
     function normalizeImageUrl(url) {
-      // Extract the hash from the image URL
-      const match = url.match(/([a-f0-9]{32})_novita_result_image\.png/);
-      if (match) {
-        return match[1];
-      }
-      const match2 = url.match(/([a-f0-9]{32})\/novita_result_image\.png/);
+      // Extract the hash from the image URL - more robust matching
+      try {
+        // Try to extract S3 object key or hash
+        const match = url.match(/([a-f0-9]{32})_novita_result_image\.png/);
+        if (match) {
+          return match[1];
+        }
+        const match2 = url.match(/([a-f0-9]{32})\/novita_result_image\.png/);
         if (match2) {
           return match2[1];
         }
-      return url; // Return original URL if no match
+        // For S3 URLs, extract the object key
+        const match3 = url.match(/\/([^\/]+\.(?:png|jpg|jpeg|webp|gif))$/i);
+        if (match3) {
+          return match3[1];
+        }
+        return url; // Return original URL if no match
+      } catch (e) {
+        return url;
+      }
+    }
+
+    // Helper function to convert multilingual title object to string
+    function getTitleString(titleObj) {
+      if (!titleObj) return '';
+      
+      // If it's already a string, return it
+      if (typeof titleObj === 'string') {
+        return titleObj;
+      }
+      
+      // If it's an object, try to get the appropriate language
+      if (typeof titleObj === 'object') {
+        // Try to get title in order of preference: en, ja, fr, or any available
+        return titleObj.en || titleObj.ja || titleObj.fr || Object.values(titleObj).find(v => v) || '';
+      }
+      
+      return '';
     }
 
     const updateOriginalMessageWithMerge = async (mergeMessage) => {
@@ -1839,28 +1867,40 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
           _id: new ObjectId(userChatId),
         });
         
+        if (!userChatData || !userChatData.messages) {
+          console.log(`[updateOriginalMessageWithMerge] User chat data not found or has no messages`);
+          return false;
+        }
+        
         // Find the index of the original message for merge
         const originalIndex = userChatData.messages.findIndex(msg => {
-          if (msg.imageUrl && msg.role === 'assistant' && msg.type === 'image') {
-            const isImageMatch = normalizeImageUrl(msg.imageUrl) === normalizeImageUrl(mergeMessage.originalImageUrl);
-            console.log(`[updateOriginalMessageWithMerge] Checking message: imageUrl: ${msg.imageUrl}, originalImageUrl: ${mergeMessage.originalImageUrl}, isImageMatch: ${isImageMatch}`);
-            return isImageMatch && msg.role === 'assistant' && msg.type === 'image';
+          if (msg.imageUrl && msg.role === 'assistant' && (msg.type === 'image' || msg.type === 'mergeFace')) {
+            // Use both normalized and direct URL comparison for robustness
+            const normalizedMsgUrl = normalizeImageUrl(msg.imageUrl);
+            const normalizedOriginalUrl = normalizeImageUrl(mergeMessage.originalImageUrl);
+            const isImageMatch = normalizedMsgUrl === normalizedOriginalUrl || msg.imageUrl === mergeMessage.originalImageUrl;
+            
+            console.log(`[updateOriginalMessageWithMerge] Checking message: normalized: ${normalizedMsgUrl} vs ${normalizedOriginalUrl}, direct: ${msg.imageUrl === mergeMessage.originalImageUrl}, match: ${isImageMatch}`);
+            return isImageMatch && msg.role === 'assistant';
           }
         });
 
         if (originalIndex !== -1) {
           // Combine originalMessage with mergeMessage
           const originalMessage = userChatData.messages[originalIndex];
+          const titleString = getTitleString(mergeMessage.title);
           const resultMessage = {
             ...originalMessage,
             imageUrl: mergeMessage.imageUrl,
             imageId: mergeMessage.imageId,
             type: "mergeFace",
             role: "assistant",
+            content: titleString || mergeMessage.content || originalMessage.content, // Ensure content is a string, not object
             hidden: true,
             isMerged: true,
             mergeId: mergeMessage.mergeId,
             originalImageUrl: mergeMessage.originalImageUrl,
+            title: titleString, // Store as string, not object
           };
           console.log(`[updateOriginalMessageWithMerge] Updating message at index ${originalIndex} with resultMessage:`, resultMessage);
 
@@ -1875,30 +1915,31 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
             }
           );
           console.log(`[updateOriginalMessageWithMerge] Message updated successfully`);
+          return true;
         } else {
-          console.log(`[updateOriginalMessageWithMerge] No matching message found for merge`);
+          console.log(`[updateOriginalMessageWithMerge] No matching message found for merge - will add as new message instead`);
+          return false;
         }
       } catch (error) {
         console.error('Error updating original message with merge:', error.message);
+        return false;
       }
     };
     
     const addImageMessageToChat = async (userId, userChatId, imageUrl, imageId, prompt, title) => {
       try {
-        // Get the title for the message
-        const firstAvailableTitle = (title && typeof title === 'object') 
-          ? (title.en || title.ja || title.fr || '') 
-          : (title || '');
+        // Convert multilingual title to string
+        const titleString = getTitleString(title);
         
         const imageMessage = {
           role: "assistant",
-          content: firstAvailableTitle || prompt,
+          content: titleString || prompt,
           imageUrl,
           imageId: imageId.toString(),
           type: isMerged ? "mergeFace" : "image",
           hidden: true,
           prompt,
-          title,
+          title: titleString, // Store as string, not object
           nsfw,
           isMerged: isMerged || false,
           createdAt: new Date(),
@@ -1924,41 +1965,47 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       }
     };
 
-    const firstAvailableTitle = (title && typeof title === 'object') 
-      ? (title.en || title.ja || title.fr || '') 
-      : (title || '');
+    const firstAvailableTitle = getTitleString(title);
     
-    // FIXED: For character creation, we should always add the message
-    // The shouldAutoMerge logic was preventing character creation images from being added
-    const isCharacterCreation = !userChatId; // Character creation typically doesn't have userChatId
-    const shouldAddMessage = isCharacterCreation || !shouldAutoMerge || (shouldAutoMerge && isMerged);
-    
-    if (shouldAddMessage && isMerged) {
-      const imageMessage = {
+    // Handle message addition/update for merged images
+    if (userChatId && isMerged) {
+      // For merged images, try to update the original message first
+      const mergeMessage = {
         role: "assistant", 
-        content: isMerged ? `[MergeFace] ${mergeId}` : `${firstAvailableTitle}`, 
+        content: firstAvailableTitle || `[MergeFace] ${mergeId}`, 
         hidden: true, 
-        type: isMerged ? "mergeFace" : "image", 
-        imageId: isMerged ? mergeId : imageId.toString(), 
+        type: "mergeFace", 
+        imageId: mergeId, 
         imageUrl,
         prompt, 
         slug, 
         aspectRatio, 
         seed, 
         nsfw,
+        isMerged: true,
+        mergeId: mergeId,
+        originalImageUrl: originalImageUrl,
+        originalImageId: imageId.toString(),
+        title: firstAvailableTitle, // Store title as string
       };
 
-      // Add merge-specific fields consistently
-      if (isMerged) {
-        imageMessage.isMerged = true;
-        imageMessage.mergeId = mergeId;
-        imageMessage.originalImageUrl = originalImageUrl;
-        imageMessage.originalImageId = imageId.toString();
+      // Try to update the original message
+      const wasUpdated = await updateOriginalMessageWithMerge(mergeMessage);
+      
+      // If update failed (original message not found), add as new message instead
+      if (!wasUpdated) {
+        console.log(`[saveImageToDB] Adding merged image as new message since original wasn't found`);
+        await addImageMessageToChat(
+          userId, 
+          userChatId, 
+          imageUrl, 
+          imageId, 
+          prompt, 
+          title,
+        );
       }
-
-      await updateOriginalMessageWithMerge(imageMessage);
     } else if (userChatId) {
-      // Only add to chat if we have a valid userChatId
+      // For non-merged images, always add as new message
       await addImageMessageToChat(
         userId, 
         userChatId, 

@@ -78,14 +78,25 @@ async function routes(fastify, options) {
           return reply.code(400).send({ error: 'User has already liked this image' });
         }
 
-        // Add like to the gallery collection
-        const result = await galleryCollection.updateOne(
+        // Try to find and update by _id first (regular images)
+        let result = await galleryCollection.updateOne(
           { 'images._id': imageId },
           {
             $inc: { 'images.$.likes': 1 },
             $addToSet: { 'images.$.likedBy': userId }
           }
         );
+
+        // If no match by _id, try by mergeId (for merged images)
+        if (result.matchedCount === 0) {
+          result = await galleryCollection.updateOne(
+            { 'images.mergeId': imageId.toString() },
+            {
+              $inc: { 'images.$.likes': 1 },
+              $addToSet: { 'images.$.likedBy': userId }
+            }
+          );
+        }
 
         if (result.matchedCount === 0) {
           return reply.code(404).send({ error: 'Image not found' });
@@ -131,19 +142,38 @@ async function routes(fastify, options) {
           return reply.code(400).send({ error: 'User has not liked this image yet' });
         }
 
-        // Fetch the current likes count to ensure it doesn't go below 0
-        const image = await galleryCollection.findOne({ 'images._id': imageId });
-        const likes = image ? image.images.find(img => img._id.equals(imageId)).likes : 0;
+        // Try to find image by _id first (regular images)
+        let image = await galleryCollection.findOne({ 'images._id': imageId });
+        
+        // If not found by _id, try by mergeId (for merged images)
+        if (!image) {
+          image = await galleryCollection.findOne({ 'images.mergeId': imageId.toString() });
+        }
+        
+        const likes = image ? image.images.find(img => 
+          img._id.equals(imageId) || img.mergeId === imageId.toString()
+        )?.likes : 0;
 
         if (likes > 0) {
-          // Remove like from the gallery collection
-          const result = await galleryCollection.updateOne(
+          // Try to remove like by _id first
+          let result = await galleryCollection.updateOne(
             { 'images._id': imageId },
             {
               $inc: { 'images.$.likes': -1 },
               $pull: { 'images.$.likedBy': userId }
             }
           );
+
+          // If no match by _id, try by mergeId
+          if (result.matchedCount === 0) {
+            result = await galleryCollection.updateOne(
+              { 'images.mergeId': imageId.toString() },
+              {
+                $inc: { 'images.$.likes': -1 },
+                $pull: { 'images.$.likedBy': userId }
+              }
+            );
+          }
 
           if (result.matchedCount === 0) {
             return reply.code(404).send({ error: 'Image not found' });

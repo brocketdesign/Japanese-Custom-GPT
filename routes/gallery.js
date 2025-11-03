@@ -726,7 +726,12 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
         .aggregate([
           { $match: { chatId: new ObjectId(chatId) } },           // Match the document by chatId
           { $unwind: '$images' },           // Unwind the images array
-          { $match: { 'images.isUpscaled': { $ne: true }} }, // Filter out images with scale_factor
+          { $match: { 
+              'images.imageUrl': { $exists: true, $ne: null },    // Ensure image has a valid URL
+              'images.isUpscaled': { $ne: true },                 // Filter out upscaled duplicates
+              'images.isMerged': { $ne: false }                   // Filter out non-merged images (keep merged and legacy images)
+            } 
+          }, 
           { $sort: { 'images.createdAt': -1 } }, // Sort by createdAt in descending order
           { $skip: skip },                  // Skip for pagination
           { $limit: limit },                // Limit the results to the page size
@@ -740,7 +745,12 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
         .aggregate([
           { $match: { chatId: new ObjectId(chatId) } },
           { $unwind: '$images' },
-          { $match: { 'images.isUpscaled': { $ne: true } } }, // Ensure count matches filter above
+          { $match: { 
+              'images.imageUrl': { $exists: true, $ne: null },    // Ensure image has a valid URL
+              'images.isUpscaled': { $ne: true },                 // Filter out upscaled duplicates
+              'images.isMerged': { $ne: false }                   // Filter out non-merged images (keep merged and legacy images)
+            } 
+          }, 
           { $count: 'total' }
         ])
         .toArray();

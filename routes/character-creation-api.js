@@ -150,27 +150,39 @@ function createSystemPayloadChatRule(purpose, gender, name, details, language) {
 // Enhanced image prompt generation with structured details
 function createSystemPayload(prompt, gender, details, imageType) {
     const detailsString = flattenDetailsForPrompt(details);
+    
+    // Gender-specific instructions to prevent unwanted features
+    const genderInstruction = gender === 'female' ?
+        'Include feminine facial features, elegant makeup, and feminine hairstyle. Avoid masculine traits. IMPORTANT: Ensure clothing fully covers chest and body - no cleavage, no exposed breasts, no bikini or revealing clothing.' : 
+        'Include masculine facial features, confident expression, and masculine hairstyle. Avoid feminine traits. IMPORTANT: Ensure the character is fully clothed with appropriate masculine clothing like shirts, jackets, or formal wear - no exposed chest.';
 
     return [
         {
             role: 'system',
-            content: `You are an expert Stable Diffusion prompt engineer.
+            content: `You are an expert Stable Diffusion prompt engineer specializing in SFW character portraits.
             Generate a detailed, keyword-based image prompt (under 1000 characters) for character visualization.
 
-            Requirements:
-            - The image must be a face and upper body of the desired character, exclusively (no full body, no background, only upper body)
+            CRITICAL SFW REQUIREMENTS:
+            - The image MUST be ONLY a face and upper body portrait (shoulders to head, no lower body)
+            - NO nudity, NO exposed skin beyond neck/shoulders/arms
+            - Character MUST be fully clothed and modestly dressed
+            - NO cleavage, NO exposed breasts, NO revealing clothing
+            - NO sexual or suggestive content whatsoever
             - Use comma-separated descriptive keywords in English
-            - Include facial features, emotion, hairstyle, and style
+            - Include facial features, emotion, hairstyle, and appropriate clothing
             - Optimize for high-quality, detailed character face generation
             - Maintain consistency with provided character details
             - NO complete sentences, only relevant keywords
             - The prompt must be strictly SFW (safe for work), no explicit or NSFW content
-            - ${gender === 'female' ?
-                'Include feminine facial features, elegant makeup, and feminine hairstyle. Avoid masculine traits.' : 'Include masculine facial features, confident expression, and masculine hairstyle. Avoid feminine traits.'}
+            - ${genderInstruction}
 
-            Respond with the enhanced prompt only in English. Do not include any explanations or additional text.
-
-            You need to be concise.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
+            IMPORTANT OUTPUT REQUIREMENTS:
+            - Respond ONLY with the comma-separated keywords
+            - NO introductory text like "Here is the prompt:" or "Here is the comprehensive..."
+            - NO headers, no explanations, no preamble
+            - Start directly with the first keyword
+            - Keep it under 1000 characters
+            - Do not include colons, dashes, or any formatting except commas between keywords`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
         },
         {
             role: 'user',
@@ -178,13 +190,23 @@ function createSystemPayload(prompt, gender, details, imageType) {
             Gender: ${gender}
             ${detailsString ? `Character details: ${detailsString}` : ''}
 
-            Create a comprehensive image prompt that captures all aspect of the given base prompt. Only generate an upper body portrait, no full body or background.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
+            Create a comprehensive image prompt that captures all aspects of the given base prompt. 
+            CRITICAL: Only generate an upper body portrait (head and shoulders), no full body or background.
+            CRITICAL: The character must be fully clothed and modest - no nudity or revealing clothing.
+            
+            REMEMBER: Output ONLY the keywords, no introduction or explanation.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
         },
         {
             role: 'user',
-            content: `Ensure the prompt is under 1000 characters and formatted for Stable Diffusion.
-            Avoid any extraneous information or context.
-            The image must be strictly SFW and only an upper body portrait.`
+            content: `FINAL REQUIREMENTS:
+            - Output ONLY comma-separated keywords - NO other text
+            - Ensure the prompt is under 1000 characters
+            - Formatted for Stable Diffusion with comma-separated keywords only
+            - The image MUST be strictly SFW - no nudity, no exposed breasts, no bikini
+            - Only an upper body portrait (head, neck, shoulders, fully clothed upper torso)
+            - No background or full body
+            - The character must be wearing appropriate clothing that fully covers the body
+            - START WITH THE KEYWORDS DIRECTLY - do not write "Here is" or "The prompt is" or any introduction`
         }
     ];
 }
@@ -194,7 +216,7 @@ function extractDetailsFromPrompt(prompt, chatPurpose = '', gender ='female') {
     return [
         {
             role: "system",
-            content: `You are an expert character creator 6 analyst. 
+            content: `You are an expert character creator analyst. 
             Extract and imagine detailed physical and personality attributes from the given character description.
 
             Analyze the prompt and return structured details in the exact format required by the details_description schema.
@@ -206,18 +228,23 @@ function extractDetailsFromPrompt(prompt, chatPurpose = '', gender ='female') {
             - Personality traits and background
             - Reference character : Provide a reference character. It could be a real person, fictional character, or any other reference that fits the description.
             
+            IMPORTANT: The character gender MUST be "${gender}". Do NOT change this based on the description. Always use the provided gender.
+            If the description seems to contradict the gender, adapt other characteristics to match the specified gender instead.
+            
             Provide creative data for unclear attributes.
             Respond with a properly formatted JSON object matching the details_description schema.`
         },
         {
             role: "user", 
-            content: `
+            content: `CHARACTER GENDER (MUST USE THIS): ${gender}
+            
             ${chatPurpose && chatPurpose.trim() !== '' ? `Character Purpose: ${chatPurpose}` : ''}
             Character Description: ${prompt}
             
             Extract and structure all available details from this description.
+            REMEMBER: The gender MUST be "${gender}" - use this gender regardless of how the description reads.
             All the fields should be filled based on the description & not left empty.
-            If a detail is not mentioned, you must imagine it.`
+            If a detail is not mentioned, you must imagine it while respecting the enforced gender.`
         }
     ];
 }
@@ -322,6 +349,17 @@ async function routes(fastify, options) {
                 const systemPayload = createSystemPayload(prompt, gender, extractedDetails, finalImageType);
                 enhancedPrompt = await generateCompletion(systemPayload, 600, 'llama');
                 
+                // Clean up the enhanced prompt: remove any comments, headers, or preamble
+                enhancedPrompt = enhancedPrompt
+                    .split('\n')
+                    .filter(line => line.trim() && !line.trim().startsWith('Here is') && !line.trim().startsWith('here is') && !line.trim().match(/^(The|This|Based|Following|.*:)(\s|.*prompt)/i))
+                    .join(', ')
+                    .replace(/^[^\w]*/i, '') // Remove leading non-word characters
+                    .replace(/,+/g, ',') // Remove duplicate commas
+                    .trim();
+                
+                console.log(`[API/generate-character-comprehensive] Cleaned enhanced prompt: ${enhancedPrompt.substring(0, 100)}...`);
+                
                 fastify.sendNotificationToUser(userId, 'showNotification', { 
                     message: request.translations.newCharacter.enhancedPrompt_complete, 
                     icon: 'success' 
@@ -342,13 +380,20 @@ async function routes(fastify, options) {
             console.log('[API/generate-character-comprehensive] Step 2.5: Triggering image generation with enhanced prompt');
 
             try {
+                // First, save gender to chat BEFORE generating images
+                await fastify.mongo.db.collection('chats').updateOne(
+                    { _id: new ObjectId(chatId) },
+                    { $set: { gender: gender } }
+                );
+                console.log(`[API/generate-character-comprehensive] Saved gender to chat: ${gender}`);
+
                 const { generateImg } = require('../models/imagen');
                 
                 // Generate placeholder ID for tracking
                 const placeholderId = new fastify.mongo.ObjectId().toString();
 
                 // Trigger image generation asynchronously with enhanced prompt
-                console.log(`[API/generate-character-comprehensive] Generating image with enhanced prompt: ${enhancedPrompt.substring(0, 100)}...`);
+                console.log(`[API/generate-character-comprehensive] Generating image with enhanced prompt: ${enhancedPrompt}`);
                 generateImg({
                     prompt: enhancedPrompt,
                     negativePrompt: negativePrompt || null,

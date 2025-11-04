@@ -892,7 +892,7 @@
         }
 
         const prompt = characterPrompt = $('#characterPrompt').val().trim();
-        const gender = 'female' || $('#gender').val();
+        const gender = $('#gender').val();
         const name = $('#chatName').val().trim();
         const chatPurpose = $('#chatPurpose').val().trim();
         let modelId = $('#modelId').val();

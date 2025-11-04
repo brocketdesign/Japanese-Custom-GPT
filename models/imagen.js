@@ -13,8 +13,8 @@ const default_prompt = {
     sdxl: {
       sfw: {
         sampler_name: "Euler a",
-        prompt: `score_9, score_8_up, masterpiece, best quality, (sfw), `,
-        negative_prompt: `nipple, topless, nsfw, naked, nude, sex,young,child,dick`,
+        prompt: `score_9, score_8_up, masterpiece, best quality, (sfw), clothed, `,
+        negative_prompt: `nipple, topless, nsfw, naked, nude, sex, young, child, dick, exposed breasts, cleavage, bikini, revealing clothing, lower body`,
         width: 1024,
         height: 1360,
         seed: -1,
@@ -34,8 +34,8 @@ const default_prompt = {
       sfw: {
         sampler_name: "DPM++ 2M Karras",
         prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (sfw), dressed, clothe on, natural lighting, `,
-        negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo, nsfw,nude, topless, worst quality, low quality,disform,weird body,multiple hands,young,child,dick,bad quality,worst quality,worst detail,sketch `,
-        loras: [{"model_name":"more_details_59655.safetensors","strength":0.2},{ model_name: 'JapaneseDollLikeness_v15_28382.safetensors', strength: 0.7 },{"model_name":"PerfectFullBreasts-fCV3_59759.safetensors","strength":0.7}],
+        negative_prompt: `BraV4Neg,paintings,sketches,(worst quality:2), (low quality:2), (normal quality:2), lowres, normal quality, ((monochrome)), ((grayscale)),logo, nsfw, nude, topless, exposed breasts, cleavage, bikini, revealing clothing, worst quality, low quality, disform, weird body, multiple hands, young, child, dick, bad quality, worst quality, worst detail, sketch, lower body, full body`,
+        loras: [{"model_name":"more_details_59655.safetensors","strength":0.2},{ model_name: 'JapaneseDollLikeness_v15_28382.safetensors', strength: 0.7 }],
         seed: -1,
       },
       nsfw: {
@@ -50,11 +50,13 @@ const default_prompt = {
       sfw:{
         sampler_name: 'euler',
         prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (sfw), dressed, clothe on, natural lighting, `,
+        negative_prompt: `nipple, topless, nude, naked, exposed breasts, cleavage, bikini, nsfw, uncensored, revealing clothing, lower body, full body`,
         seed: 0,
       },
       nsfw:{
         sampler_name: 'euler',
         prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (nsfw),uncensored, `,
+        negative_prompt: ``,
         seed: 0,
       }
     }
@@ -432,6 +434,7 @@ async function generateImg({
         image_request = {
             type: imageType,
             prompt: (selectedStyle[imageType].prompt ? selectedStyle[imageType].prompt + prompt : prompt).replace(/^\s+/gm, '').trim(),
+            negative_prompt: selectedStyle[imageType].negative_prompt || '',
             width: 768, // FLUX portrait dimensions
             height: 1024,
             seed: imageSeed || selectedStyle[imageType].seed,
@@ -446,12 +449,32 @@ async function generateImg({
         finalNegativePrompt = ((negativePrompt || finalNegativePrompt) ? (negativePrompt || finalNegativePrompt)  + ',' : '') + genderNegativePrompt;
         finalNegativePrompt = finalNegativePrompt.replace(/,+/g, ',').replace(/^\s*,|\s*,\s*$/g, '').trim();
         console.log(`[generateImg] imageType: ${imageType}`);
+        
+        // Determine LoRAs: For character creation with SFW, remove feminine-only LoRAs and handle gender-specific ones
+        let selectedLoras = imageType === 'sfw' ? [...selectedStyle.sfw.loras] : [...selectedStyle.nsfw.loras];
+        
+        // For character creation SFW images, exclude feminine-specific LoRAs
+        if (chatCreation && imageType === 'sfw') {
+            selectedLoras = selectedLoras.filter(lora => 
+                !lora.model_name.toLowerCase().includes('breast') && 
+                !lora.model_name.toLowerCase().includes('feminine')
+            );
+            
+            // For male characters in SFW character creation, further restrict feminine LoRAs
+            if (gender === 'male') {
+                selectedLoras = selectedLoras.filter(lora => 
+                    !lora.model_name.toLowerCase().includes('doll') && 
+                    !lora.model_name.toLowerCase().includes('japan')
+                );
+            }
+        }
+        
         if (imageType === 'sfw') {
           image_request = {
             type: 'sfw',
             model_name: imageModel.replace('.safetensors', '') + '.safetensors',
             sampler_name: selectedStyle.sfw.sampler_name || '',
-            loras: selectedStyle.sfw.loras,
+            loras: selectedLoras,
             prompt: (selectedStyle.sfw.prompt ? selectedStyle.sfw.prompt + prompt : prompt).replace(/^\s+/gm, '').trim(),
             negative_prompt: finalNegativePrompt,
             width: selectedStyle.sfw.width || params.width,
@@ -465,7 +488,7 @@ async function generateImg({
             type: 'nsfw',
             model_name: imageModel.replace('.safetensors', '') + '.safetensors',
             sampler_name: selectedStyle.nsfw.sampler_name || '',
-            loras: selectedStyle.nsfw.loras,
+            loras: selectedLoras,
             prompt: (selectedStyle.nsfw.prompt ? selectedStyle.nsfw.prompt + prompt : prompt),
             negative_prompt: finalNegativePrompt,
             width: selectedStyle.nsfw.width || params.width,

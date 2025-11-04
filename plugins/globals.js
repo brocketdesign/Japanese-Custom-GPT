@@ -31,6 +31,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     const legalTranslationsCache = {}; // Add cache for legal translations
     const speechToTextTranslationsCache = {}; // Add cache for speech-to-text translations
     const buyPointsTranslationsCache = {}; // Add cache for buy-points translations
+    const chatModelTestTranslationsCache = {}; // Add cache for chat model test translations
     
     // Decorate Fastify with user, lang, and translations functions
     fastify.decorate('getUser', getUser);
@@ -49,6 +50,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorate('getLegalTranslations', getLegalTranslations); // Add legal translations decorator
     fastify.decorate('getSpeechToTextTranslations', getSpeechToTextTranslations); // Add speech-to-text translations decorator
     fastify.decorate('getBuyPointsTranslations', getBuyPointsTranslations); // Add buy-points translations decorator
+    fastify.decorate('getChatModelTestTranslations', getChatModelTestTranslations); // Add chat model test translations decorator
     
     // Attach `lang` and `user` dynamically
     Object.defineProperty(fastify, 'lang', {
@@ -79,6 +81,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorateRequest('legalTranslations', null); // Add legal translations to request
     fastify.decorateRequest('speechToTextTranslations', null); // Add speech-to-text translations to request
     fastify.decorateRequest('buyPointsTranslations', null); // Add buy-points translations to request
+    fastify.decorateRequest('chatModelTestTranslations', null); // Add chat model test translations to request
 
     // Pre-handler to set user, lang, and translations
     fastify.addHook('preHandler', async (request, reply) => {
@@ -99,6 +102,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         request.legalTranslations = getLegalTranslations(request.lang); // Load legal translations
         request.speechToTextTranslations = getSpeechToTextTranslations(request.lang); // Load speech-to-text translations
         request.buyPointsTranslations = getBuyPointsTranslations(request.lang); // Load buy-points translations
+        request.chatModelTestTranslations = getChatModelTestTranslations(request.lang); // Load chat model test translations
    
         // Make translations available in Handlebars templates
         reply.locals = {
@@ -117,6 +121,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             legalTranslations: request.legalTranslations, // Make legal translations available
             speechToTextTranslations: request.speechToTextTranslations, // Make speech-to-text translations available
             buyPointsTranslations: request.buyPointsTranslations, // Make buy-points translations available
+            chatModelTestTranslations: request.chatModelTestTranslations, // Make chat model test translations available
             user: request.user, // Make user available
             isUserAdmin: request.isUserAdmin, // Make admin status available
             mode: process.env.MODE,
@@ -590,5 +595,25 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             }
         }
         return buyPointsTranslationsCache[currentLang];
+    }
+
+    /** Load ChatModelTest translations for a specific language (cached for performance) */
+    function getChatModelTestTranslations(currentLang) {
+        if (!currentLang) currentLang = 'en';
+        
+        if (!chatModelTestTranslationsCache[currentLang]) {
+            const chatModelTestTranslationFile = path.join(__dirname, '..', 'locales', `chat-model-test-${currentLang}.json`);
+            if (fs.existsSync(chatModelTestTranslationFile)) {
+                try {
+                    chatModelTestTranslationsCache[currentLang] = JSON.parse(fs.readFileSync(chatModelTestTranslationFile, 'utf-8'));
+                } catch (e) {
+                    fastify.log.error(`Error reading chat model test translations for ${currentLang}:`, e);
+                    chatModelTestTranslationsCache[currentLang] = {};
+                }
+            } else {
+                chatModelTestTranslationsCache[currentLang] = {}; // Fallback to empty object if translation file is missing
+            }
+        }
+        return chatModelTestTranslationsCache[currentLang];
     }
 });

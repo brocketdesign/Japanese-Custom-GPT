@@ -1,0 +1,777 @@
+{{#if user}}
+{{> dashboard-header}}
+<div class="dashboard-container py-4">
+    {{> dashboard-nav}}
+    
+    <main class="dashboard-content">
+        <div class="container-fluid">
+            <!-- Page Header -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h2 mb-0">{{translations.page_title}}</h1>
+                            <p class="text-muted mb-0">{{translations.page_subtitle}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="row">
+                <!-- Control Panel -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <!-- Model Selection -->
+                            <div class="mb-4">
+                                <h5 class="card-title">{{translations.section_models}}</h5>
+                                <p class="small text-muted">{{translations.section_models_description}}</p>
+                                <div id="modelSelectionContainer">
+                                    <div class="mb-3">
+                                        <div id="modelCheckboxes"></div>
+                                        <small class="text-muted d-block mt-2" id="selectedModelsCount">{{translations.no_models_selected}}</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Languages Selection -->
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h5 class="card-title mb-0">{{translations.section_languages}}</h5>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-primary" id="selectAllLanguagesBtn" title="Select all languages">
+                                            <i class="bi bi-check-all"></i> All
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" id="clearLanguagesBtn" title="Clear all languages">
+                                            <i class="bi bi-x"></i> Clear
+                                        </button>
+                                    </div>
+                                </div>
+                                <p class="small text-muted mb-2">{{translations.section_languages_description}}</p>
+                                <div id="languagesContainer">
+                                    <div class="form-check">
+                                        <input class="form-check-input model-language-select" type="checkbox" id="lang-en" value="en" checked style="cursor: pointer;">
+                                        <label class="form-check-label" for="lang-en" style="cursor: pointer; user-select: none;">
+                                            {{translations.language_en}}
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input model-language-select" type="checkbox" id="lang-fr" value="fr" style="cursor: pointer;">
+                                        <label class="form-check-label" for="lang-fr" style="cursor: pointer; user-select: none;">
+                                            {{translations.language_fr}}
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input model-language-select" type="checkbox" id="lang-ja" value="ja" style="cursor: pointer;">
+                                        <label class="form-check-label" for="lang-ja" style="cursor: pointer; user-select: none;">
+                                            {{translations.language_ja}}
+                                        </label>
+                                    </div>
+                                </div>
+                                <small class="text-muted d-block mt-2" id="selectedLanguagesCount">1 language selected</small>
+                            </div>
+
+                            <!-- Max Tokens -->
+                            <div class="mb-4">
+                                <label for="maxTokens" class="form-label">{{translations.label_max_tokens}}</label>
+                                <input type="number" class="form-control" id="maxTokens" value="1000" min="100" max="4000" step="100">
+                                <small class="text-muted">{{translations.label_max_tokens_help}}</small>
+                            </div>
+
+                            <!-- Run Test Button -->
+                            <button id="runTestBtn" class="btn btn-primary w-100 mb-2">
+                                <i class="bi bi-play-fill"></i> {{translations.button_run_test}}
+                            </button>
+                            <div class="btn-group w-100 mb-3" role="group">
+                                <button id="exportResultsBtn" class="btn btn-outline-secondary flex-grow-1" disabled title="Export test results to CSV">
+                                    <i class="bi bi-download"></i> {{translations.button_export_results}}
+                                </button>
+                                <button id="resetTestBtn" class="btn btn-outline-warning flex-grow-1" title="Reset all test configurations">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Reset Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Panel -->
+                <div class="col-lg-8 mb-4">
+                    <!-- System Prompt -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0">{{translations.section_system_prompt}}</h5>
+                                <button id="resetPromptBtn" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-arrow-clockwise"></i> {{translations.button_reset_prompt}}
+                                </button>
+                            </div>
+                            <p class="small text-muted mb-3">{{translations.section_system_prompt_description}}</p>
+                            <textarea id="systemPrompt" class="form-control" rows="4" placeholder="{{translations.placeholder_system_prompt}}">You are a helpful and friendly AI assistant.</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Questions -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0">{{translations.section_questions}}</h5>
+                            </div>
+                            <p class="small text-muted mb-3">{{translations.section_questions_description}}</p>
+                            
+                            <div id="questionsContainer"></div>
+
+                            <button id="addQuestionBtn" class="btn btn-sm btn-outline-primary mt-3 w-100">
+                                <i class="bi bi-plus-circle"></i> {{translations.button_add_question}}
+                            </button>
+                            <small class="text-muted d-block mt-2" id="questionsCount">{{translations.questions_count}}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5 class="card-title mb-0">{{translations.section_results}}</h5>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="viewMode" id="comparisonView" value="comparison" checked>
+                                    <label class="btn btn-outline-secondary" for="comparisonView">{{translations.tabs_comparison}}</label>
+                                    
+                                    <input type="radio" class="btn-check" name="viewMode" id="statsView" value="statistics">
+                                    <label class="btn btn-outline-secondary" for="statsView">{{translations.tabs_statistics}}</label>
+                                </div>
+                            </div>
+
+                            <!-- Comparison View -->
+                            <div id="comparisonViewContent">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0" id="resultsTable">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>{{translations.column_language}}</th>
+                                                <th>{{translations.column_question}}</th>
+                                                <th>{{translations.column_model}}</th>
+                                                <th>{{translations.column_response_time}}</th>
+                                                <th>{{translations.column_tokens}}</th>
+                                                <th>{{translations.column_actions}}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="resultsTableBody">
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted py-4">{{translations.status_loading}}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Statistics View -->
+                            <div id="statsViewContent" style="display: none;">
+                                <div id="statsContainer" class="row">
+                                    <!-- Stats will be dynamically populated -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Section -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">{{translations.tabs_history}}</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm mb-0" id="historyTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>{{translations.time_just_now}}</th>
+                                            <th>Models</th>
+                                            <th>Languages</th>
+                                            <th>Questions</th>
+                                            <th>{{translations.column_actions}}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="historyTableBody">
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted py-3">No test history yet</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    {{> dashboard-footer}}
+</div>
+
+<!-- Modal for detailed response view -->
+<div class="modal fade" id="responseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{translations.column_response}}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="responseContent"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="copyResponseBtn" class="btn btn-secondary">
+                    <i class="bi bi-clipboard"></i> {{translations.button_copy_text}}
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{translations.button_close}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{> dashboard-modals}}
+
+<style>
+.sticky-bottom, #footer-toolbar {display:none;}
+.dashboard-container {
+    background-color: #f8f9fa;
+    min-height: calc(100vh - 60px);
+}
+
+.dashboard-content {
+    padding: 20px;
+}
+
+.card {
+    transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1) !important;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+#modelCheckboxes {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.question-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.question-row input {
+    flex: 1;
+}
+
+.question-row button {
+    flex-shrink: 0;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    min-height: unset;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.response-text {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    border-left: 4px solid #007bff;
+    max-height: 400px;
+    overflow-y: auto;
+    line-height: 1.6;
+}
+
+.stat-card {
+    border-left: 4px solid #007bff;
+}
+
+@media (max-width: 992px) {
+    .dashboard-content {
+        margin-left: 0;
+    }
+}
+</style>
+
+<script>
+// Translations
+const translations = window.chatModelTestTranslations || {};
+const availableModels = {{{availableModels}}};
+
+// State
+let selectedModels = [];
+let questions = ['What is artificial intelligence?'];
+let testResults = null;
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    initializeModelCheckboxes();
+    initializeQuestions();
+    attachEventListeners();
+    updateLanguageCount();
+    loadTestHistory();
+});
+
+function initializeModelCheckboxes() {
+    const container = document.getElementById('modelCheckboxes');
+    Object.entries(availableModels).forEach(([key, model]) => {
+        const div = document.createElement('div');
+        div.className = 'form-check';
+        div.innerHTML = `
+            <input class="form-check-input model-select" type="checkbox" id="model-${key}" value="${key}">
+            <label class="form-check-label" for="model-${key}">
+                <strong>${model.displayName}</strong>
+                <br>
+                <small class="text-muted">${model.description}</small>
+            </label>
+        `;
+        container.appendChild(div);
+    });
+
+    document.querySelectorAll('.model-select').forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectedModels);
+    });
+}
+
+function updateSelectedModels() {
+    selectedModels = Array.from(document.querySelectorAll('.model-select:checked')).map(cb => cb.value);
+    const countEl = document.getElementById('selectedModelsCount');
+    
+    if (selectedModels.length === 0) {
+        countEl.textContent = translations.no_models_selected;
+    } else {
+        countEl.textContent = `${translations.selected_models}`.replace('{{count}}', selectedModels.length);
+    }
+}
+
+function initializeQuestions() {
+    renderQuestions();
+}
+
+function renderQuestions() {
+    const container = document.getElementById('questionsContainer');
+    container.innerHTML = '';
+    
+    questions.forEach((question, index) => {
+        const div = document.createElement('div');
+        div.className = 'question-row';
+        div.innerHTML = `
+            <input type="text" class="form-control question-input" data-index="${index}" value="${question}" placeholder="${translations.placeholder_question}">
+            <button class="btn btn-sm btn-outline-danger" onclick="removeQuestion(${index})">
+                <i class="bi bi-trash"></i>
+            </button>
+        `;
+        container.appendChild(div);
+    });
+
+    document.querySelectorAll('.question-input').forEach(input => {
+        input.addEventListener('change', function() {
+            const index = parseInt(this.getAttribute('data-index'));
+            questions[index] = this.value;
+            updateQuestionCount();
+        });
+    });
+
+    updateQuestionCount();
+}
+
+function updateQuestionCount() {
+    const count = questions.filter(q => q.trim() !== '').length;
+    const countEl = document.getElementById('questionsCount');
+    countEl.textContent = `${translations.questions_count}`.replace('{{count}}', count);
+}
+
+function removeQuestion(index) {
+    questions.splice(index, 1);
+    renderQuestions();
+}
+
+function attachEventListeners() {
+    document.getElementById('addQuestionBtn').addEventListener('click', addQuestion);
+    document.getElementById('runTestBtn').addEventListener('click', runTest);
+    document.getElementById('resetPromptBtn').addEventListener('click', resetPrompt);
+    document.getElementById('resetTestBtn').addEventListener('click', resetTest);
+    document.getElementById('exportResultsBtn').addEventListener('click', exportResults);
+    document.getElementById('selectAllLanguagesBtn').addEventListener('click', selectAllLanguages);
+    document.getElementById('clearLanguagesBtn').addEventListener('click', clearLanguages);
+
+    // Attach listeners to language checkboxes with new class name to avoid jQuery conflict
+    const langCheckboxes = document.querySelectorAll('.model-language-select');
+    langCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function(e) {
+            console.log('Language checkbox CHANGE:', this.id, 'Checked:', this.checked);
+            updateLanguageCount();
+        });
+    });
+
+    document.querySelectorAll('input[name="viewMode"]').forEach(radio => {
+        radio.addEventListener('change', switchView);
+    });
+}
+
+function addQuestion() {
+    if (questions.length < 5) {
+        questions.push('');
+        renderQuestions();
+    }
+}
+
+function resetPrompt() {
+    document.getElementById('systemPrompt').value = 'You are a helpful and friendly AI assistant.';
+}
+
+function selectAllLanguages() {
+    document.querySelectorAll('.model-language-select').forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    updateLanguageCount();
+}
+
+function clearLanguages() {
+    document.querySelectorAll('.model-language-select').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    updateLanguageCount();
+}
+
+function updateLanguageCount() {
+    const selected = Array.from(document.querySelectorAll('.model-language-select:checked')).length;
+    const countEl = document.getElementById('selectedLanguagesCount');
+    if (selected === 0) {
+        countEl.textContent = 'No languages selected';
+    } else if (selected === 1) {
+        countEl.textContent = '1 language selected';
+    } else {
+        countEl.textContent = `${selected} languages selected`;
+    }
+}
+
+function resetTest() {
+    // Reset models
+    document.querySelectorAll('.model-select').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    updateSelectedModels();
+
+    // Reset languages (keep at least English selected)
+    document.getElementById('lang-en').checked = true;
+    document.getElementById('lang-fr').checked = false;
+    document.getElementById('lang-ja').checked = false;
+    updateLanguageCount();
+
+    // Reset questions back to defaults
+    questions = [
+        'What is artificial intelligence?',
+        'How does machine learning work?',
+        'Explain the difference between ML and AI',
+        'What are neural networks?',
+        'How can AI be used in business?'
+    ];
+    renderQuestions();
+
+    // Reset system prompt
+    resetPrompt();
+
+    // Reset max tokens
+    document.getElementById('maxTokens').value = 1000;
+
+    // Clear results
+    testResults = null;
+    document.getElementById('resultsTableBody').innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No results yet</td></tr>';
+    document.getElementById('exportResultsBtn').disabled = true;
+
+    // Show confirmation
+    alert('Test configuration has been reset to defaults');
+}
+
+async function runTest() {
+    const languages = Array.from(document.querySelectorAll('.model-language-select:checked')).map(cb => cb.value);
+    const systemPrompt = document.getElementById('systemPrompt').value;
+    const filteredQuestions = questions.filter(q => q.trim() !== '');
+    const maxTokens = parseInt(document.getElementById('maxTokens').value);
+
+    // Validation
+    if (selectedModels.length === 0) {
+        alert(translations.message_select_at_least_one_model);
+        return;
+    }
+    if (languages.length === 0) {
+        alert(translations.message_select_at_least_one_language);
+        return;
+    }
+    if (filteredQuestions.length === 0) {
+        alert(translations.message_add_at_least_one_question);
+        return;
+    }
+
+    // Disable button and show loading
+    const btn = document.getElementById('runTestBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span> ' + translations.button_running;
+
+    try {
+        const response = await fetch('/api/admin/chat-model-test/run', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                models: selectedModels,
+                questions: filteredQuestions,
+                systemPrompt,
+                languages,
+                maxTokens
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Test failed');
+        }
+
+        const data = await response.json();
+        testResults = data.results;
+        displayResults();
+        loadTestHistory();
+        document.getElementById('exportResultsBtn').disabled = false;
+        
+        alert(translations.message_test_completed);
+    } catch (error) {
+        console.error('Test error:', error);
+        alert(`${translations.message_test_failed} ${error.message}`);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+function displayResults() {
+    const tbody = document.getElementById('resultsTableBody');
+    tbody.innerHTML = '';
+
+    Object.entries(testResults).forEach(([language, questions]) => {
+        Object.entries(questions).forEach(([question, models]) => {
+            Object.entries(models).forEach(([model, result]) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td><span class="badge bg-info">${language.toUpperCase()}</span></td>
+                    <td><small>${question.substring(0, 40)}...</small></td>
+                    <td>${result.modelName}</td>
+                    <td>${result.success ? `${result.responseTime}ms` : 'N/A'}</td>
+                    <td>${result.success && result.tokens ? result.tokens.total : 'N/A'}</td>
+                    <td>
+                        ${result.success ? 
+                            `<button class="btn btn-sm btn-primary" onclick="showResponse('${btoa(result.content)}')">View</button>` :
+                            `<span class="badge bg-danger">Error</span>`
+                        }
+                    </td>
+                `;
+            });
+        });
+    });
+}
+
+function showResponse(encodedContent) {
+    const content = atob(encodedContent);
+    document.getElementById('responseContent').innerHTML = `<div class="response-text">${content}</div>`;
+    new bootstrap.Modal(document.getElementById('responseModal')).show();
+}
+
+function switchView() {
+    const mode = document.querySelector('input[name="viewMode"]:checked').value;
+    const comparisonView = document.getElementById('comparisonViewContent');
+    const statsView = document.getElementById('statsViewContent');
+
+    if (mode === 'comparison') {
+        comparisonView.style.display = 'block';
+        statsView.style.display = 'none';
+    } else {
+        comparisonView.style.display = 'none';
+        statsView.style.display = 'block';
+        displayStatistics();
+    }
+}
+
+function displayStatistics() {
+    // TODO: Implement statistics view
+    const container = document.getElementById('statsContainer');
+    container.innerHTML = '<p class="text-center text-muted">Statistics view coming soon</p>';
+}
+
+async function loadTestHistory() {
+    try {
+        const response = await fetch('/api/admin/chat-model-test/results');
+        if (!response.ok) throw new Error('Failed to load history');
+
+        const data = await response.json();
+        const tbody = document.getElementById('historyTableBody');
+        tbody.innerHTML = '';
+
+        if (data.results.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No test history yet</td></tr>';
+            return;
+        }
+
+        data.results.slice(0, 10).forEach(result => {
+            const row = tbody.insertRow();
+            const createdAt = new Date(result.createdAt).toLocaleString();
+            row.innerHTML = `
+                <td>${createdAt}</td>
+                <td>${result.models.join(', ')}</td>
+                <td>${result.languages.join(', ')}</td>
+                <td>${result.questions.length} questions</td>
+                <td>
+                    <button class="btn btn-sm btn-info" onclick="viewTestDetails('${result._id}')" title="View results">View</button>
+                    <button class="btn btn-sm btn-success" onclick="restoreTestConfiguration('${result._id}')" title="Restore this test configuration">Restore</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteTest('${result._id}')" title="Delete this test">Delete</button>
+                </td>
+            `;
+        });
+    } catch (error) {
+        console.error('Error loading history:', error);
+    }
+}
+
+async function viewTestDetails(testId) {
+    try {
+        const response = await fetch(`/api/admin/chat-model-test/results/${testId}`);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to load test details');
+        }
+
+        const data = await response.json();
+        const testData = data.result;
+        testResults = testData.results;
+        displayResults();
+        document.getElementById('comparisonView').click();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error) {
+        console.error('Error loading test details:', error);
+        alert(`Failed to load test details: ${error.message}`);
+    }
+}
+
+async function restoreTestConfiguration(testId) {
+    try {
+        const response = await fetch(`/api/admin/chat-model-test/results/${testId}`);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to load test configuration');
+        }
+
+        const data = await response.json();
+        const testData = data.result;
+
+        // Restore model selections
+        document.querySelectorAll('.model-select').forEach(checkbox => {
+            checkbox.checked = testData.models.includes(checkbox.value);
+        });
+        updateSelectedModels();
+
+        // Restore language selections
+        document.querySelectorAll('.model-language-select').forEach(checkbox => {
+            checkbox.checked = testData.languages.includes(checkbox.value);
+        });
+        updateLanguageCount();
+
+        // Restore questions
+        questions = [...testData.questions];
+        renderQuestions();
+
+        // Restore system prompt
+        document.getElementById('systemPrompt').value = testData.systemPrompt;
+
+        // Restore max tokens
+        document.getElementById('maxTokens').value = testData.maxTokens || 1000;
+
+        // Show success message
+        alert(`Test configuration restored from ${new Date(testData.createdAt).toLocaleString()}`);
+        
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error) {
+        console.error('Error restoring test configuration:', error);
+        alert(`Failed to restore configuration: ${error.message}`);
+    }
+}
+
+async function deleteTest(testId) {
+    if (!confirm('Are you sure you want to delete this test result?')) return;
+
+    try {
+        const response = await fetch(`/api/admin/chat-model-test/results/${testId}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) throw new Error('Failed to delete test');
+
+        loadTestHistory();
+        alert(translations.message_result_deleted);
+    } catch (error) {
+        console.error('Error deleting test:', error);
+        alert('Failed to delete test result');
+    }
+}
+
+function exportResults() {
+    if (!testResults) {
+        alert('No results to export');
+        return;
+    }
+
+    const csv = convertResultsToCSV();
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `model-test-results-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+}
+
+function convertResultsToCSV() {
+    let csv = 'Language,Question,Model,Response,ResponseTime(ms),Tokens,Success\n';
+
+    Object.entries(testResults).forEach(([language, questions]) => {
+        Object.entries(questions).forEach(([question, models]) => {
+            Object.entries(models).forEach(([model, result]) => {
+                const escapedResponse = `"${result.content ? result.content.replace(/"/g, '""') : 'N/A'}"`;
+                csv += `${language},${question},${model},${escapedResponse},${result.responseTime || 'N/A'},${result.tokens?.total || 'N/A'},${result.success}\n`;
+            });
+        });
+    });
+
+    return csv;
+}
+
+document.getElementById('copyResponseBtn').addEventListener('click', function() {
+    const text = document.getElementById('responseContent').innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        alert(translations.message_copied_to_clipboard);
+    });
+});
+</script>
+{{/if}}

@@ -10,6 +10,7 @@ async function registerRoutes(fastify) {
   fastify.register(require('../routes/buy-points-api'));
   fastify.register(require('../routes/user'));
   fastify.register(require('../routes/admin'));
+  fastify.register(require('../routes/admin-chat-model'));
   fastify.register(require('../routes/civitai-api'));
   fastify.register(require('../routes/post'));
   fastify.register(require('../routes/notifications'));

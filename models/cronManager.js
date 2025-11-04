@@ -188,7 +188,6 @@ const createModelChatGenerationTask = (fastify) => {
 
 const processBackgroundTasks = (fastify) => async () => {
   const startTime = Date.now();
-  console.log(`\n[processBackgroundTasks] ===== STARTING BACKGROUND TASK PROCESSING ${new Date().toISOString()} =====`);
   
   try {
     const db = fastify.mongo.db;
@@ -206,21 +205,19 @@ const processBackgroundTasks = (fastify) => async () => {
       createdAt: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Only tasks created in last 24 hours
     }).toArray();
 
-    console.log(`[processBackgroundTasks] Found ${backgroundTasks.length} total tasks with status in [background, pending, processing]`);
-    backgroundTasks.forEach(t => {
-      console.log(`[processBackgroundTasks] Task: ${t.taskId}, status: ${t.status}, processedAt: ${t.processedAt}, chatCreation: ${t.chatCreation}, createdAt: ${t.createdAt}`);
-    });
-
     // Process all incomplete tasks - they will naturally complete when ready
     // We don't filter by processedAt because we remove that flag when task is still processing
     const unprocessedTasks = backgroundTasks;
 
-    console.log(`[processBackgroundTasks] Found ${unprocessedTasks.length} tasks to process`);
-
     if (!unprocessedTasks.length) {
-      console.log('[processBackgroundTasks] No unprocessed background tasks found');
       return;
     }
+
+    console.log(`\n[processBackgroundTasks] ===== STARTING BACKGROUND TASK PROCESSING ${new Date().toISOString()} =====`);
+    console.log(`[processBackgroundTasks] Found ${unprocessedTasks.length} tasks to process`);
+    unprocessedTasks.forEach(t => {
+      console.log(`[processBackgroundTasks] Task: ${t.taskId}, status: ${t.status}, processedAt: ${t.processedAt}, chatCreation: ${t.chatCreation}, createdAt: ${t.createdAt}`);
+    });
 
     for (const task of unprocessedTasks) {
       console.log(`[processBackgroundTasks] Processing task: ${task.taskId}, status: ${task.status}, chatCreation: ${task.chatCreation}`);

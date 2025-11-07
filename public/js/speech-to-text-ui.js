@@ -76,7 +76,7 @@ class SpeechToTextUI {
         // Create speech button
         const speechBtn = document.createElement('button');
         speechBtn.id = 'speech-to-text-btn';
-        speechBtn.className = `btn btn-light d-flex px-3 border-0 rounded me-1 ${this.buttonClass}`;
+        speechBtn.className = `btn btn-light d-flex px-3 border-0 chat-utils me-1 ${this.buttonClass}`;
         speechBtn.type = 'button';
         speechBtn.innerHTML = '<i class="bi bi-mic"></i>';
         speechBtn.title = this.translations.startRecording;

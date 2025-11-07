@@ -1,3 +1,6 @@
+.chat-utils{
+    border-radius: 10px !important;
+}
 .chat-toolbar-wrapper {
                 max-width: 100%;
                 min-width: 45vw;

@@ -15,6 +15,7 @@ async function registerRoutes(fastify) {
   fastify.register(require('../routes/post'));
   fastify.register(require('../routes/notifications'));
   fastify.register(require('../routes/gallery'));
+  fastify.register(require('../routes/gallery-search'));
   fastify.register(require('../routes/zohomail'));
   fastify.register(require('../routes/chat-tool-gifts-api'));
   fastify.register(require('../routes/chat-tool-settings-api'));

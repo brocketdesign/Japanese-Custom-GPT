@@ -864,31 +864,7 @@ fastify.get('/search', async (request, reply) => {
 
     user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) }) || request.user;
 
-    const page = parseInt(request.query.page) || 1;
     const query = request.query.q || request.query.query || '';
-    const limit = 30;
-
-    const baseUrl = process.env.MODE === 'local' ? `http://${ip.address()}:3000` : `${request.protocol}://${request.hostname}`;
-
-    // Fetch image results (reuse /chats/images/search logic)
-    const imageSearchUrl = `${baseUrl}/chats/images/search?page=${page}&query=${encodeURIComponent(query)}&limit=${limit}`;
-
-    const imageRes = await fetch(imageSearchUrl);
-    const imageData = imageRes.ok ? await imageRes.json() : { images: [] };
-    if (!imageRes.ok) {
-      console.warn(`[SEARCH] Image fetch failed with status: ${imageRes.status}`);
-    }
-
-    // Compute isBlur for each image
-    const subscriptionStatus = user && user.subscriptionStatus === 'active';
-    const processedImageResults = (imageData.images || []).map(item => {
-      const isBlur = item.nsfw && !subscriptionStatus;
-      return { ...item, isBlur };
-    });
-
-    const totalPages = imageData.totalPages || 1;
-    const hasNextPage = page < totalPages;
-    const hasPrevPage = page > 1;
 
     let seoTitle = translations.seo_title_default; 
     let seoDescription = translations.seo_description_default;
@@ -897,25 +873,9 @@ fastify.get('/search', async (request, reply) => {
       seoDescription = translations.seo_description_query.replace('${query}', query);
     }
 
-    // Fetch tags from a random page
-    const randomPage = Math.floor(Math.random() * 10) + 1;
-    const tagsUrl = `${baseUrl}/api/tags?page=${randomPage}`;
-    const tagsRes = await fetch(tagsUrl);
-    const tagsData = tagsRes.ok ? await tagsRes.json() : { tags: [] };
-    if (!tagsRes.ok) {
-      console.warn(`[SEARCH] Tags fetch failed with status: ${tagsRes.status}`);
-    } 
-    const tags = tagsData.tags || [];
-console.log(processedImageResults[0])
-    return reply.renderWithGtm('search.hbs', {
+    return reply.renderWithGtm('search-new.hbs', {
       title: seoTitle,
-      imageResults: processedImageResults,
-      totalPages,
-      currentPage: page,
-      hasPrevPage,
-      hasNextPage,
       query,
-      tags,
       user,
       translations,
       seo: [

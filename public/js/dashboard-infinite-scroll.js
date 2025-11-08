@@ -377,7 +377,8 @@ async function renderImages(images, id, type) {
         }
         
         const loadedIndex = window.loadedImages.length - 1;
-        const cardHtml = createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedIndex, id, type);
+        const onChatPage = window.location.pathname.includes('/chat');
+        const cardHtml = createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedIndex, id, type, onChatPage);
         
         // Create DOM element
         const tempDiv = document.createElement('div');
@@ -404,11 +405,11 @@ async function renderImages(images, id, type) {
 /**
  * Create HTML for individual image card
  */
-function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedIndex, id, type) {
+function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedIndex, id, type, onChatPage = false) {
     const chatId = type === 'chat' ? id : item.chatId;
     const linkUrl = item.chatSlug ? `/character/slug/${item.chatSlug}?imageSlug=${item.slug}` : `/character/${chatId}`;
     const addToChatLabel = window.translations?.image_tools?.add_to_chat || 'Add to Chat';
-    const addToChatButton = `
+    const addToChatButton = onChatPage ? `
         <div class="position-absolute top-0 end-0 m-1" style="z-index:3;">
             <span class="btn btn-light image-add-to-chat" 
                   data-image-id="${item._id}" 
@@ -419,7 +420,7 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedInde
                   onclick="addGalleryImageToChat(this)">
                 <i class="bi bi-chat-square-text"></i>
             </span>
-        </div>`;
+        </div>` : '';
     
     return `
         <div class="image-card col-6 col-md-3 col-lg-2 mb-2" data-image-id="${item._id}">

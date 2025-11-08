@@ -827,6 +827,10 @@
   "view_all_tags": "View All Tags",
   "view_all_character": "View All Characters",
   "result_image_query": "AI image generated using the chat and prompt feature.",
+  "images": "Images",
+  "videos": "Videos",
+  "start_searching": "Start searching to see results",
+  "loading": "Loading...",
   "prompt": "Prompt",
   "prompt_description": "An image prompt is a textual description or set of instructions provided to an AI model to generate an image. The prompt guides the AI in creating an image that matches the given description.",
   "seo": {

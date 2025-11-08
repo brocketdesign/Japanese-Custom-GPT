@@ -10,7 +10,7 @@ class ChatToolSettings {
             minimaxVoice: 'Wise_Woman',
             autoMergeFace: true,
             suggestionsEnabled: true,
-            selectedModel: 'mistral',
+            selectedModel: 'openai',
             autoImageGeneration: true,
             speechRecognitionEnabled: true,
             speechAutoSend: true
@@ -1069,7 +1069,7 @@ class ChatToolSettings {
             // Auto-correct premium models
             const premiumModels = ['llama', 'gemma', 'deepseek'];
             if (premiumModels.includes(this.settings.selectedModel)) {
-                this.settings.selectedModel = 'mistral'; // Default to free model
+                this.settings.selectedModel = 'openai'; // Default to free model
                 this.autoSaveCorrection();
             }
         }
@@ -1430,7 +1430,7 @@ class ChatToolSettings {
         const premiumModels = {};
 
         Object.entries(this.availableModels).forEach(([key, model]) => {
-            if (model.provider === 'openai' || key === 'mistral') {
+            if (model.provider === 'openai') {
                 freeModels[key] = model;
             } else {
                 premiumModels[key] = model;

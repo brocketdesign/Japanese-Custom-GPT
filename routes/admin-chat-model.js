@@ -57,7 +57,8 @@ async function routes(fastify, options) {
         questions,
         systemPrompt,
         languages,
-        maxTokens = 1000
+        maxTokens = 1000,
+        buildLanguageSpecificPrompt = true
       } = request.body;
 
       console.log('[Chat Model Test] Received request:', {
@@ -65,6 +66,7 @@ async function routes(fastify, options) {
         questions,
         languages,
         maxTokens,
+        buildLanguageSpecificPrompt,
         systemPromptLength: systemPrompt?.length
       });
 
@@ -80,13 +82,14 @@ async function routes(fastify, options) {
         return reply.status(400).send({ error: 'At least one language must be selected' });
       }
 
-      // Run tests
+      // Run tests with language-specific prompts
       const results = await testMultipleModels({
         models,
         questions,
         systemPrompt,
         languages,
-        maxTokens
+        maxTokens,
+        buildLanguageSpecificPrompt
       });
 
       console.log('[Chat Model Test] Test completed successfully');

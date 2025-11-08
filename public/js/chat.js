@@ -433,10 +433,11 @@ function setupChatInterface(chat, character) {
     $('#giftsList').attr('data-nsfw', chatNsfw).removeClass('nsfw').addClass(chatNsfw ? 'nsfw' : 'sfw');
     if(gender === 'female'){
         $('#showPrompts').show();
+        $('#gifts-toggle').show();
         $('#userMessage').removeClass('male').addClass('female');
     }else{
         $('#showPrompts').hide();
-        $('#giftsList').hide();
+        $('#gifts-toggle').hide();
         $('#userMessage').removeClass('female').addClass('male');
     }
     updateChatBackgroundImage(thumbnail);

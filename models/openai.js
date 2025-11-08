@@ -35,15 +35,9 @@ const modelConfig = {
     openai: {
       provider: 'openai',
       modelName: null,
-      displayName: 'OpenAI gpt-4o-mini',
+      displayName: 'OpenAI gpt-4o',
       description: 'Advanced reasoning and creativity'
     },
-    mistral: {
-      provider: 'novita',
-      modelName: 'mistral',
-      displayName: 'Mistral Nemo',
-      description: 'Fast and efficient responses'
-    }
   },
   premium: {
     llama: {
@@ -83,7 +77,7 @@ const getAvailableModels = (isPremium = false) => {
 // Helper function to get model config by key
 const getModelConfig = (modelKey, isPremium = false) => {
   const availableModels = getAvailableModels(isPremium);
-  return availableModels[modelKey] || availableModels.mistral; // Default to mistral
+  return availableModels[modelKey] || availableModels.hermes; // Default to hermes
 };
 
 const moderateText = async (text) => {
@@ -346,7 +340,7 @@ const analyzeConversationContext = async (messages, userInfo, language) => {
   }
 };
 
-async function generatePromptSuggestions(messages, chatDescription, language, model = 'mistral') {
+async function generatePromptSuggestions(messages, chatDescription, language, model = 'hermes') {
 
   // Get the last user message
   let lastUserMessagesContent = messages

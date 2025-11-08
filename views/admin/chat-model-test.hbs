@@ -235,6 +235,59 @@
     </div>
 </div>
 
+<!-- New comprehensive results modal -->
+<div class="modal fade" id="comprehensiveResultsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <div>
+                    <h5 class="modal-title mb-0">Test Results</h5>
+                    <small class="text-muted">Click on any response to view full content</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="resultsTabContainer" class="nav nav-tabs sticky-top bg-white border-bottom" role="tablist" style="z-index: 100;">
+                    <!-- Language tabs will be dynamically added here -->
+                </div>
+                <div id="resultsTabContent" class="tab-content p-4">
+                    <!-- Tab content will be dynamically added here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary" onclick="copyAllResults()">
+                    <i class="bi bi-clipboard"></i> Copy All Results
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for viewing individual response content -->
+<div class="modal fade" id="responseContentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title mb-1" id="responseModalTitle">Response</h5>
+                    <small id="responseModalMeta" class="text-muted"></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="responseContentBody" class="response-text"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="copyCurrentResponseBtn" class="btn btn-secondary">
+                    <i class="bi bi-clipboard"></i> Copy Response
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{> dashboard-modals}}
 
 <style>
@@ -299,19 +352,205 @@
     background-color: #f8f9fa;
     padding: 15px;
     border-radius: 5px;
-    border-left: 4px solid #007bff;
     max-height: 400px;
     overflow-y: auto;
     line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .stat-card {
     border-left: 4px solid #007bff;
 }
 
+/* New styles for comprehensive results modal */
+#comprehensiveResultsModal .nav-tabs {
+    border-bottom: 2px solid #dee2e6;
+}
+
+#comprehensiveResultsModal .nav-tabs .nav-link {
+    border: none;
+    color: #495057;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+#comprehensiveResultsModal .nav-tabs .nav-link:hover {
+    color: #007bff;
+    border-bottom: 3px solid #007bff;
+}
+
+#comprehensiveResultsModal .nav-tabs .nav-link.active {
+    color: #007bff;
+    border: none;
+    border-bottom: 3px solid #007bff;
+    background-color: transparent;
+}
+
+.results-container {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.question-section {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: all 0.3s ease;
+}
+
+.question-section:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.question-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.models-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.model-response-card {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.model-response-card:hover {
+    background: #e9ecef;
+    border-color: #007bff;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 123, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+.model-response-card.failed {
+    background: #fff3cd;
+    border-color: #ffc107;
+}
+
+.model-response-card.success {
+    background: #d4edda;
+    border-color: #28a745;
+}
+
+.model-name {
+    font-weight: 700;
+    color: #007bff;
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.model-name .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+}
+
+.response-preview {
+    font-size: 0.875rem;
+    color: #495057;
+    line-height: 1.5;
+    max-height: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    margin: 0.5rem 0;
+    cursor: pointer;
+}
+
+.response-preview.failed {
+    color: #856404;
+    font-style: italic;
+}
+
+.response-meta {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 0.25rem;
+}
+
+.view-full-btn {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.error-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    border-left: 3px solid #f5c6cb;
+}
+
+.stats-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #007bff;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
 @media (max-width: 992px) {
     .dashboard-content {
         margin-left: 0;
+    }
+    
+    .models-grid {
+        grid-template-columns: 1fr;
     }
 }
 </style>
@@ -507,9 +746,26 @@ function resetTest() {
     alert('Test configuration has been reset to defaults');
 }
 
+/**
+ * Build language-specific system prompt with language directive
+ * @param {string} basePrompt - Base system prompt
+ * @param {string} language - Language code (en, fr, ja)
+ * @returns {string} Enhanced prompt with language directive
+ */
+function buildLanguageSpecificPrompt(basePrompt, language) {
+    const languageDirectives = {
+        'en': 'Respond in English only.',
+        'fr': 'Répondez uniquement en français.',
+        'ja': '日本語でのみ答えてください。'
+    };
+    
+    const directive = languageDirectives[language] || languageDirectives['en'];
+    return `${basePrompt}\n\n[LANGUAGE DIRECTIVE] ${directive}`;
+}
+
 async function runTest() {
     const languages = Array.from(document.querySelectorAll('.model-language-select:checked')).map(cb => cb.value);
-    const systemPrompt = document.getElementById('systemPrompt').value;
+    const baseSystemPrompt = document.getElementById('systemPrompt').value;
     const filteredQuestions = questions.filter(q => q.trim() !== '');
     const maxTokens = parseInt(document.getElementById('maxTokens').value);
 
@@ -531,7 +787,7 @@ async function runTest() {
     const btn = document.getElementById('runTestBtn');
     const originalText = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '<span class="loading-spinner"></span> ' + translations.button_running;
+    btn.innerHTML = '<span class="loading-spinner"></span> ' + (translations.button_running || 'Running...');
 
     try {
         const response = await fetch('/api/admin/chat-model-test/run', {
@@ -542,24 +798,27 @@ async function runTest() {
             body: JSON.stringify({
                 models: selectedModels,
                 questions: filteredQuestions,
-                systemPrompt,
+                systemPrompt: baseSystemPrompt,
                 languages,
-                maxTokens
+                maxTokens,
+                buildLanguageSpecificPrompt: true
             })
         });
 
         if (!response.ok) {
-            const error = await response.json();
+            const error = await response.json().catch(() => ({}));
             throw new Error(error.error || 'Test failed');
         }
 
         const data = await response.json();
         testResults = data.results;
-        displayResults();
+        
+        // Display comprehensive results in modal
+        displayComprehensiveResults();
+        
         loadTestHistory();
         document.getElementById('exportResultsBtn').disabled = false;
         
-        alert(translations.message_test_completed);
     } catch (error) {
         console.error('Test error:', error);
         alert(`${translations.message_test_failed} ${error.message}`);
@@ -585,7 +844,7 @@ function displayResults() {
                     <td>${result.success && result.tokens ? result.tokens.total : 'N/A'}</td>
                     <td>
                         ${result.success ? 
-                            `<button class="btn btn-sm btn-primary" onclick="showResponse('${btoa(result.content)}')">View</button>` :
+                            `<button class="btn btn-sm btn-primary" onclick="showResponse('${result.content}', '${result.modelName}', '${language}', '${question}')">View</button>` :
                             `<span class="badge bg-danger">Error</span>`
                         }
                     </td>
@@ -595,10 +854,232 @@ function displayResults() {
     });
 }
 
-function showResponse(encodedContent) {
-    const content = atob(encodedContent);
-    document.getElementById('responseContent').innerHTML = `<div class="response-text">${content}</div>`;
-    new bootstrap.Modal(document.getElementById('responseModal')).show();
+/**
+ * Decode base64 content safely
+ * @param {string} base64Content - Base64 encoded content
+ * @returns {string} Decoded content
+ */
+function decodeBase64(base64Content) {
+    try {
+        if (!base64Content) return '';
+        return Buffer.from(base64Content, 'base64').toString('utf-8');
+    } catch (error) {
+        console.error('Error decoding base64:', error);
+        return '[Unable to decode response content]';
+    }
+}
+
+/**
+ * Decode base64 in browser (client-side)
+ * @param {string} base64Content - Base64 encoded content
+ * @returns {string} Decoded content
+ */
+function decodeBase64Browser(base64Content) {
+    try {
+        if (!base64Content) return '';
+        return atob(base64Content);
+    } catch (error) {
+        console.error('Error decoding base64:', error);
+        return '[Unable to decode response content]';
+    }
+}
+
+function showResponse(base64Content, modelName, language, question) {
+    const content = decodeBase64Browser(base64Content);
+    document.getElementById('responseModalTitle').textContent = `Response from ${modelName}`;
+    document.getElementById('responseModalMeta').textContent = `Language: ${language} | Question: ${question.substring(0, 50)}...`;
+    document.getElementById('responseContentBody').innerHTML = `<div class="response-text">${escapeHtml(content)}</div>`;
+    
+    // Store for copy button
+    window.currentResponseContent = content;
+    
+    new bootstrap.Modal(document.getElementById('responseContentModal')).show();
+}
+
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+/**
+ * Display comprehensive results in modal organized by language and question
+ */
+function displayComprehensiveResults() {
+    if (!testResults) {
+        alert('No results to display');
+        return;
+    }
+
+    const tabContainer = document.getElementById('resultsTabContainer');
+    const tabContent = document.getElementById('resultsTabContent');
+    
+    tabContainer.innerHTML = '';
+    tabContent.innerHTML = '';
+
+    const languages = Object.keys(testResults);
+    
+    // Create tabs
+    languages.forEach((language, index) => {
+        const isActive = index === 0;
+        const tabBtn = document.createElement('button');
+        tabBtn.className = `nav-link ${isActive ? 'active' : ''}`;
+        tabBtn.type = 'button';
+        tabBtn.role = 'tab';
+        tabBtn.setAttribute('data-bs-toggle', 'tab');
+        tabBtn.setAttribute('data-bs-target', `#tab-${language}`);
+        tabBtn.setAttribute('aria-selected', isActive);
+        tabBtn.innerHTML = `<i class="bi bi-translate"></i> ${language.toUpperCase()}`;
+        tabContainer.appendChild(tabBtn);
+    });
+
+    // Create tab content
+    languages.forEach((language, index) => {
+        const isActive = index === 0;
+        const pane = document.createElement('div');
+        pane.className = `tab-pane fade ${isActive ? 'show active' : ''}`;
+        pane.id = `tab-${language}`;
+        pane.role = 'tabpanel';
+
+        const questions = testResults[language];
+        let successCount = 0;
+        let failureCount = 0;
+
+        // Count stats
+        Object.entries(questions).forEach(([_, models]) => {
+            Object.entries(models).forEach(([__, result]) => {
+                if (result.success) successCount++;
+                else failureCount++;
+            });
+        });
+
+        let content = `
+            <div class="stats-summary">
+                <div class="stat-item">
+                    <div class="stat-value" style="color: #28a745;">${successCount}</div>
+                    <div class="stat-label">Successful</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" style="color: #ffc107;">${failureCount}</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${Object.keys(questions).length}</div>
+                    <div class="stat-label">Questions</div>
+                </div>
+            </div>
+            <div class="results-container">
+        `;
+
+        Object.entries(questions).forEach(([question, models]) => {
+            content += `<div class="question-section">
+                <div class="question-title">
+                    <i class="bi bi-question-circle"></i> ${escapeHtml(question)}
+                </div>
+                <div class="models-grid">`;
+
+            Object.entries(models).forEach(([modelKey, result]) => {
+                const statusIcon = result.success ? 
+                    '<i class="bi bi-check-circle-fill" style="color: #28a745;"></i>' : 
+                    '<i class="bi bi-x-circle-fill" style="color: #dc3545;"></i>';
+                
+                const cardClass = result.success ? 'success' : 'failed';
+                const decodedContent = decodeBase64Browser(result.content);
+                const preview = decodedContent.substring(0, 150);
+                const hasMoreContent = decodedContent.length > 150;
+
+                content += `
+                    <div class="model-response-card ${cardClass}">
+                        <div class="model-name">
+                            ${statusIcon}
+                            ${result.modelName}
+                        </div>`;
+
+                if (result.success) {
+                    content += `
+                        <div class="response-preview" title="Click to view full response" onclick="showResponse('${result.content}', '${result.modelName}', '${language}', '${escapeHtml(question)}')">
+                            ${escapeHtml(preview)}${hasMoreContent ? '...' : ''}
+                        </div>
+                        <div class="response-meta">
+                            <span class="meta-item">
+                                <i class="bi bi-hourglass-split"></i> ${result.responseTime}ms
+                            </span>
+                            <span class="meta-item">
+                                <i class="bi bi-file-earmark-text"></i> ${result.tokens?.total || 0} tokens
+                            </span>
+                        </div>
+                        <button class="btn btn-sm btn-primary view-full-btn w-100" onclick="showResponse('${result.content}', '${result.modelName}', '${language}', '${escapeHtml(question)}')">
+                            <i class="bi bi-arrows-fullscreen"></i> View Full Response
+                        </button>`;
+                } else {
+                    content += `
+                        <div class="error-message">
+                            <strong>Error:</strong> ${escapeHtml(result.error || 'Unknown error')}
+                        </div>`;
+                }
+
+                content += `</div>`;
+            });
+
+            content += `</div></div>`;
+        });
+
+        content += `</div>`;
+        pane.innerHTML = content;
+        tabContent.appendChild(pane);
+    });
+
+    // Show modal
+    new bootstrap.Modal(document.getElementById('comprehensiveResultsModal')).show();
+}
+
+/**
+ * Copy all results as formatted text
+ */
+function copyAllResults() {
+    if (!testResults) return;
+
+    let text = 'Test Results\n';
+    text += '='.repeat(80) + '\n\n';
+
+    Object.entries(testResults).forEach(([language, questions]) => {
+        text += `Language: ${language.toUpperCase()}\n`;
+        text += '-'.repeat(80) + '\n\n';
+
+        Object.entries(questions).forEach(([question, models]) => {
+            text += `Question: ${question}\n`;
+            
+            Object.entries(models).forEach(([modelKey, result]) => {
+                text += `\n  Model: ${result.modelName}\n`;
+                if (result.success) {
+                    const decodedContent = decodeBase64Browser(result.content);
+                    text += `  Status: Success (${result.responseTime}ms)\n`;
+                    text += `  Tokens: ${result.tokens?.total || 0}\n`;
+                    text += `  Response:\n    ${decodedContent.replace(/\n/g, '\n    ')}\n`;
+                } else {
+                    text += `  Status: Failed\n`;
+                    text += `  Error: ${result.error}\n`;
+                }
+                text += '\n';
+            });
+
+            text += '-'.repeat(80) + '\n\n';
+        });
+
+        text += '='.repeat(80) + '\n\n';
+    });
+
+    navigator.clipboard.writeText(text).then(() => {
+        alert('Results copied to clipboard!');
+    }).catch(err => {
+        console.error('Error copying to clipboard:', err);
+        alert('Failed to copy results');
+    });
 }
 
 function switchView() {
@@ -660,16 +1141,16 @@ async function viewTestDetails(testId) {
     try {
         const response = await fetch(`/api/admin/chat-model-test/results/${testId}`);
         if (!response.ok) {
-            const errorData = await response.json();
+            const errorData = await response.json().catch(() => ({}));
             throw new Error(errorData.error || 'Failed to load test details');
         }
 
         const data = await response.json();
         const testData = data.result;
         testResults = testData.results;
-        displayResults();
-        document.getElementById('comparisonView').click();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        // Display comprehensive results in new modal
+        displayComprehensiveResults();
     } catch (error) {
         console.error('Error loading test details:', error);
         alert(`Failed to load test details: ${error.message}`);
@@ -680,7 +1161,7 @@ async function restoreTestConfiguration(testId) {
     try {
         const response = await fetch(`/api/admin/chat-model-test/results/${testId}`);
         if (!response.ok) {
-            const errorData = await response.json();
+            const errorData = await response.json().catch(() => ({}));
             throw new Error(errorData.error || 'Failed to load test configuration');
         }
 
@@ -772,6 +1253,17 @@ document.getElementById('copyResponseBtn').addEventListener('click', function() 
     navigator.clipboard.writeText(text).then(() => {
         alert(translations.message_copied_to_clipboard);
     });
+});
+
+document.getElementById('copyCurrentResponseBtn').addEventListener('click', function() {
+    if (window.currentResponseContent) {
+        navigator.clipboard.writeText(window.currentResponseContent).then(() => {
+            alert('Response copied to clipboard!');
+        }).catch(err => {
+            console.error('Error copying:', err);
+            alert('Failed to copy response');
+        });
+    }
 });
 </script>
 {{/if}}

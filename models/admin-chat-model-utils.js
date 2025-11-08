@@ -144,6 +144,23 @@ const testSingleModel = async (modelKey, question, systemPrompt, language, maxTo
 };
 
 /**
+ * Build language-specific system prompt with language directive
+ * @param {string} basePrompt - Base system prompt
+ * @param {string} language - Language code (en, fr, ja)
+ * @returns {string} Enhanced prompt with language directive
+ */
+const buildLanguageSpecificPrompt = (basePrompt, language) => {
+  const languageDirectives = {
+    'en': 'Respond in English only.',
+    'fr': 'Répondez uniquement en français.',
+    'ja': '日本語でのみ答えてください。'
+  };
+  
+  const directive = languageDirectives[language] || languageDirectives['en'];
+  return `${basePrompt}\n\n[LANGUAGE DIRECTIVE] ${directive}`;
+};
+
+/**
  * Test multiple models with multiple questions in multiple languages
  * @param {Object} config - Configuration object
  * @param {Array<string>} config.models - Model keys to test
@@ -151,6 +168,7 @@ const testSingleModel = async (modelKey, question, systemPrompt, language, maxTo
  * @param {string} config.systemPrompt - System prompt for all models
  * @param {Array<string>} config.languages - Languages to test (en, fr, ja)
  * @param {number} config.maxTokens - Maximum tokens per response
+ * @param {boolean} config.buildLanguageSpecificPrompt - Whether to add language directives
  * @returns {Promise<Object>} Comprehensive test results
  */
 const testMultipleModels = async ({
@@ -158,7 +176,8 @@ const testMultipleModels = async ({
   questions,
   systemPrompt,
   languages,
-  maxTokens = 1000
+  maxTokens = 1000,
+  buildLanguageSpecificPrompt: shouldBuildLanguagePrompt = true
 }) => {
   const results = {};
 
@@ -167,13 +186,19 @@ const testMultipleModels = async ({
     modelCount: models.length,
     questionCount: questions.length,
     languageCount: languages.length,
-    maxTokens
+    maxTokens,
+    buildLanguageSpecificPrompt: shouldBuildLanguagePrompt
   });
 
   // Structure: language -> question -> model -> response
   for (const language of languages) {
     results[language] = {};
     console.log(`[Multiple Models Test] Processing language: ${language}`);
+
+    // Build language-specific prompt if enabled
+    const languageSpecificPrompt = shouldBuildLanguagePrompt 
+      ? buildLanguageSpecificPrompt(systemPrompt, language)
+      : systemPrompt;
 
     for (const question of questions) {
       results[language][question] = {};
@@ -185,7 +210,7 @@ const testMultipleModels = async ({
           const testResult = await testSingleModel(
             model,
             question,
-            systemPrompt,
+            languageSpecificPrompt,
             language,
             maxTokens
           );
@@ -270,6 +295,7 @@ const formatTestResults = (results) => {
 
 /**
  * Safe serialization of test results that removes circular references
+ * Encodes content as base64 to prevent invalid character issues
  * @param {Object} results - Raw test results
  * @returns {Object} Sanitized results safe for JSON.stringify
  */
@@ -284,11 +310,23 @@ const sanitizeResults = (results) => {
 
       for (const [model, result] of Object.entries(models)) {
         // Create a clean copy of the result object
+        let encodedContent = null;
+        
+        // Encode content as base64 to prevent character encoding issues
+        if (result.content) {
+          try {
+            encodedContent = Buffer.from(String(result.content).substring(0, 5000)).toString('base64');
+          } catch (e) {
+            console.warn(`[Sanitize] Error encoding content for ${model}:`, e.message);
+            encodedContent = null;
+          }
+        }
+
         sanitized[language][question][model] = {
           success: Boolean(result.success),
           modelKey: String(result.modelKey),
           modelName: String(result.modelName),
-          content: result.content ? String(result.content).substring(0, 5000) : null, // Limit content size
+          content: encodedContent, // Base64 encoded content
           responseTime: result.responseTime ? Number(result.responseTime) : null,
           tokens: result.tokens ? {
             prompt: Number(result.tokens.prompt) || 0,
@@ -308,6 +346,7 @@ module.exports = {
   getAvailableNovitaModels,
   testSingleModel,
   testMultipleModels,
+  buildLanguageSpecificPrompt,
   formatTestResults,
   sanitizeResults,
   NOVITA_MODELS

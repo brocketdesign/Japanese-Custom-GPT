@@ -248,14 +248,7 @@ async function routes(fastify, options) {
                 const key = `${m.role}_${m.name || 'unnamed'}_${m.hidden ? 'hidden' : 'visible'}`;
                 messageTypes[key] = (messageTypes[key] || 0) + 1;
             });
-            console.log(`[/api/openai-chat-completion] Message breakdown:`, messageTypes);
-            console.log(`[/api/openai-chat-completion] Full userData.messages:`, JSON.stringify(userData.messages.map(m => ({
-                role: m.role,
-                name: m.name,
-                hidden: m.hidden,
-                contentLength: m.content?.length || 0,
-                contentPreview: m.content?.substring(0, 80) + (m.content?.length > 80 ? '...' : '')
-            })), null, 2));
+            //console.log(`[/api/openai-chat-completion] Message breakdown:`, messageTypes);
 
             const isAdmin = await checkUserAdmin(fastify, userId);
             const chatDocument = await getChatDocument(request, db, chatId);
@@ -314,12 +307,6 @@ async function routes(fastify, options) {
             // Get the last non-context message (skip hidden scenario context messages)
             let lastMsgIndex = userData.messages.length - 1;
             let lastUserMessage = userData.messages[lastMsgIndex];
-            
-            // If the last message is a hidden context message, find the previous actual message
-            if (lastUserMessage && lastUserMessage.name === 'context' && lastUserMessage.hidden) {
-                // For scenario context messages, we still want to process with it, but log it
-                console.log('[/api/openai-chat-completion] Last message is hidden scenario context, proceeding with completion');
-            }
             
             // Safety check: ensure lastUserMessage exists and is a valid message
             if (!lastUserMessage) {
@@ -470,7 +457,7 @@ async function routes(fastify, options) {
             
             //console.log(`[/api/openai-chat-completion] Using model: ${selectedModel}, Language: ${language}, Premium: ${isPremium}`);
             //console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
-            console.log(`[/api/openai-chat-completion] Messages for completion:`, messagesForCompletion);
+            //console.log(`[/api/openai-chat-completion] Messages for completion:`, messagesForCompletion);
             
             generateCompletion(messagesForCompletion, 600, selectedModel, language, selectedModel, isPremium).then(async (completion) => {
                 if (completion) {

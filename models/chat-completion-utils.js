@@ -264,18 +264,6 @@ async function handleImageGeneration(db, currentUserMessage, lastUserMessage, ge
         }
     }
 
-    // Charge points for image generation
-    if (!currentUserMessage?.promptId) {
-        const cost = 10;
-        console.log(`[handleImageGeneration] Cost for image generation: ${cost} points`);
-        try {
-            await removeUserPoints(db, userId, cost, translations.points?.deduction_reasons?.image_generation || 'Image generation', 'image_generation', fastify);
-        } catch (error) {
-            console.log(`[handleImageGeneration] Error deducting points: ${error}`);
-            genImage.canAfford = false;
-        }
-    }
-
     // Update user minimum image
     const userMinImage = await getUserMinImages(db, userId, chatId);
     genImage.image_num = Math.max(genImage.image_num || 1, userMinImage || 1);
@@ -283,75 +271,82 @@ async function handleImageGeneration(db, currentUserMessage, lastUserMessage, ge
     let imgMessage = [{ role: 'user', name: 'master' }];
 
     if(genImage.canAfford) {
-        if(userInfo.subscriptionStatus == 'active'){
-            const imageId = Math.random().toString(36).substr(2, 9);
-            const pending_tasks = await getTasks(db, 'pending', userId);
-            
-            if(pending_tasks.length > 5 && !isAdmin){
-                fastify.sendNotificationToUser(userId, 'showNotification', { 
-                    message: translations.too_many_pending_images, 
-                    icon:'warning' 
-                });
-            } else {
-                fastify.sendNotificationToUser(userId, 'addIconToLastUserMessage');
-
-                const image_num = Math.min(Math.max(genImage?.image_num || 1, 1), 5);
-                console.log(`[handleImageGeneration] Generating ${image_num} images for user ${userId} in chat ${chatId}`);
-                
-                // Generate unique placeholder ID for tracking
-                const placeholderId = `auto_${new Date().getTime()}_${Math.random().toString(36).substring(2, 8)}`;
-                
-                // Notify frontend to show loader with the same pattern as prompt generation
-                for (let i = 0; i < image_num; i++) {
-                    fastify.sendNotificationToUser(userId, 'handleLoader', { imageId: placeholderId, action:'show' });
-                }
-                
-                const imageType = genImage.nsfw ? 'nsfw' : 'sfw';
-                
-                createPrompt(lastUserMessage.content, characterDescription, imageType)
-                    .then(async(promptResponse) => {
-                        const prompt = promptResponse.replace(/(\r\n|\n|\r)/gm, " ").trim();
-                        processPromptToTags(db, prompt);
-                        
-                        const aspectRatio = null;
-                        
-                        // Use the same generateImg pattern but with auto-generation metadata
-                        const result = await generateImg({
-                            prompt, 
-                            aspectRatio, 
-                            userId, 
-                            chatId, 
-                            userChatId, 
-                            imageType, 
-                            image_num, 
-                            chatCreation: false, 
-                            placeholderId: placeholderId, 
-                            translations, 
-                            fastify,
-                            isAutoGeneration: true  // Add this flag to identify auto-generated images
-                        });
-                        
-                        // Store the generation metadata for frontend polling
-                        if (result && result.taskId) {
-                            fastify.sendNotificationToUser(userId, 'registerAutoGeneration', {
-                                taskId: result.taskId,
-                                placeholderId: placeholderId,
-                                userChatId: userChatId,
-                                startTime: Date.now()
-                            });
-                        }
-                    })
-                    .catch((error) => {
-                        console.log('Auto generation error:', error);
-                        fastify.sendNotificationToUser(userId, 'handleLoader', { imageId: placeholderId, action: 'remove' });
-                    });
-                
-                imgMessage[0].content = `\n\n${translations.image_generation?.activated || 'I activated the image generation feature for this prompt.\n The image will be generated shortly.'}`.trim();
-                currentUserMessage.name = 'context';
-            }
+        const imageId = Math.random().toString(36).substr(2, 9);
+        const pending_tasks = await getTasks(db, 'pending', userId);
+        
+        if(pending_tasks.length > 5 && !isAdmin){
+            fastify.sendNotificationToUser(userId, 'showNotification', { 
+                message: translations.too_many_pending_images, 
+                icon:'warning' 
+            });
         } else {
-            genImage.image_request = false;
-            imgMessage[0].content = `\n\n${translations.image_generation?.not_subscribed || 'I asked for an other image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premium...'}`.trim();
+
+            // Charge points for image generation
+            if (!currentUserMessage?.promptId) {
+                const cost = 10;
+                console.log(`[handleImageGeneration] Cost for image generation: ${cost} points`);
+                try {
+                    await removeUserPoints(db, userId, cost, translations.points?.deduction_reasons?.image_generation || 'Image generation', 'image_generation', fastify);
+                } catch (error) {
+                    console.log(`[handleImageGeneration] Error deducting points: ${error}`);
+                    genImage.canAfford = false;
+                }
+            }
+
+            fastify.sendNotificationToUser(userId, 'addIconToLastUserMessage');
+
+            const image_num = Math.min(Math.max(genImage?.image_num || 1, 1), 5);
+            console.log(`[handleImageGeneration] Generating ${image_num} images for user ${userId} in chat ${chatId}`);
+            
+            // Generate unique placeholder ID for tracking
+            const placeholderId = `auto_${new Date().getTime()}_${Math.random().toString(36).substring(2, 8)}`;
+            
+            // Notify frontend to show loader with the same pattern as prompt generation
+            for (let i = 0; i < image_num; i++) {
+                fastify.sendNotificationToUser(userId, 'handleLoader', { imageId: placeholderId, action:'show' });
+            }
+            
+            const imageType = genImage.nsfw ? 'nsfw' : 'sfw';
+            
+            createPrompt(lastUserMessage.content, characterDescription, imageType)
+                .then(async(promptResponse) => {
+                    const prompt = promptResponse.replace(/(\r\n|\n|\r)/gm, " ").trim();
+                    processPromptToTags(db, prompt);
+                    
+                    const aspectRatio = null;
+                    
+                    // Use the same generateImg pattern but with auto-generation metadata
+                    const result = await generateImg({
+                        prompt, 
+                        aspectRatio, 
+                        userId, 
+                        chatId, 
+                        userChatId, 
+                        imageType, 
+                        image_num, 
+                        chatCreation: false, 
+                        placeholderId: placeholderId, 
+                        translations, 
+                        fastify,
+                        isAutoGeneration: true  // Add this flag to identify auto-generated images
+                    });
+                    
+                    // Store the generation metadata for frontend polling
+                    if (result && result.taskId) {
+                        fastify.sendNotificationToUser(userId, 'registerAutoGeneration', {
+                            taskId: result.taskId,
+                            placeholderId: placeholderId,
+                            userChatId: userChatId,
+                            startTime: Date.now()
+                        });
+                    }
+                })
+                .catch((error) => {
+                    console.log('Auto generation error:', error);
+                    fastify.sendNotificationToUser(userId, 'handleLoader', { imageId: placeholderId, action: 'remove' });
+                });
+            
+            imgMessage[0].content = `\n\n${translations.image_generation?.activated || 'I activated the image generation feature for this prompt.\n The image will be generated shortly.'}`.trim();
             currentUserMessage.name = 'context';
         }
     } else {

@@ -493,29 +493,18 @@ function setupChatInterface(chat, character) {
     }
     
     function displayExistingChat(userChat,character) {
-        console.log('[displayExistingChat] Called with userChat messages length:', userChat.messages.length);
         
         persona = userChat.persona;
         thumbnail = character?.image || localStorage.getItem('thumbnail')
 
-        // Initialize ChatScenarioModule to load existing scenario if available
-        // We need to wait for this to complete so the scenario is loaded before displayChat
-        console.log('[displayExistingChat] ChatScenarioModule available:', !!window.ChatScenarioModule);
-        console.log('[displayExistingChat] userChatId:', userChatId);
-        
         const initScenarioPromise = (async () => {
             if (window.ChatScenarioModule && userChatId) {
-                console.log('[displayExistingChat] Initializing ChatScenarioModule with userChatId:', userChatId);
                 await window.ChatScenarioModule.init(chatId, userChatId);
-                console.log('[displayExistingChat] ChatScenarioModule.init() completed');
-            } else {
-                console.log('[displayExistingChat] Skipping scenario init - ChatScenarioModule:', !!window.ChatScenarioModule, 'userChatId:', userChatId);
             }
         })();
 
         // Wait for scenario initialization before displaying chat
         initScenarioPromise.then(() => {
-            console.log('[displayExistingChat] Scenario init promise resolved, calling displayChat');
             displayChat(userChat.messages, persona, function(){
                 setTimeout(() => {
                     const $chatContainer = $('#chatContainer');
@@ -730,7 +719,6 @@ function setupChatInterface(chat, character) {
 
 
     async function displayChat(userChat, persona, callback) {
-        console.log('[displayChat] Called with userChat length:', userChat.length, 'persona:', !!persona);
         
         $('body').css('overflow', 'hidden');
         $('#stability-gen-button').show();
@@ -738,7 +726,6 @@ function setupChatInterface(chat, character) {
         $('#audio-play').show();
  
         let chatContainer = $('#chatContainer');
-        console.log('[displayChat] Chat container found:', !!chatContainer.length);
         chatContainer.empty();
 
         // Clear the tracking sets when displaying a new chat
@@ -751,9 +738,7 @@ function setupChatInterface(chat, character) {
         // We'll display it at the end of this function
         
         // Just clear the scenario container display, but keep the data
-        console.log('[displayChat] ChatScenarioModule available:', !!window.ChatScenarioModule);
         if (window.ChatScenarioModule) {
-            console.log('[displayChat] Clearing scenario UI (but preserving data)');
             // Remove the UI element, but DON'T call clearScenarios() which nullifies the data
             window.ChatScenarioModule.removeSelectedScenarioDisplay();
         }
@@ -979,13 +964,8 @@ function setupChatInterface(chat, character) {
         }
         
         // Display current scenario at the top AFTER all messages are rendered
-        console.log('[displayChat] All messages rendered, now displaying scenario');
-        console.log('[displayChat] ChatScenarioModule available:', !!window.ChatScenarioModule);
-        console.log('[displayChat] userChatId:', userChatId);
         if (window.ChatScenarioModule && userChatId) {
-            console.log('[displayChat] Calling displaySelectedScenario()');
             window.ChatScenarioModule.displaySelectedScenario();
-            console.log('[displayChat] displaySelectedScenario() completed');
         }
         
         if( typeof callback == 'function'){

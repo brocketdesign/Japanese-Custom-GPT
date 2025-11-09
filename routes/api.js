@@ -564,7 +564,6 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             }
     
             if (result.modifiedCount === 1) {
-                console.log(`Adding new message to chat ${chatId} for userChat ${userChatId}, messageObject:`, newMessage);
                 reply.send({ success: true, message: 'Message added successfully' });
             } else {
                 reply.status(500).send({ error: 'Failed to add message' });

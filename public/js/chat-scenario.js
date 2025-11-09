@@ -15,45 +15,30 @@ window.ChatScenarioModule = (function() {
      * Initialize the scenario module with a chat
      */
     async function init(chatId, uChatId) {
-        console.log('[ChatScenarioModule.init] Called with chatId:', chatId, 'uChatId:', uChatId);
         // If switching to a different chat, clear previous scenarios
         if (userChatId && userChatId !== uChatId) {
-            console.log('[ChatScenarioModule.init] Chat switched, clearing previous scenarios');
             clearScenarios();
         }
         
         userChatId = uChatId;
         if (!userChatId) {
             // Clear scenarios when no chat ID
-            console.log('[ChatScenarioModule.init] No userChatId, clearing scenarios');
             clearScenarios();
             return;
         }
         
-        console.log('[ChatScenarioModule.init] Fetching existing scenarios for userChatId:', userChatId);
         try {
             // Fetch existing scenario data
             const response = await fetch(`/api/chat-scenarios/${userChatId}`);
-            console.log('[ChatScenarioModule.init] Fetch response status:', response.status);
             
             const data = await response.json();
-            console.log('[ChatScenarioModule.init] Fetch response data:', data);
             
             if (data.availableScenarios && data.availableScenarios.length > 0) {
-                console.log('[ChatScenarioModule.init] Found existing scenarios, count:', data.availableScenarios.length);
                 scenarios = data.availableScenarios;
-                console.log('[ChatScenarioModule.init] scenarios array set to:', scenarios);
-            } else {
-                console.log('[ChatScenarioModule.init] No available scenarios found');
             }
             
             if (data.currentScenario) {
-                console.log('[ChatScenarioModule.init] Found currentScenario:', data.currentScenario);
                 currentScenario = data.currentScenario;
-                console.log('[ChatScenarioModule.init] currentScenario variable set to:', currentScenario);
-                console.log('[ChatScenarioModule.init] Scenario data loaded, will be displayed by displayChat()');
-            } else {
-                console.log('[ChatScenarioModule.init] No currentScenario in response');
             }
         } catch (error) {
             console.error('[ChatScenarioModule] Error initializing:', error);
@@ -64,9 +49,7 @@ window.ChatScenarioModule = (function() {
      * Display loading state
      */
     function displayLoadingState() {
-        console.log('[ChatScenarioModule.displayLoadingState] Called');
         const container = document.querySelector(containerSelector);
-        console.log('[ChatScenarioModule.displayLoadingState] Container found:', !!container);
         if (!container) return;
         
         container.style.display = 'flex';
@@ -79,25 +62,20 @@ window.ChatScenarioModule = (function() {
                 </div>
             </div>
         `;
-        console.log('[ChatScenarioModule.displayLoadingState] Spinner displayed');
     }
 
     /**
      * Generate new scenarios for the current chat
      */
     async function generateScenarios() {
-        console.log('[ChatScenarioModule.generateScenarios] Starting...');
         if (!userChatId || isLoadingScenarios) {
-            console.log('[ChatScenarioModule.generateScenarios] Skipping - userChatId:', userChatId, 'isLoadingScenarios:', isLoadingScenarios);
             return false;
         }
         
         try {
             isLoadingScenarios = true;
-            console.log('[ChatScenarioModule.generateScenarios] Calling displayLoadingState');
             displayLoadingState();
             
-            console.log('[ChatScenarioModule.generateScenarios] Calling API...');
             const response = await fetch(`/api/chat-scenarios/${userChatId}/generate`, {
                 method: 'POST',
                 headers: {
@@ -107,16 +85,12 @@ window.ChatScenarioModule = (function() {
             });
             
             const data = await response.json();
-            console.log('[ChatScenarioModule.generateScenarios] API response:', data);
             
             if (data.success && data.scenarios) {
-                console.log('[ChatScenarioModule.generateScenarios] Got scenarios, count:', data.scenarios.length);
                 scenarios = data.scenarios;
                 currentScenario = null;
-                console.log('[ChatScenarioModule.generateScenarios] Calling displayScenarios');
                 displayScenarios();
                 // Show the scenario container after displaying
-                console.log('[ChatScenarioModule.generateScenarios] Calling show()');
                 show();
                 return true;
             }
@@ -133,9 +107,7 @@ window.ChatScenarioModule = (function() {
      * Display scenarios in the UI
      */
     function displayScenarios() {
-        console.log('[ChatScenarioModule.displayScenarios] Called');
         const container = document.querySelector(containerSelector);
-        console.log('[ChatScenarioModule.displayScenarios] Container found:', !!container);
         if (!container) return;
         
         // Ensure container is visible
@@ -145,20 +117,17 @@ window.ChatScenarioModule = (function() {
         container.innerHTML = '';
         
         if (!scenarios || scenarios.length === 0) {
-            console.log('[ChatScenarioModule.displayScenarios] No scenarios to display');
             container.innerHTML = '<p class="no-scenarios">' + 
                 (window.chatScenariosTranslations?.no_scenarios_available || 'No scenarios available') + 
                 '</p>';
             return;
         }
         
-        console.log('[ChatScenarioModule.displayScenarios] Displaying', scenarios.length, 'scenarios');
         // Create scenario cards
         scenarios.forEach((scenario, index) => {
             const card = createScenarioCard(scenario, index);
             container.appendChild(card);
         });
-        console.log('[ChatScenarioModule.displayScenarios] Done rendering cards');
     }
 
     /**
@@ -205,18 +174,12 @@ window.ChatScenarioModule = (function() {
      * Display selected scenario in chat container
      */
     function displaySelectedScenario() {
-        console.log('[ChatScenarioModule.displaySelectedScenario] Called');
-        console.log('[ChatScenarioModule.displaySelectedScenario] currentScenario:', currentScenario);
-        
         if (!currentScenario) {
-            console.log('[ChatScenarioModule.displaySelectedScenario] No currentScenario, removing display');
             removeSelectedScenarioDisplay();
             return;
         }
         
         const chatContainer = document.getElementById(chatContainerId);
-        console.log('[ChatScenarioModule.displaySelectedScenario] chatContainer found:', !!chatContainer);
-        console.log('[ChatScenarioModule.displaySelectedScenario] chatContainerId:', chatContainerId);
         
         if (!chatContainer) {
             console.error('[ChatScenarioModule.displaySelectedScenario] Chat container not found with ID:', chatContainerId);
@@ -255,12 +218,8 @@ window.ChatScenarioModule = (function() {
             </div>
         `;
         
-        console.log('[ChatScenarioModule.displaySelectedScenario] Creating display element:', displayDiv);
-        
         // Insert at the beginning of chat container
         chatContainer.insertBefore(displayDiv, chatContainer.firstChild);
-        console.log('[ChatScenarioModule.displaySelectedScenario] Display element inserted successfully');
-        console.log('[ChatScenarioModule.displaySelectedScenario] Chat container now has', chatContainer.children.length, 'children');
     }
 
     /**
@@ -277,19 +236,11 @@ window.ChatScenarioModule = (function() {
      * Select a scenario
      */
     async function selectScenario(scenarioId) {
-        console.log('[ChatScenarioModule.selectScenario] Called with scenarioId:', scenarioId, 'userChatId:', userChatId);
-        console.log('[ChatScenarioModule.selectScenario] Current scenarios array length:', scenarios.length);
-        if (scenarios.length > 0) {
-            console.log('[ChatScenarioModule.selectScenario] First scenario id:', scenarios[0].id, 'title:', scenarios[0].title);
-        }
-        
         if (!userChatId) {
-            console.log('[ChatScenarioModule.selectScenario] No userChatId, returning');
             return;
         }
         
         try {
-            console.log('[ChatScenarioModule.selectScenario] Sending POST to /api/chat-scenarios/${userChatId}/select');
             const response = await fetch(`/api/chat-scenarios/${userChatId}/select`, {
                 method: 'POST',
                 headers: {
@@ -316,7 +267,6 @@ window.ChatScenarioModule = (function() {
                     // The server has created a hidden user message with scenario context
                     // Now we generate the completion so the assistant responds within this context
                     if (data.autoGenerateResponse && typeof window.generateChatCompletion === 'function') {
-                        console.log('[ChatScenarioModule.selectScenario] Generating assistant response for scenario context');
                         window.generateChatCompletion();
                     }
                     
@@ -666,6 +616,3 @@ window.ScenarioDebug = {
         `);
     }
 };
-
-// Show help on module load
-console.log('%c🚀 ScenarioDebug loaded! Type: ScenarioDebug.help()', 'color: #007bff; font-weight: bold;');

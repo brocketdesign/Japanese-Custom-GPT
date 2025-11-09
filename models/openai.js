@@ -17,7 +17,6 @@ const apiDetails = {
     models: {
       llama: 'meta-llama/llama-3-70b-instruct',
       deepseek: 'deepseek/deepseek-v3-turbo',
-      mistral: 'mistralai/mistral-nemo',
       hermes: 'nousresearch/hermes-2-pro-llama-3-8b'
     }
   },

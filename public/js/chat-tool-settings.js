@@ -1554,7 +1554,6 @@ class ChatToolSettings {
     getSpeedLabel(modelKey) {
         const speedMap = {
             'deepseek': 'Very Fast',
-            'mistral': 'Fast',
             'gemma': 'Fast',
             'openai': 'Medium',
             'llama': 'Medium'
@@ -1568,7 +1567,6 @@ class ChatToolSettings {
             'llama': 'Excellent',
             'deepseek': 'Excellent',
             'gemma': 'Very Good',
-            'mistral': 'Good'
         };
         return qualityMap[modelKey] || 'Good';
     }

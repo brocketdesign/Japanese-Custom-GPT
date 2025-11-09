@@ -11,7 +11,8 @@ const DEFAULT_SETTINGS = {
     minimaxVoice: 'Wise_Woman',
     voiceProvider: 'standard',
     autoMergeFace: true,
-    autoImageGeneration: true
+    autoImageGeneration: false,
+    goalsEnabled: false
 };
 
 /**

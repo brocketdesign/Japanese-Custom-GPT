@@ -4,6 +4,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <link rel="stylesheet" href="/css/chat-suggestions.css">
     <link rel="stylesheet" href="/css/speech-to-text.css">
+    <link rel="stylesheet" href="/css/chat-scenario.css">
 <body>
     {{> onboarding-modals}}
     <!-- Fullscreen overlay with loading spinner -->
@@ -315,11 +316,14 @@
                     <div id="popular-chats-pagination-controls" class="my-3" style="opacity: 0;"></div>
                 </div>
             </section>
-            <div id="chat-wrapper" class="px-0 onchat-on" style="background-position: top center;background-repeat: no-repeat;background-size:cover;">
+            <div id="chat-wrapper" class="px-0 onchat-on" style="background-position: top center;background-repeat: no-repeat;background-size:cover;position: relative;">
                 <!-- Chat Container Overlay -->
-                <div id="chat-container" class="container mx-auto shadow-0 border-0 rounded-0" style="border-radius:0 !important;">
+                <div id="chat-container" class="container mx-auto shadow-0 border-0 rounded-0" style="border-radius:0 !important;position: relative;">
                     <div class="chat-overlay d-flex justify-content-center align-items-center w-100 h-100vh position-absolute top-0 start-0 bottom-0" id="chatOverlay" style="background-color: #ffffff!important;opacity: 0.85;"></div>
-                    <div class="card-body text-center p-0 container" style="min-height:250px;overflow-y:hidden;display: flex;flex-direction: column;">
+                    
+                    <div class="card-body text-center p-0 container" style="min-height:250px;overflow-y:hidden;display: flex;flex-direction: column;position: relative;z-index: 1010;">
+                        <!-- Chat Scenarios Container - positioned absolutely but within chat wrapper to avoid toolbar overlap -->
+                        <div class="scenario-container"></div>
                         <div id="chatContainer" data-id="" class="pt-2 fade-content" style="padding-bottom: 180px !important;"></div>
                     </div>
                 </div>  
@@ -342,6 +346,7 @@
 <script src="/js/chat-tool-message.js"></script>
 <script src="/js/chat-tool-goals.js"></script>
 <script src="/js/chat-suggestions.js"></script>
+<script src="/js/chat-scenario.js"></script>
 <script src="/js/chat-footer.js"></script>
 <script src="/js/chat.js"></script>
 <script src="/js/character-infos.js"></script>

@@ -27,6 +27,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     const affiliationTranslationsCache = {}; // Add cache for affiliation translations
     const chatToolSettingsTranslationsCache = {}; // Add cache for chat tool settings translations
     const chatSuggestionsTranslationsCache = {}; // Add cache for chat suggestions translations
+    const chatScenariosTranslationsCache = {}; // Add cache for chat scenarios translations
     const onboardingTranslationsCache = {}; // Add cache for onboarding translations
     const legalTranslationsCache = {}; // Add cache for legal translations
     const speechToTextTranslationsCache = {}; // Add cache for speech-to-text translations
@@ -46,6 +47,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorate('getAffiliationTranslations', getAffiliationTranslations); // Add affiliation translations decorator
     fastify.decorate('getChatToolSettingsTranslations', getChatToolSettingsTranslations); // Add chat tool settings translations decorator
     fastify.decorate('getChatSuggestionsTranslations', getChatSuggestionsTranslations); // Add chat suggestions translations decorator
+    fastify.decorate('getChatScenariosTranslations', getChatScenariosTranslations); // Add chat scenarios translations decorator
     fastify.decorate('getOnboardingTranslations', getOnboardingTranslations); // Add onboarding translations decorator
     fastify.decorate('getLegalTranslations', getLegalTranslations); // Add legal translations decorator
     fastify.decorate('getSpeechToTextTranslations', getSpeechToTextTranslations); // Add speech-to-text translations decorator
@@ -77,6 +79,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorateRequest('affiliationTranslations', null); // Add affiliation translations to request
     fastify.decorateRequest('chatToolSettingsTranslations', null); // Add chat tool settings translations to request
     fastify.decorateRequest('chatSuggestionsTranslations', null); // Add chat suggestions translations to request
+    fastify.decorateRequest('chatScenariosTranslations', null); // Add chat scenarios translations to request
     fastify.decorateRequest('onboardingTranslations', null); // Add onboarding translations to request
     fastify.decorateRequest('legalTranslations', null); // Add legal translations to request
     fastify.decorateRequest('speechToTextTranslations', null); // Add speech-to-text translations to request
@@ -98,6 +101,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         request.affiliationTranslations = getAffiliationTranslations(request.lang); // Load affiliation translations
         request.chatToolSettingsTranslations = getChatToolSettingsTranslations(request.lang); // Load chat tool settings translations
         request.chatSuggestionsTranslations = getChatSuggestionsTranslations(request.lang); // Load chat suggestions translations
+        request.chatScenariosTranslations = getChatScenariosTranslations(request.lang); // Load chat scenarios translations
         request.onboardingTranslations = getOnboardingTranslations(request.lang); // Load onboarding translations
         request.legalTranslations = getLegalTranslations(request.lang); // Load legal translations
         request.speechToTextTranslations = getSpeechToTextTranslations(request.lang); // Load speech-to-text translations
@@ -117,6 +121,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             affiliationTranslations: request.affiliationTranslations, // Make affiliation translations available
             chatToolSettingsTranslations: request.chatToolSettingsTranslations, // Make chat tool settings translations available
             chatSuggestionsTranslations: request.chatSuggestionsTranslations, // Make chat suggestions translations available
+            chatScenariosTranslations: request.chatScenariosTranslations, // Make chat scenarios translations available
             onboardingTranslations: request.onboardingTranslations, // Make onboarding translations available
             legalTranslations: request.legalTranslations, // Make legal translations available
             speechToTextTranslations: request.speechToTextTranslations, // Make speech-to-text translations available
@@ -399,6 +404,26 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         return chatSuggestionsTranslationsCache[currentLang];
     }
 
+    /** Load ChatScenariosTranslations for a specific language (cached for performance) */
+    function getChatScenariosTranslations(currentLang) {
+        if (!currentLang) currentLang = 'en';
+        
+        if (!chatScenariosTranslationsCache[currentLang]) {
+            const chatScenariosTranslationFile = path.join(__dirname, '..', 'locales', `chat-scenarios-${currentLang}.json`);
+            if (fs.existsSync(chatScenariosTranslationFile)) {
+                try {
+                    chatScenariosTranslationsCache[currentLang] = JSON.parse(fs.readFileSync(chatScenariosTranslationFile, 'utf-8'));
+                } catch (e) {
+                    fastify.log.error(`Error reading chat scenarios translations for ${currentLang}:`, e);
+                    chatScenariosTranslationsCache[currentLang] = {};
+                }
+            } else {
+                chatScenariosTranslationsCache[currentLang] = {}; // Fallback to empty object if translation file is missing
+            }
+        }
+        return chatScenariosTranslationsCache[currentLang];
+    }
+
     /** Load OnboardingTranslations for a specific language (cached for performance) */
     function getOnboardingTranslations(currentLang) {
         if (!currentLang) currentLang = 'en';
@@ -473,6 +498,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         request.affiliationTranslations = fastify.getAffiliationTranslations(request.lang);
         request.chatToolSettingsTranslations = fastify.getChatToolSettingsTranslations(request.lang);
         request.chatSuggestionsTranslations = fastify.getChatSuggestionsTranslations(request.lang);
+        request.chatScenariosTranslations = fastify.getChatScenariosTranslations(request.lang);
         request.onboardingTranslations = fastify.getOnboardingTranslations(request.lang);
         request.legalTranslations = fastify.getLegalTranslations(request.lang);
         request.speechToTextTranslations = fastify.getSpeechToTextTranslations(request.lang);
@@ -502,6 +528,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             affiliationTranslations: request.affiliationTranslations, // Add affiliation translations to locals
             chatToolSettingsTranslations: request.chatToolSettingsTranslations, // Add chat tool settings translations to locals
             chatSuggestionsTranslations: request.chatSuggestionsTranslations, // Add chat suggestions translations to locals
+            chatScenariosTranslations: request.chatScenariosTranslations, // Add chat scenarios translations to locals
             onboardingTranslations: request.onboardingTranslations, // Add onboarding translations to locals
             legalTranslations: request.legalTranslations, // Add legal translations to locals
             speechToTextTranslations: request.speechToTextTranslations, // Add speech-to-text translations to locals

@@ -38,25 +38,21 @@ async function getUserChatData(db, userId, userChatId) {
 }
 // Return an localized languge directive message
 function getLanguageDirectiveMessage(language) {
-    const languageMessage = {
-        role: 'user',
-        name: 'context',
-        content: ''
-    };
+    let content = '';
     switch (language.toLowerCase()) {
         case 'japanese':
-            languageMessage.content = '日本語で答えてください。ユーザーが他の言語で話す場合でも、明示的に言語を変更するように求められない限り、日本語で答え続けてください。';
+            content = '日本語で答えてください。ユーザーが他の言語で話す場合でも、明示的に言語を変更するように求められない限り、日本語で答え続けてください。';
             break;
         case 'english':
-            languageMessage.content = 'Please respond in English. If the user speaks in another language, continue responding in English unless explicitly asked to change language.';
+            content = 'Please respond in English. If the user speaks in another language, continue responding in English unless explicitly asked to change language.';
             break;
         case 'french':
-            languageMessage.content = 'Veuillez répondre en français. Si l\'utilisateur parle dans une autre langue, continuez à répondre en français, sauf si on vous demande explicitement de changer de langue.';
+            content = 'Veuillez répondre en français. Si l\'utilisateur parle dans une autre langue, continuez à répondre en français, sauf si on vous demande explicitement de changer de langue.';
             break;
         default:
-            languageMessage.content = null;
+            content = null;
     }
-    return [languageMessage];
+    return content;
 }
 // Fetches persona by ID
 async function getPersonaById(db, personaId) {

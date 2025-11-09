@@ -47,7 +47,7 @@ async function routes(fastify, options) {
             
             // Get goals enabled setting
             const userSettings = await getUserChatToolSettings(fastify.mongo.db, userId, userChatDoc.chatId);
-            const goalsEnabled = userSettings.goalsEnabled !== false; // Default to true
+            const goalsEnabled = userSettings.goalsEnabled === true; // Default to false
             
             return reply.send({
                 currentGoal: goalsData.currentGoal,

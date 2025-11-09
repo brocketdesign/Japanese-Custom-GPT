@@ -317,6 +317,11 @@ function initializeWebSocket(onConnectionResult = null) {
               }
               break;
           }
+          case 'showScenariosGenerated': {
+              // Scenarios are already generated and displayed from the frontend
+              // No need to generate them again via WebSocket notification
+              break;
+          }
           default:
             // Removed console.log('[WebSocket] Unhandled notification type:', data.notification.type);
             break;

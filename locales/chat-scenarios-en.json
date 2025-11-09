@@ -1,0 +1,19 @@
+{
+  "scenarios_title": "Conversation Scenarios",
+  "scenarios_loading": "Generating scenarios...",
+  "scenarios_empty": "No scenarios available",
+  "scenarios_error": "Unable to load scenarios",
+  "scenarios_close": "Close scenarios",
+  "no_scenarios_available": "No scenarios available",
+  "choose_scenario": "Choose This Scenario",
+  "selected": "Selected",
+  "emotional_tone": "Emotional Tone",
+  "conversation_direction": "Conversation Direction",
+  "scenario_selected": "Scenario selected!",
+  "scenario_selection_failed": "Failed to select scenario",
+  "settings": {
+    "scenariosSettings": "Scenarios Settings",
+    "enableScenarios": "Enable Chat Scenarios",
+    "scenariosDescription": "Choose the emotional tone and direction for your conversation"
+  }
+}

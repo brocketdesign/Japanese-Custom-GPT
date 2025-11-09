@@ -129,6 +129,26 @@ $(document).ready(async function() {
 
     $('.is-free-user').each(function(){if(!subscriptionStatus && !isTemporary)$(this).show()})
 
+    // Helper function to check if scenarios should be generated and displayed
+    // For NEW chats, we ALWAYS generate scenarios on first load
+    window.shouldGenerateScenariosUI = async function(userChatId) {
+        try {
+            // Fetch the chat data to check if scenario has already been selected
+            const response = await fetch(`/api/chat-scenarios/${userChatId}`);
+            const data = await response.json();
+            
+            // Show scenarios if:
+            // 1. No scenario has been selected yet (currentScenario is null) - this is a new chat
+            // Even if availableScenarios are empty, we'll generate them
+            const hasNoScenarioSelected = !data.currentScenario;
+            
+            return hasNoScenarioSelected; // Return true for NEW chats to generate scenarios
+        } catch (error) {
+            console.error('[shouldGenerateScenariosUI] Error checking scenarios:', error);
+            return false;
+        }
+    };
+
     window.fetchChatData = async function(fetch_chatId, fetch_userId, fetch_reset, callback) {
         const lastUserChat = await getUserChatHistory(fetch_chatId);
         fetch_chatId = lastUserChat ?.chatId || fetch_chatId
@@ -473,53 +493,74 @@ function setupChatInterface(chat, character) {
     }
     
     function displayExistingChat(userChat,character) {
+        console.log('[displayExistingChat] Called with userChat messages length:', userChat.messages.length);
+        
         persona = userChat.persona;
         thumbnail = character?.image || localStorage.getItem('thumbnail')
 
-        displayChat(userChat.messages, persona, function(){
-            setTimeout(() => {
-                const $chatContainer = $('#chatContainer');
-                if ($chatContainer.length) {
-                    // Wait for content to be rendered by checking if scrollHeight > 0
-                    const checkAndScroll = () => {
-                        const scrollHeight = $chatContainer.prop("scrollHeight");
-                        const containerHeight = $chatContainer.height();
-                        
-                        if (scrollHeight > 0 && scrollHeight > containerHeight) {
-                            $chatContainer.animate({
-                                scrollTop: scrollHeight
-                            }, 500);
-                        } else if (scrollHeight === 0) {
-                            // Retry after a short delay if content isn't ready
-                            setTimeout(checkAndScroll, 100);
-                        }
-                    };
-                    
-                    checkAndScroll();
-                }
-            }, 1000);
+        // Initialize ChatScenarioModule to load existing scenario if available
+        // We need to wait for this to complete so the scenario is loaded before displayChat
+        console.log('[displayExistingChat] ChatScenarioModule available:', !!window.ChatScenarioModule);
+        console.log('[displayExistingChat] userChatId:', userChatId);
+        
+        const initScenarioPromise = (async () => {
+            if (window.ChatScenarioModule && userChatId) {
+                console.log('[displayExistingChat] Initializing ChatScenarioModule with userChatId:', userChatId);
+                await window.ChatScenarioModule.init(chatId, userChatId);
+                console.log('[displayExistingChat] ChatScenarioModule.init() completed');
+            } else {
+                console.log('[displayExistingChat] Skipping scenario init - ChatScenarioModule:', !!window.ChatScenarioModule, 'userChatId:', userChatId);
+            }
+        })();
 
-
-            // Add suggestions after assistant message
-            window.chatId = sessionStorage.getItem('chatId') || window.chatId;
-            window.userChatId = sessionStorage.getItem('userChatId') || window.userChatId;
-
-
-            if (window.chatSuggestionsManager && window.userId && window.chatId && window.userChatId) {
+        // Wait for scenario initialization before displaying chat
+        initScenarioPromise.then(() => {
+            console.log('[displayExistingChat] Scenario init promise resolved, calling displayChat');
+            displayChat(userChat.messages, persona, function(){
                 setTimeout(() => {
-                    window.chatSuggestionsManager.showSuggestions(
-                        window.userId, 
-                        window.chatId, 
-                        window.userChatId
-                    );
-                }, 500);
+                    const $chatContainer = $('#chatContainer');
+                    if ($chatContainer.length) {
+                        // Wait for content to be rendered by checking if scrollHeight > 0
+                        const checkAndScroll = () => {
+                            const scrollHeight = $chatContainer.prop("scrollHeight");
+                            const containerHeight = $chatContainer.height();
+                            
+                            if (scrollHeight > 0 && scrollHeight > containerHeight) {
+                                $chatContainer.animate({
+                                    scrollTop: scrollHeight
+                                }, 500);
+                            } else if (scrollHeight === 0) {
+                                // Retry after a short delay if content isn't ready
+                                setTimeout(checkAndScroll, 100);
+                            }
+                        };
+                        
+                        checkAndScroll();
+                    }
+                }, 1000);
+
+
+                // Add suggestions after assistant message
+                window.chatId = sessionStorage.getItem('chatId') || window.chatId;
+                window.userChatId = sessionStorage.getItem('userChatId') || window.userChatId;
+
+
+                if (window.chatSuggestionsManager && window.userId && window.chatId && window.userChatId) {
+                    setTimeout(() => {
+                        window.chatSuggestionsManager.showSuggestions(
+                            window.userId, 
+                            window.chatId, 
+                            window.userChatId
+                        );
+                    }, 500);
+                }
+            });
+
+            const today = new Date().toISOString().split('T')[0];
+            if (userChat.log_success) {
+                displayThankMessage();
             }
         });
-
-        const today = new Date().toISOString().split('T')[0];
-        if (userChat.log_success) {
-            displayThankMessage();
-        }
     }
     
     function displayInitialChatInterface(chat) {
@@ -643,7 +684,31 @@ function setupChatInterface(chat, character) {
                 updateCurrentChat(chatId,userId);
                 updateParameters(chatId,userId,userChatId);
 
-                // Check if user should see settings before starting chat completion
+                // Check if scenarios should be generated and displayed BEFORE starting chat
+                // Scenarios should only be shown on new chats (0 messages)
+                const shouldShowScenarios = await shouldGenerateScenariosUI(userChatId);
+                console.log('[displayStarter] shouldShowScenarios:', shouldShowScenarios);
+                
+                if (shouldShowScenarios) {
+                    console.log('[displayStarter] Scenarios should be shown, ChatScenarioModule available:', !!window.ChatScenarioModule);
+                    // Generate and show scenarios - DON'T call generateChatCompletion yet
+                    if (window.ChatScenarioModule) {
+                        // Initialize the scenario module with the new chat IDs
+                        console.log('[displayStarter] Initializing ChatScenarioModule with chatId:', chatId, 'userChatId:', userChatId);
+                        window.ChatScenarioModule.init(chatId, userChatId);
+                        console.log('[displayStarter] Calling generateScenarios');
+                        const generated = await window.ChatScenarioModule.generateScenarios();
+                        console.log('[displayStarter] generateScenarios returned:', generated);
+                        if (generated) {
+                            // Scenarios are now showing. Wait for user selection.
+                            // The scenario selection will call generateChatCompletion
+                            console.log('[displayStarter] Scenarios generated, returning early');
+                            return; // Exit without calling generateChatCompletion
+                        }
+                    }
+                }
+                
+                // If no scenarios needed or scenario module unavailable, proceed with chat completion
                 if (window.chatToolSettings) {
                     window.chatToolSettings.checkFirstTimeSettings(() => {
                         // This callback runs after settings modal is closed (or immediately if not first-time)
@@ -665,18 +730,33 @@ function setupChatInterface(chat, character) {
 
 
     async function displayChat(userChat, persona, callback) {
+        console.log('[displayChat] Called with userChat length:', userChat.length, 'persona:', !!persona);
+        
         $('body').css('overflow', 'hidden');
         $('#stability-gen-button').show();
         $('.auto-gen').each(function() { $(this).show(); });
         $('#audio-play').show();
  
         let chatContainer = $('#chatContainer');
+        console.log('[displayChat] Chat container found:', !!chatContainer.length);
         chatContainer.empty();
 
         // Clear the tracking sets when displaying a new chat
         displayedMessageIds.clear();
         displayedImageIds.clear();
         displayedVideoIds.clear();
+
+        // NOTE: Do NOT call clearScenarios() here!
+        // We need to preserve the currentScenario data that was loaded in init()
+        // We'll display it at the end of this function
+        
+        // Just clear the scenario container display, but keep the data
+        console.log('[displayChat] ChatScenarioModule available:', !!window.ChatScenarioModule);
+        if (window.ChatScenarioModule) {
+            console.log('[displayChat] Clearing scenario UI (but preserving data)');
+            // Remove the UI element, but DON'T call clearScenarios() which nullifies the data
+            window.ChatScenarioModule.removeSelectedScenarioDisplay();
+        }
 
         for (let i = 0; i < userChat.length; i++) {
             let messageHtml = '';
@@ -897,6 +977,17 @@ function setupChatInterface(chat, character) {
                 chatContainer.append($(messageHtml).hide().fadeIn());
             }
         }
+        
+        // Display current scenario at the top AFTER all messages are rendered
+        console.log('[displayChat] All messages rendered, now displaying scenario');
+        console.log('[displayChat] ChatScenarioModule available:', !!window.ChatScenarioModule);
+        console.log('[displayChat] userChatId:', userChatId);
+        if (window.ChatScenarioModule && userChatId) {
+            console.log('[displayChat] Calling displaySelectedScenario()');
+            window.ChatScenarioModule.displaySelectedScenario();
+            console.log('[displayChat] displaySelectedScenario() completed');
+        }
+        
         if( typeof callback == 'function'){
             callback()
         }

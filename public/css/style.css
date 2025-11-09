@@ -1416,7 +1416,9 @@ opacity: 0.8;
   .content.collapsed {
   margin-left:0
   }
-  
+  .sticky-bottom{
+    z-index: 1020;
+  }
   nav.navbar,.sticky-bottom {
   margin-left:0;
   transition:margin-left .3s ease

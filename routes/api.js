@@ -123,7 +123,75 @@ const free_models = false // ['293564']; // [DEBUG] Disable temporary
     
 async function routes(fastify, options) {
 
+// ========== NEW: Scenario-Focused Init Chat Route ==========
 fastify.post('/api/init-chat', async (request, reply) => {
+    try {
+      // Mongo collections
+      const usersCollection = fastify.mongo.db.collection('users');
+      const collectionChat = fastify.mongo.db.collection('chats');
+      const collectionUserChat = fastify.mongo.db.collection('userChat');
+      
+
+      // Extract and normalize request data
+      let { message, chatId, userChatId, isNew } = request.body;
+      let userId = request.body.userId;
+      if (!userId) {
+        const authenticatedUser = request.user;
+        userId = authenticatedUser._id;
+      }
+
+            const user = request.user;
+            let language = getLanguageName(user?.lang);
+      
+            const now = new Date();
+            const nowIsoString = now.toISOString();
+
+      // Retrieve chat and user-chat documents
+      let userChatDocument = await collectionUserChat.findOne({ 
+        userId: new fastify.mongo.ObjectId(userId), 
+        _id: new fastify.mongo.ObjectId(userChatId) 
+      });
+
+    if (!userChatDocument || isNew) {
+        // Initialize new userChat document
+        // Scenario will be selected separately via /api/chat-scenarios/:userChatId/select
+        // Once scenario is selected, it will be stored in currentScenario field
+        // and used in chat-completion for generating scenario-aware responses
+        
+        userChatDocument = {
+            userId: new fastify.mongo.ObjectId(userId),
+            chatId: new fastify.mongo.ObjectId(chatId),
+            createdAt: now,
+            updatedAt: now,
+            messages: [],
+            // Scenario fields - populated after user selects a scenario
+            availableScenarios: null,
+            currentScenario: null,
+            scenarioCreatedAt: null
+        };
+    }
+
+      let result = await collectionUserChat.insertOne(userChatDocument);
+      let documentId = result.insertedId;
+
+      // Reply with summary
+      return reply.send({ 
+        userChatId: documentId, 
+        chatId
+      });
+  
+    } catch (error) {
+      console.log(error);
+      return reply.status(403).send({ error: error.message });
+    }
+});
+
+// ========== DEPRECATED: Old Init Chat Route (Image-Focused) ==========
+// DEPRECATED: November 9, 2025
+// PURPOSE: Legacy route for old image-based initialization
+// NOTE: This route is deprecated. Use /api/init-chat for scenario-focused experience.
+// To reactivate: Change endpoint from /api/deprecated/init-chat to /api/init-chat
+fastify.post('/api/deprecated/init-chat', async (request, reply) => {
     try {
       // Mongo collections
       const usersCollection = fastify.mongo.db.collection('users');
@@ -155,7 +223,7 @@ fastify.post('/api/init-chat', async (request, reply) => {
         const isLoggedIn = user && !user.isTemporary;
         let startMessage = { role: 'user', name: 'master' };
 
-        // Helper function to get localized messages
+        // Helper function to get localized messages (ORIGINAL - Image-focused)
         const getLocalizedMessages = (lang) => {
             const messages = {
                 'french': {
@@ -250,7 +318,7 @@ fastify.post('/api/init-chat', async (request, reply) => {
       console.log(error);
       return reply.status(403).send({ error: error.message });
     }
-  });
+});
 
     fastify.post('/api/check-chat', async (request, reply) => {
       try {

@@ -3,7 +3,8 @@ const { createParser } = require('eventsource-parser');
 const { OpenAI } = require("openai");
 const { z } = require("zod");
 const { zodResponseFormat } = require("openai/helpers/zod");
-const { sanitizeMessages } = require('./tool')
+const { sanitizeMessages } = require('./tool');
+const { ObjectId } = require('mongodb');
 
 const apiDetails = {
   openai: {
@@ -553,6 +554,16 @@ async function createPrompt(customPrompt, imageDescription, nsfw) {
   return response;
 }
 
+// Define the schema for chat scenario generation
+const chatScenarioSchema = z.object({
+  _id: z.string().nullable(),
+  scenario_title: z.string(),
+  scenario_description: z.string(),
+  emotional_tone: z.string(),
+  conversation_direction: z.string(),
+  system_prompt_addition: z.string(),
+});
+
 // Define the schema for chat goal generation
 const chatGoalSchema = z.object({
   goal_type: z.enum(['relationship', 'activity', 'image request']),
@@ -563,6 +574,153 @@ const chatGoalSchema = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']),
   estimated_messages: z.number().min(1).max(20),
 });
+
+// Function to generate chat scenarios based on character and persona
+const generateChatScenarios = async (charInfo, personaInfo = null, userSettings = null, language = 'en') => {
+  try {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    
+    // Extract character name and description
+    const characterName = charInfo.name || 'the character';
+    const characterDescription = charInfo.description || '';
+    
+    const personaContext = personaInfo ? 
+      `\nUser Persona: ${personaInfo.name} - ${personaInfo.short_intro || 'No description available'}` : '';
+    
+    // Apply relationship type
+    const relationshipInstructions = require('./relashionshipInstructions');
+    let relationship = ''
+    if (relationshipInstructions[userSettings?.relationshipType]) {
+        relationship += `${relationshipInstructions[userSettings.relationshipType]}`;
+    }
+
+    // Extract key traits from character description to ensure diversity
+    const traitExtractionPrompt = `Analyze this character description and extract 3-5 key defining traits, quirks, or interests:
+"${characterDescription}"
+Return only the trait list, one per line, in format: "- [trait]"`;
+
+    const traitResponse = await generateCompletion(
+      [{ role: "user", content: traitExtractionPrompt }],
+      300,
+      'openai',
+      language
+    );
+    
+    const characterTraits = traitResponse || characterDescription;
+
+    // Scenario categories to ensure diversity
+    const scenarioCategories = [
+      'emotional_vulnerability', // Character shares a weakness or fear, needs support
+      'creative_collaboration', // User and character create/build/plan something together
+      'conflict_resolution',    // Addressing a misunderstanding or supporting through disagreement
+      'shared_experience',      // Bonding through a shared activity or memory
+      'character_growth',       // Character learning something new from user
+      'intimate_moment',        // Deep conversation based on relationship type
+      'playful_interaction',    // Fun, light-hearted scenario
+      'mystery_or_discovery',   // Uncovering something together
+      'support_through_change', // Character dealing with change, user is steadying force
+      'celebration_or_milestone' // Special moment tailored to relationship
+    ];
+
+    // Randomly select 3 distinct categories to ensure variety
+    const selectedCategories = [];
+    const shuffled = [...scenarioCategories].sort(() => Math.random() - 0.5);
+    for (let i = 0; i < 3; i++) {
+      selectedCategories.push(shuffled[i]);
+    }
+
+    const systemPrompt = `You are an expert scenario designer specializing in creating deeply personalized, character-specific conversation scenarios.
+
+CRITICAL REQUIREMENTS:
+1. Each scenario must reflect the character's UNIQUE traits, interests, and personality - NOT generic templates
+2. AVOID overused tropes like "lost in forest", "lost powers", "facing fear" - be creative and character-specific
+3. Generate EXACTLY 3 DISTINCT SCENARIOS, each from a different category to ensure diversity
+4. Each scenario must have a clear USER ROLE and specific situation the character is in
+5. Tailor scenarios to the ${userSettings?.relationshipType || 'casual'} relationship dynamic
+
+SCENARIO CATEGORIES for this request (ensure each is different):
+- ${selectedCategories[0]}: ${selectedCategories[0] === 'emotional_vulnerability' ? 'Character reveals something vulnerable; user provides support' : selectedCategories[0] === 'creative_collaboration' ? 'User and character work together on something creative/productive' : 'Character learns or grows through interaction with user'}
+- ${selectedCategories[1]}: [appropriate description for this category]
+- ${selectedCategories[2]}: [appropriate description for this category]
+
+Character traits to base scenarios on:
+${characterTraits}
+
+DIVERSITY REQUIREMENTS:
+- NO duplicate scenario patterns
+- NO generic "lost/stuck" scenarios
+- NO clichéd relationship dynamics unless character-specific
+- Each scenario must feel PERSONAL to ${characterName}'s unique personality
+- Scenarios should showcase different facets of the character
+
+Respond in ${language}.`;
+
+    const userPrompt = `Create 3 unique, character-tailored conversation scenarios for ${characterName}.
+
+CHARACTER INFO:
+Name: ${characterName}
+Description: ${characterDescription}${personaContext}
+
+RELATIONSHIP CONTEXT:
+- Type: ${userSettings?.relationshipType || 'casual'}
+${relationship ? `- Dynamic: ${relationship}` : ''}
+
+SCENARIO REQUIREMENTS:
+For each scenario, base it on different aspects of ${characterName}'s personality and interests. Make scenarios:
+1. Specific to their background/interests/quirks (NOT generic templates)
+2. Show clear USER INVOLVEMENT and specific role
+3. Create natural conversation flow based on the situation
+4. Include emotional depth matching the relationship type
+
+Each scenario must include:
+- scenario_title: Catchy, specific title (NOT generic)
+- scenario_description: Vivid, character-specific situation
+- emotional_tone: Appropriate tone for this scenario
+- conversation_direction: How the conversation should flow
+- system_prompt_addition: Instructions for maintaining character consistency in this scenario
+
+CRITICAL: Replace ALL "[Character name]" with "${characterName}" in EVERY field.
+
+Generate 3 scenarios that feel fresh and authentic to ${characterName}'s unique personality.`;
+
+    const scenariosListSchema = z.object({
+      scenarios: z.array(chatScenarioSchema).length(3),
+    });
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      response_format: zodResponseFormat(scenariosListSchema, "scenarios_list"),
+      max_completion_tokens: 2500,
+      temperature: 1,
+    });
+
+    const result = JSON.parse(response.choices[0].message.content);
+    
+    // Add IDs if not present and ensure character name is replaced
+    const scenariosWithIds = result.scenarios.map((scenario, index) => {
+      const nameRegex = /\[Character name\]/gi;
+      return {
+        ...scenario,
+        scenario_title: scenario.scenario_title.replace(nameRegex, characterName),
+        scenario_description: scenario.scenario_description.replace(nameRegex, characterName),
+        system_prompt_addition: scenario.system_prompt_addition.replace(nameRegex, characterName),
+        _id: new ObjectId().toString(),
+        id: new ObjectId().toString()
+      };
+    });
+    
+    console.log(`[generateChatScenarios] Generated ${scenariosWithIds.length} unique scenarios for ${characterName}`);
+    return scenariosWithIds;
+
+  } catch (error) {
+    console.log('Chat scenario generation error:', error);
+    return [];
+  }
+};
 
 // Function to generate chat goals based on character and persona
 const generateChatGoal = async (chatDescription, personaInfo = null, userSettings = null, subscriptionStatus = null, language = 'en') => {
@@ -690,7 +848,6 @@ Respond in ${language}`;
     return { completed: false, confidence: 0, reason: 'Error checking completion' };
   }
 };
-
 module.exports = {
     generateCompletion,
     checkImageRequest,
@@ -700,6 +857,7 @@ module.exports = {
     moderateImage,
     createPrompt,
     generatePromptSuggestions,
+    generateChatScenarios,
     generateChatGoal,
     checkGoalCompletion,
     getAllAvailableModels,

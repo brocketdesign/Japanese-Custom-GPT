@@ -3,6 +3,7 @@ const axios = require('axios');
 const {
     checkImageRequest, 
     generateCompletion,
+    generateChatScenarios,
 } = require('../models/openai');
 const { 
     checkImageDescription,
@@ -234,6 +235,27 @@ async function routes(fastify, options) {
             if (!userData) { 
                 return reply.status(404).send({ error: 'User data not found' }); 
             }
+            
+            console.log(`[/api/openai-chat-completion] Fetched userData with ${userData.messages.length} messages`);
+            
+            // Check for scenario context message
+            const hasContextMessage = userData.messages.some(m => m.name === 'context' && m.hidden);
+            console.log(`[/api/openai-chat-completion] Has hidden context message: ${hasContextMessage}`);
+            
+            // Log message types
+            const messageTypes = {};
+            userData.messages.forEach(m => {
+                const key = `${m.role}_${m.name || 'unnamed'}_${m.hidden ? 'hidden' : 'visible'}`;
+                messageTypes[key] = (messageTypes[key] || 0) + 1;
+            });
+            console.log(`[/api/openai-chat-completion] Message breakdown:`, messageTypes);
+            console.log(`[/api/openai-chat-completion] Full userData.messages:`, JSON.stringify(userData.messages.map(m => ({
+                role: m.role,
+                name: m.name,
+                hidden: m.hidden,
+                contentLength: m.content?.length || 0,
+                contentPreview: m.content?.substring(0, 80) + (m.content?.length > 80 ? '...' : '')
+            })), null, 2));
 
             const isAdmin = await checkUserAdmin(fastify, userId);
             const chatDocument = await getChatDocument(request, db, chatId);
@@ -242,10 +264,68 @@ async function routes(fastify, options) {
             const chatDescription = chatDataToString(chatDocument);
             const characterDescription = await checkImageDescription(db, chatId, chatDocument);
             const language = getLanguageName(userInfo.lang);
+
+            // Handle chat scenarios - Generate scenarios at the start of a new chat
+            const messageCount = userData.messages.filter(m => m.role === 'user' || m.role === 'assistant').length;
+            if (messageCount <= 2 && !userData.availableScenarios) {
+                try {
+                    // Get persona if available
+                    let personaInfo = null;
+                    const personaId = userData?.persona || null;
+                    if (personaId) {
+                        personaInfo = await getPersonaById(db, personaId);
+                    }
+
+                    // Generate scenarios
+                    const scenarios = await generateChatScenarios(
+                        chatDocument,
+                        personaInfo,
+                        userSettings,
+                        language
+                    );
+
+                    if (scenarios && scenarios.length > 0) {
+                        // Store scenarios in the user chat
+                        await db.collection('userChat').updateOne(
+                            { _id: new ObjectId(userChatId) },
+                            { 
+                                $set: { 
+                                    availableScenarios: scenarios,
+                                    scenarioCreatedAt: new Date()
+                                }
+                            }
+                        );
+
+                        // Notify user of new scenarios
+                        fastify.sendNotificationToUser(userId, 'showScenariosGenerated', { 
+                            scenarios: scenarios.map(s => ({
+                                id: s._id || s.id,
+                                title: s.scenario_title,
+                                description: s.scenario_description
+                            }))
+                        });
+                    }
+                } catch (error) {
+                    console.log(`[/api/openai-chat-completion] Error generating scenarios: ${error}`);
+                    // Don't block chat completion if scenario generation fails
+                }
+            }
             
-            // Get the last message and related info
-            const lastMsgIndex = userData.messages.length - 1;
-            const lastUserMessage = userData.messages[lastMsgIndex];
+            // Get the last non-context message (skip hidden scenario context messages)
+            let lastMsgIndex = userData.messages.length - 1;
+            let lastUserMessage = userData.messages[lastMsgIndex];
+            
+            // If the last message is a hidden context message, find the previous actual message
+            if (lastUserMessage && lastUserMessage.name === 'context' && lastUserMessage.hidden) {
+                // For scenario context messages, we still want to process with it, but log it
+                console.log('[/api/openai-chat-completion] Last message is hidden scenario context, proceeding with completion');
+            }
+            
+            // Safety check: ensure lastUserMessage exists and is a valid message
+            if (!lastUserMessage) {
+                return reply.status(400).send({ error: 'No messages in chat' });
+            }
+            
             const lastAssistantRelation = userData.messages
                 .filter(msg => msg.role === 'assistant')
                 .slice(-1)
@@ -285,7 +365,7 @@ async function routes(fastify, options) {
             let goalCompletion = null;
             
             // Check if goals are enabled for this chat
-            const goalsEnabled = userSettings.goalsEnabled !== false; // Default to true if not set
+            const goalsEnabled = userSettings.goalsEnabled === true; // Default to false if not set
             
             if (goalsEnabled) {
                 const goalResult = await handleChatGoals(
@@ -333,9 +413,25 @@ async function routes(fastify, options) {
                     `Status: ${goalCompletion.reason}\n` +
                     `Continue working toward this goal.`;
             }
+
+            // Add scenario context if a scenario has been selected
+            // Re-fetch userData to ensure we have the latest currentScenario (in case user just selected one)
+            const latestUserData = await getUserChatData(db, userId, userChatId);
+            if (latestUserData?.currentScenario) {
+                const scenario = latestUserData.currentScenario;
+                const scenarioContext = `\n\n# Conversation Scenario:\n` +
+                    `Title: ${scenario.scenario_title}\n` +
+                    `Description: ${scenario.scenario_description}\n` +
+                    `Emotional Tone: ${scenario.emotional_tone}\n` +
+                    `Conversation Direction: ${scenario.conversation_direction}\n` +
+                    `\nScenario Instructions:\n` +
+                    `${scenario.system_prompt_addition}`;
+                enhancedSystemContent += scenarioContext;
+            }
             
             // Generate the langugage directive message
             const languageDirective = getLanguageDirectiveMessage(language);
+            enhancedSystemContent += `\n\n# Language Directive:\n${languageDirective}\n`;
 
             // Add user points and prepare messages
             enhancedSystemContent = enhancedSystemContent.replace(/{{userPoints}}/g, userPoints.toString());
@@ -358,13 +454,11 @@ async function routes(fastify, options) {
                 messagesForCompletion = [
                     ...systemMsg,
                     ...userMessages,
-                    ...languageDirective,
                     ...imgMessage,
                 ];
             } else {
                 messagesForCompletion = [
                     ...systemMsg, 
-                    ...languageDirective,
                     ...userMessages,
                 ];
             }
@@ -376,7 +470,7 @@ async function routes(fastify, options) {
             
             //console.log(`[/api/openai-chat-completion] Using model: ${selectedModel}, Language: ${language}, Premium: ${isPremium}`);
             //console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
-            //console.log(`[/api/openai-chat-completion] Messages for completion:`, messagesForCompletion);
+            console.log(`[/api/openai-chat-completion] Messages for completion:`, messagesForCompletion);
             
             generateCompletion(messagesForCompletion, 600, selectedModel, language, selectedModel, isPremium).then(async (completion) => {
                 if (completion) {
@@ -390,7 +484,9 @@ async function routes(fastify, options) {
                         custom_relation: custom_relation ? custom_relation : 'Casual' 
                     };
                     
-                    if (lastUserMessage.name) {
+                    // DO NOT copy 'context' name from lastUserMessage to assistant
+                    // Only copy name if it's NOT 'context'
+                    if (lastUserMessage && lastUserMessage.name && lastUserMessage.name !== 'context') {
                         newAssistantMessage.name = lastUserMessage.name;
                     }
                     if (genImage?.image_request) {

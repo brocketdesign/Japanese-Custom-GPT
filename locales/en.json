@@ -31,6 +31,8 @@
   "requestFailed": "Request failed",
   "image_leaderboard_title": "Image Leaderboard",
   "chat_goal_completed": "Chat goal completed, received {{points}} points!",
+  "scenario_selected": "Scenario selected!",
+  "no_scenarios_available": "No scenarios available",
   "setNsfw": "Set as NSFW",
   "unsetNsfw": "Unset NSFW",
   "browseByCategory": "Browse by Category",

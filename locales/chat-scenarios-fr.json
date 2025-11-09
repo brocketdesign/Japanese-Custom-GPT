@@ -1,0 +1,19 @@
+{
+  "scenarios_title": "Scénarios de Conversation",
+  "scenarios_loading": "Génération des scénarios...",
+  "scenarios_empty": "Aucun scénario disponible",
+  "scenarios_error": "Impossible de charger les scénarios",
+  "scenarios_close": "Fermer les scénarios",
+  "no_scenarios_available": "Aucun scénario disponible",
+  "choose_scenario": "Choisir ce scénario",
+  "selected": "Sélectionné",
+  "emotional_tone": "Ton émotionnel",
+  "conversation_direction": "Direction de la conversation",
+  "scenario_selected": "Scénario sélectionné !",
+  "scenario_selection_failed": "Échec de la sélection du scénario",
+  "settings": {
+    "scenariosSettings": "Paramètres des scénarios",
+    "enableScenarios": "Activer les scénarios de chat",
+    "scenariosDescription": "Choisissez le ton émotionnel et la direction de votre conversation"
+  }
+}

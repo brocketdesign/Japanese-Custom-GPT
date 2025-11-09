@@ -69,9 +69,9 @@ window.ChatScenarioModule = (function() {
         console.log('[ChatScenarioModule.displayLoadingState] Container found:', !!container);
         if (!container) return;
         
-        container.style.display = 'grid';
+        container.style.display = 'flex';
         container.innerHTML = `
-            <div class="scenario-loading-container">
+            <div class="scenario-loading-container w-100">
                 <div class="scenario-spinner"></div>
                 <div class="scenario-loading-text">
                     ${window.chatScenariosTranslations?.scenarios_loading || 'Generating scenarios'}
@@ -139,7 +139,7 @@ window.ChatScenarioModule = (function() {
         if (!container) return;
         
         // Ensure container is visible
-        container.style.display = 'grid';
+        container.style.display = 'flex';
         
         // Clear existing scenarios
         container.innerHTML = '';
@@ -166,7 +166,7 @@ window.ChatScenarioModule = (function() {
      */
     function createScenarioCard(scenario, index) {
         const card = document.createElement('div');
-        card.className = 'scenario-card';
+        card.className = 'scenario-card w-100';
         card.dataset.scenarioId = scenario.id;
         
         const isSelected = currentScenario && currentScenario.id === scenario.id;
@@ -344,8 +344,8 @@ window.ChatScenarioModule = (function() {
             show = container.style.display === 'none';
         }
         
-        // Use grid display when showing, none when hiding
-        container.style.display = show ? 'grid' : 'none';
+        // Use flex display when showing, none when hiding
+        container.style.display = show ? 'flex' : 'none';
         
         // Hide chat overlay when showing scenarios, restore when hiding
         const chatOverlay = document.getElementById('chatOverlay');
@@ -458,9 +458,9 @@ window.ScenarioDebug = {
             return;
         }
         
-        container.style.display = 'grid';
+        container.style.display = 'flex';
         container.innerHTML = `
-            <div class="scenario-loading-container">
+            <div class="scenario-loading-container w-100">
                 <div class="scenario-spinner"></div>
                 <div class="scenario-loading-text">
                     ${window.chatScenariosTranslations?.scenarios_loading || 'Generating scenarios'}
@@ -490,7 +490,7 @@ window.ScenarioDebug = {
     },
 
     /**
-     * Show placeholder scenarios for testing grid design
+     * Show placeholder scenarios for testing flex design
      * Displays mock scenario cards with realistic data
      * Usage: ScenarioDebug.showScenarioPlaceholder()
      */
@@ -526,7 +526,7 @@ window.ScenarioDebug = {
             }
         ];
 
-        container.style.display = 'grid';
+        container.style.display = 'flex';
         container.innerHTML = '';
 
         // Create scenario cards
@@ -571,7 +571,7 @@ window.ScenarioDebug = {
         });
 
         console.log('[ScenarioDebug] ✅ Scenario placeholder displayed');
-        console.log('[ScenarioDebug] Visible: 3 cards in responsive grid');
+        console.log('[ScenarioDebug] Visible: 3 cards in responsive flex');
         console.log('[ScenarioDebug] Test: Hover over cards - they should lift and shadow should enhance');
         console.log('[ScenarioDebug] Test: Click on cards - they should turn green and show checkmark');
         console.log('[ScenarioDebug] Call ScenarioDebug.hideSpinner() to hide');
@@ -643,7 +643,7 @@ window.ScenarioDebug = {
     ✓ Animated dots beneath text
     
   SCENARIO CARDS:
-    ✓ Grid layout: 1 col (mobile) → 2 cols (tablet) → 3 cols (desktop)
+    ✓ flex layout: 1 col (mobile) → 2 cols (tablet) → 3 cols (desktop)
     ✓ Hover: card lifts 4px, shadow enhances, border turns blue
     ✓ Click: card turns green, shows checkmark
     ✓ Consistent spacing and typography

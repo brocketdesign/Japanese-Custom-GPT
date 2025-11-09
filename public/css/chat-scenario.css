@@ -2,6 +2,7 @@
 .scenario-container {
   display: none;
   grid-template-columns: 1fr;
+  flex-direction: column;
   gap: 0.75rem;
   padding: 1rem;
   margin: 0;

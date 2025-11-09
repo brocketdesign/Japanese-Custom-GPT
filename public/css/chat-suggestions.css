@@ -8,7 +8,7 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(181, 138, 254, 0.2);
     overflow: hidden;
-    max-width: 450px;
+    max-width: 600px;
     margin: auto;
     animation: slideInUp 0.3s ease-out;
 }
@@ -244,10 +244,6 @@
 
 /* Compact mode for smaller screens */
 @media (max-height: 600px) {
-    .suggestions-container {
-        margin: 8px 0;
-    }
-    
     .suggestions-header {
         padding: 8px 12px;
         font-size: 12px;

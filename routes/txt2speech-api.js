@@ -5,6 +5,7 @@ const OpenAI = require('openai');
 const { generateCompletion } = require('../models/openai');
 const { getVoiceSettings } = require('../models/chat-tool-settings-utils');
 const { removeUserPoints } = require('../models/user-points-utils');
+const { getTextToSpeechCost } = require('../config/pricing');
 const {
     sanitizeMessage,
     getMinimaxVoices,
@@ -30,7 +31,7 @@ async function routes(fastify) {
             }
 
             const db = fastify.mongo.db;
-            const cost = 3;
+            const cost = getTextToSpeechCost();
             console.log(`[text_to_speech] Cost for text-to-speech generation: ${cost} points`);
 
             try {

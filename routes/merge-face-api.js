@@ -12,6 +12,7 @@ const {
 } = require('../models/merge-face-utils');
 const { handleFileUpload } = require('../models/tool');
 const { removeUserPoints } = require('../models/user-points-utils');
+const { getFaceMergeCost } = require('../config/pricing');
 
 async function routes(fastify, options) {
 
@@ -150,7 +151,7 @@ async function routes(fastify, options) {
 
       const db = fastify.mongo.db;
       
-      const cost = 30; // Define the cost of generating an image
+      const cost = getFaceMergeCost();
       console.log(`[merge-face] Cost for merge face: ${cost} points`);
       try {
           await removeUserPoints(db, userId, cost, request.translations?.points?.deduction_reasons?.merge_face || 'Merge face', 'merge_face', fastify);

@@ -2,6 +2,7 @@ const { ObjectId } = require('mongodb');
 const axios = require('axios');
 const { createHash } = require('crypto');
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const { getImageUpscaleCost } = require('../config/pricing');
 
 // Configure AWS S3
 const s3 = new S3Client({

@@ -6,7 +6,8 @@ const { generateImg, getPromptById, getImageSeed, checkImageDescription, getTask
 const { createPrompt, moderateText } = require('../models/openai');
 const { upscaleImg } = require('../models/upscale-utils');
 const { removeUserPoints } = require('../models/user-points-utils');
-const { getUserMinImages } = require('../models/chat-tool-settings-utils')
+const { getUserMinImages } = require('../models/chat-tool-settings-utils');
+const { getImageGenerationCost, getImageUpscaleCost, getCustomPromptCost, getGiftCost } = require('../config/pricing');
 
 async function routes(fastify, options) {
 
@@ -45,7 +46,7 @@ async function routes(fastify, options) {
         const promptData = await getPromptById(db,promptId);
 
         // Remove prompt cost from user points
-        const promptCost = promptData.cost || 0;
+        const promptCost = getCustomPromptCost(promptData);
         console.log(`[generate-img] Cost for prompt: ${promptCost} points`);
         try {
           await removeUserPoints(db, userId, promptCost, translations.points?.deduction_reasons?.custom_prompt || 'Prompt', 'prompt', fastify);
@@ -75,7 +76,7 @@ async function routes(fastify, options) {
           return reply.status(404).send({ error: 'Gift not found' });
         }
         // Remove gift cost from user points
-        const giftCost = giftData.cost || 0;
+        const giftCost = getGiftCost(giftData);
         console.log(`[generate-img] Cost for gift: ${giftCost} points`);
         try {
           await removeUserPoints(db, userId, giftCost, translations.points?.deduction_reasons?.gift || 'Gift', 'gift', fastify);
@@ -96,7 +97,7 @@ async function routes(fastify, options) {
         newPrompt = await createPrompt(giftPrompt, imageDescription, false);
       } else {
         // Charge points for image generation
-        const cost = 10 * image_num; // Define the cost of generating an image
+        const cost = getImageGenerationCost(image_num);
         console.log(`[generate-img] Cost for image generation: ${cost} points`);
         try {
           await removeUserPoints(db, userId, cost, translations.points?.deduction_reasons?.image_generation || 'Image generation', 'image_generation', fastify);
@@ -153,7 +154,7 @@ async function routes(fastify, options) {
             const { userId, chatId, userChatId, originalImageId, image_base64, originalImageUrl, placeholderId, scale_factor, model_name } = request.body;
             
             const db = fastify.mongo.db;
-            const cost = 20; // Define the cost of generating an image
+            const cost = getImageUpscaleCost();
             console.log(`[upscale-img] Cost for upscale image: ${cost} points`);
             try {
               await removeUserPoints(db, userId, cost, request.translations?.points?.deduction_reasons?.upscale_image || 'Upscale image', 'upscale_image', fastify);

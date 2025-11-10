@@ -11,6 +11,7 @@ const {
 } = require('../models/chat-tool-settings-utils');
 const { generateCompletion } = require('../models/openai')
 const { removeUserPoints } = require('../models/user-points-utils');
+const { getVideoGenerationCost } = require('../config/pricing');
 const { checkUserAdmin } = require('../models/tool');
 /**
  * Image to Video API Routes
@@ -56,7 +57,7 @@ async function img2videoRoutes(fastify) {
             const imageObjectId = new ObjectId(imageId);
 
             // Charge points for video generation
-            const cost = 100; // Define the cost of generating an image
+            const cost = getVideoGenerationCost();
             console.log(`[img2video] Cost for video generation: ${cost} points`);
             try {
                 await removeUserPoints(db, userId, cost, request.points?.deduction_reasons?.video_generation || 'Video generation', 'video_generation', fastify);

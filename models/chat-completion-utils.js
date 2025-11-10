@@ -23,6 +23,7 @@ const {
     getUserMinImages
 } = require('./chat-tool-settings-utils');
 const { addUserPoints, removeUserPoints, getUserPoints } = require('./user-points-utils');
+const { getImageGenerationCost } = require('../config/pricing');
 
 // Fetches user info from 'users' collection
 async function getUserInfo(db, userId) {
@@ -199,8 +200,8 @@ async function completionSystemContent(chatDocument, chatDescription, currentTim
     - To request image generation, include a clear message indicating you want to send an image with a short description.\n
     - Example: "Let me send you a picture of me at the beach! 🏖️" (then the system will handle generation)\n
     - Do not include the full image prompt in your message, just a short description of what you want to show.\n
-    - CRITICAL: You can ONLY request image generation if the user has 10 or more points.\n
-    - If the user has less than 10 points, you must NEVER attempt to generate any images.\n
+    - CRITICAL: You can ONLY request image generation if the user has ${getImageGenerationCost(1)} or more points.\n
+    - If the user has less than ${getImageGenerationCost(1)} points, you must NEVER attempt to generate any images.\n
     - If the user asks for an image but doesn't have enough points, explain they need more points or a subscription.\n
 
     # User points status:\n
@@ -281,9 +282,11 @@ async function handleImageGeneration(db, currentUserMessage, lastUserMessage, ge
             });
         } else {
 
+            const image_num = Math.min(Math.max(genImage?.image_num || 1, 1), 5);
+            
             // Charge points for image generation
             if (!currentUserMessage?.promptId) {
-                const cost = 10;
+                const cost = getImageGenerationCost(image_num);
                 console.log(`[handleImageGeneration] Cost for image generation: ${cost} points`);
                 try {
                     await removeUserPoints(db, userId, cost, translations.points?.deduction_reasons?.image_generation || 'Image generation', 'image_generation', fastify);
@@ -295,7 +298,6 @@ async function handleImageGeneration(db, currentUserMessage, lastUserMessage, ge
 
             fastify.sendNotificationToUser(userId, 'addIconToLastUserMessage');
 
-            const image_num = Math.min(Math.max(genImage?.image_num || 1, 1), 5);
             console.log(`[handleImageGeneration] Generating ${image_num} images for user ${userId} in chat ${chatId}`);
             
             // Generate unique placeholder ID for tracking

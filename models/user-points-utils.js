@@ -1067,6 +1067,20 @@ async function awardCharacterImageMilestoneReward(db, userId, chatId, fastify = 
   // Check if current image count hits a milestone
   const milestone = milestones[totalImages];
   if (!milestone) {
+    // Send goals refresh notification even if no milestone is reached
+    if (fastify && fastify.sendNotificationToUser) {
+      try {
+        await fastify.sendNotificationToUser(userId.toString(), 'refreshGoals', {
+          userId: userId.toString(),
+          chatId: chatId.toString(),
+          type: 'character_image_progress',
+          totalImages: totalImages
+        });
+      } catch (notificationError) {
+        console.error('Error sending character image progress notification:', notificationError);
+      }
+    }
+    
     return {
       success: false,
       totalImages,
@@ -1083,6 +1097,20 @@ async function awardCharacterImageMilestoneReward(db, userId, chatId, fastify = 
   });
   
   if (existingMilestone) {
+    // Send goals refresh notification even if milestone is already granted
+    if (fastify && fastify.sendNotificationToUser) {
+      try {
+        await fastify.sendNotificationToUser(userId.toString(), 'refreshGoals', {
+          userId: userId.toString(),
+          chatId: chatId.toString(),
+          type: 'character_image_already_granted',
+          totalImages: totalImages
+        });
+      } catch (notificationError) {
+        console.error('Error sending character image already granted notification:', notificationError);
+      }
+    }
+    
     return {
       success: false,
       totalImages,
@@ -1124,6 +1152,13 @@ async function awardCharacterImageMilestoneReward(db, userId, chatId, fastify = 
         totalImages: totalImages,
         chatId: chatId.toString(),
         isMilestone: true
+      });
+      
+      // Also send goals refresh notification
+      await fastify.sendNotificationToUser(userId.toString(), 'refreshGoals', {
+        userId: userId.toString(),
+        chatId: chatId.toString(),
+        type: 'character_image_milestone'
       });
     } catch (notificationError) {
       console.error('Error sending character image milestone reward notification:', notificationError);
@@ -1185,6 +1220,20 @@ async function awardCharacterVideoMilestoneReward(db, userId, chatId, fastify = 
   // Check if current video count hits a milestone
   const milestone = milestones[totalVideos];
   if (!milestone) {
+    // Send goals refresh notification even if no milestone is reached
+    if (fastify && fastify.sendNotificationToUser) {
+      try {
+        await fastify.sendNotificationToUser(userId.toString(), 'refreshGoals', {
+          userId: userId.toString(),
+          chatId: chatId.toString(),
+          type: 'character_video_progress',
+          totalVideos: totalVideos
+        });
+      } catch (notificationError) {
+        console.error('Error sending character video progress notification:', notificationError);
+      }
+    }
+    
     return {
       success: false,
       totalVideos,
@@ -1201,6 +1250,20 @@ async function awardCharacterVideoMilestoneReward(db, userId, chatId, fastify = 
   });
   
   if (existingMilestone) {
+    // Send goals refresh notification even if milestone is already granted
+    if (fastify && fastify.sendNotificationToUser) {
+      try {
+        await fastify.sendNotificationToUser(userId.toString(), 'refreshGoals', {
+          userId: userId.toString(),
+          chatId: chatId.toString(),
+          type: 'character_video_already_granted',
+          totalVideos: totalVideos
+        });
+      } catch (notificationError) {
+        console.error('Error sending character video already granted notification:', notificationError);
+      }
+    }
+    
     return {
       success: false,
       totalVideos,
@@ -1242,6 +1305,13 @@ async function awardCharacterVideoMilestoneReward(db, userId, chatId, fastify = 
         totalVideos: totalVideos,
         chatId: chatId.toString(),
         isMilestone: true
+      });
+      
+      // Also send goals refresh notification
+      await fastify.sendNotificationToUser(userId.toString(), 'refreshGoals', {
+        userId: userId.toString(),
+        chatId: chatId.toString(),
+        type: 'character_video_milestone'
       });
     } catch (notificationError) {
       console.error('Error sending character video milestone reward notification:', notificationError);
@@ -1327,7 +1397,24 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
   }
   
   if (!milestone) {
+<<<<<<< Updated upstream
     console.log('⚠️ [DEBUG] No milestone reached for count:', totalMessages);
+=======
+    // Send goals refresh notification even if no milestone is reached
+    if (fastify && fastify.sendNotificationToUser) {
+      try {
+        await fastify.sendNotificationToUser(userId.toString(), 'refreshGoals', {
+          userId: userId.toString(),
+          chatId: chatId.toString(),
+          type: 'character_message_progress',
+          totalMessages: totalMessages
+        });
+      } catch (notificationError) {
+        console.error('Error sending character message progress notification:', notificationError);
+      }
+    }
+    
+>>>>>>> Stashed changes
     return {
       success: false,
       totalMessages,
@@ -1408,7 +1495,17 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
         milestoneType: 'messages'
       });
       
+<<<<<<< Updated upstream
       console.log('🔔 [WEBSOCKET] Milestone notification sent successfully!');
+=======
+      // Also send goals refresh notification
+      await fastify.sendNotificationToUser(userId.toString(), 'refreshGoals', {
+        userId: userId.toString(),
+        chatId: chatId.toString(),
+        type: 'character_message_milestone'
+      });
+      
+>>>>>>> Stashed changes
     } catch (notificationError) {
       console.error('❌ [DEBUG] Error sending character message milestone reward notification:', notificationError);
     }

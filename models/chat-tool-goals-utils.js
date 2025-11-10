@@ -250,10 +250,13 @@ async function getCompletedMilestones(db, userId, chatId = null, limit = 20) {
         
         const query = { userId: new ObjectId(userId) };
         if (chatId) {
-            // For message milestones, filter by chat
+            // Filter by character-specific milestones for this chat, plus global milestones
             query.$or = [
-                { type: { $in: ['image_milestone', 'video_milestone', 'character_image_milestone', 'character_video_milestone'] } },
-                { type: { $in: ['message_milestone', 'character_message_milestone'] }, chatId: new ObjectId(chatId) }
+                { type: { $in: ['image_milestone', 'video_milestone'] } }, // Global milestones (no chatId)
+                { 
+                    type: { $in: ['character_image_milestone', 'character_video_milestone', 'character_message_milestone'] }, 
+                    chatId: new ObjectId(chatId) 
+                } // Character-specific milestones for this chat
             ];
         }
         

@@ -157,7 +157,13 @@ $(document).ready(async function() {
 
         $('.new-chat').data('id',fetch_chatId).fadeIn()
         sessionStorage.setItem('lastChatId', fetch_chatId);
+        sessionStorage.setItem('chatId', fetch_chatId);
+        sessionStorage.setItem('userChatId', userChatId);
 
+        // Reset the goals widget for the new chat
+        if (window.liveGoalsWidget) {
+            window.liveGoalsWidget.resetWidget();
+        }
 
         count_proposal = 0;
         

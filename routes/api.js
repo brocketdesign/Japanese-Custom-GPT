@@ -32,7 +32,7 @@ const {
     getUserMinImages
 } = require('../models/chat-tool-settings-utils');
 const { getActiveSystemPrompt } = require('../models/system-prompt-utils');
-const { addUserPoints, removeUserPoints, getUserPoints } = require('../models/user-points-utils');
+const { addUserPoints, removeUserPoints, getUserPoints, awardCharacterMessageMilestoneReward } = require('../models/user-points-utils');
 
 const axios = require('axios');
 const sharp = require('sharp');
@@ -528,10 +528,15 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
       
     fastify.post('/api/chat/add-message', async (request, reply) => {
         const { chatId, userChatId, role, message, image_request, name, hidden } = request.body;
+        
+        const messageType = image_request ? 'IMAGE_REQUEST' : (name ? `SUGGESTION_${name.toUpperCase()}` : 'TEXT');
+        console.log('📝 [MESSAGE]', messageType, '- Role:', role, '- Content:', message?.substring(0, 50) + (message?.length > 50 ? '...' : ''));
 
         try {
             const collectionUserChat = fastify.mongo.db.collection('userChat');
             let userData = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(userChatId) });
+            
+            console.log('📝 [MESSAGE] User has', userData?.messages?.length, 'total messages');
     
             if (!userData) {
                 return reply.status(404).send({ error: 'User data not found' });
@@ -564,6 +569,26 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             }
     
             if (result.modifiedCount === 1) {
+                // Award message milestone rewards for user messages only
+                if (role === 'user') {
+                    const totalUserMessages = userData.messages.filter(m => m.role === 'user').length;
+                    console.log('🎯 [MILESTONE CHECK] User message added! Total user messages now:', totalUserMessages);
+                    console.log('🎯 [MILESTONE CHECK] Calling milestone function for user:', userData.userId.toString());
+                    
+                    try {
+                        const userIdString = userData.userId.toString();
+                        console.log('🎯 [MILESTONE] >>> Calling milestone check function...');
+                        
+                        const milestoneResult = await awardCharacterMessageMilestoneReward(fastify.mongo.db, userIdString, chatId, fastify);
+                        
+                        console.log('🎯 [MILESTONE] Result:', milestoneResult.success ? 'SUCCESS' : 'NO_MILESTONE', 
+                                    '- Points:', milestoneResult.pointsAwarded || 0,
+                                    '- Message:', milestoneResult.milestoneMessage || 'None');
+                    } catch (error) {
+                        console.error('❌ [MILESTONE ERROR]', error.message);
+                    }
+                }
+                
                 reply.send({ success: true, message: 'Message added successfully' });
             } else {
                 reply.status(500).send({ error: 'Failed to add message' });

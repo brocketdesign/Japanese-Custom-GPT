@@ -5,7 +5,7 @@ const axios = require('axios');
 const { createHash } = require('crypto');
 const { addNotification, saveChatImageToDB, getLanguageName, uploadToS3 } = require('../models/tool')
 const { getAutoMergeFaceSetting } = require('../models/chat-tool-settings-utils')
-const { awardImageGenerationReward, awardImageMilestoneReward } = require('./user-points-utils');
+const { awardImageGenerationReward, awardCharacterImageMilestoneReward } = require('./user-points-utils');
 const slugify = require('slugify');
 const sharp = require('sharp');
 const { time } = require('console');
@@ -1842,9 +1842,13 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
     );
     
     try {
-      await awardImageMilestoneReward(db, userId, fastify);
+      // Check global milestones (no base points, higher thresholds)
+      await awardImageGenerationReward(db, userId, fastify);
+      
+      // Check character-specific milestones (lower thresholds, per chat)
+      await awardCharacterImageMilestoneReward(db, userId, chatId, fastify);
     } catch (error) {
-      console.error('Error awarding image generation points:', error);
+      console.error('Error awarding image generation milestones:', error);
     }
     
     if (!userChatId || !ObjectId.isValid(userChatId)) {

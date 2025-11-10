@@ -2,6 +2,7 @@ const { ObjectId } = require('mongodb');
 const axios = require('axios');
 const { createHash } = require('crypto');
 const { uploadToS3 } = require('../models/tool');
+const { awardVideoGenerationReward, awardCharacterVideoMilestoneReward } = require('./user-points-utils');
 /**
  * Generate video from image using Novita AI
  * @param {Object} params - Parameters for video generation
@@ -344,6 +345,17 @@ async function saveVideoToDB({
     { _id: new ObjectId(userId) },
     { $inc: { videoCount: 1 } }
   );
+
+  // Award video generation milestone rewards
+  try {
+    // Check global milestones (no base points, higher thresholds)
+    await awardVideoGenerationReward(db, userId, fastify);
+    
+    // Check character-specific milestones (lower thresholds, per chat)
+    await awardCharacterVideoMilestoneReward(db, userId, chatId, fastify);
+  } catch (error) {
+    console.error('Error awarding video generation milestones:', error);
+  }
 
   return { ...videoData, _id: result.insertedId };
 }

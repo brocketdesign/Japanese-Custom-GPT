@@ -818,3 +818,152 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<style>
+/* Milestone Goals Styling */
+.milestone-goals-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+@media (min-width: 768px) {
+    .milestone-goals-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+}
+
+.milestone-goal-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 249, 250, 0.95));
+    border: 2px solid rgba(13, 110, 253, 0.15) !important;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.milestone-goal-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: rgba(13, 110, 253, 0.3) !important;
+}
+
+.milestone-goal-card .progress {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+.milestone-goal-card .progress-bar {
+    transition: width 0.6s ease;
+    border-radius: 10px;
+}
+
+.milestone-goal-card h6 {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+/* Completed Milestones Styling */
+.milestone-card.completed {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 255, 255, 0.9));
+    border-left: 4px solid #ffc107 !important;
+    transition: all 0.2s ease;
+}
+
+.milestone-card.completed:hover {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 255, 255, 1));
+    transform: translateX(3px);
+}
+
+/* Goals Section Headers */
+.milestone-goals-section h5,
+.completed-milestones-section h5 {
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 0.95rem;
+}
+
+/* Badge Styling */
+.milestone-goal-card .badge {
+    font-weight: 600;
+    font-size: 0.75rem;
+    padding: 0.4em 0.8em;
+}
+
+/* Icon Styling */
+.milestone-goal-card i[class*="bi-"] {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* Responsive Design */
+@media (max-width: 767px) {
+    .milestone-goals-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .milestone-goal-card {
+        margin-bottom: 0.75rem;
+    }
+}
+
+/* Animation for completed milestones */
+.milestone-card.completed {
+    animation: slideInFromLeft 0.5s ease-out;
+}
+
+@keyframes slideInFromLeft {
+    0% {
+        transform: translateX(-20px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Loading animation for progress bars */
+.progress-bar {
+    position: relative;
+}
+
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.4),
+        transparent
+    );
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+    .milestone-goal-card {
+        background: linear-gradient(135deg, rgba(33, 37, 41, 0.95), rgba(52, 58, 64, 0.95));
+        border-color: rgba(108, 117, 125, 0.3) !important;
+    }
+    
+    .milestone-goal-card h6 {
+        color: #f8f9fa;
+    }
+    
+    .milestone-card.completed {
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(33, 37, 41, 0.95));
+    }
+}
+</style>
+

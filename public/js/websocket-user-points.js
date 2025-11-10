@@ -44,6 +44,10 @@ class WebSocketUserPointsHandler {
         this.handleRefreshUserPoints(data.notification);
         return true;
       
+      case 'milestoneAchieved':
+        this.handleMilestoneAchieved(data.notification);
+        return true;
+      
       default:
         return false;
     }
@@ -254,6 +258,61 @@ class WebSocketUserPointsHandler {
       if (window.refreshUserPoints) {
         window.refreshUserPoints();
       }
+    }
+  }
+
+  /**
+   * Handle milestone achieved notifications
+   * @param {Object} notification - Milestone notification data
+   */
+  handleMilestoneAchieved(notification) {
+    const { 
+      userId, 
+      points,
+      reason,
+      source,
+      milestone,
+      totalMessages,
+      milestoneMessage,
+      milestoneType,
+      chatId
+    } = notification;
+    
+    console.log('📱 [WEBSOCKET] <<< Received milestone notification - Points:', points, 'Messages:', totalMessages);
+    
+    // Only show notification for the current user
+    if (userId === window.user._id && window.userPointsManager) {
+      console.log('📱 [WEBSOCKET] Current user match - showing modal');
+      
+      // Prepare reward data for showSpecialRewardNotification
+      const rewardData = {
+        points,
+        reason: milestoneMessage || reason,
+        source,
+        isMilestone: true,
+        milestoneMessage: milestoneMessage || `${milestone} ${milestoneType} milestone reached!`,
+        totalMessages: totalMessages,
+        milestoneType: milestoneType
+      };
+      
+      console.log('📱 [MODAL] >>> Showing reward modal...');
+      
+      // Show the special reward notification
+      window.userPointsManager.showSpecialRewardNotification(rewardData);
+      
+      console.log('📱 [MODAL] Modal triggered successfully!');
+      
+      // Refresh points display
+      if (window.refreshUserPoints) {
+        window.refreshUserPoints();
+      }
+      
+      // Refresh goals display if available
+      if (window.goalsManager && window.goalsManager.loadGoals) {
+        window.goalsManager.loadGoals();
+      }
+    } else {
+      console.log('📱 [WEBSOCKET] Not current user or no userPointsManager');
     }
   }
 }

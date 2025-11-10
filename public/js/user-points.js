@@ -1587,6 +1587,8 @@ class UserPointsManager {
    * @param {Object} rewardData - Reward information
    */
   async showSpecialRewardNotification(rewardData) {
+    console.log('🎊 [MODAL] >>> showSpecialRewardNotification called with data:', rewardData);
+    
     const {
       points,
       reason,
@@ -1596,6 +1598,8 @@ class UserPointsManager {
       totalLikes = 0,
       totalImages = 0
     } = rewardData;
+    
+    console.log('🎊 [MODAL] Points:', points, 'Source:', source, 'isMilestone:', isMilestone);
 
     // Remove any existing reward notifications
     $('.special-reward-notification').remove();

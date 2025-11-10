@@ -5,7 +5,9 @@ const {
     getChatGoalsData,
     getUserGoalsStats,
     getUserGoalsHistory,
-    updateGoalsAnalytics
+    updateGoalsAnalytics,
+    getMilestoneGoalsData,
+    getCompletedMilestones
 } = require('../models/chat-tool-goals-utils');
 const { getUserChatToolSettings } = require('../models/chat-tool-settings-utils');
 
@@ -49,13 +51,34 @@ async function routes(fastify, options) {
             const userSettings = await getUserChatToolSettings(fastify.mongo.db, userId, userChatDoc.chatId);
             const goalsEnabled = userSettings.goalsEnabled === true; // Default to false
             
-            return reply.send({
+            console.log('🔍 [DEBUG API GOALS] Getting milestone goals data for:', {
+                userId: userId?.toString(),
+                chatId: userChatDoc.chatId?.toString()
+            });
+            
+            // Get milestone goals data
+            const milestoneGoals = await getMilestoneGoalsData(fastify.mongo.db, userId, userChatDoc.chatId);
+            
+            console.log('🔍 [DEBUG API GOALS] Milestone goals result:', milestoneGoals);
+            
+            // Get completed milestones
+            const completedMilestones = await getCompletedMilestones(fastify.mongo.db, userId, userChatDoc.chatId, 10);
+            
+            console.log('🔍 [DEBUG API GOALS] Completed milestones:', completedMilestones);
+            
+            const responseData = {
                 currentGoal: goalsData.currentGoal,
                 completedGoals: goalsData.completedGoals,
                 goalStatus,
                 goalCreatedAt: goalsData.goalCreatedAt,
-                goalsEnabled
-            });
+                goalsEnabled,
+                milestoneGoals,
+                completedMilestones
+            };
+            
+            console.log('🔍 [DEBUG API GOALS] Final response data:', responseData);
+            
+            return reply.send(responseData);
         } catch (error) {
             console.error('Error fetching chat goals:', error);
             return reply.status(500).send({ error: 'Failed to fetch chat goals' });
@@ -158,6 +181,41 @@ async function routes(fastify, options) {
         } catch (error) {
             console.error('Error updating goals setting:', error);
             reply.status(500).send({ error: 'Failed to update goals setting' });
+        }
+    });
+
+    // Get milestone goals for a specific chat
+    fastify.get('/api/milestone-goals/:chatId', async (request, reply) => {
+        try {
+            const { chatId } = request.params;
+            const userId = request.user._id;
+            
+            if (!ObjectId.isValid(chatId)) {
+                return reply.status(400).send({ error: 'Invalid chat ID format' });
+            }
+
+            // Verify chat belongs to user
+            const chatsCollection = fastify.mongo.db.collection('chats');
+            const chat = await chatsCollection.findOne({
+                _id: new ObjectId(chatId),
+                userId: new ObjectId(userId)
+            });
+
+            if (!chat) {
+                return reply.status(404).send({ error: 'Chat not found or access denied' });
+            }
+
+            const milestoneGoals = await getMilestoneGoalsData(fastify.mongo.db, userId, chatId);
+            const completedMilestones = await getCompletedMilestones(fastify.mongo.db, userId, chatId, 20);
+            
+            return reply.send({
+                success: true,
+                milestoneGoals,
+                completedMilestones
+            });
+        } catch (error) {
+            console.error('Error fetching milestone goals:', error);
+            return reply.status(500).send({ error: 'Failed to fetch milestone goals' });
         }
     });
 }

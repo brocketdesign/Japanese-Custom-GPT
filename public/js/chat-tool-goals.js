@@ -119,7 +119,12 @@ class GoalsManager {
     async loadGoals() {
         const userChatId = sessionStorage.getItem('userChatId') || window.userChatId;
         
+        console.log('🌐 [DEBUG FRONTEND] loadGoals called with userChatId:', userChatId);
+        console.log('🌐 [DEBUG FRONTEND] sessionStorage userChatId:', sessionStorage.getItem('userChatId'));
+        console.log('🌐 [DEBUG FRONTEND] window.userChatId:', window.userChatId);
+        
         if (!userChatId) {
+            console.log('❌ [DEBUG FRONTEND] No userChatId found');
             this.displayError(window.translations?.goals?.no_chat || 'No active chat session');
             return;
         }
@@ -133,13 +138,19 @@ class GoalsManager {
                 </div>
             `);
 
+            console.log('🌐 [DEBUG FRONTEND] Fetching goals from API...');
             const response = await fetch(`/api/chat-goals/${userChatId}`);
+            
+            console.log('🌐 [DEBUG FRONTEND] API response status:', response.status);
             
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
             const data = await response.json();
+            
+            console.log('🌐 [DEBUG FRONTEND] Goals data received:', data);
+            console.log('🌐 [DEBUG FRONTEND] Milestone goals:', data.milestoneGoals);
         
             if (data.goalsEnabled !== undefined) {
                 this.updateToggleButton(data.goalsEnabled);
@@ -148,15 +159,91 @@ class GoalsManager {
             this.displayGoals(data);
 
         } catch (error) {
-            console.error('Error loading goals:', error);
+            console.error('❌ [DEBUG FRONTEND] Error loading goals:', error);
             this.displayError(window.translations?.goals?.load_error || 'Failed to load goals');
         }
     }
 
     // Display the goals data
     displayGoals(data) {
-        const { currentGoal, completedGoals = [], goalStatus } = data;
+        console.log('🎨 [DEBUG FRONTEND] displayGoals called with data:', data);
+        
+        const { currentGoal, completedGoals = [], goalStatus, milestoneGoals = {}, completedMilestones = [] } = data;
+        
+        console.log('🎨 [DEBUG FRONTEND] Extracted data:', {
+            currentGoal,
+            completedGoalsCount: completedGoals.length,
+            goalStatus,
+            milestoneGoals,
+            completedMilestonesCount: completedMilestones.length
+        });
+        
         let html = '';
+
+        // Milestone Goals Section (Character-specific goals)
+        if (Object.keys(milestoneGoals).length > 0) {
+            html += `
+                <div class="milestone-goals-section mb-4">
+                    <h5 class="text-info mb-3">
+                        <i class="bi bi-trophy me-2"></i>
+                        ${window.translations?.goals?.milestone_goals || 'Character Goals'}
+                    </h5>
+                    <div class="milestone-goals-grid">
+            `;
+
+            // Display each milestone goal type
+            Object.values(milestoneGoals).forEach(goal => {
+                const progressWidth = Math.min(goal.progress, 100);
+                const progressColor = goal.isCompleted ? 'success' : 
+                                    goal.progress > 75 ? 'warning' : 'info';
+                
+                html += `
+                    <div class="milestone-goal-card border rounded-3 p-3 mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi ${goal.icon} text-${progressColor} me-2" style="font-size: 1.2rem;"></i>
+                                <h6 class="mb-0">${goal.title}</h6>
+                            </div>
+                            <span class="badge bg-${progressColor}">
+                                ${goal.current}/${goal.next}
+                            </span>
+                        </div>
+                        
+                        <div class="progress mb-2" style="height: 8px;">
+                            <div class="progress-bar bg-${progressColor}" 
+                                 role="progressbar" 
+                                 style="width: ${progressWidth}%"
+                                 aria-valuenow="${goal.current}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="${goal.next}">
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">${goal.description}</small>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-coin text-warning me-1"></i>
+                                <small class="text-warning fw-bold">+${goal.reward}</small>
+                            </div>
+                        </div>
+                        
+                        ${goal.isCompleted ? `
+                            <div class="mt-2">
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    ${window.translations?.goals?.completed || 'Completed'}
+                                </span>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+        }
 
         // Current Goal Section
         if (currentGoal) {
@@ -270,8 +357,54 @@ class GoalsManager {
             `;
         }
 
+        // Completed Milestones Section
+        if (completedMilestones.length > 0) {
+            html += `
+                <div class="completed-milestones-section">
+                    <h5 class="text-warning mb-3">
+                        <i class="bi bi-award-fill me-2"></i>
+                        ${window.translations?.goals?.completed_milestones || 'Recent Achievements'} (${completedMilestones.length})
+                    </h5>
+                    <div class="completed-milestones-list">
+            `;
+
+            completedMilestones.forEach((milestone, index) => {
+                const completedDate = milestone.grantedAt ? new Date(milestone.grantedAt).toLocaleDateString() : '';
+                const typeIcons = {
+                    'image_milestone': 'bi-image',
+                    'video_milestone': 'bi-play-circle',
+                    'message_milestone': 'bi-chat-dots'
+                };
+                const icon = typeIcons[milestone.type] || 'bi-trophy';
+                
+                html += `
+                    <div class="milestone-card completed border rounded-2 p-2 mb-2 bg-light">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <i class="bi ${icon} text-warning me-2"></i>
+                                <div>
+                                    <small class="fw-bold">${milestone.message}</small>
+                                    <br>
+                                    <small class="text-muted">${completedDate}</small>
+                                </div>
+                            </div>
+                            <span class="badge bg-warning text-dark">
+                                <i class="bi bi-coin me-1"></i>
+                                +${milestone.points}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+        }
+
         // No goals message
-        if (!currentGoal && completedGoals.length === 0) {
+        if (!currentGoal && completedGoals.length === 0 && Object.keys(milestoneGoals).length === 0) {
             html = `
                 <div class="no-goals text-center py-4">
                     <i class="bi bi-trophy text-muted" style="font-size: 3rem;"></i>

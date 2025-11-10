@@ -218,6 +218,58 @@ async function routes(fastify, options) {
             return reply.status(500).send({ error: 'Failed to fetch milestone goals' });
         }
     });
+
+    // Get milestone goals data specifically for live-goals-widget
+    fastify.get('/api/chat-goals/:userChatId/milestones', async (request, reply) => {
+        try {
+            const { userChatId } = request.params;
+            const userId = request.user._id;
+            
+            console.log('[LiveGoals API] Fetching milestones for userChatId:', userChatId, 'userId:', userId?.toString());
+            
+            if (!ObjectId.isValid(userChatId)) {
+                return reply.status(400).send({ 
+                    success: false, 
+                    error: 'Invalid user chat ID format' 
+                });
+            }
+
+            // Verify the user chat belongs to the authenticated user
+            const userChatCollection = fastify.mongo.db.collection('userChat');
+            const userChatDoc = await userChatCollection.findOne({
+                _id: new ObjectId(userChatId),
+                userId: new ObjectId(userId)
+            });
+
+            if (!userChatDoc) {
+                return reply.status(404).send({ 
+                    success: false, 
+                    error: 'User chat not found or access denied' 
+                });
+            }
+
+            console.log('[LiveGoals API] Found userChat with chatId:', userChatDoc.chatId?.toString());
+
+            // Get milestone goals data using the chatId from the userChat document
+            const milestoneGoals = await getMilestoneGoalsData(fastify.mongo.db, userId, userChatDoc.chatId);
+            const completedMilestones = await getCompletedMilestones(fastify.mongo.db, userId, userChatDoc.chatId, 10);
+            
+            console.log('[LiveGoals API] Milestone goals result:', JSON.stringify(milestoneGoals, null, 2));
+            
+            return reply.send({
+                success: true,
+                milestoneGoals,
+                completedMilestones
+            });
+        } catch (error) {
+            console.error('[LiveGoals API] Error fetching milestone goals:', error);
+            return reply.status(500).send({ 
+                success: false, 
+                error: 'Failed to fetch milestone goals',
+                details: error.message 
+            });
+        }
+    });
 }
 
 module.exports = routes;

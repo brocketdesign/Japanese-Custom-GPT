@@ -26,7 +26,7 @@ const apiDetails = {
 // Default model config
 let currentModelConfig = {
   provider: 'openai',
-  modelName: 'gpt-4o'
+  modelName: null
 };
 
 // Enhanced model config with categorization
@@ -148,7 +148,7 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
 
   // Get the API details
   const provider = apiDetails[modelConfig.provider];
-  const modelName = modelConfig.modelName ? 
+  const modelName = modelConfig.modelName && provider.models ? 
     provider.models[modelConfig.modelName] : 
     provider.model;
 

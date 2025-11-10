@@ -9,14 +9,6 @@ class SpeechToTextUI {
         this.buttonClass = options.buttonClass || 'speech-btn';
         this.modalId = options.modalId || 'speech-modal';
         
-        // Check if we're in local/dev mode
-        this.isLocalMode = (typeof window !== 'undefined' && window.MODE === 'local') || 
-                          (typeof process !== 'undefined' && process.env.MODE === 'local');
-        
-        if (this.isLocalMode) {
-            console.log('[Speech-to-Text UI] Initializing in local mode...');
-        }
-        
         // Initialize speech utility
         this.speechUtils = new SpeechToTextUtils({
             onStart: () => this.onRecordingStart(),
@@ -31,9 +23,7 @@ class SpeechToTextUI {
         this.currentLanguage = 'auto';
         
         // Callback for when speech is converted to text
-        this.onTextResult = options.onTextResult || ((text) => {
-            console.log('Speech result:', text);
-        });
+        this.onTextResult = options.onTextResult || (() => {});
         
         // Translations
         this.translations = this.getTranslations();
@@ -58,18 +48,12 @@ class SpeechToTextUI {
     createSpeechButton() {
         const container = document.getElementById(this.containerId);
         if (!container) {
-            if (this.isLocalMode) {
-                console.error('[Speech-to-Text UI] Container not found:', this.containerId);
-            }
             return;
         }
         
         // Find the input group or create one
         const inputGroup = container.querySelector('.input-group') || container.querySelector('#toolbar-text-input .input-group');
         if (!inputGroup) {
-            if (this.isLocalMode) {
-                console.error('[Speech-to-Text UI] Input group not found in container');
-            }
             return;
         }
         
@@ -87,10 +71,6 @@ class SpeechToTextUI {
             inputGroup.insertBefore(speechBtn, sendButton);
         } else {
             inputGroup.appendChild(speechBtn);
-        }
-        
-        if (this.isLocalMode) {
-            console.log('[Speech-to-Text UI] Speech button created and added to DOM');
         }
     }
     
@@ -162,9 +142,6 @@ class SpeechToTextUI {
         }
         // Check support
         if (!this.speechUtils.isSupported()) {
-            if (this.isLocalMode) {
-                console.error('[Speech-to-Text UI] Speech recognition not supported');
-            }
             this.showError(this.translations.notSupported);
             return;
         }
@@ -172,22 +149,13 @@ class SpeechToTextUI {
         // Request permission
         const hasPermission = await this.speechUtils.requestPermission();
         if (!hasPermission) {
-            if (this.isLocalMode) {
-                console.error('[Speech-to-Text UI] Microphone permission denied');
-            }
             this.showError(this.translations.permissionDenied);
             return;
         }
         
         try {
-            if (this.isLocalMode) {
-                console.log('[Speech-to-Text UI] Starting recording...');
-            }
             await this.speechUtils.startRecording();
         } catch (error) {
-            if (this.isLocalMode) {
-                console.error('[Speech-to-Text UI] Failed to start recording:', error);
-            }
             this.showError(error.message);
         }
     }
@@ -247,28 +215,14 @@ class SpeechToTextUI {
      * Event handlers
      */
     onRecordingStart() {
-        if (this.isLocalMode) {
-            console.log('[Speech-to-Text UI] Recording started');
-        }
         this.updateButtonState('recording');
     }
     
     onRecordingStop() {
-        if (this.isLocalMode) {
-            console.log('[Speech-to-Text UI] Recording stopped');
-        }
         this.updateButtonState('processing');
     }
     
     onSpeechResult(text, language) {
-        if (this.isLocalMode) {
-            console.log('[Speech-to-Text UI] Speech result received:', {
-                text: text,
-                language: language,
-                textLength: text.length
-            });
-        }
-        
         this.updateButtonState('idle');
         
         // Send result directly to the text input
@@ -276,17 +230,11 @@ class SpeechToTextUI {
     }
     
     onSpeechError(error) {
-        if (this.isLocalMode) {
-            console.error('[Speech-to-Text UI] Speech error:', error);
-        }
         this.updateButtonState('idle');
         this.showError(error.message);
     }
     
     onProgress(status) {
-        if (this.isLocalMode) {
-            console.log('[Speech-to-Text UI] Progress update:', status);
-        }
         if (status === 'processing') {
             this.updateButtonState('processing');
         }
@@ -296,10 +244,6 @@ class SpeechToTextUI {
      * Show error message
      */
     showError(message) {
-        if (this.isLocalMode) {
-            console.error('[Speech-to-Text UI] Showing error to user:', message);
-        }
-        // You can integrate this with your existing notification system
         alert(message); // Simple fallback, replace with your notification system
     }
     

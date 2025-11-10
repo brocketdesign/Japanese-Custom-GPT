@@ -1397,15 +1397,6 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
   }
   
   if (!milestone) {
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    console.log('⚠️ [DEBUG] No milestone reached for count:', totalMessages);
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     // Send goals refresh notification even if no milestone is reached
     if (fastify && fastify.sendNotificationToUser) {
       try {
@@ -1420,13 +1411,6 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
       }
     }
     
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     return {
       success: false,
       totalMessages,
@@ -1507,15 +1491,6 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
         milestoneType: 'messages'
       });
       
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-      console.log('🔔 [WEBSOCKET] Milestone notification sent successfully!');
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
       // Also send goals refresh notification
       await fastify.sendNotificationToUser(userId.toString(), 'refreshGoals', {
         userId: userId.toString(),
@@ -1523,13 +1498,7 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
         type: 'character_message_milestone'
       });
       
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+      console.log('🔔 [WEBSOCKET] Milestone notification sent successfully!');
     } catch (notificationError) {
       console.error('❌ [DEBUG] Error sending character message milestone reward notification:', notificationError);
     }

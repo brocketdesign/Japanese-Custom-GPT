@@ -1400,8 +1400,11 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     console.log('⚠️ [DEBUG] No milestone reached for count:', totalMessages);
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -1422,6 +1425,9 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
     
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -1510,8 +1516,11 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
       console.log('🔔 [WEBSOCKET] Milestone notification sent successfully!');
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -1525,6 +1534,9 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
       
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes

@@ -687,6 +687,126 @@ class WebSocketUserPointsHandler {
       $(document).trigger('refreshGoals', notification);
     }
   }
+
+  /**
+   * Handle character image milestone notifications
+   * @param {Object} notification - Character image milestone notification data
+   */
+  handleCharacterImageMilestone(notification) {
+    const { 
+      userId, 
+      points,
+      reason,
+      source,
+      milestone,
+      totalImages,
+      chatId,
+      isMilestone
+    } = notification;
+    
+    // Only show notification for the current user
+    if (userId === window.user._id && window.userPointsManager) {
+      // Show the special reward notification
+      window.userPointsManager.showSpecialRewardNotification({
+        points,
+        reason,
+        source,
+        isMilestone: true,
+        milestoneMessage: reason,
+        totalImages: totalImages
+      });
+      
+      // Refresh points display
+      if (window.refreshUserPoints) {
+        window.refreshUserPoints();
+      }
+      
+      // Refresh goals display if available
+      if (window.goalsManager && window.goalsManager.loadGoals) {
+        window.goalsManager.loadGoals();
+      }
+      
+      // Update live goals widget if available
+      if (window.liveGoalsWidget) {
+        window.liveGoalsWidget.refreshGoalData();
+      }
+      
+      // Trigger custom event for live goals
+      $(document).trigger('characterImageMilestone', notification);
+    }
+  }
+
+  /**
+   * Handle character video milestone notifications
+   * @param {Object} notification - Character video milestone notification data
+   */
+  handleCharacterVideoMilestone(notification) {
+    const { 
+      userId, 
+      points,
+      reason,
+      source,
+      milestone,
+      totalVideos,
+      chatId,
+      isMilestone
+    } = notification;
+    
+    // Only show notification for the current user
+    if (userId === window.user._id && window.userPointsManager) {
+      // Show the special reward notification
+      window.userPointsManager.showSpecialRewardNotification({
+        points,
+        reason,
+        source,
+        isMilestone: true,
+        milestoneMessage: reason,
+        totalVideos: totalVideos
+      });
+      
+      // Refresh points display
+      if (window.refreshUserPoints) {
+        window.refreshUserPoints();
+      }
+      
+      // Refresh goals display if available
+      if (window.goalsManager && window.goalsManager.loadGoals) {
+        window.goalsManager.loadGoals();
+      }
+      
+      // Update live goals widget if available
+      if (window.liveGoalsWidget) {
+        window.liveGoalsWidget.refreshGoalData();
+      }
+      
+      // Trigger custom event for live goals
+      $(document).trigger('characterVideoMilestone', notification);
+    }
+  }
+
+  /**
+   * Handle goals refresh notifications
+   * @param {Object} notification - Goals refresh notification data
+   */
+  handleRefreshGoals(notification) {
+    const { userId, chatId, type, totalImages, totalVideos } = notification;
+    
+    // Only refresh for the current user
+    if (userId === window.user._id) {
+      // Refresh goals display if available
+      if (window.goalsManager && window.goalsManager.loadGoals) {
+        window.goalsManager.loadGoals();
+      }
+      
+      // Update live goals widget if available
+      if (window.liveGoalsWidget) {
+        window.liveGoalsWidget.refreshGoalData();
+      }
+      
+      // Trigger custom event for live goals refresh
+      $(document).trigger('refreshGoals', notification);
+    }
+  }
 }
 
 // Initialize and export the handler

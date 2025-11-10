@@ -357,7 +357,7 @@
     line-height: 1.6;
     white-space: pre-wrap;
     word-wrap: break-word;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Meiryo', 'Yu Gothic UI', 'MS Gothic', 'Noto Sans CJK JP', 'Source Han Sans', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .stat-card {
@@ -477,6 +477,7 @@
     -webkit-box-orient: vertical;
     margin: 0.5rem 0;
     cursor: pointer;
+    font-family: 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Meiryo', 'Yu Gothic UI', 'MS Gothic', 'Noto Sans CJK JP', 'Source Han Sans', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .response-preview.failed {
@@ -552,6 +553,18 @@
     .models-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* Enhanced Japanese character support */
+.model-response-card, .question-title, .modal-body, .tab-content {
+    font-family: 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Meiryo', 'Yu Gothic UI', 'MS Gothic', 'Noto Sans CJK JP', 'Source Han Sans', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Ensure proper text rendering for CJK characters */
+* {
+    text-rendering: optimizeLegibility;
+    -webkit-font-feature-settings: "liga", "kern";
+    font-feature-settings: "liga", "kern";
 }
 </style>
 
@@ -870,17 +883,54 @@ function decodeBase64(base64Content) {
 }
 
 /**
- * Decode base64 in browser (client-side)
+ * Decode base64 in browser (client-side) with proper UTF-8 support
  * @param {string} base64Content - Base64 encoded content
  * @returns {string} Decoded content
  */
 function decodeBase64Browser(base64Content) {
     try {
         if (!base64Content) return '';
-        return atob(base64Content);
+        
+        // Method 1: Use TextDecoder (preferred for UTF-8)
+        try {
+            // First decode base64 to binary string
+            const binaryString = atob(base64Content);
+            
+            // Convert binary string to UTF-8
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            
+            // Use TextDecoder for proper UTF-8 decoding
+            const decoder = new TextDecoder('utf-8');
+            const decoded = decoder.decode(bytes);
+            
+            // Log for debugging Japanese character issues
+            if (decoded.match(/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/)) {
+                console.log('[UTF-8 Decode] Japanese characters detected and decoded successfully');
+            }
+            
+            return decoded;
+        } catch (textDecoderError) {
+            console.warn('TextDecoder failed, trying fallback method:', textDecoderError);
+            
+            // Method 2: Fallback using decodeURIComponent and escape (for older browsers)
+            try {
+                const binaryString = atob(base64Content);
+                const escapedBinaryString = Array.prototype.map.call(binaryString, function(char) {
+                    return '%' + ('00' + char.charCodeAt(0).toString(16)).slice(-2);
+                }).join('');
+                return decodeURIComponent(escapedBinaryString);
+            } catch (fallbackError) {
+                console.error('Fallback decoding also failed:', fallbackError);
+                throw fallbackError;
+            }
+        }
     } catch (error) {
         console.error('Error decoding base64:', error);
-        return '[Unable to decode response content]';
+        console.error('Base64 content length:', base64Content ? base64Content.length : 0);
+        return '[Unable to decode response content - encoding issue]';
     }
 }
 
@@ -888,7 +938,10 @@ function showResponse(base64Content, modelName, language, question) {
     const content = decodeBase64Browser(base64Content);
     document.getElementById('responseModalTitle').textContent = `Response from ${modelName}`;
     document.getElementById('responseModalMeta').textContent = `Language: ${language} | Question: ${question.substring(0, 50)}...`;
-    document.getElementById('responseContentBody').innerHTML = `<div class="response-text">${escapeHtml(content)}</div>`;
+    
+    // Set appropriate language attributes for better rendering
+    const langAttr = language === 'ja' ? ' lang="ja"' : language === 'fr' ? ' lang="fr"' : ' lang="en"';
+    document.getElementById('responseContentBody').innerHTML = `<div class="response-text"${langAttr}>${escapeHtml(content)}</div>`;
     
     // Store for copy button
     window.currentResponseContent = content;
@@ -1002,9 +1055,12 @@ function displayComprehensiveResults() {
 
                 if (result.success) {
                     content += `
-                        <div class="response-preview" title="Click to view full response" onclick="showResponse('${result.content}', '${result.modelName}', '${language}', '${escapeHtml(question)}')">
+                                        if (result.success) {
+                    const langAttr = language === 'ja' ? ' lang="ja"' : language === 'fr' ? ' lang="fr"' : ' lang="en"';
+                    content += `
+                        <div class="response-preview"${langAttr} title="Click to view full response" onclick="showResponse('${result.content}', '${result.modelName}', '${language}', '${escapeHtml(question)}')">
                             ${escapeHtml(preview)}${hasMoreContent ? '...' : ''}
-                        </div>
+                        </div>`;
                         <div class="response-meta">
                             <span class="meta-item">
                                 <i class="bi bi-hourglass-split"></i> ${result.responseTime}ms

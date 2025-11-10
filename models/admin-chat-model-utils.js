@@ -315,7 +315,13 @@ const sanitizeResults = (results) => {
         // Encode content as base64 to prevent character encoding issues
         if (result.content) {
           try {
-            encodedContent = Buffer.from(String(result.content).substring(0, 5000)).toString('base64');
+            // Explicitly specify UTF-8 encoding for proper Japanese character handling
+            encodedContent = Buffer.from(String(result.content).substring(0, 5000), 'utf8').toString('base64');
+            
+            // Log for debugging Japanese character encoding
+            if (String(result.content).match(/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/)) {
+              console.log(`[Sanitize] Japanese characters detected and encoded for ${model}`);
+            }
           } catch (e) {
             console.warn(`[Sanitize] Error encoding content for ${model}:`, e.message);
             encodedContent = null;

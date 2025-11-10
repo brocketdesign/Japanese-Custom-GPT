@@ -51,21 +51,12 @@ async function routes(fastify, options) {
             const userSettings = await getUserChatToolSettings(fastify.mongo.db, userId, userChatDoc.chatId);
             const goalsEnabled = userSettings.goalsEnabled === true; // Default to false
             
-            console.log('🔍 [DEBUG API GOALS] Getting milestone goals data for:', {
-                userId: userId?.toString(),
-                chatId: userChatDoc.chatId?.toString()
-            });
-            
             // Get milestone goals data
             const milestoneGoals = await getMilestoneGoalsData(fastify.mongo.db, userId, userChatDoc.chatId);
-            
-            console.log('🔍 [DEBUG API GOALS] Milestone goals result:', milestoneGoals);
-            
+                        
             // Get completed milestones
             const completedMilestones = await getCompletedMilestones(fastify.mongo.db, userId, userChatDoc.chatId, 10);
-            
-            console.log('🔍 [DEBUG API GOALS] Completed milestones:', completedMilestones);
-            
+                        
             const responseData = {
                 currentGoal: goalsData.currentGoal,
                 completedGoals: goalsData.completedGoals,
@@ -75,9 +66,7 @@ async function routes(fastify, options) {
                 milestoneGoals,
                 completedMilestones
             };
-            
-            console.log('🔍 [DEBUG API GOALS] Final response data:', responseData);
-            
+                        
             return reply.send(responseData);
         } catch (error) {
             console.error('Error fetching chat goals:', error);
@@ -224,9 +213,7 @@ async function routes(fastify, options) {
         try {
             const { userChatId } = request.params;
             const userId = request.user._id;
-            
-            console.log('[LiveGoals API] Fetching milestones for userChatId:', userChatId, 'userId:', userId?.toString());
-            
+                        
             if (!ObjectId.isValid(userChatId)) {
                 return reply.status(400).send({ 
                     success: false, 
@@ -248,13 +235,10 @@ async function routes(fastify, options) {
                 });
             }
 
-            console.log('[LiveGoals API] Found userChat with chatId:', userChatDoc.chatId?.toString());
-
             // Get milestone goals data using the chatId from the userChat document
             const milestoneGoals = await getMilestoneGoalsData(fastify.mongo.db, userId, userChatDoc.chatId);
             const completedMilestones = await getCompletedMilestones(fastify.mongo.db, userId, userChatDoc.chatId, 10);
             
-            console.log('[LiveGoals API] Milestone goals result:', JSON.stringify(milestoneGoals, null, 2));
             
             return reply.send({
                 success: true,

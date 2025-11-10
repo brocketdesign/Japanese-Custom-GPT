@@ -61,11 +61,8 @@ class LiveGoalsWidget {
         // Use userChatId like the existing goals system for consistency
         const userChatId = sessionStorage.getItem('userChatId') || window.userChatId;
         const chatId = sessionStorage.getItem('chatId') || window.chatId;
-        
-        console.log('[LiveGoals] Available IDs - userChatId:', userChatId, 'chatId:', chatId);
-        
+                
         if (!userChatId) {
-            console.log('[LiveGoals] No userChatId found, hiding widget');
             this.hideWidget();
             return;
         }
@@ -73,7 +70,6 @@ class LiveGoalsWidget {
         try {
             // Use the new endpoint that's consistent with existing goals API
             const url = `/api/chat-goals/${userChatId}/milestones`;
-            console.log('[LiveGoals] Fetching from URL:', url);
             
             const response = await fetch(url, {
                 credentials: 'include', // Include cookies for authentication
@@ -81,7 +77,6 @@ class LiveGoalsWidget {
                     'Content-Type': 'application/json'
                 }
             });
-            console.log('[LiveGoals] Response status:', response.status, response.statusText);
             
             if (!response.ok) {
                 const errorText = await response.text();
@@ -91,7 +86,6 @@ class LiveGoalsWidget {
             }
             
             const data = await response.json();
-            console.log('[LiveGoals] Received data:', data);
             
             if (data.success) {
                 this.updateGoalDisplay(data);
@@ -104,17 +98,14 @@ class LiveGoalsWidget {
 
     async refreshGoalData() {
         const userChatId = sessionStorage.getItem('userChatId') || window.userChatId;
-        console.log('[LiveGoals] Refreshing data for userChatId:', userChatId);
         
         if (!userChatId) {
-            console.log('[LiveGoals] No userChatId found during refresh, hiding widget');
             this.hideWidget();
             return;
         }
 
         try {
             const url = `/api/chat-goals/${userChatId}/milestones`;
-            console.log('[LiveGoals] Refreshing from URL:', url);
             
             const response = await fetch(url, {
                 credentials: 'include', // Include cookies for authentication
@@ -122,7 +113,6 @@ class LiveGoalsWidget {
                     'Content-Type': 'application/json'
                 }
             });
-            console.log('[LiveGoals] Refresh response status:', response.status, response.statusText);
             
             if (!response.ok) {
                 const errorText = await response.text();
@@ -132,7 +122,6 @@ class LiveGoalsWidget {
             }
             
             const data = await response.json();
-            console.log('[LiveGoals] Refreshed data:', data);
             
             if (data.success) {
                 this.updateGoalDisplay(data, true); // true for animated update
@@ -352,7 +341,6 @@ class LiveGoalsWidget {
     }
 
     resetWidget() {
-        console.log('[LiveGoals] Resetting widget for new chat');
         
         // Reset current goals data
         this.currentGoals = {

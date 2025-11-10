@@ -18,4 +18,124 @@
 <div id="chat-recommend" class="onchat-on px-4 text-white rounded d-flex align-items-center justify-content-start scroll-horizontal" style="min-height: 70px;padding: 15px 0px;overflow-x: auto;overflow-y: hidden;white-space: nowrap;">
     <div class="characters" style="display: flex;flex-direction: row;overflow-x: scroll;"></div>
 </div>
+<!-- Live Goals Widget - Compact Floating Design -->
+<div id="live-goals-widget" class="live-goals-floating onchat-on" style="display: none;">
+    <!-- Main Toggle Button -->
+    <div class="goals-toggle-btn" id="goals-toggle-btn">
+        <div class="goals-summary">
+            <i class="bi bi-trophy goals-trophy-icon"></i>
+            <div class="goals-quick-stats">
+                <span class="goals-total-progress">0/18</span>
+                <span class="goals-next-reward">+25</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Expanded Goals Panel -->
+    <div class="goals-expanded-panel" id="goals-expanded-panel">
+        <div class="goals-panel-header">
+            <h6 class="goals-panel-title">
+                <i class="bi bi-trophy me-1"></i>
+                Character Goals
+            </h6>
+            <button class="goals-close-btn" id="goals-close-btn">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        
+        <div class="goals-grid">
+            <div class="goal-item-compact" id="goal-messages" data-reward="25">
+                <div class="goal-progress-ring">
+                    <svg class="progress-ring" width="50" height="50">
+                        <circle class="progress-ring-circle" 
+                                cx="25" cy="25" r="20" 
+                                fill="transparent" 
+                                stroke="#e9ecef" 
+                                stroke-width="4"/>
+                        <circle class="progress-ring-progress" 
+                                cx="25" cy="25" r="20" 
+                                fill="transparent" 
+                                stroke="#007bff" 
+                                stroke-width="4"
+                                stroke-dasharray="125.6"
+                                stroke-dashoffset="125.6"/>
+                    </svg>
+                    <div class="goal-icon-ring">
+                        <i class="bi bi-chat-dots"></i>
+                    </div>
+                </div>
+                <div class="goal-details">
+                    <span class="goal-count">0/10</span>
+                    <span class="goal-label">Messages</span>
+                    <span class="goal-reward">+25pts</span>
+                </div>
+            </div>
+            
+            <div class="goal-item-compact" id="goal-images" data-reward="25">
+                <div class="goal-progress-ring">
+                    <svg class="progress-ring" width="50" height="50">
+                        <circle class="progress-ring-circle" 
+                                cx="25" cy="25" r="20" 
+                                fill="transparent" 
+                                stroke="#e9ecef" 
+                                stroke-width="4"/>
+                        <circle class="progress-ring-progress" 
+                                cx="25" cy="25" r="20" 
+                                fill="transparent" 
+                                stroke="#28a745" 
+                                stroke-width="4"
+                                stroke-dasharray="125.6"
+                                stroke-dashoffset="125.6"/>
+                    </svg>
+                    <div class="goal-icon-ring">
+                        <i class="bi bi-image"></i>
+                    </div>
+                </div>
+                <div class="goal-details">
+                    <span class="goal-count">0/5</span>
+                    <span class="goal-label">Images</span>
+                    <span class="goal-reward">+25pts</span>
+                </div>
+            </div>
+            
+            <div class="goal-item-compact" id="goal-videos" data-reward="50">
+                <div class="goal-progress-ring">
+                    <svg class="progress-ring" width="50" height="50">
+                        <circle class="progress-ring-circle" 
+                                cx="25" cy="25" r="20" 
+                                fill="transparent" 
+                                stroke="#e9ecef" 
+                                stroke-width="4"/>
+                        <circle class="progress-ring-progress" 
+                                cx="25" cy="25" r="20" 
+                                fill="transparent" 
+                                stroke="#dc3545" 
+                                stroke-width="4"
+                                stroke-dasharray="125.6"
+                                stroke-dashoffset="125.6"/>
+                    </svg>
+                    <div class="goal-icon-ring">
+                        <i class="bi bi-play-circle"></i>
+                    </div>
+                </div>
+                <div class="goal-details">
+                    <span class="goal-count">0/3</span>
+                    <span class="goal-label">Videos</span>
+                    <span class="goal-reward">+50pts</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Achievement Notifications -->
+        <div class="achievement-notification" id="achievement-notification">
+            <div class="achievement-content">
+                <i class="bi bi-trophy achievement-icon"></i>
+                <div class="achievement-text">
+                    <div class="achievement-title">Milestone Reached!</div>
+                    <div class="achievement-subtitle">+25 points earned</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 </div>

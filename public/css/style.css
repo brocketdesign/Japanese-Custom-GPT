@@ -2244,7 +2244,7 @@ opacity: 0.8;
   height: 70px;
   border-radius: 50%;
   padding: 10px 30px;
-  background: rgba(110, 32, 244, 0.7);
+  background: linear-gradient(to bottom right, rgba(212, 190, 254, 1), rgba(110, 33, 244, 1));
   text-decoration: none;
   position: relative;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
@@ -2259,7 +2259,6 @@ opacity: 0.8;
 }
 
 .album-link-styled:hover {
-  background: rgba(110, 32, 244, 0.3); /* Hover background from character-create-icon */
   transform: scale(1.12) rotate(5deg); /* Hover transform from character-create-icon */
   box-shadow: 0 15px 30px rgba(110, 32, 244, 0.15); /* Hover shadow similar to character-create-card */
 }

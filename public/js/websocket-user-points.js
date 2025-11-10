@@ -153,6 +153,11 @@ class WebSocketUserPointsHandler {
       if (window.refreshUserPoints) {
         window.refreshUserPoints();
       }
+      
+      // Update live goals widget for image generation
+      if (window.liveGoalsWidget) {
+        window.liveGoalsWidget.refreshGoalData();
+      }
     }
   }
 
@@ -290,11 +295,8 @@ class WebSocketUserPointsHandler {
       chatId
     } = notification;
     
-    console.log('📱 [WEBSOCKET] <<< Received milestone notification - Points:', points, 'Messages:', totalMessages);
-    
     // Only show notification for the current user
     if (userId === window.user._id && window.userPointsManager) {
-      console.log('📱 [WEBSOCKET] Current user match - showing modal');
       
       // Prepare reward data for showSpecialRewardNotification
       const rewardData = {
@@ -307,12 +309,8 @@ class WebSocketUserPointsHandler {
         milestoneType: milestoneType
       };
       
-      console.log('📱 [MODAL] >>> Showing reward modal...');
-      
       // Show the special reward notification
       window.userPointsManager.showSpecialRewardNotification(rewardData);
-      
-      console.log('📱 [MODAL] Modal triggered successfully!');
       
       // Refresh points display
       if (window.refreshUserPoints) {
@@ -323,8 +321,14 @@ class WebSocketUserPointsHandler {
       if (window.goalsManager && window.goalsManager.loadGoals) {
         window.goalsManager.loadGoals();
       }
-    } else {
-      console.log('📱 [WEBSOCKET] Not current user or no userPointsManager');
+      
+      // Update live goals widget if available
+      if (window.liveGoalsWidget) {
+        window.liveGoalsWidget.refreshGoalData();
+      }
+      
+      // Trigger custom event for live goals
+      $(document).trigger('milestoneAchieved', notification);
     }
   }
 

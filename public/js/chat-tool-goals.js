@@ -149,9 +149,6 @@ class GoalsManager {
 
             const data = await response.json();
             
-            console.log('🌐 [DEBUG FRONTEND] Goals data received:', data);
-            console.log('🌐 [DEBUG FRONTEND] Milestone goals:', data.milestoneGoals);
-        
             if (data.goalsEnabled !== undefined) {
                 this.updateToggleButton(data.goalsEnabled);
             }

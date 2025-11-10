@@ -164,9 +164,6 @@ async function routes(fastify, options) {
                 }
             );
 
-            console.log('🚀 [SUGGESTION MESSAGE] Added suggestion message for user:', userId);
-            console.log('🎯 [MILESTONE CHECK] Calling milestone function for suggestion message...');
-
             // Check for character message milestones (same as regular messages)
             try {
                 await awardCharacterMessageMilestoneReward(
@@ -175,9 +172,8 @@ async function routes(fastify, options) {
                     new ObjectId(chatId),
                     fastify
                 );
-                console.log('🎯 [MILESTONE CHECK] Suggestion milestone check completed');
             } catch (milestoneError) {
-                console.error('🚨 [MILESTONE ERROR] Error in suggestion milestone check:', milestoneError);
+                console.error('Error in suggestion milestone check:', milestoneError);
             }
 
             return reply.send({

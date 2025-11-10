@@ -253,6 +253,11 @@ class ChatSuggestionsManager {
                 // Clear the input
                 $('#userMessage').val('');
 
+                // Update live goals widget for message count
+                if (window.liveGoalsWidget) {
+                    window.liveGoalsWidget.refreshGoalData();
+                }
+
                 // Trigger chat completion
                 if (window.generateChatCompletion) {
                     generateChatCompletion();

@@ -170,8 +170,6 @@ async function updateGoalsAnalytics(db, userId, chatId, difficulty) {
  */
 async function getMilestoneGoalsData(db, userId, chatId) {
     try {
-        console.log('📊 [MILESTONE] Getting goals data for user:', userId?.toString(), 'chat:', chatId?.toString());
-        
         // Get milestone progress
         const milestoneProgress = await getUserMilestoneProgress(db, userId, chatId);
         

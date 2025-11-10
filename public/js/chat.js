@@ -1834,6 +1834,11 @@ window.addMessageToChat = function(chatId, userChatId, option, callback) {
             image_request: image_request || null
         }),
         success: function(response) {
+            // Update live goals widget for message count
+            if (window.liveGoalsWidget && role === 'user') {
+                window.liveGoalsWidget.refreshGoalData();
+            }
+            
             if(typeof callback == 'function'){
                 callback(null, response);
             }
@@ -1873,6 +1878,9 @@ window.showChat = function() {
         'pointer-events': '',
         'visibility': ''
     }); 
+    
+    // Trigger custom event for live goals widget
+    $(document).trigger('chatOpened');
 }
 
 // Add this at the top of the file with other global variables

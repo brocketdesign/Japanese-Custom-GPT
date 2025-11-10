@@ -51,20 +51,11 @@ async function routes(fastify, options) {
             const userSettings = await getUserChatToolSettings(fastify.mongo.db, userId, userChatDoc.chatId);
             const goalsEnabled = userSettings.goalsEnabled === true; // Default to false
             
-            console.log('🔍 [DEBUG API GOALS] Getting milestone goals data for:', {
-                userId: userId?.toString(),
-                chatId: userChatDoc.chatId?.toString()
-            });
-            
             // Get milestone goals data
             const milestoneGoals = await getMilestoneGoalsData(fastify.mongo.db, userId, userChatDoc.chatId);
             
-            console.log('🔍 [DEBUG API GOALS] Milestone goals result:', milestoneGoals);
-            
             // Get completed milestones
             const completedMilestones = await getCompletedMilestones(fastify.mongo.db, userId, userChatDoc.chatId, 10);
-            
-            console.log('🔍 [DEBUG API GOALS] Completed milestones:', completedMilestones);
             
             const responseData = {
                 currentGoal: goalsData.currentGoal,
@@ -75,8 +66,6 @@ async function routes(fastify, options) {
                 milestoneGoals,
                 completedMilestones
             };
-            
-            console.log('🔍 [DEBUG API GOALS] Final response data:', responseData);
             
             return reply.send(responseData);
         } catch (error) {
@@ -215,6 +204,48 @@ async function routes(fastify, options) {
             });
         } catch (error) {
             console.error('Error fetching milestone goals:', error);
+            return reply.status(500).send({ error: 'Failed to fetch milestone goals' });
+        }
+    });
+
+    // Alternative endpoint using userChatId (consistent with existing goals API)
+    fastify.get('/api/chat-goals/:userChatId/milestones', async (request, reply) => {
+        try {
+            const { userChatId } = request.params;
+            const userId = request.user._id;
+            
+            if (!ObjectId.isValid(userChatId)) {
+                return reply.status(400).send({ error: 'Invalid user chat ID format' });
+            }
+
+            // Verify the user chat belongs to the authenticated user
+            const userChatCollection = fastify.mongo.db.collection('userChat');
+            const userChatDoc = await userChatCollection.findOne({
+                _id: new ObjectId(userChatId),
+                userId: new ObjectId(userId)
+            });
+
+            if (!userChatDoc) {
+                return reply.status(404).send({ error: 'User chat not found or access denied' });
+            }
+
+            // Get the chatId from userChat document
+            const chatId = userChatDoc.chatId;
+            
+            if (!chatId) {
+                return reply.status(404).send({ error: 'Chat ID not found in user chat document' });
+            }
+
+            const milestoneGoals = await getMilestoneGoalsData(fastify.mongo.db, userId, chatId.toString());
+            const completedMilestones = await getCompletedMilestones(fastify.mongo.db, userId, chatId.toString(), 20);
+            
+            return reply.send({
+                success: true,
+                milestoneGoals,
+                completedMilestones
+            });
+        } catch (error) {
+            console.error('Error fetching milestone goals via userChatId:', error);
             return reply.status(500).send({ error: 'Failed to fetch milestone goals' });
         }
     });

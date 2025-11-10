@@ -572,20 +572,12 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
                 // Award message milestone rewards for user messages only
                 if (role === 'user') {
                     const totalUserMessages = userData.messages.filter(m => m.role === 'user').length;
-                    console.log('🎯 [MILESTONE CHECK] User message added! Total user messages now:', totalUserMessages);
-                    console.log('🎯 [MILESTONE CHECK] Calling milestone function for user:', userData.userId.toString());
-                    
                     try {
                         const userIdString = userData.userId.toString();
-                        console.log('🎯 [MILESTONE] >>> Calling milestone check function...');
                         
                         const milestoneResult = await awardCharacterMessageMilestoneReward(fastify.mongo.db, userIdString, chatId, fastify);
-                        
-                        console.log('🎯 [MILESTONE] Result:', milestoneResult.success ? 'SUCCESS' : 'NO_MILESTONE', 
-                                    '- Points:', milestoneResult.pointsAwarded || 0,
-                                    '- Message:', milestoneResult.milestoneMessage || 'None');
                     } catch (error) {
-                        console.error('❌ [MILESTONE ERROR]', error.message);
+                        console.error('Error in milestone check:', error.message);
                     }
                 }
                 

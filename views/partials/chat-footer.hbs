@@ -1,4 +1,39 @@
 <div class="px-2 position-relative onchat-on" style="flex-grow:1;height: auto;">
+    <!-- Live Goals Widget - Horizontal Progress Bar -->
+    <div id="live-goals-widget" class="live-goals-horizontal onchat-on" style="display: none;">
+        <div class="goals-progress-bar">
+            <div class="goal-item-horizontal" id="goal-messages" data-reward="25">
+                <div class="goal-icon">
+                    <i class="bi bi-chat-dots"></i>
+                </div>
+                <div class="goal-info">
+                    <span class="goal-count">0/10</span>
+                    <span class="goal-reward">+25pts</span>
+                </div>
+            </div>
+            
+            <div class="goal-item-horizontal" id="goal-images" data-reward="25">
+                <div class="goal-icon">
+                    <i class="bi bi-image"></i>
+                </div>
+                <div class="goal-info">
+                    <span class="goal-count">0/5</span>
+                    <span class="goal-reward">+25pts</span>
+                </div>
+            </div>
+            
+            <div class="goal-item-horizontal" id="goal-videos" data-reward="50">
+                <div class="goal-icon">
+                    <i class="bi bi-play-circle"></i>
+                </div>
+                <div class="goal-info">
+                    <span class="goal-count">0/3</span>
+                    <span class="goal-reward">+50pts</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="chatInput" class="input-group rounded-0 rounded-bottom" style="position: absolute;bottom: 10px;left: 0;right: 0;padding: 0px 15px 5px 15px;">
         <div class="chat-toolbar-wrapper w-auto mx-auto">
             <div class="chat-toolbar-container">
@@ -819,6 +854,232 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
+/* Live Goals Horizontal Widget */
+.live-goals-horizontal {
+    position: absolute;
+    bottom: 85px;
+    left: 15px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    z-index: 1015;
+    padding: 8px 12px;
+    transition: all 0.3s ease;
+}
+
+.goals-progress-bar {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    gap: 8px;
+}
+
+.goal-item-horizontal {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 4px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.02);
+    transition: all 0.2s ease;
+    position: relative;
+    min-width: 0;
+}
+
+.goal-item-horizontal:hover {
+    background: rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
+}
+
+.goal-item-horizontal.completed {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.15), rgba(40, 167, 69, 0.05));
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.goal-item-horizontal.near-completion {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.05));
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.goal-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.8);
+    margin-bottom: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.goal-icon i {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+#goal-messages .goal-icon i {
+    color: #007bff;
+}
+
+#goal-images .goal-icon i {
+    color: #28a745;
+}
+
+#goal-videos .goal-icon i {
+    color: #dc3545;
+}
+
+.goal-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.goal-count {
+    font-size: 11px;
+    font-weight: 700;
+    color: #333;
+    line-height: 1;
+}
+
+.goal-reward {
+    font-size: 9px;
+    font-weight: 600;
+    color: #ffc107;
+    background: rgba(255, 193, 7, 0.15);
+    padding: 1px 4px;
+    border-radius: 8px;
+    line-height: 1;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.goal-item-horizontal.completed .goal-reward {
+    color: #28a745;
+    background: rgba(40, 167, 69, 0.15);
+    border-color: rgba(40, 167, 69, 0.3);
+}
+
+.goal-item-horizontal.completed .goal-count {
+    color: #28a745;
+}
+
+.goal-item-horizontal.completed .goal-icon {
+    background: rgba(40, 167, 69, 0.15);
+}
+
+/* Progress indicator overlay */
+.goal-item-horizontal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 8px 8px 0 0;
+}
+
+.goal-item-horizontal::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #007bff, #28a745);
+    border-radius: 8px 0 0 0;
+    width: var(--progress-width, 0%);
+    transition: width 0.6s ease;
+}
+
+#goal-messages::after {
+    background: #007bff;
+}
+
+#goal-images::after {
+    background: #28a745;
+}
+
+#goal-videos::after {
+    background: #dc3545;
+}
+
+.goal-item-horizontal.updating {
+    animation: goalPulse 0.4s ease;
+}
+
+@keyframes goalPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .live-goals-horizontal {
+        bottom: 75px;
+        left: 10px;
+        right: 10px;
+        padding: 6px 8px;
+    }
+    
+    .goals-progress-bar {
+        gap: 4px;
+    }
+    
+    .goal-item-horizontal {
+        padding: 6px 2px;
+    }
+    
+    .goal-icon {
+        width: 28px;
+        height: 28px;
+        margin-bottom: 3px;
+    }
+    
+    .goal-icon i {
+        font-size: 14px;
+    }
+    
+    .goal-count {
+        font-size: 10px;
+    }
+    
+    .goal-reward {
+        font-size: 8px;
+        padding: 1px 3px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .live-goals-horizontal {
+        background: rgba(33, 37, 41, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .goal-item-horizontal {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .goal-item-horizontal:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .goal-count {
+        color: #f8f9fa;
+    }
+    
+    .goal-icon {
+        background: rgba(255, 255, 255, 0.1);
+    }
+}
+
 /* Milestone Goals Styling */
 .milestone-goals-grid {
     display: grid;

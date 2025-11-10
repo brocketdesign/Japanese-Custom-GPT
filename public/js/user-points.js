@@ -1599,8 +1599,6 @@ class UserPointsManager {
       totalImages = 0
     } = rewardData;
     
-    console.log('🎊 [MODAL] Points:', points, 'Source:', source, 'isMilestone:', isMilestone);
-
     // Remove any existing reward notifications
     $('.special-reward-notification').remove();
 

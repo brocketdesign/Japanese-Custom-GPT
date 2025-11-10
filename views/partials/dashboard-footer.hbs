@@ -602,6 +602,9 @@ window.showDiscovery = function() {
     
     $('#footer-toolbar').fadeIn();
     window.postMessage('resizeIframe', '*');
+    
+    // Trigger custom event for live goals widget
+    $(document).trigger('chatClosed');
 }
 window.fetchUser = async function() {
     try {
@@ -1032,21 +1035,16 @@ window.debugNotifications = function() {
     }, 6500);
 
     setTimeout(() => {
-        console.log('Showing milestone reward notification...');
         if (window.userPointsManager) {
             window.userPointsManager.debugShowMilestoneRewardNotification();
         }
     }, 8000);
 
     setTimeout(() => {
-        console.log('Showing daily bonus notification...');
         if (window.userPointsManager) {
             window.userPointsManager.debugShowDailyBonusNotification();
         }
     }, 9500);
-
-    console.log('All notifications will appear over the next 10 seconds');
-    console.log('Types tested: success, error, warning, info, special rewards, milestone, daily bonus');
     
     return 'Debug notifications started! Check the top-right corner of your screen.';
 };

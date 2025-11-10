@@ -1266,8 +1266,6 @@ async function awardCharacterVideoMilestoneReward(db, userId, chatId, fastify = 
  * @returns {Object} Result of milestone check and potential reward
  */
 async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify = null) {
-  console.log('🔥 [MILESTONE FUNCTION] Called for user:', userId?.toString(), 'chat:', chatId?.toString());
-  
   const usersCollection = db.collection('users');
   const userChatCollection = db.collection('userChat');
   const milestonesCollection = db.collection('user_milestones');
@@ -1275,11 +1273,9 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
   // Get current user data
   const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
   if (!user) {
-    console.log('❌ [DEBUG] User not found for userId:', userId);
     throw new Error('User not found');
   }
   
-  console.log('✅ [DEBUG] User found:', { userId: user._id.toString(), lang: user.lang });
   
   const userPointsTranslations = fastify ? fastify.getUserPointsTranslations(user.lang || 'en') : {};
   
@@ -1295,16 +1291,10 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
     { $group: { _id: null, totalMessages: { $sum: 1 } } }
   ];
   
-  console.log('🔍 [DEBUG] Message count pipeline:', JSON.stringify(pipeline, null, 2));
   
   const result = await userChatCollection.aggregate(pipeline).toArray();
   const totalMessages = result[0]?.totalMessages || 0;
   
-  console.log('📊 [DEBUG] Message count result:', {
-    aggregationResult: result,
-    totalMessages,
-    chatId: chatId?.toString()
-  });
   
   // Define character-specific milestone rewards (lower thresholds than global)
   const milestones = {
@@ -1315,19 +1305,10 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
     250: { points: 200, message: userPointsTranslations.points?.character_messages?.milestone_rewards?.two_fifty_messages || '250 messages with this character!' }
   };
   
-  console.log('🎯 [MILESTONE CHECK] Current message count:', totalMessages, '- Checking milestones...');
-  
   // Check if current message count hits a milestone
   const milestone = milestones[totalMessages];
   
-  if (milestone) {
-    console.log('� [MILESTONE HIT] Found milestone for', totalMessages, 'messages! Points:', milestone.points);
-  } else {
-    console.log('⚪ [MILESTONE] No milestone at', totalMessages, 'messages. Next milestones: 10, 25, 50, 100, 250');
-  }
-  
   if (!milestone) {
-    console.log('⚠️ [DEBUG] No milestone reached for count:', totalMessages);
     return {
       success: false,
       totalMessages,
@@ -1343,14 +1324,11 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
     milestone: totalMessages
   };
   
-  console.log('🔍 [DEBUG] Checking existing milestone with query:', milestoneQuery);
   
   const existingMilestone = await milestonesCollection.findOne(milestoneQuery);
   
-  console.log('🔍 [DEBUG] Existing milestone found:', existingMilestone);
   
   if (existingMilestone) {
-    console.log('⚠️ [DEBUG] Milestone already granted, skipping');
     return {
       success: false,
       totalMessages,
@@ -1358,12 +1336,7 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
       alreadyGranted: true
     };
   }
-  
-  console.log('💰 [DEBUG] Awarding points:', {
-    points: milestone.points,
-    message: milestone.message,
-    userId: userId?.toString()
-  });
+
   
   // Award milestone points
   const pointsResult = await addUserPoints(
@@ -1375,7 +1348,6 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
     fastify
   );
   
-  console.log('💰 [DEBUG] Points awarded result:', pointsResult);
   
   // Record milestone as granted
   await milestonesCollection.insertOne({
@@ -1391,8 +1363,6 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
   // Send websocket notification for milestone reward
   if (fastify && fastify.sendNotificationToUser) {
     try {
-      console.log('🔔 [WEBSOCKET] >>> Sending milestone notification to user:', userId.toString());
-      console.log('🔔 [WEBSOCKET] Milestone data - Points:', milestone.points, 'Messages:', totalMessages, 'Type: messages');
       
       // Send milestone achievement notification
       await fastify.sendNotificationToUser(userId.toString(), 'milestoneAchieved', {
@@ -1408,9 +1378,7 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
         milestoneType: 'messages'
       });
       
-      console.log('🔔 [WEBSOCKET] Milestone notification sent successfully!');
     } catch (notificationError) {
-      console.error('❌ [DEBUG] Error sending character message milestone reward notification:', notificationError);
     }
   }
   

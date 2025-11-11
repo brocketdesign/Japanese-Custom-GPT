@@ -283,7 +283,7 @@
     </div>
 
     <!-- CSV Modal -->
-    <div class="modal fade" id="csvModal" tabindex="-1" aria-labelledby="csvModalLabel" aria-hidden="true">
+    <div class="modal fade modal-dialog-scrollable" id="csvModal" tabindex="-1" aria-labelledby="csvModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
                 <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 20px 20px 0 0;">
@@ -293,29 +293,153 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <div class="d-flex flex-wrap justify-content-center gap-2">
-                        <button type="button" class="btn btn-outline-primary field-btn" data-field="createdAt" style="border-radius: 12px;">
-                            <i class="bi bi-calendar-event me-1"></i>{{translations.admin_user.date}}
-                        </button>
-                        <button type="button" class="btn btn-outline-primary field-btn" data-field="email" style="border-radius: 12px;">
-                            <i class="bi bi-envelope me-1"></i>{{translations.admin_user.email}}
-                        </button>
-                        <button type="button" class="btn btn-outline-primary field-btn" data-field="nickname" style="border-radius: 12px;">
-                            <i class="bi bi-person me-1"></i>{{translations.admin_user.name}}
-                        </button>
-                        <button type="button" class="btn btn-outline-primary field-btn" data-field="gender" style="border-radius: 12px;">
-                            <i class="bi bi-gender-ambiguous me-1"></i>{{translations.admin_user.gender}}
-                        </button>
-                        <button type="button" class="btn btn-outline-primary field-btn" data-field="subscriptionStatus" style="border-radius: 12px;">
-                            <i class="bi bi-star me-1"></i>{{translations.admin_user.subscription}}
-                        </button>
+                    <!-- User Type Selection -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3">
+                            <i class="bi bi-people me-2"></i>User Type
+                        </h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            <input type="radio" class="btn-check" name="userType" id="userTypeRegistered" value="registered" checked>
+                            <label class="btn btn-outline-info" for="userTypeRegistered" style="border-radius: 12px;">
+                                <i class="bi bi-person-check me-1"></i>Registered Users
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="userType" id="userTypeRecent" value="recent">
+                            <label class="btn btn-outline-info" for="userTypeRecent" style="border-radius: 12px;">
+                                <i class="bi bi-clock-history me-1"></i>Recent Users
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="userType" id="userTypeAll" value="all">
+                            <label class="btn btn-outline-info" for="userTypeAll" style="border-radius: 12px;">
+                                <i class="bi bi-people-fill me-1"></i>All Users
+                            </label>
+                        </div>
                     </div>
+
+                    <!-- Field Selection -->
+                    <div class="mb-3">
+                        <h6 class="fw-bold mb-3">
+                            <i class="bi bi-table me-2"></i>Select Fields to Export
+                        </h6>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <h6 class="text-muted small">Basic Information</h6>
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    <button type="button" class="btn btn-outline-primary field-btn" data-field="createdAt" style="border-radius: 8px;">
+                                        <i class="bi bi-calendar-event me-1"></i>{{translations.admin_user.date}}
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary field-btn" data-field="email" style="border-radius: 8px;">
+                                        <i class="bi bi-envelope me-1"></i>{{translations.admin_user.email}}
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary field-btn" data-field="nickname" style="border-radius: 8px;">
+                                        <i class="bi bi-person me-1"></i>{{translations.admin_user.name}}
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary field-btn" data-field="username" style="border-radius: 8px;">
+                                        <i class="bi bi-at me-1"></i>Username
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted small">Demographics</h6>
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    <button type="button" class="btn btn-outline-primary field-btn" data-field="gender" style="border-radius: 8px;">
+                                        <i class="bi bi-gender-ambiguous me-1"></i>{{translations.admin_user.gender}}
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary field-btn" data-field="lang" style="border-radius: 8px;">
+                                        <i class="bi bi-globe me-1"></i>{{translations.admin_user.language}}
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary field-btn" data-field="birthDate" style="border-radius: 8px;">
+                                        <i class="bi bi-cake me-1"></i>Birth Date
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <h6 class="text-muted small">Account Status</h6>
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    <button type="button" class="btn btn-outline-primary field-btn" data-field="subscriptionStatus" style="border-radius: 8px;">
+                                        <i class="bi bi-star me-1"></i>{{translations.admin_user.subscription}}
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary field-btn" data-field="points" style="border-radius: 8px;">
+                                        <i class="bi bi-coin me-1"></i>Points
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary field-btn" data-field="clerkId" style="border-radius: 8px;">
+                                        <i class="bi bi-key me-1"></i>Clerk ID
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted small">Profile Data</h6>
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    <button type="button" class="btn btn-outline-primary field-btn" data-field="bio" style="border-radius: 8px;">
+                                        <i class="bi bi-chat-text me-1"></i>Bio
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary field-btn" data-field="profileUrl" style="border-radius: 8px;">
+                                        <i class="bi bi-image me-1"></i>Profile Image
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary field-btn" data-field="ageVerification" style="border-radius: 8px;">
+                                        <i class="bi bi-shield-check me-1"></i>Age Verified
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Select Options -->
+                    <div class="mb-3">
+                        <h6 class="text-muted small mb-2">Quick Select</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm quick-select" data-fields="createdAt,email,nickname,gender,subscriptionStatus" style="border-radius: 8px;">
+                                Basic Info
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm quick-select" data-fields="createdAt,email,nickname,gender,lang,subscriptionStatus,points" style="border-radius: 8px;">
+                                Standard Export
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm quick-select" data-fields="createdAt,email,nickname,username,gender,lang,birthDate,subscriptionStatus,points,clerkId,bio,ageVerification" style="border-radius: 8px;">
+                                Complete Profile
+                            </button>
+                            <button type="button" class="btn btn-outline-warning btn-sm" id="selectAllFields" style="border-radius: 8px;">
+                                Select All
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" id="clearAllFields" style="border-radius: 8px;">
+                                Clear All
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Options -->
+                    <div class="mb-3">
+                        <h6 class="text-muted small mb-2">Advanced Options</h6>
+                        <div class="form-check p-3" style="background: #f8f9fa; border-radius: 12px;">
+                            <input class="form-check-input" type="checkbox" value="" id="includeAnalytics">
+                            <label class="form-check-label fw-bold" for="includeAnalytics">
+                                <i class="bi bi-graph-up me-1"></i>Include Analytics Data
+                            </label>
+                            <small class="form-text text-muted d-block mt-1">
+                                Adds columns for total images generated, total messages, and total chats per user. 
+                                <strong>Note:</strong> This will significantly increase export time for large datasets.
+                            </small>
+                        </div>
+                    </div>
+
                     <input type="hidden" id="selectedFields" name="fields">
+                    <input type="hidden" id="selectedUserType" name="userType" value="registered">
                 </div>
                 <div class="modal-footer" style="border-top: 1px solid #f0f0f0;">
-                    <button id="submitCsv" type="button" class="btn btn-success" style="border-radius: 12px;">
-                        <i class="bi bi-download me-2"></i>{{translations.admin_user.download_csv}}
-                    </button>
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <small class="text-muted">
+                            <span id="exportInfo"></span>
+                        </small>
+                        <div>
+                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal" style="border-radius: 12px;">
+                                Cancel
+                            </button>
+                            <button id="submitCsv" type="button" class="btn btn-success" style="border-radius: 12px;">
+                                <i class="bi bi-download me-2"></i>{{translations.admin_user.download_csv}}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -446,26 +570,138 @@
     $(document).ready(function(){
         $("#openCsvModal").click(function(){
             $("#csvModal").modal('show');
+            updateExportInfo(); // Initialize export info when modal opens
         });
         
+        // Field selection functionality
         $('.field-btn').click(function(){
             $(this).toggleClass('selected');
             if($(this).hasClass('selected')){
-            $(this).removeClass('btn-outline-primary').addClass('btn-primary');
+                $(this).removeClass('btn-outline-primary').addClass('btn-primary');
             } else {
-            $(this).removeClass('btn-primary').addClass('btn-outline-primary');
+                $(this).removeClass('btn-primary').addClass('btn-outline-primary');
             }
+            updateSelectedFields();
+        });
+
+        // User type selection
+        $('input[name="userType"]').change(function(){
+            $('#selectedUserType').val($(this).val());
+            updateExportInfo();
+        });
+
+        // Analytics checkbox
+        $('#includeAnalytics').change(function(){
+            updateExportInfo();
+        });
+
+        // Quick select functionality
+        $('.quick-select').click(function(){
+            var fieldsToSelect = $(this).data('fields').split(',');
+            $('.field-btn').removeClass('selected btn-primary').addClass('btn-outline-primary');
+            fieldsToSelect.forEach(function(field){
+                $('.field-btn[data-field="' + field + '"]')
+                    .addClass('selected btn-primary')
+                    .removeClass('btn-outline-primary');
+            });
+            updateSelectedFields();
+        });
+
+        // Select all fields
+        $('#selectAllFields').click(function(){
+            $('.field-btn')
+                .addClass('selected btn-primary')
+                .removeClass('btn-outline-primary');
+            updateSelectedFields();
+        });
+
+        // Clear all fields
+        $('#clearAllFields').click(function(){
+            $('.field-btn')
+                .removeClass('selected btn-primary')
+                .addClass('btn-outline-primary');
+            updateSelectedFields();
+        });
+
+        function updateSelectedFields() {
             var fields = [];
             $('.field-btn.selected').each(function(){
-            fields.push($(this).data('field'));
+                fields.push($(this).data('field'));
             });
             $('#selectedFields').val(fields.join(','));
-        });
+            updateExportInfo();
+        }
+
+        function updateExportInfo() {
+            var selectedCount = $('.field-btn.selected').length;
+            var userType = $('input[name="userType"]:checked').val() || 'registered';
+            var includeAnalytics = $('#includeAnalytics').is(':checked');
+            
+            var userTypeText = userType === 'registered' ? 'Registered Users' : 
+                              userType === 'recent' ? 'Recent Users' : 'All Users';
+            
+            var info = `${selectedCount} fields selected | ${userTypeText}`;
+            if (includeAnalytics) {
+                info += ' | With Analytics';
+            }
+            
+            $('#exportInfo').text(info);
+        }
 
         $("#submitCsv").click(function(){
             var fields = $('#selectedFields').val();
-            var query = fields.length ? '?fields=' + fields : '';
-            window.location.href = '/admin/users/csv' + query;
+            var userType = $('#selectedUserType').val();
+            var includeAnalytics = $('#includeAnalytics').is(':checked');
+            
+            if (!fields) {
+                Swal.fire('Error', 'Please select at least one field to export', 'error');
+                return;
+            }
+            
+            var baseUrl = includeAnalytics ? '/admin/users/csv/enhanced' : '/admin/users/csv';
+            var query = '?fields=' + fields + '&userType=' + userType;
+            
+            if (includeAnalytics) {
+                query += '&includeStats=true';
+            }
+            
+            // Show different loading messages for analytics
+            var loadingText = includeAnalytics ? 
+                '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating with Analytics...' :
+                '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...';
+            
+            // Show loading indicator
+            $(this).prop('disabled', true).html(loadingText);
+            
+            // Show additional warning for analytics export
+            if (includeAnalytics) {
+                Swal.fire({
+                    title: 'Generating Enhanced Export',
+                    text: 'This may take a while to calculate analytics for all users...',
+                    icon: 'info',
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    timer: 3000
+                });
+            }
+            
+            // Create a temporary link to trigger download
+            var link = document.createElement('a');
+            link.href = baseUrl + query;
+            link.download = ''; // Browser will use filename from Content-Disposition header
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Reset button after a longer delay for analytics
+            var resetDelay = includeAnalytics ? 5000 : 2000;
+            setTimeout(() => {
+                $(this).prop('disabled', false).html('<i class="bi bi-download me-2"></i>{{translations.admin_user.download_csv}}');
+                $('#csvModal').modal('hide');
+                if (includeAnalytics) {
+                    Swal.fire('Success', 'Enhanced export with analytics data has been generated!', 'success');
+                }
+            }, resetDelay);
         });
 
         // Function to check if user exists in Clerk

@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const  { checkUserAdmin } = require('../models/tool')
 const cleanupNonRegisteredUsers = require('../models/databasemanagement');
+const { getUsersForExport, formatUsersForCsv, getUserExportStats } = require('../models/user-analytics-utils');
 const axios = require('axios');
 const hbs = require('handlebars');
 
@@ -196,24 +197,189 @@ async function routes(fastify, options) {
       if (!isAdmin) return reply.status(403).send({ error: 'Access denied' });
       
       let fields = request.query.fields ? request.query.fields.split(',') : [];
+      const userType = request.query.userType || 'registered'; // 'registered', 'recent', or 'all'
+      
+      // Default fields if none specified
       if (!fields.length) fields = ['createdAt', 'email', 'nickname', 'gender', 'subscriptionStatus'];
-      const projection = {};
-      fields.forEach(field => projection[field] = 1);
       
-      const users = await fastify.mongo.db.collection('users')
-        .find({ email: { $exists: true } })
-        .project(projection)
-        .toArray();
+      // Use the enhanced export utility
+      const users = await getUsersForExport(fastify.mongo.db, {
+        userType,
+        fields,
+        sortBy: 'createdAt',
+        sortOrder: -1
+      });
       
-      const header = fields.join(',');
-      const rows = users.map(u => fields.map(f => u[f] || '').join(','));
-      const csv = [header, ...rows].join('\n');
+      // Format data for CSV
+      const { csv } = formatUsersForCsv(users, fields);
       
-      reply.header('Content-Type', 'text/csv')
-           .header('Content-Disposition', 'attachment; filename="users.csv"')
-           .send(csv);
+      const filename = `users_${userType}_${new Date().toISOString().split('T')[0]}.csv`;
+      
+      reply.header('Content-Type', 'text/csv; charset=utf-8')
+           .header('Content-Disposition', `attachment; filename="${filename}"`)
+           .send('\ufeff' + csv); // Add BOM for Excel compatibility
     } catch (error) {
+      console.error('CSV export error:', error);
       reply.status(500).send({ error: error.message });
+    }
+  });
+
+  // Enhanced CSV export with analytics data
+  fastify.get('/admin/users/csv/enhanced', async (request, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) return reply.status(403).send({ error: 'Access denied' });
+      
+      let fields = request.query.fields ? request.query.fields.split(',') : [];
+      const userType = request.query.userType || 'registered';
+      const includeStats = request.query.includeStats === 'true';
+      const batchSize = parseInt(request.query.batchSize) || 100; // Process in batches for large datasets
+      
+      // Default fields if none specified
+      if (!fields.length) fields = ['createdAt', 'email', 'nickname', 'gender', 'subscriptionStatus'];
+      
+      // If including stats, add analytics fields
+      if (includeStats) {
+        fields = [...fields, 'totalImages', 'totalMessages', 'totalChats'];
+      }
+      
+      // Get users count first to warn about large exports
+      const userCount = await fastify.mongo.db.collection('users').countDocuments(
+        userType === 'registered' ? { email: { $exists: true }, isTemporary: { $ne: true } } :
+        userType === 'recent' ? { 
+          createdAt: { 
+            $gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+            $lt: new Date() 
+          }, 
+          isTemporary: { $ne: true } 
+        } : { isTemporary: { $ne: true } }
+      );
+
+      console.log(`Starting enhanced CSV export for ${userCount} users with analytics: ${includeStats}`);
+      
+      // Get users
+      const users = await getUsersForExport(fastify.mongo.db, {
+        userType,
+        fields: fields.filter(f => !['totalImages', 'totalMessages', 'totalChats'].includes(f)),
+        sortBy: 'createdAt',
+        sortOrder: -1
+      });
+      
+      // Add analytics data if requested (process in batches to avoid memory issues)
+      if (includeStats && users.length > 0) {
+        console.log(`Processing analytics for ${users.length} users in batches of ${batchSize}`);
+        
+        for (let i = 0; i < users.length; i += batchSize) {
+          const batch = users.slice(i, i + batchSize);
+          
+          await Promise.all(batch.map(async (user) => {
+            try {
+              const stats = await getUserExportStats(fastify.mongo.db, user._id);
+              user.totalImages = stats.totalImages;
+              user.totalMessages = stats.totalMessages;
+              user.totalChats = stats.totalChats;
+            } catch (error) {
+              console.error(`Error getting stats for user ${user._id}:`, error);
+              user.totalImages = 0;
+              user.totalMessages = 0;
+              user.totalChats = 0;
+            }
+          }));
+          
+          console.log(`Processed analytics for batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(users.length / batchSize)}`);
+        }
+      }
+      
+      // Format data for CSV
+      const { csv, totalRecords } = formatUsersForCsv(users, fields);
+      
+      const filename = `users_${userType}${includeStats ? '_with_stats' : ''}_${new Date().toISOString().split('T')[0]}.csv`;
+      
+      console.log(`Generated CSV with ${totalRecords} records`);
+      
+      reply.header('Content-Type', 'text/csv; charset=utf-8')
+           .header('Content-Disposition', `attachment; filename="${filename}"`)
+           .send('\ufeff' + csv);
+    } catch (error) {
+      console.error('Enhanced CSV export error:', error);
+      reply.status(500).send({ error: error.message });
+    }
+  });
+
+  // Bulk export route for very large datasets (streaming)
+  fastify.get('/admin/users/csv/bulk', async (request, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) return reply.status(403).send({ error: 'Access denied' });
+      
+      let fields = request.query.fields ? request.query.fields.split(',') : [];
+      const userType = request.query.userType || 'registered';
+      
+      // Default fields if none specified
+      if (!fields.length) fields = ['createdAt', 'email', 'nickname', 'gender', 'subscriptionStatus'];
+      
+      const filename = `users_bulk_${userType}_${new Date().toISOString().split('T')[0]}.csv`;
+      
+      // Set headers for streaming CSV
+      reply.header('Content-Type', 'text/csv; charset=utf-8')
+           .header('Content-Disposition', `attachment; filename="${filename}"`);
+      
+      // Send BOM and header
+      reply.raw.write('\ufeff');
+      reply.raw.write(fields.join(',') + '\n');
+      
+      // Build query
+      let userQuery = {};
+      if (userType === 'registered') {
+        userQuery = { email: { $exists: true }, isTemporary: { $ne: true } };
+      } else if (userType === 'recent') {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+        userQuery = {
+          createdAt: { $gte: yesterday, $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000) },
+          isTemporary: { $ne: true }
+        };
+      } else {
+        userQuery = { isTemporary: { $ne: true } };
+      }
+      
+      // Stream users in batches
+      const cursor = fastify.mongo.db.collection('users')
+        .find(userQuery)
+        .sort({ createdAt: -1 })
+        .batchSize(100);
+      
+      let count = 0;
+      await cursor.forEach(user => {
+        const row = fields.map(field => {
+          let value = user[field];
+          if (field === 'createdAt' && value instanceof Date) {
+            value = value.toISOString().split('T')[0];
+          }
+          if (field === 'birthDate' && value && typeof value === 'object') {
+            value = `${value.year}-${String(value.month).padStart(2, '0')}-${String(value.day).padStart(2, '0')}`;
+          }
+          // Escape CSV field
+          const str = String(value || '');
+          if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return `"${str.replace(/"/g, '""')}"`;
+          }
+          return str;
+        });
+        
+        reply.raw.write(row.join(',') + '\n');
+        count++;
+      });
+      
+      console.log(`Bulk export completed: ${count} users`);
+      reply.raw.end();
+    } catch (error) {
+      console.error('Bulk CSV export error:', error);
+      if (!reply.sent) {
+        reply.status(500).send({ error: error.message });
+      }
     }
   });
     

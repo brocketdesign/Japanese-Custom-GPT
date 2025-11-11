@@ -347,7 +347,7 @@ async function routes(fastify, options) {
                 console.log(`[API/generate-character-comprehensive] Gender for prompt: ${gender}`);
 
                 const systemPayload = createSystemPayload(prompt, gender, extractedDetails, finalImageType);
-                enhancedPrompt = await generateCompletion(systemPayload, 600, 'llama');
+                enhancedPrompt = await generateCompletion(systemPayload, 600, 'llama-3-70b');
                 
                 // Clean up the enhanced prompt: remove any comments, headers, or preamble
                 enhancedPrompt = enhancedPrompt

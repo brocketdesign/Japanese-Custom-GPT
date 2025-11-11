@@ -24,7 +24,7 @@
 #userMenuOffcanvas {
     width: 300px;
     max-width: 85vw;
-    max-height: 90vh;
+    max-height: 100vh;
     z-index: 1100;
     display: flex;
     flex-direction: column;
@@ -57,7 +57,7 @@
 }
 
 #userMenuOffcanvas .offcanvas-body {
-    max-height: calc(100vh - 120px);
+    max-height: 100vh;
     overflow-y: auto;
     overflow-x: hidden;
     background: white;
@@ -280,7 +280,7 @@
     }
     
     #userMenuOffcanvas .offcanvas-body {
-        max-height: calc(100vh - 100px);
+        max-height: 100vh;
         padding: 0.25rem;
     }
 }

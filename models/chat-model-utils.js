@@ -323,13 +323,19 @@ const getAvailableModelsFormatted = async (includeInactive = false) => {
     
     models.forEach(model => {
       formatted[model.key] = {
+        _id: model._id,
+        key: model.key,
         displayName: model.displayName,
         description: model.description,
         provider: model.provider,
         modelId: model.modelId,
+        apiUrl: model.apiUrl,
         category: model.category,
         maxTokens: model.maxTokens,
-        supportedLanguages: model.supportedLanguages
+        isActive: model.isActive,
+        supportedLanguages: model.supportedLanguages,
+        createdAt: model.createdAt,
+        updatedAt: model.updatedAt
       };
     });
     
@@ -399,6 +405,11 @@ const updateModel = async (modelId, updates) => {
     const db = await connect();
     const collection = db.collection('chatModels');
     
+    // Validate ObjectId
+    if (!ObjectId.isValid(modelId)) {
+      throw new Error('Invalid model ID format');
+    }
+    
     const updateData = {
       ...updates,
       updatedAt: new Date()
@@ -407,19 +418,57 @@ const updateModel = async (modelId, updates) => {
     // Remove _id from updates if present
     delete updateData._id;
     
-    const result = await collection.findOneAndUpdate(
+    const result = await collection.updateOne(
       { _id: new ObjectId(modelId) },
-      { $set: updateData },
-      { returnDocument: 'after' }
+      { $set: updateData }
     );
     
-    if (!result.value) {
+    if (result.matchedCount === 0) {
       throw new Error('Model not found');
     }
     
-    return result.value;
+    // Retrieve and return the updated document
+    const updatedModel = await collection.findOne({ _id: new ObjectId(modelId) });
+    return updatedModel;
   } catch (error) {
     console.error('Error updating model:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update an existing chat model by key
+ * @param {string} modelKey - Model key
+ * @param {Object} updates - Updates object
+ * @returns {Promise<Object>} Updated model object
+ */
+const updateModelByKey = async (modelKey, updates) => {
+  try {
+    const db = await connect();
+    const collection = db.collection('chatModels');
+    
+    const updateData = {
+      ...updates,
+      updatedAt: new Date()
+    };
+    
+    // Remove _id from updates if present
+    delete updateData._id;
+    
+    const result = await collection.updateOne(
+      { key: modelKey },
+      { $set: updateData }
+    );
+    
+    if (result.matchedCount === 0) {
+      throw new Error('Model not found');
+    }
+    
+    // Retrieve and return the updated document
+    const updatedModel = await collection.findOne({ key: modelKey });
+    return updatedModel;
+  } catch (error) {
+    console.error('Error updating model by key:', error);
     throw error;
   }
 };
@@ -434,10 +483,33 @@ const deleteModel = async (modelId) => {
     const db = await connect();
     const collection = db.collection('chatModels');
     
+    // Validate ObjectId
+    if (!ObjectId.isValid(modelId)) {
+      throw new Error('Invalid model ID format');
+    }
+    
     const result = await collection.deleteOne({ _id: new ObjectId(modelId) });
     return result.deletedCount > 0;
   } catch (error) {
     console.error('Error deleting model:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete a chat model by key
+ * @param {string} modelKey - Model key
+ * @returns {Promise<boolean>} Success status
+ */
+const deleteModelByKey = async (modelKey) => {
+  try {
+    const db = await connect();
+    const collection = db.collection('chatModels');
+    
+    const result = await collection.deleteOne({ key: modelKey });
+    return result.deletedCount > 0;
+  } catch (error) {
+    console.error('Error deleting model by key:', error);
     throw error;
   }
 };
@@ -799,7 +871,9 @@ module.exports = {
   getAvailableModelsFormatted,
   addModel,
   updateModel,
+  updateModelByKey,
   deleteModel,
+  deleteModelByKey,
   getModelByKey,
   testSingleModel,
   testMultipleModels,

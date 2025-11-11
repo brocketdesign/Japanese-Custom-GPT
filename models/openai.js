@@ -60,28 +60,24 @@ const modelConfig = {
     }
   }
 };
-// Helper function to get all available models (updated for database compatibility)
+// Helper function to get all available models (database only)
 const getAllAvailableModels = async (isPremium = false) => {
   try {
-    // Try to use database models first
     const { getAvailableModelsFormatted } = require('./chat-model-utils');
     const dbModels = await getAvailableModelsFormatted();
     if (dbModels && Object.keys(dbModels).length > 0) {
       return dbModels;
     }
+    throw new Error('No database models available');
   } catch (error) {
-    console.log('Database models not available, using hardcoded models');
+    console.error('Database models not available:', error.message);
+    throw new Error('Database models required but not available');
   }
-  
-  // Fallback to hardcoded models
-  const models = { ...modelConfig.free, ...modelConfig.premium };
-  return models;
 };
 
-// Helper function to get available models based on subscription (updated for database compatibility)
+// Helper function to get available models based on subscription (database only)
 const getAvailableModels = async (isPremium = false) => {
   try {
-    // Try to use database models first
     const { getAvailableModelsFormatted } = require('./chat-model-utils');
     const dbModels = await getAvailableModelsFormatted();
     if (dbModels && Object.keys(dbModels).length > 0) {
@@ -97,22 +93,16 @@ const getAvailableModels = async (isPremium = false) => {
       }
       return dbModels;
     }
+    throw new Error('No database models available');
   } catch (error) {
-    console.log('Database models not available, using hardcoded models');
+    console.error('Database models not available:', error.message);
+    throw new Error('Database models required but not available');
   }
-  
-  // Fallback to hardcoded models
-  const models = { ...modelConfig.free };
-  if (isPremium) {
-    Object.assign(models, modelConfig.premium);
-  }
-  return models;
 };
 
-// Helper function to get model config by key (updated for database compatibility)
+// Helper function to get model config by key (database only)
 const getModelConfig = async (modelKey, isPremium = false) => {
   try {
-    // Try to use database models first
     const { getModelByKey } = require('./chat-model-utils');
     const dbModel = await getModelByKey(modelKey);
     if (dbModel) {
@@ -126,13 +116,11 @@ const getModelConfig = async (modelKey, isPremium = false) => {
         maxTokens: dbModel.maxTokens
       };
     }
+    throw new Error(`Model '${modelKey}' not found in database`);
   } catch (error) {
-    console.log('Database model not found, using hardcoded models');
+    console.error('Database model lookup failed:', error.message);
+    throw new Error(`Database model '${modelKey}' required but not available`);
   }
-  
-  // Fallback to hardcoded models
-  const availableModels = { ...modelConfig.free, ...(isPremium ? modelConfig.premium : {}) };
-  return availableModels[modelKey] || availableModels.hermes; // Default to hermes
 };
 
 const moderateText = async (text) => {
@@ -173,8 +161,8 @@ const moderateImage = async (imageUrl) => {
 
 async function generateCompletion(messages, maxToken = 1000, model = null, lang = 'en', userModelPreference = null, isPremium = false) {
   try {
-    // Try to get model from database first
-    const { getModelByKey, getProviderByName } = require('./chat-model-utils');
+    // Get model from database only (no fallbacks)
+    const { getModelByKey, getProviderByName, getAllModels } = require('./chat-model-utils');
     
     let dbModel = null;
     let dbProvider = null;
@@ -182,144 +170,120 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
     // Determine which model to use
     let modelToUse = model || userModelPreference;
     
-    // Try to get from database
-    if (modelToUse) {
-      try {
-        dbModel = await getModelByKey(modelToUse);
-        if (dbModel) {
-          dbProvider = await getProviderByName(dbModel.provider);
-        }
-      } catch (error) {
-        console.log(`[generateCompletion] Database model lookup failed: ${error.message}`);
+    // If no specific model requested, get the first active model of appropriate category
+    if (!modelToUse) {
+      const allModels = await getAllModels();
+      if (!allModels || allModels.length === 0) {
+        throw new Error('No database models available');
       }
+      
+      // Find first suitable model based on premium status
+      const suitableModel = allModels.find(m => 
+        m.isActive && (isPremium || m.category !== 'premium')
+      );
+      
+      if (!suitableModel) {
+        throw new Error('No suitable database models found for user subscription level');
+      }
+      
+      modelToUse = suitableModel.key;
+      console.log(`[generateCompletion] Auto-selected model: ${suitableModel.displayName}`);
     }
-
-    // Use database model if available
-    if (dbModel && dbProvider) {
-      const apiKey = process.env[dbProvider.envKeyName];
-      if (!apiKey) {
-        console.error(`[generateCompletion] API key not found for provider: ${dbModel.provider}`);
-        // Fall back to legacy system
-      } else {
-        console.log(`[generateCompletion] Using database model: ${dbModel.displayName}`);
+    
+    // Get model and provider from database
+    dbModel = await getModelByKey(modelToUse);
+    if (!dbModel) {
+      console.log(`[generateCompletion] Model '${modelToUse}' not found, falling back to OpenAI model`);
+      
+      // Find the first available OpenAI model in the database
+      const allModels = await getAllModels();
+      const openaiModel = allModels.find(m => 
+        m.isActive && m.provider === 'openai' && (isPremium || m.category !== 'premium')
+      );
+      
+      if (!openaiModel) {
+        // If no OpenAI model found, use any suitable model
+        const fallbackModel = allModels.find(m => 
+          m.isActive && (isPremium || m.category !== 'premium')
+        );
         
-        for (let attempt = 1; attempt <= 2; attempt++) {
-          try {
-            const response = await fetch(dbModel.apiUrl, {
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${apiKey}`
-              },
-              method: "POST",
-              body: JSON.stringify({
-                model: dbModel.modelId,
-                messages,
-                temperature: 1,
-                max_completion_tokens: Math.min(maxToken, dbModel.maxTokens || maxToken),
-                stream: false,
-                n: 1,
-              }),
-            });
-
-            if (!response.ok) {
-              if (attempt === 2) {
-                const errorData = await response.json().catch(() => ({}));
-                console.log(`Failed after ${attempt} attempts:`, errorData.error?.message || '');
-                break; // Try legacy fallback
-              }
-              continue; // Try second attempt
-            }
-
-            const data = await response.json();
-            return data.choices[0].message.content.trim();
-          } catch (error) {
-            if (attempt === 2) {
-              console.error(`Failed after ${attempt} attempts:`, error.message);
-              break; // Try legacy fallback
-            }
-          }
+        if (!fallbackModel) {
+          throw new Error(`Model '${modelToUse}' not found in database and no suitable fallback models available`);
         }
-      }
-    }
-
-    // Fallback to legacy system
-    console.log(`[generateCompletion] Falling back to legacy model system`);
-    
-    // Determine which model configuration to use (legacy)
-    let modelConfig = { ...currentModelConfig };
-    
-    // Check if user has a model preference and it's available
-    if (userModelPreference) {
-      const userModelConfig = await getModelConfig(userModelPreference, isPremium);
-      if (userModelConfig) {
-        modelConfig.provider = userModelConfig.provider;
-        modelConfig.modelName = userModelConfig.modelName;
-      }
-    }
-    
-    if (model) {
-      if (apiDetails[model]) {
-        // Direct provider like 'openai'
-        modelConfig.provider = model;
-        modelConfig.modelName = null;
+        
+        dbModel = fallbackModel;
+        console.log(`[generateCompletion] Using fallback model: ${dbModel.displayName}`);
       } else {
-        // Specific model like 'deepseek'
-        for (const provider in apiDetails) {
-          if (apiDetails[provider].models && apiDetails[provider].models[model]) {
-            modelConfig.provider = provider;
-            modelConfig.modelName = model;
-            break;
-          }
-        }
+        dbModel = openaiModel;
+        console.log(`[generateCompletion] Using OpenAI fallback model: ${dbModel.displayName}`);
       }
     }
+    
+    dbProvider = await getProviderByName(dbModel.provider);
+    if (!dbProvider) {
+      throw new Error(`Provider '${dbModel.provider}' not found in database`);
+    }
 
-    // Get the API details
-    const provider = apiDetails[modelConfig.provider];
-    const modelName = modelConfig.modelName && provider.models ? 
-      provider.models[modelConfig.modelName] : 
-      provider.model;
+    // Check API key availability
+    const apiKey = process.env[dbProvider.envKeyName];
+    if (!apiKey) {
+      throw new Error(`API key not configured for provider: ${dbModel.provider} (${dbProvider.envKeyName})`);
+    }
 
-    console.log(`[generateCompletion] Using legacy model: ${modelName}`);
+    console.log(`[generateCompletion] Using database model: ${dbModel.displayName} (${dbModel.provider})`);
+    
+    // Make API call with retry logic
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
-        const response = await fetch(provider.apiUrl, {
+        const response = await fetch(dbModel.apiUrl, {
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${provider.key}`
+            "Authorization": `Bearer ${apiKey}`
           },
           method: "POST",
           body: JSON.stringify({
-            model: modelName,
+            model: dbModel.modelId,
             messages,
             temperature: 1,
-            max_completion_tokens: maxToken,
+            max_completion_tokens: Math.min(maxToken, dbModel.maxTokens || maxToken),
             stream: false,
             n: 1,
           }),
         });
-        // Rest of your function remains the same
+
         if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMsg = errorData.error?.message || `HTTP ${response.status}`;
+          
           if (attempt === 2) {
-            const errorData = await response.json().catch(() => ({}));
-            console.log(`Failed after ${attempt} attempts:`, errorData.error?.message || '');
-            return false;
+            throw new Error(`API call failed after ${attempt} attempts: ${errorMsg}`);
           }
-          continue; // Try second attempt
+          
+          console.log(`[generateCompletion] Attempt ${attempt} failed: ${errorMsg}, retrying...`);
+          continue;
         }
 
         const data = await response.json();
-        return data.choices[0].message.content.trim();
-      } catch (error) {
-        if (attempt === 2) {
-          console.error(`Failed after ${attempt} attempts:`, error.message);
-          return false;
+        const content = data.choices?.[0]?.message?.content;
+        
+        if (!content) {
+          throw new Error('No content in API response');
         }
+        
+        return content.trim();
+        
+      } catch (fetchError) {
+        if (attempt === 2) {
+          throw new Error(`API request failed after ${attempt} attempts: ${fetchError.message}`);
+        }
+        
+        console.log(`[generateCompletion] Attempt ${attempt} failed: ${fetchError.message}, retrying...`);
       }
     }
+    
   } catch (error) {
     console.error(`[generateCompletion] Error: ${error.message}`);
-    return false;
+    throw error; // Re-throw instead of returning false to make errors more explicit
   }
 }
 
@@ -635,7 +599,7 @@ async function createPrompt(customPrompt, imageDescription, nsfw) {
     }
   ];
 
-  let response = await generateCompletion(messages, 700, nsfw ? 'deepseek' : 'llama');
+  let response = await generateCompletion(messages, 700, nsfw ? 'deepseek' : 'llama-3-70b');
   if (!response) return null;
   
   response = response.replace(/['"]+/g, '');
@@ -671,7 +635,7 @@ async function createPrompt(customPrompt, imageDescription, nsfw) {
       }
     ];
     
-    const shortenedResponse = await generateCompletion(shortenMessages, 500, nsfw ? 'deepseek' : 'openai');
+    const shortenedResponse = await generateCompletion(shortenMessages, 500, nsfw ? 'deepseek-v3-turbo' : 'openai-gpt4o');
     if (shortenedResponse && shortenedResponse.length <= 900) {
       console.log(`[createPrompt] Successfully shortened to ${shortenedResponse.length} characters`);
       return shortenedResponse.replace(/['"]+/g, '');

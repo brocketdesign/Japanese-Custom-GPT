@@ -93,7 +93,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
         </div>
-        <div class="offcanvas-body px-3 mb-2">
+        <div class="offcanvas-body px-3">
             <div class="list-group list-group-flush">
 
                 {{#if (eq user.subscriptionStatus 'active')}}
@@ -170,7 +170,7 @@
                     </a>
                     
                     <a class="list-group-item list-group-item-action border-0 menu-item" href="/admin/chat-model-test">
-                        <i class="bi bi-flask me-3"></i>Model Testing
+                        <i class="bi bi-flask me-3"></i>{{translations.admin_model_test.title}}
                     </a>
                     
                     <a class="list-group-item list-group-item-action border-0 menu-item" href="/admin/notifications">

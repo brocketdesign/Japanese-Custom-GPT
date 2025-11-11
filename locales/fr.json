@@ -523,6 +523,15 @@
     "signin_again": "Se connecter à nouveau",
     "secure_signout": "Vous avez été déconnecté en toute sécurité"
   },
+  "admin_model_test": {
+    "title": "Test de Modèle",
+    "select_model": "Sélectionner le Modèle",
+    "input_prompt": "Invite d'Entrée",
+    "generate_response": "Générer la Réponse",
+    "response": "Réponse",
+    "loading": "Génération de la réponse...",
+    "error": "Erreur lors de la génération de la réponse"
+  },
   "admin_model_chats": {
     "title": "Auto Character",
     "generate_all": "Générer des discussions pour tous les modèles",

@@ -8,7 +8,9 @@ const {
   getAvailableModelsFormatted,
   addModel,
   updateModel,
+  updateModelByKey,
   deleteModel,
+  deleteModelByKey,
   getModelByKey,
   testMultipleModels,
   saveTestResults,
@@ -262,7 +264,19 @@ async function routes(fastify, options) {
       const { modelId } = request.params;
       const updates = request.body;
       
-      const model = await updateModel(modelId, updates);
+      // Try updating by _id first, then by key if _id format is invalid
+      let model;
+      try {
+        model = await updateModel(modelId, updates);
+      } catch (error) {
+        if (error.message.includes('Invalid model ID format')) {
+          // Try updating by key
+          model = await updateModelByKey(modelId, updates);
+        } else {
+          throw error;
+        }
+      }
+      
       return reply.status(200).send({ model, message: 'Model updated successfully' });
     } catch (error) {
       console.error('Error updating model:', error);
@@ -280,7 +294,19 @@ async function routes(fastify, options) {
       }
 
       const { modelId } = request.params;
-      const success = await deleteModel(modelId);
+      
+      // Try deleting by _id first, then by key if _id format is invalid
+      let success;
+      try {
+        success = await deleteModel(modelId);
+      } catch (error) {
+        if (error.message.includes('Invalid model ID format')) {
+          // Try deleting by key
+          success = await deleteModelByKey(modelId);
+        } else {
+          throw error;
+        }
+      }
       
       if (!success) {
         return reply.status(404).send({ error: 'Model not found' });

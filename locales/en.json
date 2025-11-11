@@ -540,6 +540,15 @@
     "signin_again": "Sign In Again",
     "secure_signout": "You have been securely signed out"
   },
+  "admin_model_test": {
+    "title": "Model Test",
+    "select_model": "Select Model",
+    "input_prompt": "Input Prompt",
+    "generate_response": "Generate Response",
+    "response": "Response",
+    "loading": "Generating response...",
+    "error": "Error generating response"
+  },
   "admin_model_chats": {
     "title": "Auto Character",
     "generate_all": "Generate Chat for All Models",

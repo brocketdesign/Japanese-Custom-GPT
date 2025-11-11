@@ -1067,7 +1067,7 @@ class ChatToolSettings {
                 this.autoSaveCorrection();
             }
             // Auto-correct premium models
-            const premiumModels = ['llama', 'gemma', 'deepseek'];
+            const premiumModels = ['llama-3-70b', 'gemma', 'deepseek'];
             if (premiumModels.includes(this.settings.selectedModel)) {
                 this.settings.selectedModel = 'openai'; // Default to free model
                 this.autoSaveCorrection();

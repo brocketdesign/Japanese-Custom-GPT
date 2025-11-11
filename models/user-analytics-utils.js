@@ -586,6 +586,10 @@ async function getUserExportStats(db, userId) {
 module.exports = {
   getUserImageGenerationStats,
   getUserImageGenerationStatsByChat,
+  getUserImageLikeStats,
+  getUserImageLikeStatsByChat,
+  debugUserImageStats,
+  debugUserLikeStats,
   getUserMessageStats,
   getUserMessageStatsByChat,
   getUserContentStats,

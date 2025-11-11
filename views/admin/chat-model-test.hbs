@@ -448,16 +448,16 @@
 </div>
 
 <!-- Edit Model Modal -->
-<div class="modal fade" id="editModelModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade " id="editModelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-pencil"></i> Edit Model</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="editModelForm">
+            <form id="editModelForm" style="overflow: scroll;">
                 <div class="modal-body">
-                    <input type="hidden" id="editModelId" name="modelId">
+                    <input type="hidden" id="editModelId" name="id">
                     <!-- Same form structure as add model but with edit prefix -->
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -938,16 +938,14 @@ async function loadModels() {
             populateModelsTable();
             setupProviderAutoFill();
         } else {
-            console.error('Failed to load models');
-            // Fall back to hardcoded models
-            allModels = availableModels;
-            initializeModelCheckboxes();
+            console.error('Failed to load models from database');
+            alert('Error: Could not load models from database. Please ensure database models are configured.');
+            allModels = {};
         }
     } catch (error) {
         console.error('Error loading models:', error);
-        // Fall back to hardcoded models
-        allModels = availableModels;
-        initializeModelCheckboxes();
+        alert('Error: Could not connect to model API. Please check your connection and try again.');
+        allModels = {};
     }
 }
 
@@ -1063,10 +1061,10 @@ function populateModelsTable() {
             <td><small>${languages}</small></td>
             <td>
                 <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" onclick="editModel('${model._id || key}')" title="Edit model">
+                    <button class="btn btn-outline-primary" onclick="editModel('${model._id || model.key || key}')" title="Edit model">
                         <i class="bi bi-pencil"></i>
                     </button>
-                    <button class="btn btn-outline-danger" onclick="deleteModel('${model._id || key}')" title="Delete model">
+                    <button class="btn btn-outline-danger" onclick="deleteModel('${model._id || model.key || key}')" title="Delete model">
                         <i class="bi bi-trash"></i>
                     </button>
                 </div>
@@ -1293,15 +1291,21 @@ async function handleAddModel(event) {
 // Edit model
 async function editModel(modelId) {
     try {
+        console.log('Editing model with ID:', modelId);
+        
         // Find model in current data
         const model = Object.values(allModels).find(m => m._id === modelId || m.key === modelId);
         if (!model) {
+            console.error('Model not found in allModels:', modelId);
+            console.log('Available models:', Object.keys(allModels));
             alert('Model not found');
             return;
         }
         
+        console.log('Found model:', model);
+        
         // Populate edit form
-        document.getElementById('editModelId').value = model._id || modelId;
+        document.getElementById('editModelId').value = model._id || model.key || modelId;
         document.getElementById('editKey').value = model.key;
         document.getElementById('editDisplayName').value = model.displayName;
         document.getElementById('editDescription').value = model.description;
@@ -1332,7 +1336,10 @@ async function handleEditModel(event) {
     
     const form = event.target;
     const formData = new FormData(form);
-    const modelId = formData.get('modelId');
+    const modelId = formData.get('id');
+    
+    console.log('Updating model with ID:', modelId);
+    console.log('Form data:', Object.fromEntries(formData.entries()));
     
     // Get supported languages
     const supportedLanguages = [];

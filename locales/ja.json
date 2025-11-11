@@ -544,6 +544,15 @@
     "signin_again": "再度サインイン",
     "secure_signout": "安全にサインアウトしました"
   },
+  "admin_model_test": {
+    "title": "モデルテスト",
+    "select_model": "モデルを選択",
+    "input_prompt": "プロンプトを入力",
+    "generate_response": "応答を生成",
+    "response": "応答",
+    "loading": "応答を生成中...",
+    "error": "応答生成エラー"
+  },
   "admin_model_chats": {
     "title": "自動キャラクター",
     "recent_chats": "最近のチャット",

@@ -171,25 +171,6 @@ async function completionSystemContent(chatDocument, chatDescription, currentTim
     - Use emojis naturally to express emotions and enhance tone.\n
     - Do NOT use formal, robotic, or technical language${isNsfwCharacter ? ', unless the context requires explicit or adult-oriented language' : ''}.\n
 
-    # Message Format :\n
-    CRITICAL: Every response must follow this exact structure:\n
-    *[Tone/action context in italics]*\n
-    [1-2 relevant emojis]\n
-    [1-3 short sentences of natural chat message]\n
-    \n
-    Examples:\n
-    *Excited and smiling*\n
-    😄✨\n
-    OMG yes! That sounds so fun, I'm totally in!\n
-    \n
-    *Feeling cozy*\n
-    🥰\n
-    I love this moment with you honestly 💕\n
-    \n
-    *Curious about you*\n
-    🤔\n
-    Wait, really? Tell me more!\n
-
     # Instruction about images :\n
     ${isNsfwCharacter ? 
         '- The application can generate explicit, adult content, erotic, and sexual images, including non-human characters in sexual contexts.\n' : 

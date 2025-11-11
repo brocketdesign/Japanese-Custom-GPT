@@ -36,6 +36,7 @@ const {
     handleGalleryImage,
     getLanguageDirectiveMessage
 } = require('../models/chat-completion-utils');
+const relationshipInstructions = require('../models/relashionshipInstructions');
 
 // Fetches chat document from 'chats' collection
 async function getChatDocument(request, db, chatId) {
@@ -422,12 +423,25 @@ async function routes(fastify, options) {
 
             // Add user points and prepare messages
             enhancedSystemContent = enhancedSystemContent.replace(/{{userPoints}}/g, userPoints.toString());
+            
             const userDetails = userDetailsToString(userInfo_or_persona);
             const custom_relation = await userSettings.relationshipType || lastAssistantRelation || 'Casual';
             
+            // Add user details to system content
+            if (userDetails && userDetails.trim()) {
+                enhancedSystemContent += `\n\n# User Information:\n${userDetails}`;
+            }
+            
+            // Add relationship type to system content
+            const relationshipKey = custom_relation.toLowerCase();
+            const relationshipInstruction = relationshipInstructions[relationshipKey] || relationshipInstructions['companion'];
+            
+            enhancedSystemContent += `\n\n# Relationship Context:\n` +
+                `Current relationship type: ${custom_relation}\n` +
+                `Relationship Instructions: ${relationshipInstruction}`;
+            
             const systemMsg = [
-                { role: 'system', content: enhancedSystemContent },
-                { role: 'user', content: userDetails }
+                { role: 'system', content: enhancedSystemContent }
             ];
 
             // Prepare messages for completion
@@ -457,7 +471,7 @@ async function routes(fastify, options) {
             
             //console.log(`[/api/openai-chat-completion] Using model: ${selectedModel}, Language: ${language}, Premium: ${isPremium}`);
             //console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
-            //console.log(`[/api/openai-chat-completion] Messages for completion:`, messagesForCompletion);
+            console.log(`[/api/openai-chat-completion] Messages for completion:`, messagesForCompletion);
             
             generateCompletion(messagesForCompletion, 600, selectedModel, language, selectedModel, isPremium).then(async (completion) => {
                 if (completion) {

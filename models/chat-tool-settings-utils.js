@@ -208,10 +208,33 @@ async function getAutoMergeFaceSetting(db, userId, chatId = null) {
 async function getUserSelectedModel(db, userId, chatId = null) {
     try {
         const settings = await getUserChatToolSettings(db, userId, chatId);
-        return settings.selectedModel || 'mistral'; // Default to mistral
+        let selectedModel = settings.selectedModel;
+        
+        // If no model selected, try to get a default from available models
+        if (!selectedModel) {
+            try {
+                const { getAvailableModelsFormatted } = require('./chat-model-utils');
+                const dbModels = await getAvailableModelsFormatted();
+                
+                if (dbModels && Object.keys(dbModels).length > 0) {
+                    // Get first available free model as default
+                    const freeModels = Object.entries(dbModels).filter(([key, model]) => model.category !== 'premium');
+                    if (freeModels.length > 0) {
+                        selectedModel = freeModels[0][0];
+                    }
+                }
+            } catch (dbError) {
+                console.log('[getUserSelectedModel] Database not available, using legacy default');
+            }
+            
+            // Final fallback to legacy default
+            selectedModel = selectedModel || 'openai';
+        }
+        
+        return selectedModel;
     } catch (error) {
         console.error('[getUserSelectedModel] Error getting selected model:', error);
-        return 'mistral';
+        return 'openai'; // Changed default to openai as it's more commonly available
     }
 }
 

@@ -170,13 +170,11 @@ async function updateGoalsAnalytics(db, userId, chatId, difficulty) {
  */
 async function getMilestoneGoalsData(db, userId, chatId) {
     try {
-        console.log('📊 [MILESTONE] Getting goals data for user:', userId?.toString(), 'chat:', chatId?.toString());
-        
         // Get milestone progress
         const milestoneProgress = await getUserMilestoneProgress(db, userId, chatId);
         
         // Get reward points for next milestones (character-specific rewards)
-        const getRewardPoints = (type, nextMilestone) => {
+        const getRewardPoints = (type, actualNextMilestone) => {
             const rewards = {
                 images: {
                     5: 25, 10: 35, 25: 60, 50: 100, 100: 200
@@ -189,7 +187,7 @@ async function getMilestoneGoalsData(db, userId, chatId) {
                     250: 200
                 }
             };
-            return rewards[type][nextMilestone] || 0;
+            return rewards[type][actualNextMilestone] || 0;
         };
         
         // Format the milestone data for frontend
@@ -201,9 +199,11 @@ async function getMilestoneGoalsData(db, userId, chatId) {
                 next: milestoneProgress.images.next,
                 progress: Math.min(milestoneProgress.images.progress, 100),
                 isCompleted: milestoneProgress.images.isCompleted,
-                reward: getRewardPoints('images', milestoneProgress.images.next),
+                reward: getRewardPoints('images', milestoneProgress.images.actualNext),
                 title: 'Image Generation',
-                description: `Generate ${milestoneProgress.images.next} images`
+                description: milestoneProgress.images.next > 0 ? 
+                    `Generate ${milestoneProgress.images.next} more images` : 
+                    'All image milestones completed!'
             },
             videos: {
                 type: 'videos',
@@ -212,9 +212,11 @@ async function getMilestoneGoalsData(db, userId, chatId) {
                 next: milestoneProgress.videos.next,
                 progress: Math.min(milestoneProgress.videos.progress, 100),
                 isCompleted: milestoneProgress.videos.isCompleted,
-                reward: getRewardPoints('videos', milestoneProgress.videos.next),
+                reward: getRewardPoints('videos', milestoneProgress.videos.actualNext),
                 title: 'Video Generation',
-                description: `Generate ${milestoneProgress.videos.next} videos`
+                description: milestoneProgress.videos.next > 0 ? 
+                    `Generate ${milestoneProgress.videos.next} more videos` : 
+                    'All video milestones completed!'
             },
             messages: {
                 type: 'messages',
@@ -223,9 +225,11 @@ async function getMilestoneGoalsData(db, userId, chatId) {
                 next: milestoneProgress.messages.next,
                 progress: Math.min(milestoneProgress.messages.progress, 100),
                 isCompleted: milestoneProgress.messages.isCompleted,
-                reward: getRewardPoints('messages', milestoneProgress.messages.next),
+                reward: getRewardPoints('messages', milestoneProgress.messages.actualNext),
                 title: 'Messages Sent',
-                description: `Send ${milestoneProgress.messages.next} messages`
+                description: milestoneProgress.messages.next > 0 ? 
+                    `Send ${milestoneProgress.messages.next} more messages` : 
+                    'All message milestones completed!'
             }
         };
         

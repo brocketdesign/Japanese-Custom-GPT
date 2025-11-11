@@ -60,13 +60,48 @@ const modelConfig = {
     }
   }
 };
-// Helper function to get all available models
-const getAllAvailableModels = (isPremium = false) => {
+// Helper function to get all available models (updated for database compatibility)
+const getAllAvailableModels = async (isPremium = false) => {
+  try {
+    // Try to use database models first
+    const { getAvailableModelsFormatted } = require('./chat-model-utils');
+    const dbModels = await getAvailableModelsFormatted();
+    if (dbModels && Object.keys(dbModels).length > 0) {
+      return dbModels;
+    }
+  } catch (error) {
+    console.log('Database models not available, using hardcoded models');
+  }
+  
+  // Fallback to hardcoded models
   const models = { ...modelConfig.free, ...modelConfig.premium };
   return models;
 };
-// Helper function to get available models based on subscription
-const getAvailableModels = (isPremium = false) => {
+
+// Helper function to get available models based on subscription (updated for database compatibility)
+const getAvailableModels = async (isPremium = false) => {
+  try {
+    // Try to use database models first
+    const { getAvailableModelsFormatted } = require('./chat-model-utils');
+    const dbModels = await getAvailableModelsFormatted();
+    if (dbModels && Object.keys(dbModels).length > 0) {
+      // Filter by premium status if needed
+      if (!isPremium) {
+        const filteredModels = {};
+        Object.entries(dbModels).forEach(([key, model]) => {
+          if (model.category !== 'premium') {
+            filteredModels[key] = model;
+          }
+        });
+        return filteredModels;
+      }
+      return dbModels;
+    }
+  } catch (error) {
+    console.log('Database models not available, using hardcoded models');
+  }
+  
+  // Fallback to hardcoded models
   const models = { ...modelConfig.free };
   if (isPremium) {
     Object.assign(models, modelConfig.premium);
@@ -74,9 +109,29 @@ const getAvailableModels = (isPremium = false) => {
   return models;
 };
 
-// Helper function to get model config by key
-const getModelConfig = (modelKey, isPremium = false) => {
-  const availableModels = getAvailableModels(isPremium);
+// Helper function to get model config by key (updated for database compatibility)
+const getModelConfig = async (modelKey, isPremium = false) => {
+  try {
+    // Try to use database models first
+    const { getModelByKey } = require('./chat-model-utils');
+    const dbModel = await getModelByKey(modelKey);
+    if (dbModel) {
+      return {
+        provider: dbModel.provider,
+        modelName: dbModel.key,
+        displayName: dbModel.displayName,
+        description: dbModel.description,
+        modelId: dbModel.modelId,
+        apiUrl: dbModel.apiUrl,
+        maxTokens: dbModel.maxTokens
+      };
+    }
+  } catch (error) {
+    console.log('Database model not found, using hardcoded models');
+  }
+  
+  // Fallback to hardcoded models
+  const availableModels = { ...modelConfig.free, ...(isPremium ? modelConfig.premium : {}) };
   return availableModels[modelKey] || availableModels.hermes; // Default to hermes
 };
 
@@ -117,77 +172,154 @@ const moderateImage = async (imageUrl) => {
 
 
 async function generateCompletion(messages, maxToken = 1000, model = null, lang = 'en', userModelPreference = null, isPremium = false) {
-  // Determine which model configuration to use
-  let modelConfig = { ...currentModelConfig };
-  
-  // Check if user has a model preference and it's available
-  if (userModelPreference) {
-    const userModelConfig = getModelConfig(userModelPreference, isPremium);
-    if (userModelConfig) {
-      modelConfig.provider = userModelConfig.provider;
-      modelConfig.modelName = userModelConfig.modelName;
+  try {
+    // Try to get model from database first
+    const { getModelByKey, getProviderByName } = require('./chat-model-utils');
+    
+    let dbModel = null;
+    let dbProvider = null;
+    
+    // Determine which model to use
+    let modelToUse = model || userModelPreference;
+    
+    // Try to get from database
+    if (modelToUse) {
+      try {
+        dbModel = await getModelByKey(modelToUse);
+        if (dbModel) {
+          dbProvider = await getProviderByName(dbModel.provider);
+        }
+      } catch (error) {
+        console.log(`[generateCompletion] Database model lookup failed: ${error.message}`);
+      }
     }
-  }
-  
-  if (model) {
-    if (apiDetails[model]) {
-      // Direct provider like 'openai'
-      modelConfig.provider = model;
-      modelConfig.modelName = null;
-    } else {
-      // Specific model like 'deepseek'
-      for (const provider in apiDetails) {
-        if (apiDetails[provider].models && apiDetails[provider].models[model]) {
-          modelConfig.provider = provider;
-          modelConfig.modelName = model;
-          break;
+
+    // Use database model if available
+    if (dbModel && dbProvider) {
+      const apiKey = process.env[dbProvider.envKeyName];
+      if (!apiKey) {
+        console.error(`[generateCompletion] API key not found for provider: ${dbModel.provider}`);
+        // Fall back to legacy system
+      } else {
+        console.log(`[generateCompletion] Using database model: ${dbModel.displayName}`);
+        
+        for (let attempt = 1; attempt <= 2; attempt++) {
+          try {
+            const response = await fetch(dbModel.apiUrl, {
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${apiKey}`
+              },
+              method: "POST",
+              body: JSON.stringify({
+                model: dbModel.modelId,
+                messages,
+                temperature: 1,
+                max_completion_tokens: Math.min(maxToken, dbModel.maxTokens || maxToken),
+                stream: false,
+                n: 1,
+              }),
+            });
+
+            if (!response.ok) {
+              if (attempt === 2) {
+                const errorData = await response.json().catch(() => ({}));
+                console.log(`Failed after ${attempt} attempts:`, errorData.error?.message || '');
+                break; // Try legacy fallback
+              }
+              continue; // Try second attempt
+            }
+
+            const data = await response.json();
+            return data.choices[0].message.content.trim();
+          } catch (error) {
+            if (attempt === 2) {
+              console.error(`Failed after ${attempt} attempts:`, error.message);
+              break; // Try legacy fallback
+            }
+          }
         }
       }
     }
-  }
 
-  // Get the API details
-  const provider = apiDetails[modelConfig.provider];
-  const modelName = modelConfig.modelName && provider.models ? 
-    provider.models[modelConfig.modelName] : 
-    provider.model;
+    // Fallback to legacy system
+    console.log(`[generateCompletion] Falling back to legacy model system`);
+    
+    // Determine which model configuration to use (legacy)
+    let modelConfig = { ...currentModelConfig };
+    
+    // Check if user has a model preference and it's available
+    if (userModelPreference) {
+      const userModelConfig = await getModelConfig(userModelPreference, isPremium);
+      if (userModelConfig) {
+        modelConfig.provider = userModelConfig.provider;
+        modelConfig.modelName = userModelConfig.modelName;
+      }
+    }
+    
+    if (model) {
+      if (apiDetails[model]) {
+        // Direct provider like 'openai'
+        modelConfig.provider = model;
+        modelConfig.modelName = null;
+      } else {
+        // Specific model like 'deepseek'
+        for (const provider in apiDetails) {
+          if (apiDetails[provider].models && apiDetails[provider].models[model]) {
+            modelConfig.provider = provider;
+            modelConfig.modelName = model;
+            break;
+          }
+        }
+      }
+    }
 
-  console.log(`[generateCompletion] Using model: ${modelName}`);
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      const response = await fetch(provider.apiUrl, {
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${provider.key}`
-        },
-        method: "POST",
-        body: JSON.stringify({
-          model: modelName,
-          messages,
-          temperature: 1,
-          max_completion_tokens: maxToken,
-          stream: false,
-          n: 1,
-        }),
-      });
-      // Rest of your function remains the same
-      if (!response.ok) {
+    // Get the API details
+    const provider = apiDetails[modelConfig.provider];
+    const modelName = modelConfig.modelName && provider.models ? 
+      provider.models[modelConfig.modelName] : 
+      provider.model;
+
+    console.log(`[generateCompletion] Using legacy model: ${modelName}`);
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const response = await fetch(provider.apiUrl, {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${provider.key}`
+          },
+          method: "POST",
+          body: JSON.stringify({
+            model: modelName,
+            messages,
+            temperature: 1,
+            max_completion_tokens: maxToken,
+            stream: false,
+            n: 1,
+          }),
+        });
+        // Rest of your function remains the same
+        if (!response.ok) {
+          if (attempt === 2) {
+            const errorData = await response.json().catch(() => ({}));
+            console.log(`Failed after ${attempt} attempts:`, errorData.error?.message || '');
+            return false;
+          }
+          continue; // Try second attempt
+        }
+
+        const data = await response.json();
+        return data.choices[0].message.content.trim();
+      } catch (error) {
         if (attempt === 2) {
-          const errorData = await response.json().catch(() => ({}));
-          console.log(`Failed after ${attempt} attempts:`, errorData.error?.message || '');
+          console.error(`Failed after ${attempt} attempts:`, error.message);
           return false;
         }
-        continue; // Try second attempt
-      }
-
-      const data = await response.json();
-      return data.choices[0].message.content.trim();
-    } catch (error) {
-      if (attempt === 2) {
-        console.error(`Failed after ${attempt} attempts:`, error.message);
-        return false;
       }
     }
+  } catch (error) {
+    console.error(`[generateCompletion] Error: ${error.message}`);
+    return false;
   }
 }
 

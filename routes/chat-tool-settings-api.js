@@ -337,9 +337,39 @@ async function routes(fastify, options) {
             
             const isPremium = user?.subscriptionStatus === 'active';
             
-            // Import model configuration from openai.js
+            try {
+                // Try to use database models first
+                const { getAvailableModelsFormatted } = require('../models/chat-model-utils');
+                const dbModels = await getAvailableModelsFormatted();
+                
+                if (dbModels && Object.keys(dbModels).length > 0) {
+                    // Filter models based on subscription status
+                    let availableModels = {};
+                    
+                    Object.entries(dbModels).forEach(([key, model]) => {
+                        // Show all free models and premium models only to premium users
+                        if (model.category !== 'premium' || isPremium) {
+                            availableModels[key] = model;
+                        }
+                    });
+                    
+                    console.log(`[chat-tool-settings] Loaded ${Object.keys(availableModels).length} models from database for user ${userId} (Premium: ${isPremium})`);
+                    
+                    return reply.send({ 
+                        success: true, 
+                        models: availableModels,
+                        isPremium: isPremium
+                    });
+                }
+            } catch (dbError) {
+                console.log('[chat-tool-settings] Database models not available, falling back to legacy system:', dbError.message);
+            }
+            
+            // Fallback to legacy system
             const { getAllAvailableModels } = require('../models/openai');
-            const availableModels = getAllAvailableModels(isPremium);
+            const availableModels = await getAllAvailableModels(isPremium);
+            
+            console.log(`[chat-tool-settings] Using legacy models for user ${userId} (Premium: ${isPremium})`);
             
             reply.send({ 
                 success: true, 

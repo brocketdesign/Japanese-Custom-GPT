@@ -82,7 +82,6 @@ async function routes(fastify, options) {
 
             // Get user's language preference
             const language = getLanguageName(userInfo.lang) || 'japanese';
-            console.log(`[Chat Suggestions] Generating suggestions in language: ${language}`);
             // Generate suggestions
             const suggestions = await generateChatSuggestions(
                 db,
@@ -164,9 +163,6 @@ async function routes(fastify, options) {
                 }
             );
 
-            console.log('🚀 [SUGGESTION MESSAGE] Added suggestion message for user:', userId);
-            console.log('🎯 [MILESTONE CHECK] Calling milestone function for suggestion message...');
-
             // Check for character message milestones (same as regular messages)
             try {
                 await awardCharacterMessageMilestoneReward(
@@ -175,7 +171,6 @@ async function routes(fastify, options) {
                     new ObjectId(chatId),
                     fastify
                 );
-                console.log('🎯 [MILESTONE CHECK] Suggestion milestone check completed');
             } catch (milestoneError) {
                 console.error('🚨 [MILESTONE ERROR] Error in suggestion milestone check:', milestoneError);
             }

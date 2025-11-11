@@ -1425,15 +1425,16 @@ class ChatToolSettings {
             return;
         }
 
-        // Separate free and premium models
+        // Separate free and premium models based on category
         const freeModels = {};
         const premiumModels = {};
 
         Object.entries(this.availableModels).forEach(([key, model]) => {
-            if (model.provider === 'openai') {
-                freeModels[key] = model;
-            } else {
+            if (model.category === 'premium') {
                 premiumModels[key] = model;
+            } else {
+                // All non-premium models are considered free
+                freeModels[key] = model;
             }
         });
 
@@ -1546,27 +1547,47 @@ class ChatToolSettings {
     getProviderName(provider) {
         const providerNames = {
             'openai': 'OpenAI',
-            'novita': 'Novita AI'
+            'novita': 'Novita AI',
+            'anthropic': 'Anthropic',
+            'google': 'Google AI'
         };
-        return providerNames[provider] || provider;
+        return providerNames[provider] || provider.charAt(0).toUpperCase() + provider.slice(1);
     }
 
     getSpeedLabel(modelKey) {
+        // Check if model has specific speed info
+        const model = this.availableModels[modelKey];
+        if (model && model.speed) {
+            return model.speed;
+        }
+        
         const speedMap = {
             'deepseek': 'Very Fast',
             'gemma': 'Fast',
             'openai': 'Medium',
-            'llama': 'Medium'
+            'llama': 'Medium',
+            'gpt-4o': 'Fast',
+            'claude': 'Fast',
+            'gemini': 'Very Fast'
         };
         return speedMap[modelKey] || 'Medium';
     }
 
     getQualityLabel(modelKey) {
+        // Check if model has specific quality info
+        const model = this.availableModels[modelKey];
+        if (model && model.quality) {
+            return model.quality;
+        }
+        
         const qualityMap = {
             'openai': 'Excellent',
             'llama': 'Excellent',
             'deepseek': 'Excellent',
             'gemma': 'Very Good',
+            'gpt-4o': 'Excellent',
+            'claude': 'Excellent',
+            'gemini': 'Very Good'
         };
         return qualityMap[modelKey] || 'Good';
     }

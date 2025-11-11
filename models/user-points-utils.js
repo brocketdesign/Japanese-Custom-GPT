@@ -1336,8 +1336,6 @@ async function awardCharacterVideoMilestoneReward(db, userId, chatId, fastify = 
  * @returns {Object} Result of milestone check and potential reward
  */
 async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify = null) {
-  console.log('🔥 [MILESTONE FUNCTION] Called for user:', userId?.toString(), 'chat:', chatId?.toString());
-  
   const usersCollection = db.collection('users');
   const userChatCollection = db.collection('userChat');
   const milestonesCollection = db.collection('user_milestones');
@@ -1348,8 +1346,6 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
     console.log('❌ [DEBUG] User not found for userId:', userId);
     throw new Error('User not found');
   }
-  
-  console.log('✅ [DEBUG] User found:', { userId: user._id.toString(), lang: user.lang });
   
   const userPointsTranslations = fastify ? fastify.getUserPointsTranslations(user.lang || 'en') : {};
   
@@ -1365,16 +1361,8 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
     { $group: { _id: null, totalMessages: { $sum: 1 } } }
   ];
   
-  console.log('🔍 [DEBUG] Message count pipeline:', JSON.stringify(pipeline, null, 2));
-  
   const result = await userChatCollection.aggregate(pipeline).toArray();
   const totalMessages = result[0]?.totalMessages || 0;
-  
-  console.log('📊 [DEBUG] Message count result:', {
-    aggregationResult: result,
-    totalMessages,
-    chatId: chatId?.toString()
-  });
   
   // Define character-specific milestone rewards (lower thresholds than global)
   const milestones = {
@@ -1385,16 +1373,8 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
     250: { points: 200, message: userPointsTranslations.points?.character_messages?.milestone_rewards?.two_fifty_messages || '250 messages with this character!' }
   };
   
-  console.log('🎯 [MILESTONE CHECK] Current message count:', totalMessages, '- Checking milestones...');
-  
   // Check if current message count hits a milestone
   const milestone = milestones[totalMessages];
-  
-  if (milestone) {
-    console.log('� [MILESTONE HIT] Found milestone for', totalMessages, 'messages! Points:', milestone.points);
-  } else {
-    console.log('⚪ [MILESTONE] No milestone at', totalMessages, 'messages. Next milestones: 10, 25, 50, 100, 250');
-  }
   
   if (!milestone) {
     // Send goals refresh notification even if no milestone is reached
@@ -1426,14 +1406,9 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
     milestone: totalMessages
   };
   
-  console.log('🔍 [DEBUG] Checking existing milestone with query:', milestoneQuery);
-  
   const existingMilestone = await milestonesCollection.findOne(milestoneQuery);
   
-  console.log('🔍 [DEBUG] Existing milestone found:', existingMilestone);
-  
   if (existingMilestone) {
-    console.log('⚠️ [DEBUG] Milestone already granted, skipping');
     return {
       success: false,
       totalMessages,
@@ -1571,8 +1546,6 @@ async function getUserMilestoneProgress(db, userId, chatId = null) {
   // Message count progress
   let totalMessages = 0;
   if (chatId) {
-    console.log('📈 [MESSAGE COUNT] Counting messages for chat:', chatId?.toString());
-    
     // Character-specific message count - count all user messages for this chat
     const messagePipeline = [
       { $match: { 
@@ -1587,8 +1560,6 @@ async function getUserMilestoneProgress(db, userId, chatId = null) {
     
     const messageResult = await userChatCollection.aggregate(messagePipeline).toArray();
     totalMessages = messageResult[0]?.totalMessages || 0;
-    
-    console.log('📈 [MESSAGE COUNT] Found', totalMessages, 'user messages for chat:', chatId?.toString());
   } else {
     // Global message count
     const messagePipeline = [
@@ -1620,11 +1591,19 @@ async function getUserMilestoneProgress(db, userId, chatId = null) {
   const getNextMilestone = (current, milestones) => {
     const next = milestones.find(m => m > current);
     const previous = milestones.filter(m => m <= current).pop() || 0;
+    
+    // Calculate progress relative to previous milestone
+    const currentRelative = current - previous; // Progress since last milestone
+    const nextRelative = next ? next - previous : 0; // Amount needed for next milestone
+    const progressPercent = next ? (currentRelative / nextRelative) * 100 : 100;
+    
     return {
-      current,
-      next: next || milestones[milestones.length - 1],
+      current: currentRelative, // Show progress from 0 at each new milestone
+      next: nextRelative, // Show remaining amount needed
       previous,
-      progress: next ? (current / next) * 100 : 100,
+      actualCurrent: current, // Keep track of actual total for backend logic
+      actualNext: next, // Keep track of actual next milestone for backend logic
+      progress: progressPercent,
       isCompleted: !next
     };
   };

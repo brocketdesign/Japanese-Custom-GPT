@@ -17,6 +17,42 @@
                 </div>
             </div>
 
+            <!-- Model Management Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0"><i class="bi bi-cpu"></i> Model Management</h5>
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addModelModal">
+                                    <i class="bi bi-plus-circle"></i> Add New Model
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body" style="max-height: 400px; overflow-y: auto;"></div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle" id="modelsTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Model Name</th>
+                                            <th>Provider</th>
+                                            <th>Category</th>
+                                            <th>Status</th>
+                                            <th>Max Tokens</th>
+                                            <th>Languages</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="modelsTableBody">
+                                        <!-- Models will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Main Content -->
             <div class="row">
                 <!-- Control Panel -->
@@ -25,7 +61,12 @@
                         <div class="card-body">
                             <!-- Model Selection -->
                             <div class="mb-4">
-                                <h5 class="card-title">{{translations.section_models}}</h5>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h5 class="card-title mb-0">{{translations.section_models}}</h5>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="refreshModels()" title="Refresh models list">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </button>
+                                </div>
                                 <p class="small text-muted">{{translations.section_models_description}}</p>
                                 <div id="modelSelectionContainer">
                                     <div class="mb-3">
@@ -102,12 +143,21 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="card-title mb-0">{{translations.section_system_prompt}}</h5>
-                                <button id="resetPromptBtn" class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-arrow-clockwise"></i> {{translations.button_reset_prompt}}
-                                </button>
+                                <div class="btn-group btn-group-sm">
+                                    <button id="templatePromptsBtn" class="btn btn-outline-primary" data-bs-toggle="dropdown">
+                                        <i class="bi bi-list-ul"></i> Templates
+                                    </button>
+                                    <ul class="dropdown-menu" id="templatePromptsMenu">
+                                        <li><h6 class="dropdown-header">Chat & Roleplay Templates</h6></li>
+                                        <!-- Templates will be populated by JavaScript -->
+                                    </ul>
+                                    <button id="resetPromptBtn" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-clockwise"></i> {{translations.button_reset_prompt}}
+                                    </button>
+                                </div>
                             </div>
-                            <p class="small text-muted mb-3">{{translations.section_system_prompt_description}}</p>
-                            <textarea id="systemPrompt" class="form-control" rows="4" placeholder="{{translations.placeholder_system_prompt}}">You are a helpful and friendly AI assistant.</textarea>
+                            <p class="small text-muted mb-3">{{translations.section_system_prompt_description}} Use templates above for common scenarios.</p>
+                            <textarea id="systemPrompt" class="form-control" style="min-height: 150px;" rows="6" placeholder="{{translations.placeholder_system_prompt}}">You are a helpful, friendly, and engaging AI assistant designed for casual conversation. Respond naturally like you would in a chat app (WhatsApp, etc.). Keep responses conversational, warm, and appropriately brief unless more detail is requested. Use emojis sparingly but naturally. Be supportive, curious about the user, and maintain a friendly tone throughout the conversation.</textarea>
                         </div>
                     </div>
 
@@ -116,8 +166,20 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="card-title mb-0">{{translations.section_questions}}</h5>
+                                <div class="btn-group btn-group-sm">
+                                    <button id="templateQuestionsBtn" class="btn btn-outline-primary" data-bs-toggle="dropdown">
+                                        <i class="bi bi-chat-quote"></i> Question Sets
+                                    </button>
+                                    <ul class="dropdown-menu" id="templateQuestionsMenu">
+                                        <li><h6 class="dropdown-header">Question Templates</h6></li>
+                                        <!-- Question sets will be populated by JavaScript -->
+                                    </ul>
+                                    <button id="clearQuestionsBtn" class="btn btn-outline-warning">
+                                        <i class="bi bi-trash"></i> Clear All
+                                    </button>
+                                </div>
                             </div>
-                            <p class="small text-muted mb-3">{{translations.section_questions_description}}</p>
+                            <p class="small text-muted mb-3">{{translations.section_questions_description}} Use question sets above for different test scenarios.</p>
                             
                             <div id="questionsContainer"></div>
 
@@ -288,6 +350,200 @@
     </div>
 </div>
 
+<!-- Add Model Modal -->
+<div class="modal fade" id="addModelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Add New Model</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addModelForm">
+                <div class="modal-body" style="max-height: 440px; overflow-y: auto;">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="modelKey" class="form-label">Model Key *</label>
+                            <input type="text" class="form-control" id="modelKey" name="key" required placeholder="e.g., gpt-4-turbo">
+                            <small class="form-text text-muted">Unique identifier for the model</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="modelDisplayName" class="form-label">Display Name *</label>
+                            <input type="text" class="form-control" id="modelDisplayName" name="displayName" required placeholder="e.g., GPT-4 Turbo">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modelDescription" class="form-label">Description *</label>
+                        <input type="text" class="form-control" id="modelDescription" name="description" required placeholder="Brief description of the model's capabilities">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="modelProvider" class="form-label">Provider *</label>
+                            <select class="form-select" id="modelProvider" name="provider" required>
+                                <option value="">Select provider</option>
+                                <option value="openai">OpenAI</option>
+                                <option value="novita">Novita AI</option>
+                                <option value="anthropic">Anthropic</option>
+                                <option value="google">Google</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="modelCategory" class="form-label">Category</label>
+                            <select class="form-select" id="modelCategory" name="category">
+                                <option value="free">Free</option>
+                                <option value="premium">Premium</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modelId" class="form-label">Model ID *</label>
+                        <input type="text" class="form-control" id="modelId" name="modelId" required placeholder="e.g., gpt-4-0125-preview">
+                        <small class="form-text text-muted">The exact model identifier used by the API provider (e.g., gpt-4o, claude-3-sonnet-20240229)</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modelApiUrl" class="form-label">API URL *</label>
+                        <input type="url" class="form-control" id="modelApiUrl" name="apiUrl" required placeholder="https://api.openai.com/v1/chat/completions">
+                        <small class="form-text text-muted">API endpoint URL (auto-filled when you select a provider)</small>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="modelMaxTokens" class="form-label">Max Tokens</label>
+                            <input type="number" class="form-control" id="modelMaxTokens" name="maxTokens" value="2048" min="100" max="32000">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="modelIsActive" class="form-label">Status</label>
+                            <select class="form-select" id="modelIsActive" name="isActive">
+                                <option value="true">Active</option>
+                                <option value="false">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Supported Languages</label>
+                        <div class="form-check-group">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="lang_en" value="en" checked>
+                                <label class="form-check-label" for="lang_en">English</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="lang_fr" value="fr">
+                                <label class="form-check-label" for="lang_fr">French</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="lang_ja" value="ja">
+                                <label class="form-check-label" for="lang_ja">Japanese</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Add Model
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Model Modal -->
+<div class="modal fade" id="editModelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil"></i> Edit Model</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editModelForm">
+                <div class="modal-body">
+                    <input type="hidden" id="editModelId" name="modelId">
+                    <!-- Same form structure as add model but with edit prefix -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editKey" class="form-label">Model Key *</label>
+                            <input type="text" class="form-control" id="editKey" name="key" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editDisplayName" class="form-label">Display Name *</label>
+                            <input type="text" class="form-control" id="editDisplayName" name="displayName" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDescription" class="form-label">Description *</label>
+                        <input type="text" class="form-control" id="editDescription" name="description" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editProvider" class="form-label">Provider *</label>
+                            <select class="form-select" id="editProvider" name="provider" required>
+                                <option value="openai">OpenAI</option>
+                                <option value="novita">Novita AI</option>
+                                <option value="anthropic">Anthropic</option>
+                                <option value="google">Google</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editCategory" class="form-label">Category</label>
+                            <select class="form-select" id="editCategory" name="category">
+                                <option value="free">Free</option>
+                                <option value="premium">Premium</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editModelId" class="form-label">Model ID *</label>
+                        <input type="text" class="form-control" id="editModelIdField" name="modelId" required>
+                        <small class="form-text text-muted">The exact model identifier used by the API provider</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editApiUrl" class="form-label">API URL *</label>
+                        <input type="url" class="form-control" id="editApiUrl" name="apiUrl" required>
+                        <small class="form-text text-muted">API endpoint URL (auto-filled when you select a provider)</small>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editMaxTokens" class="form-label">Max Tokens</label>
+                            <input type="number" class="form-control" id="editMaxTokens" name="maxTokens" min="100" max="32000">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editIsActive" class="form-label">Status</label>
+                            <select class="form-select" id="editIsActive" name="isActive">
+                                <option value="true">Active</option>
+                                <option value="false">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Supported Languages</label>
+                        <div class="form-check-group">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="edit_lang_en" value="en">
+                                <label class="form-check-label" for="edit_lang_en">English</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="edit_lang_fr" value="fr">
+                                <label class="form-check-label" for="edit_lang_fr">French</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="edit_lang_ja" value="ja">
+                                <label class="form-check-label" for="edit_lang_ja">Japanese</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Update Model
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {{> dashboard-modals}}
 
 <style>
@@ -299,6 +555,10 @@
 
 .dashboard-content {
     padding: 20px;
+}
+
+.btn-group.btn-group-sm {
+    box-shadow: unset;
 }
 
 .card {
@@ -569,35 +829,200 @@
 </style>
 
 <script>
-// Translations
+// Translations and data
 const translations = window.chatModelTestTranslations || {};
 const availableModels = {{{availableModels}}};
+const providers = {{{providers}}};
+const templatePrompts = {{{templatePrompts}}};
+const templateQuestions = {{{templateQuestions}}};
 
 // State
 let selectedModels = [];
-let questions = ['What is artificial intelligence?'];
+let questions = [
+    "Hey! How's your day going? 😊",
+    "What's something interesting you learned recently?",
+    "Tell me about something that made you smile today"
+];
 let testResults = null;
+let allModels = {};
+let allProviders = {};
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
-    initializeModelCheckboxes();
+    initializeTemplates();
+    loadModels();
     initializeQuestions();
     attachEventListeners();
     updateLanguageCount();
     loadTestHistory();
 });
 
+// Initialize template functionality
+function initializeTemplates() {
+    // Initialize template prompts dropdown
+    const promptsMenu = document.getElementById('templatePromptsMenu');
+    Object.entries(templatePrompts).forEach(([key, template]) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<a class="dropdown-item" href="#" onclick="loadTemplatePrompt('${key}')">${template.name}</a>`;
+        promptsMenu.appendChild(li);
+    });
+
+    // Initialize template questions dropdown
+    const questionsMenu = document.getElementById('templateQuestionsMenu');
+    Object.entries(templateQuestions).forEach(([category, questionSet]) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<a class="dropdown-item" href="#" onclick="loadTemplateQuestions('${category}')">${category.replace(/_/g, ' ').toUpperCase()}</a>`;
+        questionsMenu.appendChild(li);
+    });
+}
+
+// Load template prompt
+function loadTemplatePrompt(templateKey) {
+    const template = templatePrompts[templateKey];
+    if (template) {
+        document.getElementById('systemPrompt').value = template.prompt;
+        // Show success feedback
+        const btn = document.getElementById('templatePromptsBtn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check-circle text-success"></i> Loaded';
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+        }, 1500);
+    }
+}
+
+// Load template questions
+function loadTemplateQuestions(category) {
+    const questionSet = templateQuestions[category];
+    if (questionSet && Array.isArray(questionSet)) {
+        questions = [...questionSet.slice(0, 5)]; // Limit to 5 questions
+        renderQuestions();
+        // Show success feedback
+        const btn = document.getElementById('templateQuestionsBtn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check-circle text-success"></i> Loaded';
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+        }, 1500);
+    }
+}
+
+// Load models and providers from database
+async function loadModels() {
+    try {
+        // Load providers first
+        const providersResponse = await fetch('/api/admin/chat-model-test/providers');
+        if (providersResponse.ok) {
+            const providersData = await providersResponse.json();
+            allProviders = {};
+            providersData.providers.forEach(provider => {
+                allProviders[provider.name] = provider;
+            });
+        } else {
+            // Fall back to passed providers data
+            allProviders = {};
+            providers.forEach(provider => {
+                allProviders[provider.name] = provider;
+            });
+        }
+
+        // Load models
+        const modelsResponse = await fetch('/api/admin/chat-model-test/models');
+        if (modelsResponse.ok) {
+            const data = await modelsResponse.json();
+            allModels = {};
+            data.models.forEach(model => {
+                allModels[model.key] = model;
+            });
+            initializeModelCheckboxes();
+            populateModelsTable();
+            setupProviderAutoFill();
+        } else {
+            console.error('Failed to load models');
+            // Fall back to hardcoded models
+            allModels = availableModels;
+            initializeModelCheckboxes();
+        }
+    } catch (error) {
+        console.error('Error loading models:', error);
+        // Fall back to hardcoded models
+        allModels = availableModels;
+        initializeModelCheckboxes();
+    }
+}
+
+// Setup provider auto-fill functionality
+function setupProviderAutoFill() {
+    const addProviderSelect = document.getElementById('modelProvider');
+    const editProviderSelect = document.getElementById('editProvider');
+    
+    // Populate provider dropdowns
+    [addProviderSelect, editProviderSelect].forEach(select => {
+        if (!select) return;
+        
+        // Clear existing options except the first one
+        const firstOption = select.querySelector('option[value=""]');
+        select.innerHTML = '';
+        if (firstOption) select.appendChild(firstOption);
+        
+        // Add provider options
+        Object.entries(allProviders).forEach(([key, provider]) => {
+            const option = document.createElement('option');
+            option.value = provider.name;
+            option.textContent = provider.displayName;
+            option.dataset.baseUrl = provider.baseUrl;
+            select.appendChild(option);
+        });
+    });
+
+    // Auto-fill API URL when provider is selected (Add form)
+    if (addProviderSelect) {
+        addProviderSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const baseUrl = selectedOption.dataset.baseUrl;
+            if (baseUrl) {
+                document.getElementById('modelApiUrl').value = baseUrl;
+            }
+        });
+    }
+
+    // Auto-fill API URL when provider is selected (Edit form)
+    if (editProviderSelect) {
+        editProviderSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const baseUrl = selectedOption.dataset.baseUrl;
+            if (baseUrl) {
+                document.getElementById('editApiUrl').value = baseUrl;
+            }
+        });
+    }
+}
+
+// Refresh models list
+async function refreshModels() {
+    await loadModels();
+}
+
 function initializeModelCheckboxes() {
     const container = document.getElementById('modelCheckboxes');
-    Object.entries(availableModels).forEach(([key, model]) => {
+    container.innerHTML = '';
+    
+    Object.entries(allModels).forEach(([key, model]) => {
+        // Skip inactive models for selection
+        if (model.isActive === false) return;
+        
         const div = document.createElement('div');
         div.className = 'form-check';
+        const displayName = model.displayName || model.displayName;
+        const description = model.description || model.description;
+        
         div.innerHTML = `
             <input class="form-check-input model-select" type="checkbox" id="model-${key}" value="${key}">
             <label class="form-check-label" for="model-${key}">
-                <strong>${model.displayName}</strong>
+                <strong>${displayName}</strong>
+                ${model.category ? `<span class="badge bg-${model.category === 'premium' ? 'warning' : 'success'} ms-2">${model.category}</span>` : ''}
                 <br>
-                <small class="text-muted">${model.description}</small>
+                <small class="text-muted">${description}</small>
             </label>
         `;
         container.appendChild(div);
@@ -605,6 +1030,48 @@ function initializeModelCheckboxes() {
 
     document.querySelectorAll('.model-select').forEach(checkbox => {
         checkbox.addEventListener('change', updateSelectedModels);
+    });
+    updateSelectedModels();
+}
+
+// Populate models management table
+function populateModelsTable() {
+    const tbody = document.getElementById('modelsTableBody');
+    tbody.innerHTML = '';
+
+    Object.entries(allModels).forEach(([key, model]) => {
+        const row = tbody.insertRow();
+        const statusBadge = model.isActive !== false ? 
+            '<span class="badge bg-success">Active</span>' : 
+            '<span class="badge bg-danger">Inactive</span>';
+        
+        const categoryBadge = model.category === 'premium' ? 
+            '<span class="badge bg-warning">Premium</span>' : 
+            '<span class="badge bg-success">Free</span>';
+            
+        const languages = (model.supportedLanguages || ['en']).join(', ').toUpperCase();
+        
+        row.innerHTML = `
+            <td>
+                <strong>${model.displayName}</strong>
+                <br><small class="text-muted">${model.key}</small>
+            </td>
+            <td>${model.provider}</td>
+            <td>${categoryBadge}</td>
+            <td>${statusBadge}</td>
+            <td>${model.maxTokens || 'N/A'}</td>
+            <td><small>${languages}</small></td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" onclick="editModel('${model._id || key}')" title="Edit model">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="deleteModel('${model._id || key}')" title="Delete model">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
     });
 }
 
@@ -669,6 +1136,11 @@ function attachEventListeners() {
     document.getElementById('exportResultsBtn').addEventListener('click', exportResults);
     document.getElementById('selectAllLanguagesBtn').addEventListener('click', selectAllLanguages);
     document.getElementById('clearLanguagesBtn').addEventListener('click', clearLanguages);
+    document.getElementById('clearQuestionsBtn').addEventListener('click', clearAllQuestions);
+
+    // Model management form handlers
+    document.getElementById('addModelForm').addEventListener('submit', handleAddModel);
+    document.getElementById('editModelForm').addEventListener('submit', handleEditModel);
 
     // Attach listeners to language checkboxes with new class name to avoid jQuery conflict
     const langCheckboxes = document.querySelectorAll('.model-language-select');
@@ -692,7 +1164,7 @@ function addQuestion() {
 }
 
 function resetPrompt() {
-    document.getElementById('systemPrompt').value = 'You are a helpful and friendly AI assistant.';
+    document.getElementById('systemPrompt').value = 'You are a helpful, friendly, and engaging AI assistant designed for casual conversation. Respond naturally like you would in a chat app (WhatsApp, etc.). Keep responses conversational, warm, and appropriately brief unless more detail is requested. Use emojis sparingly but naturally. Be supportive, curious about the user, and maintain a friendly tone throughout the conversation.';
 }
 
 function selectAllLanguages() {
@@ -734,13 +1206,11 @@ function resetTest() {
     document.getElementById('lang-ja').checked = false;
     updateLanguageCount();
 
-    // Reset questions back to defaults
+    // Reset questions back to chat-focused defaults
     questions = [
-        'What is artificial intelligence?',
-        'How does machine learning work?',
-        'Explain the difference between ML and AI',
-        'What are neural networks?',
-        'How can AI be used in business?'
+        "Hey! How's your day going? 😊",
+        "What's something interesting you learned recently?",
+        "Tell me about something that made you smile today"
     ];
     renderQuestions();
 
@@ -757,6 +1227,179 @@ function resetTest() {
 
     // Show confirmation
     alert('Test configuration has been reset to defaults');
+}
+
+// Clear all questions
+function clearAllQuestions() {
+    if (confirm('Are you sure you want to clear all questions?')) {
+        questions = [];
+        renderQuestions();
+    }
+}
+
+// Model Management Functions
+
+// Handle add model form submission
+async function handleAddModel(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    
+    // Get supported languages
+    const supportedLanguages = [];
+    ['en', 'fr', 'ja'].forEach(lang => {
+        if (document.getElementById(`lang_${lang}`).checked) {
+            supportedLanguages.push(lang);
+        }
+    });
+    
+    const modelData = {
+        key: formData.get('key'),
+        displayName: formData.get('displayName'),
+        description: formData.get('description'),
+        provider: formData.get('provider'),
+        modelId: formData.get('modelId'),
+        apiUrl: formData.get('apiUrl'),
+        category: formData.get('category'),
+        maxTokens: parseInt(formData.get('maxTokens')),
+        isActive: formData.get('isActive') === 'true',
+        supportedLanguages
+    };
+    
+    try {
+        const response = await fetch('/api/admin/chat-model-test/models', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(modelData)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            alert('Model added successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('addModelModal')).hide();
+            form.reset();
+            await loadModels(); // Refresh models list
+        } else {
+            alert(`Error: ${result.error}`);
+        }
+    } catch (error) {
+        console.error('Error adding model:', error);
+        alert('Failed to add model. Please try again.');
+    }
+}
+
+// Edit model
+async function editModel(modelId) {
+    try {
+        // Find model in current data
+        const model = Object.values(allModels).find(m => m._id === modelId || m.key === modelId);
+        if (!model) {
+            alert('Model not found');
+            return;
+        }
+        
+        // Populate edit form
+        document.getElementById('editModelId').value = model._id || modelId;
+        document.getElementById('editKey').value = model.key;
+        document.getElementById('editDisplayName').value = model.displayName;
+        document.getElementById('editDescription').value = model.description;
+        document.getElementById('editProvider').value = model.provider;
+        document.getElementById('editCategory').value = model.category || 'free';
+        document.getElementById('editModelIdField').value = model.modelId;
+        document.getElementById('editApiUrl').value = model.apiUrl;
+        document.getElementById('editMaxTokens').value = model.maxTokens || 2048;
+        document.getElementById('editIsActive').value = model.isActive !== false ? 'true' : 'false';
+        
+        // Set supported languages
+        ['en', 'fr', 'ja'].forEach(lang => {
+            const checkbox = document.getElementById(`edit_lang_${lang}`);
+            checkbox.checked = (model.supportedLanguages || ['en']).includes(lang);
+        });
+        
+        // Show modal
+        new bootstrap.Modal(document.getElementById('editModelModal')).show();
+    } catch (error) {
+        console.error('Error preparing edit form:', error);
+        alert('Failed to load model data for editing');
+    }
+}
+
+// Handle edit model form submission
+async function handleEditModel(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    const modelId = formData.get('modelId');
+    
+    // Get supported languages
+    const supportedLanguages = [];
+    ['en', 'fr', 'ja'].forEach(lang => {
+        if (document.getElementById(`edit_lang_${lang}`).checked) {
+            supportedLanguages.push(lang);
+        }
+    });
+    
+    const updateData = {
+        key: formData.get('key'),
+        displayName: formData.get('displayName'),
+        description: formData.get('description'),
+        provider: formData.get('provider'),
+        modelId: formData.get('modelId'),
+        apiUrl: formData.get('apiUrl'),
+        category: formData.get('category'),
+        maxTokens: parseInt(formData.get('maxTokens')),
+        isActive: formData.get('isActive') === 'true',
+        supportedLanguages
+    };
+    
+    try {
+        const response = await fetch(`/api/admin/chat-model-test/models/${modelId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updateData)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            alert('Model updated successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('editModelModal')).hide();
+            await loadModels(); // Refresh models list
+        } else {
+            alert(`Error: ${result.error}`);
+        }
+    } catch (error) {
+        console.error('Error updating model:', error);
+        alert('Failed to update model. Please try again.');
+    }
+}
+
+// Delete model
+async function deleteModel(modelId) {
+    if (!confirm('Are you sure you want to delete this model? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/admin/chat-model-test/models/${modelId}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            alert('Model deleted successfully!');
+            await loadModels(); // Refresh models list
+        } else {
+            alert(`Error: ${result.error}`);
+        }
+    } catch (error) {
+        console.error('Error deleting model:', error);
+        alert('Failed to delete model. Please try again.');
+    }
 }
 
 /**
@@ -1052,32 +1695,29 @@ function displayComprehensiveResults() {
                             ${statusIcon}
                             ${result.modelName}
                         </div>`;
-
-                if (result.success) {
-                    content += `
-                                        if (result.success) {
-                    const langAttr = language === 'ja' ? ' lang="ja"' : language === 'fr' ? ' lang="fr"' : ' lang="en"';
-                    content += `
-                        <div class="response-preview"${langAttr} title="Click to view full response" onclick="showResponse('${result.content}', '${result.modelName}', '${language}', '${escapeHtml(question)}')">
-                            ${escapeHtml(preview)}${hasMoreContent ? '...' : ''}
-                        </div>`;
-                        <div class="response-meta">
-                            <span class="meta-item">
-                                <i class="bi bi-hourglass-split"></i> ${result.responseTime}ms
-                            </span>
-                            <span class="meta-item">
-                                <i class="bi bi-file-earmark-text"></i> ${result.tokens?.total || 0} tokens
-                            </span>
-                        </div>
-                        <button class="btn btn-sm btn-primary view-full-btn w-100" onclick="showResponse('${result.content}', '${result.modelName}', '${language}', '${escapeHtml(question)}')">
-                            <i class="bi bi-arrows-fullscreen"></i> View Full Response
-                        </button>`;
-                } else {
-                    content += `
-                        <div class="error-message">
-                            <strong>Error:</strong> ${escapeHtml(result.error || 'Unknown error')}
-                        </div>`;
-                }
+                        if (result.success) {
+                            const langAttr = language === 'ja' ? ' lang="ja"' : language === 'fr' ? ' lang="fr"' : ' lang="en"';
+                            content += `
+                                <div class="response-preview"${langAttr} title="Click to view full response" onclick="showResponse('${result.content}', '${result.modelName}', '${language}', '${escapeHtml(question)}')">
+                                    ${escapeHtml(preview)}${hasMoreContent ? '...' : ''}
+                                </div>
+                                <div class="response-meta">
+                                    <span class="meta-item">
+                                        <i class="bi bi-hourglass-split"></i> ${result.responseTime}ms
+                                    </span>
+                                    <span class="meta-item">
+                                        <i class="bi bi-file-earmark-text"></i> ${result.tokens?.total || 0} tokens
+                                    </span>
+                                </div>
+                                <button class="btn btn-sm btn-primary view-full-btn w-100" onclick="showResponse('${result.content}', '${result.modelName}', '${language}', '${escapeHtml(question)}')">
+                                    <i class="bi bi-arrows-fullscreen"></i> View Full Response
+                                </button>`;
+                        } else {
+                            content += `
+                                <div class="error-message">
+                                    <strong>Error:</strong> ${escapeHtml(result.error || 'Unknown error')}
+                                </div>`;
+                        }
 
                 content += `</div>`;
             });

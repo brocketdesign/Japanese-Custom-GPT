@@ -312,7 +312,6 @@ async function img2videoRoutes(fastify) {
                 status: { $in: ['pending', 'processing', 'background'] }
             }).toArray();
 
-            console.log(`[img2video] Found ${tasks.length} background tasks`);
             return reply.send({ tasks });
 
         } catch (error) {

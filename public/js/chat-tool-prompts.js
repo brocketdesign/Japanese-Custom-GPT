@@ -18,7 +18,7 @@ class PromptManager {
 
     bindEvents() {
         // Click handler for the main show/hide prompts button
-        $(document).off('click', '#showPrompts').on('click', '#showPrompts', () => {
+        $(document).off('click', '#showPrompts, .showPrompts-toggle').on('click', '#showPrompts, .showPrompts-toggle', () => {
             const $promptContainer = $('#promptContainer');
             if ($promptContainer.hasClass('visible')) {
                 this.hide();

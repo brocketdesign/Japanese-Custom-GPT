@@ -120,7 +120,12 @@
                             <textarea id="userMessage" class="form-control py-2 border-0 me-1" 
                             style="width: 100%;margin-bottom: 0.5em;margin-top: 0.5em;height: 50px;max-height: 80px; background-image: none; min-height: auto; padding-top: 5px !important; padding-left: 10px !important; padding-bottom: 0 !important;" 
                             placeholder="チャットしよう"></textarea>
-                            <button id="sendImageMessage" class="btn btn-light px-3 chat-utils border-0 me-1" type="button">
+                            <!-- [DEPRECATED] Send Image Buttons -->
+                            <button id="sendImageMessage" class="btn btn-light px-3 chat-utils border-0 me-1 d-none" type="button">
+                                <i class="bi bi-image"></i>
+                            </button>
+                            <!-- END DEPRECATED -->
+                            <button id="showPrompts-toggle" class="showPrompts-toggle btn btn-light px-3 chat-utils border-0 me-1" type="button">
                                 <i class="bi bi-image"></i>
                             </button>
                             <button id="sendMessage" class="btn btn-light px-3 border-0 chat-utils" type="button">
@@ -787,6 +792,86 @@ document.addEventListener('DOMContentLoaded', function() {
             if (isScrolling) e.preventDefault();
         }, true);
     }
+});
+
+// Hide/Show toolbar wrapper functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const toolbarWrapper = document.querySelector('.chat-toolbar-wrapper');
+    
+    // Buttons that open containers
+    const containerButtons = [
+        { button: '#showPrompts-toggle', container: '#promptContainer' },
+        { button: '#showPrompts', container: '#promptContainer' },
+        { button: '#gifts-toggle', container: '#giftsOverlay' },
+        { button: '#suggestions-toggle', container: '#suggestionsContainer' },
+        { button: '#goals-toggle', container: '#goalsOverlay' },
+        { button: '#show-personas-btn', container: '#personas-container' }
+    ];
+    
+    // Close buttons for containers
+    const closeButtons = [
+        '#close-promptContainer',
+        '#close-giftsOverlay', 
+        '#close-suggestionsContainer',
+        '#close-goalsOverlay',
+        '#close-personas-container'
+    ];
+    
+    // Hide toolbar when container buttons are clicked
+    containerButtons.forEach(item => {
+        const button = document.querySelector(item.button);
+        if (button) {
+            button.addEventListener('click', function() {
+                if (toolbarWrapper) {
+                    toolbarWrapper.style.display = 'none';
+                }
+            });
+        }
+    });
+    
+    // Show toolbar when containers are closed
+    closeButtons.forEach(closeButtonId => {
+        const closeButton = document.querySelector(closeButtonId);
+        if (closeButton) {
+            closeButton.addEventListener('click', function() {
+                if (toolbarWrapper) {
+                    toolbarWrapper.style.display = 'block';
+                }
+            });
+        }
+    });
+    
+    // Also show toolbar when clicking outside containers (if that functionality exists)
+    // This is a fallback for any other close mechanisms
+    const containers = [
+        '#promptContainer',
+        '#giftsOverlay',
+        '#suggestionsContainer', 
+        '#goalsOverlay',
+        '#personas-container'
+    ];
+    
+    containers.forEach(containerId => {
+        const container = document.querySelector(containerId);
+        if (container) {
+            // Listen for style changes to detect when container is hidden
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                        const target = mutation.target;
+                        if (target.style.display === 'none' && toolbarWrapper) {
+                            toolbarWrapper.style.display = 'block';
+                        }
+                    }
+                });
+            });
+            
+            observer.observe(container, {
+                attributes: true,
+                attributeFilter: ['style']
+            });
+        }
+    });
 });
 
 // Ensure proper modal management

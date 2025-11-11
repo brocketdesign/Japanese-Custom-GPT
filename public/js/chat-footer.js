@@ -294,12 +294,6 @@ $(document).ready(function() {
             }, 200);
         }
         
-        // Show prompts (keeping original functionality)
-        $('#showPrompts').on('click', function() {
-            $('#promptContainer').slideToggle();
-        });
-
-
         // Scroll to last message when focusing on userMessage
         $('#userMessage').on('focus', function() {
             const chatContainer = $('#chatContainer');

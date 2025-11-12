@@ -14,6 +14,7 @@
     "unlockVideo": "Unlock video"
   },
   "videos": {
+    "title": "Videos",
     "created": "Created",
     "duration": "Duration"
   },
@@ -838,8 +839,8 @@
   "view_all_tags": "View All Tags",
   "view_all_character": "View All Characters",
   "result_image_query": "AI image generated using the chat and prompt feature.",
+  "about":" About ",
   "images": "Images",
-  "videos": "Videos",
   "start_searching": "Start searching to see results",
   "loading": "Loading...",
   "prompt": "Prompt",

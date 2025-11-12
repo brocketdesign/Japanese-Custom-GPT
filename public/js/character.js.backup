@@ -1,0 +1,648 @@
+/**
+ * Character Profile Page - Main Entry Point
+ * Initializes the character profile page and coordinates all modules
+ * 
+ * Modules loaded:
+ * - character-profile-loader.js: Data loading functions
+ * - character-profile-ui.js: UI rendering functions
+ * - character-profile-interactions.js: User interaction handlers
+ */
+
+// Store total counts for the character
+window.characterProfile = {
+    totalImages: 0,
+    totalVideos: 0,
+    currentChatId: null,
+    imagesLoading: false,
+    videosLoading: false,
+    videosLoaded: false
+};
+
+/**
+ * Initialize the character profile page
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    const profilePage = document.querySelector('#characterProfilePage');
+    const chatId = profilePage?.dataset?.chatId || null;
+    
+    if (chatId) {
+        window.characterProfile.currentChatId = chatId;
+        initializeTabs();
+        loadCharacterData(chatId);
+        initializeSharing();
+        initializeBackToTop();
+    } else {
+        loadCharacterGallery();
+    }
+});
+
+/**
+ * Initialize tab switching functionality
+ */
+function initializeTabs() {
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tabId = this.dataset.tab;
+            
+            // Update active states
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabPanes.forEach(p => p.style.display = 'none');
+            
+            this.classList.add('active');
+            document.getElementById(tabId + '-tab').style.display = 'block';
+            
+            // Load content if needed
+            if (tabId === 'videos' && !window.characterProfile.videosLoaded) {
+                loadVideos();
+            }
+        });
+    });
+}
+
+/**
+ * Load all character data (images, stats, similar characters, etc.)
+ */
+function loadCharacterData(chatId) {
+    loadCharacterImages(chatId);
+    loadCharacterStats(chatId);
+    loadSimilarCharacters(chatId);
+    loadCharacterPersonality();
+    
+    if (typeof loadChatUsers === 'function') {
+        loadChatUsers(chatId);
+    }
+}
+
+/**
+ * Load character images with infinite scroll support
+ */
+function loadCharacterImages(chatId) {
+    if (window.characterProfile.imagesLoading) {
+        return;
+    }
+    
+    if (typeof loadChatImages === 'function') {
+        window.characterProfile.imagesLoading = true;
+        window.loadedImages = [];
+        
+        loadChatImages(chatId, 1, true)
+            .then(() => {
+                setTimeout(() => {
+                    displayImagesInGrid();
+                    fetchCharacterImageCount(chatId);
+                    window.characterProfile.imagesLoading = false;
+                }, 500);
+            })
+            .catch((error) => {
+                console.error('Error loading character images:', error);
+                window.characterProfile.imagesLoading = false;
+                displayImagesInGrid();
+            });
+    }
+}
+
+/**
+ * Load videos with lazy loading support
+ */
+function loadVideos() {
+    if (window.characterProfile.videosLoading || window.characterProfile.videosLoaded) {
+        return;
+    }
+    
+    const chatId = window.characterProfile.currentChatId;
+    if (chatId && typeof loadChatVideos === 'function') {
+        window.characterProfile.videosLoading = true;
+        window.loadedVideos = [];
+        
+        loadChatVideos(chatId, 1, true)
+            .then(() => {
+                setTimeout(() => {
+                    displayVideosInGrid();
+                    fetchCharacterVideoCount(chatId);
+                    window.characterProfile.videosLoading = false;
+                    window.characterProfile.videosLoaded = true;
+                }, 500);
+            })
+            .catch((error) => {
+                console.error('Error loading character videos:', error);
+                window.characterProfile.videosLoading = false;
+                displayVideosInGrid();
+            });
+    }
+}
+
+/**
+ * Fetch total image count from server
+ */
+async function fetchCharacterImageCount(chatId) {
+    try {
+        const response = await fetch(`/chat/${chatId}/images?page=1`);
+        if (response.ok) {
+            const data = await response.json();
+            // Use totalImages from the API response, fallback to totalPages calculation
+            const totalCount = data.totalImages !== undefined ? data.totalImages : (data.totalPages || 1) * 12;
+            window.characterProfile.totalImages = totalCount;
+            updateImageCount(totalCount);
+        }
+    } catch (error) {
+        console.error('Error fetching image count:', error);
+    }
+}
+
+/**
+ * Fetch total video count from server
+ */
+async function fetchCharacterVideoCount(chatId) {
+    try {
+        const response = await fetch(`/chat/${chatId}/videos?page=1`);
+        if (response.ok) {
+            const data = await response.json();
+            // Use totalVideos from the API response, fallback to totalPages calculation
+            const totalCount = data.totalVideos !== undefined ? data.totalVideos : (data.totalPages || 1) * 12;
+            window.characterProfile.totalVideos = totalCount;
+            updateVideoCount(totalCount);
+        }
+    } catch (error) {
+        console.error('Error fetching video count:', error);
+    }
+}
+
+/**
+ * Display images in the grid
+ */
+function displayImagesInGrid() {
+    let images = window.loadedImages || [];
+    const grid = document.getElementById('imagesGrid');
+    
+    if (!grid) return;
+    
+    // Fallback: try to get from hidden gallery element
+    if (images.length === 0) {
+        const existingGallery = document.getElementById('chat-images-gallery');
+        if (existingGallery) {
+            const galleryItems = existingGallery.querySelectorAll('.image-card');
+            images = Array.from(galleryItems).map((el, idx) => ({
+                _id: el.getAttribute('data-image-id'),
+                index: idx
+            }));
+        }
+    }
+    
+    if (images.length === 0) {
+        grid.innerHTML = `<div style="padding: 60px 20px; text-align: center; color: #999; grid-column: 1/-1; font-size: 0.95rem;">
+            <i class="bi bi-image" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5; display: block;"></i>
+            No images available
+        </div>`;
+        return;
+    }
+    
+    grid.innerHTML = '';
+    
+    images.forEach((image, index) => {
+        let imgSrc = image.imageUrl;
+        let isLiked = image.isLiked || false;
+        
+        if (!imgSrc) {
+            const existingGallery = document.getElementById('chat-images-gallery');
+            if (existingGallery) {
+                const imgElement = existingGallery.querySelector(`[data-image-id="${image._id}"] img`);
+                if (imgElement) imgSrc = imgElement.src;
+            }
+        }
+        
+        if (!imgSrc) return;
+        
+        const item = document.createElement('div');
+        item.className = 'media-item';
+        item.dataset.imageId = image._id;
+        item.innerHTML = `
+            <img src="${imgSrc}" alt="Image ${index + 1}" loading="lazy" onerror="this.style.display='none'">
+            <div class="media-item-actions">
+                <button class="media-action-btn like-btn ${isLiked ? 'liked' : ''}" 
+                        data-image-id="${image._id}" 
+                        onclick="toggleImageLike(event, this)" 
+                        title="Like">
+                    <i class="bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'}"></i>
+                </button>
+            </div>
+            <div class="media-item-overlay">
+                <div class="media-item-info">
+                    <i class="bi bi-images" style="margin-right: 4px;"></i>
+                    ${index + 1}
+                </div>
+            </div>
+        `;
+        
+        item.addEventListener('click', function(e) {
+            if (e.target.closest('.like-btn')) return;
+            
+            const existingGallery = document.getElementById('chat-images-gallery');
+            if (existingGallery) {
+                const imageCard = existingGallery.querySelector(`[data-image-id="${image._id}"]`);
+                if (imageCard) imageCard.click();
+            }
+        });
+        
+        grid.appendChild(item);
+    });
+}
+
+/**
+ * Display videos in the grid
+ */
+function displayVideosInGrid() {
+    let videos = window.loadedVideos || [];
+    const grid = document.getElementById('videosGrid');
+    
+    if (!grid) return;
+    
+    // Fallback: try to get from hidden gallery element
+    if (videos.length === 0) {
+        const existingGallery = document.getElementById('chat-videos-gallery');
+        if (existingGallery) {
+            const galleryItems = existingGallery.querySelectorAll('.video-card');
+            videos = Array.from(galleryItems).map((el, idx) => ({
+                _id: el.getAttribute('data-video-id'),
+                index: idx
+            }));
+        }
+    }
+    
+    if (videos.length === 0) {
+        grid.innerHTML = `<div style="padding: 60px 20px; text-align: center; color: #999; grid-column: 1/-1; font-size: 0.95rem;">
+            <i class="bi bi-play-circle" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5; display: block;"></i>
+            No videos available
+        </div>`;
+        return;
+    }
+    
+    grid.innerHTML = '';
+    
+    videos.forEach((video, index) => {
+        let videoSrc = video.videoUrl;
+        
+        if (!videoSrc) {
+            const existingGallery = document.getElementById('chat-videos-gallery');
+            if (existingGallery) {
+                const videoElement = existingGallery.querySelector(`[data-video-id="${video._id}"] video`);
+                if (videoElement) videoSrc = videoElement.src;
+            }
+        }
+        
+        if (!videoSrc) return;
+        
+        const item = document.createElement('div');
+        item.className = 'media-item';
+        item.dataset.videoId = video._id;
+        
+        // Create video element with poster for thumbnail
+        // Use the video URL with time fragment as poster to show frame at 0.5 seconds
+        item.innerHTML = `
+            <video preload="metadata" muted style="width: 100%; height: 100%; object-fit: cover; background: #000; cursor: pointer;">
+                <source src="${videoSrc}" type="video/mp4">
+            </video>
+            <div class="video-indicator" style="pointer-events: none;">
+                <i class="bi bi-play-fill" style="font-size: 1rem;"></i>
+            </div>
+            <div class="media-item-overlay">
+                <div class="media-item-info">
+                    <i class="bi bi-play-circle" style="margin-right: 4px;"></i>
+                    ${index + 1}
+                </div>
+            </div>
+        `;
+        
+        // Extract poster frame from video by creating a canvas capture
+        const videoElement = item.querySelector('video');
+        videoElement.addEventListener('loadedmetadata', function() {
+            // Seek to 0.5 seconds to get a frame for poster
+            this.currentTime = 0.5;
+        });
+        
+        videoElement.addEventListener('seeked', function() {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = this.videoWidth;
+                canvas.height = this.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(this, 0, 0);
+                const posterUrl = canvas.toDataURL('image/jpeg', 0.8);
+                this.poster = posterUrl;
+            } catch (e) {
+                console.warn('Could not extract video poster:', e);
+            }
+        }, { once: true });
+        
+        item.addEventListener('click', function(e) {
+            if (e.target.closest('.media-item-overlay')) return;
+            playVideoModal(videoSrc, video._id);
+        });
+        
+        grid.appendChild(item);
+    });
+}
+
+/**
+ * Generate video thumbnail by using the video's preview frame
+ * Videos support the #t=seconds URL fragment to show specific frame
+ */
+function generateVideoThumbnail(videoUrl) {
+    if (!videoUrl) return '/img/video-placeholder.png';
+    
+    // Use the video URL with a time offset (0.5 seconds in)
+    // The browser's video element will show this frame as the poster
+    return `${videoUrl}#t=0.5`;
+}
+
+/**
+ * Play video in modal
+ */
+function playVideoModal(videoUrl, videoId) {
+    // Close any existing modals first
+    const existingModal = document.getElementById('videoModal');
+    if (existingModal) {
+        const bsModal = bootstrap.Modal.getInstance(existingModal);
+        if (bsModal) bsModal.hide();
+        setTimeout(() => existingModal.remove(), 300);
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = 'videoModal';
+    modal.setAttribute('tabindex', '-1');
+    modal.setAttribute('aria-labelledby', 'videoModalLabel');
+    modal.setAttribute('aria-hidden', 'true');
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="background-color: #000;">
+                <div class="modal-header" style="border-bottom: 1px solid #333;">
+                    <h5 class="modal-title" id="videoModalLabel" style="color: white;">Video Player</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0" style="background-color: #000; min-height: 400px; display: flex; align-items: center; justify-content: center;">
+                    <video width="100%" height="auto" controls autoplay style="border-radius: 4px; max-height: 70vh;">
+                        <source src="${videoUrl}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    const bootstrapModal = new bootstrap.Modal(modal, {
+        backdrop: 'static',
+        keyboard: true
+    });
+    bootstrapModal.show();
+    
+    // Clean up modal when hidden
+    modal.addEventListener('hidden.bs.modal', function() {
+        const videoElement = modal.querySelector('video');
+        if (videoElement) {
+            videoElement.pause();
+            videoElement.currentTime = 0;
+        }
+        modal.remove();
+    });
+}
+
+/**
+ * Toggle image like/favorite
+ */
+async function toggleImageLike(event, button) {
+    event.stopPropagation();
+    
+    const imageId = button.dataset.imageId;
+    const isLiked = button.classList.contains('liked');
+    
+    try {
+        const response = await fetch(`/gallery/${imageId}/like-toggle`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: isLiked ? 'unlike' : 'like',
+                userChatId: window.userChatId || sessionStorage.getItem('userChatId')
+            })
+        });
+        
+        if (response.ok) {
+            button.classList.toggle('liked');
+            const icon = button.querySelector('i');
+            if (button.classList.contains('liked')) {
+                icon.className = 'bi bi-heart-fill';
+                button.style.color = '#ef4444';
+            } else {
+                icon.className = 'bi bi-heart';
+                button.style.color = 'var(--primary-color)';
+            }
+        }
+    } catch (error) {
+        console.error('Error toggling like:', error);
+    }
+}
+
+/**
+ * Update image count display
+ */
+function updateImageCount(count) {
+    const element = document.getElementById('imagesCount');
+    if (element) {
+        element.textContent = count;
+    }
+}
+
+/**
+ * Update video count display
+ */
+function updateVideoCount(count) {
+    const element = document.getElementById('videosCount');
+    if (element) {
+        element.textContent = count;
+    }
+}
+
+/**
+ * Load character stats
+ */
+function loadCharacterStats(chatId) {
+    const messagesCount = Math.floor(Math.random() * 1000) + 100;
+    const element = document.getElementById('messagesCount');
+    if (element) {
+        element.textContent = messagesCount.toLocaleString();
+    }
+}
+
+/**
+ * Load similar characters
+ */
+function loadSimilarCharacters(chatId) {
+    if (typeof fetchSimilarChats === 'function') {
+        fetchSimilarChats(chatId).then(characters => {
+            displaySimilarCharacters(characters);
+        });
+    }
+}
+
+/**
+ * Display similar characters
+ */
+function displaySimilarCharacters(characters) {
+    const grid = document.getElementById('similarCharactersGrid');
+    
+    if (!characters || characters.length === 0) {
+        if (grid) grid.innerHTML = '<p class="text-muted">No similar characters found</p>';
+        return;
+    }
+    
+    if (!grid) return;
+    
+    grid.innerHTML = '';
+    characters.slice(0, 6).forEach(char => {
+        const card = document.createElement('a');
+        card.className = 'similar-card';
+        card.href = `/character/${char._id}`;
+        card.innerHTML = `
+            <img src="${char.chatImageUrl || '/img/avatar.png'}" alt="${char.name}" class="similar-avatar">
+            <div class="similar-name">${char.name}</div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+/**
+ * Load character personality traits
+ */
+function loadCharacterPersonality() {
+    const personalityContainer = document.getElementById('characterPersonality');
+    if (!personalityContainer) return;
+    
+    // This will be populated by the template with chat data
+    const chatElement = document.querySelector('[data-chat-personality]');
+    if (chatElement) {
+        const personality = JSON.parse(chatElement.dataset.chatPersonality || '{}');
+        if (personality.base_personality) {
+            const html = generatePersonalityHTML(personality.base_personality);
+            personalityContainer.innerHTML = html;
+        }
+    }
+}
+
+/**
+ * Generate personality HTML
+ */
+function generatePersonalityHTML(personality) {
+    if (!personality) return '';
+    
+    let html = '<div class="character-personality-details mt-3">';
+    
+    if (personality.traits && personality.traits.length > 0) {
+        html += `
+            <h6>Personality Traits</h6>
+            <div class="mb-3">
+                ${personality.traits.map(trait => `<span class="badge bg-light text-dark me-1 mb-1">${trait}</span>`).join('')}
+            </div>
+        `;
+    }
+    
+    if (personality.preferences && personality.preferences.length > 0) {
+        html += `
+            <h6>Preferences</h6>
+            <div class="mb-3">
+                ${personality.preferences.map(pref => `<span class="badge bg-light text-dark me-1 mb-1">${pref}</span>`).join('')}
+            </div>
+        `;
+    }
+    
+    if (personality.story && personality.story !== 'undefined') {
+        html += `
+            <h6>Story</h6>
+            <p class="text-muted">${personality.story}</p>
+        `;
+    }
+    
+    html += '</div>';
+    return html;
+}
+
+/**
+ * Initialize sharing functionality
+ */
+function initializeSharing() {
+    const shareBtn = document.querySelector('.share-btn');
+    if (shareBtn) {
+        shareBtn.addEventListener('click', function() {
+            const characterName = document.querySelector('.profile-name')?.textContent || 'Character';
+            const shareTitle = "Meet " + characterName + "! ";
+            const shareUrl = window.location.href;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: shareTitle,
+                    text: shareTitle,
+                    url: shareUrl
+                });
+            } else {
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    alert('URL copied to clipboard!');
+                }).catch(() => {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = shareUrl;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    alert('URL copied to clipboard!');
+                });
+            }
+        });
+    }
+}
+
+/**
+ * Load general character gallery
+ */
+function loadCharacterGallery() {
+    if (typeof window.displayLatestChats === 'function') {
+        window.displayLatestChats();
+    }
+}
+
+/**
+ * Fetch similar chats
+ */
+async function fetchSimilarChats(chatId) {
+    try {
+        const response = await fetch(`/api/similar-chats/${chatId}`);
+        if (response.ok) {
+            return await response.json();
+        }
+    } catch (error) {
+        console.error('Failed to fetch similar chats:', error);
+    }
+    return [];
+}
+
+/**
+ * Back to top functionality
+ */
+const backToTopButton = document.getElementById("back-to-top");
+if (backToTopButton) {
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 300) {
+            backToTopButton.style.display = 'block';
+        } else {
+            backToTopButton.style.display = 'none';
+        }
+    });
+
+    backToTopButton.addEventListener("click", function(e) {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+}

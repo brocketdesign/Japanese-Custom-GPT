@@ -545,10 +545,26 @@ async function img2videoRoutes(fastify) {
                 return reply.status(400).send({ error: 'Invalid parameters' });
             }
 
+            // Get user information for filtering
+            const user = request.user;
+            const subscriptionStatus = user?.subscriptionStatus === 'active';
+            const isTemporary = !!user?.isTemporary;
+            
+            // Determine if user should see NSFW content
+            // Non-logged-in (temporary) and non-subscribed users should not see NSFW videos
+            const shouldFilterNSFW = isTemporary || !subscriptionStatus;
+
             const db = fastify.mongo.db;
+            
+            // Build NSFW filter based on user status
+            const nsfwFilter = shouldFilterNSFW 
+                ? { nsfw: { $ne: true } }  // Hide NSFW videos for non-subscribed/temporary users
+                : {};  // Show all videos for subscribed users
+
             const query = {
                 chatId: new ObjectId(chatId),
-                videoUrl: { $exists: true, $ne: null }
+                videoUrl: { $exists: true, $ne: null },
+                ...nsfwFilter  // Apply NSFW filter based on user status
             };
 
             const skip = (page - 1) * limit;
@@ -567,6 +583,7 @@ async function img2videoRoutes(fastify) {
             return reply.send({
                 page,
                 totalPages,
+                totalVideos: total,
                 videos: videos.map(video => ({
                     _id: video._id,
                     videoUrl: video.videoUrl,

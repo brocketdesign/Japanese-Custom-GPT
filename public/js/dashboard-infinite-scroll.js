@@ -157,8 +157,10 @@ function loadImages(type, id, page = 1, reload = false, isModal = false, endpoin
             if (reload) {
                 const hasCache = await handleReload(id, cacheKey, type, mediaType);
                 
-                // Always setup infinite scroll after reload
-                setupInfiniteScroll(id, isModal, type);
+                // Setup infinite scroll ONLY if NOT on character profile page
+                if (!onCharacterPage) {
+                    setupInfiniteScroll(id, isModal, type);
+                }
                 
                 // If we have cache and we're requesting page 1, don't fetch from server
                 if (hasCache && page === 1) {
@@ -183,7 +185,10 @@ function loadImages(type, id, page = 1, reload = false, isModal = false, endpoin
                 const cachedItems = manager.cache.get(cacheKey).get(page);
                 await renderMedia(cachedItems, id, type, mediaType, page);
                 manager.currentPages.set(cacheKey, Math.max(manager.currentPages.get(cacheKey), page));
-                setupInfiniteScroll(id, isModal, type);
+                // Setup infinite scroll ONLY if NOT on character profile page
+                if (!onCharacterPage) {
+                    setupInfiniteScroll(id, isModal, type);
+                }
                 resolve();
                 return;
             }
@@ -307,8 +312,11 @@ async function fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type
         // Render images
         await renderMedia(items, id, type, mediaType, response.page);
         
-        // Setup infinite scroll
-        setupInfiniteScroll(id, isModal, type);
+        // Setup infinite scroll ONLY if NOT on character profile page
+        const onCharacterPage = !!document.querySelector('#characterProfilePage');
+        if (!onCharacterPage) {
+            setupInfiniteScroll(id, isModal, type);
+        }
         
     } catch (error) {
         console.error(`[fetchImagesFromServer] AJAX Error for ${cacheKey}:`, error);

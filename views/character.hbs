@@ -1,698 +1,251 @@
 <!DOCTYPE html>
 <html lang="{{lang}}">
 {{> dashboard-header}}
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/css/character.css">
+</head>
+
 <body>
     {{> dashboard-nav}}
 
-<div class="container-fluid px-0" id="characterProfilePage">
-
-  {{#if chat}}
-    <!-- Hero Section -->
-    <section class="hero-section text-center">
-      <div class="container">
-        <div class="row align-items-center">
-          <div class="col-md-6">
-            {{#if image}}
-              {{#if isBlur}}
-                <div type="button" class="text-center mx-auto" onclick={{#if user.isTemporary}}'openLoginForm()'{{else}}'loadPlanPage()'{{/if}}>
-                  <img data-src="{{image.imageUrl}}" class="img-fluid img-blur" alt="{{chat.name}} - {{translations.main_image_alt_text}}">
-                </div>
-              {{else}}
-                <img id="mainImage" src="{{image.imageUrl}}" class="img-fluid" alt="{{chat.name}} - {{translations.main_image_alt_text}}">
-                <div id="about_image" class="character-speech-bubble mt-2 mx-auto" style="min-width: 180px; max-width: 320px; background: #fff; border: 1px solid #ddd; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 12px 18px; font-size: 0.8rem;color: rgba(51, 51, 51, 0.75);">
-                  {{chat.short_intro}}
-                </div>
-              {{/if}}
-            {{else}}
-              <div class="d-flex flex-column align-items-center">
-              <div class="position-relative mb-3">
-                <img src="{{default chat.chatImageUrl '/img/avatar.png'}}" alt="{{chat.name}} - {{translations.profile_image_alt_text}}" class="rounded-circle character-avatar-large" style="object-fit: cover; object-position: top;">
-              </div>
-              {{#if chat.short_intro}}
-                <div class="character-speech-bubble mt-2" style="min-width: 180px; max-width: 260px; background: #fff; border: 1px solid #ddd; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 12px 18px; font-size: 0.8rem;color: rgba(51, 51, 51, 0.75);">
-                {{chat.short_intro}}
-                </div>
-              {{/if}}
-              </div>
-            {{/if}}
-          </div>
-          <div class="col-md-6 text-md-start mt-4 mt-md-0">
-            <h1 class="display-4 fw-bold u-color-grad">{{translations.meet_your_ai_companion}} {{chat.name}}</h1>
-            <p class="lead">{{chat.description}}</p>
-            <a {{#if user.isTemporary}}onclick="openLoginForm()"{{else}}href="/chat/{{chat._id}}"{{/if}} class="btn custom-gradient-bg btn-lg-custom mt-3">
-              <i class="bi bi-chat-dots me-2"></i> {{translations.startChattingNow}}
-            </a>
-            {{#if image}} 
-            <div class="mt-3">
-              <h6 class="mt-3">{{translations.prompt}} :</h6>
-                <p class="bg-light rounded d-inline-block" style="font-size:12px;">{{translations.prompt_description}}</p>
-                <p class="card-prompt text-muted" style="font-size: 14px;">{{image.prompt}}</p>
-                <p class="text-muted"><span class="jp-date">{{image.createdAt}}</span></p>
-                <div class="d-flex justify-content-start align-items-center mt-2">
-                {{#if user.isTemporary}}{{else}}
-                  <button 
-                    class="btn btn-light shadow-0 image-fav me-2 {{#if  (includesObjectId image.likedBy user._id) }}liked{{/if}}" 
-                    data-id="{{image._id}}" 
-                    onclick="toggleImageFavorite(this)"
-                  >
-                    <i class="bi {{#if  (includesObjectId image.likedBy user._id) }}bi-heart-fill text-danger{{else}}bi-heart{{/if}} me-2"></i>{{translations.like}}<span class="ct d-none">{{default image.likes 0}}</span>
-                  </button>
-                {{/if}}
-                  <button class="btn btn-light shadow-0 share">
-                    <i class="bi bi-share me-2"></i>{{translations.share}}
-                  </button>
-                </div>
-            </div>
-            {{/if}}
-          </div>
-        </div>
-      </div>
-    </section>
-
-  {{#if user.isTemporary}}
-    <!-- About Character Section -->
-    <section class="section-padding shadow-sm">
-      <div class="container">
-        <div class="row">
-          <div class="col-lg-8 offset-lg-2 text-center">
-            <h2>{{translations.about_the_character}} {{chat.name}}</h2>
-            <hr class="w-25 mx-auto">
-            <p class="text-muted seo-text mb-4">{{translations.about_character_seo_text}}</p>
-            <div class="card mb-4 shadow-sm profile-card">
-              <div class="card-body p-0">
-                <div class="row g-0">
-                  <!-- Left side - Image -->
-                  <div class="col-md-5 profile-image-container">
-                    <a href="/character/{{chat._id}}" class="text-decoration-none">
-                      <img src="{{default chat.chatImageUrl '/img/avatar.png'}}" alt="{{chat.name}} {{translations.profile_image_alt_text}}" 
-                           class="rounded-start profile-image" style="width: 100%; height: 100%; object-fit: cover; object-position: top;">
-                    </a>
-                  </div>
-                  
-                  <!-- Right side - Profile Details -->
-                  <div class="col-md-7">
-                    <div class="card-body py-3 shadow border-2">
-                      <h3 class="card-title mb-3">{{chat.name}}</h3>
-                                              
-                        <ul class="list-unstyled profile-details">
-                          <li class="mb-2">
-                            <i class="bi bi-palette-fill text-purple me-2"></i> <strong>{{translations.profile_style}}:</strong> 
-                            <span>{{default chat.imageStyle 'Standard'}}</span>
-                            <p class="text-muted small mt-1">{{translations.profile_style_desc}}</p>
-                          </li>
-                          
-                          <li class="mb-2">
-                            <i class="bi bi-gender-ambiguous text-purple me-2"></i> <strong>{{translations.profile_gender}}:</strong> 
-                            <span>{{default chat.gender 'Not specified'}}</span>
-                            <p class="text-muted small mt-1">{{translations.profile_gender_desc}}</p>
-                          </li>
-                          
-                          <li class="mb-2">
-                            <i class="bi bi-person-badge text-purple me-2"></i> <strong>{{translations.profile_character}}:</strong> 
-                            <span>{{chat.name}}</span>
-                            <p class="text-muted small mt-1">{{translations.profile_character_desc}}</p>
-                          </li>
-                          
-                          <li class="mb-2">
-                            <i class="bi bi-chat-dots text-purple me-2"></i> <strong>{{translations.profile_messages}}:</strong> 
-                            <span>{{default chat.messagesCount '0'}}</span>
-                            <p class="text-muted small mt-1">{{translations.profile_messages_desc}}</p>
-                          </li>
-                          
-                          <li class="mb-2">
-                            <i class="bi bi-images text-purple me-2"></i> <strong>{{translations.profile_images}}:</strong> 
-                            <span>{{default chat.imageCount '0'}}</span>
-                            <p class="text-muted small mt-1">{{translations.profile_images_desc}}</p>
-                          </li>
-                          
-                          {{#if chat.nsfw}}
-                          <li class="mb-2">
-                            <i class="bi bi-exclamation-triangle text-warning me-2"></i> <strong>{{translations.profile_content_rating}}:</strong> 
-                            <span class="badge bg-warning text-dark">18+</span>
-                            <p class="text-muted small mt-1">{{translations.profile_content_rating_desc}}</p>
-                          </li>
-                          {{/if}}
-                        </ul>
-
-                        <a {{#if user.isTemporary}}onclick="openLoginForm()"{{else}}href="/chat/{{chat._id}}"{{/if}} class="btn custom-gradient-bg btn-lg-custom mt-3">
-                          <i class="bi bi-chat-dots me-2"></i> {{translations.startChattingNow}}
-                        </a>
+    <div class="profile-container" id="characterProfilePage" data-chat-id="{{#if chat}}{{chat._id}}{{/if}}" data-chat-personality="{{#if chat}}{{json chat.base_personality}}{{/if}}">
+        {{#if chat}}
+            <!-- Profile Header -->
+            <div class="profile-header">
+                <div class="profile-cover">
+                    <div class="profile-avatar-container">
+                        {{#if image}}
+                            {{#unless isBlur}}
+                                <img class="profile-avatar" src="{{image.imageUrl}}" alt="{{chat.name}}" id="mainProfileImage">
+                            {{else}}
+                                <img class="profile-avatar img-blur" src="{{image.imageUrl}}" alt="{{chat.name}}" onclick="{{#if user.isTemporary}}openLoginForm(){{else}}loadPlanPage(){{/if}}">
+                            {{/unless}}
+                        {{else}}
+                            <img class="profile-avatar" src="{{default chat.chatImageUrl '/img/avatar.png'}}" alt="{{chat.name}}">
+                        {{/if}}
                     </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-         
-            <p class="description lead">{{chat.description}}</p>
-            {{#if chat.rule}}
-              <p class="mt-3"><strong>{{translations.character_rules_heading}}:</strong> {{chat.rule}}</p>
-            {{/if}}
-          </div>
-        </div>
-      </div>
-    </section>
-  {{/if}}
-  {{#if user.isTemporary}}
-    <!-- Why Chat With This Character Section -->
-    <section class="section-padding bg-light shadow-sm">
-        <div class="container text-center">
-            <h2>{{translations.why_chat_with}} {{chat.name}}?</h2>
-            <hr class="w-25 mx-auto mb-4">
-            <p class="text-muted seo-text mb-4">{{translations.why_chat_seo_text}}</p>
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <i class="bi bi-emoji-smile feature-icon mb-2"></i>
-                    <h4>{{translations.engaging_personality}}</h4>
-                    <p>{{translations.engaging_personality_desc}}</p>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <i class="bi bi-chat-left-text feature-icon mb-2"></i>
-                    <h4>{{translations.unique_conversations}}</h4>
-                    <p>{{translations.unique_conversations_desc}}</p>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <i class="bi bi-phone feature-icon mb-2"></i>
-                    <h4>{{translations.available_anytime}}</h4>
-                    <p>{{translations.available_anytime_desc}}</p>
+                    
+                    <div class="profile-info">
+                        <h1 class="profile-name">{{chat.name}}</h1>
+                        {{#if chat.short_intro}}
+                            <p class="profile-intro">{{chat.short_intro}}</p>
+                        {{else}}
+                            <p class="profile-intro">{{chat.description}}</p>
+                        {{/if}}
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
-  {{/if}}
-  {{#if user.isTemporary}}
-    <!-- How to Start Chatting Section -->
-    <section class="section-padding shadow-sm">
-        <div class="container text-center">
-            <h2>{{translations.how_to_start_chatting_with}} {{chat.name}}</h2>
-            <hr class="w-25 mx-auto mb-5">
-            <p class="text-muted seo-text mb-4">{{translations.how_to_chat_seo_text}}</p>
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <div class="fs-1 fw-bold u-color-grad mb-2">1.</div>
-                            <h4>{{#if user.isTemporary}}{{translations.create_an_account_step_title}}{{else}}{{translations.you_are_logged_in_step_title}}{{/if}}</h4>
-                            <p>{{#if user.isTemporary}}{{translations.create_an_account_step_desc}}{{else}}{{translations.you_are_logged_in_step_desc}}{{/if}}</p>
-                            {{#if user.isTemporary}}
-                                <button onclick="openLoginForm()" class="btn custom-gradient-bg">
-                                    <i class="bi bi-person-plus me-2"></i>{{translations.signUpNow}}
-                                </button>
+
+            <!-- Action Buttons -->
+            <div class="profile-actions">
+                <a href="{{#if user.isTemporary}}#{{else}}/chat/{{chat._id}}{{/if}}" 
+                   onclick="{{#if user.isTemporary}}openLoginForm(); return false;{{/if}}" 
+                   class="action-btn action-btn-primary">
+                    <i class="bi bi-chat-dots"></i>
+                    {{translations.startChattingNow}}
+                </a>
+                {{#unless user.isTemporary}}
+                    <button class="action-btn action-btn-secondary share-btn">
+                        <i class="bi bi-share"></i>
+                        {{translations.share}}
+                    </button>
+                {{/unless}}
+            </div>
+
+            <!-- Stats Section -->
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <span class="stat-number" id="imagesCount">0</span>
+                    <div class="stat-label">{{translations.images}}</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="videosCount">0</span>
+                    <div class="stat-label">{{translations.videos.title}}</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="messagesCount">0</span>
+                    <div class="stat-label">{{translations.profile_messages}}</div>
+                </div>
+            </div>
+
+            <!-- Content Tabs -->
+            <div class="content-tabs">
+                <div class="tab-nav">
+                    <button class="tab-btn active" data-tab="images">
+                        <i class="bi bi-grid-3x3"></i>
+                        {{translations.images}}
+                    </button>
+                    <button class="tab-btn" data-tab="videos">
+                        <i class="bi bi-play-circle"></i>
+                        {{translations.videos.title}}
+                    </button>
+                    <button class="tab-btn" data-tab="about">
+                        <i class="bi bi-info-circle"></i>
+                        {{translations.about}}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content Areas -->
+            <div class="tab-content">
+                <!-- Images Tab -->
+                <div id="images-tab" class="tab-pane active">
+                    <div class="media-grid" id="imagesGrid">
+                        <!-- Loading state -->
+                        <div class="loading-grid">
+                            <div class="loading-item"></div>
+                            <div class="loading-item"></div>
+                            <div class="loading-item"></div>
+                            <div class="loading-item"></div>
+                            <div class="loading-item"></div>
+                            <div class="loading-item"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Videos Tab -->
+                <div id="videos-tab" class="tab-pane" style="display: none;">
+                    <div class="media-grid" id="videosGrid">
+                        <!-- Videos will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- About Tab -->
+                <div id="about-tab" class="tab-pane" style="display: none;">
+                    <div class="character-details mb-2" style="max-width: 900px; margin: 0 auto; padding: 0 20px;">
+                        <!-- Character Attributes Section -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin-bottom: 40px;">
+                            <!-- Style Card -->
+                            <div style="background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); border-radius: 12px; padding: 24px; border-left: 4px solid #8b5cf6;">
+                                <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                                    <i class="bi bi-palette-fill" style="font-size: 1.5rem; color: #8b5cf6; margin-right: 12px;"></i>
+                                    <h5 style="margin: 0; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px;">{{translations.profile_style}}</h5>
+                                </div>
+                                <p style="margin: 0; color: #374151; font-size: 1rem; font-weight: 500;">{{default chat.imageStyle 'Not specified'}}</p>
+                            </div>
+
+                            <!-- Gender Card -->
+                            <div style="background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); border-radius: 12px; padding: 24px; border-left: 4px solid #a855f7;">
+                                <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                                    <i class="bi bi-gender-ambiguous" style="font-size: 1.5rem; color: #a855f7; margin-right: 12px;"></i>
+                                    <h5 style="margin: 0; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px;">{{translations.profile_gender}}</h5>
+                                </div>
+                                <p style="margin: 0; color: #374151; font-size: 1rem; font-weight: 500;">{{default chat.gender 'Not specified'}}</p>
+                            </div>
+
+                            <!-- Content Rating Card -->
+                            {{#if chat.nsfw}}
+                            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; padding: 24px; border-left: 4px solid #f59e0b;">
+                                <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                                    <i class="bi bi-exclamation-triangle" style="font-size: 1.5rem; color: #f59e0b; margin-right: 12px;"></i>
+                                    <h5 style="margin: 0; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; color: #92400e; letter-spacing: 0.5px;">{{translations.profile_content_rating}}</h5>
+                                </div>
+                                <p style="margin: 0; color: #92400e; font-size: 1rem; font-weight: 600;">18+</p>
+                            </div>
                             {{/if}}
                         </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                             <div class="fs-1 fw-bold u-color-grad mb-2">2.</div>
-                            <h4>{{translations.character_selected_step_title}}</h4>
-                            <p>{{chat.name}} {{translations.character_selected_step_desc}}</p>
-                            <a href="/character" class="btn custom-gradient-bg">
-                                <i class="bi bi-search me-2"></i> {{translations.exploreCharacters}}
-                            </a>
+
+                        <!-- Character Rules Section -->
+                        {{#if chat.rule}}
+                        <div style="background: white; border-radius: 12px; padding: 30px; border: 1px solid #e5e7eb; margin-bottom: 40px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <div style="display: flex; align-items: center; margin-bottom: 16px;">
+                                <i class="bi bi-bookmark-fill" style="font-size: 1.3rem; color: #6366f1; margin-right: 10px;"></i>
+                                <h4 style="margin: 0; font-size: 1.1rem; font-weight: 600; color: #1f2937;">{{translations.character_rules_heading}}</h4>
+                            </div>
+                            <p style="margin: 0; color: #374151; line-height: 1.8; font-size: 0.95rem;">{{chat.rule}}</p>
                         </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <div class="fs-1 fw-bold u-color-grad mb-2">3.</div>
-                            <h4>{{translations.start_conversation_step_title}}</h4>
-                            <p>{{translations.start_conversation_step_desc}}</p>
-                            <a {{#if user.isTemporary}}onclick="openLoginForm()"{{else}}href="/chat/{{chat._id}}"{{/if}} class="btn custom-gradient-bg">
-                                <i class="bi bi-chat-dots me-2"></i> {{translations.startChatting}}
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-  {{/if}}
-    <!-- Users in Chat Section -->
-    <section class="section-padding bg-light shadow-sm">
-        <div class="container">
-            <h3 class="text-center">{{translations.user_in_chat}}</h3>
-            <p class="text-center text-muted mb-4">{{translations.user_in_chat_description}}</p>
-            <div id="chat-users-gallery" class="d-flex overflow-auto p-2" style="white-space: nowrap;"></div>
-            <div id="chat-users-pagination-controls" class="mt-3 d-flex justify-content-center"></div>
-        </div>
-    </section>
+                        {{/if}}
 
-    <!-- Similar Characters Section -->
-    <section class="section-padding shadow-sm">
-      <div class="container">
-        <h3 class="text-center">{{translations.similar_characters_title}}</h3>
-        <p class="text-center text-muted mb-4">{{translations.similar_characters_description}}</p>
-        <hr class="w-25 mx-auto">
-        <div class="row mx-0" id="similar-characters-gallery" style="justify-content: center;">
-          <!-- Similar characters will be appended here by displayLatestChats -->
-          <div id="similar-characters-gallery-loader" class="d-flex justify-content-center">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-          </div>
-        </div>
-        <div class="d-flex justify-content-center mt-4">
-          <a id="load-more-similar" class="btn custom-gradient-bg" href="/character">
-            <i class="bi bi-globe me-2"></i> {{translations.discover.seeAll}}
-          </a>
-        </div>
-      </div>
-    </section>
-  {{/if}} 
+                        <!-- Personality Section -->
+                        <div id="characterPersonality"></div>
 
-  <!-- Other Images Section -->
-  {{#if chatId}}
-    <section id="otherImages" class="section-padding shadow-sm">
-      <div class="container">
-        <div class="row">
-          <div class="col-12 mt-4">
-            <ul class="nav nav-pills justify-content-center mb-4" id="characterMediaTabs" role="tablist">
-              <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="images-tab" data-bs-toggle="tab" data-bs-target="#image-gallery-tab" type="button" role="tab" aria-controls="image-gallery-tab" aria-selected="true">
-                  <i class="bi bi-images me-2"></i>{{translations.galleryTabs.images}}
-                </button>
-              </li>
-              <li class="nav-item" role="presentation">
-                <button class="nav-link" id="videos-tab" data-bs-toggle="tab" data-bs-target="#video-gallery-tab" type="button" role="tab" aria-controls="video-gallery-tab" aria-selected="false">
-                  <i class="bi bi-camera-video-fill me-2"></i>{{translations.galleryTabs.videos}}
-                </button>
-              </li>
-            </ul>
-
-            <div class="tab-content" id="characterMediaTabsContent">
-              <div class="tab-pane fade show active" id="image-gallery-tab" role="tabpanel" aria-labelledby="images-tab">
-                <p class="text-center text-muted mb-4">{{translations.galleryTabs.imagesDescription}}</p>
-                <hr class="w-25 mx-auto">
-                <div class="container-none">
-                  <div class="row mx-0" id="chat-images-gallery"></div>
-                  <div class="d-flex justify-content-center mt-4" id="chat-images-pagination-controls"></div>
-                </div>
-              </div>
-              <div class="tab-pane fade" id="video-gallery-tab" role="tabpanel" aria-labelledby="videos-tab">
-                <p class="text-center text-muted mb-4">{{translations.galleryTabs.videosDescription}}</p>
-                <hr class="w-25 mx-auto">
-                <div class="alert alert-info d-none" id="chat-videos-empty">{{translations.galleryTabs.videosEmpty}}</div>
-                <div class="row mx-0" id="chat-videos-gallery"></div>
-                <div class="d-flex justify-content-center mt-4" id="chat-videos-pagination-controls"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  {{else}}
-    <!-- This section is for when there's no specific chat, e.g., a general gallery -->
-    <section class="section shadow-sm">
-
-        <!-- Card menu title & description -->
-        <div class="container text-center mb-2 animate__animated" data-animate="animate__fadeInLeft" data-delay="0.3s">
-            <h2 class="fw-bold u-color-grad">{{translations.cardMenuTitle}}</h2>
-            <p class="text-muted">{{translations.exploreCharactersDescription}}</p>
-        </div>
-
-        <!-- Category cards -->
-        <div class="container-fluid mb-4">
-            <div class="row" id="category-cards-container">
-                <!-- Loading placeholder -->
-                <div class="col-12 text-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading categories...</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-            
-        <div class="container">
-
-            <!-- Query Tags Horizontal Scroll Section -->
-            <div class="query-tags-section mb-4">
-                <div class="d-flex align-items-center mb-2">
-                    <h6 class="me-3 mb-0">{{translations.browseByCategory}}:</h6>
-                    <small class="text-muted">{{translations.scrollForMore}}</small>
-                </div>
-                <div class="query-tags-scroll-container">
-                    <div class="query-tags-list d-flex" id="query-tags-list">
-                        <!-- Query tags will be populated here -->
-                        <div class="spinner-border spinner-border-sm me-3" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="all-chats-container" class="row mx-0">
-                <!-- Chats with images will be appended here -->
-            </div>
-            <div class="row mx-0" id="all-chats-images-gallery"></div>
-            <div class="d-flex justify-content-center mt-4" id="all-chats-images-pagination-controls"></div>
-        </div>
-    </section>
-  {{/if}}
-</div>
-
-<style>
-  footer{display: inline !important;}
-  .sticky-bottom{display: inline-block !important;width: 100%;}
-</style>
-
-<script src="/js/dashboard-category.js"></script>
-{{> dashboard-footer}}
-
-<script>
-  $(document).ready(function () {
-    const chatId = "{{#if chat}}{{chat._id}}{{else}}{{chatId}}{{/if}}";
-    const characterName = "{{#if chat}}{{chat.name}}{{else}}{{/if}}";
-    
-    // Display the image object as a string for debugging
-    const image = {{#if image}}{{{json image}}}{{else}}null{{/if}};
-    const imageTitle = image ? image.title : '';
-    const imageTitleElement = $('#about_image');
-    if (imageTitleElement.length && imageTitle) {
-      imageTitleElement.text(imageTitle[lang]);
-    }
-    // If chatId exists, load images and users
-    if(chatId && chatId.trim() !== ''){
-      // Set description if needed
-      const chat = {{#if chat}}{{{json chat}}}{{else}}null{{/if}};
-      if (chat) {
-        const descriptionElement = $('.description');
-        if(descriptionElement.length && (!chat.description || chat.description.trim() === '')){
-          const chatDataToString = function(data) {
-            if (!data) return '';
-
-            let personalityHtml = '<div class="character-personality-details mt-3">';
-            let contentAdded = false;
-
-            // Add SEO paragraph for personality profile
-            personalityHtml += `<p class="seo-text text-muted mb-4">${translations.character_personality_seo || 'Discover this unique AI character\'s personality traits, preferences, and expression style. Engage in AI chat conversations that adapt to each character\'s unique persona through advanced AI character technology and AI image generation.'}</p>`;
-            
-            // Create accordion container
-            personalityHtml += '<div class="personality-accordion" id="characterAccordion">';
-
-            const addSection = (title, content, iconClass, isBadge = false, sectionId) => {
-                if (!content || (Array.isArray(content) && content.length === 0) || content === 'undefined') return '';
-                if (typeof content === 'string' && content.trim() === 'undefined') return '';
-
-                let contentHtml = '';
-                if (isBadge) {
-                    contentHtml = Array.isArray(content) ?
-                        content.map(item => `<span class="character-tag badge me-1 mb-1 p-2">${item}</span>`).join('') :
-                        `<span class="character-tag badge me-1 mb-1 p-2">${content}</span>`;
-                } else if (typeof content === 'string') {
-                    contentHtml = content;
-                } else {
-                    return ''; // Skip if content is not a string or array for badges
-                }
-
-                contentAdded = true;
-                
-                // Accordion card style
-                return `
-                    <div class="accordion-item personality-section mb-3 shadow-sm">
-                        <h2 class="accordion-header" id="heading-${sectionId}">
-                            <button class="accordion-button section-title d-flex align-items-center" 
-                                    type="button" data-bs-toggle="collapse" 
-                                    data-bs-target="#collapse-${sectionId}" 
-                                    aria-expanded="${sectionId === 'traits' ? 'true' : 'false'}" 
-                                    aria-controls="collapse-${sectionId}">
-                                <i class="${iconClass} fs-5 me-2"></i>${title}
-                            </button>
-                        </h2>
-                        <div id="collapse-${sectionId}" 
-                             class="accordion-collapse collapse ${sectionId === 'traits' ? 'show' : ''}" 
-                             aria-labelledby="heading-${sectionId}" 
-                             data-bs-parent="#characterAccordion">
-                            <div class="accordion-body">
-                                <div class="${isBadge ? 'tags-container' : 'content-container'}">${contentHtml}</div>
+                        <!-- Tags Section -->
+                        {{#if chat.tags}}
+                        <div style="margin-top: 40px;">
+                            <h5 style="margin: 0 0 16px 0; font-size: 0.95rem; font-weight: 600; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px;">{{translations.tags}}</h5>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                {{#each chat.tags}}
+                                    <a href="/search?q={{this}}" 
+                                       style="display: inline-flex; align-items: center; padding: 6px 12px; background: linear-gradient(135deg, #f3f4f6, #e5e7eb); color: #374151; border-radius: 20px; text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: all 0.2s ease; border: 1px solid #d1d5db; cursor: pointer;">
+                                        <i class="bi bi-tag" style="margin-right: 4px; font-size: 0.8rem;"></i>{{this}}
+                                    </a>
+                                {{/each}}
                             </div>
                         </div>
-                    </div>`;   
-              };
+                        {{/if}}
+                    </div>
+                </div>
+            </div>
 
-            if (data.traits && data.traits.length > 0) {
-                personalityHtml += addSection(
-                    translations.characterDescription?.traits || 'Traits', 
-                    data.traits, 
-                    'bi bi-stars', 
-                    true,
-                    'traits'
-                );
-            }
+            <!-- Similar Characters Section -->
+            <div class="similar-section">
+                <h5>{{translations.similar_characters_title}}</h5>
+                <p class="text-muted small">{{translations.similar_characters_description}}</p>
+                <div class="similar-grid" id="similarCharactersGrid">
+                    <!-- Similar characters will be loaded here -->
+                </div>
+            </div>
 
-            if (data.preferences && data.preferences.length > 0) {
-                personalityHtml += addSection(
-                    translations.characterDescription?.preferences || 'Preferences', 
-                    data.preferences, 
-                    'bi bi-heart', 
-                    true,
-                    'preferences'
-                );
-            }
+        {{else}}
+            <!-- Character Gallery for when no specific character is selected -->
+            <div class="character-gallery">
+                <div class="container">
+                    <h2 class="fw-bold">{{translations.cardMenuTitle}}</h2>
+                    <p class="text-muted text-center mb-4">{{translations.exploreCharactersDescription}}</p>
 
-            if (data.expression_style) {
-                if (data.expression_style.tone && data.expression_style.tone !== 'undefined') {
-                    personalityHtml += addSection(
-                        translations.characterDescription?.tone || 'Tone', 
-                        `<p class="mb-0">${data.expression_style.tone}</p>`, 
-                        'bi bi-chat-quote', 
-                        false,
-                        'tone'
-                    ); 
-                }
-                
-                if (data.expression_style.vocabulary && data.expression_style.vocabulary !== 'undefined') {
-                    personalityHtml += addSection(
-                        translations.characterDescription?.vocabulary || 'Vocabulary', 
-                        `<p class="mb-0">${data.expression_style.vocabulary}</p>`, 
-                        'bi bi-journal-text', 
-                        false,
-                        'vocabulary'
-                    );
-                }
-                
-                if (data.expression_style.unique_feature && data.expression_style.unique_feature !== 'undefined') {
-                    personalityHtml += addSection(
-                        translations.characterDescription?.uniqueFeature || 'Unique Feature', 
-                        `<p class="mb-0">${data.expression_style.unique_feature}</p>`, 
-                        'bi bi-gem', 
-                        false,
-                        'unique-feature'
-                    );
-                }
-            }
+                    <!-- Category Cards -->
+                    <div class="category-cards" id="category-cards-container">
+                        <!-- Categories will be loaded here -->
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading categories...</span>
+                            </div>
+                        </div>
+                    </div>
 
-            if (data.story && data.story !== 'undefined') {
-                personalityHtml += addSection(
-                    translations.characterDescription?.story || 'Story', 
-                    `<p class="fst-italic">${data.story}</p>`, 
-                    'bi bi-book', 
-                    false,
-                    'story'
-                );
-            }
+                    <!-- Query Tags Section -->
+                    <div class="query-tags-section mb-4">
+                        <div class="d-flex align-items-center justify-content-center mb-3">
+                            <h6 class="me-3 mb-0">{{translations.browseByCategory}}:</h6>
+                            <small class="text-muted">{{translations.scrollForMore}}</small>
+                        </div>
+                        <div class="query-tags-scroll-container">
+                            <div class="query-tags-list d-flex justify-content-center flex-wrap" id="query-tags-list">
+                                <!-- Query tags will be populated here -->
+                                <div class="spinner-border spinner-border-sm me-3" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-            // Tags Section
-            if (chat.tags && chat.tags.length > 0) {
-                const tagsHtml = chat.tags.map(tag => 
-                    `<a href="/search?q=${encodeURIComponent(tag)}" class="character-tag badge me-1 mb-1 p-2">${tag}</a>`
-                ).join('');
-                
-                personalityHtml += addSection(
-                    translations.tags || 'Tags', 
-                    tagsHtml, 
-                    'bi bi-tags', 
-                    false,
-                    'tags'
-                );
-            }
+                    <!-- Character Grid -->
+                    <div class="character-grid-initial row" id="all-chats-container">
+                        <!-- Characters will be loaded here -->
+                    </div>
+                    <!-- Pagination -->
+                    <div class="d-flex justify-content-center mt-4" id="all-chats-images-pagination-controls"></div>
+                </div>
+            </div>
+        {{/if}}
+    </div>
 
-            // Close accordion container
-            personalityHtml += '</div>';
+    <!-- Hidden elements for compatibility -->
+    <div id="chat-images-gallery" style="display: none;"></div>
+    <div id="chat-videos-gallery" style="display: none;"></div>
+    <div class="row mx-0" id="all-chats-images-gallery" style="display: none;"></div>
 
-            // Add CSS for better styling
-            personalityHtml += `
-            <style>
-                .character-personality-details {
-                    background-color: #f8f9fa;
-                    border-radius: 8px;
-                    padding: 20px;
-                    margin-bottom: 20px;
-                    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-                }
-                
-                .seo-text {
-                    font-size: 0.85rem;
-                    line-height: 1.5;
-                    opacity: 0.8;
-                }
-                
-                .personality-section {
-                    border: none !important;
-                    border-radius: 8px;
-                    overflow: hidden;
-                }
-                
-                .accordion-button {
-                    background: #fff;
-                    color: #8240FF;
-                    font-weight: 600;
-                }
-                
-                .accordion-button:not(.collapsed) {
-                    background: #fff;
-                    color: #8240FF;
-                }
-                
-                .accordion-button:focus {
-                    box-shadow: 0 0 0 0.25rem rgba(130,64,255,0.25);
-                }
-                
-                .section-title {
-                    color: #8240FF;
-                    padding: 12px 15px;
-                }
-                
-                .accordion-body {
-                    padding: 15px;
-                    background-color: #fff;
-                }
-                
-                .tags-container {
-                    display: flex;
-                    flex-wrap: wrap;
-                }
-                
-                .character-tag {
-                    background-color: #f0e6ff;
-                    color: #6610f2;
-                    border: 1px solid #d2b8ff;
-                    transition: all 0.3s ease;
-                    text-decoration: none;
-                    display: inline-block;
-                }
-                
-                .character-tag:hover {
-                    background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
-                    color: white !important;
-                    transform: translateY(-2px);
-                    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
-                }
-                
-                .content-container {
-                    background: #fff;
-                    border-radius: 6px;
-                    padding: 5px;
-                }
-                
-                .btn.custom-gradient-bg {
-                    background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
-                    border: none;
-                    color: white;
-                    transition: all 0.3s ease;
-                    box-shadow: 0 4px 10px rgba(130,64,255,0.25);
-                }
-                
-                .btn.custom-gradient-bg:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 6px 12px rgba(130,64,255,0.35);
-                }
-            </style>`;
+    <!-- Include required scripts -->
+    <script src="/js/dashboard-category.js"></script>
+    <!-- Character profile modules -->
+    <script src="/js/character-profile-loader.js"></script>
+    <script src="/js/character-profile-ui.js"></script>
+    <script src="/js/character-profile-interactions.js"></script>
+    <!-- Main character profile initialization -->
+    <script src="/js/character.js"></script>
 
-            personalityHtml += '</div>';
-
-            if (!contentAdded) {
-                return `<div class="alert alert-info shadow-sm p-3">${translations.default_character_description || 'This character has a mysterious personality, waiting to be discovered through chat!'}</div>`;
-            }
-
-            return personalityHtml;
-        };
-          descriptionElement.html(chatDataToString(chat.base_personality));
-        } else if (descriptionElement.length && chat.description) {
-          descriptionElement.text(chat.description);
-        }
-      }
-
-      loadChatImages(chatId, 1, true);
-      loadChatUsers(chatId);
-      fetchSimilarChats(chatId);
-    }
-
-     async function fetchSimilarChats(chatId) {
-      try {
-
-        const response = await fetch(`/api/similar-chats/${chatId}`);
-        if (response.ok) {
-          const similarChats = await response.json();
-          if (similarChats) {
-            window.displaySimilarChats(similarChats);
-          }
-        } else {
-          console.error('Failed to fetch similar chats:', response.statusText);
-          $('#similar-characters-gallery-loader').removeClass('d-flex').hide();
-        }
-      } catch (error) {
-          console.error('Failed to fetch similar chats:', error);
-          $('#similar-characters-gallery-loader').removeClass('d-flex').hide();
-      }
-    };
-
-    // Function to share image and title on SNS
-    if($('#mainImage').length){
-      const imageUrl = $('#mainImage').attr('src');
-      const shareTitle = "{{translations.share_character_intro}} " + characterName + "! {{translations.share_site_name}}";
-      $('.share').on('click', function(){
-        shareSns(shareTitle, imageUrl || window.location.href);
-      });
-    } else if (typeof chat !== 'undefined' && chat && chat.chatImageUrl) {
-      const imageUrl = chat.chatImageUrl;
-      const shareTitle = "{{translations.share_character_intro}} " + characterName + "! {{translations.share_site_name}}";
-      $('.share').on('click', function(){
-        shareSns(shareTitle, imageUrl || window.location.href);
-      });
-    }
-
-    function shareSns(title, pageUrl) {
-      const text = encodeURIComponent(title);
-      const url = encodeURIComponent(pageUrl);
-      if (navigator.share) {
-        navigator.share({
-          title: title,
-          text: title,
-          url: pageUrl,
-        })
-        .then(() => console.log('Successful share'))
-        .catch((error) => console.log('Error sharing', error));
-      } else {
-        const twitterUrl = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
-        window.open(twitterUrl, '_blank');
-      }
-    }
-
-    // Back to top button
-    var backToTopButton = $("#back-to-top");
-    $(window).scroll(function() {
-      if ($(window).scrollTop() > 300) {
-        backToTopButton.fadeIn();
-      } else {
-        backToTopButton.fadeOut();
-      }
-    });
-
-    backToTopButton.on("click", function(e) {
-      e.preventDefault();
-      $("html, body").animate({ scrollTop: 0 }, "slow");
-    });
-
-    let videosLoaded = false;
-    $('button[data-bs-target="#video-gallery-tab"]').on('shown.bs.tab', function () {
-      if (!videosLoaded && chatId && chatId.trim() !== '') {
-        loadChatVideos(chatId, 1, true);
-        videosLoaded = true;
-      }
-    });
-  });
-</script>
+    {{> dashboard-footer}}
+    
 </body>
 </html>

@@ -1799,8 +1799,8 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             const cacheExpiry = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
                         
             const cachedResult = await similarChatsCache.findOne({
-            chatId: cacheKey,
-            createdAt: { $gte: cacheExpiry }
+                chatId: cacheKey,
+                createdAt: { $gte: cacheExpiry }
             });
 
             if (cachedResult) {
@@ -1826,6 +1826,7 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             const candidateChatsCursor = chatsCollection.find(
                 { 
                 _id: { $ne: chatIdObjectId }, 
+                language: chat.language, // Match same language
                 chatImageUrl: { $exists: true, $ne: null, $ne: "" },
                 visibility: { $ne: 'private' }, // Exclude private chats
                 $or: [
@@ -1840,7 +1841,7 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
                     enhancedPrompt: 1, characterPrompt: 1
                 }
                 }
-            ).limit(200); // Limit candidates for performance
+            ).sort({ _id: -1 }).limit(200); // Limit candidates for performance
             
             const scoredChats = [];
             let candidateCount = 0;

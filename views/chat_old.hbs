@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="{{user.lang}}">
+    {{> dashboard-header}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <link rel="stylesheet" href="/css/chat-suggestions.css">
+    <link rel="stylesheet" href="/css/speech-to-text.css">
+    <link rel="stylesheet" href="/css/chat-scenario.css">
+    <link rel="stylesheet" href="/css/chat-goals-widget.css">
+<body>
+    {{> onboarding-modals}}
+    <!-- Fullscreen overlay with loading spinner -->
+    <div class="fullscreen-overlay justify-content-center align-items-center" id="loadingOverlay">
+        <div style="position: relative; display: flex; justify-content: center; align-items: center;"> <!-- Wrapper for logo and spinner -->
+            <div class="loading-circle shadow" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div style="z-index: 10;">
+                <div class="brand-logo rounded-circle bg-white" style="width: 100px; height: 100px;background: white;">
+                    <i class="bi bi-chat-heart-fill" style="font-size: 3em; color: #b58afe;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="swup-none">
+        <div id="overlay" class="d-sm-none bg-dark" style="position: fixed; inset: 0; z-index: 1033; display: none; opacity: 0.4; overflow: hidden;"></div>
+        <div class="content collapsed">
+            <nav class="navbar navbar-expand-lg navbar-white bg-transparent fixed-top shadow-0 flex-column" style="z-index: 1020;">
+                <div class="container-fluid">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <div style="position: absolute;left: 20px;top: 10px;">
+                            <button 
+                            class="btn shadow-0 onchat-on goBackButton" 
+                            style="display: none;"
+                            onclick="showDiscovery()"><i class="bi bi-arrow-left"></i></button>
+
+                            <div id="chat-actions-dropdown" class="dropdown d-inline-block onchat-on" style="display: none;">
+                                <button class="btn shadow-0 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu shadow border-0">
+                                    <!-- Dropdown items will be populated by JavaScript -->
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-row " style="cursor: pointer; min-height: 40px;" onclick="showDiscovery()">
+                            <div class="brand-logo me-3 onchat-off" style="display: flex; position: absolute; left: 10px;">
+                                <i class="bi bi-chat-heart-fill text-white fs-3"></i>
+                            </div>
+                        </div>  
+                        <div>
+                            <div class="navbar-collapse" id="navbarNav" style="position: absolute;right: -50vw;top: 10px;">
+                                <ul class="navbar-nav ms-auto flex-row mb-lg-0">
+                                    {{> dashboard-avatar}}
+                                </ul>
+                            </div>
+                        </div>   
+                    </div>
+                </div>
+            {{> chat-header}}
+            </nav>
+            {{> chat-list}}
+            <section id="chat-discovery" class="onchat-off mt-5 pt-3" style="display: block;">
+
+                <!-- Card menu title & description -->
+                <section class="animate__animated mt-5 m-3 pt-5 p-3" style="overflow-x: hidden;" data-animate="animate__fadeInLeft" data-delay="0.3s">
+                    <div class="container text-center mb-3 animate__animated" data-animate="animate__fadeInLeft" data-delay="0.3s">
+                        <h2 class="fw-bold u-color-grad">{{translations.promo.title}}</h2>
+                        <p class="text-muted">{{translations.exploreCharactersDescription}}</p>
+                    </div>
+                </section>
+
+                <!-- Free user benefits - Professional horizontal scroll design with animations -->
+                <div class="container-fluid mb-4 is-free-user animate__animated" data-animate="animate__fadeInUp" data-delay="0.5s" style="display: none;">
+                    <!-- Section Header -->
+                    <div class="text-center mb-4 animate__animated" data-animate="animate__fadeInDown" data-delay="0.6s">
+                        <div class="d-inline-flex align-items-center px-4 py-2 rounded-pill text-white fw-bold animate__animated" 
+                            data-animate="animate__pulse" data-delay="0.8s"
+                            style="background: color(srgb 0.489 0.223 0.9696); box-shadow: 0 4px 15px rgba(255, 94, 126, 0.3);">
+                            <i class="bi bi-star-fill me-2"></i>
+                            {{translations.freeUserBenefits.title}}
+                        </div>
+                        <p class="text-muted mt-2 mb-0 animate__animated" data-animate="animate__fadeIn" data-delay="0.9s">{{translations.freeUserBenefits.subtitle}}</p>
+                    </div>
+
+                    <!-- Horizontal Scrolling Benefits -->
+                    <div class="benefits-scroll-container position-relative animate__animated dflex justify-content-center d-flex" data-animate="animate__fadeInLeft" data-delay="1.0s">
+                        <div class="benefits-scroll-wrapper d-flex gap-3 pb-3" style="overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth; scrollbar-width: none; -ms-overflow-style: none;">
+                            <!-- Benefit 1 -->
+                            <div class="benefit-card flex-shrink-0 animate__animated" data-animate="animate__slideInLeft" data-delay="1.1s" style="min-width: 280px; max-width: 320px;">
+                                <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden" 
+                                    style="transition: all 0.3s ease; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                    <div class="card-body text-center text-white p-4">
+                                        <div class="benefit-icon mb-3 animate__animated">
+                                            <div class="rounded-circle bg-white bg-opacity-20 d-inline-flex align-items-center justify-content-center" 
+                                                style="width: 60px; height: 60px;">
+                                                <i class="bi bi-images fs-3 text-dark"></i>
+                                            </div>
+                                        </div>
+                                        <h5 class="card-title fw-bold mb-2 animate__animated" data-animate="animate__fadeInUp" data-delay="1.4s">{{translations.freeUserBenefits.benefit1.title}}</h5>
+                                        <p class="card-text text-white-50 mb-3 animate__animated" data-animate="animate__fadeInUp" data-delay="1.5s">{{translations.freeUserBenefits.benefit1.description}}</p>
+                                        <div class="benefit-highlight animate__animated" data-animate="animate__zoomIn" data-delay="1.6s">
+                                            <span class="badge bg-white text-dark px-3 py-2 rounded-pill fw-bold">{{translations.freeUserBenefits.daily}}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Benefit 2 -->
+                            <div class="benefit-card flex-shrink-0 animate__animated" data-animate="animate__slideInUp" data-delay="1.2s" style="min-width: 280px; max-width: 320px;">
+                                <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden" 
+                                    style="transition: all 0.3s ease; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                                    <div class="card-body text-center text-white p-4">
+                                        <div class="benefit-icon mb-3 animate__animated">
+                                            <div class="rounded-circle bg-white bg-opacity-20 d-inline-flex align-items-center justify-content-center" 
+                                                style="width: 60px; height: 60px;">
+                                                <i class="bi bi-gift fs-3 text-dark"></i>
+                                            </div>
+                                        </div>
+                                        <h5 class="card-title fw-bold mb-2 animate__animated" data-animate="animate__fadeInUp" data-delay="1.5s">{{translations.freeUserBenefits.benefit2.title}}</h5>
+                                        <p class="card-text text-white-50 mb-3 animate__animated" data-animate="animate__fadeInUp" data-delay="1.6s">{{translations.freeUserBenefits.benefit2.description}}</p>
+                                        <div class="benefit-highlight animate__animated" data-animate="animate__zoomIn" data-delay="1.7s">
+                                            <span class="badge bg-white text-dark px-3 py-2 rounded-pill fw-bold">{{translations.freeUserBenefits.daily}}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Benefit 3 -->
+                            <div class="benefit-card flex-shrink-0 animate__animated" data-animate="animate__slideInRight" data-delay="1.3s" style="min-width: 280px; max-width: 320px;">
+                                <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden" 
+                                    style="transition: all 0.3s ease; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                    <div class="card-body text-center text-white p-4">
+                                        <div class="benefit-icon mb-3 animate__animated">
+                                            <div class="rounded-circle bg-white bg-opacity-20 d-inline-flex align-items-center justify-content-center" 
+                                                style="width: 60px; height: 60px;">
+                                                <i class="bi bi-chat-dots fs-3 text-dark"></i>
+                                            </div>
+                                        </div>
+                                        <h5 class="card-title fw-bold mb-2 animate__animated" data-animate="animate__fadeInUp" data-delay="1.6s">{{translations.freeUserBenefits.benefit3.title}}</h5>
+                                        <p class="card-text text-white-50 mb-3 animate__animated" data-animate="animate__fadeInUp" data-delay="1.7s">{{translations.freeUserBenefits.benefit3.description}}</p>
+                                        <div class="benefit-highlight animate__animated" data-animate="animate__zoomIn" data-delay="1.8s">
+                                            <span class="badge bg-white text-dark px-3 py-2 rounded-pill fw-bold">∞ {{translations.freeUserBenefits.unlimited}}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Benefit 4 create a new character -->
+                            <div class="benefit-card flex-shrink-0 animate__animated" data-animate="animate__slideInLeft" data-delay="1.4s" style="min-width: 280px; max-width: 320px;">
+                                <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden" 
+                                    style="transition: all 0.3s ease; background: linear-gradient(135deg, #ffafbd 0%, #ffc3a0 100%);">
+                                    <div class="card-body text-center text-white p-4">
+                                        <div class="benefit-icon mb-3 animate__animated">
+                                            <div class="rounded-circle bg-white bg-opacity-20 d-inline-flex align-items-center justify-content-center" 
+                                                style="width: 60px; height: 60px;">
+                                                <i class="bi bi-person-plus fs-3 text-dark"></i>
+                                            </div>
+                                        </div>
+                                        <h5 class="card-title fw-bold mb-2 animate__animated" data-animate="animate__fadeInUp" data-delay="1.7s">{{translations.freeUserBenefits.benefit4.title}}</h5>  
+                                        <p class="card-text text-white-50 mb-3 animate__animated" data-animate="animate__fadeInUp" data-delay="1.8s">{{translations.freeUserBenefits.benefit4.description}}</p>
+                                        <div class="benefit-highlight animate__animated" data-animate="animate__zoomIn" data-delay="1.9s">
+                                            <span class="badge bg-white text-dark px-3 py-2 rounded-pill fw-bold">{{translations.freeUserBenefits.createCharacter}}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <!-- Card menu -->
+                <div class="is-premium card-menu-container mb-3 px-0" style="display: none;">
+                    <div class="d-flex overflow-auto px-3 pb-5" style="scrollbar-width: thin;justify-content: space-between;">
+                        <!-- Create Character Card -->
+                        <div class="character-create-card shadow-sm rounded p-3 text-center mx-2 flex-shrink-0" 
+                             onclick="loadCharacterCreationPage()"
+                             style="cursor: pointer; transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.1); width: 220px;">
+                            <div class="character-create-icon bg-light rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" 
+                                 style="width: 80px; height: 80px; transition: all 0.3s ease;">
+                                <i class="bi bi-plus-lg fs-2 text-primary"></i>
+                            </div>
+                            <h5 class="mb-2">{{translations.createCharacter}}</h5>
+                            <p class="text-muted small mb-0">{{translations.createCharacterDescription}}</p>
+                            <!-- Restrictions -->
+                            <div class="rounded-pill text-white fw-bold mt-2 p-3 is-free-user" style="font-size: 12px; background: color(srgb 0.489 0.223 0.9696);" role="alert">
+                                {{translations.createCharacterRestriction}}
+                            </div>
+                        </div>
+                        
+                        <!-- Explore Characters Card -->
+                        <div class="character-create-card shadow-sm rounded p-3 text-center mx-2 flex-shrink-0" 
+                             onclick="window.location.href='/search'"
+
+                             style="cursor: pointer; transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.1); width: 220px;">
+                            <div class="character-create-icon bg-light rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" 
+                                 style="width: 80px; height: 80px; transition: all 0.3s ease;">
+                                <i class="bi bi-globe fs-2 text-success"></i>
+                            </div>
+                            <h5 class="mb-2">{{translations.explore}}</h5>
+                            <p class="text-muted small mb-0">{{translations.exploreDescription}}</p>
+                            <div class="rounded-pill text-white fw-bold mt-2 p-3 is-free-user" style="font-size: 12px; background: color(srgb 0.489 0.223 0.9696);;" role="alert">
+                                {{translations.exploreRestriction}}
+                            </div>
+                        </div>
+                        
+                        <!-- User Profile Card -->
+                        <div class="character-create-card shadow-sm rounded p-3 text-center mx-2 flex-shrink-0" 
+                             onclick="window.location.href='/user/{{user._id}}'"
+                             style="cursor: pointer; transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.1); width: 220px;">
+                            <div class="character-create-icon bg-light rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" 
+                                 style="width: 80px; height: 80px; transition: all 0.3s ease;">
+                                <i class="bi bi-person fs-2 text-info"></i>
+                            </div>
+                            <h5 class="mb-2">{{translations.userProfile}}</h5>
+                            <p class="text-muted small mb-0">{{translations.userProfileDescription}}</p>
+                            <div class="rounded-pill text-white fw-bold mt-2 p-3 is-free-user" style="font-size: 12px; background: color(srgb 0.489 0.223 0.9696);" role="alert">
+                                {{translations.userRestriction}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Latest Chats Section -->
+                <div id="latest-chats-section">
+                    <h5 class="fw-bold mb-3 ms-4">{{translations.latestChatsHeader}}
+                        <i class="bi bi-arrow-counterclockwise" onclick="loadLatestChats(1, true)" style="cursor: pointer;"></i>
+                    </h5>
+                    <div id="latest-chats-gallery" class="row latest-chats-gallery flex-nowrap overflow-auto mx-0" style="flex-wrap: nowrap; overflow-x: auto; white-space: nowrap;"></div>
+                </div>
+
+                <!-- Latest Video Chats Section -->
+                <div id="latest-video-chats-section">
+                    <h5 class="fw-bold mb-3 ms-4">{{translations.latestVideoChatsHeader}}
+                        <i class="bi bi-arrow-counterclockwise" onclick="loadLatestVideoChats(1, true)" style="cursor: pointer;"></i>
+                    </h5>
+                    <div id="latest-video-chats-gallery" class="d-flex overflow-auto pb-3 px-3" style="gap: 15px; scroll-behavior: smooth;">
+                        <!-- Video chats will be loaded here -->
+                    </div>
+                    <div id="latest-video-chats-pagination-controls" class="text-center mt-3"></div>
+                </div>
+
+                <!-- Sorting Tools: Premium/Free, Gender & NSFW Filters (Responsive) -->
+                <div class="mx-4 sorting-tools mb-3">
+                    <div class="row g-3 align-items-center">
+
+                        <!-- [DISABLE] Gender Filter Buttons -->
+                        <div class="d-none col-12 col-md d-flex align-items-center gap-2 flex-wrap justify-content-between justify-content-md-start">
+                            <span class="me-2 text-muted" style="font-size: 15px;">
+                                <i class="bi bi-gender-ambiguous"></i> {{translations.sort.genderLabel}}
+                            </span>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button id="popular-chats-gender-female" class="btn btn-outline-primary px-3 py-1" style="border-radius: 30px; font-size: 14px;">
+                                    <i class="bi bi-gender-female me-1"></i>{{translations.sort.female}}
+                                </button>
+                                <button id="popular-chats-gender-male" class="btn btn-outline-info px-3 py-1" style="border-radius: 30px; font-size: 14px;">
+                                    <i class="bi bi-gender-male me-1"></i>{{translations.sort.male}}
+                                </button>
+                                <button id="popular-chats-gender-nonbinary" class="btn btn-outline-success px-3 py-1" style="border-radius: 30px; font-size: 14px;">
+                                    <i class="bi bi-gender-trans me-1"></i>{{translations.sort.nonBinary}}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Style Filter Buttons -->
+                        <div class="col-12 d-flex justify-content-center gap-4">
+                            <button id="popular-chats-style-anime" class="btn d-flex align-items-start justify-content-center p-3 border-0 position-relative text-white" style="border-radius: 20px; overflow: hidden; background-image: url('/img/image-placeholder-anime.jpeg'); background-size: cover; background-position: center; width: 160px; height: 160px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                                <div class="position-absolute top-0 bottom-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 50%, rgba(0,0,0,0.6) 100%);">
+                                    <span class="fw-bold text-white position-relative" style="font-size: 14px; line-height: 1.2; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{{translations.sort.anime}}</span>
+                                </div>
+                            </button>
+                            <button id="popular-chats-style-photorealistic" class="btn d-flex align-items-start justify-content-center p-3 border-0 position-relative text-white" style="border-radius: 20px; overflow: hidden; background-image: url('/img/image-placeholder-real.jpeg'); background-size: cover; background-position: center; width: 160px; height: 160px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                                <div class="position-absolute top-0 bottom-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 50%, rgba(0,0,0,0.6) 100%);">
+                                    <span class="fw-bold text-white position-relative" style="font-size: 14px; line-height: 1.2; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{{translations.sort.photorealistic}}</span>
+                                </div>
+                            </button>
+                        </div>
+
+                        <!-- Category cards -->
+                        <div class="container-fluid mb-4">
+                            <div class="row" id="category-cards-container">
+                                <!-- Loading placeholder -->
+                                <div class="col-12 text-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading categories...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Query Tags Horizontal Scroll Section -->
+                        <div class="query-tags-section mb-1">
+                            <div class="d-flex align-items-center mb-2">
+                                <h6 class="me-3 mb-0">{{translations.browseByCategory}}:</h6>
+                                <small class="text-muted">{{translations.scrollForMore}}</small>
+                                <span type="button" id="reset-popular-chat-cache" class="ms-2" title="Reset People Chat Cache">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </span>
+                            </div>
+                            <div class="query-tags-scroll-container">
+                                <div class="query-tags-list d-flex" id="query-tags-list">
+                                    <!-- Query tags will be populated here -->
+                                    <div class="spinner-border spinner-border-sm me-3" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Popular chats section -->
+                <div id="popular-chats-section">
+                    <div id="all-chats-container" class="row all-chats-gallery mx-0"></div>
+                    <div class="row mx-0" id="all-chats-images-gallery"></div>
+                    <div class="d-flex justify-content-center mt-4" id="all-chats-images-pagination-controls"></div>
+
+                    <div id="chat-gallery" class="row popular-chats-gallery mx-0"></div>
+                    <div id="popular-chats-pagination-controls" class="my-3" style="opacity: 0;"></div>
+                </div>
+            </section>
+            <div id="chat-wrapper" class="px-0 onchat-on" style="background-position: top center;background-repeat: no-repeat;background-size:cover;position: relative;">
+                <!-- Chat Container Overlay -->
+                <div id="chat-container" class="container mx-auto shadow-0 border-0 rounded-0" style="border-radius:0 !important;position: relative;">
+                    <div class="chat-overlay d-flex justify-content-center align-items-center w-100 h-100vh position-absolute top-0 start-0 bottom-0" id="chatOverlay" style="background-color: #ffffff!important;opacity: 0.85;"></div>
+                    
+                    <div class="card-body text-center p-0 container" style="min-height:250px;overflow-y:hidden;display: flex;flex-direction: column;position: relative;z-index: 990;">
+                        <!-- Chat Scenarios Container - positioned absolutely but within chat wrapper to avoid toolbar overlap -->
+                        <div class="scenario-container"></div>
+                        <div id="chatContainer" data-id="" class="pt-2 fade-content" style="padding-bottom: 180px !important;"></div>
+                    </div>
+                </div>  
+            </div>  
+        </div>
+    </div>
+ {{> dashboard-footer}}
+
+<script src="https://cdn.jsdelivr.net/npm/blueimp-md5@2.19.0/js/md5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script src="/js/merge-face.js"></script>
+<script src="/js/txt2speech.js"></script>
+<script src="/js/dashboard-category.js"></script>
+<script src="/js/chat-tool-swiper.js"></script>
+<script src="/js/chat-tool-toolbar.js"></script>
+<script src="/js/chat-list.js"></script>
+<script src="/js/chat-tool-prompts.js"></script>
+<script src="/js/chat-tool-gifts.js"></script>
+<script src="/js/chat-tool-settings.js"></script>
+<script src="/js/chat-tool-message.js"></script>
+<script src="/js/chat-tool-goals.js"></script>
+<script src="/js/chat-suggestions.js"></script>
+<script src="/js/chat-scenario.js"></script>
+<script src="/js/chat-footer.js"></script>
+<script src="/js/live-goals-widget.js"></script>
+<script src="/js/chat.js"></script>
+<script src="/js/character-infos.js"></script>
+<script src="/js/img2video.js"></script>
+<script src="/js/speech-to-text-init.js"></script>
+<script src="/js/speech-to-text-ui.js"></script>
+<script src="/js/speech-to-text-utils.js"></script>
+
+<script>
+    const newSubscription = {{newSubscription}};
+$(document).ready(function() {
+    
+    function adjustHeight() {
+        const newHeight = $(window).height() * 0.97;
+        $('.chat-contain .card-body').height(newHeight);
+    }
+    $(document).ready(adjustHeight);
+    $(window).resize(adjustHeight);
+
+    function resizeIframe() {
+        var iframe = $('#user-profile-page');
+        if(iframe.length == 0 ){return}
+        const newHeight = iframe[0].contentWindow.document.body.scrollHeight
+        if( newHeight > 0) { iframe.height(newHeight); }
+    }  
+    window.addEventListener('message', function(event) {
+        if (event.data === 'resizeIframe') {
+            resizeIframe();
+        }
+    });
+
+    window.addEventListener('message', function(event) {
+        if (event.data.event === 'openChat') {
+            redirectToChat(event.data.chatId)
+        }
+    });
+
+    window.addEventListener('message', function(event) {
+        if (event.data.event === 'updatePersona') {
+             updatePersona(event.data.personaId,event.data.isAdding)
+        }
+    });
+    
+    window.addEventListener('message', function(event) {
+        if (event.data.event === 'updateCoins') {
+             updateCoins()
+        }
+    });
+
+
+
+
+
+    $(document).on('click','.history-chat', function(){
+        const chatId = $(this).data('id')
+        console.log(`[Chat History] Opening chat history for chat ID: ${chatId} for userId: ${userId}`);
+        if(chatId && userId){ 
+            getUserChatHistory(chatId, userId) 
+        }
+    })
+
+    $('.nav-link').on('click', function(e) {
+        e.preventDefault();
+        $('.nav-link').removeClass('active');
+        $(this).addClass('active');
+        
+        if ($(this).text().trim() === 'ペルソナ') {
+            $('.custom-card').hide();
+            $('.custom-card .persona.on').closest('.custom-card').show();
+        } else {
+            $('.custom-card').show();
+        }
+    });
+
+    // --- Popular Chats Infinite Scroll with Session Storage Caching ---
+    let popularChatsPage = 1;
+    let popularChatsLoading = false;
+    let popularChatsTotalPages = 1;
+    const POPULAR_CHATS_CACHE_KEY = 'popularChatsCache';
+    const POPULAR_CHATS_CACHE_TIME_KEY = 'popularChatsCacheTime';
+    const POPULAR_CHATS_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in ms
+
+    // Helper to get cache
+    function getPopularChatsCache() {
+        const cache = sessionStorage.getItem(POPULAR_CHATS_CACHE_KEY);
+        const cacheTime = sessionStorage.getItem(POPULAR_CHATS_CACHE_TIME_KEY);
+        if (!cache || !cacheTime) return null;
+        if (Date.now() - parseInt(cacheTime, 10) > POPULAR_CHATS_CACHE_TTL) {
+            sessionStorage.removeItem(POPULAR_CHATS_CACHE_KEY);
+            sessionStorage.removeItem(POPULAR_CHATS_CACHE_TIME_KEY);
+            return null;
+        }
+        try {
+            return JSON.parse(cache);
+        } catch {
+            return null;
+        }
+    }
+
+    // Helper to set cache
+    function setPopularChatsCache(page, data) {
+        let cache = getPopularChatsCache() || {};
+        cache[page] = data;
+        sessionStorage.setItem(POPULAR_CHATS_CACHE_KEY, JSON.stringify(cache));
+        sessionStorage.setItem(POPULAR_CHATS_CACHE_TIME_KEY, Date.now().toString());
+    }
+
+    async function loadPopularChats(page = 1, reload = false) {
+        if (popularChatsLoading && !reload) return; // Added !reload to allow forced reload
+        popularChatsLoading = true;
+        // Show spinner for popular chats
+        $('#popular-chats-pagination-controls').html('<div class="text-center my-3"><div class="spinner-border text-secondary spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+
+        if (reload) { // Added reload logic for popular chats as well
+            popularChatsPage = 1;
+            $('#chat-gallery').empty(); // 'chat-gallery' is the popular chats container
+            sessionStorage.removeItem(POPULAR_CHATS_CACHE_KEY);
+            sessionStorage.removeItem(POPULAR_CHATS_CACHE_TIME_KEY);
+        }
+
+        let cache = getPopularChatsCache(); // Ensure this function exists or adapt
+        let data = cache && cache[page];
+        if (data) {
+            // console.log(`Loading popular chats page ${page} from cache`);
+            window.displayChats(data.chats, 'chat-gallery', false); // Corrected target ID
+            popularChatsTotalPages = data.totalPages || 1;
+            if (page >= popularChatsTotalPages) {
+                $('#popular-chats-pagination-controls').html('');
+            } else {
+                $('#popular-chats-pagination-controls').html('<div class="text-center my-3"><div class="spinner-border text-secondary spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+            }
+            popularChatsLoading = false;
+            return;
+        }
+
+        try {
+            // console.log(`Fetching popular chats page ${page} from API`);
+            const res = await fetch(`/api/popular-chats?page=${page}&reloadCache=${reload}`);
+            if (!res.ok) {
+                $('#popular-chats-pagination-controls').html('<div class="text-center text-danger my-3">Failed to load popular chats.</div>');
+                popularChatsLoading = false;
+                return;
+            }
+            data = await res.json();
+            setPopularChatsCache(page, data); // Ensure this function exists or adapt
+
+            // Shuffle popular chats if desired (example from your existing code)
+            if (Array.isArray(data.chats)) {
+                data.chats = data.chats
+                    .map(value => ({ value, sort: Math.random() }))
+                    .sort((a, b) => a.sort - b.sort)
+                    .map(({ value }) => value);
+            }
+            window.displayChats(data.chats, 'chat-gallery', false); // Corrected target ID
+            popularChatsTotalPages = data.totalPages || 1;
+            if (page >= popularChatsTotalPages) {
+                $('#popular-chats-pagination-controls').html('');
+            } else {
+                $('#popular-chats-pagination-controls').html('<div class="text-center my-3"><div class="spinner-border text-secondary spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+            }
+        } catch (e) {
+            $('#popular-chats-pagination-controls').html('<div class="text-center text-danger my-3">Error loading popular chats.</div>');
+        }
+        popularChatsLoading = false;
+    }
+
+    // Reset popular chats cache button 
+    $('#reset-popular-chat-cache').on('click', function() {
+        resetPopularChatCache();
+        $('#chat-gallery').empty();
+        loadPopularChats(1, true);
+    });
+    
+    window.resetPopularChatCache = function() {
+        sessionStorage.removeItem(POPULAR_CHATS_CACHE_KEY);
+        sessionStorage.removeItem(POPULAR_CHATS_CACHE_TIME_KEY);
+        popularChatsPage = 1;
+        return fetch('/api/popular-chats/reset-cache', {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({ reloadCache: true })
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Failed to reset popular chats cache');
+            return response.json();
+        })
+        .then(data => {
+            return data;
+        })
+        .catch(err => {
+            console.error('Error resetting popular chats cache:', err);
+        });
+    };
+
+    // Initial load (always loads page 1)
+    loadPopularChats();
+
+    // Infinite scroll for popular chats
+    $(window).on('scroll.popularChats', function() {
+        if (
+            !popularChatsLoading &&
+            popularChatsPage < popularChatsTotalPages &&
+            $(window).scrollTop() + $(window).height() >= $(document).height() - 200
+        ) {
+            popularChatsPage++;
+            loadPopularChats(popularChatsPage);
+        }
+    });
+
+    // Global states for Latest Chats
+    var latestChatsPage = 1;
+    var latestChatsLoading = false;
+    var latestChatsTotalPages = 1;
+    const LATEST_CHATS_CACHE_KEY = 'latestChatsCache';
+    const LATEST_CHATS_CACHE_TIME_KEY = 'latestChatsCacheTime';
+    const LATEST_CHATS_CACHE_TTL = 1 * 60 * 60 * 1000; // 1 hour in milliseconds
+
+    // --- Latest Chats ---
+    function getLatestChatsCache() {
+        const cache = sessionStorage.getItem(LATEST_CHATS_CACHE_KEY);
+        const cacheTime = sessionStorage.getItem(LATEST_CHATS_CACHE_TIME_KEY);
+        if (!cache || !cacheTime) return null;
+        if (Date.now() - parseInt(cacheTime, 10) > LATEST_CHATS_CACHE_TTL) {
+            sessionStorage.removeItem(LATEST_CHATS_CACHE_KEY);
+            sessionStorage.removeItem(LATEST_CHATS_CACHE_TIME_KEY);
+            return null;
+        }
+        try {
+            return JSON.parse(cache);
+        } catch {
+            return null;
+        }
+    }
+
+    function setLatestChatsCache(page, data) {
+        let cache = getLatestChatsCache() || {};
+        cache[page] = data;
+        sessionStorage.setItem(LATEST_CHATS_CACHE_KEY, JSON.stringify(cache));
+        sessionStorage.setItem(LATEST_CHATS_CACHE_TIME_KEY, Date.now().toString());
+    }
+    window.loadLatestChats = async function(page = 1, reload = false) {
+        if (latestChatsLoading && !reload) {
+            return;
+        }
+        latestChatsLoading = true;
+        //$('#latest-chats-pagination-controls').html('<div class="text-center my-3"><div class="spinner-border text-secondary spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+
+        if (reload) {
+            latestChatsPage = 1;
+            $('#latest-chats-gallery').empty();
+            sessionStorage.removeItem(LATEST_CHATS_CACHE_KEY);
+            sessionStorage.removeItem(LATEST_CHATS_CACHE_TIME_KEY);
+        }
+
+        let cache = getLatestChatsCache();
+        let data = cache && cache[page];
+
+        if (data) { // Disable cache for now
+            window.displayLatestChats(data.chats, 'latest-chats-gallery', false);
+            latestChatsTotalPages = data.totalPages || 1;
+            if (page >= latestChatsTotalPages) {
+                $('#latest-chats-pagination-controls').html('');
+            }
+            latestChatsLoading = false;
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/latest-chats?page=${page}`);
+            if (!res.ok) {
+                $('#latest-chats-pagination-controls').html('<div class="text-center text-danger my-3">Failed to load chats.</div>');
+                latestChatsLoading = false;
+                return;
+            }
+            data = await res.json();
+            setLatestChatsCache(page, data);
+
+            window.displayLatestChats(data.chats, 'latest-chats-gallery', false);
+            latestChatsTotalPages = data.totalPages || 1;
+
+            if (page >= latestChatsTotalPages) {
+                $('#latest-chats-pagination-controls').html('');
+            } else {
+                //$('#latest-chats-pagination-controls').html('<div class="text-center my-3"><div class="spinner-border text-secondary spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+            }
+        } catch (e) {
+            console.error('[LatestChats] Error loading chats:', e);
+            $('#latest-chats-pagination-controls').html('<div class="text-center text-danger my-3">Error loading chats.</div>');
+        }
+        latestChatsLoading = false;
+    }
+
+    // Initial load for Latest Chats
+    if ($('#latest-chats-section').length) {
+        loadLatestChats();
+    }
+    // Initial load for Latest Video Chats
+    if ($('#latest-video-chats-section').length) {
+        loadLatestVideoChats();
+    }
+    // Optional: reload on tab switch or other triggers
+    // Example: $('#reload-popular-chats').on('click', function(){ popularChatsPage=1; loadPopularChats(1, true); });
+
+});
+/* --- Sorting and Filtering for Popular Chats --- */
+
+// Premium filter state
+let premiumChatsHidden = false; //Cookies.get('premiumChatsHidden') === 'true' || (isTemporary || !subscriptionStatus);
+let currentGenderFilter = Cookies.get('currentGenderFilter') || null;
+
+// NSFW filter state
+let nsfwChatsHidden = Cookies.get('nsfwChatsHidden') === 'true';
+
+// Style filter state
+let currentStyleFilter = Cookies.get('currentStyleFilter') || null;
+/*
+ * Comprehensive log before calling updateChatFilters
+ */
+function logChatFilterStates(context) {
+    return
+    console.log('[ChatFilter] Context:', context);
+    console.log('[ChatFilter] premiumChatsHidden:', premiumChatsHidden);
+    console.log('[ChatFilter] currentGenderFilter:', currentGenderFilter);
+    console.log('[ChatFilter] nsfwChatsHidden:', nsfwChatsHidden);
+    console.log('[ChatFilter] currentStyleFilter:', currentStyleFilter);
+    // Optionally log cookies for debugging
+    console.log('[ChatFilter] Cookies:', {
+        premiumChatsHidden: Cookies.get('premiumChatsHidden'),
+        currentGenderFilter: Cookies.get('currentGenderFilter'),
+        nsfwChatsHidden: Cookies.get('nsfwChatsHidden'),
+        currentStyleFilter: Cookies.get('currentStyleFilter')
+    });
+}
+
+// Restore button states on page load
+$(function() {
+    // Set premium button text and state
+    $('#popular-chats-premium').text(
+        premiumChatsHidden ? '{{translations.sort.showPremium}}' : '{{translations.sort.hidePremium}}'
+    );
+    // Set gender button active state
+    if (currentGenderFilter) {
+        $('.sorting-tools button').removeClass('active');
+        $(`#popular-chats-gender-${currentGenderFilter}`).addClass('active');
+    }
+    // Set NSFW button text and state
+    $('#popular-chats-nsfw').text(
+        nsfwChatsHidden ? '{{translations.sort.showNSFW}}' : '{{translations.sort.hideNSFW}}'
+    );
+    // Set style button active state
+    if (currentStyleFilter) {
+        $('.sorting-tools button').removeClass('active');
+        $(`#popular-chats-style-${currentStyleFilter}`).addClass('active');
+    }
+    logChatFilterStates('on page load');
+    updateChatFilters();
+});
+$(document).on('click', '#popular-chats-premium', function() {
+    premiumChatsHidden = !premiumChatsHidden;
+    Cookies.set('premiumChatsHidden', premiumChatsHidden, { expires: 7 });
+    logChatFilterStates('premium toggle');
+    updateChatFilters();
+    $(this).text(premiumChatsHidden ? '{{translations.sort.showPremium}}' : '{{translations.sort.hidePremium}}');
+});
+// Gender filter state
+$(document).on('click', '#popular-chats-gender-female, #popular-chats-gender-male, #popular-chats-gender-nonbinary', function() {
+    currentGenderFilter = this.id.replace('popular-chats-gender-', '');
+    Cookies.set('currentGenderFilter', currentGenderFilter, { expires: 7 });
+    $('.sorting-tools button').removeClass('active');
+    $(this).addClass('active');
+    logChatFilterStates('gender filter');
+    updateChatFilters();
+});
+// Reset gender filter
+$(document).on('click', '.sorting-tools .btn:not([id^="popular-chats-gender-"])', function() {
+    currentGenderFilter = null;
+    Cookies.remove('currentGenderFilter');
+    $('.sorting-tools button').removeClass('active');
+    logChatFilterStates('reset gender filter');
+    updateChatFilters();
+});
+// NSFW filter state
+$(document).on('click', '#popular-chats-nsfw', function() {
+    nsfwChatsHidden = !nsfwChatsHidden;
+    Cookies.set('nsfwChatsHidden', nsfwChatsHidden, { expires: 7 });
+    logChatFilterStates('nsfw toggle');
+    updateChatFilters();
+    $(this).text(nsfwChatsHidden ? '{{translations.sort.showNSFW}}' : '{{translations.sort.hideNSFW}}');
+});
+// Style filter state
+$(document).on('click', '#popular-chats-style-anime, #popular-chats-style-photorealistic', function() {
+    currentStyleFilter = this.id.replace('popular-chats-style-', '');
+    Cookies.set('currentStyleFilter', currentStyleFilter, { expires: 7 });
+    $('.sorting-tools button').removeClass('active');
+    $(this).addClass('active');
+    logChatFilterStates('style filter');
+    updateChatFilters();
+    $('#all-chats-container').empty();
+    $('#chat-gallery').show();
+    $('.query-tag-all').click();
+    $('html, body').animate({
+        scrollTop: $('#chat-gallery').offset().top
+    }, 500);
+});
+// Reset style filter
+$(document).on('click', '.sorting-tools .btn:not([id^="popular-chats-style-"])', function() {
+    currentStyleFilter = null;
+    Cookies.remove('currentStyleFilter');
+    $('.sorting-tools button').removeClass('active');
+    logChatFilterStates('reset style filter');
+    updateChatFilters();
+    $('#all-chats-container').empty();
+    $('#chat-gallery').show();
+    $('.query-tag-all').click();
+    $('html, body').animate({
+        scrollTop: $('#chat-gallery').offset().top
+    }, 500);
+});
+// Filtering logic
+function updateChatFilters() {
+      
+    // Premium filter
+    $('.popular-chats-gallery .gallery-card').each(function(index) {
+        const isPremium = $(this).hasClass('premium-chat');
+        const genderClass = $(this).attr('class').match(/chat-gender-([a-z]+)/);
+        const gender = genderClass ? genderClass[1] : null;
+        const isNSFW = $(this).hasClass('nsfw-true');
+        const styleClass = $(this).attr('class').match(/chat-style-([a-z]+)/);
+        const style = styleClass ? styleClass[1] : null;
+
+        let show = true;
+        let reasons = [];
+
+        if (premiumChatsHidden && isPremium) {
+            show = false;
+            reasons.push('premiumChatsHidden && isPremium');
+        }
+        // Temporarily disable gender filter
+        // if (currentGenderFilter && gender !== currentGenderFilter) {
+        //     show = false;
+        //     reasons.push(`currentGenderFilter (${currentGenderFilter}) && gender (${gender}) !== currentGenderFilter`);
+        // }
+        if (nsfwChatsHidden && isNSFW) {
+            show = false;
+            reasons.push('nsfwChatsHidden && isNSFW');
+        }
+        if (currentStyleFilter && style !== currentStyleFilter) {
+            show = false;
+            reasons.push(`currentStyleFilter (${currentStyleFilter}) && style (${style}) !== currentStyleFilter`);
+        }
+
+        $(this).toggle(show);
+    });
+}
+
+// Ensure filters are applied after chats are rendered
+const _displayChats = window.displayChats;
+window.displayChats = function() {
+    if (typeof _displayChats === 'function') _displayChats.apply(this, arguments);
+    logChatFilterStates('after displayChats');
+    updateChatFilters();
+};
+/* --- End Sorting and Filtering --- */
+
+$('.date-time').each(function() {
+    var dateText = $(this).text();
+    var trimmedDate = dateText.split(' ')[0]; // Get the date part only
+    $(this).text(trimmedDate); // Update the element's content
+});
+function initiateCheckout(buttonId) {
+    const user = {{{json user}}}
+    const userId = user._id
+    let stripe
+    if(window.location.href.indexOf('https://') >= 0){
+        stripe = Stripe('pk_live_51PjtRbE5sP7DA1XvCkdmezori9qPGoO21y7yKSVvgkQVyrhWZfHAUkNsjPMnbwpPlp4zzoYsRjn79Ad7XN7HTHcc00UjBA9adF'); // Use your publishable key here
+    }else{
+        stripe = Stripe('pk_test_51PjtRbE5sP7DA1XvD68v7X7Qj7pG6ZJpQmvuNodJjxc7MbH1ss2Te2gahFAS9nms4pbmEdMYdfCPxFDWHBbu9CxR003ikTnRES'); // Use your publishable key here
+    }
+    $.ajax({
+        url: '/plan/create-checkout-session',
+        method: 'POST',
+        data: { buttonId, userId },
+        success: function(session) {
+            return stripe.redirectToCheckout({ sessionId: session.id });
+        },
+        error: function(xhr, status, error) {
+            console.error('Error creating Stripe checkout session:', error);
+        }
+    });
+}
+    function renderCircleGrid(cardInfos,container){
+        cardInfos.forEach(function(item) {
+            var card = $(`
+                <div class="card custom-card bg-transparent shadow-0 border-0 px-1 col-3 col-sm-4 col-lg-2" style="cursor:pointer;" data-id="${item._id}">
+                    <div style="background-image:url(${item.chatImageUrl})" class="card-img-top rounded-avatar position-relative m-auto" alt="${item.name}">
+                    </div>
+                </div>
+            `);
+            card.on('click', function() {
+                redirectToChat($(this).attr('data-id'))
+            });
+            container.append(card);
+        });   
+    }
+</script>
+</body>
+</html>

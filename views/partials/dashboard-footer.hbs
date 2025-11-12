@@ -559,6 +559,14 @@ window.hideDiscovery = function() {
             $(this).attr('data-display-flex', 'true');
         }
     });
+window.showDashboardFooter = function() {
+    $('.site-footer').show();
+    $('.site-footer').removeClass('d-none onchat-off').css({
+        'opacity': '',
+        'pointer-events': '',
+        'visibility': ''
+    });
+}
 window.showDiscovery = function() {
     if (!window.location.pathname.includes('/chat/')) {
         window.location.href = '/chat/';

@@ -340,17 +340,66 @@
 <script src="/js/dashboard-category.js"></script>
 <script src="/js/chat-tool-swiper.js"></script>
 <script src="/js/chat-tool-toolbar.js"></script>
-<script src="/js/chat-list.js"></script>
+<!-- DEPRECATED: chat-list.js migrated to chat-modules/ui/chat-list-manager.js in Phase 5 -->
 <script src="/js/chat-tool-prompts.js"></script>
 <script src="/js/chat-tool-gifts.js"></script>
 <script src="/js/chat-tool-settings.js"></script>
 <script src="/js/chat-tool-message.js"></script>
 <script src="/js/chat-tool-goals.js"></script>
-<script src="/js/chat-suggestions.js"></script>
+<!-- DEPRECATED: chat-suggestions.js migrated to chat-modules/ui/chat-suggestions-*.js modules in Phase 5 -->
 <script src="/js/chat-scenario.js"></script>
-<script src="/js/chat-footer.js"></script>
+<!-- DEPRECATED: chat-footer.js migrated to chat-modules/ui/chat-footer-*.js modules in Phase 5 -->
 <script src="/js/live-goals-widget.js"></script>
-<script src="/js/chat.js"></script>
+
+<!-- ===== NEW MODULAR CHAT SYSTEM (Phase 1 Foundation + Phase 2 Message System) ===== -->
+<!-- Phase 1: Core modules - load first (no dependencies) -->
+<script src="/js/chat-modules/core/chat-state.js"></script>
+<script src="/js/chat-modules/core/chat-routing.js"></script>
+<script src="/js/chat-modules/core/chat-init.js"></script>
+
+<!-- Phase 2: Message System modules - formatting must be loaded first -->
+<script src="/js/chat-modules/message/chat-message-formatter.js"></script>
+<script src="/js/chat-modules/message/chat-message-display.js"></script>
+<script src="/js/chat-modules/message/chat-message-stream.js"></script>
+<script src="/js/chat-modules/message/chat-message-history.js"></script>
+
+<!-- Phase 3: Media System modules - media handlers for images, videos, upscaling -->
+<script src="/js/chat-modules/media/chat-image-handler.js"></script>
+<script src="/js/chat-modules/media/chat-video-handler.js"></script>
+<script src="/js/chat-modules/media/chat-image-upscale.js"></script>
+<script src="/js/chat-modules/media/chat-merge-face.js"></script>
+
+<!-- Phase 3: UI System modules - input handling, navigation, sharing, dropdowns -->
+<script src="/js/chat-modules/ui/chat-input-handler.js"></script>
+<script src="/js/chat-modules/ui/chat-dropdown.js"></script>
+<script src="/js/chat-modules/ui/chat-sharing.js"></script>
+<script src="/js/chat-modules/ui/chat-navigation.js"></script>
+<script src="/js/chat-modules/ui/chat-list-manager.js"></script>
+
+<!-- Phase 5: Suggestions modules - container, API, manager, and orchestrator -->
+<script src="/js/chat-modules/ui/chat-suggestions-container.js"></script>
+<script src="/js/chat-modules/ui/chat-suggestions-api.js"></script>
+<script src="/js/chat-modules/ui/chat-suggestions-manager.js"></script>
+<script src="/js/chat-modules/ui/chat-suggestions-init.js"></script>
+
+<!-- Phase 5: Footer modules - audio, suggestions, toolbar, iOS fixes -->
+<script src="/js/chat-modules/ui/chat-audio.js"></script>
+<script src="/js/chat-modules/ui/chat-suggestions-display.js"></script>
+<script src="/js/chat-modules/ui/chat-toolbar-ui.js"></script>
+<script src="/js/chat-modules/ui/chat-toolbar-translator.js"></script>
+<script src="/js/chat-modules/ui/chat-ios-keyboard-fix.js"></script>
+<script src="/js/chat-modules/ui/chat-footer-init.js"></script>
+
+<!-- Phase 4: API & Integration layer - event management and external module coordination -->
+<script src="/js/chat-modules/api/chat-api-manager.js"></script>
+<script src="/js/chat-modules/api/chat-api-completion.js"></script>
+<script src="/js/chat-modules/chat-events.js"></script>
+<script src="/js/chat-modules/chat-integration.js"></script>
+
+<!-- Main orchestrator - load last (depends on all modules) -->
+<script src="/js/chat-modules/chat-core.js"></script>
+<!-- ===== END NEW MODULAR CHAT SYSTEM ===== -->
+
 <script src="/js/character-infos.js"></script>
 <script src="/js/img2video.js"></script>
 <script src="/js/speech-to-text-init.js"></script>

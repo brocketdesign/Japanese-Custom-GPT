@@ -166,11 +166,52 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://js.stripe.com/v3/"></script>
 <script src="/js/moment-with-locales.js"></script>
+
+<!-- Phase 1: Dashboard Foundation System -->
+<script src="/js/dashboard-modules/dashboard-state.js"></script>
+<script src="/js/dashboard-modules/dashboard-cache/cache-manager.js"></script>
+<script src="/js/dashboard-modules/dashboard-cache/cache-strategies.js"></script>
+<script src="/js/dashboard-modules/dashboard-core.js"></script>
+<script src="/js/dashboard-modules/dashboard-init.js"></script>
+<script src="/js/dashboard-modules/dashboard-events.js"></script>
+
+<!-- Phase 2: Gallery System -->
+<script src="/js/dashboard-modules/dashboard-gallery/gallery-renderer-base.js"></script>
+<script src="/js/dashboard-modules/dashboard-gallery/gallery-popular-chats.js"></script>
+<script src="/js/dashboard-modules/dashboard-gallery/gallery-latest-chats.js"></script>
+<script src="/js/dashboard-modules/dashboard-gallery/gallery-video-chats.js"></script>
+<script src="/js/dashboard-modules/dashboard-gallery/gallery-user-posts.js"></script>
+<script src="/js/dashboard-modules/dashboard-gallery/gallery-index.js"></script>
+
+<!-- Phase 3: Pagination & Content Filtering System -->
+<script src="/js/dashboard-modules/dashboard-pagination/pagination-manager.js"></script>
+<script src="/js/dashboard-modules/dashboard-pagination/pagination-renderer.js"></script>
+<script src="/js/dashboard-modules/dashboard-content/gallery-search.js"></script>
+<script src="/js/dashboard-modules/dashboard-content/gallery-filters.js"></script>
+<script src="/js/dashboard-modules/dashboard-content/tags-manager.js"></script>
+
+<!-- Phase 4: Image Processing & NSFW Handling -->
+<script src="/js/dashboard-modules/dashboard-image/image-blur-handler.js"></script>
+<script src="/js/dashboard-modules/dashboard-image/image-loader.js"></script>
+<script src="/js/dashboard-modules/dashboard-image/nsfw-content-manager.js"></script>
+
+<!-- Phase 5: Discovery Mode Polishing -->
+<script src="/js/dashboard-modules/dashboard-discovery/discovery-hero.js"></script>
+<script src="/js/dashboard-modules/dashboard-discovery/discovery-carousel.js"></script>
+<script src="/js/dashboard-modules/dashboard-discovery/discovery-grid.js"></script>
+<script src="/js/dashboard-modules/dashboard-discovery/discovery-loading.js"></script>
+
+<!-- Phase 6: Advanced Analytics & User Engagement System -->
+<script src="/js/dashboard-modules/dashboard-analytics/analytics-tracker.js"></script>
+<script src="/js/dashboard-modules/dashboard-analytics/engagement-analyzer.js"></script>
+<script src="/js/dashboard-modules/dashboard-analytics/personalization-engine.js"></script>
+<script src="/js/dashboard-modules/dashboard-analytics/analytics-dashboard.js"></script>
+<script src="/js/dashboard-modules/dashboard-ui/engagement-ui.js"></script>
+
+<!-- Existing Dashboard Scripts -->
 <script src="/js/personas.js"></script>
-<script src="/js/dashboard.js"></script>
 <script src="/js/user-points.js"></script>
 <script src="/js/buy-points.js"></script>
-<script src="/js/dashboard-infinite-scroll.js"></script>
 <script src="/js/stability.js"></script>
 <script src="/js/notifications.js"></script>
 <script src="/js/app.js"></script>

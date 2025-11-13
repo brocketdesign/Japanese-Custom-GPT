@@ -552,9 +552,11 @@ body {
 /* Loading States */
 .loading-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(5, 1fr);
     gap: 8px;
-    padding: 12px;
+    padding: 0;
+    width: 100%;
+    grid-column: 1 / -1;
 }
 
 .loading-item {
@@ -678,10 +680,18 @@ body {
     .media-grid {
         grid-template-columns: repeat(5, 1fr);
     }
+
+    .loading-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
 }
 
 @media (max-width: 1024px) {
     .media-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .loading-grid {
         grid-template-columns: repeat(4, 1fr);
     }
 }
@@ -708,6 +718,12 @@ body {
     }
 
     .media-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+        padding: 8px;
+    }
+
+    .loading-grid {
         grid-template-columns: repeat(3, 1fr);
         gap: 6px;
         padding: 8px;
@@ -845,6 +861,12 @@ body {
     }
 
     .media-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px;
+        padding: 4px;
+    }
+
+    .loading-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 4px;
         padding: 4px;

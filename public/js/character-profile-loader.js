@@ -29,48 +29,54 @@ function loadCharacterData(chatId) {
  * Does NOT use infinite scroll - only loads first page initially
  */
 function loadCharacterImages(chatId) {
-    console.log(`[loadCharacterImages] Starting load for chatId: ${chatId}`);
+    const cacheKey = `chat_${chatId}`;
     
     if (window.characterProfile.imagesLoading) {
-        console.warn(`[loadCharacterImages] Already loading, skipping`);
         return;
     }
     
     // Initialize pagination state for character profile
     if (!window.characterProfile.imagesCurrentPage) {
-        window.characterProfile.imagesCurrentPage = 1;
+        window.characterProfile.imagesCurrentPage = 0;
         window.characterProfile.imagesTotalPages = 0;
     }
     
     if (typeof loadChatImages === 'function') {
         window.characterProfile.imagesLoading = true;
         window.loadedImages = [];
-        console.log(`[loadCharacterImages] Initialized: currentPage=1, totalPages=0, loadedImages cleared`);
         
         loadChatImages(chatId, 1, true)
             .then(() => {
-                console.log(`[loadCharacterImages] loadChatImages completed`);
-                console.log(`[loadCharacterImages] window.loadedImages count: ${(window.loadedImages || []).length}`);
+                const manager = window.chatImageManager;
+                const imagesCount = (window.loadedImages || []).length;
                 
+                // Get the actual state from cache manager after fetch completes
+                const actualCurrentPage = manager.currentPages.get(cacheKey) || 1;
+                const actualTotalPages = manager.totalPages.get(cacheKey) || 1;
+                const hasCache = manager.cache.has(cacheKey);
+                
+                // IMPORTANT: Wait a bit more to ensure totalPages is set from API response
+                // The fetch might complete just before this setTimeout
                 setTimeout(() => {
-                    console.log(`[loadCharacterImages] Calling displayImagesInGrid()`);
                     displayImagesInGrid();
-                    // Fetch total count separately
-                    console.log(`[loadCharacterImages] Fetching total image count`);
-                    fetchCharacterImageCount(chatId);
-                    window.characterProfile.imagesLoading = false;
-                    // After loading first page, show load more button if needed
-                    console.log(`[loadCharacterImages] Updating load more button`);
+                    
+                    // Re-read the state AGAIN after display, in case totalPages was just updated
+                    const finalCurrentPage = manager.currentPages.get(cacheKey) || 1;
+                    const finalTotalPages = manager.totalPages.get(cacheKey) || 1;
+                    
+                    // Sync characterProfile with actual cache state AFTER display
+                    window.characterProfile.imagesCurrentPage = finalCurrentPage;
+                    window.characterProfile.imagesTotalPages = finalTotalPages;
+                    
+                    // After loading first page, update button visibility USING FINAL STATE
                     updateLoadMoreButton(chatId);
-                }, 500);
+                    window.characterProfile.imagesLoading = false;
+                }, 800);
             })
             .catch((error) => {
-                console.error('[loadCharacterImages] Error loading character images:', error);
                 window.characterProfile.imagesLoading = false;
                 displayImagesInGrid();
             });
-    } else {
-        console.error(`[loadCharacterImages] loadChatImages function not available`);
     }
 }
 
@@ -78,69 +84,65 @@ function loadCharacterImages(chatId) {
  * Load next page of character images
  */
 function loadMoreCharacterImages(chatId) {
-    console.log(`[loadMoreCharacterImages] Starting load for chatId: ${chatId}`);
-    console.log(`[loadMoreCharacterImages] Current state - isLoading: ${window.characterProfile.imagesLoading}, currentPage: ${window.characterProfile.imagesCurrentPage}, totalPages: ${window.characterProfile.imagesTotalPages}`);
+    const cacheKey = `chat_${chatId}`;
     
-    if (window.characterProfile.imagesLoading) {
-        console.warn('[loadMoreCharacterImages] Already loading images, please wait...');
+    // Use the actual cache manager to get real state, not characterProfile
+    const manager = window.chatImageManager;
+    const currentPageFromCache = manager.currentPages.get(cacheKey) || 0;
+    const totalPagesFromCache = manager.totalPages.get(cacheKey) || 0;
+    const isLoading = manager.loadingStates.get(cacheKey);
+    
+    if (isLoading) {
         return;
     }
     
-    const nextPage = (window.characterProfile.imagesCurrentPage || 1) + 1;
-    console.log(`[loadMoreCharacterImages] Requesting nextPage: ${nextPage}`);
+    const nextPage = currentPageFromCache + 1;
     
     // Check if there are more pages
-    if (nextPage > window.characterProfile.imagesTotalPages) {
-        console.log(`[loadMoreCharacterImages] No more pages to load (nextPage ${nextPage} > totalPages ${window.characterProfile.imagesTotalPages})`);
+    if (nextPage > totalPagesFromCache) {
         return;
     }
     
     if (typeof loadChatImages === 'function') {
         window.characterProfile.imagesLoading = true;
-        console.log(`[loadMoreCharacterImages] Set imagesLoading = true`);
-        
-        // Show loading spinner on button
-        if (typeof showLoadMoreButtonSpinner === 'function') {
-            console.log(`[loadMoreCharacterImages] Showing loading spinner`);
-            showLoadMoreButtonSpinner('images');
-        }
         
         // Load next page WITHOUT reload flag - this will render images and append to grid
-        console.log(`[loadMoreCharacterImages] Calling loadChatImages(${chatId}, ${nextPage}, false)`);
         loadChatImages(chatId, nextPage, false)
             .then(() => {
-                console.log(`[loadMoreCharacterImages] loadChatImages completed`);
-                console.log(`[loadMoreCharacterImages] window.loadedImages count after load: ${(window.loadedImages || []).length}`);
+                const imagesCount = (window.loadedImages || []).length;
                 
+                // Get updated cache state after fetch
+                const updatedCurrentPage = manager.currentPages.get(cacheKey) || nextPage;
+                const updatedTotalPages = manager.totalPages.get(cacheKey) || totalPagesFromCache;
+                
+                // Wait a bit more to ensure API response totalPages is set
                 setTimeout(() => {
-                    console.log(`[loadMoreCharacterImages] Calling displayImagesInGrid() to refresh display`);
                     // Display the newly loaded images in the grid
                     displayImagesInGrid();
-                    // Update current page AFTER successful load
-                    window.characterProfile.imagesCurrentPage = nextPage;
-                    console.log(`[loadMoreCharacterImages] Updated imagesCurrentPage to: ${nextPage}`);
-                    // Update button visibility
-                    console.log(`[loadMoreCharacterImages] Updating load more button`);
+                    
+                    // Re-read state ONE MORE TIME before updating UI (totalPages might have just updated)
+                    const finalCurrentPage = manager.currentPages.get(cacheKey) || nextPage;
+                    const finalTotalPages = manager.totalPages.get(cacheKey) || totalPagesFromCache;
+                    
+                    // Sync characterProfile state with actual cache state
+                    window.characterProfile.imagesCurrentPage = finalCurrentPage;
+                    window.characterProfile.imagesTotalPages = finalTotalPages;
+                    // Update button visibility USING FINAL STATE
                     updateLoadMoreButton(chatId);
                     // Hide loading spinner
                     if (typeof hideLoadMoreButtonSpinner === 'function') {
-                        console.log(`[loadMoreCharacterImages] Hiding loading spinner`);
                         hideLoadMoreButtonSpinner('images');
                     }
                     window.characterProfile.imagesLoading = false;
-                    console.log(`[loadMoreCharacterImages] Set imagesLoading = false`);
-                }, 300);
+                }, 500);
             })
             .catch((error) => {
-                console.error('[loadMoreCharacterImages] Error loading next page of images:', error);
                 // Hide loading spinner on error
                 if (typeof hideLoadMoreButtonSpinner === 'function') {
                     hideLoadMoreButtonSpinner('images');
                 }
                 window.characterProfile.imagesLoading = false;
             });
-    } else {
-        console.error(`[loadMoreCharacterImages] loadChatImages function not available`);
     }
 }
 
@@ -148,51 +150,52 @@ function loadMoreCharacterImages(chatId) {
  * Load videos with lazy loading support (pagination, no infinite scroll)
  */
 function loadVideos() {
-    console.log(`[loadVideos] Starting video load`);
+    const chatId = window.characterProfile.currentChatId;
+    const cacheKey = `chatVideo_${chatId}`;
     
     if (window.characterProfile.videosLoading || window.characterProfile.videosLoaded) {
-        console.warn(`[loadVideos] Already loading or loaded (videosLoading: ${window.characterProfile.videosLoading}, videosLoaded: ${window.characterProfile.videosLoaded})`);
         return;
     }
     
-    const chatId = window.characterProfile.currentChatId;
-    console.log(`[loadVideos] Current chatId: ${chatId}`);
-    
     // Initialize pagination state for videos
     if (!window.characterProfile.videosCurrentPage) {
-        window.characterProfile.videosCurrentPage = 1;
+        window.characterProfile.videosCurrentPage = 0;
         window.characterProfile.videosTotalPages = 0;
     }
     
     if (chatId && typeof loadChatVideos === 'function') {
         window.characterProfile.videosLoading = true;
         window.loadedVideos = [];
-        console.log(`[loadVideos] Initialized: currentPage=1, totalPages=0, loadedVideos cleared`);
         
         loadChatVideos(chatId, 1, true)
             .then(() => {
-                console.log(`[loadVideos] loadChatVideos completed`);
-                console.log(`[loadVideos] window.loadedVideos count: ${(window.loadedVideos || []).length}`);
+                const videosCount = (window.loadedVideos || []).length;
+                
+                const manager = window.chatImageManager;
+                const actualCurrentPage = manager.currentPages.get(cacheKey) || 1;
+                const actualTotalPages = manager.totalPages.get(cacheKey) || 1;
                 
                 setTimeout(() => {
-                    console.log(`[loadVideos] Calling displayVideosInGrid()`);
                     displayVideosInGrid();
-                    console.log(`[loadVideos] Fetching total video count`);
+                    
+                    const finalCurrentPage = manager.currentPages.get(cacheKey) || 1;
+                    const finalTotalPages = manager.totalPages.get(cacheKey) || 1;
+                    
+                    window.characterProfile.videosCurrentPage = finalCurrentPage;
+                    window.characterProfile.videosTotalPages = finalTotalPages;
+                    
+                    updateLoadMoreVideoButton(chatId);
+                    
                     fetchCharacterVideoCount(chatId);
+                    
                     window.characterProfile.videosLoading = false;
                     window.characterProfile.videosLoaded = true;
-                    // Show load more button if needed
-                    console.log(`[loadVideos] Updating load more button`);
-                    updateLoadMoreVideoButton(chatId);
-                }, 500);
+                }, 800);
             })
             .catch((error) => {
-                console.error('[loadVideos] Error loading character videos:', error);
                 window.characterProfile.videosLoading = false;
                 displayVideosInGrid();
             });
-    } else {
-        console.error(`[loadVideos] Missing chatId or loadChatVideos function (chatId: ${chatId}, loadChatVideos available: ${typeof loadChatVideos === 'function'})`);
     }
 }
 
@@ -200,31 +203,44 @@ function loadVideos() {
  * Fetch total image count from server
  */
 async function fetchCharacterImageCount(chatId) {
+    const cacheKey = `chat_${chatId}`;
+    
     try {
-        console.log(`Starting fetchCharacterImageCount for chat ${chatId}`);
         const response = await fetch(`/chat/${chatId}/images?page=1`);
         if (response.ok) {
             const data = await response.json();
-            // Use totalImages from the API response
             const totalCount = data.totalImages || 0;
             const totalPages = data.totalPages || 1;
-            console.log(`API response received - totalImages field: ${data.totalImages}, totalPages: ${totalPages}`);
+            
+            // Update characterProfile
             window.characterProfile.totalImages = totalCount;
             window.characterProfile.imagesTotalPages = totalPages;
-            console.log(`Updated window.characterProfile.totalImages to: ${totalCount}, imagesTotalPages: ${totalPages}`);
+            
+            // Wait for cache manager to be initialized, then update it
+            let attempts = 0;
+            const waitForCacheManager = setInterval(() => {
+                const manager = window.chatImageManager;
+                
+                if (manager && manager.totalPages && manager.totalPages.has(cacheKey)) {
+                    manager.totalPages.set(cacheKey, totalPages);
+                    clearInterval(waitForCacheManager);
+                } else if (attempts > 50) {
+                    clearInterval(waitForCacheManager);
+                }
+                attempts++;
+            }, 100);
+            
+            // Update UI count display
             updateCharacterImageCount(totalCount);
-            console.log(`Called updateCharacterImageCount with: ${totalCount}`);
-            console.log(`Fetched total images for chat ${chatId}: ${totalCount}`);
+            
+            // Update button visibility
+            updateLoadMoreButton(chatId);
         } else {
-            console.error(`Failed to fetch image count: ${response.status} ${response.statusText}`);
-            // Set default values on error
             window.characterProfile.totalImages = 0;
             window.characterProfile.imagesTotalPages = 0;
             updateCharacterImageCount(0);
         }
     } catch (error) {
-        console.error('Error fetching image count:', error);
-        // Set default values on error
         window.characterProfile.totalImages = 0;
         window.characterProfile.imagesTotalPages = 0;
         updateCharacterImageCount(0);
@@ -235,27 +251,30 @@ async function fetchCharacterImageCount(chatId) {
  * Fetch total video count from server
  */
 async function fetchCharacterVideoCount(chatId) {
+    const cacheKey = `chatVideo_${chatId}`;
+    
     try {
         const response = await fetch(`/chat/${chatId}/videos?page=1`);
         if (response.ok) {
             const data = await response.json();
-            // Use totalVideos from the API response
             const totalCount = data.totalVideos || 0;
             const totalPages = data.totalPages || 1;
+            
+            // Update characterProfile
             window.characterProfile.totalVideos = totalCount;
             window.characterProfile.videosTotalPages = totalPages;
+            
+            // Update UI count display
             updateCharacterVideoCount(totalCount);
-            console.log(`Fetched total videos for chat ${chatId}: ${totalCount}, totalPages: ${totalPages}`);
+            
+            // Update button visibility
+            updateLoadMoreVideoButton(chatId);
         } else {
-            console.error(`Failed to fetch video count: ${response.status} ${response.statusText}`);
-            // Set default values on error
             window.characterProfile.totalVideos = 0;
             window.characterProfile.videosTotalPages = 0;
             updateCharacterVideoCount(0);
         }
     } catch (error) {
-        console.error('Error fetching video count:', error);
-        // Set default values on error
         window.characterProfile.totalVideos = 0;
         window.characterProfile.videosTotalPages = 0;
         updateCharacterVideoCount(0);
@@ -302,7 +321,7 @@ function loadCharacterPersonality() {
             }
         }
     } catch (error) {
-        console.error('[loadCharacterPersonality] Error parsing personality data:', error);
+        // ignore parse errors
     }
 }
 
@@ -350,7 +369,7 @@ async function fetchSimilarChats(chatId) {
             return await response.json();
         }
     } catch (error) {
-        console.error('Failed to fetch similar chats:', error);
+        // ignore fetch errors
     }
     return [];
 }
@@ -359,11 +378,28 @@ async function fetchSimilarChats(chatId) {
  * Update and show load more button for images
  */
 function updateLoadMoreButton(chatId) {
-    const currentPage = window.characterProfile.imagesCurrentPage || 1;
-    const totalPages = window.characterProfile.imagesTotalPages || 1;
+    const manager = window.chatImageManager;
+    const cacheKey = `chat_${chatId}`;
+    
+    let currentPage, totalPages, source;
+    
+    // Prefer using actual cache manager state
+    if (manager && manager.currentPages.has(cacheKey)) {
+        currentPage = manager.currentPages.get(cacheKey) || 0;
+        totalPages = manager.totalPages.get(cacheKey) || 0;
+        source = 'CACHE_MGR';
+    } else {
+        // Fallback to characterProfile state
+        currentPage = window.characterProfile.imagesCurrentPage || 1;
+        totalPages = window.characterProfile.imagesTotalPages || 1;
+        source = 'FALLBACK';
+    }
+    
+    const buttonId = 'loadMoreImagesBtn';
+    const shouldShow = currentPage < totalPages;
     
     // Show button only if there are more pages
-    if (currentPage < totalPages) {
+    if (shouldShow) {
         showLoadMoreButton('images');
     } else {
         hideLoadMoreButton('images');
@@ -402,7 +438,7 @@ async function fetchSimilarChats(chatId) {
             return await response.json();
         }
     } catch (error) {
-        console.error('Failed to fetch similar chats:', error);
+        // ignore fetch errors
     }
     return [];
 }

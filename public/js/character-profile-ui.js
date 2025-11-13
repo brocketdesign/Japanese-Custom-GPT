@@ -7,36 +7,19 @@
  * Display images in the grid
  */
 function displayImagesInGrid() {
-    console.log('%c[displayImagesInGrid] FUNCTION CALLED', 'background: #2196F3; color: white; padding: 5px;');
-    console.log(`[displayImagesInGrid] Starting display`);
-    
     let images = window.loadedImages || [];
-    console.log(`[displayImagesInGrid] Initial window.loadedImages count: ${images.length}`);
-    
-    if (images.length > 0) {
-        console.log('[displayImagesInGrid] First image:', images[0]);
-    }
     
     const grid = document.getElementById('imagesGrid');
     
     if (!grid) {
-        console.error(`[displayImagesInGrid] ❌ ERROR: imagesGrid element NOT found!`);
-        console.log('[displayImagesInGrid] Searching for grid by other selectors:');
-        console.log('- .media-grid:', document.querySelectorAll('.media-grid').length);
-        console.log('- [id*="grid"]:', document.querySelectorAll('[id*="grid"]').length);
-        console.log('All IDs in page:', Array.from(document.querySelectorAll('[id]')).map(el => el.id).join(', '));
         return;
     }
     
-    console.log('[displayImagesInGrid] ✓ Grid element found:', grid.id);
-    
     // Fallback: try to get from hidden gallery element
     if (images.length === 0) {
-        console.log(`[displayImagesInGrid] No loadedImages, checking hidden gallery...`);
         const existingGallery = document.getElementById('chat-images-gallery');
         if (existingGallery) {
             const galleryItems = existingGallery.querySelectorAll('.image-card');
-            console.log(`[displayImagesInGrid] Found ${galleryItems.length} image cards in hidden gallery`);
             images = Array.from(galleryItems).map((el, idx) => ({
                 _id: el.getAttribute('data-image-id'),
                 imageUrl: el.querySelector('img').src,
@@ -47,7 +30,6 @@ function displayImagesInGrid() {
     }
     
     if (images.length === 0) {
-        console.log(`[displayImagesInGrid] No images to display`);
         grid.innerHTML = `<div style="padding: 60px 20px; text-align: center; color: #999; grid-column: 1/-1; font-size: 0.95rem;">
             <i class="bi bi-image" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5; display: block;"></i>
             No images available
@@ -55,7 +37,6 @@ function displayImagesInGrid() {
         return;
     }
     
-    console.log(`[displayImagesInGrid] Clearing grid and rendering ${images.length} images`);
     grid.innerHTML = '';
     
     // Get user info for NSFW filtering
@@ -63,21 +44,11 @@ function displayImagesInGrid() {
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
     const isTemporary = !!currentUser.isTemporary;
     
-    console.log(`[displayImagesInGrid] User: subscriptionStatus=${subscriptionStatus}, isTemporary=${isTemporary}`);
-    
     let nsfwCount = 0;
     let blurredCount = 0;
     let displayedCount = 0;
     
     images.forEach((image, index) => {
-        console.log(`[displayImagesInGrid] Processing image ${index + 1}:`, {
-            _id: image._id,
-            title: image.title,
-            imageUrl: image.imageUrl,
-            createdAt: image.createdAt,
-            nsfw: image.nsfw
-        });
-        
         let imgSrc = image.imageUrl;
         let isLiked = image.isLiked || false;
         let isNSFW = image.nsfw || false;
@@ -91,7 +62,6 @@ function displayImagesInGrid() {
         
         if (shouldBlur) {
             blurredCount++;
-            console.log(`[displayImagesInGrid] Image ${image._id}: NSFW and will be blurred (isTemporary=${isTemporary}, subscriptionStatus=${subscriptionStatus})`);
         } else {
             displayedCount++;
         }
@@ -99,15 +69,15 @@ function displayImagesInGrid() {
         if (!imgSrc) {
             const existingGallery = document.getElementById('chat-images-gallery');
             if (existingGallery) {
-                const imgElement = existingGallery.querySelector(`[data-image-id="${image._id}"] img`);
-                if (imgElement) {
-                    imgSrc = imgElement.src;
+                const existingImage = Array.from(existingGallery.querySelectorAll('[data-image-id]'))
+                    .find(el => el.getAttribute('data-image-id') === image._id);
+                if (existingImage && existingImage.querySelector('img')) {
+                    imgSrc = existingImage.querySelector('img').src;
                 }
             }
         }
         
         if (!imgSrc) {
-            console.warn(`[displayImagesInGrid] Image ${index} has no source URL, skipping`);
             return;
         }
         
@@ -156,7 +126,6 @@ function displayImagesInGrid() {
             
             // Store image data on the media-item element for later retrieval
             item.dataset.image = JSON.stringify(image);
-            console.log(`[displayImagesInGrid] Stored image data on media-item ${index + 1}`);
             
             // Make the entire media-item clickable with cursor pointer
             item.style.cursor = 'pointer';
@@ -167,83 +136,55 @@ function displayImagesInGrid() {
         grid.appendChild(item);
     });
     
-    console.log(`[displayImagesInGrid] Rendered summary - Total: ${images.length}, NSFW: ${nsfwCount}, Blurred: ${blurredCount}, Displayed: ${displayedCount}`);
-    
     // VERIFY grid was populated
     const imagesInGrid = grid.querySelectorAll('.media-item');
-    console.log(`[displayImagesInGrid] ✓ Grid now contains ${imagesInGrid.length} media-item elements`);
-    console.log('[displayImagesInGrid] Grid HTML:', grid.innerHTML.substring(0, 200) + '...');
     
     // Count img elements
     const imgElements = grid.querySelectorAll('img');
-    console.log(`[displayImagesInGrid] ✓ Found ${imgElements.length} <img> elements in grid`);
     
-    if (imgElements.length > 0) {
-        imgElements.forEach((img, idx) => {
-            console.log(`  [${idx}] img has click listener:`, typeof img.onclick === 'function' || img._hasClickListener);
-        });
-    }
-    
-    // 🔴 CRITICAL: Add event delegation for media-item clicks
+    // 🔴 CRITICAL: Add/update event delegation for media-item clicks
     // This catches ALL clicks on media items, even NSFW overlays
-    console.log('[displayImagesInGrid] Setting up event delegation on grid for media-item clicks');
     
-    // Remove any previous listeners to avoid duplicates
-    const clonedGrid = grid.cloneNode(true);
-    grid.parentNode.replaceChild(clonedGrid, grid);
-    const newGrid = clonedGrid;
-    
-    // Add delegated click handler
-    newGrid.addEventListener('click', function(e) {
-        console.log('%c[EVENT DELEGATION] Click detected on grid', 'background: #FF6B6B; color: white; padding: 5px;');
-        console.log('Clicked element:', e.target);
-        console.log('Event target tag:', e.target.tagName);
-        console.log('Event target classes:', e.target.className);
-        
+    // Add delegated click handler WITHOUT cloning grid (which removes the load more button)
+    const newGridListener = function(e) {
         // Find the closest media-item container
         const mediaItem = e.target.closest('.media-item');
-        console.log('Closest media-item:', mediaItem);
         
         if (mediaItem) {
             // Check if click was on a button (like button or subscribe button) - if so, don't open modal
             const clickedButton = e.target.closest('button');
             if (clickedButton) {
-                console.log('[EVENT DELEGATION] Click was on a button, ignoring modal open');
                 return;
             }
             
             // Check if it's an NSFW item (if so, it might have a subscribe button)
             const nsfw_overlay = mediaItem.querySelector('[style*="rgba(0,0,0,0.6)"]');
             if (nsfw_overlay && e.target.closest('button')) {
-                console.log('[EVENT DELEGATION] Click was on NSFW button, ignoring');
                 return;
             }
-            
-            console.log('[EVENT DELEGATION] Opening modal for media item');
-            console.log('mediaItem dataset:', mediaItem.dataset);
             
             // Get the stored image data from the media-item element
             if (mediaItem.dataset.image) {
                 try {
                     const imageData = JSON.parse(mediaItem.dataset.image);
-                    console.log('[EVENT DELEGATION] Parsed image data:', imageData);
                     
                     if (typeof displayImageModal === 'function') {
-                        console.log('[EVENT DELEGATION] Calling displayImageModal with data');
                         displayImageModal(imageData);
-                    } else {
-                        console.error('[EVENT DELEGATION] displayImageModal function not found!');
                     }
                 } catch (err) {
-                    console.error('[EVENT DELEGATION] Failed to parse image data:', err);
+                    // ignore parse errors
                 }
-            } else {
-                console.warn('[EVENT DELEGATION] No image data stored on media-item');
             }
         }
-    });
+    };
     
-    console.log('[displayImagesInGrid] Event delegation setup complete');
+    // Remove previous listener if exists
+    if (grid._clickListener) {
+        grid.removeEventListener('click', grid._clickListener);
+    }
+    // Store and add new listener
+    grid._clickListener = newGridListener;
+    grid.addEventListener('click', newGridListener);
     
     // Add load more button if on character profile page and more content available
     const onCharacterPage = !!document.querySelector('#characterProfilePage');
@@ -251,46 +192,38 @@ function displayImagesInGrid() {
         const currentPage = window.characterProfile.imagesCurrentPage || 1;
         const totalPages = window.characterProfile.imagesTotalPages || 1;
         
-        console.log(`[displayImagesInGrid] On character page - currentPage: ${currentPage}, totalPages: ${totalPages}`);
-        
-        // Always add button back (grid was cleared), show only if there are more pages
+        // Always add button back (grid was cleared)
         addLoadMoreButton('images');
         
-        // Hide or show based on whether there are more pages
-        if (currentPage >= totalPages) {
-            console.log(`[displayImagesInGrid] Hiding load more button (no more pages)`);
+        // Hide button only if we have actual page info AND no more pages
+        // If totalPages is still 0 (not yet fetched), keep button visible
+        if (totalPages > 0 && currentPage >= totalPages) {
             hideLoadMoreButton('images');
+        } else if (totalPages === 0) {
+            showLoadMoreButton('images');
         } else {
-            console.log(`[displayImagesInGrid] Showing load more button`);
+            showLoadMoreButton('images');
         }
     }
-    
-    console.log('%c[displayImagesInGrid] FUNCTION COMPLETE', 'background: #4CAF50; color: white; padding: 5px;');
 }
 
 /**
  * Display videos in the grid
  */
 function displayVideosInGrid() {
-    console.log(`[displayVideosInGrid] Starting display`);
-    
     let videos = window.loadedVideos || [];
-    console.log(`[displayVideosInGrid] Initial window.loadedVideos count: ${videos.length}`);
     
     const grid = document.getElementById('videosGrid');
     
     if (!grid) {
-        console.error(`[displayVideosInGrid] videosGrid not found!`);
         return;
     }
     
     // Fallback: try to get from hidden gallery element
     if (videos.length === 0) {
-        console.log(`[displayVideosInGrid] No loadedVideos, checking hidden gallery...`);
         const existingGallery = document.getElementById('chat-videos-gallery');
         if (existingGallery) {
             const galleryItems = existingGallery.querySelectorAll('.video-card');
-            console.log(`[displayVideosInGrid] Found ${galleryItems.length} video cards in hidden gallery`);
             videos = Array.from(galleryItems).map((el, idx) => ({
                 _id: el.getAttribute('data-video-id'),
                 videoUrl: el.querySelector('video')?.src || el.getAttribute('data-src'),
@@ -300,7 +233,6 @@ function displayVideosInGrid() {
     }
     
     if (videos.length === 0) {
-        console.log(`[displayVideosInGrid] No videos to display`);
         grid.innerHTML = `<div style="padding: 60px 20px; text-align: center; color: #999; grid-column: 1/-1; font-size: 0.95rem;">
             <i class="bi bi-play-circle" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5; display: block;"></i>
             No videos available
@@ -308,15 +240,12 @@ function displayVideosInGrid() {
         return;
     }
     
-    console.log(`[displayVideosInGrid] Clearing grid and rendering ${videos.length} videos`);
     grid.innerHTML = '';
     
     // Get user info for NSFW filtering
     const currentUser = window.user || {};
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
     const isTemporary = !!currentUser.isTemporary;
-    
-    console.log(`[displayVideosInGrid] User: subscriptionStatus=${subscriptionStatus}, isTemporary=${isTemporary}`);
     
     let nsfwCount = 0;
     let blurredCount = 0;
@@ -335,7 +264,6 @@ function displayVideosInGrid() {
         
         if (shouldBlur) {
             blurredCount++;
-            console.log(`[displayVideosInGrid] Video ${video._id}: NSFW and will be blurred`);
         } else {
             displayedCount++;
         }
@@ -351,7 +279,6 @@ function displayVideosInGrid() {
         }
         
         if (!videoSrc) {
-            console.warn(`[displayVideosInGrid] Video ${index} has no source URL, skipping`);
             return;
         }
         
@@ -417,25 +344,23 @@ function displayVideosInGrid() {
         grid.appendChild(item);
     });
     
-    console.log(`[displayVideosInGrid] Rendered summary - Total: ${videos.length}, NSFW: ${nsfwCount}, Blurred: ${blurredCount}, Displayed: ${displayedCount}`);
-    
     // Add load more button if on character profile page and more content available
     const onCharacterPage = !!document.querySelector('#characterProfilePage');
     if (onCharacterPage) {
         const currentPage = window.characterProfile.videosCurrentPage || 1;
         const totalPages = window.characterProfile.videosTotalPages || 1;
         
-        console.log(`[displayVideosInGrid] On character page - currentPage: ${currentPage}, totalPages: ${totalPages}`);
-        
-        // Always add button back (grid was cleared), show only if there are more pages
+        // Always add button back (grid was cleared)
         addLoadMoreButton('videos');
         
-        // Hide or show based on whether there are more pages
-        if (currentPage >= totalPages) {
-            console.log(`[displayVideosInGrid] Hiding load more button (no more pages)`);
+        // Hide button only if we have actual page info AND no more pages
+        // If totalPages is still 0 (not yet fetched), keep button visible
+        if (totalPages > 0 && currentPage >= totalPages) {
             hideLoadMoreButton('videos');
+        } else if (totalPages === 0) {
+            showLoadMoreButton('videos');
         } else {
-            console.log(`[displayVideosInGrid] Showing load more button`);
+            showLoadMoreButton('videos');
         }
     }
 }
@@ -513,11 +438,6 @@ function updateCharacterImageCount(count) {
     if (element) {
         element.textContent = count.toLocaleString();
         element.classList.remove('count-loading');
-        console.log(`Updated UI - imagesCount element text set to: ${count.toLocaleString()}`);
-        console.log('Element:', element);
-        console.log('Element text content:', element.textContent);
-    } else {
-        console.error('Element with ID imagesCount not found');
     }
 }
 
@@ -605,7 +525,6 @@ function addLoadMoreButton(type) {
  */
 function loadMoreCharacterVideos(chatId) {
     if (window.characterProfile.videosLoading) {
-        console.warn('Already loading videos, please wait...');
         return;
     }
     
@@ -613,7 +532,6 @@ function loadMoreCharacterVideos(chatId) {
     
     // Check if there are more pages
     if (nextPage > window.characterProfile.videosTotalPages) {
-        console.log('No more pages to load');
         return;
     }
     
@@ -639,15 +557,17 @@ function loadMoreCharacterVideos(chatId) {
                     if (typeof hideLoadMoreButtonSpinner === 'function') {
                         hideLoadMoreButtonSpinner('videos');
                     }
-                    window.characterProfile.videosLoading = false;
                 }, 300);
+                
+                // IMPORTANT: Reset loading flag immediately after promise resolves
+                window.characterProfile.videosLoading = false;
             })
             .catch((error) => {
-                console.error('Error loading next page of videos:', error);
                 // Hide loading spinner on error
                 if (typeof hideLoadMoreButtonSpinner === 'function') {
                     hideLoadMoreButtonSpinner('videos');
                 }
+                // IMPORTANT: Always reset loading flag on error
                 window.characterProfile.videosLoading = false;
             });
     }

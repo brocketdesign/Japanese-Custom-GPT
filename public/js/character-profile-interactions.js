@@ -23,36 +23,20 @@ function toggleImageLike(event) {
  * Display image in modal with details (title, date)
  */
 function displayImageModal(imageData) {
-    console.log('[displayImageModal] Function called with imageData:', imageData);
-    
     if (!imageData) {
-        console.error('[displayImageModal] ERROR: imageData is null or undefined!');
         return;
     }
     
-    console.log('[displayImageModal] ImageData properties:', {
-        _id: imageData._id,
-        title: imageData.title,
-        imageUrl: imageData.imageUrl,
-        createdAt: imageData.createdAt
-    });
-    
     // Close any existing modals first
-    console.log('[displayImageModal] Checking for existing modals...');
     const existingModal = document.getElementById('imageModal');
     if (existingModal) {
-        console.log('[displayImageModal] Found existing modal, closing it...');
         const bsModal = bootstrap.Modal.getInstance(existingModal);
         if (bsModal) {
-            console.log('[displayImageModal] Bootstrap Modal instance found, hiding...');
             bsModal.hide();
         }
         setTimeout(() => {
-            console.log('[displayImageModal] Removing existing modal from DOM');
             existingModal.remove();
         }, 300);
-    } else {
-        console.log('[displayImageModal] No existing modal found');
     }
     
     // Format the date
@@ -62,34 +46,25 @@ function displayImageModal(imageData) {
         day: 'numeric'
     }) : 'Unknown date';
     
-    console.log('[displayImageModal] Formatted date:', imageDate);
-    
     // Extract title based on current language
     let imageTitle = 'Untitled Image';
     const currentLang = translations?.lang || 'en';
-    console.log('[displayImageModal] Current language:', currentLang);
     
     if (imageData.title) {
         if (typeof imageData.title === 'string') {
             // Simple string title
             imageTitle = imageData.title;
-            console.log('[displayImageModal] Title is string:', imageTitle);
         } else if (typeof imageData.title === 'object' && imageData.title[currentLang]) {
             // Localized title object - get current language
             imageTitle = imageData.title[currentLang];
-            console.log('[displayImageModal] Title is localized object, using', currentLang, ':', imageTitle);
         } else if (typeof imageData.title === 'object') {
             // Localized title object but current lang not available - use first available
             const availableLang = Object.keys(imageData.title)[0];
             imageTitle = imageData.title[availableLang];
-            console.log('[displayImageModal] Current language not in title, using fallback', availableLang, ':', imageTitle);
         }
     }
     
     const imageUrl = imageData.imageUrl || '/img/avatar.png';
-    
-    console.log('[displayImageModal] Using title:', imageTitle);
-    console.log('[displayImageModal] Using imageUrl:', imageUrl);
     
     const modal = document.createElement('div');
     modal.className = 'modal fade';
@@ -129,43 +104,27 @@ function displayImageModal(imageData) {
         </div>
     `;
     
-    console.log('[displayImageModal] Modal HTML created');
-    console.log('[displayImageModal] Appending modal to DOM...');
-    
     document.body.appendChild(modal);
-    console.log('[displayImageModal] Modal appended to body');
-    console.log('[displayImageModal] Modal element:', modal);
     
-    console.log('[displayImageModal] Creating Bootstrap Modal instance...');
     const bootstrapModal = new bootstrap.Modal(modal, {
         backdrop: 'static',
         keyboard: true
     });
     
-    console.log('[displayImageModal] Bootstrap Modal instance created:', bootstrapModal);
-    console.log('[displayImageModal] Calling .show() to display modal...');
-    
     bootstrapModal.show();
-    console.log('[displayImageModal] Modal .show() called');
     
     // Add like button listener
     const likeBtn = modal.querySelector('.image-modal-like-btn');
-    console.log('[displayImageModal] Like button element:', likeBtn);
     
     if (likeBtn) {
-        console.log('[displayImageModal] Adding click listener to like button');
         likeBtn.addEventListener('click', function(e) {
-            console.log('[displayImageModal] Like button clicked');
             e.stopPropagation();
             if (typeof toggleImageFavorite === 'function') {
-                console.log('[displayImageModal] Calling toggleImageFavorite');
                 toggleImageFavorite(likeBtn);
             } else {
-                console.error('[displayImageModal] toggleImageFavorite function not available');
+                console.error('toggleImageFavorite function not available');
             }
         });
-    } else {
-        console.warn('[displayImageModal] Like button not found in modal!');
     }
     
     // Add title expand/collapse functionality
@@ -198,13 +157,9 @@ function displayImageModal(imageData) {
     }
     
     // Clean up modal when hidden
-    console.log('[displayImageModal] Adding hidden.bs.modal listener');
     modal.addEventListener('hidden.bs.modal', function() {
-        console.log('[displayImageModal] Modal being hidden, removing from DOM');
         modal.remove();
     });
-    
-    console.log('[displayImageModal] Function execution complete');
 }
 
 /**
@@ -278,13 +233,13 @@ function initializeSharing() {
                     title: chatName,
                     text: `Check out ${chatName} on ChatLamix!`,
                     url: window.location.href
-                }).catch(err => console.log('Error sharing:', err));
+                }).catch(err => {/* ignore sharing errors */});
             } else {
                 // Fallback: copy to clipboard
                 const url = window.location.href;
                 navigator.clipboard.writeText(url).then(() => {
                     alert('Profile link copied to clipboard!');
-                }).catch(err => console.error('Failed to copy:', err));
+                }).catch(err => {/* ignore copy errors */});
             }
         });
     }

@@ -549,22 +549,15 @@ async function img2videoRoutes(fastify) {
             const user = request.user;
             const subscriptionStatus = user?.subscriptionStatus === 'active';
             const isTemporary = !!user?.isTemporary;
-            
-            // Determine if user should see NSFW content
-            // Non-logged-in (temporary) and non-subscribed users should not see NSFW videos
-            const shouldFilterNSFW = isTemporary || !subscriptionStatus;
 
             const db = fastify.mongo.db;
             
-            // Build NSFW filter based on user status
-            const nsfwFilter = shouldFilterNSFW 
-                ? { nsfw: { $ne: true } }  // Hide NSFW videos for non-subscribed/temporary users
-                : {};  // Show all videos for subscribed users
+            // Note: Do NOT filter NSFW videos here - return them all so frontend can display them with unlock overlay for non-subscribed users
+            // The frontend will handle showing lock icons for NSFW content based on subscription status
 
             const query = {
                 chatId: new ObjectId(chatId),
-                videoUrl: { $exists: true, $ne: null },
-                ...nsfwFilter  // Apply NSFW filter based on user status
+                videoUrl: { $exists: true, $ne: null }
             };
 
             const skip = (page - 1) * limit;

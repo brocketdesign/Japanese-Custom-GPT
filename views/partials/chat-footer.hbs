@@ -400,6 +400,10 @@
                     <i class="bi bi-lightbulb"></i>
                     <span>{{chatToolSettingsTranslations.suggestionsSettings}}</span>
                 </button>
+                <button type="button" class="settings-quick-nav-btn" data-target="#scenarios-settings">
+                    <i class="bi bi-film"></i>
+                    <span>{{chatToolSettingsTranslations.scenariosSettings}}</span>
+                </button>
                 <button type="button" class="settings-quick-nav-btn" data-target="#model-settings">
                     <i class="bi bi-cpu"></i>
                     <span>{{chatToolSettingsTranslations.modelSettings}}</span>
@@ -735,6 +739,33 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Conversation Scenarios Settings -->
+            <div class="settings-section" id="scenarios-settings">
+                <div class="settings-section-header">
+                    <div class="settings-section-title">
+                        <i class="bi bi-film me-2"></i>
+                        {{chatToolSettingsTranslations.scenariosSettings}}
+                    </div>
+                </div>
+                <div class="settings-description text-muted mb-4">
+                    {{chatToolSettingsTranslations.scenariosSettingsDescription}}
+                </div>
+                
+                <!-- Enable Scenarios Switch -->
+                <div class="settings-field">
+                    <div class="settings-field-header">
+                        <label class="settings-label fw-semibold mb-0">{{chatToolSettingsTranslations.enableScenarios}}</label>
+                        <div class="settings-switch-container">
+                            <label class="settings-switch">
+                                <input type="checkbox" id="scenarios-enable-switch" checked>
+                                <span class="settings-switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Model Settings -->
             <div class="settings-section" id="model-settings">
                 <div class="settings-section-header">

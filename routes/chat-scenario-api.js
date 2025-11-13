@@ -181,10 +181,14 @@ async function routes(fastify, options) {
             // Update the userChat document to:
             // 1. Select the scenario
             // 2. Add the hidden scenario context message
+            // 3. Mark scenario as generated
             const updateResult = await userChatCollection.updateOne(
                 { _id: new ObjectId(userChatId) },
                 { 
-                    $set: { currentScenario: selectedScenario },
+                    $set: { 
+                        currentScenario: selectedScenario,
+                        scenarioGenerated: true
+                    },
                     $push: { messages: scenarioContextMessage },
                     $unset: { availableScenarios: "" }
                 }

@@ -12,7 +12,11 @@ const DEFAULT_SETTINGS = {
     voiceProvider: 'standard',
     autoMergeFace: true,
     autoImageGeneration: false,
-    goalsEnabled: false
+    goalsEnabled: false,
+    scenariosEnabled: true,
+    suggestionsEnabled: true,
+    speechRecognitionEnabled: true,
+    speechAutoSend: false
 };
 
 /**
@@ -25,7 +29,6 @@ const DEFAULT_SETTINGS = {
 async function getUserChatToolSettings(db, userId, chatId = null) {
     try {
         if (!userId || !ObjectId.isValid(userId)) {
-            console.warn('[getUserChatToolSettings] Invalid user ID, returning defaults');
             return DEFAULT_SETTINGS;
         }
 

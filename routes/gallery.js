@@ -719,10 +719,6 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
       const user = request.user;
       const subscriptionStatus = user?.subscriptionStatus === 'active';
       const isTemporary = !!user?.isTemporary;
-      
-      // Determine if user should see NSFW content
-      // Non-logged-in (temporary) and non-subscribed users should not see NSFW images
-      const shouldFilterNSFW = isTemporary || !subscriptionStatus;
 
       // Fetch the chat data (chatName and thumbnail)
       const chat = await chatsCollection.findOne({ _id: new ObjectId(chatId) });
@@ -730,20 +726,17 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
         return reply.code(404).send({ error: 'Chat not found' });
       }
 
-      // Build NSFW filter based on user status
-      const nsfwFilter = shouldFilterNSFW 
-        ? { 'images.nsfw': { $ne: true } }  // Hide NSFW images for non-subscribed/temporary users
-        : {};  // Show all images for subscribed users
+      // Note: Do NOT filter NSFW images here - return them all so frontend can display them blurred for non-subscribed users
+      // The frontend will handle showing blurred overlays for NSFW content based on subscription status
 
-      // Find the chat document and paginate the images & filter out image with a scale_factor
+      // Find the chat document and paginate the images (do not filter NSFW - return all)
       const chatImagesDocs = await chatsGalleryCollection
         .aggregate([
           { $match: { chatId: new ObjectId(chatId) } },           // Match the document by chatId
           { $unwind: '$images' },           // Unwind the images array
           { $match: { 
               'images.imageUrl': { $exists: true, $ne: null },    // Ensure image has a valid URL
-              'images.isUpscaled': { $ne: true },                 // Filter out upscaled duplicates
-              ...nsfwFilter                                        // Apply NSFW filter based on user status
+              'images.isUpscaled': { $ne: true }                  // Filter out upscaled duplicates
             } 
           }, 
           { $sort: { 'images.createdAt': -1 } }, // Sort by createdAt in descending order
@@ -754,15 +747,14 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
         .toArray();
 
 
-      // Get total image count for pagination info (with same NSFW filtering)
+      // Get total image count for pagination info (do not filter NSFW - count all)
       const totalImagesCount = await chatsGalleryCollection
         .aggregate([
           { $match: { chatId: new ObjectId(chatId) } },
           { $unwind: '$images' },
           { $match: { 
               'images.imageUrl': { $exists: true, $ne: null },    // Ensure image has a valid URL
-              'images.isUpscaled': { $ne: true },                 // Filter out upscaled duplicates
-              ...nsfwFilter                                        // Apply NSFW filter based on user status
+              'images.isUpscaled': { $ne: true }                  // Filter out upscaled duplicates
             } 
           }, 
           { $count: 'total' }

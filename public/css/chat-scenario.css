@@ -1,113 +1,132 @@
-/* Scenario Container - Responsive Grid */
+/* Scenario Container - Carousel Layout */
 .scenario-container {
   display: none;
-  grid-template-columns: 1fr;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  z-index: 1100;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem;
-  margin: 0;
-  background: transparent;
-  border-radius: 0;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1rem;
+  gap: 2rem;
+  overflow: hidden;
+}
+
+.scenario-container.active {
+  display: flex !important;
+}
+
+/* Carousel Wrapper */
+.scenario-carousel-wrapper {
   position: relative;
   width: 100%;
-  max-width: 100%;
-  min-height: auto;
-  z-index: 100;
+  height: 100%;
+  max-width: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
-/* Show the container when display is set to grid */
-.scenario-container[style*="display: grid"],
-.scenario-container.active {
-  display: grid !important;
-}
-
-/* Tablet and above: 2 columns */
-@media (min-width: 768px) {
-  .scenario-container {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-  }
-}
-
-/* Large screens: 3 columns */
-@media (min-width: 1024px) {
-  .scenario-container {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-  }
+/* Carousel Track */
+.scenario-carousel-track {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Scenario Cards */
 .scenario-card {
   background: #fff;
   border: 2px solid #6E20F4;
-  border-radius: 12px;
-  padding: 0.75rem;
+  border-radius: 20px;
+  padding: 2rem;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  gap: 1rem;
+  box-shadow: 0 8px 32px rgba(110, 32, 244, 0.15);
   position: relative;
-  min-height: 0;
+  min-width: 100%;
+  height: 100%;
+  max-height: 500px;
+  justify-content: center;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(242, 240, 255, 0.7) 100%);
 }
 
 .scenario-card:hover {
-  border-color: #6E20F4;
-  background-color: rgba(110, 32, 244, 0.05);
-  box-shadow: 0 6px 12px rgba(110, 32, 244, 0.15);
-  transform: translateY(-3px);
+  border-color: #8240FF;
+  background: linear-gradient(135deg, #ffffff 0%, rgba(242, 240, 255, 1) 100%);
+  box-shadow: 0 12px 40px rgba(110, 32, 244, 0.25);
+  transform: scale(1.02);
 }
 
 .scenario-card.selected {
-  border-color: #6E20F4;
-  background-color: rgba(110, 32, 244, 0.1);
-  box-shadow: 0 6px 12px rgba(110, 32, 244, 0.15);
+  border: 2px solid #6E20F4;
+  background: linear-gradient(135deg, #f0e6ff 0%, #f8f5ff 100%);
+  box-shadow: 0 12px 40px rgba(110, 32, 244, 0.3);
+  transform: scale(1.05);
 }
 
 .scenario-title {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: #222;
-  line-height: 1.2;
+  background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.3;
 }
 
 .scenario-description {
   margin: 0;
-  color: #666;
-  font-size: 0.8rem;
-  line-height: 1.4;
+  color: #555;
+  font-size: 1rem;
+  line-height: 1.6;
   flex-grow: 1;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
 .scenario-meta {
   display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  font-size: 0.7rem;
+  flex-direction: row;
+  gap: 1.5rem;
+  font-size: 0.95rem;
 }
 
 .scenario-meta-item {
   display: flex;
+  flex-direction: column;
   gap: 0.25rem;
 }
 
-.scenario-meta-item .label {
+.scenario-meta-item .labels {
   font-weight: 600;
-  color: #555;
-  min-width: 60px;
+  color: #6E20F4;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .scenario-meta-item .value {
-  color: #888;
-  font-style: italic;
+  color: #333;
+  font-size: 1rem;
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -115,29 +134,111 @@
 
 .scenario-card-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.25rem;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .scenario-badge-selected {
   display: inline-block;
-  background-color: #6E20F4;
+  background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
   color: white;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  padding: 0.15rem 0.3rem;
-  border-radius: 3px;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
   white-space: nowrap;
   flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(110, 32, 244, 0.2);
 }
 
 .no-scenarios {
   text-align: center;
   color: #999;
-  font-size: 0.9rem;
-  padding: 1rem;
+  font-size: 1.1rem;
+  padding: 2rem;
   grid-column: 1 / -1;
+}
+
+/* Carousel Navigation Arrows */
+.scenario-carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50px;
+  height: 50px;
+  border: none;
+  background: linear-gradient(135deg, #D2B8FF 0%, #8240FF 100%);
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(110, 32, 244, 0.2);
+}
+
+.scenario-carousel-arrow:hover {
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 6px 20px rgba(110, 32, 244, 0.3);
+}
+
+.scenario-carousel-arrow:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.scenario-carousel-arrow.prev {
+  left: 1rem;
+}
+
+.scenario-carousel-arrow.next {
+  right: 1rem;
+}
+
+.scenario-carousel-arrow:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.scenario-carousel-arrow:disabled:hover {
+  transform: translateY(-50%);
+  box-shadow: 0 4px 15px rgba(110, 32, 244, 0.2);
+}
+
+/* Carousel Dots Navigation */
+.scenario-carousel-dots {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  align-items: center;
+  padding: 0 1rem;
+}
+
+.scenario-carousel-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ddd;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.scenario-carousel-dot:hover {
+  background: #bbb;
+  transform: scale(1.1);
+}
+
+.scenario-carousel-dot.active {
+  background: #6E20F4;
+  width: 32px;
+  border-radius: 6px;
+  box-shadow: 0 0 0 3px rgba(110, 32, 244, 0.15);
 }
 
 /* Loading Spinner */
@@ -148,7 +249,6 @@
   flex-direction: column;
   gap: 1.5rem;
   padding: 3rem 1.5rem;
-  grid-column: 1 / -1;
   position: relative;
   z-index: 1100;
 }
@@ -328,5 +428,103 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .scenario-container {
+    padding: 1rem 0;
+  }
+
+  .scenario-carousel-wrapper {
+    max-width: 90%;
+  }
+
+  .scenario-card {
+    padding: 1.5rem;
+    max-height: 450px;
+  }
+
+  .scenario-title {
+    font-size: 1.25rem;
+  }
+
+  .scenario-description {
+    font-size: 0.95rem;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+  }
+
+  .scenario-carousel-arrow {
+    width: 44px;
+    height: 44px;
+    font-size: 1.25rem;
+  }
+
+  .scenario-carousel-arrow.prev {
+    left: 0.5rem;
+  }
+
+  .scenario-carousel-arrow.next {
+    right: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .scenario-container {
+    padding: 0.5rem 0;
+  }
+
+  .scenario-carousel-wrapper {
+    max-width: 95%;
+  }
+
+  .scenario-card {
+    padding: 1rem;
+    max-height: 400px;
+    border-radius: 16px;
+  }
+
+  .scenario-title {
+    font-size: 1.1rem;
+  }
+
+  .scenario-description {
+    font-size: 0.9rem;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+  }
+
+  .scenario-meta {
+    gap: 1rem;
+    font-size: 0.85rem;
+  }
+
+  .scenario-carousel-arrow {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+
+  .scenario-carousel-arrow.prev {
+    left: 0.25rem;
+  }
+
+  .scenario-carousel-arrow.next {
+    right: 0.25rem;
+  }
+
+  .scenario-carousel-dots {
+    gap: 0.5rem;
+  }
+
+  .scenario-carousel-dot {
+    width: 10px;
+    height: 10px;
+  }
+
+  .scenario-carousel-dot.active {
+    width: 28px;
   }
 }

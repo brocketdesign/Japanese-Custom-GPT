@@ -26,6 +26,7 @@ async function routes(fastify, options) {
             
             if (!settings) {
                 // Return default settings if none exist
+                console.log(`[chat-tool-settings] No settings found for user ${userId}, returning defaults (Premium: ${isPremium})`);
                 const defaultSettings = {
                     minImages: 3,
                     videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
@@ -39,7 +40,8 @@ async function routes(fastify, options) {
                     suggestionsEnabled: true,
                     autoImageGeneration: isPremium,
                     speechRecognitionEnabled: true,
-                    speechAutoSend: true
+                    speechAutoSend: true,
+                    scenariosEnabled: true
                 };
                 return reply.send({ success: true, settings: defaultSettings, isPremium });
             }
@@ -112,18 +114,26 @@ async function routes(fastify, options) {
                 suggestionsEnabled: Boolean(settings.suggestionsEnabled !== undefined ? settings.suggestionsEnabled : true),
                 autoImageGeneration: isPremium ? Boolean(settings.autoImageGeneration !== undefined ? settings.autoImageGeneration : false) : false,
                 speechRecognitionEnabled: Boolean(settings.speechRecognitionEnabled !== undefined ? settings.speechRecognitionEnabled : true),
-                speechAutoSend: Boolean(settings.speechAutoSend !== undefined ? settings.speechAutoSend : false)
+                speechAutoSend: Boolean(settings.speechAutoSend !== undefined ? settings.speechAutoSend : false),
+                scenariosEnabled: Boolean(settings.scenariosEnabled !== undefined ? settings.scenariosEnabled : true)
             };
 
+            // Only keep the field that exists in the incoming settings
+            Object.keys(validSettings).forEach(key => {
+                if (!(key in settings)) {
+                    delete validSettings[key];
+                }
+            });
+
             // Validate ranges and constraints
-            if (validSettings.minImages < 1 || validSettings.minImages > 20) {
+            if (validSettings.minImages !== undefined && (validSettings.minImages < 1 || validSettings.minImages > 20)) {
                 return reply.status(400).send({ error: 'minImages must be between 1 and 20' });
             }
 
-            if (validSettings.videoPrompt.length > 500) {
+            if (validSettings.videoPrompt !== undefined && validSettings.videoPrompt.length > 500) {
                 return reply.status(400).send({ error: 'videoPrompt must be less than 500 characters' });
             }
-
+            console.log(`[chat-tool-settings] Saving settings for user ${userId} (Chat-specific: ${!!chatId}, Premium: ${isPremium})`, validSettings);
             const collection = fastify.mongo.db.collection('chatToolSettings');
             const now = new Date();
 
@@ -210,7 +220,8 @@ async function routes(fastify, options) {
                 selectedModel: 'openai',
                 suggestionsEnabled: true,
                 speechRecognitionEnabled: true,
-                speechAutoSend: true
+                speechAutoSend: true,
+                scenariosEnabled: true
             };
 
             reply.send({ 
@@ -230,6 +241,7 @@ async function routes(fastify, options) {
     // Get settings for specific chat/userChat (with user defaults as fallback)
     fastify.get('/api/chat-tool-settings/:userId/:chatId', async (request, reply) => {
         try {
+            
             const { userId, chatId } = request.params;
             
             if (!userId || !ObjectId.isValid(userId) || !chatId || !ObjectId.isValid(chatId)) {
@@ -253,6 +265,7 @@ async function routes(fastify, options) {
 
             if (chatSettings) {
                 const { _id, userId: userIdField, chatId: chatIdField, createdAt, updatedAt, ...settings } = chatSettings;
+                
                 // Override autoImageGeneration for non-premium users
                 if (!isPremium) {
                     settings.autoImageGeneration = false;
@@ -278,6 +291,7 @@ async function routes(fastify, options) {
 
             if (userSettings) {
                 const { _id, userId: userIdField, createdAt, updatedAt, ...settings } = userSettings;
+                
                 // Override autoImageGeneration for non-premium users
                 if (!isPremium) {
                     settings.autoImageGeneration = false;
@@ -296,6 +310,7 @@ async function routes(fastify, options) {
             }
 
             // Return default settings if none exist
+            console.log(`[chat-tool-settings] No settings found for user ${userId} and chat ${chatId}, returning defaults (Premium: ${isPremium})`);
             const defaultSettings = {
                 minImages: 3,
                 videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
@@ -309,7 +324,8 @@ async function routes(fastify, options) {
                 suggestionsEnabled: true,
                 autoImageGeneration: isPremium,
                 speechRecognitionEnabled: true,
-                speechAutoSend: true
+                speechAutoSend: true,
+                scenariosEnabled: true
             };
 
             reply.send({ success: true, settings: defaultSettings, isChatSpecific: false, isPremium });

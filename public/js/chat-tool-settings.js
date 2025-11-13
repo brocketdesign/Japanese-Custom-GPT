@@ -1,24 +1,9 @@
 class ChatToolSettings {
     constructor() {
-        this.settings = {
-            minImages: 3,
-            videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
-            relationshipType: 'companion',
-            selectedVoice: 'nova',
-            voiceProvider: 'standard',
-            premiumVoice: 'Thandiwe',
-            minimaxVoice: 'Wise_Woman',
-            autoMergeFace: true,
-            suggestionsEnabled: true,
-            selectedModel: 'openai',
-            autoImageGeneration: true,
-            speechRecognitionEnabled: true,
-            speechAutoSend: true
-        };
-        
+        this.settings = {};
         this.isLoading = false;
         this.userId = window.userId || window.user?.id;
-    this.minimaxVoices = [];
+        this.minimaxVoices = [];
         this.premiumVoices = [];
         this.availableModels = {};
         this.isPremium = false;
@@ -27,7 +12,6 @@ class ChatToolSettings {
         this.speechToTextTranslations = window.speechToTextTranslations || {};
         
         this.init();
-        this.loadSettings();
     }
 
     // Add speech-to-text translation method
@@ -249,6 +233,14 @@ class ChatToolSettings {
                 this.settings.suggestionsEnabled = e.target.checked;
             });
         }
+
+        // Scenarios enable switch
+        const scenariosEnableSwitch = document.getElementById('scenarios-enable-switch');
+        if (scenariosEnableSwitch) {
+            scenariosEnableSwitch.addEventListener('change', (e) => {
+                this.settings.scenariosEnabled = e.target.checked;
+            });
+        }
         
         // Speech recognition enable switch
         const speechRecognitionEnableSwitch = document.getElementById('speech-recognition-enable-switch');
@@ -331,8 +323,6 @@ class ChatToolSettings {
         
         // Show selection feedback
         this.showModelSelectionFeedback(selectedOption, modelKey);
-        
-        console.log('Model selected:', modelKey, this.availableModels[modelKey]);
     }
 
     showModelSelectionFeedback(selectedOption, modelKey) {
@@ -344,7 +334,6 @@ class ChatToolSettings {
 
         // Optional: Show a brief notification
         const modelName = this.availableModels[modelKey]?.displayName || modelKey;
-        console.log(`Selected AI model: ${modelName}`);
     }
 
     // First time settings check
@@ -435,7 +424,7 @@ class ChatToolSettings {
             // Set initial value based on subscription status
             if (!subscriptionStatus) {
                 // Auto-correct non-premium users who have minImages > 1
-                if (this.settings.minImages > 1) {
+                if (this.settings.minImages && parseInt(this.settings.minImages) > 1) {
                     this.settings.minImages = 1;
                 }
 
@@ -455,8 +444,6 @@ class ChatToolSettings {
                     rangeContainer.appendChild(premiumIndicator);
                 }
 
-                // Save corrected settings after UI is set up
-                this.autoSaveCorrection();
             } else {
                 // Premium users can use any value
                 minImagesRange.disabled = false;
@@ -503,13 +490,18 @@ class ChatToolSettings {
             if (autoMergeIndicator) autoMergeIndicator.style.display = 'block';
             
             if (autoMergeFaceSwitch) {
-                this.settings.autoMergeFace = false;
-                autoMergeFaceSwitch.checked = false;
+                // Only update if not already false (preserve user setting)
+                if (this.settings.autoMergeFace) {
+                    this.settings.autoMergeFace = false;
+                }
+                autoMergeFaceSwitch.checked = this.settings.autoMergeFace;
                 autoMergeFaceSwitch.disabled = true;
                 autoMergeFaceSwitch.style.opacity = '0.6';
             }
-            
-            this.autoSaveCorrection();
+            // Save corrected settings after UI is set up (only if not loading)
+            if (!this.isLoading) {
+                this.autoSaveCorrection();
+            }
         } else {
             if (autoMergeIcon) autoMergeIcon.style.display = 'none';
             if (autoMergeIndicator) autoMergeIndicator.style.display = 'none';
@@ -530,13 +522,15 @@ class ChatToolSettings {
             if (autoImageIndicator) autoImageIndicator.style.display = 'block';
             
             if (autoImageGenerationSwitch) {
-                this.settings.autoImageGeneration = false;
-                autoImageGenerationSwitch.checked = false;
+                // Only update if not already false (preserve user setting)
+                if (this.settings.autoImageGeneration) {
+                    this.settings.autoImageGeneration = false;
+                }
+                autoImageGenerationSwitch.checked = this.settings.autoImageGeneration;
                 autoImageGenerationSwitch.disabled = true;
                 autoImageGenerationSwitch.style.opacity = '0.6';
             }
             
-            this.autoSaveCorrection();
         } else {
             if (autoImageIcon) autoImageIcon.style.display = 'none';
             if (autoImageIndicator) autoImageIndicator.style.display = 'none';
@@ -607,7 +601,6 @@ class ChatToolSettings {
         if (chatId && chatId !== 'null' && chatId !== 'undefined') {
             requestBody.chatId = chatId;
         }
-
         fetch(`/api/chat-tool-settings/${this.userId}`, {
             method: 'POST',
             headers: {
@@ -679,7 +672,6 @@ class ChatToolSettings {
         
         const storageKey = `chat_settings_opened_${this.userId}`;
         localStorage.removeItem(storageKey);
-        console.log('First-time settings flag reset for user:', this.userId);
     }
 
     isFirstTimeUser() {
@@ -725,11 +717,9 @@ class ChatToolSettings {
         // Add selected class to clicked option
         selectedOption.classList.add('selected');
         
-    // Update settings
-    this.settings.minimaxVoice = selectedOption.dataset.voice;
-    this.settings.premiumVoice = selectedOption.dataset.voice;
-        
-    console.log('Premium voice selected:', this.settings.minimaxVoice);
+        // Update settings
+        this.settings.minimaxVoice = selectedOption.dataset.voice;
+        this.settings.premiumVoice = selectedOption.dataset.voice;
     }
 
     selectRelationshipTone(selectedOption) {
@@ -764,8 +754,6 @@ class ChatToolSettings {
         
         // Update settings
         this.settings.relationshipType = selectedOption.dataset.relationship;
-        
-        console.log('Relationship tone selected:', this.settings.relationshipType);
     }
 
     async loadPremiumVoices() {
@@ -876,12 +864,10 @@ class ChatToolSettings {
         try {
             this.isLoading = true;
             this.showSavingState();
-
+            
             // Get chatId from session storage
             const chatId = sessionStorage.getItem('lastChatId') || sessionStorage.getItem('chatId');
             const userChatId = sessionStorage.getItem('userChatId');
-
-            console.log('Saving settings with chatId:', chatId, 'userChatId:', userChatId);
 
             const requestBody = { 
                 settings: this.settings 
@@ -891,7 +877,7 @@ class ChatToolSettings {
             if (chatId && chatId !== 'null' && chatId !== 'undefined') {
                 requestBody.chatId = chatId;
             }
-
+            console.log('[chat-tool-settings] Saving settings', requestBody);
             const response = await fetch(`/api/chat-tool-settings/${this.userId}`, {
                 method: 'POST',
                 headers: {
@@ -940,7 +926,7 @@ class ChatToolSettings {
         try {
             // Try to load chat-specific settings first if we have a chatId
             const chatId = sessionStorage.getItem('lastChatId') || sessionStorage.getItem('chatId');
-            
+            console.log('[chat-tool-settings] Loading settings for user', this.userId, 'chatId:', chatId);
             let response;
             if (chatId && chatId !== 'null' && chatId !== 'undefined') {
                 // Try to get chat-specific settings
@@ -954,7 +940,8 @@ class ChatToolSettings {
 
             if (response.ok && data.success) {
                 this.settings = { ...this.settings, ...data.settings };
-                this.applySettingsToUI();
+                // Skip auto-correction when applying loaded settings to preserve user's choices
+                this.applySettingsToUI(true);
             } else {
                 console.warn('Failed to load settings, using defaults');
             }
@@ -1026,14 +1013,15 @@ class ChatToolSettings {
             const savedSettings = localStorage.getItem('chatToolSettings');
             if (savedSettings) {
                 this.settings = { ...this.settings, ...JSON.parse(savedSettings) };
-                this.applySettingsToUI();
+                // Skip auto-correction when applying loaded settings to preserve user's choices
+                this.applySettingsToUI(true);
             }
         } catch (error) {
             console.error('Error loading settings from localStorage:', error);
         }
     }
 
-    applySettingsToUI() {
+    applySettingsToUI(skipAutoCorrection = false) {
         const user = window.user || {};
         const subscriptionStatus = user.subscriptionStatus === 'active';
         
@@ -1052,25 +1040,25 @@ class ChatToolSettings {
             }
         }
 
-        // Auto-correct settings for non-premium users before applying to UI
-        if (!subscriptionStatus) {
-            if (this.settings.minImages > 1) {
+        // Auto-correct ONLY premium-exclusive settings for non-premium users
+        // SKIP auto-correction if skipAutoCorrection is true to preserve user-set values
+        // NOTE: We only auto-correct premium features (minImages, autoMergeFace, autoImageGeneration)
+        // Non-premium users CAN use other features like scenarios, suggestions, speech recognition, etc.
+        if (!subscriptionStatus && !skipAutoCorrection) {
+            // Only reset premium features
+            if (this.settings.minImages && parseInt(this.settings.minImages) > 1) {
                 this.settings.minImages = 1;
-                this.autoSaveCorrection();
             }
             if (this.settings.autoMergeFace) {
                 this.settings.autoMergeFace = false;
-                this.autoSaveCorrection();
             }
             if (this.settings.autoImageGeneration) {
                 this.settings.autoImageGeneration = false;
-                this.autoSaveCorrection();
             }
             // Auto-correct premium models
             const premiumModels = ['llama-3-70b', 'gemma', 'deepseek'];
             if (premiumModels.includes(this.settings.selectedModel)) {
                 this.settings.selectedModel = 'openai'; // Default to free model
-                this.autoSaveCorrection();
             }
         }
 
@@ -1207,6 +1195,12 @@ class ChatToolSettings {
             suggestionsEnableSwitch.checked = this.settings.suggestionsEnabled !== undefined ? this.settings.suggestionsEnabled : true;
         }
 
+        // Update scenarios enable switch
+        const scenariosEnableSwitch = document.getElementById('scenarios-enable-switch');
+        if (scenariosEnableSwitch) {
+            scenariosEnableSwitch.checked = this.settings.scenariosEnabled !== undefined ? this.settings.scenariosEnabled : true;
+        }
+
         // Update speech recognition enable switch
         const speechRecognitionEnableSwitch = document.getElementById('speech-recognition-enable-switch');
         if (speechRecognitionEnableSwitch) {
@@ -1241,8 +1235,6 @@ class ChatToolSettings {
             detail: { ...this.settings }
         });
         document.dispatchEvent(settingsEvent);
-        
-        console.log('Settings applied:', this.settings);
     }
 
     // UI feedback methods
@@ -1345,6 +1337,11 @@ class ChatToolSettings {
         return this.settings.autoImageGeneration;
     }
 
+    getScenariosEnabled() {
+        return this.settings.scenariosEnabled !== undefined ? 
+            this.settings.scenariosEnabled : true;
+    }
+
     // Chat-specific methods
     async loadChatSettings(chatId) {
         if (!this.userId || !chatId) {
@@ -1352,17 +1349,42 @@ class ChatToolSettings {
         }
 
         try {
-            const response = await fetch(`/api/chat-tool-settings/${this.userId}/${chatId}`);
+            const url = `/api/chat-tool-settings/${this.userId}/${chatId}`;
+            const response = await fetch(url);
             const data = await response.json();
 
             if (response.ok && data.success) {
                 return data.settings;
+            } else {
+                return this.settings;
             }
         } catch (error) {
-            console.error('Error loading chat-specific settings:', error);
+            console.error('[ChatToolSettings] Error loading chat-specific settings:', error);
+            return this.settings;
+        }
+    }
+
+    // Load and apply chat-specific settings (called after chatId becomes available)
+    async loadAndApplyChatSettings(chatId) {
+        if (!this.userId || !chatId) {
+            return;
         }
 
-        return this.settings;
+        try {
+            this.isLoading = true;  // Prevent auto-saves during load
+            const settings = await this.loadChatSettings(chatId);
+            
+            // Always apply the settings if they were fetched, regardless of object comparison
+            if (settings) {
+                this.settings = { ...this.settings, ...settings };
+                // Skip auto-correction when applying loaded settings to preserve user's choices
+                this.applySettingsToUI(true);
+            }
+        } catch (error) {
+            console.error('[ChatToolSettings] Error loading and applying chat-specific settings:', error);
+        } finally {
+            this.isLoading = false;  // Allow auto-saves after load complete
+        }
     }
 
     // Admin utility method
@@ -1380,7 +1402,6 @@ class ChatToolSettings {
             const data = await response.json();
             
             if (data.success) {
-                console.log(`Corrected ${data.correctedCount} non-premium users`);
                 if (window.showNotification) {
                     showNotification(`Corrected ${data.correctedCount} non-premium users' settings`, 'success');
                 }

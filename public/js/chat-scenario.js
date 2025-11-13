@@ -8,6 +8,7 @@ window.ChatScenarioModule = (function() {
     let currentScenario = null;
     let userChatId = null;
     let isLoadingScenarios = false;
+    let currentSlideIndex = 0;
     const containerSelector = '.scenario-container';
     const chatContainerId = 'chatContainer';
     
@@ -23,11 +24,20 @@ window.ChatScenarioModule = (function() {
         userChatId = uChatId;
         if (!userChatId) {
             // Clear scenarios when no chat ID
+            console.log('[ChatScenarioModule] No userChatId provided, clearing scenarios');
+            clearScenarios();
+            return;
+        }
+
+        // Check if scenarios are enabled
+        if (!isScenariosEnabled()) {
+            console.log('[ChatScenarioModule] Scenarios are disabled in settings, skipping initialization');
             clearScenarios();
             return;
         }
         
         try {
+            console.log('[ChatScenarioModule] Initializing scenarios for userChatId:', uChatId);
             // Fetch existing scenario data
             const response = await fetch(`/api/chat-scenarios/${userChatId}`);
             
@@ -35,14 +45,28 @@ window.ChatScenarioModule = (function() {
             
             if (data.availableScenarios && data.availableScenarios.length > 0) {
                 scenarios = data.availableScenarios;
+                console.log('[ChatScenarioModule] Loaded', scenarios.length, 'available scenarios');
             }
             
             if (data.currentScenario) {
                 currentScenario = data.currentScenario;
+                console.log('[ChatScenarioModule] Loaded current scenario:', data.currentScenario.title);
             }
         } catch (error) {
             console.error('[ChatScenarioModule] Error initializing:', error);
+            // Don't throw - just log and continue
         }
+    }
+
+    /**
+     * Check if scenarios are enabled in settings
+     */
+    function isScenariosEnabled() {
+        if (typeof window.chatToolSettings !== 'undefined' && window.chatToolSettings.getScenariosEnabled) {
+            return window.chatToolSettings.getScenariosEnabled();
+        }
+        // Default to enabled if settings not available
+        return true;
     }
 
     /**
@@ -51,6 +75,12 @@ window.ChatScenarioModule = (function() {
     function displayLoadingState() {
         const container = document.querySelector(containerSelector);
         if (!container) return;
+        
+        // Hide chatInput during loading
+        const chatInput = document.getElementById('chatInput');
+        if (chatInput) {
+            chatInput.style.display = 'none';
+        }
         
         container.style.display = 'flex';
         container.innerHTML = `
@@ -69,6 +99,12 @@ window.ChatScenarioModule = (function() {
      */
     async function generateScenarios() {
         if (!userChatId || isLoadingScenarios) {
+            return false;
+        }
+
+        // Check if scenarios are enabled
+        if (!isScenariosEnabled()) {
+            console.log('[ChatScenarioModule] Scenarios are disabled in settings');
             return false;
         }
         
@@ -104,7 +140,7 @@ window.ChatScenarioModule = (function() {
     }
 
     /**
-     * Display scenarios in the UI
+     * Display scenarios in the UI as a carousel
      */
     function displayScenarios() {
         const container = document.querySelector(containerSelector);
@@ -123,10 +159,113 @@ window.ChatScenarioModule = (function() {
             return;
         }
         
+        // Create carousel wrapper
+        const carouselWrapper = document.createElement('div');
+        carouselWrapper.className = 'scenario-carousel-wrapper';
+        
+        // Create carousel track
+        const track = document.createElement('div');
+        track.className = 'scenario-carousel-track';
+        track.style.transform = 'translateX(0%)';
+        
         // Create scenario cards
         scenarios.forEach((scenario, index) => {
             const card = createScenarioCard(scenario, index);
-            container.appendChild(card);
+            track.appendChild(card);
+        });
+        
+        carouselWrapper.appendChild(track);
+        
+        // Create navigation arrows
+        const prevButton = document.createElement('button');
+        prevButton.className = 'scenario-carousel-arrow prev';
+        prevButton.innerHTML = '&#8249;';
+        prevButton.setAttribute('aria-label', 'Previous scenario');
+        prevButton.addEventListener('click', () => goToPreviousSlide(track));
+        
+        const nextButton = document.createElement('button');
+        nextButton.className = 'scenario-carousel-arrow next';
+        nextButton.innerHTML = '&#8250;';
+        nextButton.setAttribute('aria-label', 'Next scenario');
+        nextButton.addEventListener('click', () => goToNextSlide(track));
+        
+        carouselWrapper.appendChild(prevButton);
+        carouselWrapper.appendChild(nextButton);
+        
+        // Create dots navigation
+        const dotsContainer = document.createElement('div');
+        dotsContainer.className = 'scenario-carousel-dots';
+        
+        scenarios.forEach((_, index) => {
+            const dot = document.createElement('button');
+            dot.className = 'scenario-carousel-dot';
+            if (index === 0) dot.classList.add('active');
+            dot.setAttribute('aria-label', `Go to scenario ${index + 1}`);
+            dot.addEventListener('click', () => goToSlide(index, track, dotsContainer));
+            dotsContainer.appendChild(dot);
+        });
+        
+        container.appendChild(carouselWrapper);
+        container.appendChild(dotsContainer);
+        
+        // Reset slide index
+        currentSlideIndex = 0;
+    }
+
+    /**
+     * Navigate to next slide
+     */
+    function goToNextSlide(track) {
+        if (currentSlideIndex < scenarios.length - 1) {
+            currentSlideIndex++;
+            updateCarouselPosition(track);
+        }
+    }
+
+    /**
+     * Navigate to previous slide
+     */
+    function goToPreviousSlide(track) {
+        if (currentSlideIndex > 0) {
+            currentSlideIndex--;
+            updateCarouselPosition(track);
+        }
+    }
+
+    /**
+     * Navigate to specific slide
+     */
+    function goToSlide(index, track, dotsContainer) {
+        currentSlideIndex = index;
+        updateCarouselPosition(track);
+        updateDotsIndicators(dotsContainer);
+    }
+
+    /**
+     * Update carousel position
+     */
+    function updateCarouselPosition(track) {
+        const offset = currentSlideIndex * 100;
+        track.style.transform = `translateX(-${offset}%)`;
+        
+        // Update dots
+        const dotsContainer = document.querySelector('.scenario-carousel-dots');
+        if (dotsContainer) {
+            updateDotsIndicators(dotsContainer);
+        }
+    }
+
+    /**
+     * Update active dot indicator
+     */
+    function updateDotsIndicators(dotsContainer) {
+        const dots = dotsContainer.querySelectorAll('.scenario-carousel-dot');
+        dots.forEach((dot, index) => {
+            if (index === currentSlideIndex) {
+                dot.classList.add('active');
+            } else {
+                dot.classList.remove('active');
+            }
         });
     }
 
@@ -263,6 +402,12 @@ window.ChatScenarioModule = (function() {
                     // Hide the scenario container
                     hide();
                     
+                    // Show chatInput
+                    const chatInput = document.getElementById('chatInput');
+                    if (chatInput) {
+                        chatInput.style.display = 'block';
+                    }
+                    
                     // Immediately generate assistant response with scenario context
                     // The server has created a hidden user message with scenario context
                     // Now we generate the completion so the assistant responds within this context
@@ -282,9 +427,15 @@ window.ChatScenarioModule = (function() {
     }
 
     /**
-     * Show or hide the scenario container
+     * Show or hide the scenario container and hide/show chatInput
      */
     function toggle(show = null) {
+        // Check if scenarios are enabled before allowing toggle
+        if (show === true && !isScenariosEnabled()) {
+            console.log('[ChatScenarioModule] Cannot show scenarios - feature is disabled in settings');
+            return;
+        }
+
         const container = document.querySelector(containerSelector);
         if (!container) {
             return;
@@ -297,6 +448,12 @@ window.ChatScenarioModule = (function() {
         // Use flex display when showing, none when hiding
         container.style.display = show ? 'flex' : 'none';
         
+        // Hide/show chatInput based on scenario display
+        const chatInput = document.getElementById('chatInput');
+        if (chatInput) {
+            chatInput.style.display = show ? 'none' : 'block';
+        }
+        
         // Hide chat overlay when showing scenarios, restore when hiding
         const chatOverlay = document.getElementById('chatOverlay');
         if (chatOverlay) {
@@ -308,6 +465,11 @@ window.ChatScenarioModule = (function() {
      * Show scenarios
      */
     function show() {
+        // Check if scenarios are enabled
+        if (!isScenariosEnabled()) {
+            console.log('[ChatScenarioModule] Scenarios are disabled in settings');
+            return;
+        }
         toggle(true);
     }
 

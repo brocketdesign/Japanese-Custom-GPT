@@ -1101,10 +1101,11 @@ function createOverlay(img, imageUrl) {
   }
   
   if (isTemporary) {
+    // Temporary user - show login overlay with modern design
     overlay = $('<div></div>')
         .addClass('gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')
         .css({
-            background: 'rgba(0,0,0,0.55)',
+            background: 'rgba(0, 0, 0, 0.25)',
             zIndex: 2,
             cursor: 'pointer'
         })
@@ -1112,67 +1113,130 @@ function createOverlay(img, imageUrl) {
             openLoginForm();
         });
 
-    const lockIcon = $('<i></i>').addClass('bi bi-lock-fill fs-3 text-light');
-    const loginText = $('<p></p>').addClass('mt-2 small text-light badge bg-secondary shadow ').text(window.translations?.login_to_view || 'Login to view');
+    const lockIcon = $('<i></i>').addClass('bi bi-lock-fill').css({ 'font-size': '2rem', 'color': '#fff', 'opacity': '0.9', 'margin-bottom': '0.75rem' });
+    const loginButton = $('<button></button>')
+        .addClass('btn btn-sm')
+        .css({
+            'background': 'linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%)',
+            'color': 'white',
+            'border': 'none',
+            'border-radius': '8px',
+            'font-weight': '600',
+            'padding': '0.5rem 1rem',
+            'font-size': '0.85rem',
+            'cursor': 'pointer',
+            'transition': 'all 0.2s ease'
+        })
+        .html('<i class="bi bi-unlock-fill me-2"></i>Unlock')
+        .on('click', function(e) {
+            e.stopPropagation();
+            openLoginForm();
+        });
 
-    overlay.append(lockIcon, loginText);
+    overlay.append(lockIcon, loginButton);
 
   } else if (subscriptionStatus && !showNSFW) {
     // Subscribed user with showNSFW disabled - show removable overlay
     overlay = $('<div></div>')
         .addClass('gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')
         .css({
-            background: 'rgba(0,0,0,0.55)',
+            background: 'rgba(0, 0, 0, 0.25)',
             zIndex: 2
         });
 
     let badge = $('<span></span>')
-        .addClass('badge bg-danger mb-2')
-        .css('font-size', '1rem')
-        .html('<i class="bi bi-eye-slash"></i> NSFW Hidden');
+        .addClass('badge mb-2')
+        .css({
+            'background': 'linear-gradient(to right, #ef4444, #ff6b6b)',
+            'font-size': '0.85rem',
+            'padding': '0.5rem 1rem',
+            'font-weight': '600'
+        })
+        .html('<i class="bi bi-eye-slash-fill me-2"></i>NSFW Hidden');
 
     let buttonElement = $('<button></button>')
+        .addClass('btn btn-sm')
+        .css({
+            'background': 'linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%)',
+            'color': 'white',
+            'border': 'none',
+            'border-radius': '8px',
+            'font-weight': '600',
+            'padding': '0.5rem 1rem',
+            'font-size': '0.85rem',
+            'cursor': 'pointer',
+            'transition': 'all 0.2s ease',
+            'margin-top': '0.75rem'
+        })
         .text(window.translations?.showContent || 'Show Content')
-        .addClass('btn btn-sm btn-outline-light mt-3 animate__animated animate__pulse')
-        .css({ 'font-size': '14px', 'border-radius': '50px', cursor: 'pointer' })
         .on('click', function (e) {
-
-          e.stopPropagation();
-          $(img).attr('src', imageUrl).removeClass('img-blur');
-          $(img).closest('.assistant-image-box ').removeClass('isBlurred');
-          const imageId = $(img).attr('data-id');
-          const $imageTools = $(document).find(`.image-tools[data-id="${imageId}"]`);
-          
-          overlay.hide().removeClass('d-flex');
-          
-          // Display the image tools
-          $imageTools.show();
+            e.stopPropagation();
+            $(img).attr('src', imageUrl).removeClass('img-blur');
+            $(img).closest('.assistant-image-box').removeClass('isBlurred');
+            const imageId = $(img).attr('data-id');
+            const $imageTools = $(document).find(`.image-tools[data-id="${imageId}"]`);
+            
+            overlay.hide().removeClass('d-flex');
+            
+            // Display the image tools
+            $imageTools.show();
+        })
+        .on('mouseenter', function() {
+            $(this).css({ 'transform': 'translateY(-2px)', 'box-shadow': '0 8px 16px rgba(130, 64, 255, 0.3)' });
+        })
+        .on('mouseleave', function() {
+            $(this).css({ 'transform': 'translateY(0)', 'box-shadow': 'none' });
         });
 
     overlay.append(badge, buttonElement);
 
   } else {
-    // Non-subscribed user or other cases - existing blur logic
+    // Non-subscribed user - show unlock overlay with modern design
     overlay = $('<div></div>')
         .addClass('gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')
         .css({
-            background: 'rgba(0,0,0,0.55)',
-            zIndex: 2
+            background: 'rgba(0, 0, 0, 0.25)',
+            zIndex: 2,
+            cursor: 'pointer'
+        })
+        .on('click', function() {
+            loadPlanPage();
         });
 
     let badge = $('<span></span>')
-        .addClass('badge bg-danger mb-2')
-        .css('font-size', '1rem')
-        .html('<i class="bi bi-exclamation-triangle"></i> NSFW');
+        .addClass('badge mb-2')
+        .css({
+            'background': 'linear-gradient(to right, #ef4444, #ff6b6b)',
+            'font-size': '0.85rem',
+            'padding': '0.5rem 1rem',
+            'font-weight': '600'
+        })
+        .html('<i class="bi bi-lock-fill me-2"></i>NSFW');
 
     let buttonElement = $('<button></button>')
-        .text(window.translations?.blurButton || '画像を見る')
-        .addClass('btn btn-sm btn-outline-light mt-3 animate__animated animate__pulse')
-        .css({ 'font-size': '14px', 'border-radius': '50px', cursor: 'pointer' })
+        .addClass('btn btn-sm')
+        .css({
+            'background': 'linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%)',
+            'color': 'white',
+            'border': 'none',
+            'border-radius': '8px',
+            'font-weight': '600',
+            'padding': '0.5rem 1rem',
+            'font-size': '0.85rem',
+            'cursor': 'pointer',
+            'transition': 'all 0.2s ease',
+            'margin-top': '0.75rem'
+        })
+        .text(window.translations?.blurButton || 'Unlock Content')
         .on('click', function (e) {
             e.stopPropagation();
-            loadPlanPage(); 
-            $(img).attr('src', imageUrl);
+            loadPlanPage();
+        })
+        .on('mouseenter', function() {
+            $(this).css({ 'transform': 'translateY(-2px)', 'box-shadow': '0 8px 16px rgba(130, 64, 255, 0.3)' });
+        })
+        .on('mouseleave', function() {
+            $(this).css({ 'transform': 'translateY(0)', 'box-shadow': 'none' });
         });
 
     overlay.append(badge, buttonElement);
@@ -2686,7 +2750,7 @@ function gridLayout(selector) {
         <span><i class="bi bi-grid"></i> ${translations?.gridSize || 'Grid Size'}</span>
         <span class="grid-size-display badge bg-light text-dark">${currentValue} ${translations?.perRow || 'per row'}</span>
       </label>
-      <input type="range" class="form-range" min="1" max="6" value="${currentValue}" id="${sliderId}">
+      <input type="range" class="form-range" min="1" max="4" value="${currentValue}" id="${sliderId}">
     </div>
   `;
   

@@ -487,6 +487,12 @@ function setupChatInterface(chat, character) {
 
     new bootstrap.Tooltip(albumLink[0]);
     $('#chat-recommend').prepend(albumLink);
+
+    if (window.chatToolSettings) {
+        window.chatToolSettings.loadSettings();
+    }else {
+        console.warn('chatToolSettings module not found. Skipping settings load.');
+    }
 }
     
     function determineChatGender(chat) {
@@ -503,59 +509,58 @@ function setupChatInterface(chat, character) {
         persona = userChat.persona;
         thumbnail = character?.image || localStorage.getItem('thumbnail')
 
-        const initScenarioPromise = (async () => {
-            if (window.ChatScenarioModule && userChatId) {
-                await window.ChatScenarioModule.init(chatId, userChatId);
-            }
-        })();
-
-        // Wait for scenario initialization before displaying chat
-        initScenarioPromise.then(() => {
-            displayChat(userChat.messages, persona, function(){
-                setTimeout(() => {
-                    const $chatContainer = $('#chatContainer');
-                    if ($chatContainer.length) {
-                        // Wait for content to be rendered by checking if scrollHeight > 0
-                        const checkAndScroll = () => {
-                            const scrollHeight = $chatContainer.prop("scrollHeight");
-                            const containerHeight = $chatContainer.height();
-                            
-                            if (scrollHeight > 0 && scrollHeight > containerHeight) {
-                                $chatContainer.animate({
-                                    scrollTop: scrollHeight
-                                }, 500);
-                            } else if (scrollHeight === 0) {
-                                // Retry after a short delay if content isn't ready
-                                setTimeout(checkAndScroll, 100);
-                            }
-                        };
-                        
-                        checkAndScroll();
-                    }
-                }, 1000);
-
-
-                // Add suggestions after assistant message
-                window.chatId = sessionStorage.getItem('chatId') || window.chatId;
-                window.userChatId = sessionStorage.getItem('userChatId') || window.userChatId;
-
-
-                if (window.chatSuggestionsManager && window.userId && window.chatId && window.userChatId) {
-                    setTimeout(() => {
-                        window.chatSuggestionsManager.showSuggestions(
-                            window.userId, 
-                            window.chatId, 
-                            window.userChatId
-                        );
-                    }, 500);
-                }
+        // Initialize scenarios in background - DON'T wait for this to complete
+        if (window.ChatScenarioModule && userChatId) {
+            window.ChatScenarioModule.init(chatId, userChatId).catch(err => {
+                console.warn('[displayExistingChat] Scenario initialization error (non-blocking):', err);
             });
+        }
 
-            const today = new Date().toISOString().split('T')[0];
-            if (userChat.log_success) {
-                displayThankMessage();
+        // Display chat immediately - don't block on scenario initialization
+        displayChat(userChat.messages, persona, function(){
+            setTimeout(() => {
+                const $chatContainer = $('#chatContainer');
+                if ($chatContainer.length) {
+                    // Wait for content to be rendered by checking if scrollHeight > 0
+                    const checkAndScroll = () => {
+                        const scrollHeight = $chatContainer.prop("scrollHeight");
+                        const containerHeight = $chatContainer.height();
+                        
+                        if (scrollHeight > 0 && scrollHeight > containerHeight) {
+                            $chatContainer.animate({
+                                scrollTop: scrollHeight
+                            }, 500);
+                        } else if (scrollHeight === 0) {
+                            // Retry after a short delay if content isn't ready
+                            setTimeout(checkAndScroll, 100);
+                        }
+                    };
+                    
+                    checkAndScroll();
+                }
+            }, 1000);
+
+
+            // Add suggestions after assistant message
+            window.chatId = sessionStorage.getItem('chatId') || window.chatId;
+            window.userChatId = sessionStorage.getItem('userChatId') || window.userChatId;
+
+
+            if (window.chatSuggestionsManager && window.userId && window.chatId && window.userChatId) {
+                setTimeout(() => {
+                    window.chatSuggestionsManager.showSuggestions(
+                        window.userId, 
+                        window.chatId, 
+                        window.userChatId
+                    );
+                }, 500);
             }
         });
+
+        const today = new Date().toISOString().split('T')[0];
+        if (userChat.log_success) {
+            displayThankMessage();
+        }
     }
     
     function displayInitialChatInterface(chat) {
@@ -1537,6 +1542,7 @@ function setupChatInterface(chat, character) {
         if (window.chatSuggestionsManager) {
             window.chatSuggestionsManager.hide();
         }
+        console.log(`[generateChatCompletion] Generating chat completion for userId: ${userId}, chatId: ${chatId}, userChatId: ${userChatId}, isHidden: ${isHidden}, uniqueId: ${uniqueId}`);
         $.ajax({
             url: API_URL + '/api/openai-chat-completion',
             method: 'POST',

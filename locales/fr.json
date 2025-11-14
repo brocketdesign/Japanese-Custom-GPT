@@ -1,5 +1,6 @@
 {
   "lang": "fr",
+  "latestVideoChatsHeader": "Dernières vidéos de personnages",
   "loadMore": "Charger plus",
   "image_generation": {
     "activated": "J'ai activé la fonctionnalité de génération d'images pour cette invite.\n L'image sera générée sous peu.",
@@ -664,6 +665,7 @@
   "lp": {
     "old_login_page": "Page de connexion",
     "banner": {
+      "hero_title": "Votre #1 chat IA et générateur d'images",
       "0": {
         "title": "Créez des œuvres d'art époustouflantes générées par l'IA. Gratuitement.",
         "subtitle": "Profitez de la génération d'images IA gratuite en discutant avec de magnifiques personnages IA."

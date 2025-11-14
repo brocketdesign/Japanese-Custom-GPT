@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="{{translations.lang}}">
+   {{> dashboard-header}}
+<body>
+    {{> dashboard-nav}}
+
+<!-- ===== HERO SECTION ===== -->
+<section class="hero-section animate__animated" style="overflow: hidden; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); position: relative; margin: 0; padding: 0; width: 100vw; margin-left: calc(-50vw + 50%);" data-animate="animate__fadeIn" data-delay="0s">
+    <!-- Animated Background Pattern -->
+    <div class="hero-bg-pattern" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; z-index: 0;">
+        <div style="position: absolute; top: -50%; right: -10%; width: 400px; height: 400px; background: radial-gradient(circle, rgba(210, 184, 255, 0.15) 0%, transparent 70%); border-radius: 50%; filter: blur(40px);"></div>
+        <div style="position: absolute; bottom: -20%; left: 10%; width: 300px; height: 300px; background: radial-gradient(circle, rgba(130, 64, 255, 0.1) 0%, transparent 70%); border-radius: 50%; filter: blur(40px);"></div>
+    </div>
+
+    <!-- Content Container -->
+    <div class="container-fluid" style="position: relative; z-index: 1; padding: 60px 20px; text-align: center;">
+        <!-- Main Title with Icon -->
+        <div class="hero-content animate__animated" data-animate="animate__slideInDown" data-delay="0.2s">
+            <div class="mb-4" style="font-size: 3.5rem; margin-bottom: 1.5rem;">
+                <i class="bi bi-robot" style="background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
+            </div>
+            
+            <h1 class="hero-title" style="font-size: 3.5rem; font-weight: 800; margin: 0; line-height: 1.2; margin-bottom: 1rem;">
+                <span style="background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                    {{#if translations.lp.banner.hero_title}}{{translations.lp.banner.hero_title}}{{else}}Your #1 AI Chat & Image Generator{{/if}}
+                </span>
+            </h1>
+
+            <p class="hero-subtitle animate__animated" data-animate="animate__slideInUp" data-delay="0.4s" style="font-size: 1.25rem; color: #b8d2ff; line-height: 1.6; margin: 1.5rem auto 2rem; max-width: 700px;">
+                {{#if translations.exploreCharactersDescription}}{{translations.exploreCharactersDescription}}{{else}}Discover a diverse range of AI characters, each with their own unique traits and personalities. Engage in conversations and generate new images and videos.{{/if}}
+            </p>
+
+            <!-- CTA Buttons -->
+            <div class="hero-cta-buttons animate__animated d-flex justify-content-center gap-3 flex-wrap mt-4" data-animate="animate__zoomIn" data-delay="0.6s" style="margin-top: 2.5rem;">
+                <button class="btn btn-lg" onclick="openLoginForm()" style="background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%); color: white; border: none; border-radius: 12px; padding: 14px 40px; font-weight: 700; font-size: 1.1rem; transition: all 0.3s ease; box-shadow: 0 8px 24px rgba(130, 64, 255, 0.3);">
+                    <i class="bi bi-plus-lg me-2"></i>{{#if translations.createCharacter}}{{translations.createCharacter}}{{else}}Create Character{{/if}}
+                </button>
+                <button class="btn btn-lg" onclick="window.location.href='/search'" style="background: rgba(255, 255, 255, 0.1); color: #ffffff; border: 2px solid rgba(210, 184, 255, 0.4); border-radius: 12px; padding: 12px 40px; font-weight: 700; font-size: 1.1rem; transition: all 0.3s ease; backdrop-filter: blur(10px);">
+                    <i class="bi bi-search me-2"></i>{{#if translations.exploreCharacters}}{{translations.exploreCharacters}}{{else}}Explore Gallery{{/if}}
+                </button>
+            </div>
+        </div>
+
+        <!-- Hero Stats/Features -->
+        <div class="hero-features d-flex justify-content-center gap-4 gap-md-5 mt-5 pt-3 flex-wrap" style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(210, 184, 255, 0.1);">
+            <div class="animate__animated" data-animate="animate__fadeInUp" data-delay="0.7s">
+                <div style="font-size: 1.8rem; font-weight: 800; background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">1000+</div>
+                <div style="color: #8d9ab0; font-size: 0.95rem; margin-top: 0.5rem;">{{#if translations.lp.ai_characters}}{{translations.lp.ai_characters}}{{else}}AI Characters{{/if}}</div>
+            </div>
+            <div class="animate__animated" data-animate="animate__fadeInUp" data-delay="0.8s">
+                <div style="font-size: 1.8rem; font-weight: 800; background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Real-time</div>
+                <div style="color: #8d9ab0; font-size: 0.95rem; margin-top: 0.5rem;">{{#if translations.lp.image_generation}}{{translations.lp.image_generation}}{{else}}Image Generation{{/if}}</div>
+            </div>
+            <div class="animate__animated" data-animate="animate__fadeInUp" data-delay="0.9s">
+                <div style="font-size: 1.8rem; font-weight: 800; background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">24/7</div>
+                <div style="color: #8d9ab0; font-size: 0.95rem; margin-top: 0.5rem;">{{#if translations.lp.always_available}}{{translations.lp.always_available}}{{else}}Always Available{{/if}}</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== CAPABILITIES SECTION ===== -->
+<section class="py-5" style="background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);">
+    <div class="container">
+        <div class="text-center mb-5 animate__animated" data-animate="animate__fadeInUp">
+            <h2 class="fw-bold display-5 mb-3" style="background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                {{#if translations.lp.capabilities_heading}}{{translations.lp.capabilities_heading}}{{else}}Powerful AI Technology{{/if}}
+            </h2>
+            <p class="lead text-muted" style="max-width: 600px; margin: 0 auto;">
+                {{#if translations.lp.capabilities_subheading}}{{translations.lp.capabilities_subheading}}{{else}}Experience the next generation of AI-powered content creation and interactive conversations{{/if}}
+            </p>
+        </div>
+
+        <!-- Capability Cards Grid -->
+        <div class="row g-4 mb-5">
+            <!-- Card 1: AI Chat -->
+            <div class="col-md-6 col-lg-4 animate__animated" data-animate="animate__fadeInUp" data-delay="0.1s">
+                <div class="card h-100 shadow-sm border-0" style="transition: all 0.3s ease; border-radius: 16px;">
+                    <div class="card-body p-4 text-center">
+                        <div style="font-size: 2.5rem; margin-bottom: 1rem; background: linear-gradient(135deg, #D2B8FF, #8240FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                            <i class="bi bi-chat-dots"></i>
+                        </div>
+                        <h4 class="card-title fw-bold mb-2">{{#if translations.lp.capability_chat_title}}{{translations.lp.capability_chat_title}}{{else}}AI Conversations{{/if}}</h4>
+                        <p class="card-text text-muted">{{#if translations.lp.capability_chat_desc}}{{translations.lp.capability_chat_desc}}{{else}}Chat with intelligent AI characters that learn and adapt to your preferences with natural, engaging conversations.{{/if}}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Image Generation -->
+            <div class="col-md-6 col-lg-4 animate__animated" data-animate="animate__fadeInUp" data-delay="0.2s">
+                <div class="card h-100 shadow-sm border-0" style="transition: all 0.3s ease; border-radius: 16px;">
+                    <div class="card-body p-4 text-center">
+                        <div style="font-size: 2.5rem; margin-bottom: 1rem; background: linear-gradient(135deg, #8240FF, #5a1acc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                            <i class="bi bi-image"></i>
+                        </div>
+                        <h4 class="card-title fw-bold mb-2">{{#if translations.lp.capability_image_title}}{{translations.lp.capability_image_title}}{{else}}AI Image Generation{{/if}}</h4>
+                        <p class="card-text text-muted">{{#if translations.lp.capability_image_desc}}{{translations.lp.capability_image_desc}}{{else}}Generate stunning, unique images in multiple styles using advanced AI algorithms in real-time.{{/if}}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Video Creation -->
+            <div class="col-md-6 col-lg-4 animate__animated" data-animate="animate__fadeInUp" data-delay="0.3s">
+                <div class="card h-100 shadow-sm border-0" style="transition: all 0.3s ease; border-radius: 16px;">
+                    <div class="card-body p-4 text-center">
+                        <div style="font-size: 2.5rem; margin-bottom: 1rem; background: linear-gradient(135deg, #6E20F4, #4080FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                            <i class="bi bi-film"></i>
+                        </div>
+                        <h4 class="card-title fw-bold mb-2">{{#if translations.lp.capability_video_title}}{{translations.lp.capability_video_title}}{{else}}Video Generation{{/if}}</h4>
+                        <p class="card-text text-muted">{{#if translations.lp.capability_video_desc}}{{translations.lp.capability_video_desc}}{{else}}Create engaging video content from your AI characters with dynamic animations and professional quality.{{/if}}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Custom Characters -->
+            <div class="col-md-6 col-lg-4 animate__animated" data-animate="animate__fadeInUp" data-delay="0.4s">
+                <div class="card h-100 shadow-sm border-0" style="transition: all 0.3s ease; border-radius: 16px;">
+                    <div class="card-body p-4 text-center">
+                        <div style="font-size: 2.5rem; margin-bottom: 1rem; background: linear-gradient(135deg, #4080FF, #40BFF2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                            <i class="bi bi-person-plus"></i>
+                        </div>
+                        <h4 class="card-title fw-bold mb-2">{{#if translations.lp.capability_custom_title}}{{translations.lp.capability_custom_title}}{{else}}Custom Characters{{/if}}</h4>
+                        <p class="card-text text-muted">{{#if translations.lp.capability_custom_desc}}{{translations.lp.capability_custom_desc}}{{else}}Create fully customizable AI characters with unique personalities, appearances, and interaction styles.{{/if}}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 5: Gallery Management -->
+            <div class="col-md-6 col-lg-4 animate__animated" data-animate="animate__fadeInUp" data-delay="0.5s">
+                <div class="card h-100 shadow-sm border-0" style="transition: all 0.3s ease; border-radius: 16px;">
+                    <div class="card-body p-4 text-center">
+                        <div style="font-size: 2.5rem; margin-bottom: 1rem; background: linear-gradient(135deg, #40BFF2, #FFD6B8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                            <i class="bi bi-images"></i>
+                        </div>
+                        <h4 class="card-title fw-bold mb-2">{{#if translations.lp.capability_gallery_title}}{{translations.lp.capability_gallery_title}}{{else}}Content Gallery{{/if}}</h4>
+                        <p class="card-text text-muted">{{#if translations.lp.capability_gallery_desc}}{{translations.lp.capability_gallery_desc}}{{else}}Organize and manage all your created images and videos with powerful tools and filters.{{/if}}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 6: Unlimited Creativity -->
+            <div class="col-md-6 col-lg-4 animate__animated" data-animate="animate__fadeInUp" data-delay="0.6s">
+                <div class="card h-100 shadow-sm border-0" style="transition: all 0.3s ease; border-radius: 16px;">
+                    <div class="card-body p-4 text-center">
+                        <div style="font-size: 2.5rem; margin-bottom: 1rem; background: linear-gradient(135deg, #FF8C40, #D2B8FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                            <i class="bi bi-star"></i>
+                        </div>
+                        <h4 class="card-title fw-bold mb-2">{{#if translations.lp.capability_unlimited_title}}{{translations.lp.capability_unlimited_title}}{{else}}Premium Features{{/if}}</h4>
+                        <p class="card-text text-muted">{{#if translations.lp.capability_unlimited_desc}}{{translations.lp.capability_unlimited_desc}}{{else}}Unlock unlimited generation, NSFW content, priority processing, and exclusive features.{{/if}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== KEY FEATURES SECTION ===== -->
+<section class="py-5 bg-white">
+    <div class="container">
+        <div class="text-center mb-5 animate__animated" data-animate="animate__fadeInUp">
+            <h2 class="fw-bold display-5 mb-3" style="color: #1a1a2e;">
+                {{#if translations.lp.features_heading}}{{translations.lp.features_heading}}{{else}}Why Choose Lamix?{{/if}}
+            </h2>
+            <p class="lead text-muted" style="max-width: 600px; margin: 0 auto;">
+                {{#if translations.lp.features_subheading}}{{translations.lp.features_subheading}}{{else}}Everything you need for creative AI-powered experiences{{/if}}
+            </p>
+        </div>
+
+        <!-- Features Row 1 -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6 col-lg-3 animate__animated" data-animate="animate__fadeInUp" data-delay="0.1s">
+                <div style="padding: 1.5rem; background: rgba(130, 64, 255, 0.08); border-radius: 12px; border-left: 4px solid #8240FF;">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem; color: #8240FF;">
+                        <i class="bi bi-lightning-charge"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2" style="color: #1a1a2e;">{{#if translations.lp.feature1_title}}{{translations.lp.feature1_title}}{{else}}Lightning Fast{{/if}}</h5>
+                    <p class="text-muted small">{{#if translations.lp.feature1_text}}{{translations.lp.feature1_text}}{{else}}Get instant results with our optimized AI models and servers.{{/if}}</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3 animate__animated" data-animate="animate__fadeInUp" data-delay="0.2s">
+                <div style="padding: 1.5rem; background: rgba(64, 128, 255, 0.08); border-radius: 12px; border-left: 4px solid #4080FF;">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem; color: #4080FF;">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2" style="color: #1a1a2e;">{{#if translations.lp.feature4_title}}{{translations.lp.feature4_title}}{{else}}Safe & Secure{{/if}}</h5>
+                    <p class="text-muted small">{{#if translations.lp.feature4_text}}{{translations.lp.feature4_text}}{{else}}Your conversations are private and protected with advanced encryption.{{/if}}</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3 animate__animated" data-animate="animate__fadeInUp" data-delay="0.3s">
+                <div style="padding: 1.5rem; background: rgba(255, 140, 64, 0.08); border-radius: 12px; border-left: 4px solid #FF8C40;">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem; color: #FF8C40;">
+                        <i class="bi bi-phone"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2" style="color: #1a1a2e;">{{#if translations.lp.feature2_title}}{{translations.lp.feature2_title}}{{else}}Mobile Friendly{{/if}}</h5>
+                    <p class="text-muted small">{{#if translations.lp.feature2_text}}{{translations.lp.feature2_text}}{{else}}Works seamlessly on all devices - phone, tablet, or desktop.{{/if}}</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3 animate__animated" data-animate="animate__fadeInUp" data-delay="0.4s">
+                <div style="padding: 1.5rem; background: rgba(210, 184, 255, 0.08); border-radius: 12px; border-left: 4px solid #D2B8FF;">
+                    <div style="font-size: 2rem; margin-bottom: 0.75rem; color: #8240FF;">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2" style="color: #1a1a2e;">{{#if translations.lp.community}}{{translations.lp.community}}{{else}}Community{{/if}}</h5>
+                    <p class="text-muted small">{{#if translations.lp.community_desc}}{{translations.lp.community_desc}}{{else}}Join thousands of creators and interact with the community.{{/if}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== HOW IT WORKS SECTION ===== -->
+<section class="py-5" style="background: linear-gradient(135deg, rgba(130, 64, 255, 0.05) 0%, rgba(64, 128, 255, 0.05) 100%);">
+    <div class="container">
+        <div class="text-center mb-5 animate__animated" data-animate="animate__fadeInUp">
+            <h2 class="fw-bold display-5 mb-3" style="color: #1a1a2e;">
+                {{#if translations.lp.how_heading}}{{translations.lp.how_heading}}{{else}}How to Get Started{{/if}}
+            </h2>
+            <p class="lead text-muted" style="max-width: 600px; margin: 0 auto;">
+                {{#if translations.lp.how_subheading}}{{translations.lp.how_subheading}}{{else}}Three simple steps to start creating{{/if}}
+            </p>
+        </div>
+
+        <div class="row g-4 align-items-center">
+            <!-- Step 1 -->
+            <div class="col-md-6 col-lg-4 animate__animated" data-animate="animate__fadeInUp" data-delay="0.1s">
+                <div class="text-center">
+                    <div style="width: 80px; height: 80px; margin: 0 auto 1.5rem; background: linear-gradient(135deg, #D2B8FF, #8240FF); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: white;">
+                        <i class="bi bi-1-circle"></i>
+                    </div>
+                    <h4 class="fw-bold mb-2" style="color: #1a1a2e;">{{#if translations.lp.how_step1_title}}{{translations.lp.how_step1_title}}{{else}}1. Create Account{{/if}}</h4>
+                    <p class="text-muted">{{#if translations.lp.how_step1_text}}{{translations.lp.how_step1_text}}{{else}}Sign up in seconds and get instant access to all features.{{/if}}</p>
+                </div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="col-lg-4 d-none d-lg-flex justify-content-center align-items-center">
+                <div style="width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #8240FF, transparent); position: relative;">
+                    <i class="bi bi-arrow-right" style="position: absolute; right: -15px; top: -12px; font-size: 1.5rem; color: #8240FF;"></i>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="col-md-6 col-lg-4 animate__animated" data-animate="animate__fadeInUp" data-delay="0.2s">
+                <div class="text-center">
+                    <div style="width: 80px; height: 80px; margin: 0 auto 1.5rem; background: linear-gradient(135deg, #4080FF, #40BFF2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: white;">
+                        <i class="bi bi-2-circle"></i>
+                    </div>
+                    <h4 class="fw-bold mb-2" style="color: #1a1a2e;">{{#if translations.lp.how_step2_title}}{{translations.lp.how_step2_title}}{{else}}2. Choose Character{{/if}}</h4>
+                    <p class="text-muted">{{#if translations.lp.how_step2_text}}{{translations.lp.how_step2_text}}{{else}}Pick from 1000+ characters or create your own custom AI companion.{{/if}}</p>
+                </div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="col-lg-4 d-none d-lg-flex justify-content-center align-items-center">
+                <div style="width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #8240FF, transparent); position: relative;">
+                    <i class="bi bi-arrow-right" style="position: absolute; right: -15px; top: -12px; font-size: 1.5rem; color: #8240FF;"></i>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="col-md-6 col-lg-4 animate__animated" data-animate="animate__fadeInUp" data-delay="0.3s">
+                <div class="text-center">
+                    <div style="width: 80px; height: 80px; margin: 0 auto 1.5rem; background: linear-gradient(135deg, #FF8C40, #FFD6B8); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: white;">
+                        <i class="bi bi-3-circle"></i>
+                    </div>
+                    <h4 class="fw-bold mb-2" style="color: #1a1a2e;">{{#if translations.lp.how_step3_title}}{{translations.lp.how_step3_title}}{{else}}3. Start Creating{{/if}}</h4>
+                    <p class="text-muted">{{#if translations.lp.how_step3_text}}{{translations.lp.how_step3_text}}{{else}}Chat, generate images & videos, and unleash your creativity.{{/if}}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <button class="btn btn-lg" onclick="openLoginForm()" style="background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%); color: white; border: none; border-radius: 12px; padding: 14px 40px; font-weight: 700; font-size: 1.1rem; transition: all 0.3s ease; box-shadow: 0 8px 24px rgba(130, 64, 255, 0.3);">
+                <i class="bi bi-play-fill me-2"></i>{{#if translations.lp.cta_button2}}{{translations.lp.cta_button2}}{{else}}Start Now{{/if}}
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- ===== BENEFITS SECTION ===== -->
+<section class="py-5 bg-white">
+    <div class="container">
+        <div class="text-center mb-5 animate__animated" data-animate="animate__fadeInUp">
+            <h2 class="fw-bold display-5 mb-3" style="color: #1a1a2e;">
+                {{#if translations.lp.benefits_heading}}{{translations.lp.benefits_heading}}{{else}}Unlock Premium Benefits{{/if}}
+            </h2>
+            <p class="lead text-muted" style="max-width: 600px; margin: 0 auto;">
+                {{#if translations.lp.benefits_subheading}}{{translations.lp.benefits_subheading}}{{else}}Get the most out of your creative experience{{/if}}
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <!-- Benefit 1 -->
+            <div class="col-md-6 col-lg-6 animate__animated" data-animate="animate__fadeInUp" data-delay="0.1s">
+                <div style="display: flex; gap: 1.5rem; align-items: flex-start; padding: 1.5rem; background: linear-gradient(135deg, rgba(210, 184, 255, 0.1) 0%, rgba(130, 64, 255, 0.05) 100%); border-radius: 12px; border: 1px solid rgba(130, 64, 255, 0.2);">
+                    <div style="font-size: 2rem; color: #8240FF; flex-shrink: 0;">
+                        <i class="bi bi-infinity"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-2" style="color: #1a1a2e;">{{#if translations.lp.benefit_unlimited}}{{translations.lp.benefit_unlimited}}{{else}}Unlimited Generation{{/if}}</h5>
+                        <p class="text-muted small">{{#if translations.lp.benefit_unlimited_desc}}{{translations.lp.benefit_unlimited_desc}}{{else}}Create unlimited images, videos, and conversations without restrictions.{{/if}}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Benefit 2 -->
+            <div class="col-md-6 col-lg-6 animate__animated" data-animate="animate__fadeInUp" data-delay="0.2s">
+                <div style="display: flex; gap: 1.5rem; align-items: flex-start; padding: 1.5rem; background: linear-gradient(135deg, rgba(64, 128, 255, 0.1) 0%, rgba(64, 191, 242, 0.05) 100%); border-radius: 12px; border: 1px solid rgba(64, 128, 255, 0.2);">
+                    <div style="font-size: 2rem; color: #4080FF; flex-shrink: 0;">
+                        <i class="bi bi-rocket"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-2" style="color: #1a1a2e;">{{#if translations.lp.benefit_priority}}{{translations.lp.benefit_priority}}{{else}}Priority Processing{{/if}}</h5>
+                        <p class="text-muted small">{{#if translations.lp.benefit_priority_desc}}{{translations.lp.benefit_priority_desc}}{{else}}Get faster generation speeds and priority queue placement.{{/if}}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Benefit 3 -->
+            <div class="col-md-6 col-lg-6 animate__animated" data-animate="animate__fadeInUp" data-delay="0.3s">
+                <div style="display: flex; gap: 1.5rem; align-items: flex-start; padding: 1.5rem; background: linear-gradient(135deg, rgba(255, 140, 64, 0.1) 0%, rgba(255, 214, 184, 0.05) 100%); border-radius: 12px; border: 1px solid rgba(255, 140, 64, 0.2);">
+                    <div style="font-size: 2rem; color: #FF8C40; flex-shrink: 0;">
+                        <i class="bi bi-unlock"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-2" style="color: #1a1a2e;">{{#if translations.lp.benefit_nsfw}}{{translations.lp.benefit_nsfw}}{{else}}All Styles Available{{/if}}</h5>
+                        <p class="text-muted small">{{#if translations.lp.benefit_nsfw_desc}}{{translations.lp.benefit_nsfw_desc}}{{else}}Access all content styles including photorealistic, anime, and more.{{/if}}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Benefit 4 -->
+            <div class="col-md-6 col-lg-6 animate__animated" data-animate="animate__fadeInUp" data-delay="0.4s">
+                <div style="display: flex; gap: 1.5rem; align-items: flex-start; padding: 1.5rem; background: linear-gradient(135deg, rgba(106, 32, 244, 0.1) 0%, rgba(210, 184, 255, 0.05) 100%); border-radius: 12px; border: 1px solid rgba(106, 32, 244, 0.2);">
+                    <div style="font-size: 2rem; color: #6E20F4; flex-shrink: 0;">
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-2" style="color: #1a1a2e;">{{#if translations.lp.benefit_early_access}}{{translations.lp.benefit_early_access}}{{else}}Early Access{{/if}}</h5>
+                        <p class="text-muted small">{{#if translations.lp.benefit_early_access_desc}}{{translations.lp.benefit_early_access_desc}}{{else}}Get first access to new features and latest AI models.{{/if}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <button class="btn btn-lg" onclick="openLoginForm()" style="background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%); color: white; border: none; border-radius: 12px; padding: 14px 40px; font-weight: 700; font-size: 1.1rem; transition: all 0.3s ease; box-shadow: 0 8px 24px rgba(130, 64, 255, 0.3);">
+                <i class="bi bi-gem me-2"></i>{{#if translations.lp.view_plans}}{{translations.lp.view_plans}}{{else}}View Premium Plans{{/if}}
+            </button>
+        </div>
+    </div>
+</section>
+{{#if (eq translations.lang "ja")}}
+<section>
+    <div class="lp_{{translations.lang}} mobile d-md-none d-block">
+        <div class="d-md-none d-block">
+            {{#each (range 1 10)}}
+                <img src="img/lp_{{../translations.lang}}/mobile-{{this}}.png" class="img-fluid mb-3" alt="Mobile image {{this}}">
+            {{/each}}
+        </div>
+    </div>
+</section>
+{{/if}}
+{{#unless (eq translations.lang "ja")}}
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold u-color-grad">{{translations.lp.meet_heading}}</h2>
+            <p class="lead">{{translations.lp.meet_subheading}}</p>
+        </div>
+
+        <!-- Why Choose Us Section -->
+        <div class="text-center mb-5">
+            <h3 class="mb-4">{{translations.lp.why_heading}}</h3>
+            <p>{{translations.lp.why_subheading}}</p>
+        </div>
+
+        <!-- Features Section -->
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fas fa-dollar-sign fa-3x mb-3 text-primary"></i>
+                        <h4 class="card-title">{{translations.lp.feature1_title}}</h4>
+                        <p class="card-text">{{translations.lp.feature1_text}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fas fa-mobile-alt fa-3x mb-3 text-primary"></i>
+                        <h4 class="card-title">{{translations.lp.feature2_title}}</h4>
+                        <p class="card-text">{{translations.lp.feature2_text}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fas fa-unlock fa-3x mb-3 text-primary"></i>
+                        <h4 class="card-title">{{translations.lp.feature3_title}}</h4>
+                        <p class="card-text">{{translations.lp.feature3_text}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fas fa-shield-alt fa-3x mb-3 text-primary"></i>
+                        <h4 class="card-title">{{translations.lp.feature4_title}}</h4>
+                        <p class="card-text">{{translations.lp.feature4_text}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How to Use Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold u-color-grad">{{translations.lp.how_heading}}</h2>
+            <p class="lead">{{translations.lp.how_subheading}}</p>
+        </div>
+        <div class="row justify-content-center mb-4">
+            <div class="col-12 col-md-10 mx-auto" style="overflow-y:hidden">
+                <div id="howto-slider" class="d-flex justify-content-center align-items-center overflow-auto flex-nowrap" style="gap: 1rem; scroll-snap-type: x mandatory;overflow-x: auto;">
+                    {{#each (range 1 4)}}
+                        <img src="/img/lpbanner2/slide-{{this}}.png"
+                             class="img-fluid mb-3"
+                             alt="Slide {{this}}"
+                             style="max-height: 200px; width: auto; scroll-snap-align: center; border-radius: 10px;">
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <h3 class="card-title">{{translations.lp.how_step1_title}}</h3>
+                        <p class="card-text">{{translations.lp.how_step1_text}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <h3 class="card-title">{{translations.lp.how_step2_title}}</h3>
+                        <p class="card-text">{{translations.lp.how_step2_text}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <h3 class="card-title">{{translations.lp.how_step3_title}}</h3>
+                        <p class="card-text">{{translations.lp.how_step3_text}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="#" onclick="openLoginForm()" class="btn custom-gradient-bg text-white btn-lg px-5 py-3 fw-bold" role="button" style="border-radius: 50px;">
+                {{translations.lp.cta_button2}}
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold u-color-grad">{{translations.lp.testimonials_heading}}</h2>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-0">{{translations.lp.testimonial1_name}}</h5>
+                                <div class="text-warning">★★★★★</div>
+                            </div>
+                        </div>
+                        <p class="card-text">{{translations.lp.testimonial1_text}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-0">{{translations.lp.testimonial2_name}}</h5>
+                                <div class="text-warning">★★★★★</div>
+                            </div>
+                        </div>
+                        <p class="card-text">{{translations.lp.testimonial2_text}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-0">{{translations.lp.testimonial3_name}}</h5>
+                                <div class="text-warning">★★★★★</div>
+                            </div>
+                        </div>
+                        <p class="card-text">{{translations.lp.testimonial3_text}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold u-color-grad">{{translations.lp.faq_heading}}</h2>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="faqOne">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                {{translations.lp.faq1_q}}
+                            </button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="faqOne" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {{translations.lp.faq1_a}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="faqTwo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                {{translations.lp.faq2_q}}
+                            </button>
+                        </h2>
+                        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="faqTwo" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {{translations.lp.faq2_a}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="faqThree">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                {{translations.lp.faq3_q}}
+                            </button>
+                        </h2>
+                        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="faqThree" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {{translations.lp.faq3_a}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="#" onclick="openLoginForm()" class="btn custom-gradient-bg text-white btn-lg px-5 py-3 fw-bold" role="button" style="border-radius: 50px;">
+                {{translations.lp.cta_button3}}
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Desktop Images (Hidden on Mobile) -->
+<div class="d-none">
+    <div class="row flex-nowrap overflow-auto" style="white-space: nowrap;">
+        {{#each (range 4 10)}}
+            <div class="col-4 col-sm-3 col-lg-2 px-0" style="display: inline-block;">
+                <img src="img/lp_en/desktop-{{this}}.png" class="img-fluid mb-3" alt="Desktop image {{this}}">
+            </div>
+        {{/each}}
+    </div>
+</div>
+{{/unless}}
+
+<style>
+    .sticky-bottom, #footer-toolbar{display: none;}
+    footer{display: inline !important;}
+</style>
+ {{> dashboard-footer}}
+</body>
+</html>

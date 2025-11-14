@@ -82,6 +82,19 @@ window.ChatScenarioModule = (function() {
             chatInput.style.display = 'none';
         }
         
+        // Hide chat-recommend during loading
+        const chatRecommend = document.getElementById('chat-recommend');
+        if (chatRecommend) {
+            chatRecommend.classList.add('d-none');
+            chatRecommend.classList.remove('d-flex');
+        }
+        
+        // Hide live-goals-widget during loading
+        const liveGoalsWidget = document.getElementById('live-goals-widget');
+        if (liveGoalsWidget) {
+            liveGoalsWidget.style.display = 'none';
+        }
+        
         container.style.display = 'flex';
         container.innerHTML = `
             <div class="scenario-loading-container w-100">
@@ -289,16 +302,6 @@ window.ChatScenarioModule = (function() {
                     (window.chatScenariosTranslations?.selected || 'Selected') + '</span>' : ''}
             </div>
             <p class="scenario-description">${escapeHtml(scenario.description)}</p>
-            <div class="scenario-meta">
-                <div class="scenario-meta-item">
-                    <span class="labels">${window.chatScenariosTranslations?.emotional_tone || 'Tone'}:</span>
-                    <span class="value">${escapeHtml(scenario.emotionalTone)}</span>
-                </div>
-                <div class="scenario-meta-item">
-                    <span class="labels">${window.chatScenariosTranslations?.conversation_direction || 'Direction'}:</span>
-                    <span class="value">${escapeHtml(scenario.conversationDirection)}</span>
-                </div>
-            </div>
         `;
         
         // Add click event listener to entire card
@@ -408,6 +411,19 @@ window.ChatScenarioModule = (function() {
                         chatInput.style.display = 'block';
                     }
                     
+                    // Show chat-recommend
+                    const chatRecommend = document.getElementById('chat-recommend');
+                    if (chatRecommend) {
+                        chatRecommend.classList.remove('d-none');
+                        chatRecommend.classList.add('d-flex');
+                    }
+                    
+                    // Show live-goals-widget
+                    const liveGoalsWidget = document.getElementById('live-goals-widget');
+                    if (liveGoalsWidget) {
+                        liveGoalsWidget.style.display = 'block';
+                    }
+                    
                     // Immediately generate assistant response with scenario context
                     // The server has created a hidden user message with scenario context
                     // Now we generate the completion so the assistant responds within this context
@@ -453,7 +469,25 @@ window.ChatScenarioModule = (function() {
         if (chatInput) {
             chatInput.style.display = show ? 'none' : 'block';
         }
-        
+
+        // Hide chat-recommend when showing scenarios, restore when hiding
+        const chatRecommend = document.getElementById('chat-recommend');
+        if (chatRecommend) {
+            if (show) {
+                chatRecommend.classList.add('d-none');
+                chatRecommend.classList.remove('d-flex');
+            } else {
+                chatRecommend.classList.remove('d-none');
+                chatRecommend.classList.add('d-flex');
+            }
+        }
+
+        // Hide live-goals-widget when showing scenarios, restore when hiding
+        const liveGoalsWidget = document.getElementById('live-goals-widget');
+        if (liveGoalsWidget) {
+            liveGoalsWidget.style.display = show ? 'none' : 'block';
+        }
+
         // Hide chat overlay when showing scenarios, restore when hiding
         const chatOverlay = document.getElementById('chatOverlay');
         if (chatOverlay) {
@@ -602,8 +636,8 @@ window.ScenarioDebug = {
     },
 
     /**
-     * Show placeholder scenarios for testing flex design
-     * Displays mock scenario cards with realistic data
+     * Show placeholder scenarios for testing enhanced carousel design
+     * Displays mock scenario cards with carousel navigation
      * Usage: ScenarioDebug.showScenarioPlaceholder()
      */
     showScenarioPlaceholder: function() {
@@ -618,48 +652,64 @@ window.ScenarioDebug = {
             {
                 id: 'debug-1',
                 title: 'Romantic Scenario',
-                description: 'Engage in heartfelt conversation with gentle humor and genuine interest in their life story.',
+                description: 'Engage in heartfelt conversation with gentle humor and genuine interest in their life story. Share meaningful moments together.',
                 emotionalTone: 'Flirty',
                 conversationDirection: 'Love-focused'
             },
             {
                 id: 'debug-2',
                 title: 'Adventure Seeker',
-                description: 'Be enthusiastic about exploring new ideas, experiences, and pushing boundaries together.',
+                description: 'Be enthusiastic about exploring new ideas, experiences, and pushing boundaries together. Embrace the unknown with curiosity and excitement.',
                 emotionalTone: 'Adventurous',
                 conversationDirection: 'Action-oriented'
             },
             {
                 id: 'debug-3',
                 title: 'Deep Intellectual',
-                description: 'Engage in thoughtful philosophical discussions with nuanced perspectives and curiosity.',
+                description: 'Engage in thoughtful philosophical discussions with nuanced perspectives and curiosity. Delve into complex ideas and abstract concepts.',
                 emotionalTone: 'Intellectual',
                 conversationDirection: 'Knowledge-seeking'
+            },
+            {
+                id: 'debug-4',
+                title: 'Supportive Confidant',
+                description: 'Provide empathetic listening and genuine support. Create a safe space for vulnerability and emotional expression.',
+                emotionalTone: 'Caring',
+                conversationDirection: 'Emotionally-focused'
             }
         ];
 
         container.style.display = 'flex';
         container.innerHTML = '';
 
+        // Track current slide state
+        let currentSlideIndex = 0;
+        const totalSlides = placeholderScenarios.length;
+
+        // Create carousel wrapper
+        const carouselWrapper = document.createElement('div');
+        carouselWrapper.className = 'scenario-carousel-wrapper';
+        
+        // Create carousel track
+        const track = document.createElement('div');
+        track.className = 'scenario-carousel-track';
+        track.style.transform = 'translateX(0%)';
+        
         // Create scenario cards
         placeholderScenarios.forEach((scenario, index) => {
             const card = document.createElement('div');
-            card.className = 'scenario-card';
+            card.className = 'scenario-card w-100';
             card.dataset.scenarioId = scenario.id;
             
             // Add hover effect on mouse events
             card.addEventListener('mouseenter', function() {
-                console.log(`[ScenarioDebug] Hovering over: ${scenario.title}`);
+                console.log(`[ScenarioDebug] 🎯 Hovering over: ${scenario.title}`);
             });
             
             card.addEventListener('click', function() {
                 console.log(`[ScenarioDebug] ✅ Selected: ${scenario.title}`);
+                document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('selected'));
                 this.classList.add('selected');
-                this.innerHTML += `
-                    <div style="position: absolute; top: 10px; right: 10px; background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">
-                        ✓ Selected
-                    </div>
-                `;
             });
 
             card.innerHTML = `
@@ -667,26 +717,107 @@ window.ScenarioDebug = {
                     <h3 class="scenario-title">${scenario.title}</h3>
                 </div>
                 <p class="scenario-description">${scenario.description}</p>
-                <div class="scenario-meta">
-                    <div class="scenario-meta-item">
-                        <span class="labels">Tone:</span>
-                        <span class="value">${scenario.emotionalTone}</span>
-                    </div>
-                    <div class="scenario-meta-item">
-                        <span class="labels">Direction:</span>
-                        <span class="value">${scenario.conversationDirection}</span>
-                    </div>
-                </div>
             `;
             
-            container.appendChild(card);
+            track.appendChild(card);
         });
+        
+        carouselWrapper.appendChild(track);
+        
+        // Helper function to update carousel position and dots
+        const updateCarousel = () => {
+            const offset = currentSlideIndex * 100;
+            track.style.transform = `translateX(-${offset}%)`;
+            
+            // Sync dots with current slide
+            const dots = document.querySelectorAll('.scenario-carousel-dot');
+            dots.forEach((dot, idx) => {
+                if (idx === currentSlideIndex) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        };
+        
+        // Create navigation arrows
+        const prevButton = document.createElement('button');
+        prevButton.className = 'scenario-carousel-arrow prev';
+        prevButton.innerHTML = '&#8249;';
+        prevButton.setAttribute('aria-label', 'Previous scenario');
+        prevButton.addEventListener('click', () => {
+            currentSlideIndex = (currentSlideIndex - 1 + totalSlides) % totalSlides;
+            updateCarousel();
+            console.log(`[ScenarioDebug] ⬅️ Moved to slide ${currentSlideIndex + 1}/${totalSlides}`);
+        });
+        
+        const nextButton = document.createElement('button');
+        nextButton.className = 'scenario-carousel-arrow next';
+        nextButton.innerHTML = '&#8250;';
+        nextButton.setAttribute('aria-label', 'Next scenario');
+        nextButton.addEventListener('click', () => {
+            currentSlideIndex = (currentSlideIndex + 1) % totalSlides;
+            updateCarousel();
+            console.log(`[ScenarioDebug] ➡️ Moved to slide ${currentSlideIndex + 1}/${totalSlides}`);
+        });
+        
+        carouselWrapper.appendChild(prevButton);
+        carouselWrapper.appendChild(nextButton);
+        
+        // Create dots navigation
+        const dotsContainer = document.createElement('div');
+        dotsContainer.className = 'scenario-carousel-dots';
+        
+        placeholderScenarios.forEach((_, index) => {
+            const dot = document.createElement('button');
+            dot.className = 'scenario-carousel-dot';
+            if (index === 0) dot.classList.add('active');
+            dot.setAttribute('aria-label', `Go to scenario ${index + 1}`);
+            dot.addEventListener('click', () => {
+                currentSlideIndex = index;
+                updateCarousel();
+                console.log(`[ScenarioDebug] 🔴 Jumped to slide ${currentSlideIndex + 1}/${totalSlides}`);
+            });
+            dotsContainer.appendChild(dot);
+        });
+        
+        container.appendChild(carouselWrapper);
+        container.appendChild(dotsContainer);
 
-        console.log('[ScenarioDebug] ✅ Scenario placeholder displayed');
-        console.log('[ScenarioDebug] Visible: 3 cards in responsive flex');
-        console.log('[ScenarioDebug] Test: Hover over cards - they should lift and shadow should enhance');
-        console.log('[ScenarioDebug] Test: Click on cards - they should turn green and show checkmark');
-        console.log('[ScenarioDebug] Call ScenarioDebug.hideSpinner() to hide');
+        console.log('%c[ScenarioDebug] ✅ Enhanced Carousel Displayed', 'color: #28a745; font-weight: bold; font-size: 14px;');
+        console.log('%c📋 Bug Fixes Applied:', 'color: #dc3545; font-weight: bold;');
+        console.log(`
+  ✅ Infinite scroll enabled (arrows wrap around)
+  ✅ Space added left/right for arrow visibility
+  ✅ Dots synced with arrow navigation
+  
+  Total scenarios: ${totalSlides}
+        `);
+        console.log('%b📋 What to verify:', 'color: #007bff; font-weight: bold;');
+        console.log(`
+  ✓ Carousel is CENTERED on screen
+  ✓ Cards display with proper spacing
+  ✓ All card content is visible (no overflow)
+  ✓ Cards have max-height with scrollable overflow-y
+  ✓ Navigation arrows positioned outside card with spacing
+  ✓ Dot indicators at bottom
+  ✓ Smooth transitions between slides
+  ✓ Hover effects on cards (lift + shadow)
+  ✓ Click to select (turns card purple)
+  
+  ➡️ Arrow wraps from slide 4 → slide 1
+  ⬅️ Arrow wraps from slide 1 → slide 4
+  🔴 Dots always match current slide
+        `);
+        console.log('%c💡 Interactive Tests:', 'color: #6E20F4; font-weight: bold;');
+        console.log(`
+  1. Hover over cards → should lift with enhanced shadow
+  2. Click cards → should turn green/purple and be marked as selected
+  3. Use arrow buttons → navigate between scenarios smoothly (infinite scroll)
+  4. Click dots → jump to specific scenario and sync with arrows
+  5. Resize browser → test responsive breakpoints
+  6. Scroll card content → if description is long
+        `);
     },
 
     /**

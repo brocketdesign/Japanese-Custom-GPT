@@ -16,7 +16,8 @@
   align-items: center;
   padding: 2rem 1rem;
   gap: 2rem;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .scenario-container.active {
@@ -27,20 +28,23 @@
 .scenario-carousel-wrapper {
   position: relative;
   width: 100%;
-  height: 100%;
-  max-width: 600px;
+  max-width: 520px;
+  max-height: 600px;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  flex-shrink: 0;
+  padding: 0 80px;
 }
 
 /* Carousel Track */
 .scenario-carousel-track {
   display: flex;
   width: 100%;
-  height: 100%;
+  height: auto;
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  align-items: center;
+  gap: 1.5rem;
 }
 
 /* Scenario Cards */
@@ -56,12 +60,14 @@
   gap: 1rem;
   box-shadow: 0 8px 32px rgba(110, 32, 244, 0.15);
   position: relative;
-  min-width: 100%;
-  height: 100%;
-  max-height: 500px;
+  flex: 0 0 calc(100% - 1.5rem);
+  height: auto;
+  min-height: 420px;
+  max-height: 520px;
   justify-content: center;
-  flex-shrink: 0;
+  align-items: center;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(242, 240, 255, 0.7) 100%);
+  overflow-y: auto;
 }
 
 .scenario-card:hover {
@@ -178,7 +184,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10;
+  z-index: 20;
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(110, 32, 244, 0.2);
 }
@@ -193,11 +199,11 @@
 }
 
 .scenario-carousel-arrow.prev {
-  left: 1rem;
+  left: 10px;
 }
 
 .scenario-carousel-arrow.next {
-  right: 1rem;
+  right: 10px;
 }
 
 .scenario-carousel-arrow:disabled {
@@ -432,6 +438,12 @@
 }
 
 /* Responsive adjustments */
+@media (max-width: 1200px) {
+  .scenario-carousel-wrapper {
+    padding: 0 70px;
+  }
+}
+
 @media (max-width: 768px) {
   .scenario-container {
     padding: 1rem 0;
@@ -439,11 +451,14 @@
 
   .scenario-carousel-wrapper {
     max-width: 90%;
+    max-height: 550px;
+    padding: 0 60px;
   }
 
   .scenario-card {
     padding: 1.5rem;
-    max-height: 450px;
+    min-height: 400px;
+    max-height: 480px;
   }
 
   .scenario-title {
@@ -452,8 +467,8 @@
 
   .scenario-description {
     font-size: 0.95rem;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
 
   .scenario-carousel-arrow {
@@ -463,11 +478,11 @@
   }
 
   .scenario-carousel-arrow.prev {
-    left: 0.5rem;
+    left: 8px;
   }
 
   .scenario-carousel-arrow.next {
-    right: 0.5rem;
+    right: 8px;
   }
 }
 
@@ -478,11 +493,14 @@
 
   .scenario-carousel-wrapper {
     max-width: 95%;
+    max-height: 500px;
+    padding: 0 50px;
   }
 
   .scenario-card {
     padding: 1rem;
-    max-height: 400px;
+    min-height: 380px;
+    max-height: 450px;
     border-radius: 16px;
   }
 
@@ -492,8 +510,8 @@
 
   .scenario-description {
     font-size: 0.9rem;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
 
   .scenario-meta {
@@ -508,11 +526,11 @@
   }
 
   .scenario-carousel-arrow.prev {
-    left: 0.25rem;
+    left: 5px;
   }
 
   .scenario-carousel-arrow.next {
-    right: 0.25rem;
+    right: 5px;
   }
 
   .scenario-carousel-dots {

@@ -1,215 +1,290 @@
 <!DOCTYPE html>
 <html lang="{{lang}}">
-  {{> dashboard-header seoTitle=seoTitle seoDescription=seoDescription}} {{!-- Pass SEO variables to header partial --}}
+{{> dashboard-header seoTitle=seoTitle seoDescription=seoDescription}}
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/css/search.css">
+</head>
+
 <body>
     {{> dashboard-nav}}
-  <main class="container my-5">                            
-    <div class="text-center mb-4">
-      <p class="u-color-grad animate__animated" data-animate="animate__fadeInDown" data-delay="0.1s" style="font-size: 54px;"><img src="/img/logo.webp" alt="Lamix Logo" class="me-2" width="40px">Lamix</p>
-      <span class="text-muted animate__animated" data-animate="animate__fadeIn" data-delay="0.2s">{{translations.ai_character_conversation}}</span>
-      <h3 class="animate__animated" data-animate="animate__fadeIn" data-delay="0.3s">{{translations.free_ai_chat_and_image_generation}}</h3>
-    </div>
 
-    {{#if user.isTemporary}}
-    <div class="card mb-4 shadow border-0 animate__animated" data-animate="animate__fadeInUp" data-delay="0.4s">
-      <div class="card-body p-4 text-center">
-        <div class="row align-items-center">
-          <div class="col-md-8 text-md-start">
-            <h4 class="mb-2">{{translations.unlock_premium_features}}</h4>
-            <p class="text-muted mb-md-0">{{translations.join_now_for_full_access}}</p>
-          </div>
-          <div class="col-md-4 text-md-end mt-3 mt-md-0">
-            <a href="/auth/login" onclick="openLoginForm(); return false;" class="btn custom-gradient-bg btn-lg animate__animated" data-animate="animate__pulse" data-delay="1s">
-              <i class="bi bi-person-plus me-2"></i>{{translations.sign_up_free}}
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-    {{/if}}
-
-    {{#if query}}
-      <section aria-label="search description" class="mb-4">
-        <p class="animate__animated" data-animate="animate__fadeIn" data-delay="0.5s">{{seoDescription}}</p>
-        <hr>
-      </section>
-    {{else}}
-      <hr class="animate__animated" data-animate="animate__fadeIn" data-delay="0.5s">
-    {{/if}}
-
-    <section aria-label="search section">
-      <h1 class="mb-4 animate__animated" data-animate="animate__fadeIn" data-delay="0.6s">{{seoTitle}}</h1>
-      <div class="container text-center">
-        <h2 class="text-center text-secondary mb-4" style="font-size: 1rem;">{{translations.welcomeMessage}}</h2>
-        <form id="search-form" action="/search" method="GET" class="mb-3">
-          <div class="input-group input-group-lg justify-content-center" style="max-width: 500px; margin: 0 auto;">
-            <span class="input-group-text bg-white border-0 rounded-start-pill shadow-sm px-3">
-              <i class="bi bi-search text-secondary"></i>
-            </span>
-            <input 
-              type="text" 
-              name="q" 
-              id="search-input" 
-              class="form-control rounded-end-pill shadow-sm border-0" 
-              placeholder="{{translations.searchPlaceholder}}" 
-              aria-label="Search"
-              style="background: #f8f9fa;"
-            >
-          </div>
-        </form>
-      </div>
-    </section>
-
-    <hr class="animate__animated" data-animate="animate__fadeIn" data-delay="0.8s">
-
-    <section aria-label="search results" class="mb-4">
-      {{#if query}}
-        <h2 class="h4 mb-3 animate__animated" data-animate="animate__fadeInUp" data-delay="0.9s">
-          <i class="bi bi-image me-2 text-primary"></i>{{translations.result_image_query}} "<span class="text-primary">{{query}}</span>" 🖼️
-        </h2>
-      {{else}}
-        <h2 class="h4 mb-3 animate__animated" data-animate="animate__fadeInUp" data-delay="0.9s">
-          <i class="bi bi-collection me-2 text-primary"></i>{{translations.explore_latest_images}} ✨
-        </h2>
-      {{/if}}
-      
-      {{#if imageResults.length}}
-        <div class="all-chats-images-gallery row g-3" data-query="{{query}}">
-          {{#each imageResults}}
-            <div class="col-6 col-md-4 col-lg-3 mb-4 animate__animated" data-animate="animate__fadeInUp" data-delay="{{math @index '*' 0.05 '+' 1}}s">
-              <div class="card shadow-sm border-0 rounded-3 h-100 gallery-card overflow-hidden">
-                {{#if isBlur}}
-                  <div type="button" onclick="handleClickRegisterOrPay(event,{{../user.isTemporary}})" class="position-relative">
-                    <img data-src="{{imageUrl}}" alt="{{chatName}} - {{prompt}}" class="card-img-top gallery-img img-blur" style="object-fit: cover; height: 250px;">
-                  </div>
-                {{else}}
-                  <a href="/character/slug/{{chatSlug}}?imageId={{_id}}" class="text-decoration-none">
-                    <div class="gallery-image-wrapper">
-                      <img src="{{imageUrl}}" alt="{{chatName}} - {{prompt}}" class="card-img-top gallery-img" style="object-fit: cover; height: 250px;">
+    <div class="search-container" id="searchPage">
+        <!-- Search Header -->
+        <div class="search-header">
+            <div class="search-cover">
+                <div class="search-header-content">
+                    <div class="search-logo-wrapper">
+                        <img src="/img/logo.webp" alt="Lamix Logo" class="search-logo">
                     </div>
-                  </a>
-                {{/if}}
-                <div class="card-body p-3 d-flex flex-column">
-                  <div class="d-flex align-items-center mb-2">
-                    <img src="{{chatImageUrl}}" alt="{{chatName}} avatar" class="rounded-circle me-2" width="32" height="32" style="object-fit: cover;">
-                    <h6 class="mb-0 text-truncate">
-                      <a href="/character/slug/{{chatSlug}}" class="text-dark text-decoration-none stretched-link">{{chatName}}</a>
-                    </h6>
-                  </div>
-                  <p class="card-text text-muted small text-truncate" title="{{prompt}}">
-                    <a href="/character/slug/{{chatSlug}}?imageId={{_id}}" class="text-dark text-decoration-none">
-                      <i class="bi bi-card-image me-1 text-primary"></i>{{lookupOrFirst title lang}}
-                    </a>
-                  </p>
-                  <div class="mt-auto pt-2">
-                    <div class="text-truncate">
-                    {{#each chatTags}}
-                      <a href="/search?q={{this}}" class="badge bg-light text-dark text-decoration-none me-1">{{this}}</a>
-                    {{/each}}
+                    
+                    <div class="search-info">
+                        <h1 class="search-title">{{translations.free_ai_chat_and_image_generation}}</h1>
+                        <p class="search-subtitle">{{translations.ai_character_conversation}}</p>
                     </div>
-                  </div>
-                </div>  
-              </div>
+                </div>
             </div>
-          {{/each}}
         </div>
 
-        {{#if totalPages}}
-        <nav aria-label="Search results pagination" class="mt-4 animate__animated" data-animate="animate__fadeIn" data-delay="1.2s">
-            <ul class="pagination justify-content-center">
-                {{#if hasPrevPage}}
-                    <li class="page-item">
-                        <a class="page-link" href="/search?q={{query}}&page={{math currentPage '-' 1}}" aria-label="Previous">
-                          <span aria-hidden="true">&laquo;</span>
-                        </a>
-                    </li>
-                {{else}}
-                    <li class="page-item disabled">
-                        <span class="page-link">&laquo;</span>
-                    </li>
-                {{/if}}
+        <!-- Search Bar Section -->
+        <div class="search-bar-section">
+            <form id="search-form" action="/search" method="GET" class="search-form">
+                <div class="search-input-wrapper">
+                    <i class="bi bi-search search-icon"></i>
+                    <input 
+                        type="text" 
+                        name="q" 
+                        id="search-input" 
+                        class="search-input" 
+                        placeholder="{{translations.searchPlaceholder}}" 
+                        aria-label="Search characters and images"
+                        value="{{query}}"
+                    >
+                    {{#if query}}
+                        <button type="reset" class="search-clear" aria-label="Clear search">
+                            <i class="bi bi-x-circle-fill"></i>
+                        </button>
+                    {{/if}}
+                </div>
+            </form>
+        </div>
 
-                <li class="page-item disabled"><span class="page-link">{{currentPage}} / {{totalPages}}</span></li>
-
-                {{#if hasNextPage}}
-                    <li class="page-item">
-                        <a class="page-link" href="/search?q={{query}}&page={{math currentPage '+' 1}}" aria-label="Next">
-                          <span aria-hidden="true">&raquo;</span>
-                        </a>
-                    </li>
-                {{else}}
-                    <li class="page-item disabled">
-                        <span class="page-link">&raquo;</span>
-                    </li>
-                {{/if}}
-            </ul>
-        </nav>
+        <!-- Auth Prompt -->
+        {{#if user.isTemporary}}
+        <div class="auth-prompt">
+            <div class="auth-prompt-content">
+                <div class="auth-prompt-text">
+                    <h3 class="auth-prompt-title">{{translations.unlock_premium_features}}</h3>
+                    <p class="auth-prompt-description">{{translations.join_now_for_full_access}}</p>
+                </div>
+                <a href="/auth/login" onclick="openLoginForm(); return false;" class="auth-prompt-btn">
+                    <i class="bi bi-person-plus"></i>
+                    {{translations.sign_up_free}}
+                </a>
+            </div>
+        </div>
         {{/if}}
-      {{else}}
-        {{#if query}}
-          <div class="text-center my-5 py-5 animate__animated" data-animate="animate__fadeIn" data-delay="1s">
-            <i class="bi bi-search fs-1 text-muted mb-3"></i>
-            <p>{{translations.no_results_found_for}} "<span class="text-primary">{{query}}</span>".</p>
-          </div>
-        {{/if}}
-      {{/if}}
-    </section>
-    
-    <div class="d-flex justify-content-center mt-4 animate__animated" data-animate="animate__fadeInUp" data-delay="1.3s">
-        <a href="/character" class="btn custom-gradient-bg w-100">
-          <i class="bi bi-grid-3x3-gap me-2"></i>{{translations.view_all_character}}
-        </a>
-    </div>
-    
-    <hr class="my-4 animate__animated" data-animate="animate__fadeIn" data-delay="1.4s">
 
-    {{#if tags.length}}
-    <section aria-label="tags section" class="animate__animated" data-animate="animate__fadeInUp" data-delay="1.5s">
-      <h2 class="h4 mb-3">
-        <i class="bi bi-tags me-2 text-primary"></i>{{translations.search_ai_character_by_tag}}
-      </h2>
-      <div id="tags-container" class="tags-wrapper mb-4">
-        <div class="tags-cloud d-flex flex-wrap">
-          {{#each tags}}
-            <a href="/search?q={{this.name}}" class="tag-item btn btn-outline-secondary btn-sm m-1 animate__animated" data-animate="animate__fadeIn" data-delay="{{math @index '*' 0.05 '+' 1.5}}s">
-              <i class="bi bi-tag me-1"></i>{{this.name}}
+        <!-- Search Results Section -->
+        <div class="search-results-section">
+            {{#if query}}
+                <div class="search-header-info">
+                    <h2 class="search-results-title">
+                        <i class="bi bi-image"></i>
+                        {{translations.result_image_query}} "<span class="search-query-highlight">{{query}}</span>"
+                    </h2>
+                    {{#if seoDescription}}
+                        <p class="search-description">{{seoDescription}}</p>
+                    {{/if}}
+                </div>
+            {{else}}
+                <div class="search-header-info">
+                    <h2 class="search-results-title">
+                        <i class="bi bi-collection"></i>
+                        {{translations.explore_latest_images}}
+                    </h2>
+                    <p class="search-welcome-message">{{translations.welcomeMessage}}</p>
+                </div>
+            {{/if}}
+
+            <!-- Gallery Container - Dynamic Loading -->
+            <div id="search-results-gallery" class="search-gallery">
+                {{#if imageResults.length}}
+                    {{#each imageResults}}
+                        <div class="gallery-card-wrapper">
+                            <div class="gallery-card">
+                                {{#if isBlur}}
+                                    <div class="gallery-image-container blur-container" onclick="handleClickRegisterOrPay(event,{{../user.isTemporary}})" type="button" role="button" tabindex="0">
+                                        <img data-src="{{imageUrl}}" alt="{{chatName}} - {{prompt}}" class="gallery-image img-blur">
+                                        <div class="blur-overlay">
+                                            <i class="bi bi-lock-fill"></i>
+                                        </div>
+                                    </div>
+                                {{else}}
+                                    <a href="/character/slug/{{chatSlug}}?imageId={{_id}}" class="gallery-image-link">
+                                        <div class="gallery-image-container">
+                                            <img src="{{imageUrl}}" alt="{{chatName}} - {{prompt}}" class="gallery-image">
+                                            <div class="gallery-overlay">
+                                                <div class="overlay-content">
+                                                    <i class="bi bi-eye"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                {{/if}}
+                                
+                                <div class="gallery-card-body">
+                                    <div class="gallery-card-header">
+                                        <a href="/character/slug/{{chatSlug}}" class="character-link">
+                                            <img src="{{chatImageUrl}}" alt="{{chatName}} avatar" class="character-avatar">
+                                            <div class="character-info">
+                                                <h3 class="character-name">{{chatName}}</h3>
+                                                <p class="image-title">{{lookupOrFirst title lang}}</p>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    
+                                    {{#if chatTags.length}}
+                                        <div class="gallery-tags">
+                                            {{#each chatTags}}
+                                                <a href="/search?q={{this}}" class="tag-badge">{{this}}</a>
+                                            {{/each}}
+                                        </div>
+                                    {{/if}}
+                                </div>
+                            </div>
+                        </div>
+                    {{/each}}
+                {{/if}}
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="search-loading-indicator" class="text-center py-5" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted mt-3">{{translations.loading}}</p>
+            </div>
+
+            {{#if totalPages}}
+            <nav aria-label="Search results pagination" class="search-pagination">
+                <ul class="pagination-list">
+                    {{#if hasPrevPage}}
+                        <li class="pagination-item">
+                            <a href="/search?q={{query}}&page={{math currentPage '-' 1}}" class="pagination-link" aria-label="Previous page">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                    {{else}}
+                        <li class="pagination-item disabled">
+                            <span class="pagination-link">
+                                <i class="bi bi-chevron-left"></i>
+                            </span>
+                        </li>
+                    {{/if}}
+
+                    <li class="pagination-item info">
+                        <span class="pagination-link">{{currentPage}} / {{totalPages}}</span>
+                    </li>
+
+                    {{#if hasNextPage}}
+                        <li class="pagination-item">
+                            <a href="/search?q={{query}}&page={{math currentPage '+' 1}}" class="pagination-link" aria-label="Next page">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    {{else}}
+                        <li class="pagination-item disabled">
+                            <span class="pagination-link">
+                                <i class="bi bi-chevron-right"></i>
+                            </span>
+                        </li>
+                    {{/if}}
+                </ul>
+            </nav>
+            {{/if}}
+
+            {{#unless imageResults.length}}
+                {{#if query}}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="bi bi-search"></i>
+                        </div>
+                        <h3 class="empty-state-title">{{translations.no_results_found_for}} "<span class="search-query-highlight">{{query}}</span>"</h3>
+                        <p class="empty-state-message">Try searching for different keywords or explore popular categories below</p>
+                    </div>
+                {{/if}}
+            {{/unless}}
+        </div>
+
+
+
+        <!-- Tags Section -->
+        {{#if tags.length}}
+        <div class="tags-section">
+            <h3 class="tags-section-title">
+                <i class="bi bi-tags"></i>
+                {{translations.search_ai_character_by_tag}}
+            </h3>
+            <div class="tags-wrapper">
+                {{#each tags}}
+                    <a href="/search?q={{this.name}}" class="tag-item">
+                        <i class="bi bi-tag"></i>
+                        {{this.name}}
+                    </a>
+                {{/each}}
+            </div>
+        </div>
+        {{/if}}
+
+        <!-- Browse All Section -->
+        <div class="browse-section">
+            <a href="/character" class="browse-link browse-link-primary">
+                <i class="bi bi-grid-3x3-gap"></i>
+                {{translations.view_all_character}}
             </a>
-          {{/each}}
+            <a href="/tags" class="browse-link browse-link-secondary">
+                <i class="bi bi-tag"></i>
+                {{translations.view_all_tags}}
+            </a>
         </div>
-      </div>
-    </section>
-    {{/if}}
-
-    <div class="d-flex justify-content-center mt-4 animate__animated" data-animate="animate__fadeInUp" data-delay="1.6s">
-        <a href="/tags" class="btn custom-gradient-bg-outline w-100">
-          <i class="bi bi-tag me-2"></i>{{translations.view_all_tags}}
-        </a>
     </div>
-  </main>
-  <style>
-    footer{display: inline !important;}
-    .sticky-bottom{display: inline-block !important;width: 100%;}
-    .flagged-true { display: inline-block !important; }
-    .card-img-top {
-      width: 100%;
-      height: 200px; /* Or your desired height */
-      object-fit: cover;
-    }
-  </style>
-  {{> dashboard-footer}}
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Apply animations with delay
-      document.querySelectorAll('[data-animate]').forEach(function(element) {
-        setTimeout(function() {
-          element.classList.add(element.getAttribute('data-animate'));
-        }, parseFloat(element.getAttribute('data-delay')) * 1000 || 0);
-      });
-    });
 
-    $(document).find('.img-blur').each(function() {
-        blurImage(this);
-    });
-  </script>
+    <!-- Hidden elements for backward compatibility -->
+    <div id="chat-images-gallery" style="display: none;"></div>
+    <div id="chat-videos-gallery" style="display: none;"></div>
+    <div class="row mx-0" id="all-chats-images-gallery" style="display: none;"></div>
+
+    {{> dashboard-footer}}
+
+    <!-- Gallery Search Scripts -->
+    <script src="/js/gallery-search.js"></script>
+
+    <style>
+        footer { display: inline !important; }
+        .sticky-bottom, #footer-toolbar { display: inline-block !important; width: 100%; }
+        .flagged-true { display: inline-block !important; }
+    </style>
+
+    <script>
+        // Expose user data to global scope for gallery-search.js
+        window.user = {
+            _id: '{{user._id}}',
+            subscriptionStatus: '{{user.subscriptionStatus}}',
+            isTemporary: {{#if user.isTemporary}}true{{else}}false{{/if}},
+            lang: '{{user.lang}}'
+        };
+
+        // Expose translations to global scope
+        window.translations = {
+            loading: '{{translations.loading}}',
+            start_searching: '{{translations.start_searching}}'
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Clear search input on clear button click
+            const clearBtn = document.querySelector('.search-clear');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.getElementById('search-input').value = '';
+                    document.getElementById('search-form').submit();
+                });
+            }
+
+            // Apply blur effect to images
+            document.querySelectorAll('.img-blur').forEach(function(img) {
+                if (typeof blurImage === 'function') {
+                    blurImage(img);
+                }
+            });
+
+            // Initialize gallery search manager if available
+            if (typeof GallerySearchManager !== 'undefined' && !window.gallerySearchManager) {
+                window.gallerySearchManager = new GallerySearchManager();
+                window.gallerySearchManager.loadFromURL();
+            }
+        });
+    </script>
 </body>
 </html>

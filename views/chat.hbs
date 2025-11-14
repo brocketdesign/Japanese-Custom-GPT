@@ -95,7 +95,13 @@
 
                 
                 <!-- Card menu -->
-                <div class="is-premium card-menu-container mb-3 px-0" style="display: none;">
+                <div class="card-menu-container mb-3 px-0">
+                    <div class="native-section-header">
+                        <h2 class="native-section-title">
+                            <i class="native-section-icon bi bi-rocket-fill" style="color: #FF8C00;"></i>
+                            {{#if translations.startHere}}{{translations.startHere}}{{else}}Start Here{{/if}}
+                        </h2>
+                    </div>                    
                     <div class="d-flex overflow-auto px-3 pb-5" style="scrollbar-width: thin;justify-content: space-between;">
                         <!-- Create Character Card -->
                         <div class="character-create-card shadow-sm rounded p-3 text-center mx-2 flex-shrink-0" 

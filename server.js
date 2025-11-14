@@ -873,7 +873,7 @@ fastify.get('/search', async (request, reply) => {
       seoDescription = translations.seo_description_query.replace('${query}', query);
     }
 
-    return reply.renderWithGtm('search-new.hbs', {
+    return reply.renderWithGtm('search.hbs', {
       title: seoTitle,
       query,
       user,

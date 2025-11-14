@@ -992,7 +992,7 @@ body {
     margin: 0;
 }
 
-.sticky-bottom, #footer-toolbar, .grid-control {
+.sticky-bottom, .grid-control {
     display: none;
 }
 

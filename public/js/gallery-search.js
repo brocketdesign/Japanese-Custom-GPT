@@ -242,7 +242,7 @@ class GallerySearchManager {
         <div class="gallery-media-wrapper position-relative" style="overflow: hidden; max-height: 400px; background-color: #f0f0f0;">
           <img src="${blurredMediaUrl}" alt="${item.chatName} - ${item.prompt || ''}" class="gallery-media" style="width: 100%; height: 100%; object-fit: cover; filter: blur(15px);">
           <div class="img-blur-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
-            <button onclick="handleClickRegisterOrPay(event, ${this.isTemporary})">
+            <button onclick="handleClickRegisterOrPay(event, ${this.isTemporary})" class="btn btn-sm" style="background: linear-gradient(90.9deg, rgb(210, 184, 255) 2.74%, rgb(130, 64, 255) 102.92%); color: white; border: medium; border-radius: 8px; font-weight: 600; padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer; transition: 0.2s; margin-top: 0.75rem; transform: translateY(0px); box-shadow: none;">
               <i class="bi bi-lock-fill me-2"></i>Unlock
             </button>
           </div>

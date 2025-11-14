@@ -1,5 +1,6 @@
 {
   "lang": "en",
+  "startHere": "Start Here",
   "image_generation": {
     "activated": "I activated the image generation feature for this prompt.\n The image will be generated shortly.",
     "not_subscribed": "I asked for an other image but I am not a subscribed member.\n Tell me that I need to subscribe to Lamix Premium in order to receive unlimited images, even hot images. Provide a concise answer to inform me of that and tell me if I want to subscribe there is 70% promotion right now. Stay in your character, keep the same tone as previously. Respond in the language we were talking until now.",
@@ -877,7 +878,9 @@
   "chat_gallery_description": "Chat with AI characters and generate images with them! Enjoy free AI image generation while chatting with beautiful AI characters.",
   "view_all_tags": "View All Tags",
   "view_all_character": "View All Characters",
-  "result_image_query": "AI image generated using the chat and prompt feature.",
+  "result_image_query": "Search results for",
+  "explore_latest_images": "Explore Latest Images",
+  "no_results_found_for": "No results found for",
   "about":" About ",
   "images": "Images",
   "start_searching": "Start searching to see results",

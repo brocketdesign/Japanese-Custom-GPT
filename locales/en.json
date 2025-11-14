@@ -1701,6 +1701,7 @@
   },
   "freeUserBenefits": {
     "title": "Free User Benefits",
+    "subtitle": "Enjoy these exclusive benefits as a free user",
     "benefit1": {
       "title": "New Images Daily",
       "description": "Generate custom images every day at no cost"
@@ -1721,6 +1722,31 @@
     "daily": "Daily",
     "unlimited": "Unlimited",
     "createCharacter": "1 Character",
+    "scrollHint": "Scroll to see more benefits"
+  },
+  "premiumUserBenefits": {
+    "title": "Premium User Benefits",
+    "subtitle": "Unlock premium features and enjoy unlimited access",
+    "benefit1": {
+      "title": "Unlimited Images",
+      "description": "Generate unlimited custom images without restrictions"
+    },
+    "benefit2": {
+      "title": "Priority Processing",
+      "description": "Get faster image generation and priority support"
+    },
+    "benefit3": {
+      "title": "NSFW Access",
+      "description": "Access to all content including NSFW characters"
+    },
+    "benefit4": {
+      "title": "Advanced Customization",
+      "description": "Unlock all character customization options"
+    },
+    "perDay": "per day",
+    "daily": "Daily",
+    "unlimited": "Unlimited",
+    "createCharacter": "Unlimited Characters",
     "scrollHint": "Scroll to see more benefits"
   },
   "goals": {

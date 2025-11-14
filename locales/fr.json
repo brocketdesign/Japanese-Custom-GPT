@@ -1718,6 +1718,7 @@
   },
   "freeUserBenefits": {
     "title": "Avantages Utilisateur Gratuit",
+    "subtitle": "Profitez de ces avantages exclusifs en tant qu'utilisateur gratuit",
     "benefit1": {
       "title": "Nouvelles images quotidiennes",
       "description": "Générez des images personnalisées chaque jour gratuitement"
@@ -1738,6 +1739,30 @@
     "daily": "Quotidien",
     "unlimited": "Illimité",
     "createCharacter": "1 personnage",
+    "scrollHint": "Faites défiler pour voir plus d'avantages"
+  },
+  "premiumUserBenefits": {
+    "title": "Avantages Utilisateur Premium",
+    "benefit1": {
+      "title": "Images Illimitées",
+      "description": "Générez des images personnalisées sans restrictions"
+    },
+    "benefit2": {
+      "title": "Traitement Prioritaire",
+      "description": "Obtenez une génération d'images plus rapide et un support prioritaire"
+    },
+    "benefit3": {
+      "title": "Accès NSFW",
+      "description": "Accès à tout le contenu y compris les personnages NSFW"
+    },
+    "benefit4": {
+      "title": "Personnalisation Avancée",
+      "description": "Débloquez toutes les options de personnalisation des personnages"
+    },
+    "perDay": "par jour",
+    "daily": "Quotidien",
+    "unlimited": "Illimité",
+    "createCharacter": "Personnages Illimités",
     "scrollHint": "Faites défiler pour voir plus d'avantages"
   },
   "goals": {

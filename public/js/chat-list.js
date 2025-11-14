@@ -185,6 +185,7 @@ $(document).on('click','#toggle-chat-list',function(){
     .css('visibility', 'visible')
     .show();
 
+    $('#footer-toolbar').hide();
     displayChatList(null, userId);
 });
 
@@ -193,6 +194,7 @@ $(document).on('click','#close-chat-list-btn',function(){
     $('#chat-list').hide();
     $('.onchat-off').show();
     $('.onchat-on').hide();
+    $('#footer-toolbar').show();
     hideNavbarChatActions();
     if ($('#horizontal-chat-menu').length) {
         $('#horizontal-chat-menu').removeClass('d-none');

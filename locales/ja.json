@@ -1753,6 +1753,7 @@
   },
   "freeUserBenefits": {
     "title": "無料ユーザー特典",
+    "subtitle": "無料ユーザーとしてこれらの独占特典をお楽しみください",
     "benefit1": {
       "title": "毎日新しい画像",
       "description": "毎日無料でカスタム画像を生成できます"
@@ -1773,6 +1774,30 @@
     "daily": "毎日",
     "unlimited": "無制限",
     "createCharacter": "1キャラクター",
+    "scrollHint": "さらに特典を見るにはスクロールしてください"
+  },
+  "premiumUserBenefits": {
+    "title": "プレミアムユーザー特典",
+    "benefit1": {
+      "title": "無制限画像",
+      "description": "制限なくカスタム画像を生成できます"
+    },
+    "benefit2": {
+      "title": "優先処理",
+      "description": "より速い画像生成と優先サポートを受けられます"
+    },
+    "benefit3": {
+      "title": "NSFWアクセス",
+      "description": "NSFWキャラクターを含むすべてのコンテンツにアクセスできます"
+    },
+    "benefit4": {
+      "title": "高度なカスタマイズ",
+      "description": "すべてのキャラクターカスタマイズオプションを解除します"
+    },
+    "perDay": "1日あたり",
+    "daily": "毎日",
+    "unlimited": "無制限",
+    "createCharacter": "無制限キャラクター",
     "scrollHint": "さらに特典を見るにはスクロールしてください"
   },
   "goals": {

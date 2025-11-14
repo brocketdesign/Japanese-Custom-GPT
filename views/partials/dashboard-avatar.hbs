@@ -238,8 +238,19 @@ document.addEventListener('DOMContentLoaded', function() {
             if(navbarContainer) {
                 navbarContainer.style.right = '20px';
             }
-            if (footerToolbar) footerToolbar.style.display = 'none';
-            if (chatInput) chatInput.style.display = 'none';
+            // Manage UI elements based on chat container visibility
+            const chatContainerIsVisible = $('#chat-container:visible')[0];
+            if (chatContainerIsVisible && chatContainerIsVisible.style.display !== 'none') {
+                // If chat container is visible, hide chat input
+                if (chatInput) {
+                    $(chatInput).fadeOut(200);
+                }
+            } else {
+                // If chat container is not visible, hide footer toolbar
+                if (footerToolbar) {
+                    $(footerToolbar).fadeOut(200);
+                }
+            }
 
         });
         
@@ -252,8 +263,19 @@ document.addEventListener('DOMContentLoaded', function() {
             if(navbarContainer) {
                 navbarContainer.style.right = '-50vw';
             }
-            if (footerToolbar) footerToolbar.style.display = '';
-            if (chatInput) chatInput.style.display = '';
+            // Manage UI elements based on chat container visibility
+            const chatContainerIsVisible = $('#chat-container:visible')[0];
+            if (chatContainerIsVisible && chatContainerIsVisible.style.display !== 'none') {
+                // If chat container is visible, show chat input
+                if (chatInput) {
+                    $(chatInput).fadeIn(200);
+                }
+            } else {
+                // If chat container is not visible, show footer toolbar
+                if (footerToolbar) {
+                    $(footerToolbar).fadeIn(200);
+                }
+            }
 
             // Enable body scroll when offcanvas is hidden
             document.body.style.overflow = 'auto';

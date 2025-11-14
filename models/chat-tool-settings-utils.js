@@ -13,7 +13,7 @@ const DEFAULT_SETTINGS = {
     autoMergeFace: true,
     autoImageGeneration: false,
     goalsEnabled: false,
-    scenariosEnabled: true,
+    scenariosEnabled: false,
     suggestionsEnabled: true,
     speechRecognitionEnabled: true,
     speechAutoSend: false

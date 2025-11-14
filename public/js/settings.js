@@ -190,6 +190,29 @@ $(document).ready(function() {
     });
   });
 
+  // Handle settings modal footer visibility based on active tab
+  $('#myTab button').on('shown.bs.tab', function (e) {
+    const target = $(e.target).attr('data-bs-target');
+    if (target === '#profile') {
+      $('#settings-modal-footer').removeClass('d-none');
+    } else {
+      $('#settings-modal-footer').addClass('d-none');
+    }
+  });
+
+  // Ensure submit button works
+  $('#settings-modal-footer button[type="submit"]').on('click', function() {
+    $('#user-info-form').submit();
+  });
+
+  // Show footer initially since profile is active
+  $('#settings-modal-footer').removeClass('d-none');
+});
+
+
+
+
+
   $('#cancel-plan').click(function(){
     closeAllModals();
     // Open the cancellation feedback modal
@@ -375,41 +398,3 @@ $(document).ready(function() {
       }
     });
   });
-  $('#restart-onboarding').on('click', function() {
-    const userId = user._id;
-    
-    Swal.fire({
-      title: window.onboardingTranslations?.skip_confirmation || 'Restart Onboarding?',
-      text: 'This will guide you through the setup process again to personalize your experience.',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: window.onboardingTranslations?.continue || 'Yes, restart',
-      cancelButtonText: window.onboardingTranslations?.skip || 'Cancel'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        // Clear onboarding data
-        localStorage.removeItem(`onboarding_${userId}`);
-        
-        // Reset user onboarding status
-        $.ajax({
-          url: `/user/${userId}/reset-onboarding`,
-          method: 'POST',
-          xhrFields: {
-            withCredentials: true
-          },
-          success: function() {
-            // Start onboarding
-            if (window.OnboardingFunnel) {
-              const onboarding = new OnboardingFunnel();
-              onboarding.start();
-            }
-            showNotification(window.onboardingTranslations?.onboarding_complete || 'Onboarding restarted successfully!', 'success');
-          },
-          error: function() {
-            showNotification('Failed to restart onboarding', 'error');
-          }
-        });
-      }
-    });
-  });
-});

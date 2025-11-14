@@ -1493,6 +1493,23 @@
     margin-top: 10px;
 }
 
+/* Premium model grid responsive layout: 3 columns on large screens, 2 on tablet, 1 on mobile */
+.settings-model-grid--premium {
+    grid-template-columns: repeat(3, 1fr) !important;
+}
+
+@media (max-width: 1024px) {
+    .settings-model-grid--premium {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .settings-model-grid--premium {
+        grid-template-columns: 1fr;
+    }
+}
+
 .settings-model-option {
     padding: 20px;
     border: 2px solid #e9ecef;

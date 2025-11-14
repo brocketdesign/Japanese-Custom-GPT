@@ -675,7 +675,7 @@ opacity: 0.8;
   }
   
   .tab-pane {
-  padding-top:30px
+  padding-top:0px
   }
   
   .image-nsfw-toggle.nsfw {
@@ -3593,7 +3593,7 @@ opacity: 0.8;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-radius: 32.5px;
-  z-index: 1030;
+  z-index: 1010;
   padding: 0 10px;
   border: 1px solid rgba(255, 255, 255, 0.2);
 }

@@ -1744,12 +1744,16 @@ function setupChatInterface(chat, character) {
 
 //.reset-chat,.new-chat
 window.handleChatReset = function(el) {
+    $(el).prop('disabled', true); // Disable the button to prevent multiple resets
     chatId = $(el).data('id') || localStorage.getItem('chatId');
     if (chatId == null) {
         console.error('[handleChatReset] No chatId found in localStorage');
+        $(el).prop('disabled', false); // Re-enable if error
         return;
     }
-    fetchChatData(chatId, userId, true);
+    fetchChatData(chatId, userId, true, function() {
+        $(el).prop('disabled', false); // Re-enable the button after reset completes
+    });
 };
 
 window.regenImage = function(el){

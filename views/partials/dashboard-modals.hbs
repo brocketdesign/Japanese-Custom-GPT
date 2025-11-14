@@ -320,8 +320,43 @@
                 <h5 class="modal-title" id="settingsModalLabel">{{translations.avatar.settings}}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body position-relative">
+            <div class="modal-body position-relative p-0">
+            <!-- Tab Navigation -->
+            <div class="overflow-auto sticky-top">
+                <ul class="nav nav-tabs flex-nowrap  bg-white" id="myTab" role="tablist" style="white-space: nowrap; top: 0; z-index: 1060;">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="true">
+                            {{translations.setting.profile}}
+                        </button>
+                    </li>
+                    <li class="d-none nav-item" role="presentation">
+                        <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button" role="tab" aria-controls="password" aria-selected="false">
+                            {{translations.setting.password}}
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="subscription-tab" data-bs-toggle="tab" data-bs-target="#subscription" type="button" role="tab" aria-controls="subscription" aria-selected="false">
+                            {{translations.setting.subscription}}
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link d-none" id="usage-tab" data-bs-toggle="tab" data-bs-target="#usage" type="button" role="tab" aria-controls="usage" aria-selected="false">
+                            {{translations.setting.usage}}
+                        </button>
+                    </li>
+                </ul>
+            </div>
                 <div id="settings-container"></div>
+            </div>
+            <div class="modal-footer d-none" id="settings-modal-footer">
+                <button type="button" class="btn btn-outline-secondary" onclick="location.reload()">
+                    <i class="bi bi-arrow-clockwise me-1"></i>
+                    {{translations.setting.reset}}
+                </button>
+                <button type="submit" form="user-info-form" class="btn btn-primary btn-lg px-4">
+                    <i class="bi bi-check-circle me-2"></i>
+                    {{translations.setting.saveUserInfo}}
+                </button>
             </div>
         </div>
     </div>

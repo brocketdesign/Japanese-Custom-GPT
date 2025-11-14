@@ -1,40 +1,12 @@
-<div class="container">
-  <div class="row justify-content-center">
-    <div class="col-12 col-lg-10 col-xl-8 mx-auto">
-      <h2 class="h3 mb-4 page-title d-none">{{translations.setting.pageTitle}}</h2>
-      <div class="my-4">
-      <!-- Tab Navigation -->
-      <div class="overflow-auto">
-          <ul class="nav nav-tabs flex-nowrap" id="myTab" role="tablist" style="white-space: nowrap;">
-              <li class="nav-item" role="presentation">
-                  <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="true">
-                      {{translations.setting.profile}}
-                  </button>
-              </li>
-              <li class="d-none nav-item" role="presentation">
-                  <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button" role="tab" aria-controls="password" aria-selected="false">
-                      {{translations.setting.password}}
-                  </button>
-              </li>
-              <li class="nav-item" role="presentation">
-                  <button class="nav-link" id="subscription-tab" data-bs-toggle="tab" data-bs-target="#subscription" type="button" role="tab" aria-controls="subscription" aria-selected="false">
-                      {{translations.setting.subscription}}
-                  </button>
-              </li>
-              <li class="nav-item" role="presentation">
-                  <button class="nav-link d-none" id="usage-tab" data-bs-toggle="tab" data-bs-target="#usage" type="button" role="tab" aria-controls="usage" aria-selected="false">
-                      {{translations.setting.usage}}
-                  </button>
-              </li>
-          </ul>
-      </div>
+<h2 class="h3 mb-4 page-title d-none">{{translations.setting.pageTitle}}</h2>
+<div class="my-4">
 
-        <!-- Tab content -->
-        <div class="tab-content" id="myTabContent">
+  <!-- Tab content -->
+  <div class="tab-content" id="myTabContent">
           <!-- Profile Tab -->
           <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-tab">
             <!-- User Info Form -->
-            <form id="user-info-form" class="settings-form">
+            <form id="user-info-form" class="settings-form shadow-0">
               
               <!-- Profile Picture Section -->
               <div class="settings-section">
@@ -271,19 +243,6 @@
               </div>
               {{/if}}
 
-              <!-- Form Actions -->
-              <div class="settings-form-actions mt-5">
-                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                  <button type="button" class="btn btn-outline-secondary me-md-2" onclick="location.reload()">
-                    <i class="bi bi-arrow-clockwise me-1"></i>
-                    {{translations.setting.reset}}
-                  </button>
-                  <button type="submit" class="btn btn-primary btn-lg px-4">
-                    <i class="bi bi-check-circle me-2"></i>
-                    {{translations.setting.saveUserInfo}}
-                  </button>
-                </div>
-              </div>
             </form>
           </div>
 
@@ -323,22 +282,24 @@
 
           <!-- Subscription Tab -->
           <div class="tab-pane fade" id="subscription" role="tabpanel" aria-labelledby="subscription-tab">
-            <p id="user-plan" style="display: none;"></p>
-            <button id="cancel-plan" class="btn btn-outline-danger btn-sm rounded-pill" style="display: none;position: absolute; bottom: 20px;font-size: 10px;opacity: 0.5;" data-user-id="{{user._id}}">{{translations.setting.cancelSubscription}}</button>
-
-            <!-- Day Pass Countdown Section -->
-            <div id="day-pass-countdown-section" class="text-center p-3 border rounded shadow-sm mt-3" style="display: none;">
-              <h4 class="mb-3"><i class="bi bi-clock-history me-2"></i>{{translations.setting.dayPassActiveTitle}}</h4>
-              <p class="lead">{{translations.setting.dayPassExpiresIn}}</p>
-              <div id="countdown-timer" class="display-4 fw-bold text-primary mb-3">
-                <span id="hours">00</span>:<span id="minutes">00</span>:<span id="seconds">00</span>
+            <div class="settings-form shadow-0">
+              <p id="user-plan" style="display: none;"></p>
+              <button id="cancel-plan" class="btn btn-outline-danger btn-sm rounded-pill" style="display: none;position: absolute; bottom: 20px;font-size: 10px;opacity: 0.5;" data-user-id="{{user._id}}">{{translations.setting.cancelSubscription}}</button>
+            
+              <!-- Day Pass Countdown Section -->
+              <div id="day-pass-countdown-section" class="text-center p-3 border rounded shadow-sm mt-3" style="display: none;">
+                <h4 class="mb-3"><i class="bi bi-clock-history me-2"></i>{{translations.setting.dayPassActiveTitle}}</h4>
+                <p class="lead">{{translations.setting.dayPassExpiresIn}}</p>
+                <div id="countdown-timer" class="display-4 fw-bold text-primary mb-3">
+                  <span id="hours">00</span>:<span id="minutes">00</span>:<span id="seconds">00</span>
+                </div>
+                <p id="day-pass-expired-message" class="text-danger mt-2" style="display: none;">
+                  {{translations.setting.dayPassExpired}} <br>
+                  <button class="btn custom-gradient-bg mt-2" onclick="loadPlanPage()">{{translations.select_plan_here}}</button>
+                </p>
               </div>
-              <p id="day-pass-expired-message" class="text-danger mt-2" style="display: none;">
-                {{translations.setting.dayPassExpired}} <br>
-                <button class="btn custom-gradient-bg mt-2" onclick="loadPlanPage()">{{translations.select_plan_here}}</button>
-              </p>
+              <!-- End Day Pass Countdown Section -->
             </div>
-            <!-- End Day Pass Countdown Section -->
           </div>
 
           <!-- Usage Tab -->

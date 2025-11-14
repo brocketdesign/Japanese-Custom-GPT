@@ -94,7 +94,7 @@
             </div>
         </div>
         <div class="offcanvas-body px-3">
-            <div class="list-group list-group-flush">
+            <div class="list-group list-group-flush mb-4">
 
                 {{#if (eq user.subscriptionStatus 'active')}}
                 {{else}}
@@ -207,6 +207,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const offcanvasElement = document.getElementById('userMenuOffcanvas');
     const menuItems = document.querySelectorAll('.menu-item');
     const navbarContainer = document.getElementById('navbarNav');
+    const footerToolbar = document.getElementById('footer-toolbar');
+    const chatInput = document.getElementById('chatInput');
 
     if (avatarMenuContainer && offcanvasElement) {
         // Remove any existing show class on page load
@@ -236,6 +238,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if(navbarContainer) {
                 navbarContainer.style.right = '20px';
             }
+            if (footerToolbar) footerToolbar.style.display = 'none';
+            if (chatInput) chatInput.style.display = 'none';
 
         });
         
@@ -248,6 +252,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if(navbarContainer) {
                 navbarContainer.style.right = '-50vw';
             }
+            if (footerToolbar) footerToolbar.style.display = '';
+            if (chatInput) chatInput.style.display = '';
 
             // Enable body scroll when offcanvas is hidden
             document.body.style.overflow = 'auto';

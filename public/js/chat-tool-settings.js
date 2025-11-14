@@ -302,10 +302,8 @@ class ChatToolSettings {
         const isPremiumModel = selectedOption.classList.contains('premium-model');
         
         if (isPremiumModel && !this.isPremium) {
-            // Launch plan page for non-premium users
-            if (typeof loadPlanPage === 'function') {
-                loadPlanPage();
-            }
+            // Show premium upgrade message instead of blocking
+            loadPlanPage();
             return;
         }
         
@@ -1198,7 +1196,7 @@ class ChatToolSettings {
         // Update scenarios enable switch
         const scenariosEnableSwitch = document.getElementById('scenarios-enable-switch');
         if (scenariosEnableSwitch) {
-            scenariosEnableSwitch.checked = this.settings.scenariosEnabled !== undefined ? this.settings.scenariosEnabled : true;
+            scenariosEnableSwitch.checked = this.settings.scenariosEnabled !== undefined ? this.settings.scenariosEnabled : false;
         }
 
         // Update speech recognition enable switch
@@ -1339,7 +1337,7 @@ class ChatToolSettings {
 
     getScenariosEnabled() {
         return this.settings.scenariosEnabled !== undefined ? 
-            this.settings.scenariosEnabled : true;
+            this.settings.scenariosEnabled : false;
     }
 
     // Chat-specific methods
@@ -1490,7 +1488,7 @@ class ChatToolSettings {
                     <div class="settings-description text-muted mb-3">
                         ${this.t('premiumModelsDescription')}
                     </div>
-                    <div class="settings-model-grid">
+                    <div class="settings-model-grid settings-model-grid--premium">
                         ${this.renderModelOptions(premiumModels, true)}
                     </div>
                     ${!this.isPremium ? `
@@ -1512,7 +1510,7 @@ class ChatToolSettings {
     renderModelOptions(models, isPremium) {
         return Object.entries(models).map(([key, model]) => {
             const isSelected = key === this.settings.selectedModel;
-            // Remove the isDisabled logic - premium models should be clickable for all users
+            const isDisabled = isPremium && !this.isPremium; // Disable premium models for non-premium users
             
             const modelTranslations = this.t(`models.${key}`, {});
             const modelName = modelTranslations.name || model.displayName || model.modelName;
@@ -1522,9 +1520,11 @@ class ChatToolSettings {
             const quality = modelTranslations.quality || this.getQualityLabel(key);
 
             return `
-                <div class="settings-model-option ${isSelected ? 'selected' : ''} ${isPremium ? 'premium-model' : ''}" 
-                     data-model="${key}">
+                <div class="settings-model-option ${isSelected ? 'selected' : ''} ${isPremium ? 'premium-model' : ''} ${isDisabled ? 'disabled' : ''}" 
+                     data-model="${key}"
+                     style="${isDisabled ? 'opacity: 0.6;' : ''}">
                     ${isPremium ? '<div class="premium-model-badge"><i class="bi bi-crown-fill"></i> Premium</div>' : ''}
+                    ${isDisabled ? '<div class="model-lock-overlay"><i class="bi bi-lock-fill"></i> Premium Only</div>' : ''}
                     
                     <div class="settings-model-header">
                         <div class="settings-model-info">

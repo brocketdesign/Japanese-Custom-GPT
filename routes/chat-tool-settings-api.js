@@ -26,7 +26,6 @@ async function routes(fastify, options) {
             
             if (!settings) {
                 // Return default settings if none exist
-                console.log(`[chat-tool-settings] No settings found for user ${userId}, returning defaults (Premium: ${isPremium})`);
                 const defaultSettings = {
                     minImages: 3,
                     videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
@@ -41,7 +40,7 @@ async function routes(fastify, options) {
                     autoImageGeneration: isPremium,
                     speechRecognitionEnabled: true,
                     speechAutoSend: true,
-                    scenariosEnabled: true
+                    scenariosEnabled: false
                 };
                 return reply.send({ success: true, settings: defaultSettings, isPremium });
             }
@@ -115,7 +114,7 @@ async function routes(fastify, options) {
                 autoImageGeneration: isPremium ? Boolean(settings.autoImageGeneration !== undefined ? settings.autoImageGeneration : false) : false,
                 speechRecognitionEnabled: Boolean(settings.speechRecognitionEnabled !== undefined ? settings.speechRecognitionEnabled : true),
                 speechAutoSend: Boolean(settings.speechAutoSend !== undefined ? settings.speechAutoSend : false),
-                scenariosEnabled: Boolean(settings.scenariosEnabled !== undefined ? settings.scenariosEnabled : true)
+                scenariosEnabled: Boolean(settings.scenariosEnabled !== undefined ? settings.scenariosEnabled : false)
             };
 
             // Only keep the field that exists in the incoming settings
@@ -133,7 +132,6 @@ async function routes(fastify, options) {
             if (validSettings.videoPrompt !== undefined && validSettings.videoPrompt.length > 500) {
                 return reply.status(400).send({ error: 'videoPrompt must be less than 500 characters' });
             }
-            console.log(`[chat-tool-settings] Saving settings for user ${userId} (Chat-specific: ${!!chatId}, Premium: ${isPremium})`, validSettings);
             const collection = fastify.mongo.db.collection('chatToolSettings');
             const now = new Date();
 
@@ -221,7 +219,7 @@ async function routes(fastify, options) {
                 suggestionsEnabled: true,
                 speechRecognitionEnabled: true,
                 speechAutoSend: true,
-                scenariosEnabled: true
+                scenariosEnabled: false
             };
 
             reply.send({ 
@@ -310,7 +308,6 @@ async function routes(fastify, options) {
             }
 
             // Return default settings if none exist
-            console.log(`[chat-tool-settings] No settings found for user ${userId} and chat ${chatId}, returning defaults (Premium: ${isPremium})`);
             const defaultSettings = {
                 minImages: 3,
                 videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
@@ -325,7 +322,7 @@ async function routes(fastify, options) {
                 autoImageGeneration: isPremium,
                 speechRecognitionEnabled: true,
                 speechAutoSend: true,
-                scenariosEnabled: true
+                scenariosEnabled: false
             };
 
             reply.send({ success: true, settings: defaultSettings, isChatSpecific: false, isPremium });
@@ -359,15 +356,9 @@ async function routes(fastify, options) {
                 const dbModels = await getAvailableModelsFormatted();
                 
                 if (dbModels && Object.keys(dbModels).length > 0) {
-                    // Filter models based on subscription status
-                    let availableModels = {};
-                    
-                    Object.entries(dbModels).forEach(([key, model]) => {
-                        // Show all free models and premium models only to premium users
-                        if (model.category !== 'premium' || isPremium) {
-                            availableModels[key] = model;
-                        }
-                    });
+                    // Return ALL models to all users (premium and non-premium can see all models)
+                    // Non-premium users will see premium models as disabled on the frontend
+                    const availableModels = dbModels;
                     
                     console.log(`[chat-tool-settings] Loaded ${Object.keys(availableModels).length} models from database for user ${userId} (Premium: ${isPremium})`);
                     
@@ -384,9 +375,7 @@ async function routes(fastify, options) {
             // Fallback to legacy system
             const { getAllAvailableModels } = require('../models/openai');
             const availableModels = await getAllAvailableModels(isPremium);
-            
-            console.log(`[chat-tool-settings] Using legacy models for user ${userId} (Premium: ${isPremium})`);
-            
+                        
             reply.send({ 
                 success: true, 
                 models: availableModels,

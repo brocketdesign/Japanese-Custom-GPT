@@ -219,20 +219,11 @@ function transformUserMessages(messages, translations = {}) {
 async function routes(fastify, options) {
     fastify.post('/api/openai-chat-completion', async (request, reply) => {
         const requestId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        console.log(`[openai-chat-completion:${requestId}] === NEW REQUEST START ===`);
         
         try {
             const db = fastify.mongo.db;
             const { chatId, userChatId, isHidden, uniqueId } = request.body;
             let userId = request.body.userId;
-            
-            console.log(`[openai-chat-completion:${requestId}] Request body:`, {
-                chatId,
-                userChatId,
-                isHidden,
-                uniqueId,
-                userId
-            });
             
             // Validate required parameters
             if (!chatId || !userChatId) {
@@ -244,29 +235,18 @@ async function routes(fastify, options) {
             
             if (!userId) { 
                 const user = request.user;
-                console.log(`[openai-chat-completion:${requestId}] No userId provided, checking request.user`);
                 if (!user || !user._id) {
                     console.error(`[openai-chat-completion:${requestId}] AUTHENTICATION ERROR - User not authenticated`);
                     return reply.status(401).send({ error: 'User not authenticated' });
                 }
                 userId = user._id;
-                console.log(`[openai-chat-completion:${requestId}] Using userId from request.user: ${userId}`);
             }
 
-            console.log(`[openai-chat-completion:${requestId}] Fetching user information...`);
             // Fetch user information and settings
             const userInfo = await getUserInfo(db, userId);
-            console.log(`[openai-chat-completion:${requestId}] User info fetched:`, { subscriptionStatus: userInfo.subscriptionStatus });
             
-            console.log(`[openai-chat-completion:${requestId}] Fetching chat tool settings...`);
             const userSettings = await getUserChatToolSettings(fastify.mongo.db, userId, chatId);
-            console.log(`[openai-chat-completion:${requestId}] Settings fetched:`, {
-                scenariosEnabled: userSettings.scenariosEnabled,
-                selectedModel: userSettings.selectedModel,
-                relationshipType: userSettings.relationshipType
-            });
             
-            console.log(`[openai-chat-completion:${requestId}] Fetching user chat data...`);
             let userData = await getUserChatData(db, userId, userChatId);
             const subscriptionStatus = userInfo.subscriptionStatus == 'active' ? true : false;
             
@@ -275,17 +255,8 @@ async function routes(fastify, options) {
                 return reply.status(404).send({ error: 'User data not found' }); 
             }
             
-            console.log(`[openai-chat-completion:${requestId}] User chat data fetched - Messages: ${userData.messages.length}`);
-            console.log(`[openai-chat-completion:${requestId}] User chat data:`, {
-                messagesCount: userData.messages.length,
-                hasAvailableScenarios: !!userData.availableScenarios,
-                scenarioGenerated: userData.scenarioGenerated,
-                hasCurrentScenario: !!userData.currentScenario
-            });
-            
             // Check for scenario context message
             const hasContextMessage = userData.messages.some(m => m.name === 'context' && m.hidden);
-            console.log(`[openai-chat-completion:${requestId}] Has hidden context message: ${hasContextMessage}`);
             
             // Log message types
             const messageTypes = {};
@@ -293,16 +264,12 @@ async function routes(fastify, options) {
                 const key = `${m.role}_${m.name || 'unnamed'}_${m.hidden ? 'hidden' : 'visible'}`;
                 messageTypes[key] = (messageTypes[key] || 0) + 1;
             });
-            console.log(`[openai-chat-completion:${requestId}] Message breakdown:`, messageTypes);
 
-            console.log(`[openai-chat-completion:${requestId}] Checking admin status...`);
             const isAdmin = await checkUserAdmin(fastify, userId);
             
-            console.log(`[openai-chat-completion:${requestId}] Fetching chat document for chatId: ${chatId}`);
             let chatDocument;
             try {
                 chatDocument = await getChatDocument(request, db, chatId);
-                console.log(`[openai-chat-completion:${requestId}] Chat document fetched successfully - Name: ${chatDocument?.name}`);
             } catch (error) {
                 console.error(`[openai-chat-completion:${requestId}] ERROR fetching chat document:`, error);
                 console.error(`[openai-chat-completion:${requestId}] Stack trace:`, error.stack);
@@ -314,18 +281,13 @@ async function routes(fastify, options) {
                 return reply.status(400).send({ error: 'Chat document not found' });
             }
             
-            console.log(`[openai-chat-completion:${requestId}] Processing chat document...`);
             const nsfw = chatDocument?.nsfw || false;
             const characterNsfw = chatDocument?.nsfw || false;
             const chatDescription = chatDataToString(chatDocument);
-            console.log(`[openai-chat-completion:${requestId}] Chat description length: ${chatDescription.length}, NSFW: ${nsfw}`);
             
-            console.log(`[openai-chat-completion:${requestId}] Checking image descriptions...`);
             const characterDescription = await checkImageDescription(db, chatId, chatDocument);
-            console.log(`[openai-chat-completion:${requestId}] Character description length: ${characterDescription.length}`);
             
             const language = getLanguageName(userInfo.lang);
-            console.log(`[openai-chat-completion:${requestId}] Language detected: ${language}`);
 
             // Handle chat scenarios - Generate scenarios at the start of a new chat ONLY if:
             // 1. Not already generated (check for scenarioGenerated flag)
@@ -333,9 +295,7 @@ async function routes(fastify, options) {
             // 3. No scenario has been selected yet (currentScenario is null)
             const scenariosAlreadyGenerated = userData.scenarioGenerated === true;
             const hasSelectedScenario = userData.currentScenario !== null && userData.currentScenario !== undefined;
-            const scenariosEnabled = userSettings.scenariosEnabled !== false; // Default to true if not explicitly disabled
-            
-            console.log(`[/api/openai-chat-completion] Scenario check - Generated: ${scenariosAlreadyGenerated}, Selected: ${hasSelectedScenario}, Enabled: ${scenariosEnabled}`);
+            const scenariosEnabled = userSettings.scenariosEnabled === true; // Default to false if not explicitly disabled
             
             if (!scenariosAlreadyGenerated && !hasSelectedScenario && scenariosEnabled) {
                 try {
@@ -376,12 +336,9 @@ async function routes(fastify, options) {
                             }))
                         });
                         
-                        console.log(`[/api/openai-chat-completion] Generated and stored ${scenarios.length} scenarios for userChatId: ${userChatId}`);
                     } else {
-                        console.log(`[/api/openai-chat-completion] No scenarios generated`);
                     }
                 } catch (error) {
-                    console.log(`[/api/openai-chat-completion] Error generating scenarios: ${error}`);
                     // Don't block chat completion if scenario generation fails
                 }
             }
@@ -392,7 +349,14 @@ async function routes(fastify, options) {
             
             // Safety check: ensure lastUserMessage exists and is a valid message
             if (!lastUserMessage) {
-                return reply.status(400).send({ error: 'No messages in chat' });
+                // Init an empty assistant message if no messages exist
+                lastUserMessage = {
+                    timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }),
+                    createdAt: new Date()
+                };
+                userData.messages.push(lastUserMessage);
+                lastMsgIndex = userData.messages.length - 1;
+                //return reply.status(400).send({ error: 'No messages in chat' });
             }
             
             const lastAssistantRelation = userData.messages
@@ -423,7 +387,6 @@ async function routes(fastify, options) {
                 const personaId = userData?.persona || null;
                 personaInfo = personaId ? await getPersonaById(db, personaId) : null;
             } catch (error) {
-                console.log(`[/api/openai-chat-completion] Error fetching persona: ${error}`);
             }
             
             const userInfo_or_persona = personaInfo || userInfo;
@@ -554,7 +517,8 @@ async function routes(fastify, options) {
             //console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
             //console.log(`[/api/openai-chat-completion] Messages for completion:`, messagesForCompletion);
             
-            generateCompletion(messagesForCompletion, 600, selectedModel, language, selectedModel, isPremium).then(async (completion) => {
+            generateCompletion(messagesForCompletion, 600, selectedModel, language, selectedModel, isPremium)
+            .then(async (completion) => {
                 if (completion) {
                     fastify.sendNotificationToUser(userId, 'displayCompletionMessage', { message: completion, uniqueId });
                     
@@ -605,14 +569,11 @@ async function routes(fastify, options) {
                             }   
                         }
                     } else {
-                        console.log(`[openai-chat-completion:${requestId}] Auto image generation disabled, insufficient points, or not enough context.`);
                     }
                 } else {
                     fastify.sendNotificationToUser(userId, 'hideCompletionMessage', { uniqueId });
                 }
                 
-                console.log(`[openai-chat-completion:${requestId}] === REQUEST COMPLETED SUCCESSFULLY ===`);
-
                 // Handle sendImage from gallery on startup
                 await handleGalleryImage(db, lastUserMessage, userData, userChatId, userId, fastify);
             });
@@ -626,7 +587,6 @@ async function routes(fastify, options) {
                 console.error(`[openai-chat-completion:${requestId}] Response status:`, err.response.status);
                 console.error(`[openai-chat-completion:${requestId}] Response data:`, err.response.data);
             }
-            console.log(`[openai-chat-completion:${requestId}] === END REQUEST (ERROR) ===`);
             reply.status(500).send({ error: 'Error fetching OpenAI completion', details: err.message });
         }
     });

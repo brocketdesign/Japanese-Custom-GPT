@@ -417,98 +417,54 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedInde
     const chatId = type === 'chat' ? id : item.chatId;
     const linkUrl = item.chatSlug ? `/character/slug/${item.chatSlug}?imageSlug=${item.slug}` : `/character/${chatId}`;
     const addToChatLabel = window.translations?.image_tools?.add_to_chat || 'Add to Chat';
-    const nsfwToggleLabel = window.translations?.image_tools?.nsfw_toggle || 'Toggle NSFW';
-    const updateImageLabel = window.translations?.image_tools?.update_image || 'Update Image';
+    const addToChatButton = onChatPage ? `
+        <div class="position-absolute top-0 end-0 m-1" style="z-index:3;">
+            <span class="btn btn-light image-add-to-chat" 
+                  data-image-id="${item._id}" 
+                  data-chat-id="${chatId || ''}"
+                  data-source-type="${type}"
+                  title="${addToChatLabel}"
+                  aria-label="${addToChatLabel}"
+                  onclick="addGalleryImageToChat(this)">
+                <i class="bi bi-chat-square-text"></i>
+            </span>
+        </div>` : '';
     
-    // Generate unique identifier for this card
-    const cardId = `image-card-${item._id}`;
-    
-    // Blurred content for non-subscribers - let blurImage() handle the blur and overlay
-    if (isBlur) {
-        return `
-            <div class="image-card col-6 col-md-3 col-lg-2 mb-2" data-image-id="${item._id}" id="${cardId}">
-                <div class="card shadow-sm position-relative overflow-hidden" style="border-radius: 12px; border: 1px solid rgba(130, 64, 255, 0.15); background: #f5f7fa; aspect-ratio: 3/4;">
-                    <img data-src="${item.imageUrl}" 
-                         data-id="${item._id}" 
-                         class="card-img-top img-blur w-100 h-100" 
-                         style="object-fit: cover;">
-                </div>
-            </div>
-        `;
-    }
-    
-    // Unlocked content for subscribers
     return `
-        <div class="image-card col-6 col-md-3 col-lg-2 mb-2" data-image-id="${item._id}" id="${cardId}">
-            <div class="card shadow-sm position-relative overflow-hidden" style="border-radius: 12px; border: 1px solid rgba(130, 64, 255, 0.15); background: #ffffff; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); aspect-ratio: 3/4;">
-                <!-- Image Container -->
-                <div class="image-container image-fav-double-click position-relative w-100 h-100" 
-                     data-id="${item._id}" 
-                     data-chat-id="${chatId}"
-                     data-index="${loadedIndex}"
-                     href="${linkUrl}"
-                     style="cursor: pointer; overflow: hidden; background: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 100%);"
-                     onclick="toggleImageFavorite(this);">
-                    <img src="${item.imageUrl}" 
-                         alt="${item.prompt}" 
-                         class="card-img-top w-100 h-100" 
-                         style="object-fit: cover; transition: transform 0.3s ease;" 
-                         loading="lazy">
-                </div>
-                
-                <!-- Top Right Controls (Heart & Add-to-Chat) -->
-                <div class="position-absolute top-0 end-0 p-2 d-flex gap-2" style="z-index: 10;">
-                    <!-- Add to Chat Button (if on chat page) -->
-                    ${onChatPage ? `
-                        <button class="btn btn-sm image-add-to-chat-btn" 
-                                data-image-id="${item._id}" 
-                                data-chat-id="${chatId || ''}"
-                                data-source-type="${type}"
-                                style="background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%); border: none; border-radius: 8px; width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(130, 64, 255, 0.3); flex-shrink: 0;"
-                                title="${addToChatLabel}"
-                                onclick="event.stopPropagation(); event.preventDefault(); addGalleryImageToChat(this);">
-                            <i class="bi bi-chat-square-text" style="font-size: 1.1rem; color: white;"></i>
-                        </button>
-                    ` : ''}
-                    
-                    <!-- Heart/Like Button -->
-                    <button class="btn btn-sm image-fav" 
-                            data-id="${item._id}" 
-                            data-chat-id="${chatId}"
-                            style="background: rgba(255, 255, 255, 0.95); border: none; border-radius: 8px; width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); flex-shrink: 0;"
-                            title="Like image"
-                            onclick="event.stopPropagation(); event.preventDefault(); toggleImageFavorite(this);">
-                        <i class="bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'}" style="font-size: 1.1rem; color: ${isLiked ? '#ef4444' : '#6c757d'};"></i>
-                    </button>
-                </div>
-                
-                <!-- Admin Controls Footer -->
-                ${isAdmin ? `
-                    <div class="card-footer bg-white border-top p-2" style="background: rgba(255, 255, 255, 0.98) !important; border-top: 1px solid rgba(130, 64, 255, 0.15) !important; z-index: 8;">
-                        <div class="d-flex gap-1" style="gap: 0.25rem;">
-                            <!-- NSFW Toggle -->
-                            <button class="btn btn-sm flex-grow-1 image-nsfw-toggle-btn" 
-                                    data-id="${item._id}"
-                                    style="background: ${item?.nsfw ? 'rgba(255, 77, 77, 0.12)' : 'rgba(40, 167, 69, 0.12)'}; color: ${item?.nsfw ? '#ef4444' : '#28a745'}; border: 1px solid ${item?.nsfw ? 'rgba(255, 77, 77, 0.25)' : 'rgba(40, 167, 69, 0.25)'}; border-radius: 5px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; padding: 0.3rem 0.4rem; white-space: nowrap; overflow: hidden;"
-                                    title="${nsfwToggleLabel}"
-                                    onclick="event.stopPropagation(); event.preventDefault(); toggleImageNSFW(this);">
+        <div class="image-card col-6 col-md-3 col-lg-2 mb-2" data-image-id="${item._id}">
+            <div class="card shadow-0 position-relative">
+                ${!isBlur ? `${addToChatButton}` : ''}
+                ${isBlur ? 
+                    `<div class="position-relative">
+                        <div type="button" onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary})">
+                            <img data-src="${item.imageUrl}" data-id="${item._id}" class="card-img-top img-blur" style="object-fit: cover;" loading="lazy">
+                        </div>
+                    </div>` :
+                    `<div href="${linkUrl}" data-index="${loadedIndex}" 
+                        class="image-container image-fav-double-click"
+                        data-id="${item._id}" data-chat-id="${chatId}" onclick="toggleImageFavorite(this)">
+                        <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top" style="object-fit: cover;" loading="lazy">
+                    </div>
+                    <div class="position-absolute top-0 start-0 m-1" style="z-index:3;">
+                        <span class="btn btn-light image-fav ${isLiked ? 'liked' : ''}" 
+                            data-id="${item._id}" data-chat-id="${chatId}" onclick="toggleImageFavorite(this)">
+                            <i class="bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}" style="cursor: pointer;"></i>
+                        </span>
+                    </div>
+                    ${isAdmin ? `
+                        <div class="card-body p-2 row mx-0 px-0 align-items-center justify-content-between">
+                            <button class="btn btn-light col-6 image-nsfw-toggle ${item?.nsfw ? 'nsfw' : 'sfw'}" 
+                                data-id="${item._id}" onclick="toggleImageNSFW(this)">
                                 <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
                             </button>
-                            
-                            <!-- Update Chat Image (if chat type) -->
                             ${type === 'chat' ? `
-                                <button class="btn btn-sm flex-grow-1 update-chat-image-btn" 
-                                        data-id="${chatId}" 
-                                        data-img="${item.imageUrl}"
-                                        style="background: rgba(130, 64, 255, 0.12); color: #8240FF; border: 1px solid rgba(130, 64, 255, 0.25); border-radius: 5px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; padding: 0.3rem 0.4rem; white-space: nowrap; overflow: hidden;"
-                                        title="${updateImageLabel}"
-                                        onclick="event.stopPropagation(); event.preventDefault(); updateChatImage(this);">
+                                <button class="btn btn-light col-6 update-chat-image" onclick="updateChatImage(this)" data-id="${chatId}" data-img="${item.imageUrl}" style="cursor: pointer; opacity:0.8;">
                                     <i class="bi bi-image"></i>
                                 </button>
                             ` : ''}
-                        </div>
-                    </div>
-                ` : ''}
+                        </div>` : ''
+                    }`
+                }
             </div>
         </div>
     `;

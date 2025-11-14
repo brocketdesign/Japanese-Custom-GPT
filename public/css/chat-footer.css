@@ -2220,6 +2220,7 @@ body.keyboard-open #chatInput {
 @media (max-width: 768px) {
     .settings-model-grid {
         gap: 10px;
+        grid-template-columns: 1fr !important;
     }
     
     .settings-model-option {

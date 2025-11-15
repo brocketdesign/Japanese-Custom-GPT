@@ -1784,6 +1784,7 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             const db = fastify.mongo.db;
             const chatsCollection = db.collection('chats');
             const similarChatsCache = db.collection('similarChatsCache');
+            const similarityMatrixCollection = db.collection('similarityMatrix');
             const chatIdParam = request.params.chatId;
             let chatIdObjectId;
 
@@ -1794,7 +1795,7 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             return reply.code(400).send({ error: 'Invalid Chat ID format' });
             }
 
-            // Check cache first (24-hour expiry)
+            // Check result cache first (24-hour expiry) - fastest path
             const cacheKey = chatIdParam;
             const cacheExpiry = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
                         
@@ -1803,7 +1804,8 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
                 createdAt: { $gte: cacheExpiry }
             });
 
-            if (cachedResult) {
+            if (cachedResult && cachedResult.similarChats && cachedResult.similarChats.length > 0) {
+                console.log(`[API/SimilarChats] Using cached results for ${chatIdParam}`);
                 return reply.send(cachedResult.similarChats);
             }
 
@@ -1818,79 +1820,193 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             let similarChats = [];
             const characterPrompt = chat.enhancedPrompt || chat.characterPrompt;
 
-
             if (characterPrompt) {
             const mainPromptTokens = tokenizePrompt(characterPrompt);
             
-            // Optimized query with better indexing hints
-            const candidateChatsCursor = chatsCollection.find(
-                { 
-                _id: { $ne: chatIdObjectId }, 
-                language: chat.language, // Match same language
-                chatImageUrl: { $exists: true, $ne: null, $ne: "" },
-                visibility: { $ne: 'private' }, // Exclude private chats
-                $or: [
-                    { enhancedPrompt: { $exists: true, $ne: null, $ne: "" } }, 
-                    { characterPrompt: { $exists: true, $ne: null, $ne: "" } }
-                ] 
-                },
-                {
-                projection: {
-                    _id: 1, slug: 1, name: 1, modelId: 1, chatImageUrl: 1, 
-                    nsfw: 1, userId: 1, gender: 1, imageStyle: 1, 
-                    enhancedPrompt: 1, characterPrompt: 1
-                }
-                }
-            ).sort({ _id: -1 }).limit(200); // Limit candidates for performance
-            
-            const scoredChats = [];
-            let candidateCount = 0;
-            let validCandidateCount = 0;
-            
-            await candidateChatsCursor.forEach(candidate => {
-                candidateCount++;
-                const candidateTokens = tokenizePrompt(candidate.enhancedPrompt || candidate.characterPrompt);
-                
-                if (candidateTokens.size === 0) return; // Skip if no valid tokens
-                
-                validCandidateCount++;
-                
-                // Calculate Jaccard similarity for better matching
-                const intersection = new Set([...mainPromptTokens].filter(x => candidateTokens.has(x)));
-                const union = new Set([...mainPromptTokens, ...candidateTokens]);
-                const jaccardScore = intersection.size / union.size;
-                
-                // Only include chats with meaningful similarity (>10% Jaccard similarity)
-                if (jaccardScore > 0.1) {
-                scoredChats.push({
-                    ...candidate,
-                    score: jaccardScore
-                });
-                }
+            // Check similarity matrix for cached comparisons (7-day expiry)
+            const matrixExpiry = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+            const existingMatrix = await similarityMatrixCollection.findOne({
+                sourceChatId: chatIdObjectId,
+                updatedAt: { $gte: matrixExpiry }
             });
 
-            // Sort by score and take top 6
-            scoredChats.sort((a, b) => b.score - a.score);
-            similarChats = scoredChats.slice(0, 6).map(c => {
-                const { characterPrompt, enhancedPrompt, score, ...rest } = c;
-                return rest;
-            });
+            let scoredChats = [];
+            let fromMatrix = false;
+
+            if (existingMatrix && existingMatrix.similarities && existingMatrix.similarities.length > 0) {
+                // Use cached similarity matrix entries
+                console.log(`[API/SimilarChats] Using similarity matrix for ${chatIdParam} with ${existingMatrix.similarities.length} entries`);
+                
+                // Get chat details for matrix entries and filter by minimum score
+                const minScore = 0.08;
+                const matrixEntries = existingMatrix.similarities.filter(s => s.score >= minScore);
+                
+                if (matrixEntries.length > 0) {
+                    const matrixChatIds = matrixEntries.map(s => s.targetChatId);
+                    const matrixChats = await chatsCollection.find(
+                        { _id: { $in: matrixChatIds } },
+                        {
+                            projection: {
+                                _id: 1, slug: 1, name: 1, modelId: 1, chatImageUrl: 1,
+                                nsfw: 1, userId: 1, gender: 1, imageStyle: 1
+                            }
+                        }
+                    ).toArray();
+
+                    scoredChats = matrixEntries.map(entry => {
+                        const chatDoc = matrixChats.find(c => c._id.toString() === entry.targetChatId.toString());
+                        return {
+                            ...entry,
+                            chatDoc
+                        };
+                    }).filter(s => s.chatDoc);
+
+                    fromMatrix = true;
+                }
+            }
+
+            // If not enough results from matrix, perform fresh search
+            if (scoredChats.length < 3) {
+                console.log(`[API/SimilarChats] Insufficient matrix results (${scoredChats.length}), performing fresh search for ${chatIdParam}`);
+                
+                const galleryCollection = db.collection('gallery');
+                
+                // Find gallery documents with at least 4 images and valid image prompts
+                const galleryDocs = await galleryCollection.aggregate([
+                    {
+                        $match: {
+                            'images.0': { $exists: true },
+                            'chatId': { $ne: chatIdObjectId }
+                        }
+                    },
+                    {
+                        $addFields: {
+                            imageCount: { $size: '$images' }
+                        }
+                    },
+                    {
+                        $match: {
+                            imageCount: { $gte: 4 }
+                        }
+                    },
+                    {
+                        $project: {
+                            chatId: 1,
+                            imageCount: 1,
+                            images: {
+                                $filter: {
+                                    input: '$images',
+                                    as: 'image',
+                                    cond: { 
+                                        $and: [
+                                            { $ne: ['$$image.prompt', null] },
+                                            { $ne: ['$$image.prompt', ''] }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    {
+                        $match: {
+                            'images.0': { $exists: true }
+                        }
+                    }
+                ]).toArray();
+
+                // Score each gallery based on image prompt similarity
+                const freshScoredChats = [];
+                
+                for (const galleryDoc of galleryDocs) {
+                    let totalScore = 0;
+                    let validImages = 0;
+
+                    for (const image of galleryDoc.images) {
+                        if (image.prompt) {
+                            const imagePromptTokens = tokenizePrompt(image.prompt);
+                            const intersection = new Set([...mainPromptTokens].filter(x => imagePromptTokens.has(x)));
+                            const union = new Set([...mainPromptTokens, ...imagePromptTokens]);
+                            const jaccardScore = union.size > 0 ? intersection.size / union.size : 0;
+                            
+                            if (jaccardScore > 0.05) {
+                                totalScore += jaccardScore;
+                                validImages++;
+                            }
+                        }
+                    }
+
+                    const avgScore = validImages > 0 ? totalScore / validImages : 0;
+                    
+                    if (avgScore > 0.08) {
+                        freshScoredChats.push({
+                            targetChatId: galleryDoc.chatId,
+                            imageCount: galleryDoc.imageCount,
+                            score: avgScore,
+                            matchedImagesCount: validImages
+                        });
+                    }
+                }
+
+                // Sort by composite score: 60% similarity, 40% image count
+                freshScoredChats.sort((a, b) => {
+                    const maxImages = Math.max(...freshScoredChats.map(c => c.imageCount), 1);
+                    const scoreA = (a.score * 0.6) + ((a.imageCount / maxImages) * 0.4);
+                    const scoreB = (b.score * 0.6) + ((b.imageCount / maxImages) * 0.4);
+                    return scoreB - scoreA;
+                });
+
+                // Store in similarity matrix for future use
+                if (freshScoredChats.length > 0) {
+                    await similarityMatrixCollection.updateOne(
+                        { sourceChatId: chatIdObjectId },
+                        {
+                            $set: {
+                                sourceChatId: chatIdObjectId,
+                                similarities: freshScoredChats.slice(0, 20), // Store top 20
+                                updatedAt: new Date(),
+                                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+                            }
+                        },
+                        { upsert: true }
+                    );
+                }
+
+                // Get chat details
+                const topChatIds = freshScoredChats.slice(0, 6).map(c => c.targetChatId);
+                
+                if (topChatIds.length > 0) {
+                    const topChats = await chatsCollection.find(
+                        { _id: { $in: topChatIds } },
+                        {
+                            projection: {
+                                _id: 1, slug: 1, name: 1, modelId: 1, chatImageUrl: 1,
+                                nsfw: 1, userId: 1, gender: 1, imageStyle: 1
+                            }
+                        }
+                    ).toArray();
+
+                    similarChats = topChatIds.map(chatId => 
+                        topChats.find(c => c._id.toString() === chatId.toString())
+                    ).filter(Boolean);
+                }
+            } else {
+                // Use matrix results
+                similarChats = scoredChats.slice(0, 6).map(s => s.chatDoc);
+            }
 
             } else {
                 console.log(`[API/SimilarChats] No prompt found for current character ${chatIdParam}. Skipping similar chat search.`);
             }
 
-            // Cache the result (upsert to handle updates)
+            // Cache the final result (upsert to handle updates)
             const cacheDocument = {
             chatId: cacheKey,
             similarChats: similarChats,
             createdAt: new Date(),
-            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
             };
 
-      
-
-            const cacheResult = await similarChatsCache.updateOne(
+            await similarChatsCache.updateOne(
             { chatId: cacheKey },
             { $set: cacheDocument },
             { upsert: true }

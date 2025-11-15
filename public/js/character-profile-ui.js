@@ -6,30 +6,19 @@
 /**
  * Display images in the grid
  */
-function displayImagesInGrid() {
-    let images = window.loadedImages || [];
-    
+function displayImagesInGrid(images = []) {    
     const grid = document.getElementById('imagesGrid');
     
     if (!grid) {
+        console.log('[displayImagesInGrid] No grid element found');
         return;
     }
     
-    // Fallback: try to get from hidden gallery element
-    if (images.length === 0) {
-        const existingGallery = document.getElementById('chat-images-gallery');
-        if (existingGallery) {
-            const galleryItems = existingGallery.querySelectorAll('.image-card');
-            images = Array.from(galleryItems).map((el, idx) => ({
-                _id: el.getAttribute('data-image-id'),
-                imageUrl: el.querySelector('img').src,
-                isLiked: el.getAttribute('data-liked') === 'true',
-                index: idx
-            }));
-        }
-    }
+    // LOG: Check initial state
+    console.log(`[displayImagesInGrid] START - images length: ${images.length}`);
     
     if (images.length === 0) {
+        console.log(`[displayImagesInGrid] No images to display`);
         grid.innerHTML = `<div style="padding: 60px 20px; text-align: center; color: #999; grid-column: 1/-1; font-size: 0.95rem;">
             <i class="bi bi-image" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5; display: block;"></i>
             No images available
@@ -55,6 +44,7 @@ function displayImagesInGrid() {
         
         if (isNSFW) {
             nsfwCount++;
+            console.log(`[displayImagesInGrid] NSFW image found - ID: ${image._id}, subscription: ${subscriptionStatus}`);
         }
         
         // Determine if this image should be blurred
@@ -204,7 +194,149 @@ function displayImagesInGrid() {
         } else {
             showLoadMoreButton('images');
         }
+        
+        // LOG: Summary
+        console.log(`[displayImagesInGrid] SUMMARY - NSFW: ${nsfwCount}, Blurred: ${blurredCount}, Displayed: ${displayedCount}, Total: ${images.length}`);
     }
+}
+
+
+/**
+ * Display additional images in the grid (append mode, not replace)
+ */
+function displayMoreImagesInGrid(images = []) {
+    const grid = document.getElementById('imagesGrid');
+    
+    if (!grid || images.length === 0) {
+        console.log('[displayMoreImagesInGrid] No grid or images provided');
+        return;
+    }
+    
+    console.log(`[displayMoreImagesInGrid] Appending ${images.length} images to grid`);
+    
+    const currentUser = window.user || {};
+    const subscriptionStatus = currentUser.subscriptionStatus === 'active';
+    const isTemporary = !!currentUser.isTemporary;
+    
+    // Get current count of media items in grid (to continue numbering)
+    const existingMediaItems = grid.querySelectorAll('.media-item').length;
+    let imageIndexCounter = existingMediaItems + 1;
+    
+    images.forEach((image) => {
+        // Skip if already displayed
+        const existingCard = grid.querySelector(`[data-image-id="${image._id}"]`);
+        if (existingCard) {
+            console.log(`[displayMoreImagesInGrid] Skipping duplicate image ${image._id}`);
+            return;
+        }
+        
+        let imgSrc = image.imageUrl;
+        let isLiked = image.isLiked || false;
+        let isNSFW = image.nsfw || false;
+        
+        // Determine if this image should be blurred
+        const shouldBlur = isNSFW && (isTemporary || !subscriptionStatus);
+        
+        if (!imgSrc) {
+            return;
+        }
+        
+        const item = document.createElement('div');
+        item.className = 'media-item';  // ◄─── Use SAME class as displayImagesInGrid
+        item.dataset.imageId = image._id;
+        
+        if (shouldBlur) {
+            // Show blurred image with overlay for NSFW content
+            item.innerHTML = `
+                <div style="position: relative; cursor: pointer; overflow: hidden; border-radius: 8px;">
+                    <img src="${imgSrc}" alt="Image" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; filter: blur(8px);" onerror="this.style.display='none'">
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10;">
+                        <i class="bi bi-exclamation-triangle" style="font-size: 2rem; color: #dc2626; margin-bottom: 8px;"></i>
+                        <span style="color: white; font-weight: 600; font-size: 0.9rem;">NSFW Content</span>
+                        <button onclick="event.stopPropagation(); ${isTemporary ? 'openLoginForm()' : 'loadPlanPage()'}" style="margin-top: 8px; padding: 6px 12px; background: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 500;">
+                            ${isTemporary ? 'Login to View' : 'Subscribe to View'}
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Show normal image with like button (SAME as displayImagesInGrid)
+            item.innerHTML = `
+                <img src="${imgSrc}" alt="Image" loading="lazy" onerror="this.style.display='none'">
+                <div class="media-item-actions">
+                    <button class="media-action-btn image-fav ${isLiked ? 'liked' : ''}" 
+                            data-id="${image._id}" 
+                            title="Like">
+                        <i class="bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'}"></i>
+                    </button>
+                </div>
+                <div class="media-item-overlay">
+                    <div class="media-item-info">
+                        <i class="bi bi-images" style="margin-right: 4px;"></i>
+                        ${imageIndexCounter}
+                    </div>
+                </div>
+            `;
+            
+            // Increment counter for next image
+            imageIndexCounter++;
+            
+            // Add event listener for like button
+            const likeBtn = item.querySelector('.image-fav');
+            if (likeBtn) {
+                likeBtn.addEventListener('click', toggleImageLike);
+            }
+            
+            // Store image data on the media-item element for later retrieval
+            item.dataset.image = JSON.stringify(image);
+            
+            // Make the entire media-item clickable with cursor pointer
+            item.style.cursor = 'pointer';
+            item.setAttribute('data-toggle', 'modal');
+            item.setAttribute('role', 'button');
+        }
+        
+        grid.appendChild(item);
+    });
+    
+    // Re-attach click delegation handler (since we added new items)
+    const newGridListener = function(e) {
+        const mediaItem = e.target.closest('.media-item');
+        
+        if (mediaItem) {
+            const clickedButton = e.target.closest('button');
+            if (clickedButton) {
+                return;
+            }
+            
+            const nsfw_overlay = mediaItem.querySelector('[style*="rgba(0,0,0,0.6)"]');
+            if (nsfw_overlay && e.target.closest('button')) {
+                return;
+            }
+            
+            if (mediaItem.dataset.image) {
+                try {
+                    const imageData = JSON.parse(mediaItem.dataset.image);
+                    
+                    if (typeof displayImageModal === 'function') {
+                        displayImageModal(imageData);
+                    }
+                } catch (err) {
+                    // ignore parse errors
+                }
+            }
+        }
+    };
+    
+    // Remove previous listener if exists
+    if (grid._clickListener) {
+        grid.removeEventListener('click', grid._clickListener);
+    }
+    // Store and add new listener
+    grid._clickListener = newGridListener;
+    grid.addEventListener('click', newGridListener);
+    
+    console.log(`[displayMoreImagesInGrid] Added ${images.length} images to grid, continuing from index ${existingMediaItems + 1}`);
 }
 
 /**

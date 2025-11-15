@@ -76,7 +76,7 @@ window.loadChatImages = function(chatId, page = 1, reload = false, isModal = fal
     const onCharacterPage = !!document.querySelector('#characterProfilePage');
     if (!onCharacterPage && !validateChatIdWithSession(chatId)) {
         console.warn(`[loadChatImages] Chat ID ${chatId} does not match session storage`);
-        return Promise.resolve();
+        return Promise.resolve([]);
     }
     return loadImages('chat', chatId, page, reload, isModal, `/chat/${chatId}/images`, onCharacterPage, 'image');
 };
@@ -122,6 +122,7 @@ function validateChatIdWithSession(chatId) {
  * Generic function to load images with infinite scroll
  */
 function loadImages(type, id, page = 1, reload = false, isModal = false, endpoint, onCharacterPage = false, mediaType = 'image') {
+
     const manager = window.chatImageManager;
     const cacheKey = `${type}_${id}`;
     const config = getGalleryConfig(type);
@@ -153,6 +154,8 @@ function loadImages(type, id, page = 1, reload = false, isModal = false, endpoin
     
     return new Promise(async (resolve, reject) => {
         try {
+            let allImagesToReturn = [];
+            
             // Handle reload scenario
             if (reload) {
                 const hasCache = await handleReload(id, cacheKey, type, mediaType);
@@ -162,9 +165,19 @@ function loadImages(type, id, page = 1, reload = false, isModal = false, endpoin
                     setupInfiniteScroll(id, isModal, type);
                 }
                 
+                // Collect all cached images to return
+                const cache = manager.cache.get(cacheKey);
+                if (cache) {
+                    cache.forEach((pageImages) => {
+                        if (Array.isArray(pageImages)) {
+                            allImagesToReturn.push(...pageImages);
+                        }
+                    });
+                }
+                
                 // If we have cache and we're requesting page 1, don't fetch from server
                 if (hasCache && page === 1) {
-                    resolve();
+                    resolve(allImagesToReturn);
                     return;
                 }
                 
@@ -189,31 +202,34 @@ function loadImages(type, id, page = 1, reload = false, isModal = false, endpoin
                 if (!onCharacterPage) {
                     setupInfiniteScroll(id, isModal, type);
                 }
-                resolve();
+                resolve(cachedItems);
                 return;
             }
             
             // Prevent duplicate requests
             if (manager.loadingStates.get(cacheKey)) {
-                resolve();
+                resolve(allImagesToReturn);
                 return;
             }
             
             // Check if we've reached the end
             if (page > manager.totalPages.get(cacheKey)) {
-                resolve();
+                resolve(allImagesToReturn);
                 return;
             }
             
             // Additional check for reload scenario
             if (reload && page === 1 && manager.cache.get(cacheKey).has(1)) {
-                resolve();
+                resolve(allImagesToReturn);
                 return;
             }
             
             // Fetch from server
             await fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type, mediaType);
-            resolve();
+            
+            // Return the newly fetched page
+            const fetchedPageImages = manager.cache.get(cacheKey).get(page) || [];
+            resolve(fetchedPageImages);
             
         } catch (error) {
             console.error(`[loadImages] ERROR for ${cacheKey}:`, error);
@@ -367,10 +383,20 @@ async function renderImages(images, id, type) {
     const fragment = document.createDocumentFragment();
     let newImagesAdded = 0;
     let duplicatesSkipped = 0;
+    let nsfw_count = 0;
+    let non_nsfw_count = 0;
     
     images.forEach((item, index) => {
         const isBlur = shouldBlurNSFW(item, subscriptionStatus);
         const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
+        
+        // LOG: Track NSFW images
+        if (isBlur) {
+            nsfw_count++;
+            console.log(`[renderImages] NSFW Image Received - ID: ${item._id}, isBlur: ${isBlur}, subscription: ${subscriptionStatus}`);
+        } else {
+            non_nsfw_count++;
+        }
         
         // Check for existing image more carefully using data-image-id
         const imageAlreadyDisplayed = document.querySelector(`[data-image-id="${item._id}"]`) !== null;
@@ -382,6 +408,12 @@ async function renderImages(images, id, type) {
         // Add to loadedImages if not blurred and not already present
         if (!isBlur && !window.loadedImages.some(img => img._id === item._id)) {
             window.loadedImages.push(item);
+        }
+        
+        // LOG: Check if NSFW image was added to loadedImages
+        if (isBlur) {
+            const wasAdded = window.loadedImages.some(img => img._id === item._id);
+            console.log(`[renderImages] NSFW Image NOT added to window.loadedImages (isBlur=${isBlur}, wasAdded=${wasAdded})`);
         }
         
         const loadedIndex = window.loadedImages.length - 1;
@@ -396,6 +428,9 @@ async function renderImages(images, id, type) {
         fragment.appendChild(cardElement);
         newImagesAdded++;
     });
+    
+    // LOG: Summary of renderImages
+    console.log(`[renderImages] Summary - NSFW: ${nsfw_count}, Non-NSFW: ${non_nsfw_count}, window.loadedImages length: ${window.loadedImages.length}, Total received: ${images.length}`);
     
     // Append all cards at once for better performance
     const gallery = document.querySelector(gallerySelector);

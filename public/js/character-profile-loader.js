@@ -45,37 +45,41 @@ function loadCharacterImages(chatId) {
         window.characterProfile.imagesLoading = true;
         window.loadedImages = [];
         
+        console.log(`[loadCharacterImages] START - Calling loadChatImages with reload=true, chatId=${chatId}`);
+        
         loadChatImages(chatId, 1, true)
-            .then(() => {
+            .then((images) => {
                 const manager = window.chatImageManager;
                 const imagesCount = (window.loadedImages || []).length;
+                
+                console.log(`[loadCharacterImages] Promise resolved - window.loadedImages length: ${imagesCount}`);
                 
                 // Get the actual state from cache manager after fetch completes
                 const actualCurrentPage = manager.currentPages.get(cacheKey) || 1;
                 const actualTotalPages = manager.totalPages.get(cacheKey) || 1;
                 const hasCache = manager.cache.has(cacheKey);
                 
-                // IMPORTANT: Wait a bit more to ensure totalPages is set from API response
-                // The fetch might complete just before this setTimeout
-                setTimeout(() => {
-                    displayImagesInGrid();
+                console.log(`[loadCharacterImages] Cache state - currentPage: ${actualCurrentPage}, totalPages: ${actualTotalPages}, hasCache: ${hasCache}`);
+                                
+                // Display images directly - no setTimeout needed
+                displayImagesInGrid(images);
                     
-                    // Re-read the state AGAIN after display, in case totalPages was just updated
-                    const finalCurrentPage = manager.currentPages.get(cacheKey) || 1;
-                    const finalTotalPages = manager.totalPages.get(cacheKey) || 1;
-                    
-                    // Sync characterProfile with actual cache state AFTER display
-                    window.characterProfile.imagesCurrentPage = finalCurrentPage;
-                    window.characterProfile.imagesTotalPages = finalTotalPages;
-                    
-                    // After loading first page, update button visibility USING FINAL STATE
-                    updateLoadMoreButton(chatId);
-                    window.characterProfile.imagesLoading = false;
-                }, 800);
+                // Re-read the state AGAIN after display, in case totalPages was just updated
+                const finalCurrentPage = manager.currentPages.get(cacheKey) || 1;
+                const finalTotalPages = manager.totalPages.get(cacheKey) || 1;
+                
+                // Sync characterProfile with actual cache state AFTER display
+                window.characterProfile.imagesCurrentPage = finalCurrentPage;
+                window.characterProfile.imagesTotalPages = finalTotalPages;
+                
+                // After loading first page, update button visibility USING FINAL STATE
+                updateLoadMoreButton(chatId);
+                window.characterProfile.imagesLoading = false;
+                
             })
             .catch((error) => {
                 window.characterProfile.imagesLoading = false;
-                displayImagesInGrid();
+                displayImagesInGrid([]);
             });
     }
 }
@@ -108,33 +112,30 @@ function loadMoreCharacterImages(chatId) {
         
         // Load next page WITHOUT reload flag - this will render images and append to grid
         loadChatImages(chatId, nextPage, false)
-            .then(() => {
+            .then((images) => {
                 const imagesCount = (window.loadedImages || []).length;
                 
                 // Get updated cache state after fetch
                 const updatedCurrentPage = manager.currentPages.get(cacheKey) || nextPage;
                 const updatedTotalPages = manager.totalPages.get(cacheKey) || totalPagesFromCache;
+               
+                // Append new images to existing grid
+                displayMoreImagesInGrid(images);
                 
-                // Wait a bit more to ensure API response totalPages is set
-                setTimeout(() => {
-                    // Display the newly loaded images in the grid
-                    displayImagesInGrid();
-                    
-                    // Re-read state ONE MORE TIME before updating UI (totalPages might have just updated)
-                    const finalCurrentPage = manager.currentPages.get(cacheKey) || nextPage;
-                    const finalTotalPages = manager.totalPages.get(cacheKey) || totalPagesFromCache;
-                    
-                    // Sync characterProfile state with actual cache state
-                    window.characterProfile.imagesCurrentPage = finalCurrentPage;
-                    window.characterProfile.imagesTotalPages = finalTotalPages;
-                    // Update button visibility USING FINAL STATE
-                    updateLoadMoreButton(chatId);
-                    // Hide loading spinner
-                    if (typeof hideLoadMoreButtonSpinner === 'function') {
-                        hideLoadMoreButtonSpinner('images');
-                    }
-                    window.characterProfile.imagesLoading = false;
-                }, 500);
+                // Re-read state ONE MORE TIME before updating UI (totalPages might have just updated)
+                const finalCurrentPage = manager.currentPages.get(cacheKey) || nextPage;
+                const finalTotalPages = manager.totalPages.get(cacheKey) || totalPagesFromCache;
+                
+                // Sync characterProfile state with actual cache state
+                window.characterProfile.imagesCurrentPage = finalCurrentPage;
+                window.characterProfile.imagesTotalPages = finalTotalPages;
+                // Update button visibility USING FINAL STATE
+                updateLoadMoreButton(chatId);
+                // Hide loading spinner
+                if (typeof hideLoadMoreButtonSpinner === 'function') {
+                    hideLoadMoreButtonSpinner('images');
+                }
+                window.characterProfile.imagesLoading = false;
             })
             .catch((error) => {
                 // Hide loading spinner on error

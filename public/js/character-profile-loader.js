@@ -297,9 +297,17 @@ function loadCharacterStats(chatId) {
  * Load similar characters
  */
 function loadSimilarCharacters(chatId) {
+    // Show loading spinner
+    showSimilarCharactersLoader();
+    
     if (typeof fetchSimilarChats === 'function') {
         fetchSimilarChats(chatId).then(characters => {
             displaySimilarCharacters(characters);
+            // Hide loading spinner
+            hideSimilarCharactersLoader();
+        }).catch(error => {
+            // Hide loading spinner on error
+            hideSimilarCharactersLoader();
         });
     }
 }

@@ -94,7 +94,7 @@ window.showCharacterImagePreview = function(clickedImageData) {
                                 <div class="swiper-button-prev" style="color: white; opacity: 0.8; left: 20px;"></div>
                                 
                                 <!-- Pagination dots -->
-                                <div class="swiper-pagination" style="bottom: 140px;"></div>
+                                <div class="swiper-pagination d-none" style="bottom: 140px;"></div>
                                 
                                 <!-- Like button overlay - TOP LEFT -->
                                 <div class="image-like-overlay position-absolute" style="top: 60px; left: 20px; z-index: 1000;">
@@ -318,7 +318,9 @@ function attachCharacterDoubleTapListener() {
     function updateCharacterImageInfo(activeIndex) {
         const currentImage = window.characterPreviewImages[activeIndex];
         if (currentImage) {
-            $('.image-title').text(currentImage.title || 'Untitled');
+            currentImage.title && currentImage.title.trim() !== '' ?
+                $('.image-title').text(currentImage.title) :
+                $('.image-info-container').hide();
             $('.image-prompt').text(currentImage.prompt || 'No description available');
             
             // Reset scroll position when switching images

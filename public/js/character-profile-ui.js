@@ -613,7 +613,7 @@ function addLoadMoreButton(type) {
     const btn = document.createElement('button');
     btn.className = 'load-more-btn';
     btn.id = `${buttonId}-btn`;
-    btn.innerHTML = translations.loadMore;
+    btn.innerHTML = translations.loadMore + ' ' + (type === 'images' ? translations.images : translations.videos);
     btn.style.padding = '12px 32px';
     btn.style.fontSize = '0.95rem';
     btn.style.fontWeight = '600';
@@ -649,7 +649,7 @@ function addLoadMoreButton(type) {
     });
     
     buttonContainer.appendChild(btn);
-    grid.appendChild(buttonContainer);
+    grid.parentNode.insertBefore(buttonContainer, grid.nextSibling);
 }
 
 /**
@@ -744,8 +744,31 @@ function hideLoadMoreButtonSpinner(type) {
     
     if (btn) {
         btn.disabled = false;
-        btn.innerHTML = `Load More ${type === 'images' ? 'Images' : 'Videos'}`;
+        btn.innerHTML = translations.loadMore + ' ' + (type === 'images' ? translations.images : translations.videos);
         btn.style.cursor = 'pointer';
         btn.style.opacity = '1';
     }
+}
+
+/**
+ * Show loading spinner for similar characters
+ */
+function showSimilarCharactersLoader() {
+    const grid = document.getElementById('similarCharactersGrid');
+    if (grid) {
+        grid.innerHTML = `
+            <div style="grid-column: 1/-1; display: flex; justify-content: center; align-items: center; padding: 40px 20px;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Hide loading spinner for similar characters
+ */
+function hideSimilarCharactersLoader() {
+    // Loader will be replaced when displaySimilarCharacters is called
 }

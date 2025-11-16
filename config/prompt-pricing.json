@@ -1,0 +1,503 @@
+{
+  "prompts": [
+    {
+      "id": "671a1283a1a7560c94f7cf00",
+      "title": "Portrait",
+      "oldCost": 5,
+      "newCost": 50,
+      "nsfw": false,
+      "category": "SFW_BASIC",
+      "reasoning": "Basic SFW portrait - minimum 50 points for reasonable pricing"
+    },
+    {
+      "id": "6782c315f12a3fd2161b6b66",
+      "title": "Hands Up",
+      "oldCost": 5,
+      "newCost": 50,
+      "nsfw": false,
+      "category": "SFW_BASIC",
+      "reasoning": "Simple SFW pose - minimum tier"
+    },
+    {
+      "id": "67a57dedcf70ac08b7f58417",
+      "title": "Selfie",
+      "oldCost": 5,
+      "newCost": 50,
+      "nsfw": false,
+      "category": "SFW_BASIC",
+      "reasoning": "Basic selfie pose - minimum tier"
+    },
+    {
+      "id": "67a58240cf70ac08b7f58418",
+      "title": "Kneeling Pose",
+      "oldCost": 5,
+      "newCost": 55,
+      "nsfw": false,
+      "category": "SFW_BASIC",
+      "reasoning": "SFW kneeling pose - slightly above minimum"
+    },
+    {
+      "id": "67a58d1bcf70ac08b7f5841d",
+      "title": "Reaching Kiss",
+      "oldCost": 7,
+      "newCost": 60,
+      "nsfw": false,
+      "category": "SFW_BASIC",
+      "reasoning": "SFW romantic pose - entry level advanced"
+    },
+    {
+      "id": "671483ef624a9b9ede556cbd",
+      "title": "Knee Up",
+      "oldCost": 7,
+      "newCost": 65,
+      "nsfw": false,
+      "category": "SFW_BASIC",
+      "reasoning": "SFW leg pose with some suggestive content"
+    },
+    {
+      "id": "6714a14db3c68ec8b4cff908",
+      "title": "Grab your chest",
+      "oldCost": 8,
+      "newCost": 100,
+      "nsfw": true,
+      "category": "NSFW_LIGHT",
+      "reasoning": "NSFW with breast focus - 2x SFW minimum"
+    },
+    {
+      "id": "671a1962cc4f7e6a10cfc189",
+      "title": "Crouching panty shot",
+      "oldCost": 8,
+      "newCost": 75,
+      "nsfw": false,
+      "category": "SFW_BASIC",
+      "reasoning": "Borderline SFW with underwear visibility - still SFW"
+    },
+    {
+      "id": "6792b206521d6209011ee601",
+      "title": "Pull Short",
+      "oldCost": 10,
+      "newCost": 110,
+      "nsfw": true,
+      "category": "NSFW_LIGHT",
+      "reasoning": "NSFW with explicit underwear - light NSFW tier"
+    },
+    {
+      "id": "6792c6f08c4cb72d3a02025d",
+      "title": "Sport Gym",
+      "oldCost": 10,
+      "newCost": 70,
+      "nsfw": false,
+      "category": "SFW_BASIC",
+      "reasoning": "SFW athletic wear pose - mid-basic tier"
+    },
+    {
+      "id": "67a58dc7cf70ac08b7f5841e",
+      "title": "Sleeping Couch",
+      "oldCost": 10,
+      "newCost": 70,
+      "nsfw": false,
+      "category": "SFW_BASIC",
+      "reasoning": "SFW sleeping pose - mid-basic tier"
+    },
+    {
+      "id": "67a5844ecf70ac08b7f58419",
+      "title": "Stretching Split Legs",
+      "oldCost": 13,
+      "newCost": 80,
+      "nsfw": false,
+      "category": "SFW_ADVANCED",
+      "reasoning": "SFW advanced flexibility pose - premium SFW content"
+    },
+    {
+      "id": "671499723884c3afcaf84861",
+      "title": "On all fours",
+      "oldCost": 15,
+      "newCost": 120,
+      "nsfw": true,
+      "category": "NSFW_LIGHT",
+      "reasoning": "NSFW suggestive pose - light NSFW"
+    },
+    {
+      "id": "6782c523f12a3fd2161b6b73",
+      "title": "standing on one leg",
+      "oldCost": 20,
+      "newCost": 85,
+      "nsfw": false,
+      "category": "SFW_ADVANCED",
+      "reasoning": "SFW advanced flexibility - premium SFW content"
+    },
+    {
+      "id": "6714a7465e052492226741d9",
+      "title": "Sexy back view",
+      "oldCost": 23,
+      "newCost": 90,
+      "nsfw": false,
+      "category": "SFW_ADVANCED",
+      "reasoning": "SFW but suggestive back view - premium SFW"
+    },
+    {
+      "id": "6782bbcef12a3fd2161b6b5a",
+      "title": "Harms Behind Head",
+      "oldCost": 25,
+      "newCost": 95,
+      "nsfw": false,
+      "category": "SFW_ADVANCED",
+      "reasoning": "SFW suggestive pose - upper premium SFW"
+    },
+    {
+      "id": "671a1670cc4f7e6a10cfc186",
+      "title": "T-back pose",
+      "oldCost": 30,
+      "newCost": 150,
+      "nsfw": true,
+      "category": "NSFW_MEDIUM",
+      "reasoning": "NSFW explicit underwear focus - medium NSFW tier"
+    },
+    {
+      "id": "677e1d98cb5363dfb6136661",
+      "title": "Under legs",
+      "oldCost": 30,
+      "newCost": 160,
+      "nsfw": true,
+      "category": "NSFW_MEDIUM",
+      "reasoning": "NSFW explicit upskirt-style - medium NSFW tier"
+    },
+    {
+      "id": "6782c0b2f12a3fd2161b6b62",
+      "title": "Breast On Glass SFW",
+      "oldCost": 30,
+      "newCost": 100,
+      "nsfw": false,
+      "category": "SFW_ADVANCED",
+      "reasoning": "SFW but with breast focus - premium SFW content"
+    },
+    {
+      "id": "671495cc47fc180d148ada23",
+      "title": "M-shaped legs",
+      "oldCost": 35,
+      "newCost": 170,
+      "nsfw": true,
+      "category": "NSFW_MEDIUM",
+      "reasoning": "NSFW explicit pose - medium NSFW tier"
+    },
+    {
+      "id": "67a58761cf70ac08b7f5841a",
+      "title": "Wedding Dress",
+      "oldCost": 35,
+      "newCost": 105,
+      "nsfw": false,
+      "category": "SFW_ADVANCED",
+      "reasoning": "SFW elegant dress pose - premium SFW content"
+    },
+    {
+      "id": "6782c279f12a3fd2161b6b64",
+      "title": "jack-o challenge",
+      "oldCost": 40,
+      "newCost": 180,
+      "nsfw": true,
+      "category": "NSFW_MEDIUM",
+      "reasoning": "NSFW explicit challenge pose - medium NSFW tier"
+    },
+    {
+      "id": "676db7e221f3595a57e2ca8f",
+      "title": "Back Focus",
+      "oldCost": 40,
+      "newCost": 190,
+      "nsfw": true,
+      "category": "NSFW_MEDIUM",
+      "reasoning": "NSFW explicit back/anus focus - medium NSFW tier"
+    },
+    {
+      "id": "671a1440cc4f7e6a10cfc183",
+      "title": "Her pants are completely visible",
+      "oldCost": 40,
+      "newCost": 200,
+      "nsfw": true,
+      "category": "NSFW_MEDIUM",
+      "reasoning": "NSFW explicit pussy visibility - medium-high NSFW"
+    },
+    {
+      "id": "6782c74ff12a3fd2161b6b7f",
+      "title": "heart hands",
+      "oldCost": 40,
+      "newCost": 110,
+      "nsfw": false,
+      "category": "SFW_ADVANCED",
+      "reasoning": "SFW playful pose with breast coverage - premium SFW"
+    },
+    {
+      "id": "67a5883ecf70ac08b7f5841b",
+      "title": "Pole Dance",
+      "oldCost": 45,
+      "newCost": 210,
+      "nsfw": true,
+      "category": "NSFW_MEDIUM",
+      "reasoning": "NSFW suggestive dance pose - medium-high NSFW"
+    },
+    {
+      "id": "6782c5eff12a3fd2161b6b77",
+      "title": "breast lift",
+      "oldCost": 45,
+      "newCost": 120,
+      "nsfw": false,
+      "category": "SFW_ADVANCED",
+      "reasoning": "SFW breast pose but covered - premium SFW"
+    },
+    {
+      "id": "6782c405f12a3fd2161b6b6f",
+      "title": "Hiding Breast",
+      "oldCost": 50,
+      "newCost": 220,
+      "nsfw": true,
+      "category": "NSFW_MEDIUM",
+      "reasoning": "NSFW nude with breast focus - medium-high NSFW"
+    },
+    {
+      "id": "6782c4b2f12a3fd2161b6b71",
+      "title": "presenting embarrassed",
+      "oldCost": 50,
+      "newCost": 240,
+      "nsfw": true,
+      "category": "NSFW_MEDIUM",
+      "reasoning": "NSFW explicit pussy presentation - high NSFW"
+    },
+    {
+      "id": "67a589fbcf70ac08b7f5841c",
+      "title": "Crying",
+      "oldCost": 50,
+      "newCost": 125,
+      "nsfw": false,
+      "category": "SFW_ADVANCED",
+      "reasoning": "SFW emotional pose - premium SFW content"
+    },
+    {
+      "id": "676dbab221f3595a57e2ca95",
+      "title": "Tits Selfie",
+      "oldCost": 55,
+      "newCost": 250,
+      "nsfw": true,
+      "category": "NSFW_MEDIUM",
+      "reasoning": "NSFW breast selfie - high NSFW tier"
+    },
+    {
+      "id": "67a57d8acf70ac08b7f58416",
+      "title": "Back Puffy Pussy",
+      "oldCost": 60,
+      "newCost": 280,
+      "nsfw": true,
+      "category": "NSFW_HIGH",
+      "reasoning": "NSFW explicit pussy focus - high NSFW tier"
+    },
+    {
+      "id": "676dc054a4d69ebd6d8eda1a",
+      "title": "Hanging Breasts",
+      "oldCost": 80,
+      "newCost": 300,
+      "nsfw": true,
+      "category": "NSFW_HIGH",
+      "reasoning": "NSFW very explicit - high NSFW tier"
+    },
+    {
+      "id": "6714a91a740e125630c6d135",
+      "title": "Stick your butt out",
+      "oldCost": 90,
+      "newCost": 320,
+      "nsfw": true,
+      "category": "NSFW_HIGH",
+      "reasoning": "NSFW extreme explicit anus focus - high NSFW"
+    },
+    {
+      "id": "6792d36f11613487867cc3c8",
+      "title": "ahegao",
+      "oldCost": 90,
+      "newCost": 130,
+      "nsfw": false,
+      "category": "SFW_ADVANCED",
+      "reasoning": "SFW facial expression - premium SFW (kept lower due to being just expression)"
+    },
+    {
+      "id": "6792ad28366a82cc54d75618",
+      "title": "Back View Knees",
+      "oldCost": 100,
+      "newCost": 350,
+      "nsfw": true,
+      "category": "NSFW_HIGH",
+      "reasoning": "NSFW very explicit back view - high NSFW tier"
+    },
+    {
+      "id": "67a58ee6cf70ac08b7f5841f",
+      "title": "Sleep Slip Out",
+      "oldCost": 100,
+      "newCost": 360,
+      "nsfw": true,
+      "category": "NSFW_HIGH",
+      "reasoning": "NSFW explicit sleeping position - high NSFW tier"
+    },
+    {
+      "id": "6782c894f12a3fd2161b6b81",
+      "title": "fingering",
+      "oldCost": 150,
+      "newCost": 400,
+      "nsfw": true,
+      "category": "NSFW_EXTREME",
+      "reasoning": "NSFW extremely explicit sexual act - extreme NSFW tier"
+    },
+    {
+      "id": "6792d24b48576ec02c9fc5f5",
+      "title": "Mouth Cum",
+      "oldCost": 200,
+      "newCost": 500,
+      "nsfw": true,
+      "category": "NSFW_EXTREME",
+      "reasoning": "NSFW extremely explicit sexual act - extreme NSFW tier"
+    },
+    {
+      "id": "6782c65cf12a3fd2161b6b79",
+      "title": "breast lift nsfw",
+      "oldCost": 250,
+      "newCost": 480,
+      "nsfw": true,
+      "category": "NSFW_EXTREME",
+      "reasoning": "NSFW extremely explicit topless - extreme NSFW tier"
+    },
+    {
+      "id": "6792c8f28c4cb72d3a02025e",
+      "title": "Ass Up",
+      "oldCost": 300,
+      "newCost": 520,
+      "nsfw": true,
+      "category": "NSFW_EXTREME",
+      "reasoning": "NSFW extremely explicit full exposure - extreme NSFW tier"
+    },
+    {
+      "id": "677e1bf8cb5363dfb613665e",
+      "title": "Squat Ass",
+      "oldCost": 300,
+      "newCost": 540,
+      "nsfw": true,
+      "category": "NSFW_EXTREME",
+      "reasoning": "NSFW extremely explicit full exposure - extreme NSFW tier"
+    },
+    {
+      "id": "676db98b21f3595a57e2ca93",
+      "title": "From Below",
+      "oldCost": 400,
+      "newCost": 600,
+      "nsfw": true,
+      "category": "NSFW_EXTREME",
+      "reasoning": "NSFW extremely explicit pussy and anus - extreme NSFW tier"
+    },
+    {
+      "id": "676dbc4e21f3595a57e2ca9a",
+      "title": "Bend Over",
+      "oldCost": 450,
+      "newCost": 650,
+      "nsfw": true,
+      "category": "NSFW_EXTREME",
+      "reasoning": "NSFW extremely explicit full exposure - extreme NSFW tier"
+    },
+    {
+      "id": "677e1a6bcb5363dfb613665a",
+      "title": "Show off",
+      "oldCost": 450,
+      "newCost": 680,
+      "nsfw": true,
+      "category": "NSFW_EXTREME",
+      "reasoning": "NSFW extremely explicit full display - extreme NSFW tier"
+    },
+    {
+      "id": "676dc412a4d69ebd6d8eda1c",
+      "title": "Expose Attributes",
+      "oldCost": 500,
+      "newCost": 700,
+      "nsfw": true,
+      "category": "NSFW_EXTREME",
+      "reasoning": "NSFW extremely explicit full exposure - extreme NSFW tier"
+    },
+    {
+      "id": "6714a6a0510e3ce0b10755a6",
+      "title": "Show it all",
+      "oldCost": 500,
+      "newCost": 720,
+      "nsfw": true,
+      "category": "NSFW_EXTREME",
+      "reasoning": "NSFW extremely explicit full pussy display - extreme NSFW tier"
+    },
+    {
+      "id": "6782bf97f12a3fd2161b6b5e",
+      "title": "Legs Up Bottomless",
+      "oldCost": 600,
+      "newCost": 750,
+      "nsfw": true,
+      "category": "NSFW_EXTREME",
+      "reasoning": "NSFW extremely explicit anal content - extreme NSFW tier"
+    },
+    {
+      "id": "6782c067f12a3fd2161b6b60",
+      "title": "Breast On Glass",
+      "oldCost": 600,
+      "newCost": 780,
+      "nsfw": true,
+      "category": "NSFW_EXTREME",
+      "reasoning": "NSFW extremely explicit topless - extreme NSFW tier"
+    },
+    {
+      "id": "677e20cdcb5363dfb6136668",
+      "title": "Spread it",
+      "oldCost": 1000,
+      "newCost": 850,
+      "nsfw": true,
+      "category": "NSFW_EXTREME",
+      "reasoning": "NSFW most explicit content - ultimate extreme tier (premium privilege)"
+    }
+  ],
+  "summary": {
+    "totalPrompts": 50,
+    "categories": {
+      "SFW_BASIC": {
+        "count": 10,
+        "priceRange": "50-75",
+        "description": "Basic SFW poses for all users",
+        "affordability": "Regular users can use 1-2 per login, Premium users unlimited"
+      },
+      "SFW_ADVANCED": {
+        "count": 10,
+        "priceRange": "80-130",
+        "description": "Premium SFW content - flexible, artistic, suggestive but covered",
+        "affordability": "Regular users: limited access, Premium users can use 7-12 per login"
+      },
+      "NSFW_LIGHT": {
+        "count": 3,
+        "priceRange": "100-120",
+        "description": "Light NSFW with partial exposure",
+        "affordability": "Regular users: 1 per login with savings, Premium users: 8-10 per login"
+      },
+      "NSFW_MEDIUM": {
+        "count": 14,
+        "priceRange": "150-250",
+        "description": "Medium NSFW with explicit content but not extreme sexual acts",
+        "affordability": "Regular users: require saving, Premium users: 4-6 per login"
+      },
+      "NSFW_HIGH": {
+        "count": 6,
+        "priceRange": "280-360",
+        "description": "High NSFW with very explicit content",
+        "affordability": "Regular users: significant saving needed, Premium users: 2-3 per login"
+      },
+      "NSFW_EXTREME": {
+        "count": 7,
+        "priceRange": "400-850",
+        "description": "Extreme NSFW with explicit sexual acts and full exposure",
+        "affordability": "Regular users: 1 per day or several per week, Premium users: 1-2 per login"
+      }
+    },
+    "pricingLogic": {
+      "minimumCost": 50,
+      "baseOnImageGenerationCost": "50 points (matches image generation cost)",
+      "nsfwMultiplier": "1.4-3.5x for NSFW based on explicitness",
+      "regularUserLogin": "100 points",
+      "premiumUserLogin": "1000 points",
+      "affordabilityGoal": "Regular users can enjoy 1-2 basic prompts per login, premium users enjoy diverse selection"
+    }
+  }
+}

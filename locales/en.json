@@ -1782,8 +1782,12 @@
       "description": "Access to all content including NSFW characters"
     },
     "benefit4": {
-      "title": "Advanced Customization",
-      "description": "Unlock all character customization options"
+      "title": "Unlock All Chat Custom Features",
+      "description": "Access all character customization and chat tool options"
+    },
+    "benefit5": {
+      "title": "Video Generation",
+      "description": "Generate custom videos from your AI characters"
     },
     "perDay": "per day",
     "daily": "Daily",

@@ -1759,8 +1759,12 @@
       "description": "Accès à tout le contenu y compris les personnages NSFW"
     },
     "benefit4": {
-      "title": "Personnalisation Avancée",
-      "description": "Débloquez toutes les options de personnalisation des personnages"
+      "title": "Débloquez toutes les fonctionnalités de chat personnalisé",
+      "description": "Accédez à toutes les options de personnalisation des caractères et d'outils de chat"
+    },
+    "benefit5": {
+      "title": "Génération de Vidéos",
+      "description": "Générez des vidéos personnalisées à partir de vos personnages IA"
     },
     "perDay": "par jour",
     "daily": "Quotidien",

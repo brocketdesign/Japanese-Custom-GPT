@@ -1,0 +1,143 @@
+{
+  "gifts": [
+    {
+      "id": "68400f7c664ce9fb6e839d9c",
+      "title": "Love Letter",
+      "oldCost": 5,
+      "newCost": 50,
+      "nsfw": false,
+      "category": "SFW_BASIC",
+      "reasoning": "SFW romantic gift - basic tier at minimum 50 points"
+    },
+    {
+      "id": "684022a6664ce9fb6e839d9f",
+      "title": "Ice Cream",
+      "oldCost": 5,
+      "newCost": 50,
+      "nsfw": false,
+      "category": "SFW_BASIC",
+      "reasoning": "SFW fun gift - basic tier at minimum 50 points"
+    },
+    {
+      "id": "68402277664ce9fb6e839d9e",
+      "title": "Lily",
+      "oldCost": 10,
+      "newCost": 50,
+      "nsfw": false,
+      "category": "SFW_BASIC",
+      "reasoning": "SFW floral gift - basic tier at minimum 50 points"
+    },
+    {
+      "id": "68400ecc664ce9fb6e839d9b",
+      "title": "Perfum",
+      "oldCost": 20,
+      "newCost": 70,
+      "nsfw": false,
+      "category": "SFW_ADVANCED",
+      "reasoning": "SFW luxury gift - premium tier, romantic and elegant"
+    },
+    {
+      "id": "683fe9d7bb265dee7d6ed7da",
+      "title": "high heels",
+      "oldCost": 20,
+      "newCost": 90,
+      "nsfw": false,
+      "category": "SFW_ADVANCED",
+      "reasoning": "SFW suggestive clothing - premium tier, foot focus but covered"
+    },
+    {
+      "id": "68400fad664ce9fb6e839d9d",
+      "title": "Lipstick",
+      "oldCost": 25,
+      "newCost": 80,
+      "nsfw": false,
+      "category": "SFW_ADVANCED",
+      "reasoning": "SFW beauty gift - premium tier, makeup focused"
+    },
+    {
+      "id": "683ff11549cb54db39cb341f",
+      "title": "mini skirt",
+      "oldCost": 30,
+      "newCost": 130,
+      "nsfw": true,
+      "category": "NSFW_LIGHT",
+      "reasoning": "Light NSFW clothing - suggestive but not explicit"
+    },
+    {
+      "id": "68428143c17291abf7da38d5",
+      "title": "Corset",
+      "oldCost": 40,
+      "newCost": 200,
+      "nsfw": true,
+      "category": "NSFW_MEDIUM",
+      "reasoning": "Medium NSFW lingerie - explicit clothing but not nude"
+    },
+    {
+      "id": "684281c6c17291abf7da38d6",
+      "title": "Dildo",
+      "oldCost": 100,
+      "newCost": 380,
+      "nsfw": true,
+      "category": "NSFW_HIGH",
+      "reasoning": "High NSFW explicit sexual toy/act - premium extreme content"
+    },
+    {
+      "id": "68428270c17291abf7da38d7",
+      "title": "Anal",
+      "oldCost": 200,
+      "newCost": 550,
+      "nsfw": true,
+      "category": "NSFW_EXTREME",
+      "reasoning": "Extreme NSFW explicit sexual act - ultimate premium content"
+    }
+  ],
+  "summary": {
+    "totalGifts": 10,
+    "categories": {
+      "SFW_BASIC": {
+        "count": 3,
+        "priceRange": "50",
+        "description": "Basic SFW gifts - romantic and fun items",
+        "affordability": "Regular users: 1 per login, Premium users: 20 per login"
+      },
+      "SFW_ADVANCED": {
+        "count": 3,
+        "priceRange": "70-90",
+        "description": "Premium SFW gifts - luxury and suggestive but covered",
+        "affordability": "Regular users: limited access with savings, Premium users: 11-14 per login"
+      },
+      "NSFW_LIGHT": {
+        "count": 1,
+        "priceRange": "130",
+        "description": "Light NSFW gifts - suggestive clothing",
+        "affordability": "Regular users: rare treat, Premium users: 7 per login"
+      },
+      "NSFW_MEDIUM": {
+        "count": 1,
+        "priceRange": "200",
+        "description": "Medium NSFW gifts - explicit clothing/lingerie",
+        "affordability": "Regular users: significant saving, Premium users: 5 per login"
+      },
+      "NSFW_HIGH": {
+        "count": 1,
+        "priceRange": "380",
+        "description": "High NSFW gifts - explicit sexual content",
+        "affordability": "Regular users: 1 per 3-4 days, Premium users: 2 per login"
+      },
+      "NSFW_EXTREME": {
+        "count": 1,
+        "priceRange": "550",
+        "description": "Extreme NSFW gifts - ultimate explicit content",
+        "affordability": "Regular users: 1 per week, Premium users: 1-2 per login"
+      }
+    },
+    "pricingLogic": {
+      "minimumCost": 50,
+      "baseLogic": "All gifts minimum 50 points - same as prompts for consistency",
+      "nsfwMultiplier": "1.6-2.75x for NSFW based on explicitness",
+      "regularUserLogin": "100 points",
+      "premiumUserLogin": "1000 points",
+      "affordabilityGoal": "Gifts are accessible for showing appreciation with 50pt minimum baseline"
+    }
+  }
+}

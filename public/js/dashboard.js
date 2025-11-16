@@ -1640,10 +1640,10 @@ function generateUserChatsPagination(userId, currentPage, totalPages) {
   }
 
   if (totalPages > 1) {
-    paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="displayUserChats(${userId}, ${currentPage - 1})">${window.translations.prev}</button>`;
+    paginationHtml += `<button class="btn btn-outline-primary me-2" ${currentPage === 1 ? 'disabled' : ''} onclick="displayUserChats('${userId}', ${currentPage - 1})">${window.translations.prev}</button>`;
 
     if (currentPage > sidePagesToShow + 1) {
-      paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayUserChats(${userId}, 1)">1</button>`;
+      paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayUserChats('${userId}', 1)">1</button>`;
       if (currentPage > sidePagesToShow + 2) paginationHtml += `<span class="mx-1">...</span>`;
     }
 
@@ -1651,15 +1651,15 @@ function generateUserChatsPagination(userId, currentPage, totalPages) {
     let endPage = Math.min(totalPages, currentPage + sidePagesToShow);
 
     for (let i = startPage; i <= endPage; i++) {
-      paginationHtml += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="displayUserChats(${userId}, ${i})">${i}</button>`;
+      paginationHtml += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1" onclick="displayUserChats('${userId}', ${i})">${i}</button>`;
     }
 
     if (currentPage < totalPages - sidePagesToShow - 1) {
       if (currentPage < totalPages - sidePagesToShow - 2) paginationHtml += `<span class="mx-1">...</span>`;
-      paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayUserChats(${userId}, ${totalPages})">${totalPages}</button>`;
+      paginationHtml += `<button class="btn btn-outline-primary mx-1" onclick="displayUserChats('${userId}', ${totalPages})">${totalPages}</button>`;
     }
 
-    paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="displayUserChats(${userId}, ${currentPage + 1})">${window.translations.next}</button>`;
+    paginationHtml += `<button class="btn btn-outline-primary ms-2" ${currentPage === totalPages ? 'disabled' : ''} onclick="displayUserChats('${userId}', ${currentPage + 1})">${window.translations.next}</button>`;
   }
 
   $('#user-chat-pagination-controls').html(paginationHtml);

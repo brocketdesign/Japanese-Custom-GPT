@@ -393,7 +393,6 @@ async function renderImages(images, id, type) {
         // LOG: Track NSFW images
         if (isBlur) {
             nsfw_count++;
-            console.log(`[renderImages] NSFW Image Received - ID: ${item._id}, isBlur: ${isBlur}, subscription: ${subscriptionStatus}`);
         } else {
             non_nsfw_count++;
         }
@@ -413,7 +412,6 @@ async function renderImages(images, id, type) {
         // LOG: Check if NSFW image was added to loadedImages
         if (isBlur) {
             const wasAdded = window.loadedImages.some(img => img._id === item._id);
-            console.log(`[renderImages] NSFW Image NOT added to window.loadedImages (isBlur=${isBlur}, wasAdded=${wasAdded})`);
         }
         
         const loadedIndex = window.loadedImages.length - 1;
@@ -428,10 +426,7 @@ async function renderImages(images, id, type) {
         fragment.appendChild(cardElement);
         newImagesAdded++;
     });
-    
-    // LOG: Summary of renderImages
-    console.log(`[renderImages] Summary - NSFW: ${nsfw_count}, Non-NSFW: ${non_nsfw_count}, window.loadedImages length: ${window.loadedImages.length}, Total received: ${images.length}`);
-    
+        
     // Append all cards at once for better performance
     const gallery = document.querySelector(gallerySelector);
     if (gallery && fragment.hasChildNodes()) {

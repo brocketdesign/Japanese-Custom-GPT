@@ -68,10 +68,11 @@ const getAllAvailableModels = async (isPremium = false) => {
     if (dbModels && Object.keys(dbModels).length > 0) {
       return dbModels;
     }
-    throw new Error('No database models available');
+    console.error('Database models not available');
+    return {}; // Return empty object instead of throwing
   } catch (error) {
     console.error('Database models not available:', error.message);
-    throw new Error('Database models required but not available');
+    return {}; // Return empty object instead of throwing
   }
 };
 
@@ -93,10 +94,11 @@ const getAvailableModels = async (isPremium = false) => {
       }
       return dbModels;
     }
-    throw new Error('No database models available');
+    console.error('Database models not available');
+    return {}; // Return empty object instead of throwing
   } catch (error) {
     console.error('Database models not available:', error.message);
-    throw new Error('Database models required but not available');
+    return {}; // Return empty object instead of throwing
   }
 };
 
@@ -116,10 +118,11 @@ const getModelConfig = async (modelKey, isPremium = false) => {
         maxTokens: dbModel.maxTokens
       };
     }
-    throw new Error(`Model '${modelKey}' not found in database`);
+    console.error(`Model '${modelKey}' not found in database`);
+    return null; // Return null instead of throwing
   } catch (error) {
     console.error('Database model lookup failed:', error.message);
-    throw new Error(`Database model '${modelKey}' required but not available`);
+    return null; // Return null instead of throwing
   }
 };
 
@@ -133,7 +136,7 @@ const moderateText = async (text) => {
     return moderation;
   } catch (error) {
     console.error("Error moderating text:", error);
-    throw error;
+    return { results: [] }; // Return empty result instead of throwing
   }
 };
 
@@ -154,7 +157,7 @@ const moderateImage = async (imageUrl) => {
     return moderation;
   } catch (error) {
     console.error("Error moderating image:", error);
-    throw error;
+    return { results: [] }; // Return empty result instead of throwing
   }
 };
 
@@ -174,7 +177,8 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
     if (!modelToUse) {
       const allModels = await getAllModels();
       if (!allModels || allModels.length === 0) {
-        throw new Error('No database models available');
+        console.error('[generateCompletion] No database models available');
+        return null; // Return null instead of throwing
       }
       
       // Find first suitable model based on premium status
@@ -183,7 +187,8 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
       );
       
       if (!suitableModel) {
-        throw new Error('No suitable database models found for user subscription level');
+        console.error('[generateCompletion] No suitable database models found for user subscription level');
+        return null; // Return null instead of throwing
       }
       
       modelToUse = suitableModel.key;
@@ -197,6 +202,11 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
       
       // Find the first available OpenAI model in the database
       const allModels = await getAllModels();
+      if (!allModels || allModels.length === 0) {
+        console.error('[generateCompletion] No models available for fallback');
+        return null; // Return null instead of throwing
+      }
+
       const openaiModel = allModels.find(m => 
         m.isActive && m.provider === 'openai' && (isPremium || m.category !== 'premium')
       );
@@ -208,7 +218,8 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
         );
         
         if (!fallbackModel) {
-          throw new Error(`Model '${modelToUse}' not found in database and no suitable fallback models available`);
+          console.error(`[generateCompletion] Model '${modelToUse}' not found in database and no suitable fallback models available`);
+          return null; // Return null instead of throwing
         }
         
         dbModel = fallbackModel;
@@ -221,13 +232,15 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
     
     dbProvider = await getProviderByName(dbModel.provider);
     if (!dbProvider) {
-      throw new Error(`Provider '${dbModel.provider}' not found in database`);
+      console.error(`[generateCompletion] Provider '${dbModel.provider}' not found in database`);
+      return null; // Return null instead of throwing
     }
 
     // Check API key availability
     const apiKey = process.env[dbProvider.envKeyName];
     if (!apiKey) {
-      throw new Error(`API key not configured for provider: ${dbModel.provider} (${dbProvider.envKeyName})`);
+      console.error(`[generateCompletion] API key not configured for provider: ${dbModel.provider} (${dbProvider.envKeyName})`);
+      return null; // Return null instead of throwing
     }
 
     console.log(`[generateCompletion] Using database model: ${dbModel.displayName} (${dbModel.provider})`);
@@ -256,7 +269,8 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
           const errorMsg = errorData.error?.message || `HTTP ${response.status}`;
           
           if (attempt === 2) {
-            throw new Error(`API call failed after ${attempt} attempts: ${errorMsg}`);
+            console.error(`[generateCompletion] API call failed after ${attempt} attempts: ${errorMsg}`);
+            return null; // Return null instead of throwing
           }
           
           console.log(`[generateCompletion] Attempt ${attempt} failed: ${errorMsg}, retrying...`);
@@ -267,23 +281,32 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
         const content = data.choices?.[0]?.message?.content;
         
         if (!content) {
-          throw new Error('No content in API response');
+          console.error('[generateCompletion] No content in API response');
+          if (attempt === 2) {
+            return null; // Return null instead of throwing
+          }
+          continue;
         }
         
         return content.trim();
         
       } catch (fetchError) {
         if (attempt === 2) {
-          throw new Error(`API request failed after ${attempt} attempts: ${fetchError.message}`);
+          console.error(`[generateCompletion] API request failed after ${attempt} attempts: ${fetchError.message}`);
+          return null; // Return null instead of throwing
         }
         
         console.log(`[generateCompletion] Attempt ${attempt} failed: ${fetchError.message}, retrying...`);
       }
     }
     
+    // If we reach here, all retries have failed
+    console.error('[generateCompletion] All retry attempts exhausted');
+    return null; // Return null instead of throwing
+    
   } catch (error) {
-    console.error(`[generateCompletion] Error: ${error.message}`);
-    throw error; // Re-throw instead of returning false to make errors more explicit
+    console.error(`[generateCompletion] Unexpected error: ${error.message}`);
+    return null; // Return null instead of throwing
   }
 }
 

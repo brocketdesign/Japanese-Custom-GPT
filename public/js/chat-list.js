@@ -583,7 +583,7 @@ function constructChatItemHtml(chat, isActive) {
                             <small class="chat-time text-muted flex-shrink-0 ms-1" style="font-size: 0.65rem;">${lastMessageTime}</small>
                         </div>
                         <div class="mt-1">
-                            <p class="chat-preview mb-0 text-muted small text-truncate ${chat.lastMessage ? '' : 'd-none'}" 
+                            <p class="chat-preview mb-0 small text-truncate ${chat.lastMessage ? '' : 'd-none'}" 
                                style="max-width: 130px; font-size: 0.7rem; line-height: 1.2;">
                                 ${chat.lastMessage ? chat.lastMessage.content : ''}
                             </p>

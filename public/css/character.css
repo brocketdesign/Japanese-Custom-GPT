@@ -1,27 +1,5 @@
 /* Character Profile Page Styles */
 
-:root {
-    --primary-color: #6366f1;
-    --secondary-color: #8b5cf6;
-    --accent-color: #f59e0b;
-    --text-primary: #1f2937;
-    --text-secondary: #6b7280;
-    --bg-primary: #ffffff;
-    --bg-secondary: #f9fafb;
-    --border-color: #e5e7eb;
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-}
-
-body {
-    background: var(--bg-secondary);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
-}
-
 .profile-container {
     max-width: 100vw;
     margin: 0;
@@ -32,7 +10,7 @@ body {
 /* Profile Header */
 .profile-header {
     position: relative;
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    background: var(--primary-gradient);
     color: white;
     padding: 0;
     margin: 0;
@@ -171,7 +149,7 @@ body {
 }
 
 .action-btn-primary {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    background: var(--primary-gradient);
     color: white;
     box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
 }
@@ -194,7 +172,7 @@ body {
 }
 
 .action-btn-secondary:hover {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    background: var(--primary-gradient);
     color: white;
     border-color: transparent;
     box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
@@ -230,7 +208,7 @@ body {
 .stat-number {
     font-size: 1.8rem;
     font-weight: 800;
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    background: var(--primary-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -916,7 +894,7 @@ body {
 .character-gallery h2 {
     text-align: center;
     margin-bottom: 30px;
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    background: var(--primary-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

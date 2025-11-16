@@ -1,28 +1,5 @@
 /* Search Page Styles - Native App Design */
 
-:root {
-    --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
-    --primary-color: #6366f1;
-    --secondary-color: #8b5cf6;
-    --accent-color: #f59e0b;
-    --text-primary: #1f2937;
-    --text-secondary: #6b7280;
-    --bg-primary: #ffffff;
-    --bg-secondary: #f9fafb;
-    --border-color: #e5e7eb;
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-}
-
-body {
-    background: var(--bg-secondary);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-    margin: 0;
-    padding: 0;
-    color: var(--text-primary);
-}
-
 /* Main Container */
 .search-container {
     max-width: 100vw;
@@ -241,7 +218,7 @@ body {
 
 .auth-prompt-btn {
     padding: 10px 24px;
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    background: var(--primary-gradient);
     color: white;
     border: none;
     border-radius: 20px;
@@ -519,7 +496,7 @@ body {
 }
 
 .tag-badge:hover {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    background: var(--primary-gradient);
     color: white;
     border-color: transparent;
     transform: translateY(-2px);
@@ -653,7 +630,7 @@ body {
 }
 
 .tag-item:hover {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    background: var(--primary-gradient);
     color: white;
     border-color: transparent;
     transform: translateY(-3px);

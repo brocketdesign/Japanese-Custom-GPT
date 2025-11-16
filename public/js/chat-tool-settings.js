@@ -928,14 +928,16 @@ class ChatToolSettings {
             let response;
             if (chatId && chatId !== 'null' && chatId !== 'undefined') {
                 // Try to get chat-specific settings
+                console.log('[chat-tool-settings] Attempting to load chat-specific settings');
                 response = await fetch(`/api/chat-tool-settings/${this.userId}/${chatId}`);
             } else {
                 // Get global user settings
+                console.log('[chat-tool-settings] Loading global user settings');
                 response = await fetch(`/api/chat-tool-settings/${this.userId}`);
             }
 
             const data = await response.json();
-
+            console.log('[chat-tool-settings] Loaded settings response:', data.settings);
             if (response.ok && data.success) {
                 this.settings = { ...this.settings, ...data.settings };
                 // Skip auto-correction when applying loaded settings to preserve user's choices

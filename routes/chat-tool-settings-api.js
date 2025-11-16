@@ -207,7 +207,7 @@ async function routes(fastify, options) {
             await collection.deleteOne(query);
 
             const defaultSettings = {
-                minImages: 3,
+                minImages: 1,
                 videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
                 characterTone: 'casual',
                 relationshipType: 'companion',
@@ -215,7 +215,7 @@ async function routes(fastify, options) {
                 voiceProvider: 'standard',
                 minimaxVoice: 'Wise_Woman',
                 autoMergeFace: true,
-                selectedModel: 'openai',
+                selectedModel: 'openai-gpt4o',
                 suggestionsEnabled: true,
                 speechRecognitionEnabled: true,
                 speechAutoSend: true,
@@ -277,7 +277,7 @@ async function routes(fastify, options) {
                 if (!settings.voiceProvider) {
                     settings.voiceProvider = 'standard';
                 }
-
+                console.log('[chat-tool-settings] Loaded chat-specific settings for chatId:', chatId);
                 return reply.send({ success: true, settings, isChatSpecific: true, isPremium });
             }
 
@@ -303,13 +303,14 @@ async function routes(fastify, options) {
                 if (!settings.voiceProvider) {
                     settings.voiceProvider = 'standard';
                 }
-
+                console.log('[chat-tool-settings] Loaded user default settings as fallback for chatId:', chatId);
                 return reply.send({ success: true, settings, isChatSpecific: false, isPremium });
             }
 
             // Return default settings if none exist
+            console.log('[chat-tool-settings] No chat-specific or user default settings found, returning defaults');
             const defaultSettings = {
-                minImages: 3,
+                minImages: 1,
                 videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
                 characterTone: 'casual',
                 relationshipType: 'companion',
@@ -317,7 +318,7 @@ async function routes(fastify, options) {
                 voiceProvider: 'standard',
                 minimaxVoice: 'Wise_Woman',
                 autoMergeFace: true,
-                selectedModel: 'openai',
+                selectedModel: 'openai-gpt4o',
                 suggestionsEnabled: true,
                 autoImageGeneration: isPremium,
                 speechRecognitionEnabled: true,

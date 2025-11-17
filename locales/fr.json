@@ -1,6 +1,7 @@
 {
   "lang": "fr",
   "loading": "Chargement...",
+  "newChat": "Nouvelle discussion",
   "upgradeNow": "Passer premium maintenant",
   "startHere": "Commencez ici",
   "latestVideoChatsHeader": "Dernières vidéos de personnages",
@@ -977,6 +978,7 @@
   "userCoins": "{{user.coins}}",
   "plusIcon": "<i class=\"fas fa-plus me-2\"></i>",
   "chatHistoryTitle": "Historique des conversations",
+  "chatHistory": "Historique des conversations",
   "chatHistoryDescription": "Consultez vos discussions passées avec des personnages IA et continuez à discuter avec eux.",
   "chatListTitle": "Liste des discussions",
   "send": "Envoyer",

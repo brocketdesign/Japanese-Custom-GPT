@@ -322,7 +322,6 @@ async function routes(fastify, options) {
             const scenariosAlreadyGenerated = userData.scenarioGenerated === true;
             const hasSelectedScenario = userData.currentScenario !== null && userData.currentScenario !== undefined;
             const scenariosEnabled = userSettings.scenariosEnabled === true ? true : false; // Default to false if not explicitly enabled
-            console.log(`[/api/openai-chat-completion] Scenario generation check - Already generated: ${scenariosAlreadyGenerated}, Has selected scenario: ${hasSelectedScenario}, Scenarios enabled: ${scenariosEnabled}, User settings:`,  userSettings.scenariosEnabled);
             if (!scenariosAlreadyGenerated && !hasSelectedScenario && scenariosEnabled) {
                     console.log(`[DEBUG] Entering scenario generation for userChatId: ${userChatId}`);
                 try {

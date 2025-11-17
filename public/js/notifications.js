@@ -8,12 +8,6 @@ window.showNotification = (message, type = 'info') => {
     const createToastContainer = () => {
         const container = document.createElement('div');
         container.id = 'toastContainer';
-        container.className = 'position-fixed start-50 translate-middle-x d-flex flex-column align-items-center';
-        container.style.zIndex = '1060';
-        container.style.top = '20px';
-        container.style.right = '20px'; // Changed from top to right for better stacking
-        container.style.maxWidth = '380px';
-        container.style.pointerEvents = 'none';
         document.body.appendChild(container);
         return container;
     };
@@ -22,131 +16,52 @@ window.showNotification = (message, type = 'info') => {
 
     const toastId = 'toast-' + Date.now();
     const iconMap = {
-        success: 'bi-check-circle-fill text-success',
-        error: 'bi-exclamation-triangle-fill text-danger',
-        warning: 'bi-exclamation-circle-fill text-warning',
-        info: 'bi-info-circle-fill text-info'
+        success: 'bi-check-circle-fill',
+        error: 'bi-exclamation-triangle-fill',
+        warning: 'bi-exclamation-circle-fill',
+        info: 'bi-info-circle-fill'
     };
 
-    const borderMap = {
-        success: 'border-success',
-        error: 'border-danger',
-        warning: 'border-warning',
-        info: 'border-info'
-    };
-
+    const typeClass = `notification-${type}`;
     const icon = iconMap[type] || iconMap.info;
-    const borderClass = borderMap[type] || borderMap.info;
 
     const toastHTML = `
-        <div id="${toastId}" class="toast bg-white text-dark rounded-pill shadow-lg border ${borderClass} notification-toast" 
-             role="alert" aria-live="assertive" aria-atomic="true" 
-             style="width: 100%; opacity: 0; transform: translateY(20px); border-left-width: 4px !important; pointer-events: all; margin-bottom: 8px;">
-            <div class="toast-body d-flex align-items-center py-3 px-3">
-                <i class="bi ${icon} me-2 fs-5"></i>
-                <div class="flex-grow-1">${message}</div>
-                <button type="button" class="btn-close ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
+        <div id="${toastId}" class="toast notification-toast ${typeClass}" 
+             role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-body">
+                <i class="bi ${icon}"></i>
+                <div class="notification-message">${message}</div>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
         </div>
     `;
 
     toastContainer.insertAdjacentHTML('beforeend', toastHTML);
 
-    // Add CSS for notification styling and stacking animation
-    if (!document.getElementById('notification-styles')) {
-        const styleEl = document.createElement('style');
-        styleEl.id = 'notification-styles';
-        styleEl.innerHTML = `
-            #toastContainer {
-                display: flex;
-                flex-direction: column;
-                align-items: flex-end;
-                padding: 10px;
-                gap: 4px;
-                max-width: 380px;
-            }
-            
-            .notification-toast {
-                transition: all 0.4s ease-in-out;
-                opacity: 0;
-                transform: translateY(20px);
-                will-change: transform, opacity;
-            }
-            
-            /* Slide in animation */
-            .notification-toast.showing {
-                animation: slideIn 0.3s ease forwards;
-            }
-            
-            @keyframes slideIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(20px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-            
-            /* Fade out animation */
-            .notification-toast.hiding {
-                animation: fadeOut 0.3s ease forwards;
-            }
-            
-            @keyframes fadeOut {
-                from {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-                to {
-                    opacity: 0;
-                    transform: translateY(20px);
-                }
-            }
-            
-            /* Hover effect for better interaction */
-            .notification-toast:hover {
-                transform: translateY(0) scale(1.02) !important;
-                opacity: 1 !important;
-                z-index: 1070 !important;
-                box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
-            }
-
-            /*Min width 80vw on mobile */
-            @media (max-width: 767.98px) {
-                .notification-toast {
-                    min-width: 80vw;
-                }
-            }
-        `;
-        document.head.appendChild(styleEl);
+    // Ensure notifications.css is loaded
+    if (!document.querySelector('link[href*="notifications.css"]')) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = '/css/notifications.css';
+        document.head.appendChild(link);
     }
 
     const toastElement = document.getElementById(toastId);
 
-    // Calculate the stacking offset
-    const existingToasts = toastContainer.querySelectorAll('.notification-toast');
-    const stackOffset = existingToasts.length * 5; // Reduced from 10 to 5 for closer spacing
-
-    // Apply initial animation and stacking offset
-    toastElement.style.transform = `translateY(${stackOffset + 20}px)`;
+    // Add showing animation
     setTimeout(() => {
         toastElement.classList.add('showing');
-        toastElement.style.transform = `translateY(${stackOffset}px)`;
-        toastElement.style.opacity = 1;
-    }, 50);
+    }, 10);
 
     // Limit the number of visible notifications (keep max 2)
-    if (existingToasts.length >= 2) {
+    const existingToasts = toastContainer.querySelectorAll('.notification-toast:not(.hiding)');
+    if (existingToasts.length > 2) {
         const oldestToast = existingToasts[0];
         oldestToast.classList.add('hiding');
         setTimeout(() => {
             if (oldestToast.parentNode) {
                 oldestToast.remove();
             }
-            // Adjust the stacking of remaining notifications
-            adjustStacking(toastContainer);
         }, 300);
     }
 
@@ -165,8 +80,6 @@ window.showNotification = (message, type = 'info') => {
             if (toastElement.parentNode) {
                 toastElement.remove();
             }
-            // Adjust the stacking of remaining notifications
-            adjustStacking(toastContainer);
         }, 300);
     };
 
@@ -182,15 +95,6 @@ window.showNotification = (message, type = 'info') => {
             hideToast();
         }
     }, 5000);
-
-    // Function to adjust the stacking of notifications
-    function adjustStacking(container) {
-        const toasts = container.querySelectorAll('.notification-toast:not(.hiding)');
-        toasts.forEach((toast, index) => {
-            const newOffset = index * 5; // Reduced from 10 to 5 for closer spacing
-            toast.style.transform = `translateY(${newOffset}px)`;
-        });
-    }
 };
 
 window.debugNotifications = function() {

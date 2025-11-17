@@ -1,6 +1,7 @@
 const { ObjectId } = require('mongodb');
 const { getLanguageName } = require('../models/tool');
 const { removeUserPoints, awardLikeMilestoneReward, awardLikeActionReward } = require('../models/user-points-utils');
+const { hasUserChattedWithCharacter } = require('../models/chat-tool-settings-utils');
 const {
   getGalleryImageById,
   buildChatImageMessage,
@@ -596,7 +597,6 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
     const db = fastify.mongo.db;
     const chatsGalleryCollection = db.collection('gallery');
     const chatsCollection = db.collection('chats');
-    const userChatCollection = db.collection('userChat');
     const userId = request.user?._id;
 
     // Pagination parameters
@@ -681,33 +681,20 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
       .toArray();
 
     // Fetch user chat history for the current user to determine if they've chatted with each character
-    const userChatHistory = userId
-      ? await userChatCollection
-          .find({ userId: new ObjectId(userId) })
-          .project({ chatId: 1 })
-          .toArray()
-      : [];
-
-    const userChattedChatIds = new Set(
-      userChatHistory.map(uc => {
-        // Handle both string and ObjectId formats
-        return typeof uc.chatId === 'string' ? uc.chatId : uc.chatId.toString();
-      })
-    );
-
-    // Merge chats with images and add hasUserChatted field
-    const result = chats.map(chat => {
+    // Using the same hasUserChattedWithCharacter utility function for consistency
+    const result = [];
+    for (const chat of chats) {
       const imageInfo = imagesByChat.find(image => image.chatId.equals(chat._id));
-      const chatIdStr = chat._id.toString();
-      const hasUserChatted = userChattedChatIds.has(chatIdStr);
-      return {
+      const hasChatted = userId ? await hasUserChattedWithCharacter(db, userId, chat._id.toString()) : false;
+      
+      result.push({
         ...chat,
         images: imageInfo?.images || [],
         imageCount: imageInfo?.imageCount || 0,
         thumbnail: chat.thumbnail || chat.thumbnailUrl || '/img/default-thumbnail.png',
-        hasUserChatted
-      };
-    });
+        hasUserChatted: hasChatted
+      });
+    }
 
     // Send response with pagination metadata
     reply.send({

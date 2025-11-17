@@ -31,7 +31,6 @@ window.ChatScenarioModule = (function() {
 
         // Check if scenarios are enabled
         if (!isScenariosEnabled()) {
-            console.log('[ChatScenarioModule] Scenarios are disabled in settings, skipping initialization');
             clearScenarios();
             return;
         }
@@ -117,7 +116,6 @@ window.ChatScenarioModule = (function() {
 
         // Check if scenarios are enabled
         if (!isScenariosEnabled()) {
-            console.log('[ChatScenarioModule] Scenarios are disabled in settings');
             return false;
         }
         
@@ -501,7 +499,6 @@ window.ChatScenarioModule = (function() {
     function show() {
         // Check if scenarios are enabled
         if (!isScenariosEnabled()) {
-            console.log('[ChatScenarioModule] Scenarios are disabled in settings');
             return;
         }
         toggle(true);

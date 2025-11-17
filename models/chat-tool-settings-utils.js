@@ -283,6 +283,56 @@ async function getAutoImageGenerationSetting(db, userId, chatId = null) {
     }
 }
 
+/**
+ * Check if user has ever chatted with a specific character
+ * @param {Object} db - MongoDB database instance
+ * @param {string} userId - User ID
+ * @param {string} chatId - Chat ID (character ID)
+ * @returns {boolean} True if user has chatted with this character (has messages), false otherwise
+ */
+async function hasUserChattedWithCharacter(db, userId, chatId) {
+    try {
+        if (!userId || !ObjectId.isValid(userId) || !chatId || !ObjectId.isValid(chatId)) {
+            return false;
+        }
+
+        const userChatCollection = db.collection('userChat');
+        
+        // Convert to ObjectId for proper query
+        const userIdObj = new ObjectId(userId);
+        const chatIdObj = new ObjectId(chatId);
+        
+        // Query using both ObjectId and string formats (like gallery.js)
+        const query = {
+            $or: [
+                { userId: userIdObj, chatId: chatIdObj },
+                { userId: userIdObj, chatId: chatId.toString() },
+                { userId: userId.toString(), chatId: chatIdObj }
+            ]
+        };
+        
+        const userChat = await userChatCollection.findOne(query);
+        
+        if (userChat) {
+            // Check if userChat has actual messages
+            const messageCount = userChat.messages ? userChat.messages.length : 0;
+            
+            // Only consider it as "chatted" if there are actual messages
+            if (messageCount === 0) {
+                return false;
+            }
+        } else {
+            return false;
+        }
+        
+        return !!userChat && userChat.messages && userChat.messages.length > 0;
+        
+    } catch (error) {
+        console.error('[hasUserChattedWithCharacter] Error:', error.message);
+        return false;
+    }
+}
+
 module.exports = {
     DEFAULT_SETTINGS,
     getUserChatToolSettings,
@@ -293,5 +343,6 @@ module.exports = {
     getAutoMergeFaceSetting,
     getUserSelectedModel,
     getUserPremiumStatus,
-    getAutoImageGenerationSetting
+    getAutoImageGenerationSetting,
+    hasUserChattedWithCharacter
 };

@@ -274,9 +274,6 @@ class PromptManager {
     
     // Clean up method for when WebSocket reconnects
     handleWebSocketReconnect() {
-        if (this.isDevelopmentMode()) {
-            console.log('[PromptManager] WebSocket reconnected, checking for missed completions');
-        }
         if (this.activeGenerations.size > 0) {
             this.checkActiveGenerations();
         }

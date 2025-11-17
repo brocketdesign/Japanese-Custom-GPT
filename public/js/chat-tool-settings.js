@@ -335,6 +335,43 @@ class ChatToolSettings {
     }
 
     // First time settings check
+    // Check if user has ever chatted with this character
+    async hasUserChatted(chatId, callback) {
+        if (!this.userId || !chatId) {
+            if (callback) callback();
+            return;
+        }
+
+        try {
+            const endpoint = `/api/chat-tool-settings/has-chatted/${this.userId}/${chatId}`;
+            
+            const response = await fetch(endpoint, {
+                method: 'GET',
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                if (callback) callback();
+                return;
+            }
+
+            const data = await response.json();
+            const hasChatted = data.hasChatted;
+
+            // If user has never chatted with this character, show settings modal
+            if (!hasChatted) {
+                this.openModalForFirstTime(callback);
+            } else {
+                if (callback) callback();
+            }
+        } catch (error) {
+            console.error('[hasUserChatted] Error:', error.message);
+            // On error, proceed normally without showing modal
+            if (callback) callback();
+        }
+    }
+
+    // Legacy function for backwards compatibility
     checkFirstTimeSettings(callback) {
         if (!this.userId) {
             if (callback) callback();
@@ -356,17 +393,22 @@ class ChatToolSettings {
 
     // Special method for first-time opening with welcome message and callback
     openModalForFirstTime(callback) {
+        console.log('[openModalForFirstTime] Opening settings modal for first-time user');
+        
         // Mark that user has now seen the settings
         this.markSettingsAsOpened();
         
         // Open the modal
         this.openModal();
+        console.log('[openModalForFirstTime] Modal opened');
         
         // Add a welcome message
         this.showFirstTimeWelcome();
+        console.log('[openModalForFirstTime] Welcome message displayed');
         
         // Set up callback for when modal is closed
         if (callback) {
+            console.log('[openModalForFirstTime] Callback registered');
             this.onFirstTimeClose = callback;
         }
     }
@@ -641,6 +683,8 @@ class ChatToolSettings {
     }
 
     closeModal() {
+        console.log('[closeModal] Closing settings modal');
+        
         const overlay = document.getElementById('settings-modal-overlay');
         if (overlay) {
             overlay.classList.remove('show');
@@ -651,15 +695,20 @@ class ChatToolSettings {
             const welcomeMessage = overlay.querySelector('.first-time-welcome');
             if (welcomeMessage) {
                 welcomeMessage.remove();
+                console.log('[closeModal] Welcome message removed');
             }
             
             // Execute callback if this was a first-time opening
             if (this.onFirstTimeClose) {
+                console.log('[closeModal] First-time callback detected - executing after 300ms delay');
                 const callback = this.onFirstTimeClose;
                 this.onFirstTimeClose = null; // Clear the callback
                 setTimeout(() => {
+                    console.log('[closeModal] Executing first-time callback');
                     callback();
                 }, 300); // Small delay to ensure modal is fully closed
+            } else {
+                console.log('[closeModal] No first-time callback');
             }
         }
     }
@@ -924,20 +973,16 @@ class ChatToolSettings {
         try {
             // Try to load chat-specific settings first if we have a chatId
             const chatId = sessionStorage.getItem('lastChatId') || sessionStorage.getItem('chatId');
-            console.log('[chat-tool-settings] Loading settings for user', this.userId, 'chatId:', chatId);
             let response;
             if (chatId && chatId !== 'null' && chatId !== 'undefined') {
                 // Try to get chat-specific settings
-                console.log('[chat-tool-settings] Attempting to load chat-specific settings');
                 response = await fetch(`/api/chat-tool-settings/${this.userId}/${chatId}`);
             } else {
                 // Get global user settings
-                console.log('[chat-tool-settings] Loading global user settings');
                 response = await fetch(`/api/chat-tool-settings/${this.userId}`);
             }
 
             const data = await response.json();
-            console.log('[chat-tool-settings] Loaded settings response:', data.settings);
             if (response.ok && data.success) {
                 this.settings = { ...this.settings, ...data.settings };
                 // Skip auto-correction when applying loaded settings to preserve user's choices

@@ -1,5 +1,5 @@
 const { ObjectId } = require('mongodb');
-const { getVoiceSettings } = require('../models/chat-tool-settings-utils');
+const { getVoiceSettings, hasUserChattedWithCharacter } = require('../models/chat-tool-settings-utils');
 async function routes(fastify, options) {
     
     // Get user's chat tool settings
@@ -384,6 +384,39 @@ async function routes(fastify, options) {
             
         } catch (error) {
             console.error('Error fetching available models:', error);
+            reply.status(500).send({ error: 'Internal server error' });
+        }
+    });
+
+    // Check if user has ever chatted with a specific character
+    fastify.get('/api/chat-tool-settings/has-chatted/:userId/:chatId', async (request, reply) => {
+        try {
+            const { userId, chatId } = request.params;
+            console.log('\n[API /has-chatted] REQUEST START');
+            console.log('[API /has-chatted] Params:');
+            console.log('  - userId (raw):', userId);
+            console.log('  - chatId (raw):', chatId);
+            console.log('  - userId type:', typeof userId);
+            console.log('  - chatId type:', typeof chatId);
+
+            if (!userId || !ObjectId.isValid(userId) || !chatId || !ObjectId.isValid(chatId)) {
+                console.warn('[API /has-chatted] Invalid ObjectId format');
+                console.warn('  - userId valid:', ObjectId.isValid(userId));
+                console.warn('  - chatId valid:', ObjectId.isValid(chatId));
+                return reply.status(400).send({ error: 'Invalid userId or chatId' });
+            }
+
+            const db = fastify.mongo.db;
+            
+            const hasChatted = await hasUserChattedWithCharacter(db, userId, chatId);
+
+            reply.send({ 
+                success: true, 
+                hasChatted
+            });
+            
+        } catch (error) {
+            console.error('[API /has-chatted] Error:', error.message);
             reply.status(500).send({ error: 'Internal server error' });
         }
     });

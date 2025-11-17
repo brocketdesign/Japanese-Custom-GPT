@@ -18,7 +18,7 @@ class GallerySearchManager {
     // Get user subscription status from window object (set by server)
     this.isSubscribed = window.user?.subscriptionStatus === 'active';
     this.isTemporary = window.user?.isTemporary || false;
-    this.shouldBlurNSFW = this.isTemporary || !this.isSubscribed;
+    this.shouldBlurNSFW = this.isTemporary || !this.isSubscribed || !window?.showNSFW;
 
     this.init();
   }
@@ -215,7 +215,27 @@ class GallerySearchManager {
       });
     });
   }
+  // Create character image overlay for NSFW images when showNSFW is disabled
+  createCharacterImageOverlay(item) {
+    // Overlay for subscribed user with showNSFW disabled
+    // Match the design used for other blurred media: blurred image + Unlock button with gradient
+    const linkUrl = item.chatSlug
+      ? `/character/slug/${item.chatSlug}${item.slug ? `?imageSlug=${item.slug}` : ''}`
+      : `/character/${item.chatId}`;
 
+    return `
+      <div class="gallery-media-wrapper position-relative" style="overflow: hidden; max-height: 400px; background-color: #f0f0f0;">
+        <a href="${linkUrl}" class="text-decoration-none">
+          <img src="${item.imageUrl}" alt="${item.chatName} - ${item.prompt || ''}" class="gallery-media" style="width: 100%; height: 100%; object-fit: cover; filter: blur(15px); display: block;">
+        </a>
+        <div class="img-blur-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
+          <button onclick="handleUnlockOverlay(event)" class="btn btn-sm" style="background: linear-gradient(90.9deg, rgb(210, 184, 255) 2.74%, rgb(130, 64, 255) 102.92%); color: white; border: none; border-radius: 8px; font-weight: 600; padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer; transition: 0.2s; box-shadow: none;">
+            <i class="bi bi-lock-fill me-2"></i>Unlock
+          </button>
+        </div>
+      </div>
+    `;
+  }
   /**
    * Create media card HTML
    */
@@ -237,8 +257,12 @@ class GallerySearchManager {
     const mediaUrl = isImage ? item.imageUrl : item.videoUrl;
     const blurredMediaUrl = shouldBlur && !isImage && item.imageUrl ? item.imageUrl : mediaUrl;
 
-    const mediaContent = shouldBlur
-      ? `
+    let mediaContent;
+    // Subscribed user with showNSFW disabled - show blurry overlay on top of visible image
+    if (shouldBlur && isImage) {
+      mediaContent = this.createCharacterImageOverlay(item);
+    } else if (shouldBlur) {
+      mediaContent = `
         <div class="gallery-media-wrapper position-relative" style="overflow: hidden; max-height: 400px; background-color: #f0f0f0;">
           <img src="${blurredMediaUrl}" alt="${item.chatName} - ${item.prompt || ''}" class="gallery-media" style="width: 100%; height: 100%; object-fit: cover; filter: blur(15px);">
           <div class="img-blur-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
@@ -247,16 +271,17 @@ class GallerySearchManager {
             </button>
           </div>
         </div>
-      `
-      : isImage
-      ? `
+      `;
+    } else if (isImage) {
+      mediaContent = `
         <a href="${linkUrl}" class="text-decoration-none">
           <div class="gallery-media-wrapper position-relative" style="overflow: hidden; max-height: 400px; background-color: #f0f0f0;">
             <img src="${mediaUrl}" alt="${item.chatName} - ${item.prompt || ''}" class="gallery-media" style="width: 100%; height: 100%; object-fit: cover;">
           </div>
         </a>
-      `
-      : `
+      `;
+    } else {
+      mediaContent = `
         <div class="gallery-media-wrapper position-relative video-wrapper" style="overflow: hidden; max-height: 400px; background-color: #000; display: block;">
           <video style="width: 100%; height: 100%; object-fit: cover; display: block;" controls controlsList="nodownload">
             <source src="${mediaUrl}" type="video/mp4">
@@ -264,6 +289,7 @@ class GallerySearchManager {
           </video>
         </div>
       `;
+    }
 
     const cardHTML = `
       <div class="card shadow-sm border-0 rounded-3 h-100 gallery-card overflow-hidden">
@@ -447,3 +473,37 @@ document.addEventListener('DOMContentLoaded', () => {
   window.gallerySearchManager = new GallerySearchManager();
   window.gallerySearchManager.loadFromURL();
 });
+
+// Global handler to remove the blur overlay and reveal the image
+window.handleUnlockOverlay = function(event) {
+  try {
+    if (event && typeof event.preventDefault === 'function') {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    const btn = event && (event.currentTarget || event.target);
+    const wrapper = btn ? btn.closest('.gallery-media-wrapper') : null;
+    if (!wrapper) return;
+
+    // Remove overlay element
+    const overlay = wrapper.querySelector('.img-blur-overlay');
+    if (overlay) overlay.remove();
+
+    // Reveal image by removing blur filter
+    const img = wrapper.querySelector('.gallery-media');
+    if (img) {
+      img.style.filter = '';
+      img.style.opacity = '1';
+    }
+
+    // If image was wrapped in a link that had pointer-events disabled, ensure it's clickable
+    const link = wrapper.querySelector('a');
+    if (link) {
+      link.style.pointerEvents = '';
+    }
+  } catch (err) {
+    // Fail silently but keep dev console informed
+    console.error('handleUnlockOverlay error', err);
+  }
+};

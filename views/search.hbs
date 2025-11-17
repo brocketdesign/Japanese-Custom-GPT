@@ -184,17 +184,15 @@
             </nav>
             {{/if}}
 
-            {{#unless imageResults.length}}
-                {{#if query}}
-                    <div class="empty-state">
-                        <div class="empty-state-icon">
-                            <i class="bi bi-search"></i>
-                        </div>
-                        <h3 class="empty-state-title">{{translations.no_results_found_for}} "<span class="search-query-highlight">{{query}}</span>"</h3>
-                        <p class="empty-state-message">Try searching for different keywords or explore popular categories below</p>
+            {{#if query}}
+                <div class="empty-state d-none">
+                    <div class="empty-state-icon mx-auto">
+                        <i class="bi bi-search"></i>
                     </div>
-                {{/if}}
-            {{/unless}}
+                    <h3 class="empty-state-title">{{translations.no_results_found_for}} "<span class="search-query-highlight">{{query}}</span>"</h3>
+                    <p class="empty-state-message">Try searching for different keywords or explore popular categories below</p>
+                </div>
+            {{/if}}
         </div>
 
 

@@ -596,6 +596,8 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
     const db = fastify.mongo.db;
     const chatsGalleryCollection = db.collection('gallery');
     const chatsCollection = db.collection('chats');
+    const userChatCollection = db.collection('userChat');
+    const userId = request.user?._id;
 
     // Pagination parameters
     const page = parseInt(request.query.page) || 1; // Default to page 1
@@ -678,14 +680,32 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
       })
       .toArray();
 
-    // Merge chats with images
+    // Fetch user chat history for the current user to determine if they've chatted with each character
+    const userChatHistory = userId
+      ? await userChatCollection
+          .find({ userId: new ObjectId(userId) })
+          .project({ chatId: 1 })
+          .toArray()
+      : [];
+
+    const userChattedChatIds = new Set(
+      userChatHistory.map(uc => {
+        // Handle both string and ObjectId formats
+        return typeof uc.chatId === 'string' ? uc.chatId : uc.chatId.toString();
+      })
+    );
+
+    // Merge chats with images and add hasUserChatted field
     const result = chats.map(chat => {
       const imageInfo = imagesByChat.find(image => image.chatId.equals(chat._id));
+      const chatIdStr = chat._id.toString();
+      const hasUserChatted = userChattedChatIds.has(chatIdStr);
       return {
         ...chat,
         images: imageInfo?.images || [],
         imageCount: imageInfo?.imageCount || 0,
-        thumbnail: chat.thumbnail || chat.thumbnailUrl || '/img/default-thumbnail.png'
+        thumbnail: chat.thumbnail || chat.thumbnailUrl || '/img/default-thumbnail.png',
+        hasUserChatted
       };
     });
 

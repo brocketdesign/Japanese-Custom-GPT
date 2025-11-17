@@ -10,8 +10,6 @@ async function connect() {
       throw new Error('MongoDB URI is not defined in environment variables');
     }
     await client.connect();
-    console.log('Connected to MongoDB');
-    console.log('Using database:', dbName);
     return client.db(dbName);
   } catch (error) {
     console.error('Could not connect to db', error);

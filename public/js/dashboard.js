@@ -1980,7 +1980,12 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                           aria-hidden="true"
                         >
                         <!-- Chat icon on top right -->
-                        <div class="position-absolute top-0 end-0 m-2 d-flex align-items-center gap-1" style="z-index: 3;">
+                        <div class="position-absolute top-0 end-0 m-2 d-flex flex-column align-items-end gap-1" style="z-index: 3;">
+                          ${chat.hasUserChatted === false ? `
+                            <span class="badge bg-warning bg-opacity-85 text-dark border text-decoration-none" style="backdrop-filter: blur(4px); font-size: 0.75rem;">
+                              <i class="bi bi-star-fill me-1"></i>New
+                            </span>
+                          ` : ''}
                           <span class="badge bg-light bg-opacity-75 text-dark border text-decoration-none" style="backdrop-filter: blur(4px);">
                             <i class="bi bi-chat-dots-fill"></i>
                           </span>

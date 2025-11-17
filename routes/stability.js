@@ -189,18 +189,33 @@ async function routes(fastify, options) {
       const galleryCollection = db.collection('gallery');
       const chatsCollection = db.collection('chats');
 
-      const objectId = new fastify.mongo.ObjectId(imageId);
-      const imageDocument = await galleryCollection.findOne(
-        { "images._id": objectId },
-        { projection: { "images.$": 1, chatId: 1 } }
-      );
+      let imageDocument = null;
+      
+      // First, try to find by image ID
+      try {
+        const objectId = new fastify.mongo.ObjectId(imageId);
+        imageDocument = await galleryCollection.findOne(
+          { "images._id": objectId },
+          { projection: { "images.$": 1, chatId: 1 } }
+        );
+      } catch (err) {
+        // Invalid ObjectId format, continue to mergeId search
+      }
+
+      // If not found by imageId, try to find by mergeId
+      if (!imageDocument) {
+        imageDocument = await galleryCollection.findOne(
+          { "images.mergeId": imageId },
+          { projection: { "images.$": 1, chatId: 1 } }
+        );
+      }
 
       if (!imageDocument || !imageDocument.images?.length) {
         return reply.status(404).send({ error: 'Image not found' });
       }
 
       const image = imageDocument.images[0];
-      const { imageUrl, prompt: imagePrompt, isUpscaled, title, nsfw, likedBy = [], actions } = image;
+      const { imageUrl, prompt: imagePrompt, isUpscaled, title, nsfw, likedBy = [], actions, isMerged, mergeId } = image;
       const { chatId } = imageDocument;
 
       let chatData = {};
@@ -211,7 +226,7 @@ async function routes(fastify, options) {
         ) || {};
       }
 
-      return reply.status(200).send({ imageUrl, imagePrompt, isUpscaled, title, likedBy, nsfw, actions, ...chatData });
+      return reply.status(200).send({ imageUrl, imagePrompt, isUpscaled, title, likedBy, nsfw, actions, isMerged, mergeId, ...chatData });
     } catch (error) {
       console.error('Error fetching image details:', error);
       return reply.status(500).send({ error: 'An error occurred while fetching the image details' });

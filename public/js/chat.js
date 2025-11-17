@@ -715,14 +715,13 @@ function setupChatInterface(chat, character) {
         });
     }
 
-
     async function displayChat(userChat, persona, callback) {
         
         $('body').css('overflow', 'hidden');
         $('#stability-gen-button').show();
         $('.auto-gen').each(function() { $(this).show(); });
         $('#audio-play').show();
- 
+
         let chatContainer = $('#chatContainer');
         chatContainer.empty();
 
@@ -731,13 +730,8 @@ function setupChatInterface(chat, character) {
         displayedImageIds.clear();
         displayedVideoIds.clear();
 
-        // NOTE: Do NOT call clearScenarios() here!
-        // We need to preserve the currentScenario data that was loaded in init()
-        // We'll display it at the end of this function
-        
         // Just clear the scenario container display, but keep the data
         if (window.ChatScenarioModule) {
-            // Remove the UI element, but DON'T call clearScenarios() which nullifies the data
             window.ChatScenarioModule.removeSelectedScenarioDisplay();
         }
 
@@ -789,57 +783,16 @@ function setupChatInterface(chat, character) {
                     displayedMessageIds.add(messageId);
                 } else if (isMergeFace) {
                     const mergeId = chatMessage?.mergeId || chatMessage.content.replace("[MergeFace]", "").replace("[mergeface]", "").trim();
-                    console.log(`Processing merge face with ID: ${mergeId}`);
-                                        
                     // Skip if this specific merge face instance has already been displayed
                     const uniqueMergeIdentifier = `${mergeId}_${i}_${messageId}`;
                     if (displayedImageIds.has(uniqueMergeIdentifier)) {
                         continue;
                     }
                     
-                    // If this is a stored merged image (from database), display it directly
-                    if (chatMessage.imageUrl && chatMessage.isMerged) {
-                        messageHtml = `
-                            <div id="container-${designStep}">
-                                <div class="d-flex flex-row justify-content-start mb-4 message-container">
-                                    <img 
-                                    src="${thumbnail || '/img/logo.webp'}" 
-                                    alt="avatar 1" 
-                                    class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;"
-                                    onclick="openCharacterInfoModal('${chatId}', event)">
-                                    <div class="ms-3 position-relative">
-                                        <div 
-                                        onclick="showImagePreview(this)"
-                                        class="ps-0 text-start assistant-image-box vertical-transition">
-                                            <img id="merge-${mergeId}" data-id="${mergeId}" src="${chatMessage.imageUrl}" alt="Merged Face Result" data-prompt="Face merge completed">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>`;
-                            
-                        // Add tools for the merged image
-                        setTimeout(() => {
-                            const toolsHtml = getImageTools({
-                                chatId, 
-                                imageId: mergeId, 
-                                isLiked: false,
-                                title: chatMessage.title || '[displayChat 822] Auto Merged Image', 
-                                prompt: chatMessage.prompt || '[displayChat 823] Auto merged image', 
-                                nsfw: false, 
-                                imageUrl: chatMessage.imageUrl,
-                                isMergeFace: true
-                            });
-                            $(`#merge-${mergeId}`).closest('.assistant-image-box').after(toolsHtml);
-                        }, 100);
-                        
-                        displayImageThumb(chatMessage.imageUrl);
-                        displayedImageIds.add(uniqueMergeIdentifier);
-                        displayedMessageIds.add(messageId);
-                    } else {
-                        // Legacy handling for old merge face references
-                        const mergeData = await getMergeFaceUrlById(mergeId, designStep, thumbnail);
-                        messageHtml = mergeData ? mergeData.messageHtml : '';
-                    }
+                    // Use getImageUrlById for all merge faces (including stored ones)
+                    let actions = chatMessage.actions || null;
+                    const mergeData = await getImageUrlById(mergeId, designStep, thumbnail, actions);
+                    messageHtml = mergeData ? mergeData.messageHtml : '';
                     
                     if (messageHtml) {
                         displayedImageIds.add(uniqueMergeIdentifier);
@@ -853,54 +806,11 @@ function setupChatInterface(chat, character) {
                         continue;
                     }
                     
-                    // Check if this is actually a merged image stored as regular image
-                    if (chatMessage.isMerged && chatMessage.imageUrl) {
-                        // This is a merged image stored in the database, display it directly
-                        messageHtml = `
-                            <div id="container-${designStep}">
-                                <div class="d-flex flex-row justify-content-start mb-4 message-container">
-                                    <img src="${thumbnail || '/img/logo.webp'}" 
-                                    alt="avatar 1" 
-                                    class="rounded-circle chatbot-image-chat" 
-                                    data-id="${chatId}" 
-                                    style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;"
-                                    onclick="openCharacterInfoModal('${chatId}', event)">
-                                    <div class="ms-3 position-relative">
-                                        <div 
-                                        onclick="showImagePreview(this)"
-                                        class="ps-0 text-start assistant-image-box vertical-transition">
-                                            <img id="image-${imageId}" data-id="${imageId}" src="${chatMessage.imageUrl}" alt="${chatMessage.title || 'Merged Image'}" data-prompt="${chatMessage.prompt || 'Auto merged image'}">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>`;
-                        
-                        // Add tools for the merged image
-                        setTimeout(() => {
-                            const toolsHtml = getImageTools({
-                                chatId, 
-                                imageId, 
-                                isLiked: false,
-                                title: chatMessage.title || '[displayhat 874] Auto Merged Image', 
-                                prompt: chatMessage.prompt || '[displayhat 875] Auto merged image', 
-                                nsfw: chatMessage.nsfw || false, 
-                                imageUrl: chatMessage.imageUrl,
-                                isMergeFace: true
-                            });
-                            $(`#image-${imageId}`).closest('.assistant-image-box').after(toolsHtml);
-                            
-                            if (chatMessage.nsfw) {
-                                $(`#image-${imageId}`).closest('.assistant-image-box').find('.nsfw-badge-container').show();
-                            }
-                        }, 100);
-                        
-                        displayImageThumb(chatMessage.imageUrl);
-                    } else {
-                        // Regular image handling - fetch from API
-                        let actions = chatMessage.actions || null;
-                        const imageData = await getImageUrlById(imageId, designStep, thumbnail, actions);
-                        messageHtml = imageData ? imageData.messageHtml : '';
-                    }
+                    // Use getImageUrlById for ALL images (merged or not)
+                    // This ensures consistent NSFW blur logic
+                    let actions = chatMessage.actions || null;
+                    const imageData = await getImageUrlById(imageId, designStep, thumbnail, actions);
+                    messageHtml = imageData ? imageData.messageHtml : '';
                     
                     if (messageHtml) {
                         displayedImageIds.add(imageId);

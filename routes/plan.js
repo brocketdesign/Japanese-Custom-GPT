@@ -4,6 +4,92 @@ const stripe = process.env.MODE == 'local' ? require('stripe')(process.env.STRIP
 const { getApiUrl } = require('../models/tool');
 const { addUserPoints } = require('../models/user-points-utils');
 
+/**
+ * Check and process expired day passes
+ * This function is exported and called from cronManager.js with proper cron scheduling
+ */
+async function checkExpiredDayPasses(fastifyInstance) {
+  const now = new Date();
+  const subscriptionsCollection = fastifyInstance.mongo.db.collection('subscriptions');
+  const usersCollection = fastifyInstance.mongo.db.collection('users');
+
+  try {
+    const expiredPasses = await subscriptionsCollection.find({
+      subscriptionType: 'day-pass',
+      subscriptionStatus: 'active',
+      dayPassProcessed: false,
+      subscriptionEndDate: { $lt: now }
+    }).toArray();
+
+    if (expiredPasses.length === 0) {
+      console.log('💳 [CRON] ℹ️  No expired day passes found');
+      return;
+    }
+
+    console.log(`💳 [CRON] 📊 Found ${expiredPasses.length} expired day pass(es) to process`);
+
+    for (const pass of expiredPasses) {
+      console.log(`💳 [CRON] 🔄 Processing expired day pass for user: ${pass.userId}`);
+
+      // Fetch the user to check their current subscription type
+      const userToUpdate = await usersCollection.findOne({ _id: new ObjectId(pass.userId) });
+
+      if (!userToUpdate) {
+        console.log(`💳 [CRON] ⚠️  User ${pass.userId} not found. Skipping.`);
+        // Mark the pass as processed even if user not found to avoid reprocessing
+        await subscriptionsCollection.updateOne(
+          { _id: pass._id },
+          { $set: { subscriptionStatus: 'expired', dayPassProcessed: true } }
+        );
+        continue;
+      }
+
+      // Update the specific day-pass subscription record to expired
+      const subscriptionUpdateResult = await subscriptionsCollection.updateOne(
+        { _id: pass._id },
+        {
+          $set: {
+            subscriptionStatus: 'expired',
+            dayPassProcessed: true
+          }
+        }
+      );
+
+      if (subscriptionUpdateResult.modifiedCount > 0) {
+        console.log(`💳 [CRON] ✅ Day pass record updated to expired`);
+
+        // Only deactivate user if their current subscription is still the day-pass
+        // or if they are somehow active without a 'subscription' type.
+        if (userToUpdate.subscriptionType === 'day-pass' || (userToUpdate.subscriptionStatus === 'active' && userToUpdate.subscriptionType !== 'subscription')) {
+          const userUpdateResult = await usersCollection.updateOne(
+            { _id: new ObjectId(pass.userId) },
+            {
+              $set: { subscriptionStatus: 'inactive' },
+              $unset: {
+                subscriptionType: "", // Unset type if it was 'day-pass'
+                subscriptionEndDate: "" // Unset end date if it was from day-pass
+              }
+            }
+          );
+          if (userUpdateResult.modifiedCount > 0) {
+            console.log(`💳 [CRON] ✅ User ${pass.userId} deactivated (day pass expired)`);
+          } else {
+            console.log(`💳 [CRON] ℹ️  User ${pass.userId} already inactive or unchanged`);
+          }
+        } else if (userToUpdate.subscriptionType === 'subscription') {
+          console.log(`💳 [CRON] ℹ️  User ${pass.userId} has active subscription - status unchanged`);
+        } else {
+          console.log(`💳 [CRON] ℹ️  User ${pass.userId} status is '${userToUpdate.subscriptionStatus}' - no action taken`);
+        }
+      } else {
+        console.log(`💳 [CRON] ⚠️  Failed to update day pass record or already processed`);
+      }
+    }
+  } catch (error) {
+    console.error('💳 [CRON] ❌ Error processing expired day passes:', error);
+  }
+}
+
 async function routes(fastify, options) {
 
   const plans = {
@@ -1144,99 +1230,7 @@ fastify.post('/album/check-client', async (request, reply) => {
   }
 });
 
-// Function to check and process expired day passes
-async function checkExpiredDayPasses(fastifyInstance) {
-  console.log('[CronJob] checkExpiredDayPasses: Running job to check for expired day passes...');
-  const now = new Date();
-  const subscriptionsCollection = fastifyInstance.mongo.db.collection('subscriptions');
-  const usersCollection = fastifyInstance.mongo.db.collection('users');
-
-  try {
-    const expiredPasses = await subscriptionsCollection.find({
-      subscriptionType: 'day-pass',
-      subscriptionStatus: 'active',
-      dayPassProcessed: false,
-      subscriptionEndDate: { $lt: now }
-    }).toArray();
-
-    if (expiredPasses.length === 0) {
-      console.log('[CronJob] checkExpiredDayPasses: No expired day passes found.');
-      return;
-    }
-
-    console.log(`[CronJob] checkExpiredDayPasses: Found ${expiredPasses.length} expired day pass(es) to process.`);
-
-    for (const pass of expiredPasses) {
-      console.log(`[CronJob] checkExpiredDayPasses: Processing expired day pass for user ID: ${pass.userId}, Subscription ID: ${pass._id}`);
-
-      // Fetch the user to check their current subscription type
-      const userToUpdate = await usersCollection.findOne({ _id: new ObjectId(pass.userId) });
-
-      if (!userToUpdate) {
-        console.log(`[CronJob] checkExpiredDayPasses: User ${pass.userId} not found. Skipping.`);
-        // Mark the pass as processed even if user not found to avoid reprocessing
-        await subscriptionsCollection.updateOne(
-          { _id: pass._id },
-          { $set: { subscriptionStatus: 'expired', dayPassProcessed: true } }
-        );
-        continue;
-      }
-
-      // Update the specific day-pass subscription record to expired
-      const subscriptionUpdateResult = await subscriptionsCollection.updateOne(
-        { _id: pass._id },
-        {
-          $set: {
-            subscriptionStatus: 'expired',
-            dayPassProcessed: true
-          }
-        }
-      );
-
-      if (subscriptionUpdateResult.modifiedCount > 0) {
-        console.log(`[CronJob] checkExpiredDayPasses: Day pass record ${pass._id} updated to expired.`);
-
-        // Only deactivate user if their current subscription is still the day-pass
-        // or if they are somehow active without a 'subscription' type.
-        if (userToUpdate.subscriptionType === 'day-pass' || (userToUpdate.subscriptionStatus === 'active' && userToUpdate.subscriptionType !== 'subscription')) {
-          const userUpdateResult = await usersCollection.updateOne(
-            { _id: new ObjectId(pass.userId) },
-            {
-              $set: { subscriptionStatus: 'inactive' },
-              $unset: {
-                subscriptionType: "", // Unset type if it was 'day-pass'
-                subscriptionEndDate: "" // Unset end date if it was from day-pass
-              }
-            }
-          );
-          if (userUpdateResult.modifiedCount > 0) {
-            console.log(`[CronJob] checkExpiredDayPasses: User record ${pass.userId} updated to inactive as their day pass expired.`);
-          } else {
-            console.log(`[CronJob] checkExpiredDayPasses: Failed to update user record ${pass.userId} to inactive, or user was already inactive/status unchanged.`);
-          }
-        } else if (userToUpdate.subscriptionType === 'subscription') {
-          console.log(`[CronJob] checkExpiredDayPasses: User ${pass.userId} has an active subscription. Their status will not be changed to inactive due to day pass expiration.`);
-        } else {
-          console.log(`[CronJob] checkExpiredDayPasses: User ${pass.userId} status is '${userToUpdate.subscriptionStatus}' with type '${userToUpdate.subscriptionType}'. No deactivation action taken for this expired day pass.`);
-        }
-      } else {
-        console.log(`[CronJob] checkExpiredDayPasses: Failed to update day pass subscription record ${pass._id} or already processed.`);
-      }
-    }
-  } catch (error) {
-    console.error('[CronJob] checkExpiredDayPasses: Error processing expired day passes:', error);
-  }
 }
 
-// Schedule the job and run once on startup
-fastify.ready(async () => {
-  console.log('[Startup] Initial call to checkExpiredDayPasses.');
-  await checkExpiredDayPasses(fastify); // Pass fastify instance
-  setInterval(() => checkExpiredDayPasses(fastify), 60 * 60 * 1000); // Run every hour
-  console.log('[Startup] checkExpiredDayPasses job scheduled to run every hour.');
-});
-
-
-}
-
-  module.exports = routes;
+module.exports = routes;
+module.exports.checkExpiredDayPasses = checkExpiredDayPasses;

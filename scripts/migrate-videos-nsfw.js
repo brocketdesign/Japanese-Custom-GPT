@@ -25,7 +25,7 @@ async function detectImageNsfw(image) {
 }
 
 async function migrate() {
-  const client = new MongoClient(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  const client = new MongoClient(MONGODB_URI);
   let updatedCount = 0;
   let processedCount = 0;
   let skippedCount = 0;

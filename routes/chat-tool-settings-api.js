@@ -277,7 +277,6 @@ async function routes(fastify, options) {
                 if (!settings.voiceProvider) {
                     settings.voiceProvider = 'standard';
                 }
-                console.log('[chat-tool-settings] Loaded chat-specific settings for chatId:', chatId);
                 return reply.send({ success: true, settings, isChatSpecific: true, isPremium });
             }
 

@@ -14,8 +14,7 @@ const {
 } = require('./models/databasemanagement');
 const { checkUserAdmin, getUserData, updateCounter, fetchTags } = require('./models/tool');
 const { deleteOldTasks } = require('./models/imagen');
-const { cronJobs, cacheSitemapDataTask, configureCronJob, initializeCronJobs } = require('./models/cronManager');
-const {initializeAnalyticsCron} = require('./models/cronUserAnalytics');
+const { cronJobs, cacheSitemapDataTask, configureCronJob, initializeCronJobs, initializeDayPassExpirationCheck } = require('./models/cronManager');
 // Expose cron jobs and configuration to routes
 fastify.decorate('cronJobs', cronJobs);
 fastify.decorate('configureCronJob', configureCronJob);
@@ -49,8 +48,11 @@ fastify.ready(async () => {
 
   // Initialize configured cron jobs
   initializeCronJobs(fastify);
-  // Initialize user analytics cron job
-  initializeAnalyticsCron(fastify);
+  
+  // Initialize day pass expiration check cron job
+  // Import checkExpiredDayPasses from plan.js routes
+  const planRoutes = require('./routes/plan');
+  initializeDayPassExpirationCheck(fastify, planRoutes.checkExpiredDayPasses);
 });
 
 // Every 3 cron jobs for cleanup and maintenance
@@ -1132,7 +1134,10 @@ const start = async () => {
         console.error(err);
         process.exit(1);
       }
-      console.log(`Fastify running → PORT http://${ip.address()}:${port}`);
+      // Wait for cronjon logs to finish
+      setTimeout(() => {
+        console.log(`Fastify running → PORT http://${ip.address()}:${port}`);
+      }, 3000);
     });
   } catch (err) {
     console.log(err);

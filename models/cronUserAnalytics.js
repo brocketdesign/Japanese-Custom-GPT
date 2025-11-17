@@ -19,16 +19,6 @@ function initializeAnalyticsCron(fastify) {
       fastify.log.error('Error updating analytics cache:', error);
     }
   });
-  
-  // Initial update on startup
-  setTimeout(async () => {
-    try {
-      await updateAnalyticsCache(db);
-      fastify.log.info('Initial analytics cache created');
-    } catch (error) {
-      fastify.log.error('Error creating initial analytics cache:', error);
-    }
-  }, 5000);
 }
 
 /**
@@ -46,7 +36,7 @@ async function updateAnalyticsCache(db) {
   const now = new Date();
   const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   
-  console.log('Starting analytics cache update...');
+  console.log('\n📊 [CRON] ▶️  Starting analytics cache update...');
   
   // Count total messages from userChat collection
   const totalMessagesResult = await userChatCollection.aggregate([
@@ -56,7 +46,7 @@ async function updateAnalyticsCache(db) {
   
   const totalMessages = totalMessagesResult[0]?.total || 0;
   
-  console.log('Total messages found:', totalMessages);
+  console.log('📊 [CRON] 📨 Total messages found:', totalMessages);
   
   // Calculate all statistics
   const [
@@ -96,10 +86,10 @@ async function updateAnalyticsCache(db) {
   const prevTotalUsers = totalUsers - newUsersLastWeek;
   const prevTotalImages = totalImagesCount - newImagesCount;
   
-  console.log('Analytics cache update - Message stats:', {
+  console.log('📊 [CRON] 📈 Cache statistics:', {
     totalMessages,
     totalUsers,
-    avgMessagesPerUser: totalUsers > 0 ? (totalMessages / totalUsers) : 0
+    avgMessagesPerUser: totalUsers > 0 ? (totalMessages / totalUsers).toFixed(2) : 0
   });
   
   const dashboardData = {
@@ -133,6 +123,8 @@ async function updateAnalyticsCache(db) {
     },
     { upsert: true }
   );
+  
+  console.log('📊 [CRON] ✅ Analytics cache updated successfully\n');
 }
 
 async function calculateUserGrowth(usersCollection) {
@@ -263,4 +255,4 @@ async function calculateContentTrends(imagesCollection, userChatCollection) {
   return { labels, images, messages };
 }
 
-module.exports = { initializeAnalyticsCron };
+module.exports = { initializeAnalyticsCron, updateAnalyticsCache };

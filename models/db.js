@@ -2,7 +2,7 @@ const { MongoClient } = require('mongodb');
 const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
 const dbName = process.env.MONGODB_NAME || process.env.DB_NAME || 'lamix';
 
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+const client = new MongoClient(uri);
 
 async function connect() {
   try {

@@ -9,6 +9,7 @@ const { handleTaskCompletion, checkTaskStatus } = require('./imagen'); // <-- im
 const { ObjectId } = require('mongodb');
 const fs = require('fs');
 const { cacheSitemapData } = require('./sitemap-utils'); // <-- import sitemap utils
+const { updateAnalyticsCache } = require('./cronUserAnalytics'); // <-- import analytics cache function
 // Store active cron jobs
 const cronJobs = {};
 
@@ -43,10 +44,10 @@ const configureCronJob = (jobName, schedule, enabled, task) => {
         schedule,
         enabled: true
       };
-      console.log(`[configureCronJob]'${jobName}' configured with schedule: ${schedule}`);
+      console.log(`⏰ [CRON] ✅ Job configured: '${jobName}' | Schedule: ${schedule}`);
       return true;
     } catch (error) {
-      console.error(`[configureCronJob] Error configuring cron job '${jobName}':`, error);
+      console.error(`⏰ [CRON] ❌ Error configuring cron job '${jobName}':`, error);
       return false;
     }
   }
@@ -74,21 +75,24 @@ const cleanupExpiredAudioFiles = (fastify) => async () => {
         const filePath = fileRecord.filePath;
         if (fs.existsSync(filePath)) {
           await fs.promises.unlink(filePath);
-          console.log(`[cleanupExpiredAudioFiles] Deleted expired file: ${fileRecord.filename}`);
+          console.log(`🗑️  [CRON] Deleted expired audio: ${fileRecord.filename}`);
         }
         
         // Remove from the tracking collection
         await cleanupCollection.deleteOne({ _id: fileRecord._id });
       } catch (err) {
-        console.error(`[cleanupExpiredAudioFiles] Error deleting file ${fileRecord.filename}:`, err);
+        console.error(`🗑️  [CRON] ❌ Error deleting file ${fileRecord.filename}:`, err);
         // If the file doesn't exist, still remove from tracking
         if (err.code === 'ENOENT') {
           await cleanupCollection.deleteOne({ _id: fileRecord._id });
         }
       }
     }
+    if (expiredFiles.length > 0) {
+      console.log(`🗑️  [CRON] ✅ Audio cleanup complete | Deleted: ${expiredFiles.length} files`);
+    }
   } catch (err) {
-    console.error('[cleanupExpiredAudioFiles] Error cleaning up expired audio files:', err);
+    console.error('🗑️  [CRON] ❌ Error cleaning up expired audio files:', err);
   }
 };
 
@@ -100,7 +104,7 @@ const cleanupExpiredAudioFiles = (fastify) => async () => {
  */
 const createModelChatGenerationTask = (fastify) => {
   return async () => {
-    console.log('[createModelChatGenerationTask] Running scheduled model chat generation task...');
+    console.log('🤖 [CRON] ▶️  Starting model chat generation task...');
     const db = fastify.mongo.db;
     
     try {
@@ -112,7 +116,7 @@ const createModelChatGenerationTask = (fastify) => {
       const modelChatCronSettings = await settingsCollection.findOne({ type: 'modelChatCron' });
       
       if (!modelChatCronSettings || !modelChatCronSettings.enabled) {
-        console.log('[createModelChatGenerationTask] Model chat generation is disabled. Skipping task.');
+        console.log('🤖 [CRON] ⏭️  Model chat generation is disabled. Skipping.');
         return;
       }
       
@@ -120,14 +124,14 @@ const createModelChatGenerationTask = (fastify) => {
       const modelsCollection = db.collection('myModels');
       const models = await modelsCollection.find({}).toArray();
       
-      console.log(`[createModelChatGenerationTask] Found ${models.length} models to generate chats for`);
+      console.log(`🤖 [CRON] 📊 Found ${models.length} models to process`);
       
       // Find an admin user to use for image generation
       const usersCollection = db.collection('users');
       const adminUser = await usersCollection.findOne({ role: 'admin' });
       
       if (!adminUser) {
-        console.log('[createModelChatGenerationTask] No admin user found for automated chat generation');
+        console.log('🤖 [CRON] ⚠️  No admin user found for automated chat generation');
         return;
       }
       
@@ -140,7 +144,7 @@ const createModelChatGenerationTask = (fastify) => {
       // Create chat for each model
       for (const model of models) {
         try {
-          console.log(`[createModelChatGenerationTask] Processing model: ${model.model}`);
+          console.log(`🤖 [CRON] 🔄 Processing model: ${model.model}`);
           
           // Get prompt from Civitai with strict exclusion of used/skipped prompts and forbidden words filtering
           const prompt = await fetchRandomCivitaiPrompt(
@@ -153,7 +157,7 @@ const createModelChatGenerationTask = (fastify) => {
           );
           
           if (!prompt) {
-            console.log(`[createModelChatGenerationTask] No suitable prompt found for model ${model.model} after exhaustive search. All prompts may have been used or contain forbidden words. Skipping.`);
+            console.log(`🤖 [CRON] ⚠️  No suitable prompt found for model ${model.model}. Skipping.`);
             continue;
           }
           
@@ -161,22 +165,22 @@ const createModelChatGenerationTask = (fastify) => {
           const createdChat = await createModelChat(db, model, prompt, 'en', fastify, adminUser, modelChatCronSettings.nsfw);
           
           if (createdChat) {
-            console.log(`[createModelChatGenerationTask] Successfully created chat for model ${model.model}: ${createdChat._id}`);
+            console.log(`🤖 [CRON] ✅ Chat created for ${model.model} | ID: ${createdChat._id}`);
           } else {
-            console.log(`[createModelChatGenerationTask] Failed to create chat for model ${model.model}`);
+            console.log(`🤖 [CRON] ❌ Failed to create chat for ${model.model}`);
           }
           
           // Wait a bit between requests to avoid rate limiting
           await new Promise(resolve => setTimeout(resolve, 5000));
         } catch (modelError) {
-          console.error(`[createModelChatGenerationTask] Error processing model ${model.model}:`, modelError);
+          console.error(`🤖 [CRON] ❌ Error processing model ${model.model}:`, modelError);
           // Continue with next model
         }
       }
       
-      console.log('[createModelChatGenerationTask] Scheduled chat generation completed');
+      console.log('🤖 [CRON] ✅ Model chat generation completed');
     } catch (err) {
-      console.error('[createModelChatGenerationTask] Failed to execute scheduled chat generation:', err);
+      console.error('🤖 [CRON] ❌ Failed to execute model chat generation:', err);
     }
   };
 };
@@ -193,7 +197,7 @@ const processBackgroundTasks = (fastify) => async () => {
     const db = fastify.mongo.db;
     
     if (!db) {
-      console.error('[processBackgroundTasks] Database not available');
+      console.error('🖼️  [CRON] ❌ Database not available');
       return;
     }
 
@@ -213,14 +217,17 @@ const processBackgroundTasks = (fastify) => async () => {
       return;
     }
 
-    console.log(`\n[processBackgroundTasks] ===== STARTING BACKGROUND TASK PROCESSING ${new Date().toISOString()} =====`);
-    console.log(`[processBackgroundTasks] Found ${unprocessedTasks.length} tasks to process`);
-    unprocessedTasks.forEach(t => {
-      console.log(`[processBackgroundTasks] Task: ${t.taskId}, status: ${t.status}, processedAt: ${t.processedAt}, chatCreation: ${t.chatCreation}, createdAt: ${t.createdAt}`);
+    console.log(`\n🖼️  [CRON] ════════════════════════════════════════════`);
+    console.log(`🖼️  [CRON] ▶️  IMAGE TASK PROCESSING STARTED`);
+    console.log(`🖼️  [CRON] 📊 Found ${unprocessedTasks.length} task(s) to process`);
+    console.log(`🖼️  [CRON] ════════════════════════════════════════════`);
+    
+    unprocessedTasks.forEach((t, idx) => {
+      console.log(`🖼️  [CRON] Task ${idx + 1}/${unprocessedTasks.length} | ID: ${t.taskId} | Status: ${t.status}`);
     });
 
     for (const task of unprocessedTasks) {
-      console.log(`[processBackgroundTasks] Processing task: ${task.taskId}, status: ${task.status}, chatCreation: ${task.chatCreation}`);
+      console.log(`\n🖼️  [CRON] 🔄 Processing task: ${task.taskId}`);
       
       try {
         // Only mark as being processed to prevent duplicate processing within THIS cron cycle
@@ -229,16 +236,10 @@ const processBackgroundTasks = (fastify) => async () => {
         
         const taskStatus = await checkTaskStatus(task.taskId, fastify);
         
-        console.log(`[processBackgroundTasks] checkTaskStatus returned for ${task.taskId}:`, {
-          status: taskStatus?.status,
-          userId: taskStatus?.userId,
-          userChatId: taskStatus?.userChatId,
-          hasImages: !!taskStatus?.result?.images,
-          imagesCount: taskStatus?.result?.images?.length || 0
-        });
+        console.log(`🖼️  [CRON] ℹ️  Status check: ${taskStatus?.status || 'unknown'}`);
         
         if (taskStatus && taskStatus.status === 'completed') {
-          console.log(`[processBackgroundTasks] Task ${task.taskId} is completed, handling completion with chatCreation: ${task.chatCreation}`);
+          console.log(`🖼️  [CRON] ✅ Task ${task.taskId} is completed, processing...`);
           await handleTaskCompletion(taskStatus, fastify, {
             chatCreation: task.chatCreation,
             translations: fastify.translations?.en || {},
@@ -253,22 +254,25 @@ const processBackgroundTasks = (fastify) => async () => {
             { $set: { status: 'completed', updatedAt: new Date() } }
           );
           
-          console.log(`[processBackgroundTasks] Task ${task.taskId} completion handled successfully`);
+          console.log(`🖼️  [CRON] ✅ Task ${task.taskId} completed successfully`);
         } else {
-          console.log(`[processBackgroundTasks] Task ${task.taskId} is not completed yet, status: ${taskStatus?.status || 'unknown'}, will retry next cycle`);
+          console.log(`🖼️  [CRON] ⏳ Task ${task.taskId} still processing (${taskStatus?.status || 'unknown'}), will retry next cycle`);
           // Don't set processedAt - let it be reprocessed next cycle
         }
       } catch (error) {
-        console.error(`[processBackgroundTasks] Error processing task ${task.taskId}:`, error.message, error.stack);
+        console.error(`🖼️  [CRON] ❌ Error processing task ${task.taskId}:`, error.message);
         // Don't update anything - let it be retried next cycle
       }
     }
     
     const endTime = Date.now();
-    console.log(`[processBackgroundTasks] ===== COMPLETED BACKGROUND TASK PROCESSING in ${endTime - startTime}ms =====\n`);
+    console.log(`\n🖼️  [CRON] ════════════════════════════════════════════`);
+    console.log(`🖼️  [CRON] ✅ IMAGE TASK PROCESSING COMPLETED`);
+    console.log(`🖼️  [CRON] ⏱️  Duration: ${endTime - startTime}ms`);
+    console.log(`🖼️  [CRON] ════════════════════════════════════════════\n`);
     
   } catch (error) {
-    console.error('[processBackgroundTasks] Critical error in background task processing:', error);
+    console.error('🖼️  [CRON] ❌ Critical error in background task processing:', error);
   }
 };
 
@@ -281,7 +285,7 @@ const processBackgroundVideoTasks = (fastify) => async () => {
 
     // Add this check at the beginning
     if (!fastify.sendNotificationToUser) {
-      console.warn('[processBackgroundVideoTasks] sendNotificationToUser method not available');
+      console.warn('🎬 [CRON] ⚠️  sendNotificationToUser method not available');
     }
 
   try {
@@ -296,30 +300,26 @@ const processBackgroundVideoTasks = (fastify) => async () => {
       return;
     }
     
+    console.log(`\n🎬 [CRON] ════════════════════════════════════════════`);
+    console.log(`🎬 [CRON] ▶️  VIDEO TASK PROCESSING STARTED`);
+    console.log(`🎬 [CRON] 📊 Found ${backgroundVideoTasks.length} video task(s)`);
+    console.log(`🎬 [CRON] ════════════════════════════════════════════`);
+    
     const { checkVideoTaskStatus, handleVideoTaskCompletion } = require('./img2video-utils');
     
     for (const task of backgroundVideoTasks) {
-      console.log(`[processBackgroundVideoTasks] Processing task ${task.taskId} (status: ${task.status})`);
-      console.log(`[processBackgroundVideoTasks] Task details:`, {
-        taskId: task.taskId,
-        userId: task.userId,
-        chatId: task.chatId,
-        placeholderId: task.placeholderId,
-        status: task.status,
-        createdAt: task.createdAt,
-        updatedAt: task.updatedAt
-      });
+      console.log(`\n🎬 [CRON] 🔄 Processing video task: ${task.taskId} (Status: ${task.status})`);
       
       try {
-        console.log(`[processBackgroundVideoTasks] Checking status for video task ${task.taskId}`);
+        console.log(`🎬 [CRON] 📋 Checking status for: ${task.taskId}`);
         
         // Check the current status of the video generation
         const taskStatus = await checkVideoTaskStatus(task.taskId);
         
-        console.log(`[processBackgroundVideoTasks] Task ${task.taskId} status check result:`, JSON.stringify(taskStatus, null, 2));
+        console.log(`🎬 [CRON] ℹ️  Status: ${taskStatus?.status || 'unknown'}`);
         
         if (!taskStatus) {
-          console.error(`[processBackgroundVideoTasks] No status returned for task ${task.taskId}`);
+          console.error(`🎬 [CRON] ❌ No status returned for task ${task.taskId}`);
           await db.collection('tasks').updateOne(
             { _id: task._id },
             { 
@@ -334,7 +334,7 @@ const processBackgroundVideoTasks = (fastify) => async () => {
         }
         
         if (taskStatus.status === 'processing' || taskStatus.status === 'pending') {
-          console.log(`[processBackgroundVideoTasks] Task ${task.taskId} still processing (${taskStatus.status}), will check again next cycle`);
+          console.log(`🎬 [CRON] ⏳ Task ${task.taskId} still processing...`);
           
           // Update task status and progress if changed
           await db.collection('tasks').updateOne(
@@ -351,7 +351,7 @@ const processBackgroundVideoTasks = (fastify) => async () => {
         }
         
         if (taskStatus.status === 'failed') {
-          console.error(`[processBackgroundVideoTasks] Task ${task.taskId} failed:`, taskStatus.error);
+          console.error(`🎬 [CRON] ❌ Task ${task.taskId} failed:`, taskStatus.error);
           
           // Update task as failed
           await db.collection('tasks').updateOne(
@@ -367,7 +367,7 @@ const processBackgroundVideoTasks = (fastify) => async () => {
           
           // Notify user of failure
           if (task.userId && fastify.sendNotificationToUser) {
-            console.log(`[processBackgroundVideoTasks] Notifying user ${task.userId} of task failure`);
+            console.log(`🎬 [CRON] 🔔 Notifying user of failure`);
             fastify.sendNotificationToUser(task.userId.toString(), 'handleVideoLoader', { 
               videoId: task.placeholderId, 
               action: 'remove' 
@@ -381,7 +381,7 @@ const processBackgroundVideoTasks = (fastify) => async () => {
         }
         
         if (taskStatus.status === 'completed') {
-          console.log(`[processBackgroundVideoTasks] Task ${task.taskId} completed successfully!`);
+          console.log(`🎬 [CRON] ✅ Task ${task.taskId} completed successfully!`);
           
           // Handle task completion with all necessary data
           await handleVideoTaskCompletion(
@@ -398,14 +398,14 @@ const processBackgroundVideoTasks = (fastify) => async () => {
             }
           );
           
-          console.log(`[processBackgroundVideoTasks] Task ${task.taskId} completion handling finished`);
+          console.log(`🎬 [CRON] ✅ Task ${task.taskId} completion handling finished`);
           continue;
         }
         
-        console.log(`[processBackgroundVideoTasks] Task ${task.taskId} has unknown status: ${taskStatus.status}`);
+        console.log(`🎬 [CRON] ⚠️  Task ${task.taskId} has unknown status: ${taskStatus.status}`);
         
       } catch (err) {
-        console.error(`[processBackgroundVideoTasks] Error processing video task ${task.taskId}:`, err);
+        console.error(`🎬 [CRON] ❌ Error processing video task ${task.taskId}:`, err.message);
         
         // Mark task as failed if we can't process it
         try {
@@ -422,7 +422,7 @@ const processBackgroundVideoTasks = (fastify) => async () => {
           
           // Notify user of error
           if (task.userId && fastify.sendNotificationToUser) {
-            console.log(`[processBackgroundVideoTasks] Notifying user ${task.userId} of processing error`);
+            console.log(`🎬 [CRON] 🔔 Notifying user of processing error`);
             fastify.sendNotificationToUser(task.userId.toString(), 'handleVideoLoader', { 
               videoId: task.placeholderId, 
               action: 'remove' 
@@ -433,14 +433,16 @@ const processBackgroundVideoTasks = (fastify) => async () => {
             });
           }
         } catch (updateErr) {
-          console.error(`[processBackgroundVideoTasks] Failed to update task ${task.taskId} as failed:`, updateErr);
+          console.error(`🎬 [CRON] ❌ Failed to update task ${task.taskId} as failed:`, updateErr.message);
         }
       }
     }
     
-    console.log('[processBackgroundVideoTasks] Background video task processing completed');
+    console.log(`\n🎬 [CRON] ════════════════════════════════════════════`);
+    console.log(`🎬 [CRON] ✅ VIDEO TASK PROCESSING COMPLETED`);
+    console.log(`🎬 [CRON] ════════════════════════════════════════════\n`);
   } catch (err) {
-    console.error('[processBackgroundVideoTasks] Error processing background video tasks:', err);
+    console.error('🎬 [CRON] ❌ Error processing background video tasks:', err.message);
   }
 };
 
@@ -450,7 +452,7 @@ const processBackgroundVideoTasks = (fastify) => async () => {
  * @param {Object} fastify - Fastify instance
  */
 const cachePopularChatsTask = (fastify) => async () => {
-  console.log('[cachePopularChatsTask] Starting popular chats caching task...');
+  console.log('\n⭐ [CRON] ▶️  Starting popular chats caching task...');
   const db = fastify.mongo.db;
   const chatsCollection = db.collection('chats');
   const cacheCollection = db.collection('popularChatsCache');
@@ -551,13 +553,13 @@ const cachePopularChatsTask = (fastify) => async () => {
         cachedAt: new Date()
       }));
       await cacheCollection.insertMany(chatsToInsert);
-      console.log(`[cachePopularChatsTask] Successfully cached ${chatsWithSamples.length} popular chats with non-NSFW sample images.`);
+      console.log(`⭐ [CRON] ✅ Cached ${chatsWithSamples.length} popular chats with sample images`);
     } else {
-      console.log('[cachePopularChatsTask] No popular chats found to cache.');
+      console.log('⭐ [CRON] ℹ️  No popular chats found to cache');
     }
 
   } catch (err) {
-    console.error('[cachePopularChatsTask] Error caching popular chats:', err);
+    console.error('⭐ [CRON] ❌ Error caching popular chats:', err.message);
   }
 };
 
@@ -566,7 +568,7 @@ const cachePopularChatsTask = (fastify) => async () => {
  * @param {Object} fastify - Fastify instance
  */
 const cacheSitemapDataTask = (fastify) => async () => {
-  console.log('[cacheSitemapDataTask] Starting sitemap data caching task...');
+  console.log('\n🗺️  [CRON] ▶️  Starting sitemap data caching task...');
   const db = fastify.mongo.db;
   
   try {
@@ -574,9 +576,68 @@ const cacheSitemapDataTask = (fastify) => async () => {
     await db.command({ ping: 1 });
     
     await cacheSitemapData(db);
-    console.log('[cacheSitemapDataTask] Sitemap data caching completed successfully');
+    console.log('🗺️  [CRON] ✅ Sitemap data caching completed successfully');
   } catch (err) {
-    console.error('[cacheSitemapDataTask] Error caching sitemap data:', err);
+    console.error('🗺️  [CRON] ❌ Error caching sitemap data:', err.message);
+  }
+};
+
+/**
+ * Analytics cache update task
+ * Fetches and caches dashboard analytics data
+ * @param {Object} fastify - Fastify instance
+ */
+const createAnalyticsCacheTask = (fastify) => {
+  return async () => {
+    console.log('\n📊 [CRON] ▶️  Starting analytics cache update...');
+    const db = fastify.mongo.db;
+    
+    try {
+      // Check if the database is accessible
+      await db.command({ ping: 1 });
+      
+      await updateAnalyticsCache(db);
+      console.log('📊 [CRON] ✅ Analytics cache updated successfully\n');
+    } catch (err) {
+      console.error('📊 [CRON] ❌ Error updating analytics cache:', err.message);
+    }
+  };
+};
+
+/**
+ * Check and process expired day passes
+ * Note: The checkExpiredDayPasses function itself is defined in plan.js
+ * This wrapper imports and executes it with proper logging
+ * @param {Function} checkExpiredDayPasses - The function from plan.js
+ * @param {Object} fastify - Fastify instance
+ */
+const checkExpiredDayPassesTask = (checkExpiredDayPasses, fastify) => async () => {
+  console.log('\n💳 [CRON] ▶️  Starting day pass expiration check...');
+  try {
+    await checkExpiredDayPasses(fastify);
+    console.log('💳 [CRON] ✅ Day pass expiration check completed');
+  } catch (err) {
+    console.error('💳 [CRON] ❌ Error checking expired day passes:', err.message);
+  }
+};
+
+/**
+ * Initialize day pass expiration check cron job
+ * @param {Object} fastify - Fastify instance
+ * @param {Function} checkExpiredDayPasses - The function from plan.js
+ */
+const initializeDayPassExpirationCheck = (fastify, checkExpiredDayPasses) => {
+  try {
+    // Add day pass expiration check (every hour)
+    configureCronJob(
+      'dayPassExpirationCheck',
+      '0 * * * *', // Runs every hour
+      true,
+      checkExpiredDayPassesTask(checkExpiredDayPasses, fastify)
+    );
+    console.log('💳 [CRON] ✅ Day pass expiration check job configured');
+  } catch (error) {
+    console.error('💳 [CRON] ❌ Error initializing day pass expiration check:', error);
   }
 };
 /**
@@ -586,6 +647,10 @@ const cacheSitemapDataTask = (fastify) => async () => {
  */
 const initializeCronJobs = async (fastify) => {
   try {
+    console.log('\n╔══════════════════════════════════════════════════════════╗');
+    console.log('║          🚀 INITIALIZING CRON JOBS                       ║');
+    console.log('╚══════════════════════════════════════════════════════════╝\n');
+    
     const db = fastify.mongo.db;
     const settingsCollection = db.collection('systemSettings');
      
@@ -603,7 +668,7 @@ const initializeCronJobs = async (fastify) => {
       };
       
       await settingsCollection.insertOne(modelChatCronSettings);
-      console.log('[initializeCronJobs] Created default model chat cron settings');
+      console.log('⚙️  [CRON] Created default model chat cron settings');
     }
     
     // Configure the cron job if enabled
@@ -655,8 +720,21 @@ const initializeCronJobs = async (fastify) => {
         cacheSitemapDataTask(fastify)
     );
     
+    // Add analytics cache update task (every hour)
+    const analyticsCacheTask = createAnalyticsCacheTask(fastify);
+    configureCronJob(
+        'analyticsCacheUpdater',
+        '0 * * * *', // Runs every hour
+        true, // Enable this job
+        analyticsCacheTask
+    );
+    
+    console.log('\n╔══════════════════════════════════════════════════════════╗');
+    console.log('║          ✅ ALL CRON JOBS INITIALIZED SUCCESSFULLY       ║');
+    console.log('╚══════════════════════════════════════════════════════════╝\n');
+    
   } catch (error) {
-    console.error('[initializeCronJobs] Error initializing cron jobs:', error);
+    console.error('❌ [CRON] Error initializing cron jobs:', error);
   }
 };
 
@@ -701,6 +779,7 @@ module.exports = {
   cronJobs,
   configureCronJob,
   initializeCronJobs,
+  initializeDayPassExpirationCheck,
   createModelChatGenerationTask,
   processBackgroundTasks,
   processBackgroundVideoTasks,

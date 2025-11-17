@@ -242,8 +242,6 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
       console.error(`[generateCompletion] API key not configured for provider: ${dbModel.provider} (${dbProvider.envKeyName})`);
       return null; // Return null instead of throwing
     }
-
-    console.log(`[generateCompletion] Using database model: ${dbModel.displayName} (${dbModel.provider})`);
     
     // Make API call with retry logic
     for (let attempt = 1; attempt <= 2; attempt++) {

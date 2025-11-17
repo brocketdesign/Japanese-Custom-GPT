@@ -4,13 +4,291 @@
  */
 
 /**
+ * Fetch blurred image from API (converts to blob for security)
+ */
+function fetchBlurredImageForCharacter(imgElement, imageUrl) {
+    $.ajax({
+        url: '/blur-image?url=' + encodeURIComponent(imageUrl),
+        method: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
+        xhrFields: { responseType: 'blob' },
+        success: function(blob) { 
+            handleImageSuccessForCharacter(imgElement, blob, imageUrl); 
+        },
+        error: function() { 
+            console.error("Failed to load blurred image for character profile."); 
+        }
+    });
+}
+
+/**
+ * Handle blurred image success - creates object URL and overlay
+ */
+function handleImageSuccessForCharacter(imgElement, blob, imageUrl) {
+    let objectUrl = URL.createObjectURL(blob);
+    $(imgElement).attr('src', objectUrl)
+        .data('processed', "true")
+        .removeAttr('data-original-src')
+        .removeAttr('data-src')
+        .removeAttr('srcset');
+    createCharacterImageOverlay(imgElement, imageUrl);
+}
+
+/**
+ * Create overlay with unlock button for NSFW images
+ * Same logic as createOverlay in dashboard.js
+ */
+function createCharacterImageOverlay(imgElement, imageUrl) {
+    let overlay;
+    const isTemporary = !!window.user?.isTemporary;
+    const subscriptionStatus = window.user?.subscriptionStatus === 'active';
+    const showNSFW = sessionStorage.getItem('showNSFW') === 'true';
+    
+    // Check if overlay already exists
+    if ($(imgElement).next('.character-nsfw-overlay').length) {
+        $(imgElement).next('.character-nsfw-overlay').remove();
+    }
+    
+    // No overlay needed if NSFW content should be shown
+    if (showNSFW) {
+        return;
+    }
+    
+    if (isTemporary) {
+        // Temporary user - show login overlay with modern design
+        overlay = $('<div></div>')
+            .addClass('character-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')
+            .css({
+                background: 'rgba(0, 0, 0, 0.25)',
+                zIndex: 10,
+                cursor: 'pointer'
+            })
+            .on('click', function() {
+                openLoginForm();
+            });
+
+        const lockIcon = $('<i></i>').addClass('bi bi-lock-fill').css({ 
+            'font-size': '2rem', 
+            'color': '#fff', 
+            'opacity': '0.9', 
+            'margin-bottom': '0.75rem' 
+        });
+        
+        const loginButton = $('<button></button>')
+            .addClass('btn btn-sm')
+            .css({
+                'background': 'linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%)',
+                'color': 'white',
+                'border': 'none',
+                'border-radius': '8px',
+                'font-weight': '600',
+                'padding': '0.5rem 1rem',
+                'font-size': '0.85rem',
+                'cursor': 'pointer',
+                'transition': 'all 0.2s ease'
+            })
+            .html('<i class="bi bi-unlock-fill me-2"></i>Unlock')
+            .on('click', function(e) {
+                e.stopPropagation();
+                openLoginForm();
+            });
+
+        overlay.append(lockIcon, loginButton);
+
+    } else if (subscriptionStatus) {
+        // Subscribed user with showNSFW disabled - show blurry overlay on top of visible image
+        overlay = $('<div></div>')
+            .addClass('character-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')
+            .css({
+                background: 'rgba(0, 0, 0, 0.25)',
+                zIndex: 10,
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                cursor: 'pointer'
+            });
+
+        let badge = $('<span></span>')
+            .addClass('badge mb-2')
+            .css({
+                'background': 'linear-gradient(to right, #ef4444, #ff6b6b)',
+                'font-size': '0.85rem',
+                'padding': '0.5rem 1rem',
+                'font-weight': '600'
+            })
+            .html('<i class="bi bi-eye-slash-fill me-2"></i>NSFW Hidden');
+
+        let buttonElement = $('<button></button>')
+            .addClass('btn btn-sm')
+            .css({
+                'background': 'linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%)',
+                'color': 'white',
+                'border': 'none',
+                'border-radius': '8px',
+                'font-weight': '600',
+                'padding': '0.5rem 1rem',
+                'font-size': '0.85rem',
+                'cursor': 'pointer',
+                'transition': 'all 0.2s ease',
+                'margin-top': '0.75rem'
+            })
+            .text(window.translations?.showContent || 'Show Content')
+            .on('click', function (e) {
+                e.stopPropagation();
+                
+                // Hide the overlay to reveal the image
+                overlay.fadeOut(300, function() {
+                    overlay.remove();
+                });
+                
+                // Get the image data from the media-item element to open swiper
+                // Try multiple ways to find the media-item and image data
+                let mediaItem = $(imgElement).closest('.media-item');
+                let imageData = null;
+                
+                if (mediaItem && mediaItem.length) {
+                    const imageDataStr = mediaItem.data('image');
+                    if (imageDataStr) {
+                        try {
+                            imageData = typeof imageDataStr === 'string' ? JSON.parse(imageDataStr) : imageDataStr;
+                        } catch (err) {
+                            console.error('Failed to parse image data from media-item:', err);
+                        }
+                    }
+                }
+                
+                // Fallback: if we couldn't find it, create minimal image data from the URL
+                if (!imageData) {
+                    imageData = {
+                        imageUrl: imageUrl,
+                        _id: $(imgElement).data('image-id') || 'unknown-' + Date.now(),
+                        title: $(imgElement).data('image-title') || 'Image',
+                        prompt: $(imgElement).data('image-prompt') || '',
+                        nsfw: true
+                    };
+                }
+                
+                // Open the swiper modal with the image
+                if (typeof displayImageModal === 'function') {
+                    console.log('[Show Content] Opening swiper with image:', imageData);
+                    displayImageModal(imageData);
+                } else {
+                    console.error('[Show Content] displayImageModal function not available');
+                }
+            })
+            .on('mouseenter', function() {
+                $(this).css({ 
+                    'transform': 'translateY(-2px)', 
+                    'box-shadow': '0 8px 16px rgba(130, 64, 255, 0.3)' 
+                });
+            })
+            .on('mouseleave', function() {
+                $(this).css({ 
+                    'transform': 'translateY(0)', 
+                    'box-shadow': 'none' 
+                });
+            });
+
+        overlay.append(badge, buttonElement);
+        
+        // Add click handler to overlay background to also trigger image reveal
+        overlay.on('click', function(e) {
+            // Only trigger if clicking on overlay itself, not the button
+            if (e.target === this) {
+                buttonElement.click();
+            }
+        });
+
+
+    } else {
+        // Non-subscribed user - show unlock overlay with modern design
+        overlay = $('<div></div>')
+            .addClass('character-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')
+            .css({
+                background: 'rgba(0, 0, 0, 0.25)',
+                zIndex: 10,
+                cursor: 'pointer'
+            })
+            .on('click', function() {
+                loadPlanPage();
+            });
+
+        let badge = $('<span></span>')
+            .addClass('badge mb-2')
+            .css({
+                'background': 'linear-gradient(to right, #ef4444, #ff6b6b)',
+                'font-size': '0.85rem',
+                'padding': '0.5rem 1rem',
+                'font-weight': '600'
+            })
+            .html('<i class="bi bi-lock-fill me-2"></i>NSFW');
+
+        let buttonElement = $('<button></button>')
+            .addClass('btn btn-sm')
+            .css({
+                'background': 'linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%)',
+                'color': 'white',
+                'border': 'none',
+                'border-radius': '8px',
+                'font-weight': '600',
+                'padding': '0.5rem 1rem',
+                'font-size': '0.85rem',
+                'cursor': 'pointer',
+                'transition': 'all 0.2s ease',
+                'margin-top': '0.75rem'
+            })
+            .text(window.translations?.blurButton || 'Unlock Content')
+            .on('click', function (e) {
+                e.stopPropagation();
+                loadPlanPage();
+            })
+            .on('mouseenter', function() {
+                $(this).css({ 
+                    'transform': 'translateY(-2px)', 
+                    'box-shadow': '0 8px 16px rgba(130, 64, 255, 0.3)' 
+                });
+            })
+            .on('mouseleave', function() {
+                $(this).css({ 
+                    'transform': 'translateY(0)', 
+                    'box-shadow': 'none' 
+                });
+            });
+
+        overlay.append(badge, buttonElement);
+    }
+
+    $(imgElement)
+        .wrap('<div style="position: relative; display: inline-block;"></div>')
+        .after(overlay);
+}
+
+/**
+ * Unlock NSFW image for character profile
+ */
+window.unlockCharacterImage = function(button, isTemporary) {
+    if (isTemporary === 'true') {
+        openLoginForm();
+    } else {
+        loadPlanPage();
+    }
+};
+
+/**
  * Display images in the grid
  */
-function displayImagesInGrid(images = []) {    
+function displayImagesInGrid(images = [], chatId = null) {    
     const grid = document.getElementById('imagesGrid');
     
     if (!grid) {
         return;
+    }
+    
+    // Get chatId from profile page if not provided
+    if (!chatId) {
+        const profilePage = document.querySelector('#characterProfilePage');
+        chatId = profilePage?.dataset?.chatId;
     }
     
     if (images.length === 0) {
@@ -27,6 +305,7 @@ function displayImagesInGrid(images = []) {
     const currentUser = window.user || {};
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
     const isTemporary = !!currentUser.isTemporary;
+    const showNSFW = sessionStorage.getItem('showNSFW') === 'true';
     
     let nsfwCount = 0;
     let blurredCount = 0;
@@ -41,8 +320,19 @@ function displayImagesInGrid(images = []) {
             nsfwCount++;
         }
         
-        // Determine if this image should be blurred
-        const shouldBlur = isNSFW && (isTemporary || !subscriptionStatus);
+        // Match dashboard logic: shouldBlurNSFW
+        // Logic: 
+        // - If NOT NSFW, don't blur
+        // - If NSFW AND subscribed: blur only if showNSFW is false
+        // - If NSFW AND NOT subscribed: always blur
+        let shouldBlur = false;
+        if (isNSFW) {
+            if (subscriptionStatus) {
+                shouldBlur = !showNSFW; // Blur if showNSFW is false
+            } else {
+                shouldBlur = true; // Always blur if not subscribed
+            }
+        }
         
         if (shouldBlur) {
             blurredCount++;
@@ -69,18 +359,52 @@ function displayImagesInGrid(images = []) {
         item.className = 'media-item';
         item.dataset.imageId = image._id;
         
-        if (shouldBlur) {
-            // Show blurred image with overlay for NSFW content
+        // For premium users with NSFW OFF: show normal image with blur overlay
+        // For non-premium users: show placeholder and load blurred image via API
+        if (shouldBlur && subscriptionStatus) {
+            // Premium user with NSFW OFF - show normal image with overlay that will add blur effect
             item.innerHTML = `
-                <div style="position: relative; cursor: pointer; overflow: hidden; border-radius: 8px;">
-                    <img src="${imgSrc}" alt="Image ${index + 1}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; filter: blur(8px);" onerror="this.style.display='none'">
-                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10;">
-                        <i class="bi bi-exclamation-triangle" style="font-size: 2rem; color: #dc2626; margin-bottom: 8px;"></i>
-                        <span style="color: white; font-weight: 600; font-size: 0.9rem;">NSFW Content</span>
-                        <button onclick="event.stopPropagation(); ${isTemporary ? 'openLoginForm()' : 'loadPlanPage()'}" style="margin-top: 8px; padding: 6px 12px; background: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 500;">
-                            ${isTemporary ? 'Login to View' : 'Subscribe to View'}
-                        </button>
+                <img src="${imgSrc}" alt="Image ${index + 1}" loading="lazy" onerror="this.style.display='none'" 
+                     style="width: 100%; height: 100%; object-fit: cover;">
+                <div class="media-item-actions">
+                    <button class="media-action-btn image-fav ${isLiked ? 'liked' : ''}" 
+                            data-id="${image._id}" 
+                            ${chatId ? `data-chat-id="${chatId}"` : ''}
+                            title="Like">
+                        <i class="bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'}"></i>
+                    </button>
+                </div>
+                <div class="media-item-overlay">
+                    <div class="media-item-info">
+                        <i class="bi bi-images" style="margin-right: 4px;"></i>
+                        ${index + 1}
                     </div>
+                </div>
+            `;
+            
+            // Add event listener for like button
+            const likeBtn = item.querySelector('.image-fav');
+            if (likeBtn) {
+                likeBtn.addEventListener('click', toggleImageLike);
+            }
+            
+            // Store image data on the media-item element for later retrieval
+            item.dataset.image = JSON.stringify(image);
+            
+            // Make the entire media-item clickable with cursor pointer
+            item.style.cursor = 'pointer';
+            item.setAttribute('data-toggle', 'modal');
+            item.setAttribute('role', 'button');
+            
+        } else if (shouldBlur) {
+            // Non-premium user or temporary - show placeholder and load blurred image via API
+            item.innerHTML = `
+                <div style="position: relative; cursor: pointer; overflow: hidden; border-radius: 8px; background: #f0f0f0;">
+                    <img alt="Image ${index + 1}" loading="lazy" 
+                         class="blur-image-character" 
+                         data-src="${imgSrc}"
+                         style="width: 100%; height: 100%; object-fit: cover;" 
+                         onerror="this.style.display='none'">
                 </div>
             `;
         } else {
@@ -90,6 +414,7 @@ function displayImagesInGrid(images = []) {
                 <div class="media-item-actions">
                     <button class="media-action-btn image-fav ${isLiked ? 'liked' : ''}" 
                             data-id="${image._id}" 
+                            ${chatId ? `data-chat-id="${chatId}"` : ''}
                             title="Like">
                         <i class="bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'}"></i>
                     </button>
@@ -118,6 +443,23 @@ function displayImagesInGrid(images = []) {
         }
         
         grid.appendChild(item);
+        
+        // Apply overlay or blur effect based on user status
+        if (shouldBlur) {
+            if (subscriptionStatus) {
+                // Premium user with NSFW OFF - add overlay with blur effect on the normal image
+                const imgElement = item.querySelector('img');
+                if (imgElement) {
+                    createCharacterImageOverlay(imgElement, imgSrc);
+                }
+            } else {
+                // Non-premium user - fetch blurred image via API
+                const imgElement = item.querySelector('.blur-image-character');
+                if (imgElement && imgElement.dataset.src) {
+                    fetchBlurredImageForCharacter(imgElement, imgElement.dataset.src);
+                }
+            }
+        }
     });
     
     // VERIFY grid was populated
@@ -196,7 +538,7 @@ function displayImagesInGrid(images = []) {
 /**
  * Display additional images in the grid (append mode, not replace)
  */
-function displayMoreImagesInGrid(images = []) {
+function displayMoreImagesInGrid(images = [], chatId = null) {
     const grid = document.getElementById('imagesGrid');
     
     if (!grid || images.length === 0) {
@@ -204,11 +546,18 @@ function displayMoreImagesInGrid(images = []) {
         return;
     }
     
+    // Get chatId from profile page if not provided
+    if (!chatId) {
+        const profilePage = document.querySelector('#characterProfilePage');
+        chatId = profilePage?.dataset?.chatId;
+    }
+    
     console.log(`[displayMoreImagesInGrid] Appending ${images.length} images to grid`);
     
     const currentUser = window.user || {};
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
     const isTemporary = !!currentUser.isTemporary;
+    const showNSFW = sessionStorage.getItem('showNSFW') === 'true';
     
     // Get current count of media items in grid (to continue numbering)
     const existingMediaItems = grid.querySelectorAll('.media-item').length;
@@ -227,7 +576,8 @@ function displayMoreImagesInGrid(images = []) {
         let isNSFW = image.nsfw || false;
         
         // Determine if this image should be blurred
-        const shouldBlur = isNSFW && (isTemporary || !subscriptionStatus);
+        // Blur if: NSFW AND (user is temporary OR user is not subscribed OR user disabled NSFW viewing)
+        const shouldBlur = isNSFW && (isTemporary || !subscriptionStatus || !showNSFW);
         
         if (!imgSrc) {
             return;
@@ -237,18 +587,53 @@ function displayMoreImagesInGrid(images = []) {
         item.className = 'media-item';  // ◄─── Use SAME class as displayImagesInGrid
         item.dataset.imageId = image._id;
         
-        if (shouldBlur) {
-            // Show blurred image with overlay for NSFW content
+        if (shouldBlur && subscriptionStatus) {
+            // Premium user with NSFW OFF - show normal image with overlay that will add blur effect
             item.innerHTML = `
-                <div style="position: relative; cursor: pointer; overflow: hidden; border-radius: 8px;">
-                    <img src="${imgSrc}" alt="Image" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; filter: blur(8px);" onerror="this.style.display='none'">
-                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10;">
-                        <i class="bi bi-exclamation-triangle" style="font-size: 2rem; color: #dc2626; margin-bottom: 8px;"></i>
-                        <span style="color: white; font-weight: 600; font-size: 0.9rem;">NSFW Content</span>
-                        <button onclick="event.stopPropagation(); ${isTemporary ? 'openLoginForm()' : 'loadPlanPage()'}" style="margin-top: 8px; padding: 6px 12px; background: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 500;">
-                            ${isTemporary ? 'Login to View' : 'Subscribe to View'}
-                        </button>
+                <img src="${imgSrc}" alt="Image" loading="lazy" onerror="this.style.display='none'"
+                     style="width: 100%; height: 100%; object-fit: cover;">
+                <div class="media-item-actions">
+                    <button class="media-action-btn image-fav ${isLiked ? 'liked' : ''}" 
+                            data-id="${image._id}" 
+                            ${chatId ? `data-chat-id="${chatId}"` : ''}
+                            title="Like">
+                        <i class="bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'}"></i>
+                    </button>
+                </div>
+                <div class="media-item-overlay">
+                    <div class="media-item-info">
+                        <i class="bi bi-images" style="margin-right: 4px;"></i>
+                        ${imageIndexCounter}
                     </div>
+                </div>
+            `;
+            
+            // Increment counter for next image
+            imageIndexCounter++;
+            
+            // Add event listener for like button
+            const likeBtn = item.querySelector('.image-fav');
+            if (likeBtn) {
+                likeBtn.addEventListener('click', toggleImageLike);
+            }
+            
+            // Store image data on the media-item element for later retrieval
+            item.dataset.image = JSON.stringify(image);
+            
+            // Make the entire media-item clickable with cursor pointer
+            item.style.cursor = 'pointer';
+            item.setAttribute('data-toggle', 'modal');
+            item.setAttribute('role', 'button');
+            
+        } else if (shouldBlur) {
+            // Non-premium user or temporary - show placeholder and load blurred image via API
+            item.innerHTML = `
+                <div style="position: relative; cursor: pointer; overflow: hidden; border-radius: 8px; background: #f0f0f0;">
+                    <img alt="Image" loading="lazy" 
+                         class="blur-image-character" 
+                         data-src="${imgSrc}"
+                         style="width: 100%; height: 100%; object-fit: cover;" 
+                         onerror="this.style.display='none'">
                 </div>
             `;
         } else {
@@ -258,6 +643,7 @@ function displayMoreImagesInGrid(images = []) {
                 <div class="media-item-actions">
                     <button class="media-action-btn image-fav ${isLiked ? 'liked' : ''}" 
                             data-id="${image._id}" 
+                            ${chatId ? `data-chat-id="${chatId}"` : ''}
                             title="Like">
                         <i class="bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'}"></i>
                     </button>
@@ -289,6 +675,23 @@ function displayMoreImagesInGrid(images = []) {
         }
         
         grid.appendChild(item);
+        
+        // Apply overlay or blur effect based on user status
+        if (shouldBlur) {
+            if (subscriptionStatus) {
+                // Premium user with NSFW OFF - add overlay with blur effect on the normal image
+                const imgElement = item.querySelector('img');
+                if (imgElement) {
+                    createCharacterImageOverlay(imgElement, imgSrc);
+                }
+            } else {
+                // Non-premium user - fetch blurred image via API
+                const imgElement = item.querySelector('.blur-image-character');
+                if (imgElement && imgElement.dataset.src) {
+                    fetchBlurredImageForCharacter(imgElement, imgElement.dataset.src);
+                }
+            }
+        }
     });
     
     // Re-attach click delegation handler (since we added new items)
@@ -370,6 +773,7 @@ function displayVideosInGrid() {
     const currentUser = window.user || {};
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
     const isTemporary = !!currentUser.isTemporary;
+    const showNSFW = sessionStorage.getItem('showNSFW') === 'true';
     
     let nsfwCount = 0;
     let blurredCount = 0;
@@ -384,7 +788,8 @@ function displayVideosInGrid() {
         }
         
         // Determine if this video should be blurred
-        const shouldBlur = isNSFW && (isTemporary || !subscriptionStatus);
+        // Blur if: NSFW AND (user is temporary OR user is not subscribed OR user disabled NSFW viewing)
+        const shouldBlur = isNSFW && (isTemporary || !subscriptionStatus || !showNSFW);
         
         if (shouldBlur) {
             blurredCount++;

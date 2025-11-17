@@ -57,8 +57,8 @@ function loadCharacterImages(chatId) {
                 const actualTotalPages = manager.totalPages.get(cacheKey) || 1;
                 const hasCache = manager.cache.has(cacheKey);
                                                 
-                // Display images directly - no setTimeout needed
-                displayImagesInGrid(images);
+                // Display images directly - pass chatId for data-chat-id attribute
+                displayImagesInGrid(images, chatId);
                     
                 // Re-read the state AGAIN after display, in case totalPages was just updated
                 const finalCurrentPage = manager.currentPages.get(cacheKey) || 1;
@@ -115,8 +115,8 @@ function loadMoreCharacterImages(chatId) {
                 const updatedCurrentPage = manager.currentPages.get(cacheKey) || nextPage;
                 const updatedTotalPages = manager.totalPages.get(cacheKey) || totalPagesFromCache;
                
-                // Append new images to existing grid
-                displayMoreImagesInGrid(images);
+                // Append new images to existing grid - pass chatId for data-chat-id attribute
+                displayMoreImagesInGrid(images, chatId);
                 
                 // Re-read state ONE MORE TIME before updating UI (totalPages might have just updated)
                 const finalCurrentPage = manager.currentPages.get(cacheKey) || nextPage;
@@ -293,7 +293,6 @@ function loadCharacterStats(chatId) {
             throw new Error('Failed to fetch character stats');
         })
         .then(data => {
-            console.log('[loadCharacterStats] Fetched data:', data);
             if (data.success && data.stats) {
                 // Update messages count
                 const messagesCount = data.stats.messagesCount || 0;

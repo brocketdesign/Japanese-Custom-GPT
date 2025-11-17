@@ -388,7 +388,8 @@ async function renderImages(images, id, type) {
     
     images.forEach((item, index) => {
         const isBlur = shouldBlurNSFW(item, subscriptionStatus);
-        const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
+        // Use the isLiked property from API response - it's already computed by the backend
+        const isLiked = item?.isLiked || false;
         
         // LOG: Track NSFW images
         if (isBlur) {
@@ -960,6 +961,7 @@ window.clearImageCache = function(type, id) {
     const cacheKey = `${type}_${id}`;
     
     // Clear cache
+    const hadCache = manager.cache.has(cacheKey);
     manager.cache.delete(cacheKey);
     manager.loadingStates.delete(cacheKey);
     manager.currentPages.delete(cacheKey);
@@ -971,9 +973,10 @@ window.clearImageCache = function(type, id) {
         manager.initialized.delete(key);
         manager.scrollHandlers.delete(key);
     });
-    
+
     // Clear localStorage cache as well
     const localCacheKey = `images_${cacheKey}`;
+    const hadLocalCache = localStorage.getItem(localCacheKey) !== null;
     localStorage.removeItem(localCacheKey);
 };
 

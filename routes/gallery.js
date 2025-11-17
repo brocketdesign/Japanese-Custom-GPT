@@ -776,14 +776,25 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
         return reply.code(404).send({ images: [], page, totalPages: 0 });
       }
 
+      // Get user ID for checking if images are liked
+      const currentUserId = user ? new ObjectId(user._id) : null;
+
       // Map the chat data to the images
-      const imagesWithChatData = chatImagesDocs.map(doc => ({
-        ...doc.image,
-        chatId: chat._id,
-        chatSlug: chat.slug,
-        chatName: chat.name,
-        thumbnail: chat?.thumbnail || chat?.thumbnailUrl || '/img/default-thumbnail.png',
-      }));
+      const imagesWithChatData = chatImagesDocs.map(doc => {
+        // Check if current user has liked this image
+        const isLiked = currentUserId && Array.isArray(doc.image.likedBy)
+          ? doc.image.likedBy.some(likedUserId => likedUserId.toString() === currentUserId.toString())
+          : false;
+
+        return {
+          ...doc.image,
+          chatId: chat._id,
+          chatSlug: chat.slug,
+          chatName: chat.name,
+          thumbnail: chat?.thumbnail || chat?.thumbnailUrl || '/img/default-thumbnail.png',
+          isLiked: isLiked
+        };
+      });
 
       // Send the paginated images response
       return reply.send({

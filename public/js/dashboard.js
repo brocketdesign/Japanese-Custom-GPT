@@ -811,14 +811,17 @@ window.toggleImageFavorite = function(el) {
         userId = $('#profileSection').data('user-id');
       }
 
+      // Debug: Log the cache keys being cleared
+
       if(chatId && chatId !== 'null') {
         clearChatImageCache(chatId);
-      }
+      } 
+      
       if(userId && userId !== 'null') {
         clearUserImageCache(userId);
         const cacheKey = `userImages_${userId}`;
         localStorage.removeItem(cacheKey);
-      }
+      } 
     },
     error: function() {
       // Revert all changes on error

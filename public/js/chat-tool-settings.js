@@ -393,22 +393,18 @@ class ChatToolSettings {
 
     // Special method for first-time opening with welcome message and callback
     openModalForFirstTime(callback) {
-        console.log('[openModalForFirstTime] Opening settings modal for first-time user');
         
         // Mark that user has now seen the settings
         this.markSettingsAsOpened();
         
         // Open the modal
         this.openModal();
-        console.log('[openModalForFirstTime] Modal opened');
         
         // Add a welcome message
         this.showFirstTimeWelcome();
-        console.log('[openModalForFirstTime] Welcome message displayed');
         
         // Set up callback for when modal is closed
         if (callback) {
-            console.log('[openModalForFirstTime] Callback registered');
             this.onFirstTimeClose = callback;
         }
     }
@@ -683,7 +679,6 @@ class ChatToolSettings {
     }
 
     closeModal() {
-        console.log('[closeModal] Closing settings modal');
         
         const overlay = document.getElementById('settings-modal-overlay');
         if (overlay) {
@@ -695,20 +690,17 @@ class ChatToolSettings {
             const welcomeMessage = overlay.querySelector('.first-time-welcome');
             if (welcomeMessage) {
                 welcomeMessage.remove();
-                console.log('[closeModal] Welcome message removed');
             }
             
             // Execute callback if this was a first-time opening
             if (this.onFirstTimeClose) {
-                console.log('[closeModal] First-time callback detected - executing after 300ms delay');
                 const callback = this.onFirstTimeClose;
                 this.onFirstTimeClose = null; // Clear the callback
                 setTimeout(() => {
-                    console.log('[closeModal] Executing first-time callback');
                     callback();
                 }, 300); // Small delay to ensure modal is fully closed
             } else {
-                console.log('[closeModal] No first-time callback');
+                // Normal close, no special action needed
             }
         }
     }
@@ -924,7 +916,6 @@ class ChatToolSettings {
             if (chatId && chatId !== 'null' && chatId !== 'undefined') {
                 requestBody.chatId = chatId;
             }
-            console.log('[chat-tool-settings] Saving settings', requestBody);
             const response = await fetch(`/api/chat-tool-settings/${this.userId}`, {
                 method: 'POST',
                 headers: {

@@ -677,6 +677,7 @@ function setupChatInterface(chat, character) {
                 if (window.PersonaModule) {
                     PersonaModule.currentUserChatId = userChatId;
                 }
+                
                 sessionStorage.setItem('userChatId', userChatId);
                 sessionStorage.setItem('lastChatId', chatId);
                 sessionStorage.setItem('chatId', chatId);
@@ -684,35 +685,23 @@ function setupChatInterface(chat, character) {
                 updateCurrentChat(chatId,userId);
                 updateParameters(chatId,userId,userChatId);
 
-                // Check if scenarios should be generated and displayed BEFORE starting chat
-                // Scenarios should only be shown on new chats (0 messages)
-                const shouldShowScenarios = await shouldGenerateScenariosUI(userChatId);
-                console.log('[displayStarter] shouldShowScenarios:', shouldShowScenarios);
-                
-                if (shouldShowScenarios) {
-                    // Generate and show scenarios - DON'T call generateChatCompletion yet
-                    if (window.ChatScenarioModule) {
-                        // Initialize the scenario module with the new chat IDs
-                        window.ChatScenarioModule.init(chatId, userChatId);
-                        const generated = await window.ChatScenarioModule.generateScenarios();
-                        if (generated) {
-                            // Scenarios are now showing. Wait for user selection.
-                            // The scenario selection will call generateChatCompletion
-                            return; // Exit without calling generateChatCompletion
-                        }
-                    }
-                }
                 
                 if (window.chatToolSettings) {
-                    console.log('[displayStarter] Checking if user has chatted before with chatId:', chatId);
-                    // Check if user has chatted with this character before
-                    // If not, settings modal will be shown automatically
-                    window.chatToolSettings.hasUserChatted(chatId, () => {
-                        // This callback runs after settings modal is closed (or immediately if user has chatted before)
+                    window.chatToolSettings.hasUserChatted(chatId, async () => {
+                        const shouldShowScenarios = await shouldGenerateScenariosUI(userChatId);
+                        
+                        if (shouldShowScenarios) {
+                            if (window.ChatScenarioModule) {
+                                window.ChatScenarioModule.init(chatId, userChatId);
+                                const generated = await window.ChatScenarioModule.generateScenarios();
+                                if (generated) {
+                                    return;
+                                }
+                            }
+                        }
                         generateChatCompletion();
                     });
                 } else {
-                    console.log('[displayStarter] chatToolSettings module not found, proceeding to generateChatCompletion');
                     // Fallback if settings not available
                     generateChatCompletion();
                 }

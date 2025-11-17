@@ -351,9 +351,6 @@
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
-    .live-goals-floating {
-        right: 10px;
-    }
     
     .goals-toggle-btn {
         width: 70px;

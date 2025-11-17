@@ -24,7 +24,6 @@ window.ChatScenarioModule = (function() {
         userChatId = uChatId;
         if (!userChatId) {
             // Clear scenarios when no chat ID
-            console.log('[ChatScenarioModule] No userChatId provided, clearing scenarios');
             clearScenarios();
             return;
         }
@@ -36,7 +35,6 @@ window.ChatScenarioModule = (function() {
         }
         
         try {
-            console.log('[ChatScenarioModule] Initializing scenarios for userChatId:', uChatId);
             // Fetch existing scenario data
             const response = await fetch(`/api/chat-scenarios/${userChatId}`);
             
@@ -44,12 +42,10 @@ window.ChatScenarioModule = (function() {
             
             if (data.availableScenarios && data.availableScenarios.length > 0) {
                 scenarios = data.availableScenarios;
-                console.log('[ChatScenarioModule] Loaded', scenarios.length, 'available scenarios');
             }
             
             if (data.currentScenario) {
                 currentScenario = data.currentScenario;
-                console.log('[ChatScenarioModule] Loaded current scenario:', data.currentScenario.title);
             }
         } catch (error) {
             console.error('[ChatScenarioModule] Error initializing:', error);

@@ -129,6 +129,23 @@ async function routes(fastify, options) {
   fastify.get('/sitemap-static.xml', async (request, reply) => {
     try {
       const baseUrl = getBaseUrl(request);
+      
+      // Determine the hostname and extract base domain for hreflang URLs
+      const host = request.hostname;
+      const isLocalHost = host.includes('localhost') || host.includes('127.0.0.1') || host.includes('0.0.0.0');
+      const baseDomain = process.env.PUBLIC_BASE_DOMAIN || (isLocalHost ? host : host.split('.').slice(-2).join('.')) || 'chatlamix.com';
+      const supportsLocaleSubdomains = !isLocalHost && baseDomain === 'chatlamix.com';
+
+      const forwardedProto = request.headers['x-forwarded-proto'];
+      const protocol = (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) || request.protocol || 'https';
+
+      const localeDomainMap = supportsLocaleSubdomains
+        ? {
+            en: `${protocol}://en.${baseDomain}`,
+            fr: `${protocol}://fr.${baseDomain}`,
+            ja: `${protocol}://ja.${baseDomain}`,
+          }
+        : {};
 
       const staticPages = [
         { url: '', priority: '1.0', changefreq: 'daily' },
@@ -143,15 +160,30 @@ async function routes(fastify, options) {
       ];
 
       let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">`;
 
       staticPages.forEach(page => {
+        const primaryUrl = supportsLocaleSubdomains 
+          ? `${protocol}://app.${baseDomain}${page.url}`
+          : `${baseUrl}${page.url}`;
+
         sitemap += `
   <url>
-    <loc>${baseUrl}${page.url}</loc>
+    <loc>${primaryUrl}</loc>
     <lastmod>${new Date().toISOString()}</lastmod>
     <changefreq>${page.changefreq}</changefreq>
-    <priority>${page.priority}</priority>
+    <priority>${page.priority}</priority>`;
+
+        // Add hreflang tags for static pages
+        if (supportsLocaleSubdomains) {
+          sitemap += `
+    <xhtml:link rel="alternate" hreflang="en" href="${localeDomainMap.en}${page.url}"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="${localeDomainMap.fr}${page.url}"/>
+    <xhtml:link rel="alternate" hreflang="ja" href="${localeDomainMap.ja}${page.url}"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="${primaryUrl}"/>`;
+        }
+
+        sitemap += `
   </url>`;
       });
 
@@ -183,29 +215,47 @@ async function routes(fastify, options) {
       }
 
       const baseUrl = getBaseUrl(request);
+      
+      // Determine the hostname and extract base domain for hreflang URLs
+      const host = request.hostname;
+      const isLocalHost = host.includes('localhost') || host.includes('127.0.0.1') || host.includes('0.0.0.0');
+      const baseDomain = process.env.PUBLIC_BASE_DOMAIN || (isLocalHost ? host : host.split('.').slice(-2).join('.')) || 'chatlamix.com';
+      const supportsLocaleSubdomains = !isLocalHost && baseDomain === 'chatlamix.com';
+
+      const forwardedProto = request.headers['x-forwarded-proto'];
+      const protocol = (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) || request.protocol || 'https';
+
+      const localeDomainMap = supportsLocaleSubdomains
+        ? {
+            en: `${protocol}://en.${baseDomain}`,
+            fr: `${protocol}://fr.${baseDomain}`,
+            ja: `${protocol}://ja.${baseDomain}`,
+          }
+        : {};
 
       const urlsPerSitemap = 10000;
       const startIndex = (page - 1) * urlsPerSitemap;
 
-      // Collect all URLs
-      const allUrls = [];
+      // Collect unique character URLs (deduplicated by slug)
+      const charactersBySlug = {};
 
-      // Add character URLs from all languages
+      // Collect all character URLs, deduplicating by slug
       Object.keys(sitemapData.characters || {}).forEach(lang => {
         (sitemapData.characters[lang] || []).forEach(character => {
           if (character.slug) {
-            allUrls.push({
-              url: `/character/slug/${character.slug}`,
-              lastmod: character.updatedAt || character.createdAt || new Date(),
-              changefreq: 'weekly',
-              priority: '0.8'
-            });
+            if (!charactersBySlug[character.slug]) {
+              charactersBySlug[character.slug] = {
+                url: `/character/slug/${character.slug}`,
+                lastmod: character.updatedAt || character.createdAt || new Date(),
+                changefreq: 'weekly',
+                priority: '0.8'
+              };
+            }
           }
         });
       });
 
-      // Add tag URLs
-      // Tags remain available for API consumers, but search URLs are excluded to respect robots rules
+      const allUrls = Object.values(charactersBySlug);
 
       // Get URLs for this page
       const pageUrls = allUrls.slice(startIndex, startIndex + urlsPerSitemap);
@@ -215,19 +265,34 @@ async function routes(fastify, options) {
       }
 
       let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">`;
 
       pageUrls.forEach(item => {
         const lastmod = item.lastmod instanceof Date ? 
           item.lastmod.toISOString() : 
           new Date(item.lastmod).toISOString();
 
+        const primaryUrl = supportsLocaleSubdomains 
+          ? `${protocol}://app.${baseDomain}${item.url}`
+          : `${baseUrl}${item.url}`;
+
         sitemap += `
   <url>
-    <loc>${baseUrl}${item.url}</loc>
+    <loc>${primaryUrl}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>${item.changefreq}</changefreq>
-    <priority>${item.priority}</priority>
+    <priority>${item.priority}</priority>`;
+
+        // Add hreflang tags for language variants
+        if (supportsLocaleSubdomains) {
+          sitemap += `
+    <xhtml:link rel="alternate" hreflang="en" href="${localeDomainMap.en}${item.url}"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="${localeDomainMap.fr}${item.url}"/>
+    <xhtml:link rel="alternate" hreflang="ja" href="${localeDomainMap.ja}${item.url}"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="${primaryUrl}"/>`;
+        }
+
+        sitemap += `
   </url>`;
       });
 

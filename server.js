@@ -162,6 +162,17 @@ fastify.register(fastifyPluginGlobals);
 // Register all routes from the routes plugin
 fastify.register(require('./plugins/routes'));
 
+// SEO: Redirect www to app for domain consolidation
+fastify.addHook('onRequest', (request, reply, done) => {
+  const host = request.hostname;
+  if (host === 'www.chatlamix.com') {
+    const newUrl = `https://app.chatlamix.com${request.raw.url}`;
+    console.log(`[SEO] Redirecting www to app: ${host} → app.chatlamix.com`);
+    return reply.redirect(301, newUrl);
+  }
+  done();
+});
+
 fastify.get('/', async (request, reply) => {
   const db = fastify.mongo.db;
   let { translations, lang, user } = request;

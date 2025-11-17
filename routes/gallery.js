@@ -25,6 +25,49 @@ async function routes(fastify, options) {
       const usersCollection = db.collection('users'); // Collection to update user's imageLikeCount
       const collectionUserChat = db.collection('userChat');
 
+      const addUserToImageIfMissing = async () => {
+        const updateOps = {
+          $addToSet: { 'images.$.likedBy': userId },
+          $inc: { 'images.$.likes': 1 }
+        };
+
+        let result = await galleryCollection.updateOne(
+          { 'images._id': imageId, 'images.likedBy': { $ne: userId } },
+          updateOps
+        );
+
+        if (result.matchedCount === 0) {
+          await galleryCollection.updateOne(
+            { 'images.mergeId': imageId.toString(), 'images.likedBy': { $ne: userId } },
+            updateOps
+          );
+        }
+      };
+
+      const removeUserFromGalleryImage = async ({ decrementLikes = false } = {}) => {
+        const updateOps = {
+          $pull: { 'images.$.likedBy': userId }
+        };
+
+        if (decrementLikes) {
+          updateOps.$inc = { 'images.$.likes': -1 };
+        }
+
+        let result = await galleryCollection.updateOne(
+          { 'images._id': imageId },
+          updateOps
+        );
+
+        if (result.matchedCount === 0) {
+          result = await galleryCollection.updateOne(
+            { 'images.mergeId': imageId.toString() },
+            updateOps
+          );
+        }
+
+        return result;
+      };
+
       // Declare a function that will find the object with content that starts with [Image] or [image] followed by a space and then the imageId and update it with the like action field
       const findImageMessageandUpdateLikeAction = async (userChatId, userChatMessages, imageId, action) => {
         if (!userChatMessages || !userChatMessages.messages) {
@@ -76,7 +119,8 @@ async function routes(fastify, options) {
         const existingLike = await imagesLikesCollection.findOne({ imageId, userId });
 
         if (existingLike) {
-          return reply.code(400).send({ error: 'User has already liked this image' });
+          await addUserToImageIfMissing();
+          return reply.send({ message: 'Image already liked', alreadyLiked: true });
         }
 
         // Try to find and update by _id first (regular images)
@@ -140,7 +184,8 @@ async function routes(fastify, options) {
         const existingLike = await imagesLikesCollection.findOne({ imageId, userId });
 
         if (!existingLike) {
-          return reply.code(400).send({ error: 'User has not liked this image yet' });
+          await removeUserFromGalleryImage();
+          return reply.send({ message: 'Image already unliked', alreadyUnliked: true });
         }
 
         // Try to find image by _id first (regular images)
@@ -155,62 +200,42 @@ async function routes(fastify, options) {
           img._id.equals(imageId) || img.mergeId === imageId.toString()
         )?.likes : 0;
 
-        if (likes > 0) {
-          // Try to remove like by _id first
-          let result = await galleryCollection.updateOne(
-            { 'images._id': imageId },
-            {
-              $inc: { 'images.$.likes': -1 },
-              $pull: { 'images.$.likedBy': userId }
-            }
-          );
+        const shouldDecrementLikes = likes > 0;
 
-          // If no match by _id, try by mergeId
-          if (result.matchedCount === 0) {
-            result = await galleryCollection.updateOne(
-              { 'images.mergeId': imageId.toString() },
-              {
-                $inc: { 'images.$.likes': -1 },
-                $pull: { 'images.$.likedBy': userId }
-              }
-            );
-          }
+        const result = await removeUserFromGalleryImage({ decrementLikes: shouldDecrementLikes });
 
-          if (result.matchedCount === 0) {
-            return reply.code(404).send({ error: 'Image not found' });
-          }
-
-          // Remove like from the images_likes collection
-          await imagesLikesCollection.deleteOne({ imageId, userId });
-
-          // Decrement user's imageLikeCount, ensuring it doesn't go below 0
-          const userDoc = await usersCollection.findOne({ _id: userId });
-          
-          if (userDoc.imageLikeCount > 0) {
-            await usersCollection.updateOne(
-              { _id: userId },
-              { $inc: { imageLikeCount: -1 } }
-            );
-          }
-
-          const cost = 5; // Cost for unliking an image (removing 5 points)
-          console.log(`[gallery-like-toggle] Deducting ${cost} point for unliking image: ${imageId}`);
-          try {
-            await removeUserPoints(db, userId, cost, request.userPointsTranslations.points?.deduction_reasons?.unlike_image || 'Unlike image', 'unlike_image', fastify);
-          } catch (error) {
-            console.error('[gallery-like-toggle] Failed to deduct point for unlike:', error);
-            // Optionally handle if you want to revert the unlike action or notify the user
-          }
-
-          if(userChatId && userChatId.trim() != ''){
-            const userChatMessages = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(userChatId) });
-            await findImageMessageandUpdateLikeAction(userChatId, userChatMessages, imageId, 'unlike');
-          }
-
-          return reply.send({ message: 'Image unliked successfully' });
-        } else {
-          return reply.code(400).send({ error: 'Cannot decrease like count below 0' });
+        if (result.matchedCount === 0) {
+          return reply.code(404).send({ error: 'Image not found' });
         }
+
+        // Remove like from the images_likes collection
+        await imagesLikesCollection.deleteOne({ imageId, userId });
+
+        // Decrement user's imageLikeCount, ensuring it doesn't go below 0
+        const userDoc = await usersCollection.findOne({ _id: userId });
+        
+        if (userDoc.imageLikeCount > 0) {
+          await usersCollection.updateOne(
+            { _id: userId },
+            { $inc: { imageLikeCount: -1 } }
+          );
+        }
+
+        const cost = 5; // Cost for unliking an image (removing 5 points)
+        console.log(`[gallery-like-toggle] Deducting ${cost} point for unliking image: ${imageId}`);
+        try {
+          await removeUserPoints(db, userId, cost, request.userPointsTranslations.points?.deduction_reasons?.unlike_image || 'Unlike image', 'unlike_image', fastify);
+        } catch (error) {
+          console.error('[gallery-like-toggle] Failed to deduct point for unlike:', error);
+          // Optionally handle if you want to revert the unlike action or notify the user
+        }
+
+        if(userChatId && userChatId.trim() != ''){
+          const userChatMessages = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(userChatId) });
+          await findImageMessageandUpdateLikeAction(userChatId, userChatMessages, imageId, 'unlike');
+        }
+
+        return reply.send({ message: 'Image unliked successfully' });
       } else {
         return reply.code(400).send({ error: 'Invalid action' });
       }

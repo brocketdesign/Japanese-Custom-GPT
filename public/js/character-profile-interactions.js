@@ -37,13 +37,16 @@ function displayImageModal(imageData) {
  * Supports navigation, zooming, double-click to like, and image info
  */
 window.showCharacterImagePreview = function(clickedImageData) {
+    
     // Get all UNLOCKED images from the current grid
     const gridImages = [];
     const imagesGrid = document.getElementById('imagesGrid');
     
+    
     if (imagesGrid) {
         const mediaItems = imagesGrid.querySelectorAll('.media-item');
-        mediaItems.forEach(item => {
+        
+        mediaItems.forEach((item, index) => {
             // Check if this item has a blur overlay (indicating it's locked)
             const hasBlurOverlay = item.querySelector('.character-nsfw-overlay');
             
@@ -51,16 +54,22 @@ window.showCharacterImagePreview = function(clickedImageData) {
             if (item.dataset.image && !hasBlurOverlay) {
                 try {
                     const imageData = JSON.parse(item.dataset.image);
+                    
+                    // Get the CURRENT like state from the grid button, not from the data
+                    // This ensures we always have the latest like status
+                    const gridLikeBtn = item.querySelector('.image-fav');
+                    const isLikedInGrid = gridLikeBtn && gridLikeBtn.querySelector('i.bi-heart-fill') !== null;
+                    
                     gridImages.push({
                         url: imageData.imageUrl,
                         id: imageData._id,
                         title: extractImageTitle(imageData),
                         prompt: imageData.prompt || '',
-                        isLiked: imageData.isLiked || false,
+                        isLiked: isLikedInGrid, // Use the CURRENT state from grid button
                         data: imageData
                     });
                 } catch (err) {
-                    // ignore parse errors
+                    console.error('[showCharacterImagePreview] Error parsing image data:', err);
                 }
             }
         });
@@ -80,6 +89,34 @@ window.showCharacterImagePreview = function(clickedImageData) {
     
     const clickedImageUrl = clickedImageData.imageUrl;
     const clickedIndex = gridImages.findIndex(img => img.url === clickedImageUrl);
+    
+    // Always remove and recreate the modal for a fresh state
+    const existingModal = document.getElementById('characterImagePreviewModal');
+    if (existingModal) {
+        // Hide existing modal instance
+        const bsModal = bootstrap.Modal.getInstance(existingModal);
+        if (bsModal) {
+            bsModal.hide();
+        }
+        
+        // Wait a bit for modal to hide, then remove it
+        setTimeout(() => {
+            if (window.characterImageSwiper) {
+                window.characterImageSwiper.destroy();
+                window.characterImageSwiper = null;
+            }
+            $(document).off('click', '.character-image-like-btn');
+            const elem = document.getElementById('characterImagePreviewModal');
+            if (elem) {
+                $(elem).remove();
+            }
+            
+            // Recursively call to create fresh modal
+            showCharacterImagePreview(clickedImageData);
+        }, 200);
+        
+        return;
+    }
     
     // Create modal if it doesn't exist yet
     if ($('#characterImagePreviewModal').length === 0) {
@@ -130,6 +167,19 @@ window.showCharacterImagePreview = function(clickedImageData) {
         
         // Store clickedIndex in the modal element for later use
         $('#characterImagePreviewModal').data('clickedIndex', clickedIndex);
+        
+        // Clean up when modal is hidden to allow fresh initialization on next open
+        $('#characterImagePreviewModal').on('hidden.bs.modal', function() {
+            // Destroy swiper instance
+            if (window.characterImageSwiper) {
+                window.characterImageSwiper.destroy();
+                window.characterImageSwiper = null;
+            }
+            // Clear image data
+            window.characterPreviewImages = [];
+            // Remove event listeners
+            $(document).off('click', '.character-image-like-btn');
+        });
         
         // Initialize Swiper with enhanced configuration
         $('#characterImagePreviewModal').on('shown.bs.modal', function() {
@@ -183,8 +233,8 @@ window.showCharacterImagePreview = function(clickedImageData) {
                     },
                     slideChangeTransitionStart: function() {
                         // Reset zoom level on slide change
-                        if (window.characterImageSwiper && window.characterImageSwiper.zoom) {
-                            window.characterImageSwiper.zoom.reset();
+                        if (window.characterImageSwiper && window.characterImageSwiper.zoom && typeof window.characterImageSwiper.zoom.out === 'function') {
+                            window.characterImageSwiper.zoom.out();
                         }
                     },
                     init: function() {
@@ -203,76 +253,78 @@ window.showCharacterImagePreview = function(clickedImageData) {
             $('.swiper-slide').show();
         });
         
-        // Update the like button click handler - only attach once
-        if (!window.characterImageLikeHandlerAttached) {
-            $(document).on('click', '.character-image-like-btn', function(e) {
-                e.stopPropagation();
-                
-                const activeIndex = window.characterImageSwiper?.realIndex || window.characterImageSwiper?.activeIndex || 0;
-                const imageId = window.characterPreviewImages && window.characterPreviewImages.length > 0 
-                    ? window.characterPreviewImages[activeIndex].id 
-                    : null;
-                
-                if (imageId) {
-                    if (typeof toggleImageFavorite === 'function') {
-                        // Add data-id and data-chat-id directly to the like button
-                        const profilePage = document.querySelector('#characterProfilePage');
-                        const chatId = profilePage?.dataset?.chatId;
-                        const $likeBtn = $(this);
+        // Update the like button click handler
+        // Always detach old handler if it exists and attach a new one
+        $(document).off('click', '.character-image-like-btn');
+        
+        $(document).on('click', '.character-image-like-btn', function(e) {
+            e.stopPropagation();
                         
-                        // Set the data attributes on the button
-                        $likeBtn.attr('data-id', imageId);
-                        if (chatId) {
-                            $likeBtn.attr('data-chat-id', chatId);
+            const activeIndex = window.characterImageSwiper?.realIndex || window.characterImageSwiper?.activeIndex || 0;
+            const imageId = window.characterPreviewImages && window.characterPreviewImages.length > 0 
+                ? window.characterPreviewImages[activeIndex].id 
+                : null;
+                
+            if (imageId) {
+                if (typeof toggleImageFavorite === 'function') {
+                    // Add data-id and data-chat-id directly to the like button
+                    const profilePage = document.querySelector('#characterProfilePage');
+                    const chatId = profilePage?.dataset?.chatId;
+                    const $likeBtn = $(this);
+                    
+                    // Set the data attributes on the button
+                    $likeBtn.attr('data-id', imageId);
+                    if (chatId) {
+                        $likeBtn.attr('data-chat-id', chatId);
+                    }
+                    
+                    toggleImageFavorite(this);
+                                        
+                    // Update the button appearance and state after toggle
+                    setTimeout(() => {
+                        
+                        // Get the CURRENT state from the grid button (most reliable source)
+                        const gridBtn = document.querySelector(`.image-fav[data-id="${imageId}"]`);
+                        let newState = false;
+                        
+                        if (gridBtn) {
+                            const icon = gridBtn.querySelector('i');
+                            newState = icon && icon.classList.contains('bi-heart-fill');
+                        } else {
+                            
+                            // Debug: Log all image-fav buttons
+                            const allButtons = document.querySelectorAll('.image-fav');
+                            allButtons.forEach((btn, idx) => {
+                                console.log(`  [${idx}] data-id="${btn.getAttribute('data-id')}", icon:`, btn.querySelector('i')?.className);
+                            });
+                        }
+
+                        // Update the in-memory state
+                        if (window.characterPreviewImages[activeIndex]) {
+                            window.characterPreviewImages[activeIndex].isLiked = newState;
                         }
                         
-                        // Call toggleImageFavorite with the actual button
-                        toggleImageFavorite(this);
-                        
-                        // Update the button appearance and state after toggle
-                        // IMPORTANT: Toggle the isLiked state in the characterPreviewImages array
-                        setTimeout(() => {
-                            if (window.characterPreviewImages[activeIndex]) {
-                                // Toggle the like state in memory
-                                window.characterPreviewImages[activeIndex].isLiked = !window.characterPreviewImages[activeIndex].isLiked;
-                            }
-                            updateCharacterLikeButton(activeIndex);
-                            
-                            // Also update the grid button to reflect new state
-                            const gridBtn = document.querySelector(`.image-fav[data-id="${imageId}"]`);
-                            if (gridBtn) {
-                                const icon = gridBtn.querySelector('i');
-                                const newState = window.characterPreviewImages[activeIndex]?.isLiked;
-                                if (icon) {
-                                    if (newState) {
-                                        icon.classList.remove('bi-heart');
-                                        icon.classList.add('bi-heart-fill', 'text-danger');
-                                    } else {
-                                        icon.classList.remove('bi-heart-fill', 'text-danger');
-                                        icon.classList.add('bi-heart');
-                                    }
-                                }
-                            }
-                        }, 300);
-                    }
+                        // Update the swiper button UI to match the grid
+                        updateCharacterLikeButton(activeIndex);
+                    }, 500);
+                } else {
+                    console.error(' toggleImageFavorite function NOT available');
                 }
-            });
-            window.characterImageLikeHandlerAttached = true;
-        }
+            }
+        });
     }
     
-    // Update clickedIndex in the modal element (even if modal already exists)
-    $('#characterImagePreviewModal').data('clickedIndex', clickedIndex);
+    // Store images data globally for reference
+    window.characterPreviewImages = gridImages;
     
-    // Clear existing slides and add new ones
+    // Store the initial slide index globally
+    window.characterInitialSlideIndex = Math.max(0, clickedIndex);
+    
+    // Add slides to swiper wrapper
     const swiperWrapper = $('#characterImagePreviewModal .swiper-wrapper');
     swiperWrapper.empty();
     
-    // Keep original order - DON'T reorder images
-    const orderedImages = [...gridImages];
-    
-    // Add slides with zoom containers
-    orderedImages.forEach((image, index) => {
+    gridImages.forEach((image) => {
         swiperWrapper.append(`
             <div class="swiper-slide d-flex align-items-center justify-content-center">
                 <div class="swiper-zoom-container">
@@ -287,18 +339,6 @@ window.showCharacterImagePreview = function(clickedImageData) {
         `);
     });
     
-    // Store images data globally for reference
-    window.characterPreviewImages = orderedImages;
-    
-    // Store the initial slide index globally
-    window.characterInitialSlideIndex = Math.max(0, clickedIndex);
-    
-    // If swiper already exists, update it to the correct slide
-    if (window.characterImageSwiper) {
-        window.characterImageSwiper.update();
-        window.characterImageSwiper.slideTo(Math.max(0, clickedIndex));
-    }
-    
     // Initialize the modal
     const characterImageModal = new bootstrap.Modal(document.getElementById('characterImagePreviewModal'));
     characterImageModal.show();
@@ -309,7 +349,8 @@ window.showCharacterImagePreview = function(clickedImageData) {
             window.characterImageSwiper.update();
         }
     }, 300);
-    
+}
+
 /**
  * Attach double-tap listener to character image swiper
  */
@@ -328,12 +369,18 @@ function attachCharacterDoubleTapListener() {
         const currentTime = new Date().getTime();
         const tapLength = currentTime - lastTapTime;
         
+        console.log('[handleCharacterDoubleTap] tapLength:', tapLength, 'ms');
+        
         if (tapLength < 400 && tapLength > 0) {
             // Double tap detected - LIKE the image
+            console.log('[handleCharacterDoubleTap] DOUBLE TAP DETECTED');
             clearTimeout(tapTimeout);
             
             const activeIndex = swiper.realIndex || swiper.activeIndex;
             const currentImage = window.characterPreviewImages[activeIndex];
+            
+            console.log('[handleCharacterDoubleTap] activeIndex:', activeIndex);
+            console.log('[handleCharacterDoubleTap] currentImage:', currentImage);
             
             if (currentImage && currentImage.id) {
                 if (typeof toggleImageFavorite === 'function') {
@@ -344,35 +391,42 @@ function attachCharacterDoubleTapListener() {
                     if (chatId) {
                         tempBtn.attr('data-chat-id', chatId);
                     }
+                    
+                    console.log('[handleCharacterDoubleTap] Before toggle - state:', currentImage.isLiked);
+                    console.log('[handleCharacterDoubleTap] Calling toggleImageFavorite');
                     toggleImageFavorite(tempBtn[0]);
                     
                     setTimeout(() => {
-                        // Toggle the like state in memory before updating button
-                        if (window.characterPreviewImages[activeIndex]) {
-                            window.characterPreviewImages[activeIndex].isLiked = !window.characterPreviewImages[activeIndex].isLiked;
-                        }
-                        updateCharacterLikeButton(activeIndex);
-                        showCharacterLikeAnimation();
-                        
-                        // Also update the grid button to reflect new state
+                        // Get the CURRENT state from the grid button (most reliable source)
                         const gridBtn = document.querySelector(`.image-fav[data-id="${currentImage.id}"]`);
+                        let newState = false;
+                        
                         if (gridBtn) {
                             const icon = gridBtn.querySelector('i');
-                            const newState = window.characterPreviewImages[activeIndex]?.isLiked;
-                            if (icon) {
-                                if (newState) {
-                                    icon.classList.remove('bi-heart');
-                                    icon.classList.add('bi-heart-fill', 'text-danger');
-                                } else {
-                                    icon.classList.remove('bi-heart-fill', 'text-danger');
-                                    icon.classList.add('bi-heart');
-                                }
-                            }
+                            newState = icon && icon.classList.contains('bi-heart-fill');
+                            console.log('[handleCharacterDoubleTap] Grid button found, new state:', newState);
+                        } else {
+                            console.log('[handleCharacterDoubleTap] Grid button NOT found');
                         }
+                        
+                        // Update the in-memory state
+                        if (window.characterPreviewImages[activeIndex]) {
+                            window.characterPreviewImages[activeIndex].isLiked = newState;
+                            console.log('[handleCharacterDoubleTap] Updated in-memory state to:', newState);
+                        }
+                        
+                        console.log('[handleCharacterDoubleTap] Calling updateCharacterLikeButton');
+                        updateCharacterLikeButton(activeIndex);
+                        showCharacterLikeAnimation();
                     }, 200);
+                } else {
+                    console.error('[handleCharacterDoubleTap] toggleImageFavorite NOT available');
                 }
+            } else {
+                console.error('[handleCharacterDoubleTap] currentImage or currentImage.id missing');
             }
         } else {
+            console.log('[handleCharacterDoubleTap] Single tap or invalid timing');
             // Single tap - set timeout to handle if no second tap comes
             tapTimeout = setTimeout(() => {
                 // Handle single tap if needed
@@ -387,89 +441,105 @@ function attachCharacterDoubleTapListener() {
         handleCharacterDoubleTap(this, event);
     });
 }
-    
-    function updateCharacterImageInfo(activeIndex) {
-        const currentImage = window.characterPreviewImages[activeIndex];
-        if (currentImage) {
-            currentImage.title && currentImage.title.trim() !== '' ?
-                $('.image-title').text(currentImage.title) :
-                $('.image-info-container').hide();
-            $('.image-prompt').text(currentImage.prompt || 'No description available');
-            
-            // Reset scroll position when switching images
-            $('.image-prompt-container').scrollTop(0);
-            
-            // Update the like button's data-id attribute
-            const $likeBtn = $('.image-like-btn');
-            if ($likeBtn.length && currentImage.id) {
-                $likeBtn.attr('data-id', currentImage.id);
-            }
+
+function updateCharacterImageInfo(activeIndex) {
+    const currentImage = window.characterPreviewImages[activeIndex];
+    if (currentImage) {
+        currentImage.title && currentImage.title.trim() !== '' ?
+            $('.image-title').text(currentImage.title) :
+            $('.image-info-container').hide();
+        $('.image-prompt').text(currentImage.prompt || 'No description available');
+        
+        // Reset scroll position when switching images
+        $('.image-prompt-container').scrollTop(0);
+        
+        // Update the like button's data-id attribute
+        const $likeBtn = $('.image-like-btn');
+        if ($likeBtn.length && currentImage.id) {
+            $likeBtn.attr('data-id', currentImage.id);
         }
     }
+}
 
-    function updateCharacterLikeButton(activeIndex) {
-        const currentImage = window.characterPreviewImages[activeIndex];
-        if (currentImage && currentImage.id) {
-            // Use the isLiked property from the image data (from API - most reliable source)
-            const isLiked = !!currentImage.isLiked; // Convert to boolean explicitly
-            
-            const $likeBtn = $('.image-like-btn');
-            const $likeIcon = $likeBtn.find('i');
-                        
-            if (isLiked) {
-                $likeIcon.removeClass('bi-heart').addClass('bi-heart-fill text-danger');
-            } else {
-                $likeIcon.removeClass('bi-heart-fill text-danger').addClass('bi-heart');
-            }
+function updateCharacterLikeButton(activeIndex) {
+    const currentImage = window.characterPreviewImages[activeIndex];
+
+    if (currentImage && currentImage.id) {
+        // First check the grid for the CURRENT like state (most authoritative)
+        const gridLikeBtn = document.querySelector(`.image-fav[data-id="${currentImage.id}"]`);
+        let isLiked = false;
+        
+        if (gridLikeBtn) {
+            // Check if the grid button shows it as liked
+            const heartIcon = gridLikeBtn.querySelector('i');
+            isLiked = heartIcon && heartIcon.classList.contains('bi-heart-fill');
+        } else {
+            // Fallback to the in-memory state
+            isLiked = !!currentImage.isLiked;
         }
+        
+        // Update the swiper like button to match
+        const $likeBtn = $('.image-like-btn');
+        const $likeIcon = $likeBtn.find('i');
+                            
+        if (isLiked) {
+            $likeIcon.removeClass('bi-heart').addClass('bi-heart-fill text-danger');
+            // Also update the in-memory state
+            currentImage.isLiked = true;
+        } else {
+            $likeIcon.removeClass('bi-heart-fill text-danger').addClass('bi-heart');
+            // Also update the in-memory state
+            currentImage.isLiked = false;
+        }
+        
     }
+}
 
-    function checkIfImageIsLiked(imageId) {
-        // Check if the image is already liked by looking at existing elements in the grid
-        const existingLikeBtn = $(`.image-fav[data-id="${imageId}"] i`);
-        return existingLikeBtn.hasClass('bi-heart-fill');
-    }
+function checkIfImageIsLiked(imageId) {
+    // Check if the image is already liked by looking at existing elements in the grid
+    const existingLikeBtn = $(`.image-fav[data-id="${imageId}"] i`);
+    return existingLikeBtn.hasClass('bi-heart-fill');
+}
+
+function showCharacterLikeAnimation() {
+    // Create floating heart animation
+    const $heart = $('<div class="floating-heart position-absolute d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10001; pointer-events: none;"><i class="bi bi-heart-fill text-danger" style="font-size: 2.5rem; opacity: 0; filter: drop-shadow(0 0 10px rgba(220, 53, 69, 0.8));"></i></div>');
     
-    function showCharacterLikeAnimation() {
-        // Create floating heart animation
-        const $heart = $('<div class="floating-heart position-absolute d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10001; pointer-events: none;"><i class="bi bi-heart-fill text-danger" style="font-size: 2.5rem; opacity: 0; filter: drop-shadow(0 0 10px rgba(220, 53, 69, 0.8));"></i></div>');
-        
-        $('#characterImagePreviewModal .modal-body').append($heart);
-        
-        // Animate the heart with enhanced effects
-        $heart.find('i').animate({
-            opacity: 1,
-            fontSize: '4rem'
-        }, 300, function() {
-            // Fade out and float up
-            setTimeout(() => {
-                $heart.find('i').animate({
-                    opacity: 0,
-                    marginTop: '-100px'
-                }, 400, function() {
-                    $heart.remove();
-                });
-            }, 600);
-        });
-        
-        // Update the like button immediately with animation
-        const $likeBtn = $('.image-like-btn i');
-        $likeBtn.removeClass('bi-heart').addClass('bi-heart-fill text-danger');
-        
-        // Add enhanced bounce effect to the like button
-        $('.image-like-btn').addClass('animate__animated animate__heartBeat');
+    $('#characterImagePreviewModal .modal-body').append($heart);
+    
+    // Animate the heart with enhanced effects
+    $heart.find('i').animate({
+        opacity: 1,
+        fontSize: '4rem'
+    }, 300, function() {
+        // Fade out and float up
         setTimeout(() => {
-            $('.image-like-btn').removeClass('animate__animated animate__heartBeat');
-        }, 1000);
-        
-        // Add ripple effect to like button
-        const $ripple = $('<div class="like-ripple"></div>');
-        $('.image-like-btn').append($ripple);
-        
-        setTimeout(() => {
-            $ripple.remove();
+            $heart.find('i').animate({
+                opacity: 0,
+                marginTop: '-100px'
+            }, 400, function() {
+                $heart.remove();
+            });
         }, 600);
-    }
+    });
+    
+    // Update the like button immediately with animation
+    const $likeBtn = $('.image-like-btn i');
+    $likeBtn.removeClass('bi-heart').addClass('bi-heart-fill text-danger');
+    
+    // Add enhanced bounce effect to the like button
+    $('.image-like-btn').addClass('animate__animated animate__heartBeat');
+    setTimeout(() => {
+        $('.image-like-btn').removeClass('animate__animated animate__heartBeat');
+    }, 1000);
+    
+    // Add ripple effect to like button
+    const $ripple = $('<div class="like-ripple"></div>');
+    $('.image-like-btn').append($ripple);
+    
+    setTimeout(() => {
+        $ripple.remove();
+    }, 600);
 }
 
 /**

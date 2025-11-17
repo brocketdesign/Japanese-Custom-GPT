@@ -1917,7 +1917,6 @@ window.displayLatestChats = function (chatData, targetGalleryId, modal = false) 
   const isTemporaryUser = !!currentUser?.isTemporary;
   displayChats(chatData, targetGalleryId, modal);
 };
-
 window.displayChats = function (chatData, searchId = null, modal = false) {
 
   let htmlContent = '';
@@ -1968,16 +1967,18 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                       <div class="gallery-image-wrapper position-relative chat-card-clickable-area" style="aspect-ratio: 4/5; background: #f8f9fa; cursor: pointer;"
                         onclick="${chat.premium ? `(window.user && window.user.subscriptionStatus === 'active' ? redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}') : loadPlanPage())` : `redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')`}">
                         <img 
-                          src="${primaryImage}" 
+                          data-src="${primaryImage}" 
+                          src="/img/logo.webp" 
                           alt="${chat.name || chat.chatName}" 
-                          class="card-img-top gallery-img gallery-img-primary transition rounded-top"
+                          class="card-img-top gallery-img gallery-img-primary transition rounded-top lazy-image"
                           style="object-fit: cover; width: 100%; height: 100%; min-height: 220px;"
                           loading="lazy"
                         >
                         <img 
-                          src="${secondaryImage}" 
+                          data-src="${secondaryImage}" 
+                          src="/img/logo.webp" 
                           alt="${chat.name || chat.chatName} preview"
-                          class="card-img-top gallery-img gallery-img-secondary transition rounded-top"
+                          class="card-img-top gallery-img gallery-img-secondary transition rounded-top lazy-image"
                           style="object-fit: cover; width: 100%; height: 100%; min-height: 220px;"
                           loading="lazy"
                           aria-hidden="true"

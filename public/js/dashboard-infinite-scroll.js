@@ -468,13 +468,13 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedInde
                 ${isBlur ? 
                     `<div class="position-relative">
                         <div type="button" onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary})">
-                            <img data-src="${item.imageUrl}" data-id="${item._id}" class="card-img-top img-blur" style="object-fit: cover;" loading="lazy">
+                            <img data-src="${item.imageUrl}" data-id="${item._id}" src="/img/logo.webp" class="card-img-top img-blur lazy-image" style="object-fit: cover;" loading="lazy">
                         </div>
                     </div>` :
                     `<div href="${linkUrl}" data-index="${loadedIndex}" 
                         class="image-container image-fav-double-click"
                         data-id="${item._id}" data-chat-id="${chatId}" onclick="toggleImageFavorite(this)">
-                        <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top" style="object-fit: cover;" loading="lazy">
+                        <img data-src="${item.imageUrl}" src="/img/logo.webp" alt="${item.prompt}" class="card-img-top lazy-image" style="object-fit: cover;" loading="lazy">
                     </div>
                     <div class="position-absolute top-0 start-0 m-1" style="z-index:3;">
                         <span class="btn btn-light image-fav ${isLiked ? 'liked' : ''}" 

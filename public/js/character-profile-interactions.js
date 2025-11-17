@@ -689,7 +689,9 @@ function initializeTabs() {
  * Load character gallery for non-specific character pages
  */
 function loadCharacterGallery() {
-    if (typeof window.displayLatestChats === 'function') {
+    const profilePage = document.querySelector('#characterProfilePage');
+    const chatId = profilePage?.dataset?.chatId;
+    if (typeof window.displayLatestChats === 'function' & chatId ) {
         window.displayLatestChats();
     }
 }

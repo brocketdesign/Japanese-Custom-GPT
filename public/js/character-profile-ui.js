@@ -168,14 +168,6 @@ function createCharacterImageOverlay(imgElement, imageUrl) {
                         nsfw: true
                     };
                 }
-                
-                // Open the swiper modal with the image
-                if (typeof displayImageModal === 'function') {
-                    console.log('[Show Content] Opening swiper with image:', imageData);
-                    displayImageModal(imageData);
-                } else {
-                    console.error('[Show Content] displayImageModal function not available');
-                }
             })
             .on('mouseenter', function() {
                 $(this).css({ 

@@ -118,10 +118,15 @@
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
                         const img = entry.target;
-                        const dataSrc = img.getAttribute("data-src");
-                        if (dataSrc) {
-                            img.src = dataSrc; // Replace placeholder with actual image
-                            img.removeAttribute("data-src");
+                        // If the element is an NSFW blurred image, call blurImage to fetch blurred blob
+                        if (img.classList.contains('img-blur') && typeof blurImage === 'function') {
+                            blurImage(img);
+                        } else {
+                            const dataSrc = img.getAttribute("data-src");
+                            if (dataSrc) {
+                                img.src = dataSrc; // Replace placeholder with actual image
+                                img.removeAttribute("data-src");
+                            }
                         }
                         observer.unobserve(img); // Stop observing once the image is loaded
                     }
@@ -130,7 +135,8 @@
 
             // Function to observe all .lazy-image elements
             const observeImages = () => {
-                const lazyImages = document.querySelectorAll(".lazy-image");
+                // Observe both regular lazy images and blurred NSFW images
+                const lazyImages = document.querySelectorAll(".lazy-image, .img-blur");
                 lazyImages.forEach((img) => {
                     if (img.getAttribute("data-src")) {
                         observer.observe(img);
@@ -147,12 +153,12 @@
                     if (mutation.type === "childList") {
                         mutation.addedNodes.forEach((node) => {
                             if (node.nodeType === 1) { // Ensure it's an element node
-                                if (node.matches(".lazy-image")) {
+                                if (node.matches(".lazy-image") || node.matches('.img-blur')) {
                                     // Observe the newly added lazy-image element
                                     observer.observe(node);
                                 } else {
                                     // Check for any .lazy-image elements inside the added node
-                                    const lazyImages = node.querySelectorAll(".lazy-image");
+                                    const lazyImages = node.querySelectorAll(".lazy-image, .img-blur");
                                     lazyImages.forEach((img) => {
                                         observer.observe(img);
                                     });
@@ -174,17 +180,21 @@
         document.addEventListener("DOMContentLoaded", () => {
             const promptContainer = document.getElementById("promptContainer");
             const showPromptsBtn = document.getElementById("showPrompts"); // Button to show the container
-            const lazyImages = document.querySelectorAll("#promptContainer img.lazy-image");
+            const lazyImages = document.querySelectorAll("#promptContainer img.lazy-image, #promptContainer img.img-blur");
 
             // Intersection Observer for lazy loading
             const observer = new IntersectionObserver((entries, observer) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
                         const img = entry.target;
-                        const dataSrc = img.getAttribute("data-src");
-                        if (dataSrc) {
-                            img.src = dataSrc; // Replace placeholder with actual image
-                            img.removeAttribute("data-src");
+                        if (img.classList.contains('img-blur') && typeof blurImage === 'function') {
+                            blurImage(img);
+                        } else {
+                            const dataSrc = img.getAttribute("data-src");
+                            if (dataSrc) {
+                                img.src = dataSrc; // Replace placeholder with actual image
+                                img.removeAttribute("data-src");
+                            }
                         }
                         observer.unobserve(img); // Stop observing once the image is loaded
                     }
@@ -225,12 +235,14 @@
     />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Personal CSS -->
+    <!-- Other CSS -->
     <link rel="stylesheet" href="/css/personas.css">
+    <link rel="stylesheet" href="/css/character-cards.css">
     <!-- User Points CSS -->
     <link rel="stylesheet" href="/css/user-points.css">
     <link href="/css/style.css" rel="stylesheet">
     <link href="/css/overwrite-bootstrap.css" rel="stylesheet">
+    
     <link rel="stylesheet" href="/css/chat-footer.css" />
 
     <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>

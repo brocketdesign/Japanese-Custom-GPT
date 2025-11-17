@@ -77,7 +77,7 @@ function setCachedCategories(categories) {
 
 function displayCategoryCards(categories) {
   let htmlContent = '';
-  
+  console.log('Displaying categories:', categories);
   categories.forEach((categoryData, index) => {
     const { category, icon, image } = categoryData;
     const delay = (index * 0.3).toFixed(1);
@@ -153,7 +153,7 @@ $(document).ready(function() {
   // Load category cards if the container exists
   if ($('#category-cards-container').length > 0) {
     // [Commented out to prevent automatic loading, can be enabled if needed]
-    //loadCategoryCards();
-    $('#category-cards-container').remove(); // Remove container if not used
+    //$('#category-cards-container').remove(); // Remove container if not used
+    loadCategoryCards();
   }
 });

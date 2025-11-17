@@ -51,16 +51,12 @@ function loadCharacterImages(chatId) {
             .then((images) => {
                 const manager = window.chatImageManager;
                 const imagesCount = (window.loadedImages || []).length;
-                
-                console.log(`[loadCharacterImages] Promise resolved - window.loadedImages length: ${imagesCount}`);
-                
+                                
                 // Get the actual state from cache manager after fetch completes
                 const actualCurrentPage = manager.currentPages.get(cacheKey) || 1;
                 const actualTotalPages = manager.totalPages.get(cacheKey) || 1;
                 const hasCache = manager.cache.has(cacheKey);
-                
-                console.log(`[loadCharacterImages] Cache state - currentPage: ${actualCurrentPage}, totalPages: ${actualTotalPages}, hasCache: ${hasCache}`);
-                                
+                                                
                 // Display images directly - no setTimeout needed
                 displayImagesInGrid(images);
                     
@@ -285,12 +281,66 @@ async function fetchCharacterVideoCount(chatId) {
 /**
  * Load character stats
  */
+/**
+ * Load character stats (global counts - all messages, images, videos)
+ */
 function loadCharacterStats(chatId) {
-    const messagesCount = Math.floor(Math.random() * 1000) + 100;
-    const element = document.getElementById('messagesCount');
-    if (element) {
-        element.textContent = messagesCount.toLocaleString();
-    }
+    fetch(`/api/character-stats/${chatId}`)
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Failed to fetch character stats');
+        })
+        .then(data => {
+            console.log('[loadCharacterStats] Fetched data:', data);
+            if (data.success && data.stats) {
+                // Update messages count
+                const messagesCount = data.stats.messagesCount || 0;
+                const messagesElement = document.getElementById('messagesCount');
+                if (messagesElement) {
+                    messagesElement.classList.remove('count-loading');
+                    messagesElement.textContent = messagesCount.toLocaleString();
+                }
+                
+                // Update image count
+                const imageCount = data.stats.imageCount || 0;
+                const imageElement = document.getElementById('imagesCount');
+                if (imageElement) {
+                    imageElement.classList.remove('count-loading');
+                    imageElement.textContent = imageCount.toLocaleString();
+                }
+                
+                // Update video count
+                const videoCount = data.stats.videoCount || 0;
+                const videoElement = document.getElementById('videosCount');
+                if (videoElement) {
+                    videoElement.classList.remove('count-loading');
+                    videoElement.textContent = videoCount.toLocaleString();
+                }
+            }
+        })
+        .catch(error => {
+            console.error('[loadCharacterStats] Error:', error);
+            // Fallback: display 0 if fetch fails and hide loading state
+            const messagesElement = document.getElementById('messagesCount');
+            if (messagesElement) {
+                messagesElement.classList.remove('count-loading');
+                messagesElement.textContent = '0';
+            }
+            
+            const imageElement = document.getElementById('imagesCount');
+            if (imageElement) {
+                imageElement.classList.remove('count-loading');
+                imageElement.textContent = '0';
+            }
+            
+            const videoElement = document.getElementById('videosCount');
+            if (videoElement) {
+                videoElement.classList.remove('count-loading');
+                videoElement.textContent = '0';
+            }
+        });
 }
 
 /**
@@ -340,6 +390,7 @@ function loadCharacterPersonality() {
 function showCountLoadingState() {
     const imagesCount = document.getElementById('imagesCount');
     const videosCount = document.getElementById('videosCount');
+    const messagesCount = document.getElementById('messagesCount');
     
     if (imagesCount) {
         imagesCount.classList.add('count-loading');
@@ -350,6 +401,11 @@ function showCountLoadingState() {
         videosCount.classList.add('count-loading');
         videosCount.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
     }
+    
+    if (messagesCount) {
+        messagesCount.classList.add('count-loading');
+        messagesCount.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+    }
 }
 
 /**
@@ -358,6 +414,7 @@ function showCountLoadingState() {
 function hideCountLoadingState() {
     const imagesCount = document.getElementById('imagesCount');
     const videosCount = document.getElementById('videosCount');
+    const messagesCount = document.getElementById('messagesCount');
     
     if (imagesCount) {
         imagesCount.classList.remove('count-loading');
@@ -365,6 +422,10 @@ function hideCountLoadingState() {
     
     if (videosCount) {
         videosCount.classList.remove('count-loading');
+    }
+    
+    if (messagesCount) {
+        messagesCount.classList.remove('count-loading');
     }
 }
 

@@ -10,15 +10,10 @@ function displayImagesInGrid(images = []) {
     const grid = document.getElementById('imagesGrid');
     
     if (!grid) {
-        console.log('[displayImagesInGrid] No grid element found');
         return;
     }
     
-    // LOG: Check initial state
-    console.log(`[displayImagesInGrid] START - images length: ${images.length}`);
-    
     if (images.length === 0) {
-        console.log(`[displayImagesInGrid] No images to display`);
         grid.innerHTML = `<div style="padding: 60px 20px; text-align: center; color: #999; grid-column: 1/-1; font-size: 0.95rem;">
             <i class="bi bi-image" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5; display: block;"></i>
             No images available
@@ -44,7 +39,6 @@ function displayImagesInGrid(images = []) {
         
         if (isNSFW) {
             nsfwCount++;
-            console.log(`[displayImagesInGrid] NSFW image found - ID: ${image._id}, subscription: ${subscriptionStatus}`);
         }
         
         // Determine if this image should be blurred
@@ -195,8 +189,6 @@ function displayImagesInGrid(images = []) {
             showLoadMoreButton('images');
         }
         
-        // LOG: Summary
-        console.log(`[displayImagesInGrid] SUMMARY - NSFW: ${nsfwCount}, Blurred: ${blurredCount}, Displayed: ${displayedCount}, Total: ${images.length}`);
     }
 }
 

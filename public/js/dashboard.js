@@ -2477,7 +2477,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
                         </a>
                     </div>
                     ${isBlur ? `
-                    <div type="button" onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary})")>
+                    <div type="button" onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary})">
                         <img data-src="${item.image.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
                     </div>
                     ` : `

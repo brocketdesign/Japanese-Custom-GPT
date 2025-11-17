@@ -826,17 +826,29 @@ function displayUserChatHistoryInModal(userChat) {
         }
 
         userChats.forEach(chat => {
-            const chatDate = new Date(chat.updatedAt);
-            const formattedDate = chatDate.toLocaleDateString('ja-JP', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                weekday: 'short'
-            });
-            const formattedTime = chatDate.toLocaleTimeString('ja-JP', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+                // Determine the best timestamp available for the chat
+                const timestamp = (chat.updatedAt || chat.createdAt || chat.userChatUpdatedAt || chat.userChatCreatedAt || chat.lastMessage?.createdAt || chat.lastMessage?.timestamp || null);
+                const chatDate = timestamp ? new Date(timestamp) : new Date();
+
+                // Determine locale from window.lang with sensible defaults
+                const lang = typeof window.lang === 'string' ? window.lang : 'en';
+                const localeMap = {
+                    'ja': 'ja-JP',
+                    'en': 'en-US',
+                    'fr': 'fr-FR'
+                };
+                const locale = localeMap[lang] || lang || 'en-US';
+
+                const formattedDate = chatDate.toLocaleDateString(locale, {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    weekday: 'short'
+                });
+                const formattedTime = chatDate.toLocaleTimeString(locale, {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
 
             const historyItem = $(`
                 <div class="list-group-item list-group-item-action border-0 p-2 user-chat-history"

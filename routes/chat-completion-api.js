@@ -42,25 +42,51 @@ const relationshipInstructions = require('../models/relashionshipInstructions');
 async function getChatDocument(request, db, chatId) {
     let chatdoc = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
     
+    if (!chatdoc) {
+        throw new Error(`Chat not found for chatId: ${chatId}`);
+    }
+    
     // Check if chatdoc is updated to the new format
-    if(!chatdoc?.system_prompt || !chatdoc?.details_description || !chatdoc?.details_description?.personality?.reference_character) {
-        console.log('Updating chat document to new format');
+    const hasSystemPrompt = !!chatdoc?.system_prompt;
+    const hasDetailsDescription = !!chatdoc?.details_description;
+    const hasReferenceCharacter = !!chatdoc?.details_description?.personality?.reference_character;
+    
+    if(!hasSystemPrompt || !hasDetailsDescription || !hasReferenceCharacter) {
+        console.log(`[getChatDocument] Incomplete chat detected - regenerating for chatId: ${chatId}`);
+
+        if (!chatdoc.characterPrompt || chatdoc.characterPrompt.trim() === '') {
+            console.warn(`[getChatDocument] Cannot regenerate - characterPrompt is empty`);
+            return chatdoc;
+        }
 
         const purpose = `Her name is, ${chatdoc.name}.\nShe looks like :${chatdoc.enhancedPrompt ? chatdoc.enhancedPrompt : chatdoc.characterPrompt}.\n\n${chatdoc.rule}`;
         const language = chatdoc.language;
         const apiUrl = getApiUrl(request);        
         
-        const response = await axios.post(apiUrl+'/api/generate-character-comprehensive', {
-            userId: request.user._id,
-            chatId,
-            name: chatdoc.name,
-            prompt: chatdoc.characterPrompt,
-            gender: chatdoc.gender,
-            nsfw: chatdoc.nsfw,
-            chatPurpose: purpose,
-            language
-        });
-        chatdoc = response.chatData;
+        try {
+            const response = await axios.post(apiUrl+'/api/generate-character-comprehensive', {
+                userId: request.user._id,
+                chatId,
+                name: chatdoc.name,
+                prompt: chatdoc.characterPrompt,
+                gender: chatdoc.gender,
+                nsfw: chatdoc.nsfw,
+                chatPurpose: purpose,
+                language
+            });
+            
+            if (!response.data.chatData) {
+                throw new Error('Response missing chatData field');
+            }
+            
+            chatdoc = response.data.chatData;
+            console.log(`[getChatDocument] ✅ Chat regenerated successfully for chatId: ${chatId}`);
+            
+        } catch (error) {
+            console.error(`[getChatDocument] ❌ Regeneration failed: ${error.message}`);
+            console.warn(`[getChatDocument] Returning incomplete document`);
+            return chatdoc;
+        }
     }
 
     return chatdoc;

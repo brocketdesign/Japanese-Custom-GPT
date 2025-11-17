@@ -358,7 +358,21 @@ async function routes(fastify, options) {
                     .replace(/,+/g, ',') // Remove duplicate commas
                     .trim();
                 
-                console.log(`[API/generate-character-comprehensive] Cleaned enhanced prompt: ${enhancedPrompt.substring(0, 100)}...`);
+                // Enforce Novita API limit: max 1024 characters
+                const MAX_PROMPT_LENGTH = 1024;
+                if (enhancedPrompt.length > MAX_PROMPT_LENGTH) {
+                    // Truncate to max length, trying to cut at a comma to avoid breaking words
+                    let truncatedPrompt = enhancedPrompt.substring(0, MAX_PROMPT_LENGTH);
+                    const lastCommaIndex = truncatedPrompt.lastIndexOf(',');
+                    if (lastCommaIndex > MAX_PROMPT_LENGTH - 100) {
+                        // If comma is close to end, truncate at comma
+                        truncatedPrompt = truncatedPrompt.substring(0, lastCommaIndex).trim();
+                    }
+                    console.log(`[API/generate-character-comprehensive] Truncated prompt: ${enhancedPrompt.length} → ${truncatedPrompt.length} chars`);
+                    enhancedPrompt = truncatedPrompt;
+                }
+                
+                console.log(`[API/generate-character-comprehensive] Final prompt: ${enhancedPrompt.substring(0, 100)}... (${enhancedPrompt.length} chars)`);
                 
                 fastify.sendNotificationToUser(userId, 'showNotification', { 
                     message: request.translations.newCharacter.enhancedPrompt_complete, 
@@ -468,68 +482,55 @@ async function routes(fastify, options) {
             chatData.imageType = finalImageType;
             chatData.thumbIsPortrait = true;
             
-            console.log('[API/generate-character-comprehensive] Prepared chatData for database:');
-            console.log(`  - system_prompt length: ${chatData.system_prompt?.length || 0} chars`);
-            console.log(`  - details_description: ${chatData.details_description ? '✓' : '✗'}`);
-            console.log(`  - details_description.personality: ${chatData.details_description?.personality ? '✓' : '✗'}`);
-            console.log(`  - reference_character: ${chatData.details_description?.personality?.reference_character || 'N/A'}`);
-            console.log(`  - tags: ${chatData.tags?.length || 0} tags`);
-            
             const collectionChats = fastify.mongo.db.collection('chats');
             
+            // Convert chatId to ObjectId once and reuse
+            const chatObjectId = new ObjectId(chatId);
+            
             // Update chat document
-            console.log('[API/generate-character-comprehensive] Executing first database update...');
             const firstUpdate = await collectionChats.updateOne(
-                { _id: new fastify.mongo.ObjectId(chatId) },
+                { _id: chatObjectId },
                 { $set: chatData }
             );
 
             if (firstUpdate.matchedCount === 0) {
-                console.error(`[API/generate-character-comprehensive] ❌ Chat not found for ID: ${chatId}`);
+                console.error(`[API/generate-character-comprehensive] ❌ First update failed - Chat not found for ID: ${chatId}`);
                 throw new Error('Chat not found.');
             }
 
-            console.log(`[API/generate-character-comprehensive] ✓ First update successful: ${firstUpdate.modifiedCount} document(s) modified`);
+            console.log(`[API/generate-character-comprehensive] ✓ Database saved: system_prompt=${chatData.system_prompt?.length}c, reference_character=${chatData.details_description?.personality?.reference_character}`);
 
             // Step 5: Generate unique slug if name is provided
-            console.log('[API/generate-character-comprehensive] Step 5: Generating unique slug if name is provided');
             if (chatData.name) {
                 const baseSlug = slugify(chatData.name, { lower: true, strict: true });
                 let slug = baseSlug;
                 
                 const slugExists = await collectionChats.findOne({ 
                     slug: baseSlug, 
-                    _id: { $ne: new fastify.mongo.ObjectId(chatId) } 
+                    _id: { $ne: chatObjectId } 
                 });
                 
                 if (slugExists) {
                     const randomStr = Math.random().toString(36).substring(2, 6);
                     slug = `${baseSlug}-${randomStr}`;
-                    console.log(`[API/generate-character-comprehensive] Generated unique slug: ${slug}`);
-                } else {
-                    console.log(`[API/generate-character-comprehensive] Using base slug: ${slug}`);
                 }
                 
                 chatData.slug = slug;
             }
 
             // Step 6: Update tags in the database
-            console.log('[API/generate-character-comprehensive] Step 6: Updating tags in the database');
-
             const tagsCollection = fastify.mongo.db.collection('tags');
             const generatedTags = chatData.tags;
             
-            console.log(`[API/generate-character-comprehensive] Processing ${generatedTags?.length || 0} tags...`);
             for (const tag of (generatedTags || [])) {
                 try {
                     await tagsCollection.updateOne(
                         { name: tag },
-                        { $set: { name: tag, language }, $addToSet: { chatIds: chatId } },
+                        { $set: { name: tag, language }, $addToSet: { chatIds: chatObjectId.toString() } },
                         { upsert: true }
                     );
-                    console.log(`  - Tag "${tag}" updated`);
                 } catch (tagError) {
-                    console.error(`  - ❌ Error updating tag "${tag}":`, tagError.message);
+                    console.error(`[API/generate-character-comprehensive] Error updating tag "${tag}": ${tagError.message}`);
                 }
             }
 
@@ -538,52 +539,40 @@ async function routes(fastify, options) {
             });
 
             // Update chat document with slug and tags
-            console.log('[API/generate-character-comprehensive] Executing second database update with slug and tags...');
             const secondUpdate = await collectionChats.updateOne(
-                { _id: new fastify.mongo.ObjectId(chatId) },
+                { _id: chatObjectId },
                 { $set: chatData }
             );
 
             if (secondUpdate.matchedCount === 0) {
-                console.error(`[API/generate-character-comprehensive] ❌ Chat not found for ID: ${chatId}`);
-                throw new Error('Chat not found.');
+                console.error(`[API/generate-character-comprehensive] ❌ Second update failed - No documents matched for ID: ${chatId}`);
+                throw new Error(`Second database update failed - chat document may have been deleted`);
             }
 
-            console.log(`[API/generate-character-comprehensive] ✓ Second update successful: ${secondUpdate.modifiedCount} document(s) modified`);
-
             // Fetch final document from database
-            console.log('[API/generate-character-comprehensive] Fetching final document from database...');
             const finalChatDocument = await collectionChats.findOne({
-                _id: new fastify.mongo.ObjectId(chatId)
+                _id: chatObjectId
             });
 
             if (!finalChatDocument) {
-                console.error(`[API/generate-character-comprehensive] ❌ Could not retrieve final document from database`);
+                console.error(`[API/generate-character-comprehensive] ❌ Could not retrieve final document - searched for _id: ${chatObjectId}`);
                 throw new Error('Failed to retrieve final chat document from database');
             }
 
-            // Validate final document
-            console.log('[API/generate-character-comprehensive] Validating final document:');
-            console.log(`  - _id: ${finalChatDocument._id ? '✓' : '✗'}`);
-            console.log(`  - name: ${finalChatDocument.name ? '✓' : '✗'} (${finalChatDocument.name || 'N/A'})`);
-            console.log(`  - system_prompt: ${finalChatDocument.system_prompt ? '✓' : '✗'} (${finalChatDocument.system_prompt?.length || 0} chars)`);
-            console.log(`  - details_description: ${finalChatDocument.details_description ? '✓' : '✗'}`);
-            console.log(`  - personality: ${finalChatDocument.details_description?.personality ? '✓' : '✗'}`);
-            console.log(`  - reference_character: ${finalChatDocument.details_description?.personality?.reference_character ? '✓' : '✗'}`);
-            console.log(`  - slug: ${finalChatDocument.slug ? '✓' : '✗'} (${finalChatDocument.slug || 'N/A'})`);
-            console.log(`  - tags: ${Array.isArray(finalChatDocument.tags) ? '✓' : '✗'} (${finalChatDocument.tags?.length || 0} tags)`);
-            console.log(`  - enhancedPrompt: ${finalChatDocument.enhancedPrompt ? '✓' : '✗'}`);
-            console.log(`  - gender: ${finalChatDocument.gender ? '✓' : '✗'} (${finalChatDocument.gender || 'N/A'})`);
+            // Validate critical fields
+            if (!finalChatDocument.system_prompt || !finalChatDocument.details_description?.personality?.reference_character) {
+                console.error(`[API/generate-character-comprehensive] ❌ Final document missing critical fields`);
+                throw new Error('Final document missing required fields');
+            }
 
             const totalTime = Date.now() - startTime;
-            console.log(`[API/generate-character-comprehensive] ✅ Process completed successfully in ${totalTime}ms`);
+            console.log(`[API/generate-character-comprehensive] ✅ Completed in ${totalTime}ms - chatId: ${chatId}`);
             
             fastify.sendNotificationToUser(userId, 'showNotification', { 
                 message: request.translations.newCharacter.character_generation_complete || 'Character generation completed successfully!', 
                 icon: 'success' 
             });
 
-            console.log('[API/generate-character-comprehensive] 📤 Sending final response to client');
             return reply.send({
                 success: true,
                 chatId,

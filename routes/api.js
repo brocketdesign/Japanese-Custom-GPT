@@ -70,45 +70,26 @@ const free_models = false // ['293564']; // [DEBUG] Disable temporary
     // Fetches chat document from 'chats' collection
     async function getChatDocument(request, db, chatId, fastify) {
         const getChatDocStartTime = Date.now();
-        console.log(`[getChatDocument] Starting for chatId: ${chatId}`);
         
         try {
             let chatdoc = await db.collection('chats').findOne({ _id: new ObjectId(chatId)});
             
             if (!chatdoc) {
-                console.error(`[getChatDocument] ❌ Chat not found in database for chatId: ${chatId}`);
-                throw new Error(`Chat document not found for chatId: ${chatId}`);
+                throw new Error(`Chat not found for chatId: ${chatId}`);
             }
-            
-            console.log(`[getChatDocument] ✓ Chat document fetched from DB`);
-            console.log(`[getChatDocument] Available fields: ${Object.keys(chatdoc).join(', ')}`);
-            console.log(`[getChatDocument] Basic fields:`);
-            console.log(`  - name: ${chatdoc.name || 'undefined'}`);
-            console.log(`  - characterPrompt: ${chatdoc.characterPrompt ? '✓' : '✗'} (${chatdoc.characterPrompt?.length || 0} chars)`);
-            console.log(`  - gender: ${chatdoc.gender || 'undefined'}`);
-            console.log(`  - language: ${chatdoc.language || 'undefined'}`);
             
             // Check if chatdoc is updated to the new format
             const hasSystemPrompt = !!chatdoc?.system_prompt;
             const hasDetailsDescription = !!chatdoc?.details_description;
-            const hasPersonality = !!chatdoc?.details_description?.personality;
             const hasReferenceCharacter = !!chatdoc?.details_description?.personality?.reference_character;
             
-            console.log(`[getChatDocument] Field validation:`);
-            console.log(`  - system_prompt: ${hasSystemPrompt ? '✓' : '✗'}`);
-            console.log(`  - details_description: ${hasDetailsDescription ? '✓' : '✗'}`);
-            console.log(`  - details_description.personality: ${hasPersonality ? '✓' : '✗'}`);
-            console.log(`  - details_description.personality.reference_character: ${hasReferenceCharacter ? '✓' : '✗'}`);
-            
             if(!hasSystemPrompt || !hasDetailsDescription || !hasReferenceCharacter) {
-                console.log(`[getChatDocument] 🔄 Chat document incomplete - needs regeneration`);
+                console.log(`[getChatDocument] Incomplete chat detected - triggering regeneration for chatId: ${chatId}`);
                 
                 // Check if we have the required fields to regenerate
                 if (!chatdoc.characterPrompt || chatdoc.characterPrompt.trim() === '') {
-                    console.error(`[getChatDocument] ⚠️  CANNOT REGENERATE - characterPrompt is missing or empty`);
-                    console.error(`[getChatDocument] This chat was created with incomplete data`);
-                    console.error(`[getChatDocument] Returning incomplete document - frontend should handle gracefully`);
-                    return chatdoc; // Return incomplete document and let frontend handle it
+                    console.warn(`[getChatDocument] Cannot regenerate - characterPrompt is empty. Returning incomplete document.`);
+                    return chatdoc;
                 }
 
                 const apiUrl = getApiUrl(request);
@@ -116,13 +97,7 @@ const free_models = false // ['293564']; // [DEBUG] Disable temporary
                 const language = chatdoc?.language || 'en';
                 
                 try {
-                    console.log(`[getChatDocument] 📤 Calling /api/generate-character-comprehensive`);
-                    console.log(`[getChatDocument]   - userId: ${request.user._id}`);
-                    console.log(`[getChatDocument]   - chatId: ${chatId}`);
-                    console.log(`[getChatDocument]   - name: ${chatdoc.name || 'undefined'}`);
-                    console.log(`[getChatDocument]   - gender: ${chatdoc.gender || 'undefined'}`);
-                    console.log(`[getChatDocument]   - language: ${language}`);
-                    console.log(`[getChatDocument]   - prompt length: ${chatdoc.characterPrompt?.length || 0} chars`);
+                    console.log(`[getChatDocument] Calling /api/generate-character-comprehensive for chatId: ${chatId}`);
                     
                     const response = await axios.post(apiUrl+'/api/generate-character-comprehensive', {
                         userId: request.user._id,
@@ -135,73 +110,36 @@ const free_models = false // ['293564']; // [DEBUG] Disable temporary
                         language
                     }, { timeout: 120000 }); // 2 minute timeout
                     
-                    console.log(`[getChatDocument] 📦 Response received`);
-                    console.log(`[getChatDocument]   - status: ${response.status}`);
-                    console.log(`[getChatDocument]   - data keys: ${Object.keys(response.data).join(', ')}`);
-                    
                     if (!response.data.chatData) {
-                        console.error(`[getChatDocument] ❌ Response missing chatData field`);
-                        console.error(`[getChatDocument] Full response:`, JSON.stringify(response.data, null, 2));
                         throw new Error('Response missing chatData field');
                     }
                     
                     chatdoc = response.data.chatData;
                     
-                    // Verify regenerated data
-                    const regeneratedHasSystemPrompt = !!chatdoc?.system_prompt;
-                    const regeneratedHasDetailsDescription = !!chatdoc?.details_description;
-                    const regeneratedHasPersonality = !!chatdoc?.details_description?.personality;
-                    const regeneratedHasReferenceCharacter = !!chatdoc?.details_description?.personality?.reference_character;
-                    
-                    console.log(`[getChatDocument] ✅ Regenerated data validation:`);
-                    console.log(`  - system_prompt: ${regeneratedHasSystemPrompt ? '✓' : '✗'} (length: ${chatdoc.system_prompt?.length || 0})`);
-                    console.log(`  - details_description: ${regeneratedHasDetailsDescription ? '✓' : '✗'}`);
-                    console.log(`  - reference_character: ${regeneratedHasReferenceCharacter ? '✓' : '✗'} (${chatdoc.details_description?.personality?.reference_character || 'N/A'})`);
-                    console.log(`  - slug: ${chatdoc.slug ? '✓' : '✗'} (${chatdoc.slug || 'N/A'})`);
-                    console.log(`  - tags: ${Array.isArray(chatdoc.tags) ? '✓' : '✗'} (count: ${chatdoc.tags?.length || 0})`);
-                    
-                    if (!regeneratedHasSystemPrompt || !regeneratedHasDetailsDescription || !regeneratedHasReferenceCharacter) {
-                        console.error(`[getChatDocument] ❌ CRITICAL: Regenerated data is still incomplete!`);
-                        throw new Error('Regenerated chat data missing required fields');
+                    // Quick validation
+                    if (!chatdoc?.system_prompt || !chatdoc?.details_description?.personality?.reference_character) {
+                        throw new Error('Regenerated data still missing critical fields');
                     }
                     
-                    const totalRegenTime = Date.now() - getChatDocStartTime;
-                    console.log(`[getChatDocument] ✅ Chat document regenerated and validated in ${totalRegenTime}ms`);
+                    const regenTime = Date.now() - getChatDocStartTime;
+                    console.log(`[getChatDocument] ✅ Regenerated in ${regenTime}ms for chatId: ${chatId}`);
                     
                 } catch (regenerationError) {
-                    const totalErrorTime = Date.now() - getChatDocStartTime;
-                    console.error(`[getChatDocument] ❌ Character regeneration failed after ${totalErrorTime}ms`);
-                    console.error(`[getChatDocument] Error message: ${regenerationError.message}`);
-                    console.error(`[getChatDocument] Error code: ${regenerationError.code || 'N/A'}`);
+                    console.error(`[getChatDocument] ❌ Regeneration failed: ${regenerationError.message}`);
                     
                     if (regenerationError.response?.status) {
-                        console.error(`[getChatDocument] HTTP status: ${regenerationError.response.status}`);
-                        console.error(`[getChatDocument] Response data:`, JSON.stringify(regenerationError.response.data, null, 2));
+                        console.error(`[getChatDocument] Response status: ${regenerationError.response.status}`);
                     }
                     
-                    if (regenerationError.code === 'ECONNREFUSED') {
-                        console.error(`[getChatDocument] ❌ Connection refused - server may be down`);
-                    } else if (regenerationError.code === 'ENOTFOUND') {
-                        console.error(`[getChatDocument] ❌ DNS resolution failed`);
-                    } else if (regenerationError.code === 'ETIMEDOUT') {
-                        console.error(`[getChatDocument] ❌ Request timeout - regeneration took too long`);
-                    }
-                    
-                    console.warn(`[getChatDocument] ⚠️  Regeneration failed - returning incomplete document`);
-                    console.warn(`[getChatDocument] Chat may display with missing personality/system_prompt`);
+                    console.warn(`[getChatDocument] Returning incomplete document - chat may not function properly`);
                     return chatdoc; // Return incomplete document instead of throwing
                 }
-            } else {
-                const totalLoadTime = Date.now() - getChatDocStartTime;
-                console.log(`[getChatDocument] ✅ Chat document valid and complete (loaded in ${totalLoadTime}ms)`);
             }
 
             return chatdoc;
             
         } catch (error) {
-            const totalTime = Date.now() - getChatDocStartTime;
-            console.error(`[getChatDocument] ❌ FATAL ERROR after ${totalTime}ms: ${error.message}`);
-            console.error(`[getChatDocument] Stack trace:`, error.stack);
+            console.error(`[getChatDocument] ❌ Fatal error: ${error.message}`);
             throw error;
         }
     }

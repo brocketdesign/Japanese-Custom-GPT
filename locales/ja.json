@@ -1,5 +1,6 @@
 {
   "lang": "ja",
+  "upgradeNow": "今すぐアップグレード",
   "startHere": "ここから始めましょう",
   "image_generation": {
     "activated": "このプロンプトの画像生成機能を有効にしました。\nまもなく画像が生成されます。",
@@ -31,6 +32,19 @@
     "follow": "フォロー",
     "unfollowed": "フォロー解除しました！",
     "requestFailed": "リクエストに失敗しました。"
+  },
+  "favorite": {
+    "latest": "最新",
+    "addFavorite": "お気に入りに追加",
+    "removeFavorite": "お気に入りから削除",
+    "favorited": "お気に入りに追加しました！",
+    "unfavorited": "お気に入りから削除しました",
+    "favorites": "お気に入り",
+    "myFavorites": "私のお気に入り",
+    "noFavorites": "まだお気に入りのキャラクターがありません",
+    "addedToFavorites": "キャラクターをお気に入りに追加しました",
+    "removedFromFavorites": "キャラクターをお気に入りから削除しました",
+    "requestFailed": "お気に入りのステータスを更新できませんでした"
   },
   "requestFailed": "リクエストに失敗しました",
   "image_leaderboard_title": "画像リーダーボード",

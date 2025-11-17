@@ -1,5 +1,6 @@
 {
   "lang": "en",
+  "upgradeNow": "Upgrade Now",
   "startHere": "Start Here",
   "image_generation": {
     "activated": "I activated the image generation feature for this prompt.\n The image will be generated shortly.",
@@ -29,6 +30,19 @@
     "follow": "Follow",
     "unfollowed": "Unfollowed!",
     "requestFailed": "Request failed."
+  },
+  "favorite": {
+    "latest": "Latest",
+    "addFavorite": "Add to Favorites",
+    "removeFavorite": "Remove from Favorites",
+    "favorited": "Added to Favorites!",
+    "unfavorited": "Removed from Favorites",
+    "favorites": "Favorites",
+    "myFavorites": "My Favorites",
+    "noFavorites": "No favorite characters yet",
+    "addedToFavorites": "Character added to your favorites",
+    "removedFromFavorites": "Character removed from your favorites",
+    "requestFailed": "Failed to update favorite status"
   },
   "requestFailed": "Request failed",
   "image_leaderboard_title": "Image Leaderboard",

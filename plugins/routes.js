@@ -34,6 +34,7 @@ async function registerRoutes(fastify) {
   fastify.register(require('../routes/admin-models'));
   fastify.register(require('../routes/chat-suggestions-api'));
   fastify.register(require('../routes/speech-to-text-api'));
+  fastify.register(require('../routes/favorites-api'));
 }
 
 module.exports = registerRoutes;

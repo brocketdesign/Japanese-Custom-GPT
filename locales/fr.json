@@ -1,5 +1,7 @@
 {
   "lang": "fr",
+  "loading": "Chargement...",
+  "upgradeNow": "Passer premium maintenant",
   "startHere": "Commencez ici",
   "latestVideoChatsHeader": "Dernières vidéos de personnages",
   "loadMore": "Charger plus",
@@ -35,6 +37,19 @@
         "name": "Fena - Personnage",
         "description": "Jeune fille impertinente"
       }
+    },
+    "favorite": {
+      "latest": "Récent",
+      "addFavorite": "Ajouter aux favoris",
+      "removeFavorite": "Supprimer des favoris",
+      "favorited": "Ajouté aux favoris !",
+      "unfavorited": "Supprimé des favoris",
+      "favorites": "Favoris",
+      "myFavorites": "Mes favoris",
+      "noFavorites": "Aucun personnage favori pour le moment",
+      "addedToFavorites": "Personnage ajouté à vos favoris",
+      "removedFromFavorites": "Personnage supprimé de vos favoris",
+      "requestFailed": "Impossible de mettre à jour le statut des favoris"
     },
     "relationships": {
       "friend": "Ami",

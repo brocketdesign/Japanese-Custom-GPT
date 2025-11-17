@@ -218,6 +218,7 @@
     z-index: 100;
     width: 95%;
     max-width: 240px; /* Smaller for compact sidebar */
+    pointer-events: none; /* Prevent interactions when hidden */
 }
 
 .loading-card {
@@ -277,22 +278,57 @@
 
 .loading-dots-container {
     display: flex;
-    justify-content: center;
-    gap: 4px; /* Reduced gap */
+    flex-direction: column;
+    gap: 8px; /* Gap between skeleton items */
+    width: 100%;
 }
 
 .loading-dot {
-    width: 6px !important; /* Smaller dots */
-    height: 6px !important;
-    background-color: #6E20F4;
+    background: linear-gradient(90deg, #e9ecef 25%, #f0f0f0 50%, #e9ecef 75%);
+    background-size: 200% 100%;
+    animation: shimmerLoading 2s infinite;
+    border-radius: 8px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    box-sizing: border-box;
+    width: 100%;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.loading-dot::before {
+    content: '';
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(90deg, #d0d0d0 25%, #e0e0e0 50%, #d0d0d0 75%);
+    background-size: 200% 100%;
+    animation: shimmerLoading 2s infinite;
     border-radius: 50%;
-    animation: dotBounce 1.4s infinite ease-in-out;
+    flex-shrink: 0;
+}
+
+.loading-dot::after {
+    content: '';
+    flex: 1;
+    height: 12px;
+    background: linear-gradient(90deg, #d0d0d0 25%, #e0e0e0 50%, #d0d0d0 75%);
+    background-size: 200% 100%;
+    animation: shimmerLoading 2s infinite;
+    border-radius: 4px;
 }
 
 /* Keyframe Animations */
 @keyframes shimmerWave {
     0% { left: -100%; }
     100% { left: 100%; }
+}
+
+@keyframes shimmerLoading {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
 }
 
 @keyframes loadingDots {
@@ -398,8 +434,17 @@
     }
     
     .loading-dot {
-        width: 4px !important;
-        height: 4px !important;
+        height: 45px;
+        padding: 0 6px;
+    }
+    
+    .loading-dot::before {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .loading-dot::after {
+        height: 10px;
     }
     
     .chat-avatar {

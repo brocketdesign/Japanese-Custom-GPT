@@ -49,6 +49,162 @@ function saveCache() {
     sessionStorage.setItem('chatListCache', JSON.stringify(chatCache));
 }
 
+// Current active tab state
+let currentChatTab = 'latest';
+let favoritesCache = {
+    data: [],
+    currentPage: 1,
+    pagination: { total: 0, totalPages: 0 },
+    lastUpdated: null
+};
+
+/**
+ * Switch between Latest and Favorites tabs
+ */
+function switchChatTab(tabName) {
+    currentChatTab = tabName;
+
+    // Keep nav classes in sync with the clicked tab
+    if (tabName === 'favorites') {
+        // Hide latest list and show favorites
+        $('#latest-chat-list').addClass('d-none');
+        $('#chat-favorites-content').addClass('show active');
+        $('#chat-latest-content').removeClass('show active');
+        $('#tab-favorites').addClass('active');
+        $('#tab-latest').removeClass('active');
+
+        loadFavoriteChats(1);
+    } else {
+        // Show latest and hide favorites
+        $('#latest-chat-list').removeClass('d-none');
+        $('#chat-latest-content').addClass('show active');
+        $('#chat-favorites-content').removeClass('show active');
+        $('#tab-latest').addClass('active');
+        $('#tab-favorites').removeClass('active');
+
+        displayChatList(false, userId);
+    }
+}
+
+/**
+ * Load favorite chats
+ */
+function loadFavoriteChats(page = 1) {
+    const list = $('#favorites-chat-list');
+    
+    // Hide latest list to prevent duplicate views and scrollbars
+    $('#latest-chat-list').addClass('d-none');
+    $('#chat-favorites-content').addClass('show active');
+    $('#chat-latest-content').removeClass('show active');
+    
+    // Show skeleton loading
+    list.empty();
+    const skeletonContainer = $('<div class="loading-dots-container"></div>');
+    for (let i = 0; i < 5; i++) {
+        skeletonContainer.append('<div class="loading-dot" style="margin-bottom: 0.5rem;"></div>');
+    }
+    list.append(skeletonContainer);
+    list.removeClass('d-none');
+    
+    $.ajax({
+        type: 'GET',
+        url: '/favorites',
+        data: { page: page, limit: 10 },
+        success: function(response) {
+            
+            if (response.data && response.data.length > 0) {
+                favoritesCache.data = response.data;
+                favoritesCache.currentPage = page;
+                favoritesCache.pagination = response.pagination;
+
+                $('#favorites-chat-list .loading-dots-container').remove();
+                displayFavoriteChats(response.data);
+                
+                // Update favorite count badge
+                $('#favorite-count-badge')
+                    .text(response.pagination.total)
+                    .show();
+                // Ensure favorites displayed
+                list.removeClass('d-none');
+            } else {
+                list.html(`
+                    <div class="text-center py-5">
+                        <i class="bi bi-star display-5 text-muted mb-3"></i>
+                        <p class="text-muted">${window.translations.favorite.noFavorites}</p>
+                    </div>
+                `);
+                
+                $('#favorite-count-badge').hide();
+            }
+        },
+        error: function(xhr, status, error) {
+            spinner.hide();
+            console.error('Error loading favorites:', error);
+            list.html(`
+                <div class="text-center py-5">
+                    <i class="bi bi-exclamation-triangle display-5 text-warning mb-3"></i>
+                    <p class="text-muted">${window.translations.favorite.requestFailed}</p>
+                </div>
+            `);
+        }
+    });
+}
+
+/**
+ * Display favorite chats in the list
+ */
+function displayFavoriteChats(favorites) {
+    const list = $('#favorites-chat-list');
+    // Hide the latest tab content while showing favorites
+    $('#latest-chat-list').addClass('d-none');
+    list.empty();
+    
+    if (!favorites || favorites.length === 0) {
+        list.html(`
+            <div class="text-center py-5">
+                <i class="bi bi-star display-5 text-muted mb-3"></i>
+                <p class="text-muted">${window.translations.favorite.noFavorites}</p>
+            </div>
+        `);
+        return;
+    }
+    
+    favorites.forEach(function(chat) {
+        if (!chat) return; // Skip any null/undefined entries (deleted chats)
+        // Ensure chat shape is normalized like the chat-list endpoint
+        const normalizedChat = normalizeChatRecord(chat);
+        const isActive = chatId && normalizedChat._id === chatId;
+        const chatHtml = constructChatItemHtml(normalizedChat, isActive);
+        list.append(chatHtml);
+    });
+}
+
+/**
+ * Update favorite count in tab badge
+ */
+function updateFavoriteCountBadge() {
+    if (typeof Favorites !== 'undefined' && Favorites.getFavoriteCount) {
+        Favorites.getFavoriteCount(function(count) {
+            const badge = $('#favorite-count-badge');
+            if (count > 0) {
+                badge.text(count).show();
+            } else {
+                badge.hide();
+            }
+        });
+    }
+}
+
+function clearChatListItems() {
+    const $latestList = $('#latest-chat-list');
+    if ($latestList.length === 0) {
+        return;
+    }
+
+    $latestList.find('.chat-list.item').remove();
+    $latestList.find('#show-more-chats').remove();
+}
+
 function getChatTimestamp(chat) {
     if (!chat) return 0;
     const candidates = [
@@ -186,7 +342,13 @@ $(document).on('click','#toggle-chat-list',function(){
     .show();
 
     $('#footer-toolbar').hide();
+    
+    // Reset to latest tab and load chats
+    currentChatTab = 'latest';
     displayChatList(null, userId);
+    
+    // Update favorite count badge
+    updateFavoriteCountBadge();
 });
 
 // Close chat list when clicking #close-chat-list-btn
@@ -244,16 +406,33 @@ function deleteChatHistoryHandler(selectedChatId) {
 // Main function to display chat list
 function displayChatList(reset, userId) {
     if ($('#chat-list').length === 0) return;
+    // Ensure latest list is visible by default and favorites are hidden
+    $('#latest-chat-list').removeClass('d-none');
+    $('#chat-favorites-content').removeClass('show active');
+    $('#chat-latest-content').addClass('show active');
+    $('#favorites-chat-list').addClass('d-none');
     if (reset) {
         resetCache();
-        $('#chat-list').empty();
+        clearChatListItems();
     }
 
     chatCache.currentPage = 1;
     fetchChatListData(chatCache.currentPage);
 
     function fetchChatListData(page) {
-        $('#chat-list-spinner').show();
+        // Show skeleton loading
+        const latestList = $('#latest-chat-list');
+        
+        // Only clear list on first page, append skeleton on subsequent pages
+        if (page === 1) {
+            latestList.empty();
+        }
+        
+        const skeletonContainer = $('<div class="loading-dots-container" style="margin-top: 0.5rem;"></div>');
+        for (let i = 0; i < 5; i++) {
+            skeletonContainer.append('<div class="loading-dot" style="margin-bottom: 0.5rem;"></div>');
+        }
+        latestList.append(skeletonContainer);
         
         $.ajax({
             type: 'GET',
@@ -294,7 +473,7 @@ function displayChatList(reset, userId) {
 
                     const mergedChats = Array.from(cacheMap.values());
                     chatCache.data = sortChatsByUpdatedAt(mergedChats);
-                    $('#chat-list').empty();
+                    clearChatListItems();
                     chatsToRender = chatCache.data;
                 } else {
                     const newChats = [];
@@ -318,21 +497,29 @@ function displayChatList(reset, userId) {
                 chatCache.currentPage = page;
                 chatCache.pagination = pagination;
                 saveCache();
-                
+                $('#latest-chat-list .loading-dots-container').remove();
                 displayChats(chatsToRender, pagination);
             },
             error: function(xhr, status, error) {
                 console.error('Error fetching chat list:', error);
             },
             complete: function() {
-                $('#chat-list-spinner').hide();
+                // Skeleton loading will be replaced by displayChats
             }
         });
     }
 
     function displayChats(chats, pagination) {
+        const $latestList = $('#latest-chat-list');
+        if ($latestList.length === 0) {
+            return;
+        }
+
+        // Remove only the skeleton loading container, not the entire list
+        $latestList.find('.loading-dots-container').remove();
+
         // Reset loading button state
-        const $loadMoreBtn = $('#show-more-chats');
+        const $loadMoreBtn = $latestList.find('#show-more-chats');
         if ($loadMoreBtn.length) {
             $loadMoreBtn.removeClass('loading');
             $loadMoreBtn.find('.load-more-content').removeClass('d-none');
@@ -344,12 +531,12 @@ function displayChatList(reset, userId) {
         // Don't append if these are duplicate chats
         chats.forEach(function(chat){
             // Check if this chat is already displayed
-            if ($(`#chat-list .chat-list.item[data-id="${chat._id}"]`).length === 0) {
+            if ($latestList.find(`.chat-list.item[data-id="${chat._id}"]`).length === 0) {
                 const isActive = chatId ? chat._id === chatId : false;
-                var chatHtml = constructChatItemHtml(chat, isActive);
+                const chatHtml = constructChatItemHtml(chat, isActive);
                 // Add smooth fade-in animation for new chats
                 const $chatElement = $(chatHtml).hide();
-                $('#chat-list').append($chatElement);
+                $latestList.append($chatElement);
                 $chatElement.fadeIn(300);
             }
         });
@@ -364,9 +551,14 @@ function displayChatList(reset, userId) {
     }
 
     function checkShowMoreButton(pagination) {
-        $('#show-more-chats').remove(); 
+        const $latestList = $('#latest-chat-list');
+        if ($latestList.length === 0) {
+            return;
+        }
+
+        $latestList.find('#show-more-chats').remove(); 
         if (pagination.page < pagination.totalPages) {
-            $('#chat-list').append(
+            $latestList.append(
                 `<button id="show-more-chats" class="btn shadow-0 w-100 mt-2 chat-load-more-btn">
                     <span class="load-more-content">
                         <i class="bi bi-three-dots me-2"></i>
@@ -414,49 +606,64 @@ function updateNavbarChatActions(chat) {
     
     const isOwner = chat.userId === userId;
     
-    const dropdownItems = `
-        <li>
-            <a href="#" class="dropdown-item d-flex align-items-center py-2" 
-               onclick="${!isOwner ? `loadCharacterCreationPage('${chat._id}')` : `loadCharacterUpdatePage('${chat._id}')`}">
-                <i class="bi bi-pencil me-2 text-primary"></i>
-                <span>${!isOwner ? window.translations.edit : window.translations.update}</span>
-            </a>
-        </li>
-        <li>
-            <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start" onclick="showChatHistory('${chat._id}')">
-                <i class="bi bi-clock-history me-2 text-info"></i>
-                <span>${window.translations.chatHistory}</span>
-            </button>
-        </li>
-        <li>
-            <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start" 
-                    onclick="handleChatReset(this)"
-                    data-id="${chat._id}">
-                <i class="bi bi-plus-square me-2 text-success"></i>
-                <span>${window.translations.newChat}</span>
-            </button>
-        </li>
-        ${window.isAdmin ? `
-        <li><hr class="dropdown-divider"></li>
-        <li>
-            <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start text-warning" 
-                    onclick="logFullConversation('${chat._id}')">
-                <i class="bi bi-terminal me-2"></i>
-                <span>Log Full Conversation</span>
-            </button>
-        </li>
-        ` : ''}
-        <li><hr class="dropdown-divider"></li>
-        <li class="d-none">
-            <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start text-danger" onclick="deleteChatHandler('${chat._id}')">
-                <i class="bi bi-trash me-2"></i>
-                <span>${window.translations.delete}</span>
-            </button>
-        </li>
-    `;
-    
-    dropdownMenu.html(dropdownItems);
-    dropdown.show();
+    // Check if chat is favorited
+    Favorites.checkFavorite(chat._id, function(isFavorited) {
+        const favoriteIcon = isFavorited ? 'bi-star-fill text-warning' : 'bi-star';
+        const favoriteText = isFavorited 
+            ? window.translations.favorite.removeFavorite 
+            : window.translations.favorite.addFavorite;
+        
+        const dropdownItems = `
+            <li>
+                <a href="#" class="dropdown-item d-flex align-items-center py-2" 
+                   onclick="${!isOwner ? `loadCharacterCreationPage('${chat._id}')` : `loadCharacterUpdatePage('${chat._id}')`}">
+                    <i class="bi bi-pencil me-2 text-primary"></i>
+                    <span>${!isOwner ? window.translations.edit : window.translations.update}</span>
+                </a>
+            </li>
+            <li>
+                <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start" onclick="showChatHistory('${chat._id}')">
+                    <i class="bi bi-clock-history me-2 text-info"></i>
+                    <span>${window.translations.chatHistory}</span>
+                </button>
+            </li>
+            <li>
+                <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start" 
+                        onclick="Favorites.toggleFavorite('${chat._id}')">
+                    <i class="bi ${favoriteIcon} me-2"></i>
+                    <span>${favoriteText}</span>
+                </button>
+            </li>
+            <li>
+                <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start" 
+                        onclick="handleChatReset(this)"
+                        data-id="${chat._id}">
+                    <i class="bi bi-plus-square me-2 text-success"></i>
+                    <span>${window.translations.newChat}</span>
+                </button>
+            </li>
+            ${window.isAdmin ? `
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start text-warning" 
+                        onclick="logFullConversation('${chat._id}')">
+                    <i class="bi bi-terminal me-2"></i>
+                    <span>Log Full Conversation</span>
+                </button>
+            </li>
+            ` : ''}
+            <li><hr class="dropdown-divider"></li>
+            <li class="d-none">
+                <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start text-danger" onclick="deleteChatHandler('${chat._id}')">
+                    <i class="bi bi-trash me-2"></i>
+                    <span>${window.translations.delete}</span>
+                </button>
+            </li>
+        `;
+        
+        dropdownMenu.html(dropdownItems);
+        dropdown.show();
+    });
 }
 
 // Function to hide navbar chat actions
@@ -524,12 +731,12 @@ function updateChatListDisplay(currentChat) {
     chatCache.data = sortChatsByUpdatedAt(chatCache.data);
     saveCache();
 
-    // remove all active class 
-    $('#chat-list').find('.chat-list.item').removeClass('active');
-    // remove all occurrence of chat from list
-    const currentChatObjs = $(document)
-        .find('#chat-list')
-        .find(`.chat-list.item[data-id="${normalizedChat._id}"]`);
+        const $latestList = $('#latest-chat-list');
+        if ($latestList.length) {
+            $latestList.find('.chat-list.item').removeClass('active');
+        }
+        // remove all occurrence of chat from list
+        const currentChatObjs = $latestList.find(`.chat-list.item[data-id="${normalizedChat._id}"]`);
     if(currentChatObjs.length >= 1){
         currentChatObjs.each(function(){
             const chatName = $(this).find('.chat-list-title h6').text();
@@ -538,7 +745,9 @@ function updateChatListDisplay(currentChat) {
     }
 
     let chatHtml = constructChatItemHtml(normalizedChat, true);
-    $('#chat-list').prepend(chatHtml);
+        if ($latestList.length) {
+            $latestList.prepend(chatHtml);
+        }
 
     // Update navbar dropdown
     updateNavbarChatActions(normalizedChat);
@@ -564,6 +773,8 @@ function constructChatItemHtml(chat, isActive) {
             break;
     }
 
+    const previewText = chat.lastMessage?.content || '';
+
     return `
         <div class="list-group-item list-group-item-action border-0 p-0 ${isActive ? 'active bg-primary bg-opacity-10' : ''} chat-list item user-chat chat-item-enhanced" 
             data-id="${chat._id}" style="position: relative;">
@@ -585,7 +796,7 @@ function constructChatItemHtml(chat, isActive) {
                         <div class="mt-1">
                             <p class="chat-preview mb-0 small text-truncate ${chat.lastMessage ? '' : 'd-none'}" 
                                style="max-width: 130px; font-size: 0.7rem; line-height: 1.2;">
-                                ${chat.lastMessage ? chat.lastMessage.content : ''}
+                                ${previewText}
                             </p>
                             ${!chat.lastMessage ? `<small class="text-muted fst-italic" style="font-size: 0.7rem;">${translations.newChat}</small>` : ''}
                         </div>
@@ -1227,6 +1438,51 @@ const horizontalChatStyles = `
 }
 </style>
 `;
+
+// Debug function to test loading skeleton state
+window.debugShowLoadingState = function(count = 5) {
+    const latestList = $('#latest-chat-list');
+    
+    if (latestList.length === 0) {
+        console.warn('Chat list not found');
+        return;
+    }
+    
+    // Make sure the list is visible
+    latestList.removeClass('d-none');
+    latestList.show();
+    
+    // Clear existing content
+    latestList.empty();
+    
+    // Add skeleton items with proper spacing (similar to actual chat items)
+    const skeletonContainer = $('<div class="loading-dots-container"></div>');
+    for (let i = 0; i < count; i++) {
+        skeletonContainer.append('<div class="loading-dot" style="margin-bottom: 0.5rem;"></div>');
+    }
+    latestList.append(skeletonContainer);
+    
+    console.log(`✓ Loading skeleton state displayed with ${count} items.`);
+    console.log(`  Call debugHideLoadingState() to restore the chat list.`);
+};
+
+// Debug function to hide/restore the loading state
+window.debugHideLoadingState = function() {
+    const latestList = $('#latest-chat-list');
+    
+    if (latestList.length === 0) {
+        console.warn('Chat list not found');
+        return;
+    }
+    
+    // Clear skeleton items
+    latestList.empty();
+    
+    // Reload actual chat list
+    displayChatList(false, userId);
+    
+    console.log('✓ Chat list restored.');
+};
 
 // Make functions available globally
 window.displayChatList = displayChatList;

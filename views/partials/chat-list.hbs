@@ -1,25 +1,81 @@
 
     <div id="chat-list" class="container flex-grow-1 overflow-auto p-3 h-100vh mt-5" style="border-top: none;display:none;">
-        <!-- Professional Loading State -->
-        <div id="chat-list-spinner" class="chat-loading-state mx-auto text-center m-2 border border-light shadow-sm rounded" style="display: none;">
-            <div class="loading-card">
-                <div class="loading-header">
-                    <div class="loading-pulse-icon">
-                        <i class="bi bi-chat-dots"></i>
+        <!-- Chat List Navigation Tabs -->
+        <div id="chat-list-tabs" class="mb-3 border-bottom">
+            <ul class="nav nav-tabs" id="chatListTabs" role="tablist" style="justify-content: space-evenly;">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active chat-tab-latest" id="tab-latest" data-bs-toggle="tab" data-bs-target="#chat-latest-content" type="button" role="tab" aria-controls="chat-latest-content" aria-selected="true" onclick="switchChatTab('latest')">
+                        <i class="bi bi-clock-history me-2"></i>
+                        <span>{{translations.favorite.latest}}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link chat-tab-favorites" id="tab-favorites" data-bs-toggle="tab" data-bs-target="#chat-favorites-content" type="button" role="tab" aria-controls="chat-favorites-content" aria-selected="false" onclick="switchChatTab('favorites')">
+                        <i class="bi bi-star me-2"></i>
+                        <span>{{translations.favorite.favorites}}</span>
+                        <span id="favorite-count-badge" class="bg-primary text-white ms-2" style="display: none;">0</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Chat List Tab Contents -->
+        <div class="tab-content" id="chatListTabContent">
+            <!-- Latest Chats Tab -->
+            <div class="tab-pane fade show active" id="chat-latest-content" role="tabpanel" aria-labelledby="tab-latest">
+                <!-- Latest chat list renders here -->
+                <div id="latest-chat-list" class="list-group mt-3"></div>
+                <!-- Professional Loading State (moved after list to reduce layout jank) -->
+                <div id="chat-list-spinner" class="chat-loading-state mx-auto text-center m-2 border border-light shadow-sm rounded" style="display: none;">
+                    <div class="loading-card">
+                        <div class="loading-header">
+                            <div class="loading-pulse-icon">
+                                <i class="bi bi-chat-dots"></i>
+                            </div>
+                            <div class="loading-text">
+                                <h6 class="mb-1 text-secondary" style="font-size: 0.8rem;">{{translations.loadingChats}}</h6>
+                                <small class="text-muted" style="font-size: 0.7rem;">{{translations.pleaseWait}}</small>
+                            </div>
+                        </div>
+                        <div class="loading-progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <div class="loading-dots-container">
+                            <div class="loading-dot"></div>
+                            <div class="loading-dot"></div>
+                            <div class="loading-dot"></div>
+                        </div>
                     </div>
-                    <div class="loading-text">
-                        <h6 class="mb-1 text-secondary" style="font-size: 0.8rem;">{{translations.loadingChats}}</h6>
-                        <small class="text-muted" style="font-size: 0.7rem;">{{translations.pleaseWait}}</small>
+                </div>
+                
+            </div>
+
+            <!-- Favorites Chats Tab -->
+            <div class="tab-pane fade" id="chat-favorites-content" role="tabpanel" aria-labelledby="tab-favorites">
+                <!-- Favorites Loading State -->
+                <div id="favorites-loading-spinner" class="chat-loading-state mx-auto text-center m-2 border border-light shadow-sm rounded" style="display: none;">
+                    <div class="loading-card">
+                        <div class="loading-header">
+                            <div class="loading-pulse-icon">
+                                <i class="bi bi-star"></i>
+                            </div>
+                            <div class="loading-text">
+                                <h6 class="mb-1 text-secondary" style="font-size: 0.8rem;">{{translations.loadingChats}}</h6>
+                                <small class="text-muted" style="font-size: 0.7rem;">{{translations.pleaseWait}}</small>
+                            </div>
+                        </div>
+                        <div class="loading-progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <div class="loading-dots-container">
+                            <div class="loading-dot"></div>
+                            <div class="loading-dot"></div>
+                            <div class="loading-dot"></div>
+                        </div>
                     </div>
                 </div>
-                <div class="loading-progress-bar">
-                    <div class="progress-fill"></div>
-                </div>
-                <div class="loading-dots-container">
-                    <div class="loading-dot"></div>
-                    <div class="loading-dot"></div>
-                    <div class="loading-dot"></div>
-                </div>
+                <!-- Favorites list will be rendered here -->
+                <div id="favorites-chat-list" class="list-group mt-3 d-none"></div>
             </div>
         </div>
     </div>

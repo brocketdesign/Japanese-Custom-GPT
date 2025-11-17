@@ -1,0 +1,379 @@
+/* ========================================
+   CHARACTER CARDS & GALLERY STYLES
+   Mobile-First Responsive Design
+   Following DESIGN_THEME_DOCUMENTATION.md
+   ======================================== */
+
+/* Gallery card - Professional glassmorphic design */
+.gallery-card {
+  animation: galleryFadeIn 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  height: 100%;
+  max-height: 400px;
+}
+
+.gallery-card .card {
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(130, 64, 255, 0.1);
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.card.gallery-hover {
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+}
+
+.card.gallery-hover:hover {
+  box-shadow: 0 12px 30px rgba(110, 32, 244, 0.15);
+  transform: translateY(-8px) scale(1.03);
+  z-index: 2;
+}
+
+/* Image wrapper with aspect ratio */
+.gallery-image-wrapper {
+  position: relative;
+  aspect-ratio: 4/5;
+  background: linear-gradient(135deg, #f0f0f0 0%, #e9ecef 100%);
+  overflow: hidden;
+  transition: background-size 0.3s ease, background-position 0.3s ease;
+}
+
+/* Primary and secondary images */
+.gallery-img-primary,
+.gallery-img-secondary {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gallery-img-secondary {
+  opacity: 0;
+  z-index: 2;
+  transition: opacity 0.45s ease;
+}
+
+.gallery-img-primary {
+  z-index: 1;
+  opacity: 1;
+  transition: opacity 0.45s ease;
+}
+
+.gallery-img {
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), 
+              filter 0.4s ease, 
+              opacity 0.45s ease;
+  will-change: transform, opacity;
+}
+
+.card.gallery-hover:hover .gallery-img {
+  transform: scale(1.08);
+  filter: brightness(1.08) saturate(1.1);
+}
+
+.card.gallery-hover:hover .gallery-img-secondary {
+  opacity: 1;
+}
+
+.card.gallery-hover:hover .gallery-img-primary {
+  opacity: 0;
+}
+
+/* Gradient overlay for text readability */
+.gallery-image-wrapper::after {
+  content: '';
+  display: block;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: linear-gradient(to top, 
+    rgba(0, 0, 0, 0.8) 0%, 
+    rgba(0, 0, 0, 0.4) 50%, 
+    transparent 100%);
+  z-index: 1;
+}
+
+/* Content positioning at bottom of image */
+.gallery-image-wrapper .position-absolute {
+  z-index: 2;
+}
+
+/* Character card content */
+.gallery-card .card-body {
+  flex-grow: 1;
+  display: none;
+  padding: 0.75rem;
+  border-top: 1px solid rgba(130, 64, 255, 0.1);
+}
+
+.gallery-card .admin .card-body {
+  display: flex;
+}
+
+/* Tag badges styling - Flexbox for wrapping */
+.gallery-card .badge {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.6rem; /* Slightly smaller font */
+  padding: 0.2rem 0.4rem; /* Compact padding */
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  border-radius: var(--radius-xs, 4px); /* Softer radius */
+  color: rgba(255,255,255,0.85);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.gallery-card .badge:hover {
+  background: rgba(130, 64, 255, 0.4) !important;
+  border-color: rgba(130, 64, 255, 0.7) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px rgba(130, 64, 255, 0.2);
+}
+
+/* Tag container with flexbox for wrapping */
+.gallery-card .tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+  overflow: hidden; /* No scrollbars */
+}
+
+/* Character name - Smaller for full display */
+.gallery-card .card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 0.4rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  display: -webkit-box;
+  overflow: hidden;
+}
+
+/* First message text - Compact */
+.gallery-card .text-white-50 {
+  font-size: 0.7rem;
+  line-height: 1.3;
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+/* Badges positioning */
+.gallery-card .position-absolute.top-0 {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: flex-end;
+}
+
+.gallery-card .top-0 .badge {
+  font-size: 0.65rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 12px;
+}
+
+/* Admin controls */
+.gallery-card .btn-sm {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.75rem;
+  border-radius: 6px;
+}
+
+/* Loading overlay */
+.loading-overlay {
+  border-radius: var(--radius-sm);
+}
+
+/* Animations */
+@keyframes galleryFadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   RESPONSIVE BREAKPOINTS
+   ======================================== */
+
+/* Mobile - Small devices (320px - 480px) */
+@media (max-width: 480px) {
+  .gallery-card .card-title {
+    font-size: 0.85rem;
+  }
+
+  .gallery-card .text-white-50 {
+    font-size: 0.65rem;
+  }
+
+  .card.gallery-hover:hover {
+    transform: none;
+    box-shadow: 0 4px 12px rgba(110, 32, 244, 0.12);
+  }
+
+  .card.gallery-hover:hover .gallery-img {
+    transform: none;
+  }
+}
+
+/* Mobile - Medium devices (481px - 600px) */
+@media (min-width: 481px) and (max-width: 600px) {
+  .gallery-card .card-title {
+    font-size: 0.9rem;
+  }
+}
+
+/* Tablet - Portrait (601px - 768px) */
+@media (min-width: 601px) and (max-width: 768px) {
+  .gallery-card .card-title {
+    font-size: 0.95rem;
+  }
+}
+
+/* Tablet & Desktop (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .gallery-card .card-title {
+    font-size: 1rem;
+  }
+}
+
+/* Desktop - Large screens (1025px+) */
+@media (min-width: 1025px) {
+
+  .gallery-card .card-title {
+    font-size: 1rem;
+  }
+
+  .card.gallery-hover:hover {
+    box-shadow: 0 15px 30px rgba(110, 32, 244, 0.2);
+    transform: translateY(-10px) scale(1.04);
+  }
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+/* Transition helpers */
+.transition {
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Premium/Special badge styles */
+.popular-badge {
+  background: linear-gradient(45deg, #FF5E7E, #FF8C40);
+  transform: rotate(3deg);
+  box-shadow: 0 4px 12px rgba(255, 94, 126, 0.35);
+  border: none !important;
+}
+
+.premium-chat {
+  position: relative;
+}
+
+.premium-chat::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgba(210, 184, 255, 0.3);
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+}
+
+/* NSFW content handling */
+.nsfw-badge-container {
+  background: linear-gradient(to right, red, #ff4d4d, #f99);
+  opacity: 0.5;
+}
+
+/* ========================================
+   ADMIN CONTROLS
+   ======================================== */
+
+.gallery-card .card-body.admin {
+  display: flex;
+  justify-content: between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+.gallery-card .btn.persona {
+  flex-shrink: 0;
+}
+
+.gallery-card .chat-nsfw-toggle {
+  flex-shrink: 0;
+}
+
+.gallery-card .btn-danger {
+  flex-shrink: 0;
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .gallery-card,
+  .card.gallery-hover,
+  .gallery-img,
+  .badge {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .gallery-card:hover {
+    transform: none !important;
+  }
+}
+
+/* Focus visible states for keyboard navigation */
+.gallery-card:focus-within {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.gallery-card .badge:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 1px;
+}
+
+.gallery-card .btn:focus {
+  box-shadow: 0 0 0 3px rgba(130, 64, 255, 0.25);
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+
+@media print {
+  .gallery-card {
+    page-break-inside: avoid;
+    box-shadow: none;
+  }
+
+  .gallery-card:hover {
+    transform: none;
+  }
+}

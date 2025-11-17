@@ -2,6 +2,7 @@
 <html lang="{{user.lang}}">
     {{> dashboard-header}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <link rel="stylesheet" href="/css/character-cards.css">
     <link rel="stylesheet" href="/css/chat-suggestions.css">
     <link rel="stylesheet" href="/css/speech-to-text.css">
     <link rel="stylesheet" href="/css/chat-scenario.css">
@@ -102,63 +103,64 @@
                                 <p class="native-benefit-description">{{#if translations.premiumUserBenefits.benefit5.description}}{{translations.premiumUserBenefits.benefit5.description}}{{else}}Generate custom videos from your AI characters{{/if}}</p>
                             </div>
                         </div>
+                        <!-- Premium CTA Button -->
+                        <div class="text-center mt-4">
+                            <button class="btn btn-primary btn-lg fw-bold" onclick="loadPlanPage()" style="background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%); border: none; padding: 12px 40px; border-radius: 30px; font-size: 16px; transition: all 0.3s ease;">
+                                <i class="bi bi-crown-fill me-2"></i>{{#if translations.upgradeNow}}{{translations.upgradeNow}}{{else}}Upgrade to Premium{{/if}}
+                            </button>
+                        </div>
                     </div>
                 </section>
 
                 
                 <!-- Card menu -->
-                <div class="card-menu-container mb-3 px-0">
+                <div class="card-menu-container native-section mb-3 px-0">
                     <div class="native-section-header">
                         <h2 class="native-section-title">
                             <i class="native-section-icon bi bi-rocket-fill" style="color: #FF8C00;"></i>
                             {{#if translations.startHere}}{{translations.startHere}}{{else}}Start Here{{/if}}
                         </h2>
-                    </div>                    
-                    <div class="d-flex overflow-auto px-3 pb-5" style="scrollbar-width: thin;justify-content: space-between;">
-                        <!-- Create Character Card -->
-                        <div class="character-create-card shadow-sm rounded p-3 text-center mx-2 flex-shrink-0" 
-                             onclick="loadCharacterCreationPage()"
-                             style="cursor: pointer; transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.1); width: 220px;">
-                            <div class="character-create-icon bg-light rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" 
-                                 style="width: 80px; height: 80px; transition: all 0.3s ease;">
-                                <i class="bi bi-plus-lg fs-2 text-primary"></i>
+                    </div>
+                    <div class="native-section-content">
+                        <div class="native-benefits-grid">
+                            <!-- Create Character Card -->
+                            <div class="native-benefit-card card-menu-item" onclick="loadCharacterCreationPage()" style="cursor: pointer;">
+                                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" 
+                                     style="width: 60px; height: 60px; background-color: #e7f5ff;">
+                                    <i class="bi bi-plus-lg" style="font-size: 1.8em; color: #0066cc;"></i>
+                                </div>
+                                <h3 class="native-benefit-title">{{translations.createCharacter}}</h3>
+                                <p class="native-benefit-description">{{translations.createCharacterDescription}}</p>
+                                <!-- Restrictions -->
+                                <div class="rounded-pill text-white fw-bold mt-2 py-1 px-2 is-free-user" style="font-size: 11px; background: color(srgb 0.489 0.223 0.9696); display: inline-block;" role="alert">
+                                    {{translations.createCharacterRestriction}}
+                                </div>
                             </div>
-                            <h5 class="mb-2">{{translations.createCharacter}}</h5>
-                            <p class="text-muted small mb-0">{{translations.createCharacterDescription}}</p>
-                            <!-- Restrictions -->
-                            <div class="rounded-pill text-white fw-bold mt-2 p-3 is-free-user" style="font-size: 12px; background: color(srgb 0.489 0.223 0.9696);" role="alert">
-                                {{translations.createCharacterRestriction}}
+                            
+                            <!-- Explore Characters Card -->
+                            <div class="native-benefit-card card-menu-item" onclick="window.location.href='/search'" style="cursor: pointer;">
+                                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" 
+                                     style="width: 60px; height: 60px; background-color: #f0fdf4;">
+                                    <i class="bi bi-globe" style="font-size: 1.8em; color: #16a34a;"></i>
+                                </div>
+                                <h3 class="native-benefit-title">{{translations.explore}}</h3>
+                                <p class="native-benefit-description">{{translations.exploreDescription}}</p>
+                                <div class="rounded-pill text-white fw-bold mt-2 py-1 px-2 is-free-user" style="font-size: 11px; background: color(srgb 0.489 0.223 0.9696); display: inline-block;" role="alert">
+                                    {{translations.exploreRestriction}}
+                                </div>
                             </div>
-                        </div>
-                        
-                        <!-- Explore Characters Card -->
-                        <div class="character-create-card shadow-sm rounded p-3 text-center mx-2 flex-shrink-0" 
-                             onclick="window.location.href='/search'"
-
-                             style="cursor: pointer; transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.1); width: 220px;">
-                            <div class="character-create-icon bg-light rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" 
-                                 style="width: 80px; height: 80px; transition: all 0.3s ease;">
-                                <i class="bi bi-globe fs-2 text-success"></i>
-                            </div>
-                            <h5 class="mb-2">{{translations.explore}}</h5>
-                            <p class="text-muted small mb-0">{{translations.exploreDescription}}</p>
-                            <div class="rounded-pill text-white fw-bold mt-2 p-3 is-free-user" style="font-size: 12px; background: color(srgb 0.489 0.223 0.9696);;" role="alert">
-                                {{translations.exploreRestriction}}
-                            </div>
-                        </div>
-                        
-                        <!-- User Profile Card -->
-                        <div class="character-create-card shadow-sm rounded p-3 text-center mx-2 flex-shrink-0" 
-                             onclick="window.location.href='/user/{{user._id}}'"
-                             style="cursor: pointer; transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.1); width: 220px;">
-                            <div class="character-create-icon bg-light rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" 
-                                 style="width: 80px; height: 80px; transition: all 0.3s ease;">
-                                <i class="bi bi-person fs-2 text-info"></i>
-                            </div>
-                            <h5 class="mb-2">{{translations.userProfile}}</h5>
-                            <p class="text-muted small mb-0">{{translations.userProfileDescription}}</p>
-                            <div class="rounded-pill text-white fw-bold mt-2 p-3 is-free-user" style="font-size: 12px; background: color(srgb 0.489 0.223 0.9696);" role="alert">
-                                {{translations.userRestriction}}
+                            
+                            <!-- User Profile Card -->
+                            <div class="native-benefit-card card-menu-item" onclick="window.location.href='/user/{{user._id}}'" style="cursor: pointer;">
+                                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" 
+                                     style="width: 60px; height: 60px; background-color: #ecf9ff;">
+                                    <i class="bi bi-person" style="font-size: 1.8em; color: #0891b2;"></i>
+                                </div>
+                                <h3 class="native-benefit-title">{{translations.userProfile}}</h3>
+                                <p class="native-benefit-description">{{translations.userProfileDescription}}</p>
+                                <div class="rounded-pill text-white fw-bold mt-2 py-1 px-2 is-free-user" style="font-size: 11px; background: color(srgb 0.489 0.223 0.9696); display: inline-block;" role="alert">
+                                    {{translations.userRestriction}}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -272,11 +274,11 @@
                 </div>
                 <!-- Popular chats section -->
                 <div id="popular-chats-section">
-                    <div id="all-chats-container" class="row all-chats-gallery mx-0"></div>
+                    <div id="all-chats-container" class="row g-3 all-chats-gallery mx-0"></div>
                     <div class="row mx-0" id="all-chats-images-gallery"></div>
                     <div class="d-flex justify-content-center mt-4" id="all-chats-images-pagination-controls"></div>
 
-                    <div id="chat-gallery" class="row popular-chats-gallery mx-0"></div>
+                    <div id="chat-gallery" class="row g-3 popular-chats-gallery mx-0"></div>
                     <div id="popular-chats-pagination-controls" class="my-3" style="opacity: 0;"></div>
                 </div>
             </section>

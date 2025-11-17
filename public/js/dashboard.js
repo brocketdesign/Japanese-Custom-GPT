@@ -1959,7 +1959,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
 
           // --- End: Sample image selection logic ---
           htmlContent += `
-                  <div class="gallery-card col-6 col-sm-6 col-lg-3 mb-4 ${finalNsfwResult ? "nsfw-content":''} ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} ${chat.imageStyle ? 'chat-style-'+chat.imageStyle : ''} nsfw-${finalNsfwResult}" data-id="${chat._id}" style="cursor:pointer;">
+                  <div class="gallery-card col-6 col-sm-4 col-lg-2 mb-0 px-1 ${finalNsfwResult ? "nsfw-content":''} ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} ${chat.imageStyle ? 'chat-style-'+chat.imageStyle : ''} nsfw-${finalNsfwResult}" data-id="${chat._id}" style="cursor:pointer;">
                     <div class="card shadow border-0 h-100 position-relative gallery-hover" style="overflow: hidden;">
                       <!-- Clickable image area -->
                       <div class="gallery-image-wrapper position-relative chat-card-clickable-area" style="aspect-ratio: 4/5; background: #f8f9fa; cursor: pointer;"
@@ -1990,17 +1990,13 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                             <i class="bi bi-chat-dots-fill"></i>
                           </span>
                         </div>
-                        <!-- Gradient overlay for better text readability -->
-                        <div class="position-absolute bottom-0 start-0 w-100" style="height: 60%; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, transparent 100%); z-index: 1;"></div>
                         
                         <!-- Content container positioned at bottom -->
                         <div class="position-absolute bottom-0 start-0 w-100 p-3" style="z-index: 2;">
                           <!-- Tags on single line with horizontal scroll -->
                           ${(chat.tags || chat.chatTags || []).length ? `
-                          <div class="mb-2" style="overflow-x: auto; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none;">
-                            <div class="d-inline-flex gap-1" style="white-space: nowrap;">
-                              ${(chat.tags ? chat.tags : chat.chatTags).slice(0, 3).map(tag => `<span onclick="event.stopPropagation(); handleCategoryClick('${tag}')" class="badge bg-light bg-opacity-75 text-dark border text-decoration-none" style="backdrop-filter: blur(4px);opacity: 0.7;">#${tag}</span>`).join('')}
-                            </div>
+                          <div class="tags-container">
+                              ${(chat.tags || chat.chatTags).slice(0, 4).map(tag => `<span onclick="event.stopPropagation(); handleCategoryClick('${tag}')" class="badge">${tag}</span>`).join('')}
                           </div>
                           ` : ''}
 

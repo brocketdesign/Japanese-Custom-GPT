@@ -41,10 +41,6 @@ $(document).ready(function() {
     packages.forEach((pkg, index) => {
       const isPopular = index === 1;
       const pointsPerUnit = (parseFloat(pkg.points) / parseFloat(pkg.price)).toFixed(1);
-      
-      const pointsPerDollar = window.buyPointsTranslations.buy_points.points_per_dollar
-        .replace('{ratio}', pointsPerUnit);
-
       const popularBadge = isPopular 
         ? `<span class="badge bg-success position-absolute top-0 end-0 m-2">${window.buyPointsTranslations.buy_points.most_popular}</span>`
         : '';
@@ -66,10 +62,6 @@ $(document).ready(function() {
                 </p>
                 ${pkg.discount !== '0%' ? `<span class="badge bg-danger d-block text-center">${pkg.discount}</span>` : ''}
               </div>
-
-              <p class="text-center small text-success mb-3">
-                ${pointsPerDollar}
-              </p>
 
               <button class="btn btn-primary mt-auto purchase-points-btn" data-package-id="${pkg.id}">
                 ${window.buyPointsTranslations.buy_points.purchase_button || 'Get Started'}

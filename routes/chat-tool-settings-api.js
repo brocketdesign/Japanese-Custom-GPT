@@ -1,6 +1,18 @@
 const { ObjectId } = require('mongodb');
 const { getVoiceSettings, hasUserChattedWithCharacter } = require('../models/chat-tool-settings-utils');
 async function routes(fastify, options) {
+    // Get available relationships based on gender
+    fastify.get('/api/chat-tool-settings/relationships/:gender', async (request, reply) => {
+        try {
+            const { gender } = request.params;
+            const { getAvailableRelationshipsByGender } = require('../models/chat-tool-settings-utils');
+            const rels = getAvailableRelationshipsByGender(gender);
+            reply.send({ success: true, relationships: rels });
+        } catch (error) {
+            console.error('Error fetching relationships:', error);
+            reply.status(500).send({ error: 'Internal server error' });
+        }
+    });
     
     // Get user's chat tool settings
     fastify.get('/api/chat-tool-settings/:userId', async (request, reply) => {
@@ -392,17 +404,8 @@ async function routes(fastify, options) {
     fastify.get('/api/chat-tool-settings/has-chatted/:userId/:chatId', async (request, reply) => {
         try {
             const { userId, chatId } = request.params;
-            console.log('\n[API /has-chatted] REQUEST START');
-            console.log('[API /has-chatted] Params:');
-            console.log('  - userId (raw):', userId);
-            console.log('  - chatId (raw):', chatId);
-            console.log('  - userId type:', typeof userId);
-            console.log('  - chatId type:', typeof chatId);
 
             if (!userId || !ObjectId.isValid(userId) || !chatId || !ObjectId.isValid(chatId)) {
-                console.warn('[API /has-chatted] Invalid ObjectId format');
-                console.warn('  - userId valid:', ObjectId.isValid(userId));
-                console.warn('  - chatId valid:', ObjectId.isValid(chatId));
                 return reply.status(400).send({ error: 'Invalid userId or chatId' });
             }
 

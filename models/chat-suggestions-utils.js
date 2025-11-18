@@ -25,11 +25,20 @@ async function generateChatSuggestions(db, chatDocument, userMessages, userInfo,
         // Get user's chat settings including relationship type
         const userSettings = await getUserChatToolSettings(db, userInfo._id, chatDocument._id);
         const relationshipType = userSettings?.relationshipType || 'companion';
-        // Apply relationship type
-        const relationshipInstructions = require('./relashionshipInstructions');
+        
+        // Get relationship instructions - handle both new gender-based and legacy formats
+        const { relationshipInstructions } = require('./relashionshipInstructions');
         let relationshipDescription = ''
-        if (relationshipInstructions[relationshipType]) {
-            relationshipDescription += `${relationshipInstructions[relationshipType]}`;
+        
+        // Determine gender from character (default to female if not specified)
+        const characterGender = chatDocument?.gender?.toLowerCase() || 'female';
+        const genderKey = characterGender === 'male' ? 'male' : 'female';
+        
+        // Get the appropriate relationship instruction
+        if (relationshipInstructions[genderKey] && relationshipInstructions[genderKey][relationshipType]) {
+            relationshipDescription = relationshipInstructions[genderKey][relationshipType];
+        } else if (relationshipInstructions[genderKey] && relationshipInstructions[genderKey].companion) {
+            relationshipDescription = relationshipInstructions[genderKey].companion;
         }
         
         // Get character description
@@ -88,7 +97,8 @@ Generate 3 conversation suggestions in ${language}.`;
 
     } catch (error) {
         console.error('[generateChatSuggestions] Error generating suggestions:', error);
-        return getDefaultSuggestions(relationshipType, language);
+        const characterGender = chatDocument?.gender?.toLowerCase() || 'female';
+        return getDefaultSuggestions(relationshipType, language, characterGender);
     }
 }
 
@@ -96,9 +106,10 @@ Generate 3 conversation suggestions in ${language}.`;
  * Generate default suggestions based on relationship type and language
  * @param {string} relationshipType - Type of relationship (companion, romantic, friend, etc.)
  * @param {string} language - User's language preference
+ * @param {string} gender - Character gender (male/female)
  * @returns {Array} Array of 3 default suggestion strings
  */
-function getDefaultSuggestions(relationshipType, language) {
+function getDefaultSuggestions(relationshipType, language, gender = 'female') {
     const suggestions = {
         ja: {
             companion: [
@@ -106,15 +117,30 @@ function getDefaultSuggestions(relationshipType, language) {
                 "興味深いですね",
                 "あなたの意見は？"
             ],
-            romantic: [
-                "君のことをもっと知りたい",
-                "一緒にいると楽しいよ",
-                "今度何をしようか？"
-            ],
             friend: [
                 "面白い話だね！",
                 "今度一緒にやろう",
                 "他に何かある？"
+            ],
+            wife: [
+                "君のことが大好き",
+                "一緒にいると幸せ",
+                "今日はどうだった？"
+            ],
+            husband: [
+                "君のことが大好き",
+                "一緒にいると幸せ",
+                "何か手伝えることある？"
+            ],
+            stepmom: [
+                "ありがとう",
+                "心配してくれてありがとう",
+                "今日は楽しかった"
+            ],
+            first_date: [
+                "これ面白いね",
+                "もっと教えてほしい",
+                "一緒にいると楽しい"
             ]
         },
         en: {
@@ -123,15 +149,30 @@ function getDefaultSuggestions(relationshipType, language) {
                 "That's interesting",
                 "What's your opinion?"
             ],
-            romantic: [
-                "I want to know more about you",
-                "I enjoy our time together",
-                "What should we do next?"
-            ],
             friend: [
                 "That's a fun story!",
                 "Let's do that together",
                 "What else is going on?"
+            ],
+            wife: [
+                "I love you so much",
+                "You make me happy",
+                "How was your day?"
+            ],
+            husband: [
+                "I love you so much",
+                "You mean everything to me",
+                "Can I help with anything?"
+            ],
+            stepmom: [
+                "Thank you so much",
+                "I appreciate you caring",
+                "That was a great day"
+            ],
+            first_date: [
+                "That's really interesting",
+                "Tell me more",
+                "I'm having a great time"
             ]
         },
         fr: {
@@ -140,15 +181,30 @@ function getDefaultSuggestions(relationshipType, language) {
                 "C'est intéressant",
                 "Qu'en penses-tu ?"
             ],
-            romantic: [
-                "Je veux te connaître davantage",
-                "J'aime passer du temps avec toi",
-                "Que devrions-nous faire ensuite ?"
-            ],
             friend: [
                 "C'est une histoire amusante !",
                 "Faisons ça ensemble",
                 "Quoi d'autre se passe ?"
+            ],
+            wife: [
+                "Je t'aime tellement",
+                "Tu me rends heureuse",
+                "Comment s'est passée ta journée ?"
+            ],
+            husband: [
+                "Je t'aime tellement",
+                "Tu es tout pour moi",
+                "Je peux t'aider ?"
+            ],
+            stepmom: [
+                "Merci beaucoup",
+                "J'apprécie ton soutien",
+                "C'était une belle journée"
+            ],
+            first_date: [
+                "C'est vraiment intéressant",
+                "Raconte-moi plus",
+                "Je m'amuse beaucoup"
             ]
         }
     };

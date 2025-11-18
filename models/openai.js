@@ -704,11 +704,20 @@ const generateChatScenarios = async (charInfo, personaInfo = null, userSettings 
     const personaContext = personaInfo ? 
       `\nUser Persona: ${personaInfo.name} - ${personaInfo.short_intro || 'No description available'}` : '';
     
-    // Apply relationship type
-    const relationshipInstructions = require('./relashionshipInstructions');
-    let relationship = ''
-    if (relationshipInstructions[userSettings?.relationshipType]) {
-        relationship += `${relationshipInstructions[userSettings.relationshipType]}`;
+    // Apply relationship type - handle both new gender-based and legacy formats
+    const { relationshipInstructions } = require('./relashionshipInstructions');
+    let relationship = '';
+    const relationshipType = userSettings?.relationshipType || 'companion';
+    const characterGender = charInfo?.gender?.toLowerCase() || 'female';
+    const genderKey = characterGender === 'male' ? 'male' : 'female';
+    
+    if (relationshipInstructions[genderKey] && relationshipInstructions[genderKey][relationshipType]) {
+        relationship = relationshipInstructions[genderKey][relationshipType];
+    } else if (relationshipInstructions[genderKey] && relationshipInstructions[genderKey].companion) {
+        relationship = relationshipInstructions[genderKey].companion;
+    } else if (relationshipInstructions[relationshipType]) {
+        // Fallback for legacy format
+        relationship = relationshipInstructions[relationshipType];
     }
 
     // Extract key traits from character description to ensure diversity
@@ -776,6 +785,7 @@ Respond in ${language}.`;
 
 CHARACTER INFO:
 Name: ${characterName}
+Gender: ${characterGender}
 Description: ${characterDescription}${personaContext}
 
 RELATIONSHIP CONTEXT:
@@ -805,13 +815,13 @@ Generate 3 scenarios that feel fresh and authentic to ${characterName}'s unique 
     });
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
       ],
       response_format: zodResponseFormat(scenariosListSchema, "scenarios_list"),
-      max_completion_tokens: 2500,
+      max_completion_tokens: 1000,
       temperature: 1,
     });
 
@@ -847,7 +857,7 @@ const generateChatGoal = async (chatDescription, personaInfo = null, userSetting
     const personaContext = personaInfo ? 
       `\nUser Persona: ${personaInfo.name} - ${personaInfo.short_intro || 'No description available'}` : '';
     // Apply relationship type
-    const relationshipInstructions = require('./relashionshipInstructions');
+    const { relationshipInstructions } = require('./relashionshipInstructions');
     let relationship = ''
     if (relationshipInstructions[userSettings.relationshipType]) {
         relationship += `${relationshipInstructions[userSettings.relationshipType]}`;

@@ -4,6 +4,10 @@ const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 window.loadCategoryCards = async function() {
   try {
+    // Check if container exists
+    if ($('#category-cards-container').length === 0) {
+      return;
+    }
     // Check cache first
     const cachedData = getCachedCategories();
     if (cachedData) {
@@ -77,7 +81,7 @@ function setCachedCategories(categories) {
 
 function displayCategoryCards(categories) {
   let htmlContent = '';
-  console.log('Displaying categories:', categories);
+
   categories.forEach((categoryData, index) => {
     const { category, icon, image } = categoryData;
     const delay = (index * 0.3).toFixed(1);

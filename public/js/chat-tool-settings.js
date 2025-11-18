@@ -54,8 +54,9 @@ class ChatToolSettings {
     }
 
     init() {
-        this.bindEvents();
-        this.setupRangeSliders();
+    this.bindEvents();
+    this.setupRangeSliders();
+    this.renderRelationshipOptions();
     }
 
     bindEvents() {
@@ -100,6 +101,11 @@ class ChatToolSettings {
             const modalBody = document.querySelector('.settings-modal-body');
             if (!modalBody || !targetSelector) {
                 return;
+            }
+
+            // If switching to relationship settings, re-render based on current gender
+            if (targetSelector === '#relationship-settings') {
+                this.renderRelationshipOptions();
             }
 
             const targetSection = modalBody.querySelector(targetSelector);
@@ -720,6 +726,53 @@ class ChatToolSettings {
         return !localStorage.getItem(storageKey);
     }
 
+    async renderRelationshipOptions() {
+        const container = document.getElementById('dynamic-relationship-container');
+        if (!container) return;
+
+        // Get gender from modal body
+        const modalBody = document.querySelector('.settings-modal-body');
+        const gender = modalBody ? modalBody.getAttribute('data-genre') : 'female';
+
+        // Fetch relationships from API
+        try {
+            const res = await fetch(`/api/chat-tool-settings/relationships/${gender}`);
+            const data = await res.json();
+            if (!data.success) throw new Error('Failed to fetch relationships');
+            const { free, premium } = data.relationships;
+
+            // Render free relationships
+            let html = '<div class="settings-subsection">';
+            html += `<h6 class="settings-subsection-title fw-semibold mb-2">${this.t('freeRelationships')}</h6>`;
+            html += `<div class="settings-description text-muted mb-3">${this.t('freeRelationshipsDescription')}</div>`;
+            html += '<div class="settings-tone-grid">';
+            free.forEach(rel => {
+                html += `<div class="settings-tone-option" data-relationship="${rel}">${this.t(`relationships.${rel}`)}</div>`;
+            });
+            html += '</div></div>';
+
+            // Render premium relationships
+            html += '<div class="settings-subsection">';
+            html += `<h6 class="settings-subsection-title fw-semibold mb-2">${this.t('premiumRelationships')} <i class="bi bi-crown-fill premium-icon ms-1 text-warning"></i></h6>`;
+            html += `<div class="settings-description text-muted mb-3">${this.t('premiumRelationshipsDescription')}</div>`;
+            html += '<div class="settings-tone-grid">';
+            premium.forEach(rel => {
+                html += `<div class="settings-tone-option premium-relationship" data-relationship="${rel}" data-nsfw="true">${this.t(`relationships.${rel}`)} <i class="bi bi-crown-fill premium-icon text-warning"></i></div>`;
+            });
+            html += '</div>';
+            
+            if(!this.isPremium) {
+                html += '<div id="premium-relationships-indicator" class="premium-feature-indicator">';
+                html += `<small class="text-warning d-block mt-2"><i class="bi bi-star-fill me-1"></i> ${this.t('premiumRelationshipsPremiumFeature')}</small>`;
+                html += '</div></div>';
+            }
+
+            container.innerHTML = html;
+        } catch (err) {
+            container.innerHTML = '<div class="text-danger">Failed to load relationships.</div>';
+        }
+    }
+
     // Selection methods
     selectVoice(selectedOption) {
         // Remove selected class from all voice options
@@ -817,12 +870,14 @@ class ChatToolSettings {
         const grid = document.getElementById('premium-voices-grid');
         if (!grid || !this.premiumVoices.length) return;
 
+        const characterGender = $('.settings-modal-body').attr('data-genre') || 'female';
         const user = window.user || {};
         const subscriptionStatus = user.subscriptionStatus === 'active';
 
         grid.innerHTML = '';
-        
-        this.premiumVoices.forEach(voice => {
+
+        const filteredVoices = this.premiumVoices.filter(voice => voice.gender === characterGender);
+        filteredVoices.forEach(voice => {
             const voiceOption = document.createElement('div');
             voiceOption.className = 'settings-premium-voice-option settings-voice-option';
             voiceOption.setAttribute('data-voice', voice.key);

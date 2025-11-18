@@ -74,20 +74,25 @@ async function getUserChatToolSettings(db, userId, chatId = null) {
  * @param {string} basePrompt - Base system prompt
  * @returns {string} Enhanced system prompt with user preferences
  */
-async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt) {
+async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt, characterGender = 'female') {
     try {
         const settings = await getUserChatToolSettings(db, userId, chatId);
         
         let enhancedPrompt = basePrompt;
         
-        // Apply relationship type
-        const relationshipInstructions = require('./relashionshipInstructions');
+        // Apply relationship type - handle both new gender-based and legacy formats
+        const { relationshipInstructions } = require('./relashionshipInstructions');
+        const genderKey = characterGender?.toLowerCase() === 'male' ? 'male' : 'female';
         
-        if (relationshipInstructions[settings.relationshipType]) {
-            enhancedPrompt += `\n# Relationship Context :\n ${relationshipInstructions[settings.relationshipType]}`;
+        if (relationshipInstructions[genderKey] && relationshipInstructions[genderKey][settings.relationshipType]) {
+            enhancedPrompt += `\n# Relationship Context :\n ${relationshipInstructions[genderKey][settings.relationshipType]}`;
+        } else if (relationshipInstructions[genderKey] && relationshipInstructions[genderKey].companion) {
+            enhancedPrompt += `\n# Relationship Context :\n ${relationshipInstructions[genderKey].companion}`;
         }
-        // Add instructions for NSFW relationships if applicabl
-        if (settings.relationshipType === 'lover' || settings.relationshipType === 'submissive' || settings.relationshipType === 'dominant' || settings.relationshipType === 'playmate' || settings.relationshipType === 'intimate') {
+        
+        // Add instructions for NSFW relationships if applicable
+        const nsfw_relationships = ['lover', 'submissive', 'dominant', 'playmate', 'intimate'];
+        if (nsfw_relationships.includes(settings.relationshipType)) {
             enhancedPrompt += `\n# NSFW Relationship Context :\n You are in a ${settings.relationshipType} relationship. Use explicit, sensual language and describe intimate acts in detail. `;
         }
         return enhancedPrompt;
@@ -333,6 +338,22 @@ async function hasUserChattedWithCharacter(db, userId, chatId) {
     }
 }
 
+/**
+ * Get available relationships for a given gender
+ * @param {string} gender - 'male' or 'female'
+ * @returns {Object} { free: [...], premium: [...] }
+ */
+function getAvailableRelationshipsByGender(gender = 'female') {
+    const { relationshipInstructions, relationshipTiers } = require('./relashionshipInstructions');
+    const key = gender && String(gender).toLowerCase() === 'male' ? 'male' : 'female';
+    const rels = relationshipInstructions[key] || {};
+    // SFW relationships (not NSFW/premium)
+    const free = Object.keys(rels).filter(r => relationshipTiers.free.includes(r));
+    // Premium/NSFW relationships
+    const premium = Object.keys(rels).filter(r => relationshipTiers.premium.includes(r));
+    return { free, premium };
+}
+
 module.exports = {
     DEFAULT_SETTINGS,
     getUserChatToolSettings,
@@ -344,5 +365,6 @@ module.exports = {
     getUserSelectedModel,
     getUserPremiumStatus,
     getAutoImageGenerationSetting,
-    hasUserChattedWithCharacter
+    hasUserChattedWithCharacter,
+    getAvailableRelationshipsByGender
 };

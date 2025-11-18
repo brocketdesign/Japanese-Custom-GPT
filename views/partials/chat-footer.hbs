@@ -513,6 +513,7 @@
             </div>
 
             <!-- Relationship Settings -->
+                
             <div class="settings-section" id="relationship-settings">
                 <div class="settings-section-header">
                     <div class="settings-section-title">
@@ -520,68 +521,7 @@
                         {{chatToolSettingsTranslations.relationshipType}}
                     </div>
                 </div>
-                
-                <div class="settings-subsection">
-                    <h6 class="settings-subsection-title fw-semibold mb-2">
-                        {{chatToolSettingsTranslations.freeRelationships}}
-                    </h6>
-                    <div class="settings-description text-muted mb-3">
-                        {{chatToolSettingsTranslations.freeRelationshipsDescription}}
-                    </div>
-                    <div class="settings-tone-grid">
-                        <div class="settings-tone-option selected" data-relationship="companion">
-                            😎 {{chatToolSettingsTranslations.relationships.companion}}
-                        </div>
-                        <div class="settings-tone-option" data-relationship="friend">
-                            😊 {{chatToolSettingsTranslations.relationships.friend}}
-                        </div>
-                        <div class="settings-tone-option" data-relationship="mentor">
-                            💼 {{chatToolSettingsTranslations.relationships.mentor}}
-                        </div>
-                        <div class="settings-tone-option" data-relationship="assistant">
-                            🤖 {{chatToolSettingsTranslations.relationships.assistant}}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="settings-subsection">
-                    <h6 class="settings-subsection-title fw-semibold mb-2">
-                        {{chatToolSettingsTranslations.premiumRelationships}}
-                        <i class="bi bi-crown-fill premium-icon ms-1 text-warning"></i>
-                    </h6>
-                    <div class="settings-description text-muted mb-3">
-                        {{chatToolSettingsTranslations.premiumRelationshipsDescription}}
-                    </div>
-                    <div class="settings-tone-grid">
-                        <!-- Premium NSFW Relationships -->
-                        <div class="settings-tone-option premium-relationship" data-relationship="lover" data-nsfw="true">
-                            💋 {{chatToolSettingsTranslations.relationships.lover}}
-                            <i class="bi bi-crown-fill premium-icon text-warning"></i>
-                        </div>
-                        <div class="settings-tone-option premium-relationship" data-relationship="submissive" data-nsfw="true">
-                            🔒 {{chatToolSettingsTranslations.relationships.submissive}}
-                            <i class="bi bi-crown-fill premium-icon text-warning"></i>
-                        </div>
-                        <div class="settings-tone-option premium-relationship" data-relationship="dominant" data-nsfw="true">
-                            ⚡ {{chatToolSettingsTranslations.relationships.dominant}}
-                            <i class="bi bi-crown-fill premium-icon text-warning"></i>
-                        </div>
-                        <div class="settings-tone-option premium-relationship" data-relationship="playmate" data-nsfw="true">
-                            🎭 {{chatToolSettingsTranslations.relationships.playmate}}
-                            <i class="bi bi-crown-fill premium-icon text-warning"></i>
-                        </div>
-                        <div class="settings-tone-option premium-relationship" data-relationship="intimate" data-nsfw="true">
-                            🌹 {{chatToolSettingsTranslations.relationships.intimate}}
-                            <i class="bi bi-crown-fill premium-icon text-warning"></i>
-                        </div>
-                    </div>
-                    <div id="premium-relationships-indicator" class="premium-feature-indicator">
-                        <small class="text-warning d-block mt-2">
-                            <i class="bi bi-star-fill me-1"></i> 
-                            {{chatToolSettingsTranslations.premiumRelationshipsPremiumFeature}}
-                        </small>
-                    </div>
-                </div>
+                <div id="dynamic-relationship-container"></div>
             </div>
 
             <!-- Voice Settings -->

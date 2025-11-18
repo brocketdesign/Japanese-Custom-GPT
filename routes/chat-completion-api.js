@@ -36,7 +36,7 @@ const {
     handleGalleryImage,
     getLanguageDirectiveMessage
 } = require('../models/chat-completion-utils');
-const relationshipInstructions = require('../models/relashionshipInstructions');
+const { relationshipInstructions } = require('../models/relashionshipInstructions');
 
 // Fetches chat document from 'chats' collection
 async function getChatDocument(request, db, chatId) {
@@ -477,7 +477,7 @@ async function routes(fastify, options) {
             const latestUserData = await getUserChatData(db, userId, userChatId);
             if (latestUserData?.currentScenario) {
                 const scenario = latestUserData.currentScenario;
-                const scenarioContext = `\n\n# Conversation Scenario:\n` +
+                const scenarioContext = `\n\n# Conversation Scenario (from your point of view, you are ${chatDocument?.name}):\n` +
                     `Title: ${scenario.scenario_title}\n` +
                     `Description: ${scenario.scenario_description}\n` +
                     `Emotional Tone: ${scenario.emotional_tone}\n` +
@@ -501,14 +501,6 @@ async function routes(fastify, options) {
             if (userDetails && userDetails.trim()) {
                 enhancedSystemContent += `\n\n# User Information:\n${userDetails}`;
             }
-            
-            // Add relationship type to system content
-            const relationshipKey = custom_relation.toLowerCase();
-            const relationshipInstruction = relationshipInstructions[relationshipKey] || relationshipInstructions['companion'];
-            
-            enhancedSystemContent += `\n\n# Relationship Context:\n` +
-                `Current relationship type: ${custom_relation}\n` +
-                `Relationship Instructions: ${relationshipInstruction}`;
             
             const systemMsg = [
                 { role: 'system', content: enhancedSystemContent }
@@ -540,7 +532,7 @@ async function routes(fastify, options) {
             const isPremium = subscriptionStatus;
             
             //console.log(`[/api/openai-chat-completion] Using model: ${selectedModel}, Language: ${language}, Premium: ${isPremium}`);
-            //console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
+            console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
             //console.log(`[/api/openai-chat-completion] Messages for completion:`, messagesForCompletion);
             
             generateCompletion(messagesForCompletion, 600, selectedModel, language, selectedModel, isPremium)

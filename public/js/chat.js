@@ -461,10 +461,12 @@ function setupChatInterface(chat, character) {
         $('#showPrompts').show();
         $('#gifts-toggle').show();
         $('#userMessage').removeClass('male').addClass('female');
+        $('.settings-modal-body').attr('data-genre', 'female');
     }else{
         $('#showPrompts').hide();
         $('#gifts-toggle').hide();
         $('#userMessage').removeClass('female').addClass('male');
+        $('.settings-modal-body').attr('data-genre', 'male');
     }
     updateChatBackgroundImage(thumbnail);
     $('#chat-title').text(chatName);

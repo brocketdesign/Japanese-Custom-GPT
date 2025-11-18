@@ -11,19 +11,11 @@ const DEFAULT_AUDIO_SETTINGS = {
 };
 
 const MINIMAX_VOICES = {
-    default: {
-        key: DEFAULT_MINIMAX_VOICE_KEY,
-        voice_id: DEFAULT_MINIMAX_VOICE_KEY,
-        gender: 'female',
-        language: 'ja',
-        name: 'Wise Woman',
-        description: 'Warm, expressive female voice suited for companion chats.'
-    },
     [DEFAULT_MINIMAX_VOICE_KEY]: {
         key: DEFAULT_MINIMAX_VOICE_KEY,
         voice_id: DEFAULT_MINIMAX_VOICE_KEY,
         gender: 'female',
-        language: 'ja',
+        language: 'en',
         name: 'Wise Woman',
         description: 'Warm, expressive female voice suited for companion chats.'
     },

@@ -37,6 +37,39 @@ function handleImageSuccessForCharacter(imgElement, blob, imageUrl) {
 }
 
 /**
+ * Fetch blurred video preview from API (converts to blob for security)
+ * Uses videoId to retrieve the associated image and blur it
+ */
+function fetchBlurredVideoPreview(imgElement, videoId) {
+    $.ajax({
+        url: '/blur-video-preview?videoId=' + encodeURIComponent(videoId),
+        method: 'GET',
+        xhrFields: {
+            withCredentials: true,
+            responseType: 'blob'
+        },
+        success: function(blob) { 
+            handleVideoPreviewSuccessForCharacter(imgElement, blob, videoId); 
+        },
+        error: function() { 
+            console.error("Failed to load blurred video preview for character profile."); 
+        }
+    });
+}
+
+/**
+ * Handle blurred video preview success - creates object URL
+ */
+function handleVideoPreviewSuccessForCharacter(imgElement, blob, videoId) {
+    let objectUrl = URL.createObjectURL(blob);
+    $(imgElement).attr('src', objectUrl)
+        .data('processed', "true")
+        .removeAttr('data-original-src')
+        .removeAttr('data-src')
+        .removeAttr('srcset');
+}
+
+/**
  * Create overlay with unlock button for NSFW images
  * Same logic as createOverlay in dashboard.js
  */
@@ -254,6 +287,226 @@ function createCharacterImageOverlay(imgElement, imageUrl) {
     $(imgElement)
         .wrap('<div style="position: relative; display: inline-block;"></div>')
         .after(overlay);
+}
+
+/**
+ * Create overlay with unlock button for NSFW videos (premium users with NSFW OFF)
+ * Similar to createCharacterImageOverlay but for video elements
+ */
+function createCharacterVideoOverlay(videoElement, videoSrc) {
+    let overlay;
+    const subscriptionStatus = window.user?.subscriptionStatus === 'active';
+    const showNSFW = sessionStorage.getItem('showNSFW') === 'true';
+    
+    // Check if overlay already exists
+    const mediaItem = videoElement.closest('.media-item');
+    if (mediaItem && mediaItem.querySelector('.character-nsfw-overlay')) {
+        mediaItem.querySelector('.character-nsfw-overlay').remove();
+    }
+    
+    // No overlay needed if NSFW content should be shown
+    if (showNSFW) {
+        return;
+    }
+    
+    if (subscriptionStatus) {
+        // Subscribed user with showNSFW disabled - show blurry overlay on top of visible video
+        overlay = $('<div></div>')
+            .addClass('character-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')
+            .css({
+                background: 'rgba(0, 0, 0, 0.25)',
+                zIndex: 10,
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                cursor: 'pointer'
+            });
+
+        let badge = $('<span></span>')
+            .addClass('badge mb-2')
+            .css({
+                'background': 'linear-gradient(to right, #ef4444, #ff6b6b)',
+                'font-size': '0.85rem',
+                'padding': '0.5rem 1rem',
+                'font-weight': '600'
+            })
+            .html('<i class="bi bi-eye-slash-fill me-2"></i>NSFW Hidden');
+
+        let buttonElement = $('<button></button>')
+            .addClass('btn btn-sm')
+            .css({
+                'background': 'linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%)',
+                'color': 'white',
+                'border': 'none',
+                'border-radius': '8px',
+                'font-weight': '600',
+                'padding': '0.5rem 1rem',
+                'font-size': '0.85rem',
+                'cursor': 'pointer',
+                'transition': 'all 0.2s ease',
+                'margin-top': '0.75rem',
+                'z-index': 20
+            })
+            .text(window.translations?.showContent || 'Show Content')
+            .on('click', function (e) {
+                e.stopPropagation();
+                
+                // Hide the overlay to reveal the video
+                overlay.fadeOut(300, function() {
+                    overlay.remove();
+                });
+            })
+            .on('mouseenter', function() {
+                $(this).css({ 
+                    'transform': 'translateY(-2px)', 
+                    'box-shadow': '0 8px 16px rgba(130, 64, 255, 0.3)' 
+                });
+            })
+            .on('mouseleave', function() {
+                $(this).css({ 
+                    'transform': 'translateY(0)', 
+                    'box-shadow': 'none' 
+                });
+            });
+
+        overlay.append(badge, buttonElement);
+        
+        // Add click handler to overlay background to also trigger video reveal
+        overlay.on('click', function(e) {
+            // Only trigger if clicking on overlay itself, not the button
+            if (e.target === this || $(e.target).closest('button').length === 0) {
+                buttonElement.click();
+            }
+        });
+    }
+    
+    if (overlay && videoElement) {
+        $(videoElement)
+            .wrap('<div style="position: relative; display: inline-block;"></div>')
+            .after(overlay);
+    }
+}
+
+/**
+ * Create NSFW overlay for videos (non-premium users or temporary users)
+ * Shows unlock/login button and prevents video playback
+ */
+function createCharacterVideoNSFWOverlay(videoElement, videoSrc) {
+    let overlay;
+    const isTemporary = !!window.user?.isTemporary;
+    const subscriptionStatus = window.user?.subscriptionStatus === 'active';
+    
+    // Check if overlay already exists
+    const mediaItem = videoElement.closest('.media-item');
+    if (mediaItem && mediaItem.querySelector('.character-nsfw-overlay')) {
+        mediaItem.querySelector('.character-nsfw-overlay').remove();
+    }
+    
+    if (isTemporary) {
+        // Temporary user - show login overlay with modern design
+        overlay = $('<div></div>')
+            .addClass('character-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')
+            .css({
+                background: 'rgba(0, 0, 0, 0.25)',
+                zIndex: 10,
+                cursor: 'pointer'
+            })
+            .on('click', function() {
+                openLoginForm();
+            });
+
+        const lockIcon = $('<i></i>').addClass('bi bi-lock-fill').css({ 
+            'font-size': '2rem', 
+            'color': '#fff', 
+            'opacity': '0.9', 
+            'margin-bottom': '0.75rem' 
+        });
+        
+        const loginButton = $('<button></button>')
+            .addClass('btn btn-sm')
+            .css({
+                'background': 'linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%)',
+                'color': 'white',
+                'border': 'none',
+                'border-radius': '8px',
+                'font-weight': '600',
+                'padding': '0.5rem 1rem',
+                'font-size': '0.85rem',
+                'cursor': 'pointer',
+                'transition': 'all 0.2s ease',
+                'z-index': 20
+            })
+            .html('<i class="bi bi-unlock-fill me-2"></i>Unlock')
+            .on('click', function(e) {
+                e.stopPropagation();
+                openLoginForm();
+            });
+
+        overlay.append(lockIcon, loginButton);
+
+    } else if (!subscriptionStatus) {
+        // Non-subscribed user - show unlock overlay with modern design
+        overlay = $('<div></div>')
+            .addClass('character-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')
+            .css({
+                background: 'rgba(0, 0, 0, 0.25)',
+                zIndex: 10,
+                cursor: 'pointer'
+            })
+            .on('click', function() {
+                loadPlanPage();
+            });
+
+        let badge = $('<span></span>')
+            .addClass('badge mb-2')
+            .css({
+                'background': 'linear-gradient(to right, #ef4444, #ff6b6b)',
+                'font-size': '0.85rem',
+                'padding': '0.5rem 1rem',
+                'font-weight': '600'
+            })
+            .html('<i class="bi bi-lock-fill me-2"></i>NSFW');
+
+        let buttonElement = $('<button></button>')
+            .addClass('btn btn-sm')
+            .css({
+                'background': 'linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%)',
+                'color': 'white',
+                'border': 'none',
+                'border-radius': '8px',
+                'font-weight': '600',
+                'padding': '0.5rem 1rem',
+                'font-size': '0.85rem',
+                'cursor': 'pointer',
+                'transition': 'all 0.2s ease',
+                'margin-top': '0.75rem',
+                'z-index': 20
+            })
+            .text(window.translations?.blurButton || 'Unlock Content')
+            .on('click', function (e) {
+                e.stopPropagation();
+                loadPlanPage();
+            })
+            .on('mouseenter', function() {
+                $(this).css({ 
+                    'transform': 'translateY(-2px)', 
+                    'box-shadow': '0 8px 16px rgba(130, 64, 255, 0.3)' 
+                });
+            })
+            .on('mouseleave', function() {
+                $(this).css({ 
+                    'transform': 'translateY(0)', 
+                    'box-shadow': 'none' 
+                });
+            });
+
+        overlay.append(badge, buttonElement);
+    }
+    
+    if (overlay && videoElement) {
+        $(videoElement)
+            .wrap('<div style="position: relative; display: inline-block;"></div>')
+            .after(overlay);
+    }
 }
 
 /**
@@ -779,9 +1032,19 @@ function displayVideosInGrid() {
             nsfwCount++;
         }
         
-        // Determine if this video should be blurred
-        // Blur if: NSFW AND (user is temporary OR user is not subscribed OR user disabled NSFW viewing)
-        const shouldBlur = isNSFW && (isTemporary || !subscriptionStatus || !showNSFW);
+        // Match dashboard logic: shouldBlurNSFW
+        // Logic: 
+        // - If NOT NSFW, don't blur
+        // - If NSFW AND subscribed: blur only if showNSFW is false
+        // - If NSFW AND NOT subscribed: always blur
+        let shouldBlur = false;
+        if (isNSFW) {
+            if (subscriptionStatus) {
+                shouldBlur = !showNSFW; // Blur if showNSFW is false
+            } else {
+                shouldBlur = true; // Always blur if not subscribed
+            }
+        }
         
         if (shouldBlur) {
             blurredCount++;
@@ -807,22 +1070,71 @@ function displayVideosInGrid() {
         item.className = 'media-item';
         item.dataset.videoId = video._id;
         
-        if (shouldBlur) {
-            // Show blurred video with overlay for NSFW content
+        // For premium users with NSFW OFF: show normal video with blur overlay
+        // For non-premium users: show video with NSFW overlay
+        if (shouldBlur && subscriptionStatus) {
+            // Premium user with NSFW OFF - show normal video with overlay that will add blur effect
             item.innerHTML = `
-                <div style="position: relative; cursor: pointer; overflow: hidden; border-radius: 8px; background: #000;">
-                    <video preload="metadata" muted style="width: 100%; height: 100%; object-fit: cover; filter: blur(8px);">
-                        <source src="${videoSrc}" type="video/mp4">
-                    </video>
-                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10;">
-                        <i class="bi bi-exclamation-triangle" style="font-size: 2rem; color: #dc2626; margin-bottom: 8px;"></i>
-                        <span style="color: white; font-weight: 600; font-size: 0.9rem;">NSFW Content</span>
-                        <button onclick="event.stopPropagation(); ${isTemporary ? 'openLoginForm()' : 'loadPlanPage()'}" style="margin-top: 8px; padding: 6px 12px; background: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 500;">
-                            ${isTemporary ? 'Login to View' : 'Subscribe to View'}
-                        </button>
+                <video preload="metadata" muted style="width: 100%; height: 100%; object-fit: cover; background: #000;">
+                    <source src="${videoSrc}" type="video/mp4">
+                </video>
+                <div class="video-indicator" style="pointer-events: none;">
+                    <i class="bi bi-play-fill" style="font-size: 1rem;"></i>
+                </div>
+                <div class="media-item-overlay">
+                    <div class="media-item-info">
+                        <i class="bi bi-play-circle" style="margin-right: 4px;"></i>
+                        ${index + 1}
                     </div>
                 </div>
             `;
+            
+            // Extract poster frame from video for thumbnail
+            const videoElement = item.querySelector('video');
+            videoElement.addEventListener('loadedmetadata', function() {
+                this.currentTime = 0.5;
+            });
+            
+            videoElement.addEventListener('seeked', function() {
+                const canvas = document.createElement('canvas');
+                canvas.width = this.videoWidth;
+                canvas.height = this.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(this, 0, 0);
+                const posterUrl = canvas.toDataURL('image/jpeg');
+                this.poster = posterUrl;
+            }, { once: true });
+            
+            // Store video data on the media-item element for later retrieval
+            item.dataset.video = JSON.stringify(video);
+            
+            // Make the entire media-item clickable with cursor pointer
+            item.style.cursor = 'pointer';
+            item.setAttribute('data-toggle', 'modal');
+            item.setAttribute('role', 'button');
+            
+        } else if (shouldBlur) {
+            // Non-premium user or temporary - show placeholder image and load blurred preview via API
+            // DO NOT expose videoUrl in DOM for security - use videoId to fetch blurred preview
+            item.innerHTML = `
+                <div style="position: relative; cursor: pointer; overflow: hidden; border-radius: 8px; background: #f0f0f0;">
+                    <img alt="Video ${index + 1}" loading="lazy" 
+                         class="blur-video-preview" 
+                         data-video-id="${video._id}"
+                         style="width: 100%; height: 100%; object-fit: cover;" 
+                         onerror="this.style.display='none'">
+                    <div class="media-item-overlay">
+                        <div class="media-item-info">
+                            <i class="bi bi-play-circle" style="margin-right: 4px;"></i>
+                            ${index + 1}
+                        </div>
+                    </div>
+                </div>
+            `;
+            // Make the entire media-item clickable with cursor pointer
+            item.style.cursor = 'pointer';
+            item.setAttribute('data-toggle', 'modal');
+            item.setAttribute('role', 'button');
         } else {
             // Show normal video player
             item.innerHTML = `
@@ -856,6 +1168,14 @@ function displayVideosInGrid() {
                 this.poster = posterUrl;
             }, { once: true });
             
+            // Store video data on the media-item element for later retrieval
+            item.dataset.video = JSON.stringify(video);
+            
+            // Make the entire media-item clickable with cursor pointer
+            item.style.cursor = 'pointer';
+            item.setAttribute('data-toggle', 'modal');
+            item.setAttribute('role', 'button');
+            
             // Add click handler for video playback
             item.addEventListener('click', function(e) {
                 playVideoModal(videoSrc);
@@ -863,7 +1183,64 @@ function displayVideosInGrid() {
         }
         
         grid.appendChild(item);
+        
+        // Apply overlay or blur effect based on user status
+        if (shouldBlur) {
+            if (subscriptionStatus) {
+                // Premium user with NSFW OFF - add overlay with blur effect on the normal video
+                const videoElement = item.querySelector('video');
+                if (videoElement) {
+                    createCharacterVideoOverlay(videoElement, videoSrc);
+                }
+            } else {
+                // Non-premium user or temporary - add NSFW overlay with unlock/login button
+                const videoElement = item.querySelector('.blur-video-preview');
+                if (videoElement) {
+                    fetchBlurredVideoPreview(videoElement, video._id);
+                    createCharacterVideoNSFWOverlay(videoElement, videoSrc);
+                }
+            }
+        }
     });
+    
+    // Add delegated click handler for video playback
+    const newGridListener = function(e) {
+        const mediaItem = e.target.closest('.media-item');
+        
+        if (mediaItem) {
+            // Check if click was on a button - if so, don't open modal
+            const clickedButton = e.target.closest('button');
+            if (clickedButton) {
+                return;
+            }
+            
+            // Check if it's an NSFW overlay - if so, don't open modal
+            const nsfw_overlay = mediaItem.querySelector('.character-nsfw-overlay');
+            if (nsfw_overlay && e.target.closest('.character-nsfw-overlay')) {
+                return;
+            }
+            
+            // Get the video data and play it
+            if (mediaItem.dataset.video) {
+                try {
+                    const videoData = JSON.parse(mediaItem.dataset.video);
+                    if (typeof playVideoModal === 'function') {
+                        playVideoModal(videoData.videoUrl);
+                    }
+                } catch (err) {
+                    // ignore parse errors
+                }
+            }
+        }
+    };
+    
+    // Remove previous listener if exists
+    if (grid._clickListener) {
+        grid.removeEventListener('click', grid._clickListener);
+    }
+    // Store and add new listener
+    grid._clickListener = newGridListener;
+    grid.addEventListener('click', newGridListener);
     
     // Add load more button if on character profile page and more content available
     const onCharacterPage = !!document.querySelector('#characterProfilePage');

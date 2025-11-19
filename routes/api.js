@@ -33,6 +33,7 @@ const {
 } = require('../models/chat-tool-settings-utils');
 const { getActiveSystemPrompt } = require('../models/system-prompt-utils');
 const { addUserPoints, removeUserPoints, getUserPoints, awardCharacterMessageMilestoneReward } = require('../models/user-points-utils');
+const { getGalleryImageById, toObjectId } = require('../models/gallery-utils');
 
 const axios = require('axios');
 const sharp = require('sharp');
@@ -1594,6 +1595,51 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             reply.type('image/jpeg').send(blurredImage);
         } catch {
             reply.status(500).send('Error processing image');
+        }
+    });
+
+    /**
+     * Blur video preview image
+     * Takes a videoId, retrieves the associated image, and returns blurred version
+     * Used for NSFW video content on character profile pages
+     */
+    fastify.get('/blur-video-preview', async (request, reply) => {
+        const { videoId } = request.query;
+        
+        if (!videoId) {
+            return reply.status(400).send('videoId is required');
+        }
+
+        try {
+            const db = fastify.mongo.db;
+            const videosCollection = db.collection('videos');
+            
+            // Find the video to get its imageId
+            const video = await videosCollection.findOne({ 
+                _id: toObjectId(videoId) 
+            });
+            
+            if (!video || !video.imageId) {
+                return reply.status(404).send('Video or associated image not found');
+            }
+            
+            // Get the image using getGalleryImageById
+            const galleryImage = await getGalleryImageById(db, video.imageId);
+            
+            if (!galleryImage || !galleryImage.image || !galleryImage.image.imageUrl) {
+                return reply.status(404).send('Gallery image not found');
+            }
+            
+            const imageUrl = galleryImage.image.imageUrl;
+            
+            // Fetch and blur the image
+            const response = await axios({ url: imageUrl, responseType: 'arraybuffer' });
+            const blurredImage = await sharp(response.data).blur(25).toBuffer();
+            
+            reply.type('image/jpeg').send(blurredImage);
+        } catch (error) {
+            console.error('Error blurring video preview:', error);
+            reply.status(500).send('Error processing video preview');
         }
     });
 

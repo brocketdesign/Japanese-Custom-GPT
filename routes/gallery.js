@@ -2,6 +2,7 @@ const { ObjectId } = require('mongodb');
 const { getLanguageName } = require('../models/tool');
 const { removeUserPoints, awardLikeMilestoneReward, awardLikeActionReward } = require('../models/user-points-utils');
 const { hasUserChattedWithCharacter } = require('../models/chat-tool-settings-utils');
+const { buildQueryTagsIndex } = require('../models/query-tags-utils');
 const {
   getGalleryImageById,
   buildChatImageMessage,
@@ -1143,40 +1144,49 @@ fastify.get('/api/query-tags', async (request, reply) => {
         const db = fastify.mongo.db;
         const tagsColl = db.collection('queryTags');
 
-      // Try to read persisted ranked tags first
-      const persisted = await tagsColl.find({}).sort({ rank: 1 }).toArray();
-      let tags = [];
+        // If a language is requested, compute tags filtered by chat.language
+        const lang = request.query.lang || request.query.language || null;
+        if (lang) {
+          // Compute on the fly for the requested language (minLength 10, limit 50)
+          const results = await buildQueryTagsIndex(db, 10, 50, lang);
+          const tags = (results || []).map(r => r.tag).filter(Boolean);
+          return reply.send({ tags, success: true, lang });
+        }
 
-      if (persisted && persisted.length) {
-        tags = persisted.map(t => t.tag).filter(Boolean);
-      } else {
-        // Fallback: compute on the fly (length >= 10, top 50)
-        const chatsCollection = db.collection('chats');
-        const pipeline = [
-          {
-            $lookup: {
-              from: 'gallery',
-              localField: '_id',
-              foreignField: 'chatId',
-              as: 'gallery'
-            }
-          },
-          { $match: { 'gallery.0': { $exists: true }, tags: { $exists: true, $ne: [] } } },
-          { $unwind: '$tags' },
-          { $match: { 'tags': { $type: 'string' } } },
-          { $addFields: { tagLength: { $strLenCP: '$tags' } } },
-          { $match: { tagLength: { $gte: 10 } } },
-          { $group: { _id: '$tags', count: { $sum: 1 } } },
-          { $sort: { count: -1 } },
-          { $limit: 50 },
-          { $project: { _id: 0, tag: '$_id', count: 1 } }
-        ];
+        // No language provided: try to read persisted ranked tags first
+        const persisted = await tagsColl.find({}).sort({ rank: 1 }).toArray();
+        let tags = [];
 
-        const results = await chatsCollection.aggregate(pipeline).toArray();
-        tags = results.map(r => r.tag).filter(Boolean);
-      }
+        if (persisted && persisted.length) {
+          tags = persisted.map(t => t.tag).filter(Boolean);
+        } else {
+          // Fallback: compute on the fly (length >= 10, top 50) without language filter
+          const chatsCollection = db.collection('chats');
+          const pipeline = [
+            {
+              $lookup: {
+                from: 'gallery',
+                localField: '_id',
+                foreignField: 'chatId',
+                as: 'gallery'
+              }
+            },
+            { $match: { 'gallery.0': { $exists: true }, tags: { $exists: true, $ne: [] } } },
+            { $unwind: '$tags' },
+            { $match: { 'tags': { $type: 'string' } } },
+            { $addFields: { tagLength: { $strLenCP: '$tags' } } },
+            { $match: { tagLength: { $gte: 10 } } },
+            { $group: { _id: '$tags', count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: 50 },
+            { $project: { _id: 0, tag: '$_id', count: 1 } }
+          ];
 
-      reply.send({ tags, success: true });
+          const results = await chatsCollection.aggregate(pipeline).toArray();
+          tags = results.map(r => r.tag).filter(Boolean);
+        }
+
+        reply.send({ tags, success: true });
         
     } catch (err) {
         console.error('Error in /api/query-tags:', err);

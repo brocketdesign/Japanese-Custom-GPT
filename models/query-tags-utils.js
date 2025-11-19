@@ -9,15 +9,24 @@ const { ObjectId } = require('mongodb');
  * @param {number} minLength
  * @param {number} limit
  */
-async function buildQueryTagsIndex(db, minLength = 10, limit = 50) {
+/**
+ * @param {string|null} language Optional language code to filter chats by `chat.language` field
+ */
+async function buildQueryTagsIndex(db, minLength = 10, limit = 50, language = null) {
   if (!db) throw new Error('Database handle required');
 
   const chatsCollection = db.collection('chats');
 
   try {
     // Build the index directly from the `chats` collection tags (character tags).
-    // We no longer require the chat to have gallery/images.
-    const pipeline = [
+    // Optionally filter chats by language if `language` is provided.
+    const pipeline = [];
+
+    if (language) {
+      pipeline.push({ $match: { language } });
+    }
+
+    pipeline.push(
       { $match: { tags: { $exists: true, $ne: [] } } },
       { $unwind: '$tags' },
       // Ensure tag is a string
@@ -29,7 +38,7 @@ async function buildQueryTagsIndex(db, minLength = 10, limit = 50) {
       { $sort: { count: -1 } },
       { $limit: limit },
       { $project: { _id: 0, tag: '$_id', count: 1 } }
-    ];
+    );
 
     const results = await chatsCollection.aggregate(pipeline).toArray();
     return results || [];

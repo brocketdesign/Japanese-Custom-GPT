@@ -3147,7 +3147,8 @@ $(document).ready(function () {
     // Function to load and display query tags
     window.loadQueryTags = async function() {
         try {
-            const response = await fetch('/api/query-tags');
+            const lang = translations?.lang || 'en';
+            const response = await fetch(`/api/query-tags?lang=${lang}`);
             if (!response.ok) throw new Error('Failed to fetch query tags');
             
             const data = await response.json();

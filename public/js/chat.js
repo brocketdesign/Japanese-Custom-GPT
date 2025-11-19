@@ -394,7 +394,6 @@ $(document).ready(async function() {
 
     async function handleChatSuccess(data, fetch_reset, fetch_userId, userChatId) {
         $(document).find(`.chat-list.item[data-id="${chatId}"]`).addClass('active').siblings().removeClass('active');
-       
         // Handle fetch_reset and isNew logic robustly
 
         isNew = (typeof fetch_reset === 'string' ? fetch_reset.toLowerCase() : fetch_reset) === true || 

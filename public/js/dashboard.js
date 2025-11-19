@@ -123,7 +123,7 @@ window.displayLatestVideoChats = function(videoChatsData, targetGalleryId) {
 
         // Video card with thumbnail and play button
         htmlContent += `
-            <div class="video-chat-card flex-shrink-0 ${isNSFW ? 'nsfw-content' : ''}" data-chat-id="${videoChat.chatId}" data-nsfw="${isNSFW}" style="width: 200px; cursor: pointer;" onclick="redirectToChat('${videoChat.chatId}')">
+            <div class="video-chat-card col-6 col-sm-4 col-lg-2 flex-shrink-0 px-1 ${isNSFW ? 'nsfw-content' : ''}" data-chat-id="${videoChat.chatId}" data-nsfw="${isNSFW}" style="cursor: pointer;" onclick="redirectToChat('${videoChat.chatId}')">
                 <div class="card shadow-sm border-0 h-100 position-relative overflow-hidden">
                     <!-- Video thumbnail with play button -->
                     <div class="video-thumbnail-wrapper position-relative" style="aspect-ratio: 9/16; background: #f8f9fa;">
@@ -3174,20 +3174,37 @@ $(document).ready(function () {
         
         // Add "All" tag first
         tagsHtml += `
-            <div class="query-tag query-tag-all ${currentActiveQuery === '' ? 'active' : ''}" 
+            <div class="query-tag query-tag-all badge btn-outline-primary ${currentActiveQuery === '' ? 'active' : ''}" 
+                style="line-height: 1.5;"
                 data-query="" 
-                onclick="setActiveQuery('')">
+                onclick="setActiveQueryAndSearch('')">
                 <i class="bi bi-grid me-1"></i>${translations.all || 'All'}
             </div>
         `;
+
+        // Add "Realistic" and "Anime" tags
+        const specialTags = ['photorealistic', 'anime'];
+        specialTags.forEach(tag => {
+            const isActive = currentActiveQuery === tag;
+            tagsHtml += `
+                <div id="popular-chats-style-${tag}" 
+                class="query-tag badge btn-outline-primary ${isActive ? 'active' : ''}" 
+                style="line-height: 1.5;"
+                    data-query="${tag === 'photorealistic' ? translations.sort.photorealistic : translations.sort.anime}" 
+                    >
+                    #${tag.charAt(0).toUpperCase() + tag.slice(1)}
+                </div>
+            `;
+        });
         
         // Add other query tags
         availableQueryTags.forEach(tag => {
             const isActive = currentActiveQuery === tag;
             tagsHtml += `
-                <div class="query-tag ${isActive ? 'active' : ''}" 
+                <div class="query-tag badge btn-outline-primary ${isActive ? 'active' : ''}" 
+                    style="line-height: 1.5;"
                     data-query="${tag}" 
-                    onclick="setActiveQuery('${tag}')">
+                    onclick="setActiveQueryAndSearch('${tag}')">
                     #${tag}
                 </div>
             `;
@@ -3196,47 +3213,43 @@ $(document).ready(function () {
         queryTagsList.html(tagsHtml);
     };
 
-    // Function to set active query and trigger search
+    // Function to set active query and update UI only
     window.setActiveQuery = function(query) {
-        // Update active state
-        currentActiveQuery = query;
-        
-        // Update UI
-        $('.query-tag').removeClass('active');
-        $(`.query-tag[data-query="${query}"]`).addClass('active');
-        
-        // Clear existing results
-        $('#all-chats-container').empty();
-        $('#all-chats-images-gallery').empty();
-        $('#all-chats-images-pagination-controls').empty();
-        
-        // Reset pagination state
-        if (typeof currentPageMap !== 'undefined') {
-            currentPageMap.set(query, 0);
+      currentActiveQuery = query;
+      $('.query-tag').removeClass('active');
+      $(`.query-tag[data-query="${query}"]`).addClass('active');
+    };
+
+    // Function to set active query and trigger search
+    window.setActiveQueryAndSearch = function(query) {
+      window.setActiveQuery(query);
+
+      // Clear existing results
+      $('#all-chats-container').empty();
+      $('#all-chats-images-gallery').empty();
+      $('#all-chats-images-pagination-controls').empty();
+
+      // Reset pagination state
+      if (typeof currentPageMap !== 'undefined') {
+        currentPageMap.set(query, 0);
+      }
+      if (typeof allChatsLoadingState !== 'undefined') {
+        allChatsLoadingState = false;
+      }
+
+      // Reset global flags
+      isFetchingChats = false;
+      hasMoreChatsMap.set(query, true);
+
+      // Trigger new search with query
+      if (query) {
+        emptyAllGalleriesExcept('all-chats-container');
+        fetchChatsWithImagesQuery(1, query);
+      } else {
+        if (typeof fetchChatsWithImages === 'function') {
+          fetchChatsWithImages(1, '');
         }
-        if (typeof allChatsLoadingState !== 'undefined') {
-            allChatsLoadingState = false;
-        }
-
-        // Reset global flags
-        isFetchingChats = false;
-        hasMoreChatsMap.set(query, true); // Reset hasMoreChats for the new query
-
-        // Trigger new search with query
-        if (query) {
-            // Search for chats with the query
-            fetchChatsWithImagesQuery(1, query);
-        } else {
-            // Load all chats (existing functionality)
-            if (typeof fetchChatsWithImages === 'function') {
-                fetchChatsWithImages(1, '');
-            }
-        }
-
-
-      $('html, body').animate({
-          scrollTop: $('#all-chats-container').offset().top
-      }, 500);
+      }
     };
 
     // Enhanced function to fetch chats with query support

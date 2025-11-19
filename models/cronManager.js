@@ -10,6 +10,7 @@ const { ObjectId } = require('mongodb');
 const fs = require('fs');
 const { cacheSitemapData } = require('./sitemap-utils'); // <-- import sitemap utils
 const { updateAnalyticsCache } = require('./cronUserAnalytics'); // <-- import analytics cache function
+const { persistQueryTags } = require('./query-tags-utils');
 // Store active cron jobs
 const cronJobs = {};
 
@@ -583,6 +584,26 @@ const cacheSitemapDataTask = (fastify) => async () => {
 };
 
 /**
+ * Cache query tags task
+ * Builds and persists a ranked list of query tags (min length 10, top 50)
+ */
+const cacheQueryTagsTask = (fastify) => async () => {
+  console.log('\n🏷️  [CRON] ▶️  Starting query tags caching task...');
+  const db = fastify.mongo.db;
+  try {
+    await db.command({ ping: 1 });
+    const docs = await persistQueryTags(db, 10, 50);
+    if (docs && docs.length) {
+      console.log(`🏷️  [CRON] ✅ Persisted ${docs.length} query tags`);
+    } else {
+      console.log('🏷️  [CRON] ℹ️  No query tags found to persist');
+    }
+  } catch (err) {
+    console.error('🏷️  [CRON] ❌ Error caching query tags:', err.message || err);
+  }
+};
+
+/**
  * Analytics cache update task
  * Fetches and caches dashboard analytics data
  * @param {Object} fastify - Fastify instance
@@ -703,6 +724,13 @@ const initializeCronJobs = async (fastify) => {
         '0 1 * * *', // Runs every day at 1:00 AM
         true, // Enable this job
         cachePopularChatsTask(fastify)
+    );
+    // Add query tags caching task (daily at 3 AM)
+    configureCronJob(
+      'queryTagsCacher',
+      '0 3 * * *', // Runs every day at 3:00 AM
+      true, // Enable
+      cacheQueryTagsTask(fastify)
     );
     // Add audio files cleanup task (runs every 15 minutes)
     configureCronJob(

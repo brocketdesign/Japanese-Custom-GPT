@@ -1141,50 +1141,42 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
 fastify.get('/api/query-tags', async (request, reply) => {
     try {
         const db = fastify.mongo.db;
+        const tagsColl = db.collection('queryTags');
+
+      // Try to read persisted ranked tags first
+      const persisted = await tagsColl.find({}).sort({ rank: 1 }).toArray();
+      let tags = [];
+
+      if (persisted && persisted.length) {
+        tags = persisted.map(t => t.tag).filter(Boolean);
+      } else {
+        // Fallback: compute on the fly (length >= 10, top 50)
         const chatsCollection = db.collection('chats');
-        
-        // Get user language for filtering
-        const user = request.user;
-        const language = getLanguageName(user?.lang);
-        const requestLang = request.lang;
-        
-        // Aggregate tags from chats
-        const tagResults = await chatsCollection.aggregate([
-            {
-                $match: {
-                    $or: [
-                        { language: language },
-                        { language: requestLang }
-                    ],
-                    tags: { $exists: true, $not: { $size: 0 } }
-                }
-            },
-            { $unwind: '$tags' },
-            {
-                $group: {
-                    _id: '$tags',
-                    count: { $sum: 1 }
-                }
-            },
-            { $sample: { size: 20 } },
-            { $sort: { count: -1 } },
-            { $limit: 20 }, // Limit to top 20 most popular tags
-            {
-                $project: {
-                    _id: 0,
-                    tag: '$_id',
-                    count: 1
-                }
+        const pipeline = [
+          {
+            $lookup: {
+              from: 'gallery',
+              localField: '_id',
+              foreignField: 'chatId',
+              as: 'gallery'
             }
-        ]).toArray();
-        
-        // Extract just the tag names
-        const tags = tagResults.map(result => result.tag).filter(tag => tag && tag.trim() !== '');
-        
-        reply.send({
-            tags: tags,
-            success: true
-        });
+          },
+          { $match: { 'gallery.0': { $exists: true }, tags: { $exists: true, $ne: [] } } },
+          { $unwind: '$tags' },
+          { $match: { 'tags': { $type: 'string' } } },
+          { $addFields: { tagLength: { $strLenCP: '$tags' } } },
+          { $match: { tagLength: { $gte: 10 } } },
+          { $group: { _id: '$tags', count: { $sum: 1 } } },
+          { $sort: { count: -1 } },
+          { $limit: 50 },
+          { $project: { _id: 0, tag: '$_id', count: 1 } }
+        ];
+
+        const results = await chatsCollection.aggregate(pipeline).toArray();
+        tags = results.map(r => r.tag).filter(Boolean);
+      }
+
+      reply.send({ tags, success: true });
         
     } catch (err) {
         console.error('Error in /api/query-tags:', err);

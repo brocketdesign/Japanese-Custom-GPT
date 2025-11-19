@@ -64,7 +64,7 @@
             <section id="chat-discovery" class="onchat-off" style="display: block; padding-top: 180px;">
 
                 <!-- Premium user benefits - Native design matching chat-native.hbs -->
-                <section class="native-section is-free-user" id="premium-benefits-section" style="display: block;">
+                <section class="native-section is-free-user d-none" id="premium-benefits-section" style="display: block;">
                     <div class="native-section-header">
                         <h2 class="native-section-title">
                             <i class="native-section-icon bi bi-star-fill" style="color: #FFD700;"></i>
@@ -115,7 +115,7 @@
 
                 
                 <!-- Card menu -->
-                <div class="card-menu-container native-section mb-3 px-0">
+                <div class="card-menu-container native-section mb-3 px-0 d-none">
                     <div class="native-section-header">
                         <h2 class="native-section-title">
                             <i class="native-section-icon bi bi-rocket-fill" style="color: #FF8C00;"></i>
@@ -167,37 +167,6 @@
                     </div>
                 </div>
 
-                <!-- Latest Chats Section -->
-                <div id="latest-chats-section" class="native-section">
-                    <div class="native-section-header">
-                        <h2 class="native-section-title">
-                            <i class="native-section-icon bi bi-clock-history" style="color: #8240FF;"></i>
-                            {{translations.latestChatsHeader}}
-                        </h2>
-                        <button class="native-section-action" onclick="loadLatestChats(1, true)" title="Refresh latest chats">
-                            <i class="bi bi-arrow-counterclockwise"></i>
-                        </button>
-                    </div>
-                    <div id="latest-chats-gallery" class="row latest-chats-gallery flex-nowrap overflow-auto mx-0" style="flex-wrap: nowrap; overflow-x: auto; white-space: nowrap;"></div>
-                </div>
-
-                <!-- Latest Video Chats Section -->
-                <div id="latest-video-chats-section" class="native-section">
-                    <div class="native-section-header">
-                        <h2 class="native-section-title">
-                            <i class="native-section-icon bi bi-play-circle" style="color: #FF6B6B;"></i>
-                            {{translations.latestVideoChatsHeader}}
-                        </h2>
-                        <button class="native-section-action" onclick="loadLatestVideoChats(1, true)" title="Refresh latest video chats">
-                            <i class="bi bi-arrow-counterclockwise"></i>
-                        </button>
-                    </div>
-                    <div id="latest-video-chats-gallery" class="d-flex overflow-auto pb-3 px-3" style="gap: 15px; scroll-behavior: smooth;">
-                        <!-- Video chats will be loaded here -->
-                    </div>
-                    <div id="latest-video-chats-pagination-controls" class="text-center mt-3"></div>
-                </div>
-
                 <!-- Sorting Tools: Premium/Free, Gender & NSFW Filters (Responsive) -->
                 <div class="mx-4 sorting-tools mb-3">
                     <div class="row g-3 align-items-center">
@@ -218,20 +187,6 @@
                                     <i class="bi bi-gender-trans me-1"></i>{{translations.sort.nonBinary}}
                                 </button>
                             </div>
-                        </div>
-
-                        <!-- Style Filter Buttons -->
-                        <div class="col-12 d-flex justify-content-center gap-4">
-                            <button id="popular-chats-style-anime" class="btn d-flex align-items-start justify-content-center p-3 border-0 position-relative text-white" style="border-radius: 20px; overflow: hidden; background-image: url('/img/image-placeholder-anime.jpeg'); background-size: cover; background-position: center; width: 160px; height: 160px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                                <div class="position-absolute top-0 bottom-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 50%, rgba(0,0,0,0.6) 100%);">
-                                    <span class="fw-bold text-white position-relative" style="font-size: 14px; line-height: 1.2; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{{translations.sort.anime}}</span>
-                                </div>
-                            </button>
-                            <button id="popular-chats-style-photorealistic" class="btn d-flex align-items-start justify-content-center p-3 border-0 position-relative text-white" style="border-radius: 20px; overflow: hidden; background-image: url('/img/image-placeholder-real.jpeg'); background-size: cover; background-position: center; width: 160px; height: 160px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                                <div class="position-absolute top-0 bottom-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 50%, rgba(0,0,0,0.6) 100%);">
-                                    <span class="fw-bold text-white position-relative" style="font-size: 14px; line-height: 1.2; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{{translations.sort.photorealistic}}</span>
-                                </div>
-                            </button>
                         </div>
 
                         <!-- Category cards -->
@@ -261,8 +216,17 @@
                                     <i class="bi bi-arrow-counterclockwise"></i>
                                 </button>
                             </div>
-                            <small class="text-muted d-block mb-2">{{translations.scrollForMore}}</small>
-                            <div class="query-tags-scroll-container">
+
+                            <!-- Action button section #reload-latest-chats -->
+                            <div class="col-12 col-md-auto d-flex justify-content-center justify-content-md-start mx-3">
+                                <button id="reload-latest-chats" class="badge btn-outline-primary">
+                                    <i class="bi bi-arrow-clockwise me-1"></i>{{#if translations.recent}}{{translations.recent}}{{else}}Recent{{/if}}
+                                </button>
+                                <button id="reload-latest-video-chats" class="badge btn-outline-primary ms-2">
+                                    <i class="bi bi-film me-1"></i>{{#if translations.recentVideos}}{{translations.recentVideos}}{{else}}Recent Videos{{/if}}
+                                </button>
+                            </div>
+                            <div class="query-tags-scroll-container mx-3">
                                 <div class="query-tags-list d-flex" id="query-tags-list">
                                     <!-- Query tags will be populated here -->
                                     <div class="spinner-border spinner-border-sm me-3" role="status">
@@ -278,6 +242,11 @@
                     <div id="all-chats-container" class="row g-3 all-chats-gallery mx-0"></div>
                     <div class="row mx-0" id="all-chats-images-gallery"></div>
                     <div class="d-flex justify-content-center mt-4" id="all-chats-images-pagination-controls"></div>
+                    
+                    <div id="latest-chats-gallery" class="row latest-chats-gallery mx-0"></div>
+
+                    <div id="latest-video-chats-gallery" class="row pb-3 px-3 mx-0"></div>
+                    <div id="latest-video-chats-pagination-controls" class="text-center mt-3"></div>
 
                     <div id="chat-gallery" class="row g-3 popular-chats-gallery mx-0"></div>
                     <div id="popular-chats-pagination-controls" class="my-3" style="opacity: 0;"></div>
@@ -441,6 +410,7 @@ $(document).ready(function() {
         if (data) {
             // console.log(`Loading popular chats page ${page} from cache`);
             window.displayChats(data.chats, 'chat-gallery', false); // Corrected target ID
+            emptyAllGalleriesExcept('chat-gallery');
             popularChatsTotalPages = data.totalPages || 1;
             if (page >= popularChatsTotalPages) {
                 $('#popular-chats-pagination-controls').html('');
@@ -469,6 +439,7 @@ $(document).ready(function() {
                     .sort((a, b) => a.sort - b.sort)
                     .map(({ value }) => value);
             }
+            emptyAllGalleriesExcept('chat-gallery');
             window.displayChats(data.chats, 'chat-gallery', false); // Corrected target ID
             popularChatsTotalPages = data.totalPages || 1;
             if (page >= popularChatsTotalPages) {
@@ -577,7 +548,7 @@ $(document).ready(function() {
         let data = cache && cache[page];
 
         if (data) { // Disable cache for now
-            window.displayLatestChats(data.chats, 'latest-chats-gallery', false);
+            window.displayChats(data.chats, 'latest-chats-gallery', false);
             latestChatsTotalPages = data.totalPages || 1;
             if (page >= latestChatsTotalPages) {
                 $('#latest-chats-pagination-controls').html('');
@@ -596,7 +567,8 @@ $(document).ready(function() {
             data = await res.json();
             setLatestChatsCache(page, data);
 
-            window.displayLatestChats(data.chats, 'latest-chats-gallery', false);
+            window.displayChats(data.chats, 'latest-chats-gallery', false);
+            emptyAllGalleriesExcept('latest-chats-gallery');
             latestChatsTotalPages = data.totalPages || 1;
 
             if (page >= latestChatsTotalPages) {
@@ -610,15 +582,15 @@ $(document).ready(function() {
         }
         latestChatsLoading = false;
     }
-
-    // Initial load for Latest Chats
-    if ($('#latest-chats-section').length) {
-        loadLatestChats();
-    }
+    // trigger load latest on click of a button if needed
+    $(document).on('click', '#reload-latest-chats', function() {
+        loadLatestChats(1, true);
+    });
     // Initial load for Latest Video Chats
-    if ($('#latest-video-chats-section').length) {
-        loadLatestVideoChats();
-    }
+    $('#reload-latest-video-chats').on('click', function() {
+        loadLatestVideoChats(1, true);
+        emptyAllGalleriesExcept('latest-video-chats-gallery');
+    });
     // Optional: reload on tab switch or other triggers
     // Example: $('#reload-popular-chats').on('click', function(){ popularChatsPage=1; loadPopularChats(1, true); });
 
@@ -718,10 +690,8 @@ $(document).on('click', '#popular-chats-style-anime, #popular-chats-style-photor
     updateChatFilters();
     $('#all-chats-container').empty();
     $('#chat-gallery').show();
+    emptyAllGalleriesExcept('chat-gallery');
     $('.query-tag-all').click();
-    $('html, body').animate({
-        scrollTop: $('#chat-gallery').offset().top
-    }, 500);
 });
 // Reset style filter
 $(document).on('click', '.sorting-tools .btn:not([id^="popular-chats-style-"])', function() {
@@ -732,11 +702,22 @@ $(document).on('click', '.sorting-tools .btn:not([id^="popular-chats-style-"])',
     updateChatFilters();
     $('#all-chats-container').empty();
     $('#chat-gallery').show();
+    emptyAllGalleriesExcept('chat-gallery');
     $('.query-tag-all').click();
     $('html, body').animate({
         scrollTop: $('#chat-gallery').offset().top
     }, 500);
 });
+// Empty all gallery container but the on in parameter
+window.emptyAllGalleriesExcept = function(exceptId) {
+    const galleryIds = ['chat-gallery', 'all-chats-container', 'latest-chats-gallery', 'latest-video-chats-gallery', 'all-chats-images-gallery','all-chats-images-pagination-controls', 'latest-video-chats-pagination-controls', 'popular-chats-pagination-controls'];
+    galleryIds.forEach(id => {
+        if (id !== exceptId) {
+            $(`#${id}`).hide();
+        }
+    });
+    $(`#${exceptId}`).show();
+}
 // Filtering logic
 function updateChatFilters() {
       

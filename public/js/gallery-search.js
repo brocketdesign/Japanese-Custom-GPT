@@ -294,7 +294,7 @@ class GallerySearchManager {
     const cardHTML = `
       <div class="card shadow-sm border-0 rounded-3 h-100 gallery-card overflow-hidden">
         ${mediaContent}
-        <div class="card-body p-3 d-flex flex-column">
+        <div class="card-body p-3 d-flex flex-column d-none">
           <div class="d-flex align-items-center mb-2">
             <img src="${item.chatImageUrl}" alt="${item.chatName}" class="rounded-circle me-2" width="32" height="32" style="object-fit: cover;">
             <h6 class="mb-0 text-truncate">

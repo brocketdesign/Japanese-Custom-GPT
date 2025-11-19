@@ -1441,7 +1441,6 @@ function setupChatInterface(chat, character) {
         if (window.chatSuggestionsManager) {
             window.chatSuggestionsManager.hide();
         }
-        console.log(`[generateChatCompletion] Generating chat completion for userId: ${userId}, chatId: ${chatId}, userChatId: ${userChatId}, isHidden: ${isHidden}, uniqueId: ${uniqueId}`);
         $.ajax({
             url: API_URL + '/api/openai-chat-completion',
             method: 'POST',

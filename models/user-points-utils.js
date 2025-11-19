@@ -1417,9 +1417,7 @@ async function awardCharacterMessageMilestoneReward(db, userId, chatId, fastify 
     'character_message_milestone',
     fastify
   );
-  
-  console.log('💰 [DEBUG] Points awarded result:', pointsResult);
-  
+    
   // Record milestone as granted
   await milestonesCollection.insertOne({
     userId: new ObjectId(userId),

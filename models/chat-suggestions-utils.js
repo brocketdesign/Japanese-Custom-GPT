@@ -7,9 +7,24 @@ const { z } = require("zod");
 const { zodResponseFormat } = require("openai/helpers/zod");
 
 // Define the schema for chat suggestions
-const chatSuggestionsSchema = z.object({
-  suggestions: z.array(z.string()).length(3)
-});
+const chatSuggestionsSchema = {
+  type: "json_schema",
+  json_schema: {
+    name: "chat_suggestions",
+    schema: {
+      type: "object",
+      properties: {
+        suggestions: {
+          type: "array",
+          items: { type: "string" },
+          minItems: 3,
+          maxItems: 3
+        }
+      },
+      required: ["suggestions"]
+    }
+  }
+};
 
 /**
  * Generate chat suggestions based on current conversation context
@@ -75,30 +90,31 @@ ${conversationContext}
 
 Generate 3 conversation suggestions in ${language}.`;
 
-        const userPrompt = 'Generate 3 conversation suggestions based on the context above from the point of view of the user. Include the character name in the suggestions if applicable.';
+        const userPrompt = `Generate 3 conversation suggestions based on the context above from the point of view of the user (${userDetails}). Include the character name in the suggestions if applicable.`;
 
         // Use OpenAI with structured output
-        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-        
+        const openai = new OpenAI({
+            apiKey: process.env.NOVITA_API_KEY,
+            baseURL: "https://api.novita.ai/openai",
+        });        
         const response = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
+            model: "meta-llama/llama-3-70b-instruct",
             messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: userPrompt }
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userPrompt }
             ],
-            response_format: zodResponseFormat(chatSuggestionsSchema, "chat_suggestions"),
             max_tokens: 300,
             temperature: 0.8,
             top_p: 0.9,
+            response_format: chatSuggestionsSchema,
         });
-
+        
         const parsedResponse = JSON.parse(response.choices[0].message.content);
         return parsedResponse.suggestions;
 
     } catch (error) {
         console.error('[generateChatSuggestions] Error generating suggestions:', error);
-        const characterGender = chatDocument?.gender?.toLowerCase() || 'female';
-        return getDefaultSuggestions(relationshipType, language, characterGender);
+        return;
     }
 }
 

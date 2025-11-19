@@ -1,5 +1,10 @@
 const { ObjectId } = require('mongodb');
 const { getVoiceSettings, hasUserChattedWithCharacter } = require('../models/chat-tool-settings-utils');
+const { getUserChatToolSettings } = require('../models/chat-tool-settings-utils');
+
+const DEFAULT_CHAT_SETTINGS = require('../config/default-chat-settings.json');
+
+
 async function routes(fastify, options) {
     // Get available relationships based on gender
     fastify.get('/api/chat-tool-settings/relationships/:gender', async (request, reply) => {
@@ -37,24 +42,7 @@ async function routes(fastify, options) {
             });
             
             if (!settings) {
-                // Return default settings if none exist
-                const defaultSettings = {
-                    minImages: 3,
-                    videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
-                    characterTone: 'casual',
-                    relationshipType: 'companion',
-                    selectedVoice: 'nova',
-                    voiceProvider: 'standard',
-                    minimaxVoice: 'Wise_Woman',
-                    autoMergeFace: true,
-                    selectedModel: 'openai',
-                    suggestionsEnabled: true,
-                    autoImageGeneration: isPremium,
-                    speechRecognitionEnabled: true,
-                    speechAutoSend: true,
-                    scenariosEnabled: false
-                };
-                return reply.send({ success: true, settings: defaultSettings, isPremium });
+                return reply.send({ success: true, settings: DEFAULT_CHAT_SETTINGS, isPremium });
             }
 
             // Remove MongoDB specific fields from response
@@ -218,26 +206,10 @@ async function routes(fastify, options) {
 
             await collection.deleteOne(query);
 
-            const defaultSettings = {
-                minImages: 1,
-                videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
-                characterTone: 'casual',
-                relationshipType: 'companion',
-                selectedVoice: 'nova',
-                voiceProvider: 'standard',
-                minimaxVoice: 'Wise_Woman',
-                autoMergeFace: true,
-                selectedModel: 'openai-gpt4o',
-                suggestionsEnabled: true,
-                speechRecognitionEnabled: true,
-                speechAutoSend: true,
-                scenariosEnabled: false
-            };
-
             reply.send({ 
                 success: true, 
                 message: chatId ? 'Chat-specific settings reset to default' : 'Settings reset to default',
-                settings: defaultSettings,
+                settings: DEFAULT_CHAT_SETTINGS,
                 isChatSpecific: !!chatId,
                 isPremium
             });
@@ -265,79 +237,15 @@ async function routes(fastify, options) {
             });
             const isPremium = user?.subscriptionStatus === 'active';
 
-            const collection = fastify.mongo.db.collection('chatToolSettings');
+            // Use utility function to get settings with fallback
+            const settings = await getUserChatToolSettings(fastify.mongo.db, userId, chatId);
             
-            // First try to get chat-specific settings
-            const chatSettings = await collection.findOne({ 
-                userId: new ObjectId(userId),
-                chatId: new ObjectId(chatId)
-            });
-
-            if (chatSettings) {
-                const { _id, userId: userIdField, chatId: chatIdField, createdAt, updatedAt, ...settings } = chatSettings;
-                
-                // Override autoImageGeneration for non-premium users
-                if (!isPremium) {
-                    settings.autoImageGeneration = false;
-                }
-                
-                if (!settings.minimaxVoice && settings.evenLabVoice) {
-                    settings.minimaxVoice = settings.evenLabVoice;
-                }
-                delete settings.evenLabVoice;
-
-                if (!settings.voiceProvider) {
-                    settings.voiceProvider = 'standard';
-                }
-                return reply.send({ success: true, settings, isChatSpecific: true, isPremium });
+            // Override autoImageGeneration for non-premium users
+            if (!isPremium) {
+                settings.autoImageGeneration = false;
             }
 
-            // Fallback to user default settings
-            const userSettings = await collection.findOne({ 
-                userId: new ObjectId(userId),
-                chatId: { $exists: false }
-            });
-
-            if (userSettings) {
-                const { _id, userId: userIdField, createdAt, updatedAt, ...settings } = userSettings;
-                
-                // Override autoImageGeneration for non-premium users
-                if (!isPremium) {
-                    settings.autoImageGeneration = false;
-                }
-                
-                if (!settings.minimaxVoice && settings.evenLabVoice) {
-                    settings.minimaxVoice = settings.evenLabVoice;
-                }
-                delete settings.evenLabVoice;
-
-                if (!settings.voiceProvider) {
-                    settings.voiceProvider = 'standard';
-                }
-                console.log('[chat-tool-settings] Loaded user default settings as fallback for chatId:', chatId);
-                return reply.send({ success: true, settings, isChatSpecific: false, isPremium });
-            }
-
-            // Return default settings if none exist
-            console.log('[chat-tool-settings] No chat-specific or user default settings found, returning defaults');
-            const defaultSettings = {
-                minImages: 1,
-                videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
-                characterTone: 'casual',
-                relationshipType: 'companion',
-                selectedVoice: 'nova',
-                voiceProvider: 'standard',
-                minimaxVoice: 'Wise_Woman',
-                autoMergeFace: true,
-                selectedModel: 'openai-gpt4o',
-                suggestionsEnabled: true,
-                autoImageGeneration: isPremium,
-                speechRecognitionEnabled: true,
-                speechAutoSend: true,
-                scenariosEnabled: false
-            };
-
-            reply.send({ success: true, settings: defaultSettings, isChatSpecific: false, isPremium });
+            reply.send({ success: true, settings, isPremium });
             
         } catch (error) {
             console.error('Error fetching chat-specific settings:', error);

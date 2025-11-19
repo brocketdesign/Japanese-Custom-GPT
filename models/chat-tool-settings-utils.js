@@ -1,23 +1,5 @@
 const { ObjectId } = require('mongodb');
-
-/**
- * Default chat tool settings
- */
-const DEFAULT_SETTINGS = {
-    minImages: 3,
-    videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
-    relationshipType: 'companion',
-    selectedVoice: 'nova',
-    minimaxVoice: 'Wise_Woman',
-    voiceProvider: 'standard',
-    autoMergeFace: true,
-    autoImageGeneration: false,
-    goalsEnabled: false,
-    scenariosEnabled: false,
-    suggestionsEnabled: true,
-    speechRecognitionEnabled: true,
-    speechAutoSend: false
-};
+const DEFAULT_CHAT_SETTINGS = require('../config/default-chat-settings.json');
 
 /**
  * Get user's chat tool settings with fallback to defaults
@@ -29,7 +11,8 @@ const DEFAULT_SETTINGS = {
 async function getUserChatToolSettings(db, userId, chatId = null) {
     try {
         if (!userId || !ObjectId.isValid(userId)) {
-            return DEFAULT_SETTINGS;
+            console.warn('[getUserChatToolSettings] Invalid userId provided:', userId);
+            return DEFAULT_CHAT_SETTINGS;
         }
 
         const collection = db.collection('chatToolSettings');
@@ -40,10 +23,10 @@ async function getUserChatToolSettings(db, userId, chatId = null) {
                 userId: new ObjectId(userId),
                 chatId: new ObjectId(chatId)
             });
-            
+
             if (chatSettings) {
                 const { _id, userId: userIdField, chatId: chatIdField, createdAt, updatedAt, ...settings } = chatSettings;
-                return { ...DEFAULT_SETTINGS, ...settings };
+                return { ...DEFAULT_CHAT_SETTINGS, ...settings };
             }
         }
         
@@ -52,17 +35,17 @@ async function getUserChatToolSettings(db, userId, chatId = null) {
             userId: new ObjectId(userId),
             chatId: { $exists: false }
         });
-        
+
         if (userSettings) {
             const { _id, userId: userIdField, createdAt, updatedAt, ...settings } = userSettings;
-            return { ...DEFAULT_SETTINGS, ...settings };
+            return { ...DEFAULT_CHAT_SETTINGS, ...settings };
         }
         
-        return DEFAULT_SETTINGS;
+        return DEFAULT_CHAT_SETTINGS;
         
     } catch (error) {
         console.error('[getUserChatToolSettings] Error fetching settings:', error);
-        return DEFAULT_SETTINGS;
+        return DEFAULT_CHAT_SETTINGS;
     }
 }
 
@@ -116,11 +99,11 @@ async function getUserVideoPrompt(db, userId, chatId = null) {
         console.log(`[getUserVideoPrompt] User settings:`, settings);
         
         // Return user-specific video prompt or default if not set
-        return settings.videoPrompt || DEFAULT_SETTINGS.videoPrompt;
+        return settings.videoPrompt || DEFAULT_CHAT_SETTINGS.videoPrompt;
         
     } catch (error) {
         console.error('[getUserVideoPrompt] Error getting video prompt:', error);
-        return DEFAULT_SETTINGS.videoPrompt;
+        return DEFAULT_CHAT_SETTINGS.videoPrompt;
     }
 }
 /**
@@ -139,7 +122,7 @@ async function getVoiceSettings(db, userId, chatId = null) {
         const normalizedProvider = String(voiceProviderRaw).toLowerCase();
 
         if (normalizedProvider === 'premium' || normalizedProvider === 'minimax' || normalizedProvider === 'evenlab') {
-            const minimaxVoice = settings.minimaxVoice || settings.evenLabVoice || DEFAULT_SETTINGS.minimaxVoice;
+            const minimaxVoice = settings.minimaxVoice || settings.evenLabVoice || DEFAULT_CHAT_SETTINGS.minimaxVoice;
             return {
                 provider: 'minimax',
                 voice: minimaxVoice,
@@ -182,10 +165,10 @@ async function getVoiceSettings(db, userId, chatId = null) {
 async function getUserMinImages(db, userId, chatId = null) {
     try {
         const settings = await getUserChatToolSettings(db, userId, chatId);
-        return settings.minImages || DEFAULT_SETTINGS.minImages;
+        return settings.minImages || DEFAULT_CHAT_SETTINGS.minImages;
     } catch (error) {
         console.error('[getUserMinImages] Error getting minimum images:', error);
-        return DEFAULT_SETTINGS.minImages;
+        return DEFAULT_CHAT_SETTINGS.minImages;
     }
 }
 
@@ -199,10 +182,10 @@ async function getUserMinImages(db, userId, chatId = null) {
 async function getAutoMergeFaceSetting(db, userId, chatId = null) {
     try {
         const settings = await getUserChatToolSettings(db, userId, chatId);
-        return settings.autoMergeFace !== undefined ? settings.autoMergeFace : DEFAULT_SETTINGS.autoMergeFace;
+        return settings.autoMergeFace !== undefined ? settings.autoMergeFace : DEFAULT_CHAT_SETTINGS.autoMergeFace;
     } catch (error) {
         console.error('[getAutoMergeFaceSetting] Error getting auto merge face setting:', error);
-        return DEFAULT_SETTINGS.autoMergeFace;
+        return DEFAULT_CHAT_SETTINGS.autoMergeFace;
     }
 }
 
@@ -281,10 +264,10 @@ async function getUserPremiumStatus(db, userId) {
 async function getAutoImageGenerationSetting(db, userId, chatId = null) {
     try {
         const settings = await getUserChatToolSettings(db, userId, chatId);
-        return settings.autoImageGeneration !== undefined ? settings.autoImageGeneration : DEFAULT_SETTINGS.autoImageGeneration;
+        return settings.autoImageGeneration !== undefined ? settings.autoImageGeneration : DEFAULT_CHAT_SETTINGS.autoImageGeneration;
     } catch (error) {
         console.error('[getAutoImageGenerationSetting] Error getting auto image generation setting:', error);
-        return DEFAULT_SETTINGS.autoImageGeneration;
+        return DEFAULT_CHAT_SETTINGS.autoImageGeneration;
     }
 }
 
@@ -355,7 +338,7 @@ function getAvailableRelationshipsByGender(gender = 'female') {
 }
 
 module.exports = {
-    DEFAULT_SETTINGS,
+    DEFAULT_CHAT_SETTINGS,
     getUserChatToolSettings,
     applyUserSettingsToPrompt,
     getUserVideoPrompt,

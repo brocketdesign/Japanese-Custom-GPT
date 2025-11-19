@@ -1,21 +1,6 @@
 const { MongoClient, ObjectId } = require('mongodb');
 require('dotenv').config();
-
-const defaultSettings = {
-    minImages: 1,
-    videoPrompt: 'Generate a short, engaging video with smooth transitions and vibrant colors.',
-    characterTone: 'casual',
-    relationshipType: 'companion',
-    selectedVoice: 'nova',
-    voiceProvider: 'standard',
-    minimaxVoice: 'Wise_Woman',
-    autoMergeFace: true,
-    selectedModel: 'openai-gpt4o',
-    suggestionsEnabled: true,
-    speechRecognitionEnabled: true,
-    speechAutoSend: true,
-    scenariosEnabled: false
-};
+const DEFAULT_CHAT_SETTINGS = require('../config/default-chat-settings.json');
 
 async function resetAllSettings() {
     const client = new MongoClient(process.env.MONGODB_URI);

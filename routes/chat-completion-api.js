@@ -532,7 +532,7 @@ async function routes(fastify, options) {
             const isPremium = subscriptionStatus;
             
             //console.log(`[/api/openai-chat-completion] Using model: ${selectedModel}, Language: ${language}, Premium: ${isPremium}`);
-            console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
+            //console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
             //console.log(`[/api/openai-chat-completion] Messages for completion:`, messagesForCompletion);
             
             generateCompletion(messagesForCompletion, 600, selectedModel, language, selectedModel, isPremium)
@@ -567,10 +567,10 @@ async function routes(fastify, options) {
                     // Check if the assistant's new message was an image request [ONLY IF THE USER SETTING IS ENABLED] // New Update
                     const newUserPointsBalance = await getUserPoints(db, userId);
                     const autoImageGenerationEnabled = await getAutoImageGenerationSetting(db, userId, chatId);
-
+                    console.log(`[/api/openai-chat-completion] Auto Image Generation Setting:`, autoImageGenerationEnabled);
                     if( messagesForCompletion.length > 4 && newUserPointsBalance >= 10 && autoImageGenerationEnabled ) {
                         const assistantImageRequest = await checkImageRequest(newAssistantMessage.content, lastUserMessage.content);
-                        //console.log(`[/api/openai-chat-completion] Image request detected:`, assistantImageRequest);
+                        console.log(`[/api/openai-chat-completion] Image request detected:`, assistantImageRequest);
                         if (assistantImageRequest && assistantImageRequest.image_request) {
                             lastUserMessage.content += ' ' + newAssistantMessage.content;
                             // [OVERWRITE] Use the character nsfw setting for auto image generation

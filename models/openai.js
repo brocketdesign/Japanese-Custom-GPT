@@ -312,7 +312,6 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
 const formatSchema = z.object({
   image_request: z.boolean(),
   nsfw: z.boolean(),
-  reason: z.string()
 });
 const checkImageRequest = async (lastAssistantMessage,lastUserMessage) => {
 
@@ -325,14 +324,13 @@ const checkImageRequest = async (lastAssistantMessage,lastUserMessage) => {
       You are a helpful assistant designed to evaluate whether the assistant's response is trying to generate an image. \n
       1. **image_request**: true if the message is an explicit request for image generation, false otherwise.
       2. **nsfw**: Based on the request, what is the kind of image that should be generated ? true if the content is explicit or adult-oriented, false otherwise.
-      3. **reason**: you explain why it is an image request or not.
     `;
     const analysisPrompt = `
       Analyze the following request considering ALL aspects:\n\n
       "User: ${lastUserMessage}"\n
       "Assistant: ${lastAssistantMessage}"\n\n
       Is the assistant trying to send an image following the user message ?
-      Format response using JSON object with the following keys: image_request, nsfw, reason.
+      Format response using JSON object with the following keys: image_request, nsfw.
     `;
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -464,47 +462,58 @@ async function generatePromptSuggestions(messages, chatDescription, language, mo
     .filter(m => m.content && !m.content.startsWith('[Image]') && m.role !== 'system')
     .slice(-5);
 
-  console.log(`[generatePromptSuggestions] Using OpenAI gpt-4o-mini for stable structured output in language: ${language}`);
-
-  // Define Zod schemas for each category
-  const chatSchema = z.object({
-    chat: z.array(z.string()).length(3)
-  });
-
-  const feelingsSchema = z.object({
-    feelings: z.array(z.string()).length(3)
-  });
-
-  const image_requestSchema = z.object({
-    image_request: z.array(z.string()).length(3)
-  });
-
   // Create separate request functions for each category using OpenAI
-  const generateCategory = async (categoryName, categoryPrompt, schema) => {
+  const generateCategory = async (categoryName, categoryPrompt) => {
     try {
-      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const openai = new OpenAI({ 
+        apiKey: process.env.NOVITA_API_KEY,
+        baseURL: "https://api.novita.ai/openai"
+      });
 
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          { 
+    const messages = [
+      { 
         role: "system", 
         content: `Generate exactly 3 ${categoryName} suggestions in ${language}. ${categoryPrompt} Be creative and engaging. Include emojis for visual appeal. From the user point of view. You start your sentence with "I ...".` 
-          },
-          ...lastUserMessagesContent,
-          { 
+      },
+      // Ensure lastUserMessagesContent is an array of {role, content} objects
+      ...lastUserMessagesContent,
+      { 
         role: "user", 
         content: `I need suggestion to converse with the following character: ${chatDescription}\n\nGenerate 3 unique ${categoryName} suggestions that fit the provided character description and the conversation. From the user point of view.` 
-          },
-          {
-        role: 'user',
+      },
+      {
+        role: "user",
         content: `Provide concise suggestions in ${language}. One short sentence. Use first person for your sentence. The user is sending the messages.`
+      }
+    ];
+
+    const response = await openai.chat.completions.create({
+      model: "meta-llama/llama-3-70b-instruct", // Novita-supported model
+      messages,
+      max_tokens: 800,
+      temperature: 1,
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: `${categoryName}_suggestions`,
+          schema: {
+            type: "object",
+            properties: {
+              [categoryName]: {
+                type: "array",
+                items: { type: "string" },
+                minItems: 3,
+                maxItems: 3
+              }
+            },
+            required: [categoryName],
+            additionalProperties: false
           }
-        ],
-        max_completion_tokens: 800,
-        temperature: 1,
-        response_format: zodResponseFormat(schema, `${categoryName}_suggestions`)
-      });
+        },
+        strict: true
+      }
+    });
+
 
       const parsed = JSON.parse(response.choices[0].message.content);
       const items = parsed[categoryName] || [];
@@ -526,9 +535,9 @@ async function generatePromptSuggestions(messages, chatDescription, language, mo
 
     // Generate all categories in parallel using OpenAI
     const [chat, feelings, image_request] = await Promise.all([
-      generateCategory('chat', categoryPrompts.chat, chatSchema),
-      generateCategory('feelings', categoryPrompts.feelings, feelingsSchema),
-      generateCategory('image_request', categoryPrompts.image_request, image_requestSchema),
+      generateCategory('chat', categoryPrompts.chat),
+      generateCategory('feelings', categoryPrompts.feelings),
+      generateCategory('image_request', categoryPrompts.image_request),
     ]);
 
     const total = chat.length + feelings.length + image_request.length;

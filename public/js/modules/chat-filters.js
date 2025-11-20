@@ -1,8 +1,8 @@
 // chat-filters.js
-// Manages premium, gender, NSFW, style filters with cookies and applies them after display
+// Updated for the new gender dropdown design (November 2025)
 
 let premiumChatsHidden = Cookies.get('premiumChatsHidden') === 'true';
-let currentGenderFilter = Cookies.get('currentGenderFilter') || null;
+let currentGenderFilter = Cookies.get('currentGenderFilter') || null;  // 'female', 'male', 'nonbinary', or null
 let nsfwChatsHidden = Cookies.get('nsfwChatsHidden') === 'true';
 let currentStyleFilter = Cookies.get('currentStyleFilter') || null;
 
@@ -12,7 +12,7 @@ const logFilters = (context) => {
             premiumChatsHidden,
             currentGenderFilter,
             nsfwChatsHidden,
-            currentStyleFilter,
+            currentStyleFilter
         });
     } catch {}
 };
@@ -28,6 +28,7 @@ const updateChatFilters = () => {
         const style = styleMatch ? styleMatch[1] : null;
 
         let show = true;
+
         if (premiumChatsHidden && isPremium) show = false;
         if (currentGenderFilter && gender !== currentGenderFilter) show = false;
         if (nsfwChatsHidden && isNSFW) show = false;
@@ -37,23 +38,42 @@ const updateChatFilters = () => {
     });
 };
 
-// Restore UI state
+// Helper: Update the dropdown button text + icon
+const updateGenderDropdownDisplay = (gender) => {
+    const selectedTextEl = document.getElementById('selected-gender-text');
+    if (!selectedTextEl) return;
+
+    const labels = {
+        female: { icon: '<i class="bi bi-gender-female text-primary"></i>', text: window.translations?.sort?.female || 'Female' },
+        male: { icon: '<i class="bi bi-gender-male text-info"></i>', text: window.translations?.sort?.male || 'Male' },
+        nonbinary: { icon: '<i class="bi bi-gender-trans text-success"></i>', text: window.translations?.sort?.nonBinary || 'Non-binary' }
+    };
+
+    if (gender && labels[gender]) {
+        selectedTextEl.innerHTML = `${labels[gender].icon} <span class="ms-1">${labels[gender].text}</span>`;
+    } else {
+        // Default "All genders" or fallback
+        selectedTextEl.innerHTML = `<i class="bi bi-gender-ambiguous"></i> <span class="ms-1">${window.translations?.sort?.allGenders || 'All Genders'}</span>`;
+    }
+};
+
+// On page load – restore state
 $(function () {
     const t = window.translations?.sort || {};
+
+    // Premium button text
     $('#popular-chats-premium').text(
         premiumChatsHidden ? (t.showPremium || 'Show Premium') : (t.hidePremium || 'Hide Premium')
     );
-    if (currentGenderFilter) {
-        $('.sorting-tools button').removeClass('active');
-        $(`#popular-chats-gender-${currentGenderFilter}`).addClass('active');
-    }
+
+    // NSFW button text
     $('#popular-chats-nsfw').text(
         nsfwChatsHidden ? (t.showNSFW || 'Show NSFW') : (t.hideNSFW || 'Hide NSFW')
     );
-    if (currentStyleFilter) {
-        $('.sorting-tools button').removeClass('active');
-        $(`#popular-chats-style-${currentStyleFilter}`).addClass('active');
-    }
+
+    // Restore gender dropdown appearance
+    updateGenderDropdownDisplay(currentGenderFilter);
+
     logFilters('on page load');
     updateChatFilters();
 });
@@ -62,28 +82,9 @@ $(function () {
 $(document).on('click', '#popular-chats-premium', function () {
     premiumChatsHidden = !premiumChatsHidden;
     Cookies.set('premiumChatsHidden', premiumChatsHidden, { expires: 7 });
-    logFilters('premium toggle');
-    updateChatFilters();
     const t = window.translations?.sort || {};
     $(this).text(premiumChatsHidden ? (t.showPremium || 'Show Premium') : (t.hidePremium || 'Hide Premium'));
-});
-
-// Gender filters
-$(document).on('click', '#popular-chats-gender-female, #popular-chats-gender-male, #popular-chats-gender-nonbinary', function () {
-    currentGenderFilter = this.id.replace('popular-chats-gender-', '');
-    Cookies.set('currentGenderFilter', currentGenderFilter, { expires: 7 });
-    $('.sorting-tools button').removeClass('active');
-    $(this).addClass('active');
-    logFilters('gender filter');
-    updateChatFilters();
-});
-
-// Reset gender (clicking any non-gender button within .sorting-tools)
-$(document).on('click', '.sorting-tools .btn:not([id^="popular-chats-gender-"])', function () {
-    currentGenderFilter = null;
-    Cookies.remove('currentGenderFilter');
-    $('.sorting-tools button').removeClass('active');
-    logFilters('reset gender filter');
+    logFilters('premium toggle');
     updateChatFilters();
 });
 
@@ -91,13 +92,49 @@ $(document).on('click', '.sorting-tools .btn:not([id^="popular-chats-gender-"])'
 $(document).on('click', '#popular-chats-nsfw', function () {
     nsfwChatsHidden = !nsfwChatsHidden;
     Cookies.set('nsfwChatsHidden', nsfwChatsHidden, { expires: 7 });
-    logFilters('nsfw toggle');
-    updateChatFilters();
     const t = window.translations?.sort || {};
     $(this).text(nsfwChatsHidden ? (t.showNSFW || 'Show NSFW') : (t.hideNSFW || 'Hide NSFW'));
+    logFilters('nsfw toggle');
+    updateChatFilters();
 });
 
-// Style filters
+// ========== GENDER DROPDOWN HANDLER (NEW) ==========
+$(document).on('click', '.dropdown-menu [data-gender]', function (e) {
+    e.preventDefault();
+    const gender = $(this).data('gender');  // 'female', 'male', 'nonbinary'
+
+    if (currentGenderFilter === gender) {
+        // Clicking the same → reset to "All"
+        currentGenderFilter = null;
+        Cookies.remove('currentGenderFilter');
+    } else {
+        // Select new gender
+        currentGenderFilter = gender;
+        Cookies.set('currentGenderFilter', currentGenderFilter, { expires: 7 });
+    }
+
+    // Update visual
+    updateGenderDropdownDisplay(currentGenderFilter);
+
+    // Close dropdown (Bootstrap handles it, but ensure)
+    $(this).closest('.dropdown-menu').dropdown('hide');
+
+    logFilters('gender filter changed');
+    updateChatFilters();
+});
+
+// Reset gender when clicking other filters (optional – keeps UX clean)
+$(document).on('click', '.sorting-tools .btn:not(.dropdown-toggle)', function () {
+    if (currentGenderFilter !== null) {
+        currentGenderFilter = null;
+        Cookies.remove('currentGenderFilter');
+        updateGenderDropdownDisplay(null);
+        logFilters('gender filter reset by other button');
+        updateChatFilters();
+    }
+});
+
+// Style filters (unchanged logic)
 $(document).on('click', '#popular-chats-style-anime, #popular-chats-style-photorealistic', function () {
     currentStyleFilter = this.id.replace('popular-chats-style-', '');
     Cookies.set('currentStyleFilter', currentStyleFilter, { expires: 7 });
@@ -105,6 +142,7 @@ $(document).on('click', '#popular-chats-style-anime, #popular-chats-style-photor
     $(this).addClass('active');
     logFilters('style filter');
     updateChatFilters();
+
     $('#all-chats-container').empty();
     $('#chat-gallery').show();
     if (typeof window.emptyAllGalleriesExcept === 'function') {
@@ -113,26 +151,30 @@ $(document).on('click', '#popular-chats-style-anime, #popular-chats-style-photor
     $('.query-tag-all').click();
 });
 
-// Reset style (clicking any non-style button within .sorting-tools)
 $(document).on('click', '.sorting-tools .btn:not([id^="popular-chats-style-"])', function () {
-    currentStyleFilter = null;
-    Cookies.remove('currentStyleFilter');
-    $('.sorting-tools button').removeClass('active');
-    logFilters('reset style filter');
-    updateChatFilters();
-    $('#all-chats-container').empty();
-    $('#chat-gallery').show();
-    if (typeof window.emptyAllGalleriesExcept === 'function') {
-        window.emptyAllGalleriesExcept('chat-gallery');
+    if (currentStyleFilter !== null) {
+        currentStyleFilter = null;
+        Cookies.remove('currentStyleFilter');
+        $('.sorting-tools button').removeClass('active');
+        logFilters('reset style filter');
+        updateChatFilters();
+
+        $('#all-chats-container').empty();
+        $('#chat-gallery').show();
+        if (typeof window.emptyAllGalleriesExcept === 'function') {
+            window.emptyAllGalleriesExcept('chat-gallery');
+        }
+        $('.query-tag-all').click();
+        $('html, body').animate({ scrollTop: $('#chat-gallery').offset().top }, 500);
     }
-    $('.query-tag-all').click();
-    $('html, body').animate({ scrollTop: $('#chat-gallery').offset().top }, 500);
 });
 
-// Ensure filters apply after any displayChats call
+// Re-apply filters after any new chats are displayed
 const originalDisplayChats = window.displayChats;
 window.displayChats = function (...args) {
-    if (typeof originalDisplayChats === 'function') originalDisplayChats.apply(this, args);
+    if (typeof originalDisplayChats === 'function') {
+        originalDisplayChats.apply(this, args);
+    }
     logFilters('after displayChats');
     updateChatFilters();
 };

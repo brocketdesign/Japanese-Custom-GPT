@@ -172,7 +172,7 @@
                     <div class="row g-3 align-items-center">
 
                         <!-- [DISABLE] Gender Filter Buttons -->
-                        <div class="d-none col-12 col-md d-flex align-items-center gap-2 flex-wrap justify-content-between justify-content-md-start">
+                        <div class="col-12 col-md d-flex align-items-center gap-2 flex-wrap justify-content-between justify-content-md-start">
                             <span class="me-2 text-muted" style="font-size: 15px;">
                                 <i class="bi bi-gender-ambiguous"></i> {{translations.sort.genderLabel}}
                             </span>
@@ -219,10 +219,12 @@
 
                             <!-- Action button section #reload-latest-chats -->
                             <div class="col-12 col-md-auto d-flex justify-content-center justify-content-md-start mx-3">
-                                <button id="reload-latest-chats" class="badge btn-outline-primary">
+                                <button id="reload-latest-chats" class="btn-flat-border btn-outline-primary" style="border: none!important;
+background-color: color(srgb 0.5022 0.2316 0.965 / 0.2) !important;">
                                     <i class="bi bi-arrow-clockwise me-1"></i>{{#if translations.recent}}{{translations.recent}}{{else}}Recent{{/if}}
                                 </button>
-                                <button id="reload-latest-video-chats" class="badge btn-outline-primary ms-2">
+                                <button id="reload-latest-video-chats" class="btn-flat-border btn-outline-primary ms-2" style="border: none!important;
+background-color: color(srgb 0.5022 0.2316 0.965 / 0.2) !important;">
                                     <i class="bi bi-film me-1"></i>{{#if translations.recentVideos}}{{translations.recentVideos}}{{else}}Recent Videos{{/if}}
                                 </button>
                             </div>
@@ -268,542 +270,41 @@
     </div>
  {{> dashboard-footer}}
 
-<script src="https://cdn.jsdelivr.net/npm/blueimp-md5@2.19.0/js/md5.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-<script src="/js/merge-face.js"></script>
-<script src="/js/txt2speech.js"></script>
-<script src="/js/dashboard-category.js"></script>
-<script src="/js/chat-tool-swiper.js"></script>
-<script src="/js/chat-tool-toolbar.js"></script>
-<script src="/js/chat-list.js"></script>
-<script src="/js/favorites.js"></script>
-<script src="/js/chat-tool-prompts.js"></script>
-<script src="/js/chat-tool-gifts.js"></script>
-<script src="/js/chat-tool-settings.js"></script>
-<script src="/js/chat-tool-message.js"></script>
-<script src="/js/chat-tool-goals.js"></script>
-<script src="/js/chat-suggestions.js"></script>
-<script src="/js/chat-scenario.js"></script>
-<script src="/js/chat-footer.js"></script>
-<script src="/js/live-goals-widget.js"></script>
-<script src="/js/chat.js"></script>
-<script src="/js/character-infos.js"></script>
-<script src="/js/img2video.js"></script>
-<script src="/js/speech-to-text-init.js"></script>
-<script src="/js/speech-to-text-ui.js"></script>
-<script src="/js/speech-to-text-utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/blueimp-md5@2.19.0/js/md5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="/js/merge-face.js"></script>
+    <script src="/js/txt2speech.js"></script>
+    <script src="/js/dashboard-category.js"></script>
+    <script src="/js/chat-tool-swiper.js"></script>
+    <script src="/js/chat-tool-toolbar.js"></script>
+    <script src="/js/chat-list.js"></script>
+    <script src="/js/favorites.js"></script>
+    <script src="/js/chat-tool-prompts.js"></script>
+    <script src="/js/chat-tool-gifts.js"></script>
+    <script src="/js/chat-tool-settings.js"></script>
+    <script src="/js/chat-tool-message.js"></script>
+    <script src="/js/chat-tool-goals.js"></script>
+    <script src="/js/chat-suggestions.js"></script>
+    <script src="/js/chat-scenario.js"></script>
+    <script src="/js/chat-footer.js"></script>
+    <script src="/js/live-goals-widget.js"></script>
+    <script src="/js/chat.js"></script>
+    <script src="/js/character-infos.js"></script>
+    <script src="/js/img2video.js"></script>
+    <script src="/js/speech-to-text-init.js"></script>
+    <script src="/js/speech-to-text-ui.js"></script>
+    <script src="/js/speech-to-text-utils.js"></script>
 
-<script>
-    const newSubscription = {{newSubscription}};
-$(document).ready(function() {
-    
-    function adjustHeight() {
-        const newHeight = $(window).height() * 0.97;
-        $('.chat-contain .card-body').height(newHeight);
-    }
-    $(document).ready(adjustHeight);
-    $(window).resize(adjustHeight);
+    <!-- Modularized scripts extracted from inline block -->
+    <script src="/js/modules/layout-adjustments.js"></script>
+    <script src="/js/modules/iframe-communication.js"></script>
+    <script src="/js/modules/chat-history.js"></script>
+    <script src="/js/modules/popular-chats.js"></script>
+    <script src="/js/modules/latest-chats.js"></script>
+    <script src="/js/modules/chat-filters.js"></script>
+    <script src="/js/modules/ui-helpers.js"></script>
+    <script src="/js/modules/checkout.js"></script>
+    <script src="/js/modules/init.js"></script>
 
-    function resizeIframe() {
-        var iframe = $('#user-profile-page');
-        if(iframe.length == 0 ){return}
-        const newHeight = iframe[0].contentWindow.document.body.scrollHeight
-        if( newHeight > 0) { iframe.height(newHeight); }
-    }  
-    window.addEventListener('message', function(event) {
-        if (event.data === 'resizeIframe') {
-            resizeIframe();
-        }
-    });
-
-    window.addEventListener('message', function(event) {
-        if (event.data.event === 'openChat') {
-            redirectToChat(event.data.chatId)
-        }
-    });
-
-    window.addEventListener('message', function(event) {
-        if (event.data.event === 'updatePersona') {
-             updatePersona(event.data.personaId,event.data.isAdding)
-        }
-    });
-    
-    window.addEventListener('message', function(event) {
-        if (event.data.event === 'updateCoins') {
-             updateCoins()
-        }
-    });
-
-
-
-
-
-    $(document).on('click','.history-chat', function(){
-        const chatId = $(this).data('id')
-        console.log(`[Chat History] Opening chat history for chat ID: ${chatId} for userId: ${userId}`);
-        if(chatId && userId){ 
-            getUserChatHistory(chatId, userId) 
-        }
-    })
-
-    $('.nav-link').on('click', function(e) {
-        e.preventDefault();
-        $('.nav-link').removeClass('active');
-        $(this).addClass('active');
-        
-        if ($(this).text().trim() === 'ペルソナ') {
-            $('.custom-card').hide();
-            $('.custom-card .persona.on').closest('.custom-card').show();
-        } else {
-            $('.custom-card').show();
-        }
-    });
-
-    // --- Popular Chats Infinite Scroll with Session Storage Caching ---
-    let popularChatsPage = 1;
-    let popularChatsLoading = false;
-    let popularChatsTotalPages = 1;
-    const POPULAR_CHATS_CACHE_KEY = 'popularChatsCache';
-    const POPULAR_CHATS_CACHE_TIME_KEY = 'popularChatsCacheTime';
-    const POPULAR_CHATS_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in ms
-
-    // Helper to get cache
-    function getPopularChatsCache() {
-        const cache = sessionStorage.getItem(POPULAR_CHATS_CACHE_KEY);
-        const cacheTime = sessionStorage.getItem(POPULAR_CHATS_CACHE_TIME_KEY);
-        if (!cache || !cacheTime) return null;
-        if (Date.now() - parseInt(cacheTime, 10) > POPULAR_CHATS_CACHE_TTL) {
-            sessionStorage.removeItem(POPULAR_CHATS_CACHE_KEY);
-            sessionStorage.removeItem(POPULAR_CHATS_CACHE_TIME_KEY);
-            return null;
-        }
-        try {
-            return JSON.parse(cache);
-        } catch {
-            return null;
-        }
-    }
-
-    // Helper to set cache
-    function setPopularChatsCache(page, data) {
-        let cache = getPopularChatsCache() || {};
-        cache[page] = data;
-        sessionStorage.setItem(POPULAR_CHATS_CACHE_KEY, JSON.stringify(cache));
-        sessionStorage.setItem(POPULAR_CHATS_CACHE_TIME_KEY, Date.now().toString());
-    }
-
-    async function loadPopularChats(page = 1, reload = false) {
-        if (popularChatsLoading && !reload) return; // Added !reload to allow forced reload
-        popularChatsLoading = true;
-        // Show spinner for popular chats
-        $('#popular-chats-pagination-controls').html('<div class="text-center my-3"><div class="spinner-border text-secondary spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>');
-
-        if (reload) { // Added reload logic for popular chats as well
-            popularChatsPage = 1;
-            $('#chat-gallery').empty(); // 'chat-gallery' is the popular chats container
-            sessionStorage.removeItem(POPULAR_CHATS_CACHE_KEY);
-            sessionStorage.removeItem(POPULAR_CHATS_CACHE_TIME_KEY);
-        }
-
-        let cache = getPopularChatsCache(); // Ensure this function exists or adapt
-        let data = cache && cache[page];
-        if (data) {
-            // console.log(`Loading popular chats page ${page} from cache`);
-            window.displayChats(data.chats, 'chat-gallery', false); // Corrected target ID
-            emptyAllGalleriesExcept('chat-gallery');
-            popularChatsTotalPages = data.totalPages || 1;
-            if (page >= popularChatsTotalPages) {
-                $('#popular-chats-pagination-controls').html('');
-            } else {
-                $('#popular-chats-pagination-controls').html('<div class="text-center my-3"><div class="spinner-border text-secondary spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>');
-            }
-            popularChatsLoading = false;
-            return;
-        }
-
-        try {
-            // console.log(`Fetching popular chats page ${page} from API`);
-            const res = await fetch(`/api/popular-chats?page=${page}&reloadCache=${reload}`);
-            if (!res.ok) {
-                $('#popular-chats-pagination-controls').html('<div class="text-center text-danger my-3">Failed to load popular chats.</div>');
-                popularChatsLoading = false;
-                return;
-            }
-            data = await res.json();
-            setPopularChatsCache(page, data); // Ensure this function exists or adapt
-
-            // Shuffle popular chats if desired (example from your existing code)
-            if (Array.isArray(data.chats)) {
-                data.chats = data.chats
-                    .map(value => ({ value, sort: Math.random() }))
-                    .sort((a, b) => a.sort - b.sort)
-                    .map(({ value }) => value);
-            }
-            emptyAllGalleriesExcept('chat-gallery');
-            window.displayChats(data.chats, 'chat-gallery', false); // Corrected target ID
-            popularChatsTotalPages = data.totalPages || 1;
-            if (page >= popularChatsTotalPages) {
-                $('#popular-chats-pagination-controls').html('');
-            } else {
-                $('#popular-chats-pagination-controls').html('<div class="text-center my-3"><div class="spinner-border text-secondary spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>');
-            }
-        } catch (e) {
-            $('#popular-chats-pagination-controls').html('<div class="text-center text-danger my-3">Error loading popular chats.</div>');
-        }
-        popularChatsLoading = false;
-    }
-
-    // Reset popular chats cache button 
-    $('#reset-popular-chat-cache').on('click', function() {
-        resetPopularChatCache();
-        $('#chat-gallery').empty();
-        loadPopularChats(1, true);
-    });
-    
-    window.resetPopularChatCache = function() {
-        sessionStorage.removeItem(POPULAR_CHATS_CACHE_KEY);
-        sessionStorage.removeItem(POPULAR_CHATS_CACHE_TIME_KEY);
-        popularChatsPage = 1;
-        return fetch('/api/popular-chats/reset-cache', {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({ reloadCache: true })
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Failed to reset popular chats cache');
-            return response.json();
-        })
-        .then(data => {
-            return data;
-        })
-        .catch(err => {
-            console.error('Error resetting popular chats cache:', err);
-        });
-    };
-
-    // Initial load (always loads page 1)
-    loadPopularChats();
-
-    // Infinite scroll for popular chats
-    $(window).on('scroll.popularChats', function() {
-        if (
-            !popularChatsLoading &&
-            popularChatsPage < popularChatsTotalPages &&
-            $(window).scrollTop() + $(window).height() >= $(document).height() - 200
-        ) {
-            popularChatsPage++;
-            loadPopularChats(popularChatsPage);
-        }
-    });
-
-    // Global states for Latest Chats
-    var latestChatsPage = 1;
-    var latestChatsLoading = false;
-    var latestChatsTotalPages = 1;
-    const LATEST_CHATS_CACHE_KEY = 'latestChatsCache';
-    const LATEST_CHATS_CACHE_TIME_KEY = 'latestChatsCacheTime';
-    const LATEST_CHATS_CACHE_TTL = 1 * 60 * 60 * 1000; // 1 hour in milliseconds
-
-    // --- Latest Chats ---
-    function getLatestChatsCache() {
-        const cache = sessionStorage.getItem(LATEST_CHATS_CACHE_KEY);
-        const cacheTime = sessionStorage.getItem(LATEST_CHATS_CACHE_TIME_KEY);
-        if (!cache || !cacheTime) return null;
-        if (Date.now() - parseInt(cacheTime, 10) > LATEST_CHATS_CACHE_TTL) {
-            sessionStorage.removeItem(LATEST_CHATS_CACHE_KEY);
-            sessionStorage.removeItem(LATEST_CHATS_CACHE_TIME_KEY);
-            return null;
-        }
-        try {
-            return JSON.parse(cache);
-        } catch {
-            return null;
-        }
-    }
-
-    function setLatestChatsCache(page, data) {
-        let cache = getLatestChatsCache() || {};
-        cache[page] = data;
-        sessionStorage.setItem(LATEST_CHATS_CACHE_KEY, JSON.stringify(cache));
-        sessionStorage.setItem(LATEST_CHATS_CACHE_TIME_KEY, Date.now().toString());
-    }
-    window.loadLatestChats = async function(page = 1, reload = false) {
-        if (latestChatsLoading && !reload) {
-            return;
-        }
-        latestChatsLoading = true;
-        //$('#latest-chats-pagination-controls').html('<div class="text-center my-3"><div class="spinner-border text-secondary spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>');
-
-        if (reload) {
-            latestChatsPage = 1;
-            $('#latest-chats-gallery').empty();
-            sessionStorage.removeItem(LATEST_CHATS_CACHE_KEY);
-            sessionStorage.removeItem(LATEST_CHATS_CACHE_TIME_KEY);
-        }
-
-        let cache = getLatestChatsCache();
-        let data = cache && cache[page];
-
-        if (data) { // Disable cache for now
-            window.displayChats(data.chats, 'latest-chats-gallery', false);
-            latestChatsTotalPages = data.totalPages || 1;
-            if (page >= latestChatsTotalPages) {
-                $('#latest-chats-pagination-controls').html('');
-            }
-            latestChatsLoading = false;
-            return;
-        }
-
-        try {
-            const res = await fetch(`/api/latest-chats?page=${page}`);
-            if (!res.ok) {
-                $('#latest-chats-pagination-controls').html('<div class="text-center text-danger my-3">Failed to load chats.</div>');
-                latestChatsLoading = false;
-                return;
-            }
-            data = await res.json();
-            setLatestChatsCache(page, data);
-
-            window.displayChats(data.chats, 'latest-chats-gallery', false);
-            emptyAllGalleriesExcept('latest-chats-gallery');
-            latestChatsTotalPages = data.totalPages || 1;
-
-            if (page >= latestChatsTotalPages) {
-                $('#latest-chats-pagination-controls').html('');
-            } else {
-                //$('#latest-chats-pagination-controls').html('<div class="text-center my-3"><div class="spinner-border text-secondary spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>');
-            }
-        } catch (e) {
-            console.error('[LatestChats] Error loading chats:', e);
-            $('#latest-chats-pagination-controls').html('<div class="text-center text-danger my-3">Error loading chats.</div>');
-        }
-        latestChatsLoading = false;
-    }
-    // trigger load latest on click of a button if needed
-    $(document).on('click', '#reload-latest-chats', function() {
-        loadLatestChats(1, true);
-    });
-    // Initial load for Latest Video Chats
-    $('#reload-latest-video-chats').on('click', function() {
-        loadLatestVideoChats(1, true);
-        emptyAllGalleriesExcept('latest-video-chats-gallery');
-    });
-    // Optional: reload on tab switch or other triggers
-    // Example: $('#reload-popular-chats').on('click', function(){ popularChatsPage=1; loadPopularChats(1, true); });
-
-});
-/* --- Sorting and Filtering for Popular Chats --- */
-
-// Premium filter state
-let premiumChatsHidden = false; //Cookies.get('premiumChatsHidden') === 'true' || (isTemporary || !subscriptionStatus);
-let currentGenderFilter = Cookies.get('currentGenderFilter') || null;
-
-// NSFW filter state
-let nsfwChatsHidden = Cookies.get('nsfwChatsHidden') === 'true';
-
-// Style filter state
-let currentStyleFilter = Cookies.get('currentStyleFilter') || null;
-/*
- * Comprehensive log before calling updateChatFilters
- */
-function logChatFilterStates(context) {
-    return
-    console.log('[ChatFilter] Context:', context);
-    console.log('[ChatFilter] premiumChatsHidden:', premiumChatsHidden);
-    console.log('[ChatFilter] currentGenderFilter:', currentGenderFilter);
-    console.log('[ChatFilter] nsfwChatsHidden:', nsfwChatsHidden);
-    console.log('[ChatFilter] currentStyleFilter:', currentStyleFilter);
-    // Optionally log cookies for debugging
-    console.log('[ChatFilter] Cookies:', {
-        premiumChatsHidden: Cookies.get('premiumChatsHidden'),
-        currentGenderFilter: Cookies.get('currentGenderFilter'),
-        nsfwChatsHidden: Cookies.get('nsfwChatsHidden'),
-        currentStyleFilter: Cookies.get('currentStyleFilter')
-    });
-}
-
-// Restore button states on page load
-$(function() {
-    // Set premium button text and state
-    $('#popular-chats-premium').text(
-        premiumChatsHidden ? '{{translations.sort.showPremium}}' : '{{translations.sort.hidePremium}}'
-    );
-    // Set gender button active state
-    if (currentGenderFilter) {
-        $('.sorting-tools button').removeClass('active');
-        $(`#popular-chats-gender-${currentGenderFilter}`).addClass('active');
-    }
-    // Set NSFW button text and state
-    $('#popular-chats-nsfw').text(
-        nsfwChatsHidden ? '{{translations.sort.showNSFW}}' : '{{translations.sort.hideNSFW}}'
-    );
-    // Set style button active state
-    if (currentStyleFilter) {
-        $('.sorting-tools button').removeClass('active');
-        $(`#popular-chats-style-${currentStyleFilter}`).addClass('active');
-    }
-    logChatFilterStates('on page load');
-    updateChatFilters();
-});
-$(document).on('click', '#popular-chats-premium', function() {
-    premiumChatsHidden = !premiumChatsHidden;
-    Cookies.set('premiumChatsHidden', premiumChatsHidden, { expires: 7 });
-    logChatFilterStates('premium toggle');
-    updateChatFilters();
-    $(this).text(premiumChatsHidden ? '{{translations.sort.showPremium}}' : '{{translations.sort.hidePremium}}');
-});
-// Gender filter state
-$(document).on('click', '#popular-chats-gender-female, #popular-chats-gender-male, #popular-chats-gender-nonbinary', function() {
-    currentGenderFilter = this.id.replace('popular-chats-gender-', '');
-    Cookies.set('currentGenderFilter', currentGenderFilter, { expires: 7 });
-    $('.sorting-tools button').removeClass('active');
-    $(this).addClass('active');
-    logChatFilterStates('gender filter');
-    updateChatFilters();
-});
-// Reset gender filter
-$(document).on('click', '.sorting-tools .btn:not([id^="popular-chats-gender-"])', function() {
-    currentGenderFilter = null;
-    Cookies.remove('currentGenderFilter');
-    $('.sorting-tools button').removeClass('active');
-    logChatFilterStates('reset gender filter');
-    updateChatFilters();
-});
-// NSFW filter state
-$(document).on('click', '#popular-chats-nsfw', function() {
-    nsfwChatsHidden = !nsfwChatsHidden;
-    Cookies.set('nsfwChatsHidden', nsfwChatsHidden, { expires: 7 });
-    logChatFilterStates('nsfw toggle');
-    updateChatFilters();
-    $(this).text(nsfwChatsHidden ? '{{translations.sort.showNSFW}}' : '{{translations.sort.hideNSFW}}');
-});
-// Style filter state
-$(document).on('click', '#popular-chats-style-anime, #popular-chats-style-photorealistic', function() {
-    currentStyleFilter = this.id.replace('popular-chats-style-', '');
-    Cookies.set('currentStyleFilter', currentStyleFilter, { expires: 7 });
-    $('.sorting-tools button').removeClass('active');
-    $(this).addClass('active');
-    logChatFilterStates('style filter');
-    updateChatFilters();
-    $('#all-chats-container').empty();
-    $('#chat-gallery').show();
-    emptyAllGalleriesExcept('chat-gallery');
-    $('.query-tag-all').click();
-});
-// Reset style filter
-$(document).on('click', '.sorting-tools .btn:not([id^="popular-chats-style-"])', function() {
-    currentStyleFilter = null;
-    Cookies.remove('currentStyleFilter');
-    $('.sorting-tools button').removeClass('active');
-    logChatFilterStates('reset style filter');
-    updateChatFilters();
-    $('#all-chats-container').empty();
-    $('#chat-gallery').show();
-    emptyAllGalleriesExcept('chat-gallery');
-    $('.query-tag-all').click();
-    $('html, body').animate({
-        scrollTop: $('#chat-gallery').offset().top
-    }, 500);
-});
-// Empty all gallery container but the on in parameter
-window.emptyAllGalleriesExcept = function(exceptId) {
-    const galleryIds = ['chat-gallery', 'all-chats-container', 'latest-chats-gallery', 'latest-video-chats-gallery', 'all-chats-images-gallery','all-chats-images-pagination-controls', 'latest-video-chats-pagination-controls', 'popular-chats-pagination-controls'];
-    galleryIds.forEach(id => {
-        if (id !== exceptId) {
-            $(`#${id}`).hide();
-        }
-    });
-    $(`#${exceptId}`).show();
-}
-// Filtering logic
-function updateChatFilters() {
-      
-    // Premium filter
-    $('.popular-chats-gallery .gallery-card').each(function(index) {
-        const isPremium = $(this).hasClass('premium-chat');
-        const genderClass = $(this).attr('class').match(/chat-gender-([a-z]+)/);
-        const gender = genderClass ? genderClass[1] : null;
-        const isNSFW = $(this).hasClass('nsfw-true');
-        const styleClass = $(this).attr('class').match(/chat-style-([a-z]+)/);
-        const style = styleClass ? styleClass[1] : null;
-
-        let show = true;
-        let reasons = [];
-
-        if (premiumChatsHidden && isPremium) {
-            show = false;
-            reasons.push('premiumChatsHidden && isPremium');
-        }
-        // Temporarily disable gender filter
-        // if (currentGenderFilter && gender !== currentGenderFilter) {
-        //     show = false;
-        //     reasons.push(`currentGenderFilter (${currentGenderFilter}) && gender (${gender}) !== currentGenderFilter`);
-        // }
-        if (nsfwChatsHidden && isNSFW) {
-            show = false;
-            reasons.push('nsfwChatsHidden && isNSFW');
-        }
-        if (currentStyleFilter && style !== currentStyleFilter) {
-            show = false;
-            reasons.push(`currentStyleFilter (${currentStyleFilter}) && style (${style}) !== currentStyleFilter`);
-        }
-
-        $(this).toggle(show);
-    });
-}
-
-// Ensure filters are applied after chats are rendered
-const _displayChats = window.displayChats;
-window.displayChats = function() {
-    if (typeof _displayChats === 'function') _displayChats.apply(this, arguments);
-    logChatFilterStates('after displayChats');
-    updateChatFilters();
-};
-/* --- End Sorting and Filtering --- */
-
-$('.date-time').each(function() {
-    var dateText = $(this).text();
-    var trimmedDate = dateText.split(' ')[0]; // Get the date part only
-    $(this).text(trimmedDate); // Update the element's content
-});
-function initiateCheckout(buttonId) {
-    const user = {{{json user}}}
-    const userId = user._id
-    let stripe
-    if(window.location.href.indexOf('https://') >= 0){
-        stripe = Stripe('pk_live_51PjtRbE5sP7DA1XvCkdmezori9qPGoO21y7yKSVvgkQVyrhWZfHAUkNsjPMnbwpPlp4zzoYsRjn79Ad7XN7HTHcc00UjBA9adF'); // Use your publishable key here
-    }else{
-        stripe = Stripe('pk_test_51PjtRbE5sP7DA1XvD68v7X7Qj7pG6ZJpQmvuNodJjxc7MbH1ss2Te2gahFAS9nms4pbmEdMYdfCPxFDWHBbu9CxR003ikTnRES'); // Use your publishable key here
-    }
-    $.ajax({
-        url: '/plan/create-checkout-session',
-        method: 'POST',
-        data: { buttonId, userId },
-        success: function(session) {
-            return stripe.redirectToCheckout({ sessionId: session.id });
-        },
-        error: function(xhr, status, error) {
-            console.error('Error creating Stripe checkout session:', error);
-        }
-    });
-}
-    function renderCircleGrid(cardInfos,container){
-        cardInfos.forEach(function(item) {
-            var card = $(`
-                <div class="card custom-card bg-transparent shadow-0 border-0 px-1 col-3 col-sm-4 col-lg-2" style="cursor:pointer;" data-id="${item._id}">
-                    <div style="background-image:url(${item.chatImageUrl})" class="card-img-top rounded-avatar position-relative m-auto" alt="${item.name}">
-                    </div>
-                </div>
-            `);
-            card.on('click', function() {
-                redirectToChat($(this).attr('data-id'))
-            });
-            container.append(card);
-        });   
-    }
-</script>
 </body>
 </html>

@@ -147,6 +147,7 @@ window.loadStyleFilteredChats = function(style) {
     // Clear current galleries
     $('#all-chats-container').empty();
     $('#chat-gallery').empty().show();
+    emptyAllGalleriesExcept('chat-gallery');
 
     // Stop popular-chats infinite scroll to avoid mixing datasets
     $(window).off('scroll.popularChats');

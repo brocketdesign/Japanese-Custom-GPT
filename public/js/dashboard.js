@@ -1571,7 +1571,11 @@ function generatePagination(currentPage, totalPages, userId, type) {
   // Use namespaced event to avoid conflicts
   const eventName = `scroll.peoplePagination_${userId}_${type}`;
   $(window).off(eventName).on(eventName, function() {
-    if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+
+    const scrollTresold = $('#pagination-controls').offset().top  - 1000;
+    console.log(`[peoplePagination_] Scroll threshold: ${scrollTresold}, Current scrollTop: ${$(window).scrollTop()}`);
+    
+    if (scrollTresold < $(window).scrollTop()) {
       if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
         displayPeopleList(userId, type, currentPage + 1);
         pagesShown.add(currentPage + 1);  // Mark page as shown
@@ -1639,7 +1643,10 @@ function generateUserChatsPagination(userId, currentPage, totalPages) {
   // Use namespaced event to avoid conflicts
   const eventName = `scroll.userChatsPagination_${userId}`;
   $(window).off(eventName).on(eventName, function() {
-    if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+    const scrollTresold = $('#user-chat-pagination-controls').offset().top  - 1000;
+    console.log(`[generateUserChatsPagination] Scroll threshold: ${scrollTresold}, Current scrollTop: ${$(window).scrollTop()}`);
+    
+    if (scrollTresold < $(window).scrollTop()) {
       if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
         displayUserChats(userId, currentPage + 1);
         pagesShown.add(currentPage + 1);
@@ -1681,7 +1688,6 @@ function generateUserChatsPagination(userId, currentPage, totalPages) {
 // Enhanced displayPeopleChat with caching + infinite scroll
 window.displayPeopleChat = async function (page = 1, option = {}, callback, reload = false) {
   const { imageStyle, imageModel, modelId = false, premium = false, query = '', userId = false, modal = false } = option
-
   const searchId = `${imageStyle}-${imageModel}-${query}-${userId}`
 
   let nsfw = $.cookie('nsfw') === 'true' || false
@@ -1770,10 +1776,11 @@ window.generateChatsPagination = function (totalPages, option = {}) {
   // Use namespaced event to avoid conflicts
   const eventName = `scroll.chatsPagination_${searchId.replace(/[^a-zA-Z0-9]/g, '_')}`;
   $(window).off(eventName).on(eventName, () => {
+    const scrollTresold = $('#chat-pagination-controls').offset().top - 1000;
     if (
       !peopleChatLoadingState[searchId] &&
       peopleChatCurrentPage[searchId] < totalPages &&
-      $(window).scrollTop() + $(window).height() >= $(document).height() - 100
+      scrollTresold < $(window).scrollTop() 
     ) {
       console.log(`Infinite scroll => next page: ${peopleChatCurrentPage[searchId] + 1}`)
       peopleChatLoadingState[searchId] = true
@@ -2379,10 +2386,13 @@ window.loadAllChatImages = function (page = 1, reload = false) {
     // Use namespaced event to avoid conflicts
     const eventName = 'scroll.allChatsImagePagination';
     $(window).off(eventName).on(eventName, () => {
+
+      const scrollTresold = $('#all-chats-images-pagination-controls').offset().top  - 1000;
+      console.log(`[generateAllChatsImagePagination] Scroll threshold: ${scrollTresold}, Current scrollTop: ${$(window).scrollTop()}`);
       if (
         !allChatsLoadingState &&
         allChatsCurrentPage < totalPages &&
-        $(window).scrollTop() + $(window).height() >= $(document).height() - 100
+        scrollTresold < $(window).scrollTop()
       ) {
         allChatsLoadingState = true
         loadAllChatImages(allChatsCurrentPage + 1, false)
@@ -3141,8 +3151,8 @@ $(document).ready(function () {
      * Vertical Infinite Scroll for Chats
      */
     $(window).off('scroll.fetchChats').on('scroll.fetchChats', function () {
-      // Changed from -50 to -200 to trigger loading earlier
-      if ($(window).scrollTop() + $(window).height() >= $(document).height() - 200) {
+      const scrollTresold = $('#all-chats-images-pagination-controls').offset().top  - 1000;
+      if (scrollTresold < $(window).scrollTop()) {
         fetchChatsWithImages(currentPageMap.get(currentActiveQuery) || 1, currentActiveQuery);
       }
     });

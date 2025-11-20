@@ -393,6 +393,7 @@ $(document).ready(async function() {
     }
 
     async function handleChatSuccess(data, fetch_reset, fetch_userId, userChatId) {
+        logChatDataFetch(data);
         $(document).find(`.chat-list.item[data-id="${chatId}"]`).addClass('active').siblings().removeClass('active');
         // Handle fetch_reset and isNew logic robustly
 
@@ -1638,7 +1639,9 @@ function setupChatInterface(chat, character) {
     }
 });
 
-
+function logChatDataFetch(data){
+    console.log('[logChatDataFetch] Chat data fetched:', data);
+}
 //.reset-chat,.new-chat
 window.handleChatReset = function(el) {
     $(el).prop('disabled', true); // Disable the button to prevent multiple resets

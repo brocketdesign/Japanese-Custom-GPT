@@ -568,7 +568,8 @@ async function routes(fastify, options) {
                     const newUserPointsBalance = await getUserPoints(db, userId);
                     const autoImageGenerationEnabled = await getAutoImageGenerationSetting(db, userId, chatId);
                     console.log(`[/api/openai-chat-completion] Auto Image Generation Setting:`, autoImageGenerationEnabled);
-                    if( messagesForCompletion.length > 4 && newUserPointsBalance >= 10 && autoImageGenerationEnabled ) {
+                    console.log(`[/api/openai-chat-completion] messagesForCompletion.length:`, messagesForCompletion.length);
+                    if( messagesForCompletion.length > 2 && newUserPointsBalance >= 10 && autoImageGenerationEnabled ) {
                         const assistantImageRequest = await checkImageRequest(newAssistantMessage.content, lastUserMessage.content);
                         console.log(`[/api/openai-chat-completion] Image request detected:`, assistantImageRequest);
                         if (assistantImageRequest && assistantImageRequest.image_request) {

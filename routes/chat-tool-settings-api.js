@@ -279,9 +279,7 @@ async function routes(fastify, options) {
                     // Return ALL models to all users (premium and non-premium can see all models)
                     // Non-premium users will see premium models as disabled on the frontend
                     const availableModels = dbModels;
-                    
-                    console.log(`[chat-tool-settings] Loaded ${Object.keys(availableModels).length} models from database for user ${userId} (Premium: ${isPremium})`);
-                    
+                                        
                     return reply.send({ 
                         success: true, 
                         models: availableModels,

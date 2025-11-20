@@ -268,7 +268,6 @@ async function handleImageGeneration(db, currentUserMessage, lastUserMessage, ge
             // Charge points for image generation
             if (!currentUserMessage?.promptId) {
                 const cost = getImageGenerationCost(image_num);
-                console.log(`[handleImageGeneration] Cost for image generation: ${cost} points`);
                 try {
                     await removeUserPoints(db, userId, cost, translations.points?.deduction_reasons?.image_generation || 'Image generation', 'image_generation', fastify);
                 } catch (error) {

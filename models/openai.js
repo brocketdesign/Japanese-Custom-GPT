@@ -628,8 +628,7 @@ async function createPrompt(customPrompt, imageDescription, nsfw) {
       Respond ONLY with the new prompt in English. Make it concise but comprehensive.`.replace(/^\s+/gm, '').trim()
     }
   ];
-
-  let response = await generateCompletion(messages, 700, nsfw ? 'deepseek' : 'llama-3-70b');
+  let response = await generateCompletion(messages, 700, 'llama-3-70b');
   if (!response) return null;
   
   response = response.replace(/['"]+/g, '');
@@ -676,7 +675,6 @@ async function createPrompt(customPrompt, imageDescription, nsfw) {
     return response.substring(0, 900);
   }
   
-  console.log(`[createPrompt] Generated prompt: ${response.length} characters`);
   return response;
 }
 
@@ -803,7 +801,7 @@ ${relationship ? `- Dynamic: ${relationship}` : ''}
 
 SCENARIO REQUIREMENTS:
 For each scenario, base it on different aspects of ${characterName}'s personality and interests. Make scenarios:
-1. Specific to their background/interests/quirks (NOT generic templates)
+1. Specific to their background/interests/quirks (NOT generic templates, can be fantasy-based if fitting, but must align with character)
 2. Show clear USER INVOLVEMENT and specific role
 3. Create natural conversation flow based on the situation
 4. Include emotional depth matching the relationship type

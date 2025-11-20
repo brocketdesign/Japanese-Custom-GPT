@@ -638,12 +638,15 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
     const language = getLanguageName(request.user?.lang);
     const requestLang = request.lang; // Language inferred from the request
 
-    // Fetch chat IDs that have images
+    // Build match filter for images
+    const imageMatch = { 'images.1': { $exists: true } }; // Only chats with at least 2 images
+
+    // Fetch chat IDs that have images (and style if provided)
     const chatsWithImages = await chatsGalleryCollection
       .aggregate([
-        { $match: { 'images.0': { $exists: true } } }, // Only chats with images
-        { $sort: { _id: -1 } }, // Sort by _id in descending order for latest first
-        { $project: { chatId: 1 } }
+      { $match: imageMatch },
+      { $sort: { _id: -1 } }, // Sort by _id in descending order for latest first
+      { $project: { chatId: 1 } }
       ])
       .toArray();
 

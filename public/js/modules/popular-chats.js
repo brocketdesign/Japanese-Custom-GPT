@@ -147,7 +147,7 @@ $(document).on('click', '#reset-popular-chat-cache', () => {
         $('#chat-gallery').empty();
         window.loadPopularChats(1, true);
     });
-});
+}); 
 
 // Initial load
 $(document).ready(() => window.loadPopularChats());

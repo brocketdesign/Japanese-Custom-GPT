@@ -1,5 +1,7 @@
 {
   "lang": "fr",
+  "recent" : "Récent",
+  "recentVideos": "Vidéos récentes",
   "loading": "Chargement...",
   "newChat": "Nouvelle discussion",
   "upgradeNow": "Passer premium maintenant",

@@ -1337,12 +1337,13 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             }
 
             if (style) {
-                const safeStyle = escapeForRegex(style);
+                // Normalize "realistic" to "photorealistic" for convenience
+                const normalized = (style || '').toLowerCase() === 'realistic' ? 'photorealistic' : (style || '');
+                const safeStyle = escapeForRegex(normalized);
+
+                // Strict style filter (remove the $exists:false fallback)
                 filters.push({
-                    $or: [
-                        { imageStyle: { $regex: new RegExp(safeStyle, 'i') } },
-                        { imageStyle: { $exists: false } }
-                    ]
+                    imageStyle: { $regex: new RegExp(`^${safeStyle}$`, 'i') }
                 });
             }
 

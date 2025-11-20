@@ -7,6 +7,7 @@ let nsfwChatsHidden = Cookies.get('nsfwChatsHidden') === 'true';
 let currentStyleFilter = Cookies.get('currentStyleFilter') || null;
 
 const logFilters = (context) => {
+    return
     try {
         console.log('[ChatFilter]', context, {
             premiumChatsHidden,
@@ -134,39 +135,70 @@ $(document).on('click', '.sorting-tools .btn:not(.dropdown-toggle)', function ()
     }
 });
 
-// Style filters (unchanged logic)
-$(document).on('click', '#popular-chats-style-anime, #popular-chats-style-photorealistic', function () {
-    currentStyleFilter = this.id.replace('popular-chats-style-', '');
+// Helper: fetch & render characters by imageStyle using /api/chats via displayPeopleChat
+window.loadStyleFilteredChats = function(style) {
+    currentStyleFilter = style;
     Cookies.set('currentStyleFilter', currentStyleFilter, { expires: 7 });
-    $('.sorting-tools button').removeClass('active');
-    $(this).addClass('active');
-    logFilters('style filter');
-    updateChatFilters();
 
+    // Update active UI state
+    $('.sorting-tools button').removeClass('active');
+    $(`#popular-chats-style-${style}`).addClass('active');
+
+    // Clear current galleries
     $('#all-chats-container').empty();
-    $('#chat-gallery').show();
-    if (typeof window.emptyAllGalleriesExcept === 'function') {
-        window.emptyAllGalleriesExcept('chat-gallery');
-    }
-    $('.query-tag-all').click();
+    $('#chat-gallery').empty().show();
+
+    // Stop popular-chats infinite scroll to avoid mixing datasets
+    $(window).off('scroll.popularChats');
+
+    // Clear popular cache (optional, keeps UI clean if user switches back)
+    sessionStorage.removeItem('popularChatsCache');
+    sessionStorage.removeItem('popularChatsCacheTime');
+
+    // Load server-filtered characters by style with infinite scroll
+    // displayPeopleChat uses /api/chats under the hood
+    displayPeopleChat(
+      1,
+      { imageStyle: style, imageModel: '', query: '', userId: '', modal: false },
+      null,
+      true // reload
+    );
+};
+
+// Style filters (now fetch from server instead of only hiding/showing)
+$(document).on('click', '#popular-chats-style-anime, #popular-chats-style-photorealistic', function () {
+    const style = this.id.endsWith('anime') ? 'anime' : 'photorealistic';
+    loadStyleFilteredChats(style);
 });
 
+// Reset style when clicking other filters
 $(document).on('click', '.sorting-tools .btn:not([id^="popular-chats-style-"])', function () {
     if (currentStyleFilter !== null) {
         currentStyleFilter = null;
         Cookies.remove('currentStyleFilter');
         $('.sorting-tools button').removeClass('active');
-        logFilters('reset style filter');
-        updateChatFilters();
 
+        // Restore default: clear gallery, reload popular, re-bind its infinite scroll
         $('#all-chats-container').empty();
-        $('#chat-gallery').show();
-        if (typeof window.emptyAllGalleriesExcept === 'function') {
-            window.emptyAllGalleriesExcept('chat-gallery');
+        $('#chat-gallery').empty().show();
+
+        // Clear style-specific view and show the popular list again
+        if (typeof window.loadPopularChats === 'function') {
+            popularChatsPage = 1;
+            window.loadPopularChats(1, true);
         }
-        $('.query-tag-all').click();
+
+        // Also ensure “All” query tag state visually
+        if ($('.query-tag-all').length) {
+            $('.query-tag-all').click();
+        }
+
+        // Optionally scroll to the grid
         $('html, body').animate({ scrollTop: $('#chat-gallery').offset().top }, 500);
     }
+
+    logFilters('reset style filter');
+    updateChatFilters();
 });
 
 // Re-apply filters after any new chats are displayed

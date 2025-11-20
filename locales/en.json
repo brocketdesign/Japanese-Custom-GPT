@@ -1,5 +1,7 @@
 {
   "lang": "en",
+  "recent" : "Recent",
+  "recentVideos": "Recent Videos",
   "upgradeNow": "Upgrade Now",
   "startHere": "Start Here",
   "image_generation": {

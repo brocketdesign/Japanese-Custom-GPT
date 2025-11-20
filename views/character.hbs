@@ -191,13 +191,13 @@
 
         {{else}}
             <!-- Character Gallery for when no specific character is selected -->
-            <div class="character-gallery">
+            <div class="character-gallery px-0">
                 <div class="container">
                     <h2 class="fw-bold">{{translations.cardMenuTitle}}</h2>
                     <p class="text-muted text-center mb-4">{{translations.exploreCharactersDescription}}</p>
 
                     <!-- Category Cards -->
-                    <div class="category-cards-row row" id="category-cards-container">
+                    <div class="category-cards-row row" id="category-cards-container" style="overflow-x: auto; overflow-y: hidden; white-space: nowrap; display: flex; flex-wrap: nowrap;">
                         <!-- Categories will be loaded here -->
                         <div class="text-center">
                             <div class="spinner-border text-primary" role="status">

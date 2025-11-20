@@ -87,7 +87,7 @@ function displayCategoryCards(categories) {
     const delay = (index * 0.3).toFixed(1);
 
     htmlContent += `
-      <div class="col-6 col-md-4 col-lg-2 mb-4">
+      <div class="col-6 col-md-4 col-lg-2 mb-4 px-1" style="flex: 0 0 auto;">
         <div class="card category-card h-100 shadow border-0 overflow-hidden position-relative animate__animated" 
              style="cursor: pointer; transition: all 0.3s ease; min-height: 280px;display:none;"
              data-animate="animate__slideInUp"
@@ -108,7 +108,7 @@ function displayCategoryCards(categories) {
           
           <!-- Content -->
           <div class="card-body d-flex flex-column justify-content-end align-items-center text-center position-relative" 
-               style="min-height: 280px; z-index: 2; padding: 1.5rem;">
+               style="overflow: hidden; min-height: 200px; z-index: 2; padding: 1.5rem;">
             <div class="mb-3">
               <i class="${icon} fs-1 text-white mb-2" style="text-shadow: 0 3px 6px rgba(0,0,0,0.6);"></i>
             </div>

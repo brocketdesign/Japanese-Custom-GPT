@@ -1102,6 +1102,13 @@ function createOverlay(img, imageUrl) {
     // If it exists, remove it first
     $(img).next('.gallery-nsfw-overlay').remove();
   }
+
+  // Save container link and remove it
+  const containerLink = $(img).closest('a');
+  const originalHref = containerLink.attr('href');
+  if (containerLink.length) {
+    containerLink.attr('href', 'javascript:void(0);');
+  }
   
   if (isTemporary) {
     // Temporary user - show login overlay with modern design
@@ -1183,6 +1190,9 @@ function createOverlay(img, imageUrl) {
             
             // Display the image tools
             $imageTools.show();
+
+            // Restore container link if it was removed
+            containerLink.attr('href', originalHref);
         })
         .on('mouseenter', function() {
             $(this).css({ 'transform': 'translateY(-2px)', 'box-shadow': '0 8px 16px rgba(130, 64, 255, 0.3)' });

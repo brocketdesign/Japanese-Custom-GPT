@@ -215,24 +215,19 @@ class GallerySearchManager {
       });
     });
   }
-  // Create character image overlay for NSFW images when showNSFW is disabled
+  // Create character image overlay for NSFW images
+  // Reuses logic from createOverlay in dashboard.js
   createCharacterImageOverlay(item) {
-    // Overlay for subscribed user with showNSFW disabled
-    // Match the design used for other blurred media: blurred image + Unlock button with gradient
     const linkUrl = item.chatSlug
       ? `/character/slug/${item.chatSlug}${item.slug ? `?imageSlug=${item.slug}` : ''}`
       : `/character/${item.chatId}`;
 
+    // Do not leak real URL in DOM; no src or data-src here.
     return `
       <div class="gallery-media-wrapper position-relative" style="overflow: hidden; max-height: 400px; background-color: #f0f0f0;">
         <a href="${linkUrl}" class="text-decoration-none">
-          <img src="${item.imageUrl}" alt="${item.chatName} - ${item.prompt || ''}" class="gallery-media" style="width: 100%; height: 100%; object-fit: cover; filter: blur(15px); display: block;">
+          <img alt="${item.chatName} - ${item.prompt || ''}" class="gallery-media" style="width: 100%; height: 100%; object-fit: cover;" />
         </a>
-        <div class="img-blur-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
-          <button onclick="handleUnlockOverlay(event)" class="btn btn-sm" style="background: linear-gradient(90.9deg, rgb(210, 184, 255) 2.74%, rgb(130, 64, 255) 102.92%); color: white; border: none; border-radius: 8px; font-weight: 600; padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer; transition: 0.2s; box-shadow: none;">
-            <i class="bi bi-lock-fill me-2"></i>Unlock
-          </button>
-        </div>
       </div>
     `;
   }
@@ -248,6 +243,7 @@ class GallerySearchManager {
     // Determine if content should be blurred
     const isNSFW = item.nsfw;
     const shouldBlur = isNSFW && this.shouldBlurNSFW;
+    const showNSFW = sessionStorage.getItem('showNSFW') === 'true';
 
     const container = document.createElement('div');
     container.className = 'gallery-grid-item animate__animated';
@@ -255,24 +251,14 @@ class GallerySearchManager {
 
     // For locked videos, use image thumbnail instead of video
     const mediaUrl = isImage ? item.imageUrl : item.videoUrl;
-    const blurredMediaUrl = shouldBlur && !isImage && item.imageUrl ? item.imageUrl : mediaUrl;
 
     let mediaContent;
-    // Subscribed user with showNSFW disabled - show blurry overlay on top of visible image
-    if (shouldBlur && isImage) {
+
+    if (isImage && shouldBlur) {
+      // Build a safe wrapper without leaking real URL; overlay will be attached by createOverlay
       mediaContent = this.createCharacterImageOverlay(item);
-    } else if (shouldBlur) {
-      mediaContent = `
-        <div class="gallery-media-wrapper position-relative" style="overflow: hidden; max-height: 400px; background-color: #f0f0f0;">
-          <img src="${blurredMediaUrl}" alt="${item.chatName} - ${item.prompt || ''}" class="gallery-media" style="width: 100%; height: 100%; object-fit: cover; filter: blur(15px);">
-          <div class="img-blur-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
-            <button onclick="handleClickRegisterOrPay(event, ${this.isTemporary})" class="btn btn-sm" style="background: linear-gradient(90.9deg, rgb(210, 184, 255) 2.74%, rgb(130, 64, 255) 102.92%); color: white; border: medium; border-radius: 8px; font-weight: 600; padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer; transition: 0.2s; margin-top: 0.75rem; transform: translateY(0px); box-shadow: none;">
-              <i class="bi bi-lock-fill me-2"></i>Unlock
-            </button>
-          </div>
-        </div>
-      `;
     } else if (isImage) {
+      // Regular image - not NSFW or showNSFW is enabled
       mediaContent = `
         <a href="${linkUrl}" class="text-decoration-none">
           <div class="gallery-media-wrapper position-relative" style="overflow: hidden; max-height: 400px; background-color: #f0f0f0;">
@@ -281,6 +267,7 @@ class GallerySearchManager {
         </a>
       `;
     } else {
+      // Video content
       mediaContent = `
         <div class="gallery-media-wrapper position-relative video-wrapper" style="overflow: hidden; max-height: 400px; background-color: #000; display: block;">
           <video style="width: 100%; height: 100%; object-fit: cover; display: block;" controls controlsList="nodownload">
@@ -324,6 +311,21 @@ class GallerySearchManager {
     `;
 
     container.innerHTML = cardHTML;
+    // Initialize blurred rendering and overlay after DOM subtree is created
+    if (isImage && shouldBlur) {
+      const imgEl = container.querySelector('.gallery-media');
+      if (imgEl && item.imageUrl) {
+        try {
+          if (window.fetchBlurredImage) {
+            window.fetchBlurredImage(imgEl, item.imageUrl);
+          } else if (typeof fetchBlurredImage === 'function') {
+            fetchBlurredImage(imgEl, item.imageUrl);
+          }
+        } catch (e) {
+          console.error('[GallerySearchManager] Failed to blur image via fetchBlurredImage', e);
+        }
+      }
+    }
     return container;
   }
 
@@ -473,6 +475,41 @@ document.addEventListener('DOMContentLoaded', () => {
   window.gallerySearchManager = new GallerySearchManager();
   window.gallerySearchManager.loadFromURL();
 });
+
+// Global handler for subscribed users to reveal NSFW content
+window.showNSFWContent = function(button, imageUrl) {
+  try {
+    if (button && typeof button.preventDefault === 'function') {
+      button.preventDefault();
+      button.stopPropagation();
+    }
+
+    // Find the wrapper and image
+    const wrapper = button.closest('.gallery-media-wrapper');
+    if (!wrapper) return;
+
+    // Get the image element
+    const img = wrapper.querySelector('.gallery-media');
+    if (!img) return;
+
+    // Update the image src to the real unblurred image
+    img.src = imageUrl;
+    img.removeAttribute('filter');
+    img.style.filter = 'none';
+
+    // Remove the overlay
+    const overlay = wrapper.querySelector('.gallery-nsfw-overlay');
+    if (overlay) {
+      overlay.style.display = 'none';
+      overlay.classList.remove('d-flex');
+    }
+
+    // Update data attribute
+    img.removeAttribute('data-original-url');
+  } catch (err) {
+    console.error('showNSFWContent error', err);
+  }
+};
 
 // Global handler to remove the blur overlay and reveal the image
 window.handleUnlockOverlay = function(event) {

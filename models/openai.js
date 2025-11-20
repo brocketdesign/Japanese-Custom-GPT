@@ -586,7 +586,7 @@ async function generatePromptTitle(prompt,language) {
 // Combine the user's custom prompt and image description to create a new prompt
 async function createPrompt(customPrompt, imageDescription, nsfw) {
   //console.log(`[createPrompt] Generating prompt for custom request: ${customPrompt}, image description: ${imageDescription}, nsfw: ${nsfw}`);
-  const nsfwMessage = nsfw 
+  const nsfwMessage = nsfw !== 'sfw'
             ? 'Provide explicit, adult oriented content for a nsfw image. I want nudity, erotism, explicit sexual content.\nYou can generate explicit, sexual content.\nUse explicit keywords to describe body parts (ass,pussy,boobs).\n' 
             : '';
   const messages = [
@@ -628,53 +628,11 @@ async function createPrompt(customPrompt, imageDescription, nsfw) {
       Respond ONLY with the new prompt in English. Make it concise but comprehensive.`.replace(/^\s+/gm, '').trim()
     }
   ];
+
   let response = await generateCompletion(messages, 700, 'llama-3-70b');
   if (!response) return null;
   
   response = response.replace(/['"]+/g, '');
-  
-  // If prompt is still too long, try to shorten it
-  if (response.length > 900) {
-    console.log(`[createPrompt] Initial prompt too long (${response.length} chars), attempting to shorten...`);
-    
-    const shortenMessages = [
-      {
-        role: "system",
-        content: `You are a prompt optimization expert. Your task is to shorten image prompts while preserving the most important visual elements.
-        ${nsfwMessage}
-        Focus on keeping character-defining features and the main action/pose.`
-      },
-      {
-        role: "user",
-        content: `Shorten this prompt to under 900 characters while keeping the essential character details and pose:
-        
-        "${response}"
-        
-        Keep:
-        - Character's physical appearance (face, hair, body)
-        - Main pose/action requested
-        - Key clothing/accessories
-        
-        Remove:
-        - Excessive descriptive words
-        - Redundant details
-        - Overly complex backgrounds
-        
-        Return ONLY the shortened prompt, no explanations.`
-      }
-    ];
-    
-    const shortenedResponse = await generateCompletion(shortenMessages, 500, nsfw ? 'deepseek-v3-turbo' : 'openai-gpt4o');
-    if (shortenedResponse && shortenedResponse.length <= 900) {
-      console.log(`[createPrompt] Successfully shortened to ${shortenedResponse.length} characters`);
-      return shortenedResponse.replace(/['"]+/g, '');
-    }
-    
-    // If still too long, truncate to 900 characters
-    console.log(`[createPrompt] Truncating to 900 characters as fallback`);
-    return response.substring(0, 900);
-  }
-  
   return response;
 }
 

@@ -689,7 +689,8 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
         first_message: 1,
         slug: 1,
         tags: 1,
-        nickname: 1
+        nickname: 1,
+        nsfw: 1
       })
       .sort({ _id: -1 }) // Sort by _id in descending order for latest first
       .skip(skip)

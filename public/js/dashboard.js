@@ -1029,10 +1029,10 @@ window.redirectToChatPage = function(el) {
 window.blurImage = function(img) {
     if ($(img).data('processed') === "true") return;
     let imageUrl = $(img).data('src');
-    fetchBlurredImage(img, imageUrl);
+    fetchBlurredImageAndCreateOverlay(img, imageUrl);
 }
 
-function fetchBlurredImage(img, imageUrl) {
+function fetchBlurredImageAndCreateOverlay(img, imageUrl) {
     $.ajax({
         url: '/blur-image?url=' + encodeURIComponent(imageUrl),
         method: 'GET',
@@ -1040,7 +1040,10 @@ function fetchBlurredImage(img, imageUrl) {
             withCredentials: true
         },
         xhrFields: { responseType: 'blob' },
-        success: function(blob) { handleImageSuccess(img, blob, imageUrl); },
+        success: function(blob) { 
+          handleImageSuccess(img, blob, imageUrl, 
+          createOverlay(img, imageUrl)); 
+        },
         error: function() { console.error("Failed to load blurred image."); }
     });
 }
@@ -1084,11 +1087,34 @@ window.resetPeopleChatCache = function(chatId,model_name) {
       }
   }
 };
+function applyNSFWBlurEffect(){
+    $(document).find('img.blurred-image').each(function() {
+      if ($(this).data('processed') === "true") return;
+      let imageUrl = $(this).data('src');
+      fetchBlurredImageAndReplace(this, imageUrl);
+    });
+}
+function fetchBlurredImageAndReplace(img, imageUrl) {
+    $.ajax({
+        url: '/blur-image?url=' + encodeURIComponent(imageUrl),
+        method: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
+        xhrFields: { responseType: 'blob' },
+        success: function(blob) { 
+          handleImageSuccess(img, blob, imageUrl); 
+        },
+        error: function() { console.error("Failed to load blurred image."); }
+    });
+}
 
-function handleImageSuccess(img, blob, imageUrl) {
+function handleImageSuccess(img, blob, imageUrl, call) {
     let objectUrl = URL.createObjectURL(blob);
     $(img).attr('src', objectUrl).data('processed', "true").removeAttr('data-original-src').removeAttr('data-src').removeAttr('srcset');
-    createOverlay(img, imageUrl);
+    if(call && typeof call === 'function'){
+      call();
+    }
 }
 
 function createOverlay(img, imageUrl) {
@@ -1571,7 +1597,7 @@ function generatePagination(currentPage, totalPages, userId, type) {
   // Use namespaced event to avoid conflicts
   const eventName = `scroll.peoplePagination_${userId}_${type}`;
   $(window).off(eventName).on(eventName, function() {
-
+    if($('#pagination-controls').length === 0) return;
     const scrollTresold = $('#pagination-controls').offset().top  - 1000;
     console.log(`[peoplePagination_] Scroll threshold: ${scrollTresold}, Current scrollTop: ${$(window).scrollTop()}`);
     
@@ -1643,6 +1669,7 @@ function generateUserChatsPagination(userId, currentPage, totalPages) {
   // Use namespaced event to avoid conflicts
   const eventName = `scroll.userChatsPagination_${userId}`;
   $(window).off(eventName).on(eventName, function() {
+    if($('#user-chat-pagination-controls').length === 0) return;
     const scrollTresold = $('#user-chat-pagination-controls').offset().top  - 1000;
     console.log(`[generateUserChatsPagination] Scroll threshold: ${scrollTresold}, Current scrollTop: ${$(window).scrollTop()}`);
     
@@ -1776,6 +1803,7 @@ window.generateChatsPagination = function (totalPages, option = {}) {
   // Use namespaced event to avoid conflicts
   const eventName = `scroll.chatsPagination_${searchId.replace(/[^a-zA-Z0-9]/g, '_')}`;
   $(window).off(eventName).on(eventName, () => {
+    if($('#chat-pagination-controls').length === 0) return;
     const scrollTresold = $('#chat-pagination-controls').offset().top - 1000;
     if (
       !peopleChatLoadingState[searchId] &&
@@ -1939,7 +1967,8 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
   let htmlContent = '';
   chatData.forEach(chat => {
       if (chat.name || chat.chatName) {
-            // Normalize nsfw to boolean (handles string "true"/"false" and boolean)
+
+        // Normalize nsfw to boolean (handles string "true"/"false" and boolean)
             const nsfw = chat?.nsfw === true || chat?.nsfw === 'true';
             const moderationFlagged = Array.isArray(chat?.moderation?.results) && chat.moderation.results.length > 0
             ? !!chat.moderation.results[0].flagged
@@ -1947,6 +1976,8 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
             const finalNsfwResult = nsfw || moderationFlagged;
             chat.premium = false //(chat.premium || finalNsfwResult);
             const isOwner = chat.userId === user._id;
+            chat.nsfw = finalNsfwResult
+            const isBlur = shouldBlurNSFW(chat, subscriptionStatus);
           // --- Begin: Sample image selection logic ---
           let sampleImages = [];
           // Prefer chat.sampleImages if present (from backend cache), fallback to empty array
@@ -1976,18 +2007,20 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
           const primaryImage = sampleImages[0];
           const secondaryImage = sampleImages.find((img) => img !== primaryImage) || primaryImage;
 
+          const conditionFunc = `${finalNsfwResult ? `(${subscriptionStatus} ? redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}') : loadPlanPage())` : `redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')`}`;
+
           // --- End: Sample image selection logic ---
           htmlContent += `
                   <div class="gallery-card col-6 col-sm-4 col-lg-2 mb-0 px-1 ${finalNsfwResult ? "nsfw-content":''} ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} ${chat.imageStyle ? 'chat-style-'+chat.imageStyle : ''} nsfw-${finalNsfwResult}" data-id="${chat._id}" style="cursor:pointer;">
                     <div class="card shadow border-0 h-100 position-relative gallery-hover" style="overflow: hidden;">
                       <!-- Clickable image area -->
                       <div class="gallery-image-wrapper position-relative chat-card-clickable-area" style="aspect-ratio: 4/5; background: #f8f9fa; cursor: pointer;"
-                        onclick="${chat.premium ? `(window.user && window.user.subscriptionStatus === 'active' ? redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}') : loadPlanPage())` : `redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')`}">
+                        onclick="${conditionFunc}; event.stopPropagation();">
                         <img 
                           data-src="${primaryImage}" 
                           src="/img/logo.webp" 
                           alt="${chat.name || chat.chatName}" 
-                          class="card-img-top gallery-img gallery-img-primary transition rounded-top lazy-image"
+                          class="card-img-top gallery-img gallery-img-primary transition rounded-top ${isBlur ? 'blurred-image' : 'lazy-image'}"
                           style="object-fit: cover; width: 100%; height: 100%; min-height: 220px;"
                           loading="lazy"
                         >
@@ -1995,7 +2028,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                           data-src="${secondaryImage}" 
                           src="/img/logo.webp" 
                           alt="${chat.name || chat.chatName} preview"
-                          class="card-img-top gallery-img gallery-img-secondary transition rounded-top lazy-image"
+                          class="card-img-top gallery-img gallery-img-secondary transition rounded-top ${isBlur ? 'blurred-image' : 'lazy-image'}"
                           style="object-fit: cover; width: 100%; height: 100%; min-height: 220px;"
                           loading="lazy"
                           aria-hidden="true"
@@ -2081,14 +2114,17 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
   });
   if(searchId == 'top-free'){
     $('#top-free-chats-gallery').append(htmlContent);
+    applyNSFWBlurEffect();
     return;
   }
   if($(`#${searchId}`).length > 0){ 
     $(`#${searchId}`).append(htmlContent);
+    applyNSFWBlurEffect();
     return;
   }
   // Append the generated HTML to the gallery
   $(document).find('#chat-gallery').append(htmlContent);
+    applyNSFWBlurEffect();
 };
 // Call /api/delete-chat/:chatId to delete a chat
 window.deleteChat = function(el) {
@@ -2386,7 +2422,7 @@ window.loadAllChatImages = function (page = 1, reload = false) {
     // Use namespaced event to avoid conflicts
     const eventName = 'scroll.allChatsImagePagination';
     $(window).off(eventName).on(eventName, () => {
-
+      if($('#all-chats-images-pagination-controls').length === 0) return;
       const scrollTresold = $('#all-chats-images-pagination-controls').offset().top  - 1000;
       console.log(`[generateAllChatsImagePagination] Scroll threshold: ${scrollTresold}, Current scrollTop: ${$(window).scrollTop()}`);
       if (
@@ -3151,6 +3187,7 @@ $(document).ready(function () {
      * Vertical Infinite Scroll for Chats
      */
     $(window).off('scroll.fetchChats').on('scroll.fetchChats', function () {
+      if($('#all-chats-images-pagination-controls').length === 0) return;
       const scrollTresold = $('#all-chats-images-pagination-controls').offset().top  - 1000;
       if (scrollTresold < $(window).scrollTop()) {
         fetchChatsWithImages(currentPageMap.get(currentActiveQuery) || 1, currentActiveQuery);
@@ -3198,7 +3235,7 @@ $(document).ready(function () {
             <div class="query-tag query-tag-all badge btn-outline-primary ${currentActiveQuery === '' ? 'active' : ''}" 
                 style="line-height: 1.5;"
                 data-query="" 
-                onclick="setActiveQueryAndSearch('')">
+                onclick="loadPopularChats(1, true); setActiveQuery(''); loadStyleFilteredChats('');">
                 <i class="bi bi-grid me-1"></i>${translations.all || 'All'}
             </div>
         `;
@@ -3211,7 +3248,7 @@ $(document).ready(function () {
                 <div id="popular-chats-style-${tag}" 
                 class="query-tag badge btn-outline-primary ${isActive ? 'active' : ''}" 
                 style="line-height: 1.5;"
-                    data-query="${tag === 'photorealistic' ? translations.sort.photorealistic : translations.sort.anime}" 
+                    data-query="${tag === 'photorealistic' ? 'photorealistic' : 'anime'}" 
                     >
                     #${tag.charAt(0).toUpperCase() + tag.slice(1)}
                 </div>
@@ -3239,6 +3276,9 @@ $(document).ready(function () {
       currentActiveQuery = query;
       $('.query-tag').removeClass('active');
       $(`.query-tag[data-query="${query}"]`).addClass('active');
+      // Replace outline class with filled
+      $('.query-tag').removeClass('btn-primary').addClass('btn-outline-primary');
+      $(`.query-tag[data-query="${query}"]`).removeClass('btn-outline-primary').addClass('btn-primary');
     };
 
     // Function to set active query and trigger search
@@ -3278,7 +3318,7 @@ $(document).ready(function () {
           fetchChatsWithImages(page, query);
     };
     // Load query tags if we're on the character exploration page
-    if ($('#all-chats-container').length > 0) {
+    if ($('#query-tags-list').length > 0) {
         loadQueryTags();
     }
 });

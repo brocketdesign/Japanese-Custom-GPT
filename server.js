@@ -14,7 +14,12 @@ const {
 } = require('./models/databasemanagement');
 const { checkUserAdmin, getUserData, updateCounter, fetchTags } = require('./models/tool');
 const { deleteOldTasks } = require('./models/imagen');
-const { cronJobs, cacheSitemapDataTask, configureCronJob, initializeCronJobs, initializeDayPassExpirationCheck } = require('./models/cronManager');
+const { 
+  cronJobs, 
+  cachePopularChatsTask, 
+  configureCronJob, 
+  initializeCronJobs, 
+  initializeDayPassExpirationCheck } = require('./models/cronManager');
 // Expose cron jobs and configuration to routes
 fastify.decorate('cronJobs', cronJobs);
 fastify.decorate('configureCronJob', configureCronJob);
@@ -47,7 +52,7 @@ fastify.ready(async () => {
   });
   // Initialize configured cron jobs
   initializeCronJobs(fastify);
-  
+
   // Initialize day pass expiration check cron job
   // Import checkExpiredDayPasses from plan.js routes
   const planRoutes = require('./routes/plan');

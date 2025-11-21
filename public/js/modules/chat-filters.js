@@ -7,7 +7,7 @@ let nsfwChatsHidden = Cookies.get('nsfwChatsHidden') === 'true';
 let currentStyleFilter = Cookies.get('currentStyleFilter') || null;
 
 const logFilters = (context) => {
-    return
+    return; // Disable logging for now
     try {
         console.log('[ChatFilter]', context, {
             premiumChatsHidden,
@@ -144,32 +144,20 @@ window.loadStyleFilteredChats = function(style) {
     $('.sorting-tools button').removeClass('active');
     $(`#popular-chats-style-${style}`).addClass('active');
 
-    // Clear current galleries
-    $('#all-chats-container').empty();
-    $('#chat-gallery').empty().show();
-    emptyAllGalleriesExcept('chat-gallery');
-
-    // Stop popular-chats infinite scroll to avoid mixing datasets
-    $(window).off('scroll.popularChats');
-
-    // Clear popular cache (optional, keeps UI clean if user switches back)
-    sessionStorage.removeItem('popularChatsCache');
-    sessionStorage.removeItem('popularChatsCacheTime');
-
-    // Load server-filtered characters by style with infinite scroll
-    // displayPeopleChat uses /api/chats under the hood
-    displayPeopleChat(
-      1,
-      { imageStyle: style, imageModel: '', query: '', userId: '', modal: false },
-      null,
-      true // reload
-    );
+    logFilters('style filter applied');
+    updateChatFilters(); // Hide opposite style
 };
 
 // Style filters (now fetch from server instead of only hiding/showing)
 $(document).on('click', '#popular-chats-style-anime, #popular-chats-style-photorealistic', function () {
     const style = this.id.endsWith('anime') ? 'anime' : 'photorealistic';
     loadStyleFilteredChats(style);
+    setActiveQuery(style);
+    // Trigger loadPopularChats to refresh the display
+    if (typeof window.loadPopularChats === 'function') {
+        popularChatsPage = 1;
+        window.loadPopularChats(1, true);
+    }
 });
 
 // Reset style when clicking other filters
@@ -194,8 +182,6 @@ $(document).on('click', '.sorting-tools .btn:not([id^="popular-chats-style-"])',
             $('.query-tag-all').click();
         }
 
-        // Optionally scroll to the grid
-        $('html, body').animate({ scrollTop: $('#chat-gallery').offset().top }, 500);
     }
 
     logFilters('reset style filter');

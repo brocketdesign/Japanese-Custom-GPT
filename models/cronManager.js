@@ -460,104 +460,127 @@ const cachePopularChatsTask = (fastify) => async () => {
   const usersCollection = db.collection('users');
   const galleryCollection = db.collection('gallery');
 
-  const pagesToCache = 5;
+  const pagesToCache = 100;
   const limitPerPage = 50;
   const totalToCache = pagesToCache * limitPerPage;
 
   try {
-    const pipeline = [
-      { $match: { chatImageUrl: { $exists: true, $ne: '' }, name: { $exists: true, $ne: '' } } },
-      {
-        $lookup: {
-          from: 'gallery',
-          localField: '_id',
-          foreignField: 'chatId',
-          as: 'gallery'
-        }
-      },
-      {
-        $addFields: {
-          imageCount: {
-            $cond: [
-              { $gt: [ { $size: '$gallery' }, 0 ] },
-              { $size: { $ifNull: [ { $arrayElemAt: [ '$gallery.images', 0 ] }, [] ] } },
-              0
-            ]
+    // Get all distinct languages in the database
+    const languages = await chatsCollection.distinct('language', {
+      chatImageUrl: { $exists: true, $ne: '' },
+      name: { $exists: true, $ne: '' }
+    });
+
+    console.log(`⭐ [CRON] Found ${languages.length} languages to cache:`, languages);
+
+    // Clear the entire cache collection first
+    await cacheCollection.deleteMany({});
+
+    let totalCached = 0;
+
+    // Build cache for each language separately
+    for (const language of languages) {
+      console.log(`⭐ [CRON] Building cache for language: ${language}`);
+
+      const pipeline = [
+        { $match: { chatImageUrl: { $exists: true, $ne: '' }, name: { $exists: true, $ne: '' }, language } },
+        {
+          $lookup: {
+            from: 'gallery',
+            localField: '_id',
+            foreignField: 'chatId',
+            as: 'gallery'
+          }
+        },
+        {
+          $addFields: {
+            imageCount: {
+              $cond: [
+                { $gt: [ { $size: '$gallery' }, 0 ] },
+                { $size: { $ifNull: [ { $arrayElemAt: [ '$gallery.images', 0 ] }, [] ] } },
+                0
+              ]
+            }
+          }
+        },
+        { $sort: { imageCount: -1, _id: -1 } },
+        { $limit: totalToCache },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'userId',
+            foreignField: '_id',
+            as: 'userInfo'
+          }
+        },
+        {
+          $addFields: {
+            userInfo: { $arrayElemAt: ['$userInfo', 0] }
+          }
+        },
+        {
+          $addFields: {
+            nickname: '$userInfo.nickname',
+            profileUrl: '$userInfo.profileUrl',
+            premium: '$userInfo.subscriptionStatus',
+          }
+        },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            chatImageUrl: 1,
+            imageCount: 1,
+            imageStyle: 1,
+            userId: 1,
+            nickname: 1,
+            gender: 1,
+            profileUrl: 1,
+            tags: 1,
+            chatTags: 1,
+            messagesCount: 1,
+            premium: { $cond: [ { $eq: ['$premium', 'active'] }, true, false ] },
+            nsfw: 1,
+            moderation: 1,
+            language: 1
           }
         }
-      },
-      { $sort: { imageCount: -1, _id: -1 } },
-      { $limit: totalToCache },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'userInfo'
-        }
-      },
-      {
-        $addFields: {
-          userInfo: { $arrayElemAt: ['$userInfo', 0] }
-        }
-      },
-      {
-        $addFields: {
-          nickname: '$userInfo.nickname',
-          profileUrl: '$userInfo.profileUrl',
-          premium: '$userInfo.subscriptionStatus',
-        }
-      },
-      {
-        $project: {
-          _id: 1,
-          name: 1,
-          chatImageUrl: 1,
-          imageCount: 1,
-          imageStyle: 1,
-          userId: 1,
-          nickname: 1,
-          gender: 1,
-          profileUrl: 1,
-          tags: 1,
-          chatTags: 1,
-          messagesCount: 1,
-          premium: { $cond: [ { $eq: ['$premium', 'active'] }, true, false ] },
-          nsfw: 1,
-          moderation: 1,
-          language: 1
-        }
-      }
-    ];
+      ];
 
-    const popularChats = await chatsCollection.aggregate(pipeline).toArray();
+      const popularChats = await chatsCollection.aggregate(pipeline).toArray();
 
-    if (popularChats.length > 0) {
-      // For each chat, fetch up to 5 non-NSFW sample images from the gallery
-      const chatsWithSamples = await Promise.all(popularChats.map(async (chat) => {
-        const galleryDoc = await galleryCollection.findOne({ chatId: chat._id });
-        let sampleImages = [];
-        if (galleryDoc && Array.isArray(galleryDoc.images)) {
-          // Filter out NSFW images (assuming each image has an 'nsfw' boolean property)
-          sampleImages = galleryDoc.images.filter(img => !img.nsfw).slice(0, 5);
-        }
-        return {
+      if (popularChats.length > 0) {
+        // For each chat, fetch up to 5 non-NSFW sample images from the gallery
+        const chatsWithSamples = await Promise.all(popularChats.map(async (chat) => {
+          const galleryDoc = await galleryCollection.findOne({ chatId: chat._id });
+          let sampleImages = [];
+          if (galleryDoc && Array.isArray(galleryDoc.images)) {
+            // Filter out NSFW images (assuming each image has an 'nsfw' boolean property)
+            sampleImages = galleryDoc.images.filter(img => !img.nsfw).slice(0, 5);
+          }
+          return {
+            ...chat,
+            sampleImages,
+          };
+        }));
+
+        // Create cache entries with language-specific ranking
+        const chatsToInsert = chatsWithSamples.map((chat, index) => ({
           ...chat,
-          sampleImages,
-        };
-      }));
+          cacheRank: index, // Rank within this language
+          language: language, // Ensure language is set
+          cachedAt: new Date()
+        }));
 
-      await cacheCollection.deleteMany({});
-      const chatsToInsert = chatsWithSamples.map((chat, index) => ({
-        ...chat,
-        cacheRank: index,
-        cachedAt: new Date()
-      }));
-      await cacheCollection.insertMany(chatsToInsert);
-      console.log(`⭐ [CRON] ✅ Cached ${chatsWithSamples.length} popular chats with sample images`);
-    } else {
-      console.log('⭐ [CRON] ℹ️  No popular chats found to cache');
+        await cacheCollection.insertMany(chatsToInsert);
+        console.log(`⭐ [CRON] ✅ Cached ${chatsWithSamples.length} popular chats for language: ${language}`);
+        totalCached += chatsWithSamples.length;
+      } else {
+        console.log(`⭐ [CRON] ℹ️  No popular chats found for language: ${language}`);
+      }
     }
+
+    console.log(`⭐ [CRON] ✅ Total chats cached across all languages: ${totalCached}`);
 
   } catch (err) {
     console.error('⭐ [CRON] ❌ Error caching popular chats:', err.message);

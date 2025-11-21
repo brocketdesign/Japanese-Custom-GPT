@@ -55,8 +55,16 @@ window.loadPopularChats = async (page = 1, reload = false) => {
     if (popularChatsLoading && !reload) return;
     popularChatsLoading = true;
 
+    $('#popular-chats-pagination-controls').css('opacity', '1');
     $('#popular-chats-pagination-controls').html(
-        '<div class="text-center my-3"><div class="spinner-border text-secondary spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>'
+            `
+            <div id="popular-chats-loading-spinner" class="text-center my-4">
+                <div class="spinner-border text-purple" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="mt-2 text-muted">${translations.loadingMoreCharacters ? translations.loadingMoreCharacters : 'Loading more characters...'}</div>
+            </div>  
+            `
     );
 
     if (reload) {
@@ -69,7 +77,8 @@ window.loadPopularChats = async (page = 1, reload = false) => {
     const cache = getPopularChatsCache();
     const cachedData = cache && cache[page];
 
-    if (cachedData && !reload) {
+    // Validate cached data before using it
+    if (cachedData && !reload && Array.isArray(cachedData.chats) && cachedData.chats.length > 0) {
         renderPopularChatsFromCache(cachedData);
         popularChatsLoading = false;
         return;
@@ -109,6 +118,12 @@ window.loadPopularChats = async (page = 1, reload = false) => {
 };
 
 const renderPopularChatsFromCache = (data) => {
+    // Validate data structure before using it
+    if (!data || !Array.isArray(data.chats)) {
+        console.warn('[renderPopularChatsFromCache] Invalid cache data, skipping render');
+        return;
+    }
+    
     if (typeof window.displayChats === 'function') {
         window.displayChats(data.chats, 'chat-gallery', false);
     }
@@ -124,17 +139,29 @@ const updatePopularChatsPagination = (page) => {
         $('#popular-chats-pagination-controls').html('');
     } else {
         $('#popular-chats-pagination-controls').html(
-            '<div class="text-center my-3"><div class="spinner-border text-secondary spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>'
+            `
+            <div id="popular-chats-loading-spinner" class="text-center my-4">
+            <div class="spinner-border text-purple" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="mt-2 text-muted">${translations.loadingMoreCharacters ? translations.loadingMoreCharacters : 'Loading more characters...'}</div>
+            </div>  
+            `
         );
     }
 };
 
 // Infinite scroll
 $(window).on('scroll.popularChats', () => {
+    if ($('#chat-gallery').is(':visible') === false) return;
+    if($('.popular-chats-gallery').is(':visible') === false) return;
+    if($('#popular-chats-pagination-controls').length === 0) return;
+    const scrollTresold = $('#popular-chats-pagination-controls').offset().top  - 1000;
+    
     if (
         !popularChatsLoading &&
         popularChatsPage < popularChatsTotalPages &&
-        $(window).scrollTop() + $(window).height() >= $(document).height() - 200
+        scrollTresold < $(window).scrollTop()
     ) {
         popularChatsPage++;
         window.loadPopularChats(popularChatsPage);
@@ -150,4 +177,4 @@ $(document).on('click', '#reset-popular-chat-cache', () => {
 }); 
 
 // Initial load
-$(document).ready(() => window.loadPopularChats());
+$(document).ready(() => window.loadPopularChats(1, true));

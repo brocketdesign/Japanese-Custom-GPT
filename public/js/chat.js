@@ -1640,7 +1640,7 @@ function setupChatInterface(chat, character) {
 });
 
 function logChatDataFetch(data){
-    //console.log('[logChatDataFetch] Chat data fetched:', data);
+    console.log('[logChatDataFetch] Chat data fetched:', data);
 }
 //.reset-chat,.new-chat
 window.handleChatReset = function(el) {

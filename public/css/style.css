@@ -100,7 +100,7 @@ body {
   }
   
   body.sfw-mode .nsfw-content {
-    display: none !important; /* Hide NSFW content */
+    display: block !important; /* Hide NSFW content */
   }
   body.nsfw-mode .nsfw-content {
     display: block ; /* Or any other appropriate display value */

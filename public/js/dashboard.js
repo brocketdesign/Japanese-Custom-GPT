@@ -91,6 +91,7 @@ window.loadLatestVideoChats = async function(page = 1, reload = false) {
         displayLatestVideoChats(data.videoChats, 'latest-video-chats-gallery');
         latestVideoChatsState = data.totalPages || 1;
         latestVideoChatsLoading = false;
+        $('#latest-video-chats-pagination-controls').html('');
         return;
     }
 
@@ -120,9 +121,7 @@ window.loadLatestVideoChats = async function(page = 1, reload = false) {
         displayLatestVideoChats(data.videoChats, 'latest-video-chats-gallery');
         latestVideoChatsState = data.totalPages || 1;
 
-        if (page >= latestVideoChatsState) {
-            $('#latest-video-chats-pagination-controls').html('');
-        }
+        $('#latest-video-chats-pagination-controls').html('');
     } catch (e) {
         console.error('[LatestVideoChats] Error loading video chats:', e);
         $('#latest-video-chats-pagination-controls').html('<div class="text-center text-danger my-3">Error loading video chats.</div>');
@@ -2151,7 +2150,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
   }
   // Append the generated HTML to the gallery
   $(document).find('#chat-gallery').append(htmlContent);
-    applyNSFWBlurEffect();
+  applyNSFWBlurEffect();
 };
 // Call /api/delete-chat/:chatId to delete a chat
 window.deleteChat = function(el) {
@@ -3215,6 +3214,11 @@ $(document).ready(function () {
      */
     $(window).off('scroll.fetchChats').on('scroll.fetchChats', function () {
       if($('#all-chats-images-pagination-controls').length === 0) return;
+      // Only trigger if the gallery and controls are both visible (not display:none and not opacity:0)
+      const $gallery = $('#all-chats-container');
+      const $controls = $('#all-chats-images-pagination-controls');
+      if (!$gallery.is(':visible') || $gallery.css('opacity') === '0') return;
+      if (!$controls.is(':visible') || $controls.css('opacity') === '0') return;
       const scrollTresold = $('#all-chats-images-pagination-controls').offset().top  - 1000;
       if (scrollTresold < $(window).scrollTop()) {
         fetchChatsWithImages(currentPageMap.get(currentActiveQuery) || 1, currentActiveQuery);

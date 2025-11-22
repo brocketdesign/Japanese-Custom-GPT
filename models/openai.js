@@ -687,8 +687,8 @@ const generateChatScenarios = async (charInfo, personaInfo = null, userSettings 
 
     // Extract key traits from character description to ensure diversity
     const traitExtractionPrompt = `Analyze this character description and extract 3-5 key defining traits, quirks, or interests:
-"${characterDescription}"
-Return only the trait list, one per line, in format: "- [trait]"`;
+    "${characterDescription}"
+    Return only the trait list, one per line, in format: "- [trait]"`;
 
     const traitResponse = await generateCompletion(
       [{ role: "user", content: traitExtractionPrompt }],
@@ -698,21 +698,63 @@ Return only the trait list, one per line, in format: "- [trait]"`;
     );
     
     const characterTraits = traitResponse || characterDescription;
+   
+    const scenarioExamples = `
+      Lily – The Babysitter:
+      Your parents hire Lily to "babysit" you while they're gone for the week — even though you swear you're too old for it. Lily is in her early 20s, playful and teasing, always treating you half like a kid, half like something else entirely. Being alone with her for a whole week will test your nerves… and your willpower.
+      
+      Max – The Mysterious Stranger:
+      You meet Max at a secluded cabin in the woods where you're both seeking solitude. Max is enigmatic, with a dark past hinted at in his brooding demeanor. As a storm traps you both inside, you must navigate the tension and attraction that builds between you.
+      
+      Ellie – The Reclusive Stepsister:
+      Ellie's your girlfriend's 18-year-old stepsister, left in your care for the weekend. She's moody, glued to her phone, and barely leaves her room. On the surface she's all eye-rolls and "whatever," but behind that is a restless Gen Z brat addicted to porn and late-night scrolling. You're supposed to get her out of her shell — but maybe she's more curious than she pretends.
+      
+      Ophelia – The Lonely Goth Roommate:
+      When you moved into your college dorm, you expected parties and noise — but your roommate, Ophelia, is nothing like that. She's quiet, withdrawn, and spends most of her time sketching in a notebook or listening to music through oversized headphones. At first, she barely looks at you, but slowly you realize she isn't cruel — just lonely, hiding behind sarcasm and dark humor. Beneath the eyeliner and the black clothes, she's desperate for someone who sees her as more than just "the goth girl."
+      
+      Sofia – Caught in the Shower:
+      You accidentally walk in on Sofia fresh out of the shower, wrapped only in a towel. Instead of running away embarrassed, she freezes and holds your gaze for a moment longer than necessary. The air between you becomes charged as she asks if you need something, her voice lower than usual, neither of you moving away.
+      
+      Jasmine – Sensual Massage:
+      After a long day, Jasmine offers to give you a massage to help you relax. As her hands move across your shoulders and back, the touch becomes increasingly deliberate and intimate. She leans close, her breath warm against your skin, and whispers that she wants to help you feel better—in every way possible.
+      
+      Aurora – Jealous Reconciliation:
+      Aurora saw you talking to someone else and it set her off. Now she's cornered you alone, eyes intense and demanding. She needs you to prove that no one else matters, that she's the only one you want. Her hands find yours as the tension between you becomes undeniable.
+      
+      Vera – Midnight Vulnerability:
+      Late at night, Vera appears at your door, unable to sleep. She's been drinking and admits she's been thinking about you all day. As you talk in hushed tones, her confessions become more personal, more intimate. She inches closer, asking if you've thought about her too—if you want her as much as she wants you.
+      
+      Luna – Forbidden Attraction:
+      Luna is someone you shouldn't want—perhaps your friend's partner, a coworker, or someone otherwise off-limits. But tonight, she pulls you into a private corner, breathless and conflicted. She admits she can't stop thinking about you, and asks if you feel the same way. The risk makes it even more intoxicating.
+      
+      Ivy – Spontaneous Passion:
+      During an ordinary moment—watching a movie, talking in your room—Ivy suddenly straddles your lap and kisses you intensely. She's been holding back too long. Now she's done waiting. Her hands explore your body as she whispers that she needs you, right now.
+      
+      Zara – Deliberate Seduction:
+      Zara has decided tonight is the night. She wears something deliberately chosen to distract you, moves closer than necessary, touches your arm as she laughs at your jokes. She's playing a game and you both know it. She leans in and asks if you like what you see, her eyes daring you to touch her.
+      
+      Mia – Shared Secrets:
+      You and Mia have been dancing around your feelings for weeks. Tonight, alone together, you both finally admit the truth. Your walls come down as she confesses her deepest desires and fears. As vulnerability melts into passion, you discover you want each other in ways you never dared admit before.
+    `;
 
     // Scenario categories to ensure diversity
     const scenarioCategories = [
-      'emotional_vulnerability', // Character shares a weakness or fear, needs support
-      'creative_collaboration', // User and character create/build/plan something together
-      'conflict_resolution',    // Addressing a misunderstanding or supporting through disagreement
-      'shared_experience',      // Bonding through a shared activity or memory
-      'character_growth',       // Character learning something new from user
-      'intimate_moment',        // Deep conversation based on relationship type
-      'playful_interaction',    // Fun, light-hearted scenario
-      'mystery_or_discovery',   // Uncovering something together
-      'support_through_change', // Character dealing with change, user is steadying force
-      'celebration_or_milestone' // Special moment tailored to relationship
+      'A ambiguous encounter : A chance meeting that leads to unexpected intimacy',
+      'Emotional distress : Character seeks comfort from user during a tough time',
+      'Flirty banter : Light-hearted teasing that escalates into something more',
+      'Alone together in a confined space : Forced proximity leads to tension and attraction',
+      'Private moment interrupted : User catches character in a vulnerable or intimate moment',
+      'Sensual collaboration : User and character work together on something intimate or physical',
+      'Jealousy and reconciliation : Tension builds and resolves through physical closeness',
+      'Late night confession : Deep conversation escalates into intimate connection',
+      'Forbidden attraction : User and character explore chemistry despite circumstances',
+      'Spontaneous passion : Sudden moment where both give in to attraction',
+      'Playful seduction : Character deliberately creates intimate moment with user',
+      'Mutual vulnerability : Both share intimate thoughts leading to physical connection',
     ];
 
+ 
+    
     // Randomly select 3 distinct categories to ensure variety
     const selectedCategories = [];
     const shuffled = [...scenarioCategories].sort(() => Math.random() - 0.5);
@@ -722,58 +764,58 @@ Return only the trait list, one per line, in format: "- [trait]"`;
 
     const systemPrompt = `You are an expert scenario designer specializing in creating deeply personalized, character-specific conversation scenarios.
 
-CRITICAL REQUIREMENTS:
-1. Each scenario must reflect the character's UNIQUE traits, interests, and personality - NOT generic templates
-2. AVOID overused tropes like "lost in forest", "lost powers", "facing fear" - be creative and character-specific
-3. Generate EXACTLY 3 DISTINCT SCENARIOS, each from a different category to ensure diversity
-4. Each scenario must have a clear USER ROLE and specific situation the character is in
-5. Tailor scenarios to the ${userSettings?.relationshipType || 'casual'} relationship dynamic
+    CRITICAL REQUIREMENTS:
+    1. Each scenario must reflect the character's UNIQUE traits, interests, and personality - NOT generic templates
+    2. AVOID overused tropes like "lost in forest", "lost powers", "facing fear" - be creative and character-specific
+    3. Generate EXACTLY 3 DISTINCT SCENARIOS, each from a different category to ensure diversity
+    4. Each scenario must have a clear USER ROLE and specific situation the character is in
+    5. Tailor scenarios to the ${userSettings?.relationshipType || 'casual'} relationship dynamic
 
-SCENARIO CATEGORIES for this request (ensure each is different):
-- ${selectedCategories[0]}: ${selectedCategories[0] === 'emotional_vulnerability' ? 'Character reveals something vulnerable; user provides support' : selectedCategories[0] === 'creative_collaboration' ? 'User and character work together on something creative/productive' : 'Character learns or grows through interaction with user'}
-- ${selectedCategories[1]}: [appropriate description for this category]
-- ${selectedCategories[2]}: [appropriate description for this category]
+    SCENARIO CATEGORIES for this request (ensure each is different):
+    - ${selectedCategories[0]}: ${selectedCategories[0] === 'emotional_vulnerability' ? 'Character reveals something vulnerable; user provides support' : selectedCategories[0] === 'creative_collaboration' ? 'User and character work together on something creative/productive' : 'Character learns or grows through interaction with user'}
+    - ${selectedCategories[1]}: [appropriate description for this category]
+    - ${selectedCategories[2]}: [appropriate description for this category]
 
-Character traits to base scenarios on:
-${characterTraits}
+    Character traits to base scenarios on:
+    ${characterTraits}
 
-DIVERSITY REQUIREMENTS:
-- NO duplicate scenario patterns
-- NO generic "lost/stuck" scenarios
-- NO clichéd relationship dynamics unless character-specific
-- Each scenario must feel PERSONAL to ${characterName}'s unique personality
-- Scenarios should showcase different facets of the character
+    DIVERSITY REQUIREMENTS:
+    - NO duplicate scenario patterns
+    - NO generic "lost/stuck" scenarios
+    - NO clichéd relationship dynamics unless character-specific
+    - Each scenario must feel PERSONAL to ${characterName}'s unique personality
+    - Scenarios should showcase different facets of the character
 
-Respond in ${language}.`;
+    Respond in ${language}.`;
 
     const userPrompt = `Create 3 unique, character-tailored conversation scenarios for ${characterName}.
 
-CHARACTER INFO:
-Name: ${characterName}
-Gender: ${characterGender}
-Description: ${characterDescription}${personaContext}
+    CHARACTER INFO:
+    Name: ${characterName}
+    Gender: ${characterGender}
+    Description: ${characterDescription}${personaContext}
 
-RELATIONSHIP CONTEXT:
-- Type: ${userSettings?.relationshipType || 'casual'}
-${relationship ? `- Dynamic: ${relationship}` : ''}
+    RELATIONSHIP CONTEXT:
+    - Type: ${userSettings?.relationshipType || 'casual'}
+    ${relationship ? `- Dynamic: ${relationship}` : ''}
 
-SCENARIO REQUIREMENTS:
-For each scenario, base it on different aspects of ${characterName}'s personality and interests. Make scenarios:
-1. Specific to their background/interests/quirks (NOT generic templates, can be fantasy-based if fitting, but must align with character)
-2. Show clear USER INVOLVEMENT and specific role
-3. Create natural conversation flow based on the situation
-4. Include emotional depth matching the relationship type
+    SCENARIO REQUIREMENTS:
+    For each scenario, base it on different aspects of ${characterName}'s personality and interests. Make scenarios:
+    1. Specific to their background/interests/quirks (NOT generic templates, can be fantasy-based if fitting, but must align with character)
+    2. Show clear USER INVOLVEMENT and specific role
+    3. Create natural conversation flow based on the situation
+    4. Include emotional depth matching the relationship type
 
-Each scenario must include:
-- scenario_title: Catchy, specific title (NOT generic)
-- scenario_description: Vivid, character-specific situation
-- emotional_tone: Appropriate tone for this scenario
-- conversation_direction: How the conversation should flow
-- system_prompt_addition: Instructions for maintaining character consistency in this scenario
+    Each scenario must include:
+    - scenario_title: Catchy, specific title (NOT generic)
+    - scenario_description: Vivid, character-specific situation
+    - emotional_tone: Appropriate tone for this scenario
+    - conversation_direction: How the conversation should flow
+    - system_prompt_addition: Instructions for maintaining character consistency in this scenario
 
-CRITICAL: Replace ALL "[Character name]" with "${characterName}" in EVERY field.
+    CRITICAL: Replace ALL "[Character name]" with "${characterName}" in EVERY field.
 
-Generate 3 scenarios that feel fresh and authentic to ${characterName}'s unique personality.`;
+    Generate 3 scenarios that feel fresh and authentic to ${characterName}'s unique personality.`;
 
     const scenariosListSchema = z.object({
       scenarios: z.array(chatScenarioSchema).length(3),
@@ -783,7 +825,9 @@ Generate 3 scenarios that feel fresh and authentic to ${characterName}'s unique 
       model: 'gpt-4o',
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
+        { role: "user", content: userPrompt },
+        { role: "user", content: `Example scenarios: ${scenarioExamples}` },
+        { role: "user", content: `Ensure ALL instances of "[Character name]" are replaced with "${characterName}" in EVERY field.` }
       ],
       response_format: zodResponseFormat(scenariosListSchema, "scenarios_list"),
       max_completion_tokens: 1000,

@@ -54,14 +54,14 @@
             {{/if}}
             <!-- Points Balance -->
             <div id="userPointsContainer" class="d-flex align-items-center gap-2 mt-2">
-                <span class="btn btn-warning text-white my-1" style="font-size: 0.9rem;" data-bs-toggle="modal" data-bs-target="#userPointsModal">
+                <span class="btn btn-primary text-white shadow-0 my-1" style="font-size: 0.9rem;" data-bs-toggle="modal" data-bs-target="#userPointsModal">
                     <i class="bi bi-coin"></i>
                     <span class="user-points-balance">0</span>
                 </span>
             </div>
             <!-- Avatar Button -->
             <button id="avatarMenuBtn" 
-                class="btn p-0 border-0 bg-transparent avatar-bg {{#if (eq user.subscriptionStatus 'active')}} bg-purple {{/if}}" 
+                class="btn p-0 border-0 shadow-0 bg-transparent avatar-bg {{#if (eq user.subscriptionStatus 'active')}} bg-purple {{/if}}" 
                 type="button" 
                 data-bs-toggle="offcanvas" 
                 data-bs-target="#userMenuOffcanvas" 

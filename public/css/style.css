@@ -3217,7 +3217,7 @@ opacity: 0.8;
   height: 50px;
   background: linear-gradient(135deg, #6E20F4, #8B4CF8);
   border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(110, 32, 244, 0.3);
+  box-shadow: none;
 }
 
 .copyright-text {

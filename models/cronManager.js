@@ -775,7 +775,7 @@ const initializeCronJobs = async (fastify) => {
     const analyticsCacheTask = createAnalyticsCacheTask(fastify);
     configureCronJob(
         'analyticsCacheUpdater',
-        '0 * * * *', // Runs every hour
+        '0 */5 * * *', // Runs every 5 hours
         true, // Enable this job
         analyticsCacheTask
     );

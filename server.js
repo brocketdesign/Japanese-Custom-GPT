@@ -16,7 +16,6 @@ const { checkUserAdmin, getUserData, updateCounter, fetchTags } = require('./mod
 const { deleteOldTasks } = require('./models/imagen');
 const { 
   cronJobs, 
-  cachePopularChatsTask, 
   configureCronJob, 
   initializeCronJobs, 
   initializeDayPassExpirationCheck } = require('./models/cronManager');

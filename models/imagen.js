@@ -66,8 +66,8 @@ const params = {
   model_name: "novaAnimeXL_ponyV20_461138.safetensors",
   prompt: '',
   negative_prompt: '',
-  width: 701,
-  height: 1024,
+  width: 1024,
+  height: 1360,
   sampler_name: "Euler a",
   guidance_scale: 7,
   steps: 30,
@@ -502,7 +502,7 @@ async function generateImg({
 
     // Prepare params
     let requestData = flux ? { ...image_request, image_num } : { ...params, ...image_request, image_num };
-
+    console.log('[generateImg] Prepared requestData:', requestData);
     if(image_base64){
       // Get target dimensions from the selected style
       const targetWidth = image_request.width;

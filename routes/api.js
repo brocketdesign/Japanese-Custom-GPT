@@ -1834,7 +1834,6 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             let usingCache = false;
 
             // Check if the requested page is within the cached range
-            console.log(`[API /popular-chats] Requesting page ${page} (lang: ${language}), reloadCache: ${reloadCache}`);
             if (page <= pagesToCache && !reloadCache) {
                 // Try fetching from cache first, filtering by language
                 const cacheQuery = { language: language }; // Filter cache by language
@@ -1850,22 +1849,13 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
                     if (chats.length > 0) {
                         totalPages = Math.ceil(totalCount / limit);
                         usingCache = true;
-                        console.log(`[API /popular-chats] Served page ${page} for lang ${language} from cache (totalCount: ${totalCount}, totalPages: ${totalPages}).`);
-                    } else {
-                         // Cache exists but no results for this specific page/language
-                         console.log(`[API /popular-chats] Cache exists for lang ${language} (${totalCount} items), but no results for page ${page}. Falling back to DB.`);
-                    }
-                } else {
-                    console.log(`[API /popular-chats] Cache miss for lang ${language}. Falling back to DB.`);
-                }
-            } else {
-                 console.log(`[API /popular-chats] Page ${page} exceeds cache limit (${pagesToCache}). Falling back to DB.`);
-            }
+                    } 
+                } 
+            } 
 
 
             // Fallback to direct DB query if not using cache or cache fetch failed
             if (!usingCache) {
-                console.log(`[API /popular-chats] Falling back to direct DB query for page ${page}, lang ${language}.`);
                 const pipeline = [
                     // Match language and basic requirements
                     { $match: { chatImageUrl: { $exists: true, $ne: '' }, name: { $exists: true, $ne: '' }, language, imageStyle: { $exists: true, $ne: '' } } },
@@ -1937,8 +1927,6 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
                 // Count total for pagination (only if fallback is used)
                 totalCount = await chatsCollection.countDocuments({ chatImageUrl: { $exists: true, $ne: '' }, name: { $exists: true, $ne: '' }, language });
                 totalPages = Math.ceil(totalCount / limit);
-                console.log(`[API /popular-chats] Fetched page ${page} directly from DB for lang ${language}.`);
-                console.log(`[API /popular-chats] Total count: ${totalCount}, Total pages: ${totalPages}`);
             }
 
             reply.send({ chats, page, totalPages, usingCache }); // Add usingCache flag for debugging/info

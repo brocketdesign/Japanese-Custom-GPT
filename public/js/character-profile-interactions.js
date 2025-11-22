@@ -577,61 +577,6 @@ function escapeHtml(text) {
 }
 
 /**
- * Play video in modal
- */
-function playVideoModal(videoUrl) {
-    // Close any existing modals first
-    const existingModal = document.getElementById('videoModal');
-    if (existingModal) {
-        const bsModal = bootstrap.Modal.getInstance(existingModal);
-        if (bsModal) {
-            bsModal.hide();
-        }
-        setTimeout(() => existingModal.remove(), 300);
-    }
-    
-    const modal = document.createElement('div');
-    modal.className = 'modal fade';
-    modal.id = 'videoModal';
-    modal.setAttribute('tabindex', '-1');
-    modal.setAttribute('aria-labelledby', 'videoModalLabel');
-    modal.setAttribute('aria-hidden', 'true');
-    modal.innerHTML = `
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content" style="background-color: #000;">
-                <div class="modal-header" style="border-bottom: 1px solid #333;">
-                    <h5 class="modal-title" id="videoModalLabel" style="color: white;">Video Player</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-0" style="background-color: #000; min-height: 400px; display: flex; align-items: center; justify-content: center;">
-                    <video width="100%" height="auto" controls autoplay style="border-radius: 4px; max-height: 70vh;">
-                        <source src="${videoUrl}" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    const bootstrapModal = new bootstrap.Modal(modal, {
-        backdrop: 'static',
-        keyboard: true
-    });
-    bootstrapModal.show();
-    
-    // Clean up modal when hidden
-    modal.addEventListener('hidden.bs.modal', function() {
-        const videoElement = modal.querySelector('video');
-        if (videoElement) {
-            videoElement.pause();
-            videoElement.currentTime = 0;
-        }
-        modal.remove();
-    });
-}
-
-/**
  * Initialize sharing functionality
  */
 function initializeSharing() {

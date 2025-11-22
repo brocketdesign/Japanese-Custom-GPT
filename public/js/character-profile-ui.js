@@ -1175,11 +1175,7 @@ function displayVideosInGrid() {
             item.style.cursor = 'pointer';
             item.setAttribute('data-toggle', 'modal');
             item.setAttribute('role', 'button');
-            
-            // Add click handler for video playback
-            item.addEventListener('click', function(e) {
-                playVideoModal(videoSrc);
-            });
+
         }
         
         grid.appendChild(item);

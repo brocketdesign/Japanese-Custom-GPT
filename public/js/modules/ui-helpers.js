@@ -15,9 +15,19 @@ window.emptyAllGalleriesExcept = (exceptId) => {
     galleryIds.forEach((id) => {
         if (id !== exceptId) {
             $(`#${id}`).hide();
+            $(`#${id}`).css('opacity', 0);
+            // Hide corresponding pagination if exists
+            if (id.endsWith('-gallery')) {
+                $(`#${id.replace('-gallery', '-pagination-controls')}`).hide().css('opacity', 0);
+            }
         }
     });
     $(`#${exceptId}`).show();
+    $(`#${exceptId}`).css('opacity', 1);
+    // Show corresponding pagination if exists
+    if (exceptId.endsWith('-gallery')) {
+        $(`#${exceptId.replace('-gallery', '-pagination-controls')}`).show().css('opacity', 1);
+    }
 };
 
 // Clean date display

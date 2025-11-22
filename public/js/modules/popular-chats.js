@@ -152,9 +152,12 @@ const updatePopularChatsPagination = (page) => {
 };
 
 // Infinite scroll
-$(window).on('scroll.popularChats', () => {
-    if ($('#chat-gallery').is(':visible') === false) return;
-    if($('.popular-chats-gallery').is(':visible') === false) return;
+$(window).off('scroll.popularChats').on('scroll.popularChats', () => {
+    // Only trigger if the gallery and controls are both visible (not display:none and not opacity:0)
+    const $gallery = $('#chat-gallery');
+    const $controls = $('#popular-chats-pagination-controls');
+    if (!$gallery.is(':visible') || $gallery.css('opacity') === '0') return;
+    if (!$controls.is(':visible') || $controls.css('opacity') === '0') return;
     if($('#popular-chats-pagination-controls').length === 0) return;
     const scrollTresold = $('#popular-chats-pagination-controls').offset().top  - 1000;
     

@@ -54,7 +54,16 @@ window.loadLatestVideoChats = async function(page = 1, reload = false) {
         return;
     }
     latestVideoChatsLoading = true;
-
+     $('#latest-video-chats-pagination-controls').html(
+            `
+            <div id="latest-video-chats-loading-spinner" class="text-center my-4">
+                <div class="spinner-border text-purple" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="mt-2 text-muted">${translations.loadingMoreVideos ? translations.loadingMoreVideos : 'Loading more videos...'}</div>
+            </div>  
+            `
+    ).show().css('opacity', '1');
     if (reload) {
         latestVideoChatsPage = 1;
         $('#latest-video-chats-gallery').empty();
@@ -68,6 +77,13 @@ window.loadLatestVideoChats = async function(page = 1, reload = false) {
     if(data && data.videoChats && data.videoChats.length === 0) {
       $('#latest-video-chats-section').remove();
       latestVideoChatsLoading = false;
+      $('#latest-video-chats-pagination-controls').html(`
+            <div id="latest-video-chats-loading-spinner" class="text-center my-4">
+                <div class="spinner-border text-purple" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="mt-2 text-muted">${translations.noMoreVideos ? translations.noMoreVideos : 'No more videos available.'}</div>
+            </div>  `).show().css('opacity', '1');
       return;
     }
 
@@ -90,6 +106,13 @@ window.loadLatestVideoChats = async function(page = 1, reload = false) {
         if(data && data.videoChats && data.videoChats.length === 0) {
           $('#latest-video-chats-section').remove();
           latestVideoChatsLoading = false;
+          $('#latest-video-chats-pagination-controls').html(`
+            <div id="latest-video-chats-loading-spinner" class="text-center my-4">
+                <div class="spinner-border text-purple" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="mt-2 text-muted">${translations.noMoreVideos ? translations.noMoreVideos : 'No more videos available.'}</div>
+            </div>  `).show().css('opacity', '1');
           return;
         }
 
@@ -219,11 +242,14 @@ window.playVideoModal = function(videoUrl, chatName) {
             <div class="modal fade" id="videoPlayModal" tabindex="-1" aria-labelledby="videoPlayModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-lg modal-dialog-centered">
                     <div class="modal-content bg-transparent shadow-0 border-0 mx-auto w-auto">
-                        <div class="modal-header border-0 bg-dark">
+                        <div class="modal-header border-0"
+                         style="background-color:rgba(33, 37, 41, 0.8)!important;backdrop-filter: blur(10px);-webkit-backdrop-filter: blur(10px);">
                             <h5 class="modal-title text-white" id="videoPlayModalLabel"></h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="modal-body p-0 text-center bg-dark" style="display: flex;justify-content: center;align-items: center;border-radius: 0 0 25px 25px !important;">
+                        <div class="modal-body p-0 text-center" 
+                        style="display: flex;justify-content: center;align-items: center;border-radius: 0 0 25px 25px !important;background-color:rgba(33, 37, 41, 0.8)!important;backdrop-filter: blur(10px);
+                        -webkit-backdrop-filter: blur(10px);">
                             <video id="modalVideo" class="w-auto" loop autoplay muted 
                             style="max-height: 70vh; max-width: 90vw;">
                                 <source src="" type="video/mp4">
@@ -243,6 +269,7 @@ window.playVideoModal = function(videoUrl, chatName) {
                 video.pause();
                 video.currentTime = 0;
             }
+            $('#videoPlayModal').remove();
         });
     }
     

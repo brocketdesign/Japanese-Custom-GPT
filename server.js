@@ -1089,6 +1089,7 @@ Disallow: /dashboard/
 Disallow: /settings/
 Disallow: /generate/
 Disallow: /search
+Disallow: /tags/
 Allow: /
 
 Sitemap: ${baseUrl}/sitemap.xml`;

@@ -31,7 +31,33 @@ function getImageTools({chatId, imageId, isLiked = false, title, prompt = false,
             (window.translations?.image_tools?.video_generated || 'Video Generated') : 
             (window.translations?.image_tools?.video || 'Video');
         const videoBadgeClass = hasVideoAction ? 'badge bg-success text-white' : 'badge bg-white text-secondary';
-
+        // Add a video icon on top (bottom right) of the .assistant-image-box 
+        const assistantImageBox = $(`.assistant-image-box img[data-id="${imageId}"]`);
+        if (assistantImageBox.length) {
+            let $parent = assistantImageBox.parent();
+            if ($parent.find('.video-icon-overlay').length === 0) {
+            const $icon = $('<i>')
+                .addClass('bi bi-play-circle-fill video-icon-overlay')
+                .css({
+                position: 'absolute',
+                bottom: '8px',
+                right: '8px',
+                fontSize: '24px',
+                color: 'rgba(255, 255, 255, 0.8)',
+                cursor: 'pointer'
+                })
+                .attr('data-id', imageId)
+                .on('click', function(e) {
+                e.stopPropagation();
+                if (!hasVideoAction && subscriptionStatus) {
+                    generateVideoFromImage(imageId, chatId, userChatId);
+                } else if (!hasVideoAction) {
+                    loadPlanPage();
+                }
+                });
+            $parent.css('position', 'relative').append($icon);
+            }
+        }
         const mergeFaceIcon = hasMergeFaceAction ? 'bi-person-fill-check' : 'bi-person-plus';
         const mergeFaceLabel = hasMergeFaceAction ? 
             (window.translations?.image_tools?.face_merged || 'Face Merged') : 

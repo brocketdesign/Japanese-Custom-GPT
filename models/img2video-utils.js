@@ -19,15 +19,18 @@ async function generateVideoFromImage({ imageUrl, nsfw, prompt, userId, chatId, 
 
   const requestData = {
     image_url: imageUrl,
-    image: imageUrl, // For backward compatibility
+    image: imageUrl,
+    images: [imageUrl],
     prompt: prompt || 'Generate a dynamic video from this image',
     negative_prompt: 'blurry, low quality, distorted',
     duration: "5",
     guidance_scale: 0.5,
+    aspect_ratio: "9:16",
+    resolution: "720p",
+    movement_amplitude: "auto", //auto, small, medium, large
+    bgm: false // Background music option
   };
   
-  console.log(`[generateVideoFromImage] RequestData: ${JSON.stringify(requestData)}`);
-
   try {
     const response = await axios.post(apiUrl, requestData, {
       headers: {
@@ -165,6 +168,8 @@ async function saveVideoTask({
 
   const taskData = {
     taskId,
+    task_type: 'img2video',
+    type: 'img2video',
     userId: new ObjectId(userId),
     chatId: new ObjectId(chatId),
     userChatId,
@@ -173,7 +178,6 @@ async function saveVideoTask({
     prompt,
     nsfw,
     placeholderId,
-    type: 'img2video',
     status: 'pending',
     createdAt: new Date(),
     updatedAt: new Date()
@@ -368,7 +372,6 @@ async function saveVideoToDB({
  */
 async function pollVideoTaskStatus(taskId, fastify, options = {}) {
   console.log(`[pollVideoTaskStatus] Setting task ${taskId} to background status for cron job processing`);
-  console.log(`[pollVideoTaskStatus] Options:`, JSON.stringify(options, null, 2));
   
   const db = fastify.mongo.db;
   
@@ -384,12 +387,10 @@ async function pollVideoTaskStatus(taskId, fastify, options = {}) {
       }
     );
     
-    console.log(`[pollVideoTaskStatus] Task ${taskId} set to background status. Update result:`, updateResult);
+    console.log(`[pollVideoTaskStatus] Task ${taskId} set to background status.`);
     
     if (updateResult.matchedCount === 0) {
       console.warn(`[pollVideoTaskStatus] No task found with taskId: ${taskId}`);
-    } else {
-      console.log(`[pollVideoTaskStatus] Task ${taskId} will be processed by cron job processBackgroundVideoTasks`);
     }
     
   } catch (error) {

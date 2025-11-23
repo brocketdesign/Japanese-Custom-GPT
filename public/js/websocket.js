@@ -105,7 +105,7 @@ function initializeWebSocket(onConnectionResult = null) {
           }
           case 'handleVideoLoader': {
             const { placeholderId, action } = data.notification; // Use placeholderId consistently
-            displayOrRemoveImageLoader(placeholderId, action);
+            displayOrRemoveVideoLoader(placeholderId, action);
             break;
           }
           case 'videoGenerated': {

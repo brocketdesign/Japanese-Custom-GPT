@@ -24,12 +24,9 @@ async function img2videoRoutes(fastify) {
      * Generate video from image
      */
     fastify.post('/api/img2video/generate', async (request, reply) => {
-        console.log('[img2video] POST /api/img2video/generate called');
         try {
             const { imageId, prompt, nsfw, chatId, userChatId, placeholderId } = request.body;
             const userId = request?.user?._id;
-            console.log(`[img2video] Request body:`, request.body);
-            console.log(`[img2video] User ID: ${userId}`);
 
             if (!userId) {
                 console.warn('[img2video] Unauthorized access attempt');
@@ -58,7 +55,6 @@ async function img2videoRoutes(fastify) {
 
             // Charge points for video generation
             const cost = getVideoGenerationCost();
-            console.log(`[img2video] Cost for video generation: ${cost} points`);
             try {
                 await removeUserPoints(db, userId, cost, request.points?.deduction_reasons?.video_generation || 'Video generation', 'video_generation', fastify);
             } catch (error) {
@@ -117,11 +113,8 @@ async function img2videoRoutes(fastify) {
                 return reply.status(422).send({ error: 'Image is missing a source URL' });
             }
 
-            console.log(`[img2video] Image found for video generation: ${image.imageUrl}`);
-
             try {
                 const imageUrl = image.imageUrl;
-                console.log(`[img2video] Starting video generation for imageUrl: ${imageUrl}`);
                 const systemPrompt = [
                     {
                         role: 'system',
@@ -153,7 +146,7 @@ async function img2videoRoutes(fastify) {
                         content:`Here is the desired video: ${prompt}`
                     });
                 }
-                const instructionPrompt = prompt && prompt.trim() !== '' ? prompt : await generateCompletion(systemPrompt, 600, 'mistral');
+                const instructionPrompt = prompt && prompt.trim() !== '' ? prompt : await generateCompletion(systemPrompt, 600, 'llama-3-70b');
 
                 // Start video generation
                 const videoTask = await generateVideoFromImage({
@@ -164,8 +157,6 @@ async function img2videoRoutes(fastify) {
                     chatId,
                     placeholderId
                 });
-
-                console.log(`[img2video] Video task response:`, videoTask);
 
                 if (!videoTask.success) {
                     console.error(`[img2video] Failed to start video generation: ${videoTask.message}`);

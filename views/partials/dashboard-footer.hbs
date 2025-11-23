@@ -262,14 +262,16 @@ window.fetchAndAppendModels = function() {
                     ${translations.all || 'All'}
                 </button>
             `);
-            stylesSet.forEach(style => {
-                // Use translation if available, fallback to style name
-                let styleLabel = (translations[style] || style);
-                styleButtons.push(`
-                    <button class="btn btn-outline-secondary btn-sm me-2 style-filter-btn" data-style="${style}">
-                        ${styleLabel}
-                    </button>
-                `);
+            // Only include "photorealistic" and "anime" styles
+            ['photorealistic', 'anime'].forEach(style => {
+                if (stylesSet.has(style)) {
+                    let styleLabel = (translations[style] || style);
+                    styleButtons.push(`
+                        <button class="btn btn-outline-secondary btn-sm me-2 style-filter-btn" data-style="${style}">
+                            ${styleLabel}
+                        </button>
+                    `);
+                }
             });
 
             // 3. Insert style filter buttons above the containers

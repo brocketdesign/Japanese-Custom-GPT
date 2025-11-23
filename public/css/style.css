@@ -754,7 +754,20 @@ opacity: 0.8;
   .assistant-image-box {
   position:relative
   }
-  
+
+  .video-icon-overlay {
+    cursor: pointer;
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.video-icon-overlay:hover {
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+}
+
+.video-icon-overlay:active {
+    transform: scale(1.1);
+}
   .nsfw-badge-container {
   position:absolute;
   bottom:5px;

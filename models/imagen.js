@@ -394,7 +394,6 @@ async function generateImg({
           if (!modelData) {
             modelData = await db.collection('myModels').findOne({ modelId: modelId?.toString() });
           }
-          console.log(`[generateImg] Using image model: ${imageModel} from chat or default`);
         } catch (error) {
           console.error('[generateImg] Error fetching modelData:', error);
           modelData = null;
@@ -448,8 +447,7 @@ async function generateImg({
         let finalNegativePrompt = imageType === 'sfw' ? modelNegativePrompt +','+ selectedStyle.sfw.negative_prompt : modelNegativePrompt +','+ selectedStyle.nsfw.negative_prompt;
         finalNegativePrompt = ((negativePrompt || finalNegativePrompt) ? (negativePrompt || finalNegativePrompt)  + ',' : '') + genderNegativePrompt;
         finalNegativePrompt = finalNegativePrompt.replace(/,+/g, ',').replace(/^\s*,|\s*,\s*$/g, '').trim();
-        console.log(`[generateImg] imageType: ${imageType}`);
-        
+
         // Determine LoRAs: For character creation with SFW, remove feminine-only LoRAs and handle gender-specific ones
         let selectedLoras = imageType === 'sfw' ? [...selectedStyle.sfw.loras] : [...selectedStyle.nsfw.loras];
         
@@ -502,7 +500,7 @@ async function generateImg({
 
     // Prepare params
     let requestData = flux ? { ...image_request, image_num } : { ...params, ...image_request, image_num };
-    console.log('[generateImg] Prepared requestData:', requestData);
+
     if(image_base64){
       // Get target dimensions from the selected style
       const targetWidth = image_request.width;
@@ -526,8 +524,6 @@ async function generateImg({
         ? (enableMergeFace && image_base64) // Only merge on character creation if explicitly enabled and has uploaded image
         : (!chatCreation && autoMergeFaceEnabled && isPhotorealistic && chat.chatImageUrl.length > 0); // Regular auto merge logic for non-character creation
     
-    console.log(`[generateImg] shouldAutoMerge: ${!!shouldAutoMerge}, chatCreation: ${chatCreation}, enableMergeFace: ${enableMergeFace}, hasUploadedImage: ${!!image_base64}`);
-
     // Generate title if not provided
     let newTitle = title;
     if (!title) {
@@ -610,6 +606,7 @@ async function generateImg({
     const taskData = {
         taskId: novitaTaskId,
         type: imageType,
+        task_type: 'txt2img',
         status: 'pending',
         prompt: prompt,
         title: newTitle,

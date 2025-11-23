@@ -96,7 +96,6 @@ async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt, charact
 async function getUserVideoPrompt(db, userId, chatId = null) {
     try {
         const settings = await getUserChatToolSettings(db, userId, chatId);
-        console.log(`[getUserVideoPrompt] User settings:`, settings);
         
         // Return user-specific video prompt or default if not set
         return settings.videoPrompt || DEFAULT_CHAT_SETTINGS.videoPrompt;

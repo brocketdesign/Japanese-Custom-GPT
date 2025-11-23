@@ -18,7 +18,6 @@ async function routes(fastify, options) {
     const db = fastify.mongo.db;
     const translations = request.translations
 
-    console.log(`[generate-img] Request received with userId: ${userId}, chatId: ${chatId}, promptId: ${promptId}, giftId: ${giftId}`);
     try {
       // Get fresh user data from database to check subscription
       const freshUserData = await db.collection('users').findOne(
@@ -37,7 +36,6 @@ async function routes(fastify, options) {
       // Add number of images to request
       let image_num = chatCreation ? 1 : 1;
       const userMinImage = await getUserMinImages(db, userId, chatId);
-      console.log(`[generate-img] userMinImage: ${userMinImage}, image_num: ${image_num}`);
       image_num = Math.max(image_num || 1, userMinImage || 1); // Ensure at least 1 image is requested and respect user setting
 
 
@@ -47,7 +45,6 @@ async function routes(fastify, options) {
 
         // Remove prompt cost from user points
         const promptCost = getCustomPromptCost(promptData);
-        console.log(`[generate-img] Cost for prompt: ${promptCost} points`);
         try {
           await removeUserPoints(db, userId, promptCost, translations.points?.deduction_reasons?.custom_prompt || 'Prompt', 'prompt', fastify);
         } catch (error) {

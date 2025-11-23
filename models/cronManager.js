@@ -206,10 +206,10 @@ const processBackgroundTasks = (fastify) => async () => {
     
     // Get tasks that are background or incomplete (pending/processing) and not already processed recently
     const backgroundTasks = await tasksCollection.find({ 
+      task_type: { $in: ['txt2img', 'img2img'] },
       status: { $in: ['background', 'pending', 'processing'] },
       createdAt: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Only tasks created in last 24 hours
     }).toArray();
-
     // Process all incomplete tasks - they will naturally complete when ready
     // We don't filter by processedAt because we remove that flag when task is still processing
     const unprocessedTasks = backgroundTasks;
@@ -292,11 +292,10 @@ const processBackgroundVideoTasks = (fastify) => async () => {
   try {
     // Find incomplete video tasks
     const backgroundVideoTasks = await db.collection('tasks').find({ 
-      type: 'img2video',
+      task_type: 'img2video',
       status: { $in: ['pending', 'processing', 'background'] }
     }).toArray();
-    
-    
+
     if (!backgroundVideoTasks.length) {
       return;
     }
@@ -371,6 +370,7 @@ const processBackgroundVideoTasks = (fastify) => async () => {
             console.log(`🎬 [CRON] 🔔 Notifying user of failure`);
             fastify.sendNotificationToUser(task.userId.toString(), 'handleVideoLoader', { 
               videoId: task.placeholderId, 
+              placeholderId: task.placeholderId,
               action: 'remove' 
             });
             fastify.sendNotificationToUser(task.userId.toString(), 'showNotification', {
@@ -426,6 +426,7 @@ const processBackgroundVideoTasks = (fastify) => async () => {
             console.log(`🎬 [CRON] 🔔 Notifying user of processing error`);
             fastify.sendNotificationToUser(task.userId.toString(), 'handleVideoLoader', { 
               videoId: task.placeholderId, 
+              placeholderId: task.placeholderId,
               action: 'remove' 
             });
             fastify.sendNotificationToUser(task.userId.toString(), 'showNotification', {
@@ -728,7 +729,7 @@ const initializeCronJobs = async (fastify) => {
     // Add background task processor (every 20 seconds)
     configureCronJob(
       'backgroundTaskProcessor',
-      '*/20 * * * * *',
+      '*/10 * * * * *', // Runs every 20 seconds
       true,
       processBackgroundTasks(fastify)
     );
@@ -736,7 +737,7 @@ const initializeCronJobs = async (fastify) => {
     // Add video background task processor (every minute)
     configureCronJob(
       'videoBackgroundTaskProcessor',
-      '*/1 * * * *',
+      '*/20 * * * * *', // Runs every 5 seconds (6-field format)
       true,
       processBackgroundVideoTasks(fastify)
     );

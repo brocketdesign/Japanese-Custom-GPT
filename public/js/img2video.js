@@ -206,6 +206,35 @@ function showVideoPromptModal() {
     });
 }
 
+// Display or remove video loader with provided data-id
+window.displayOrRemoveVideoLoader = function (placeholderId, action) {
+    console.log(`[displayOrRemoveVideoLoader] Action: ${action} for placeholderId: ${placeholderId}`);
+    if (action === 'remove') {
+        const existingElement = $(`#chat-recommend [data-id=${placeholderId}]`);
+        existingElement.remove();
+        removeVideoLoader(placeholderId);
+    } else {
+        // Check if placeholder already exists
+        const existingPlaceholder = $(`#chat-recommend [data-id=${placeholderId}]`);
+        if (existingPlaceholder.length > 0) {
+            return;
+        }
+        
+        const loadingSpinerGif = "/img/video-placeholder.gif";
+        
+        // with a video icon in the center
+        const card = $(`
+            <div data-id="${placeholderId}" class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 mx-1 col-auto" style="cursor:pointer;">
+                <div class="card-img-top rounded-avatar position-relative m-auto" style="border:4px solid white;">
+                    <img src="${loadingSpinerGif}" alt="Loading..." class="position-absolute top-50 start-50 translate-middle" style="z-index:2;"/>
+                </div>
+            </div>
+        `);
+        
+        $('#chat-recommend').append(card);
+        $('#chat-recommend').scrollLeft($('#chat-recommend')[0].scrollWidth);
+    }
+};
 /**
  * Remove video generation loader
  * @param {string} placeholderId - Placeholder ID
@@ -264,6 +293,8 @@ function displayVideoLoader(placeholderId, imageId) {
         // Scroll to show the loader
         $('#chatContainer').animate({ scrollTop: $('#chatContainer')[0].scrollHeight }, 500);
     }
+
+    displayOrRemoveVideoLoader(placeholderId, 'display');
 
 }
 

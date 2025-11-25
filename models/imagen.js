@@ -1240,16 +1240,38 @@ async function updateOriginalMessageWithMerge(userDataCollection, taskId, userId
       console.log(`🧩 mergeId ${mergeMessage.mergeId} already present in chat ${userChatId}`);
       return true;
     }
-    // log userDataCollection messages
+    //  ===========================
+    // DEBUG LOGGING START
+    //  ===========================
+    console.log(`🧩 [MergeUpdate] ${new Date().toISOString()} === START: Logging userDataCollection messages ===`);
     const chatDoc = await userDataCollection.findOne({ userId: new ObjectId(userId), _id: new ObjectId(userChatId) });
     if (!chatDoc) {
-      console.log(`🧩 Chat ${userChatId} not found for user ${userId}`);
+      console.log(`🧩 [MergeUpdate] ${new Date().toISOString()} Chat ${userChatId} not found for user ${userId}`);
+      console.log(`🧩 [MergeUpdate] ${new Date().toISOString()} === END: Logging userDataCollection messages ===`);
       return false;
     }
-    console.log(`chatDoc :`, chatDoc);
-    console.log(`🧩 Searching messages in chat ${userChatId} for originalImageUrl=${mergeMessage.originalImageUrl}`);
+    console.log(`🧩 [MergeUpdate] ${new Date().toISOString()} Searching messages in chat ${userChatId} for originalImageUrl=${mergeMessage.originalImageUrl}`);
     const matchingMessages = chatDoc.messages.filter(m => m.imageUrl === mergeMessage.originalImageUrl && m.isMerged !== true);
-    console.log(`🧩 Found ${matchingMessages.length} matching messages for originalImageUrl=${mergeMessage.originalImageUrl}`);
+    console.log(`🧩 [MergeUpdate] ${new Date().toISOString()} Found ${matchingMessages.length} matching messages for originalImageUrl=${mergeMessage.originalImageUrl}`);
+    // Only log image details for messages with imageId or mergeId
+    chatDoc.messages.forEach(msg => {
+      if (msg.imageId || msg.mergeId) {
+      console.log(
+      '🕒 createdAt:', msg.createdAt, '\n' +
+      '⚙️ type:', msg.type || 'N/A', '\n' +
+      '🖼️ imageId:', msg.imageId || '', '\n' +
+      '🔗 mergeId:', msg.mergeId || '', '\n' +
+      '🌐 imageUrl:', msg.imageUrl || '', '\n' +
+      '🏷️ originalImageUrl:', msg.originalImageUrl || ''
+      );
+      console.log('------------------------------');
+      }
+    });
+    console.log(`🧩 [MergeUpdate] ${new Date().toISOString()} === END: Logging userDataCollection messages ===`);
+    //  ===========================
+    // DEBUG LOGGING END
+    //  ===========================
+
     // Update the specific original message by matching its imageUrl (the original, unmerged URL)
     const updateResult = await userDataCollection.updateOne(
       { userId: new ObjectId(userId), _id: new ObjectId(userChatId) },
@@ -2225,23 +2247,53 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
           url: imageUrl
         };
         fastify.sendNotificationToUser(userId, 'imageGenerated', notificationData);
-        // [DEBUG] Log the userChat message
+        // ===========================
+        // == User Chat Message Image Debug ==
+        // ===========================
         const userChatCollection = fastify.mongo.db.collection('userChat');
         try {
           const userChatData = await userChatCollection.findOne({ userId: new ObjectId(userId), _id: new ObjectId(userChatId) });
           if (userChatData) {
+            console.log('\n==============================');
+            console.log(`== User Chat Message (${userChatId}) Image Debug ==`);
+            console.log('==============================');
             const imageMessage = userChatData.messages.find(msg => msg.imageId && msg.imageId.toString() === imageId?.toString());
-            console.log(`[handleTaskCompletion] UserChat message for imageId ${imageId}:`, imageMessage);
-            const mergeMessage = userChatData.messages.find(msg => msg.mergeId && msg.mergeId === image.mergeId);
-            console.log(`[handleTaskCompletion] UserChat merge message for mergeId ${image.mergeId}:`, mergeMessage);
-
-            console.log(`[handleTaskCompletion] Full UserChat data for userId ${userId} and userChatId ${userChatId}:`, userChatData.messages);
+            console.log(`🖼️ imageMessage for imageId ${imageId}:`, imageMessage);
+            const testMergeId = imageId
+            const mergeMessage = userChatData.messages.find(msg => msg.mergeId && msg.mergeId === testMergeId);
+            console.log(`🔗 mergeMessage for mergeId ${testMergeId}:`, mergeMessage);
+            // Check for imageUrl again originalImageUrl in case of merge
+            const imageUrlMessage = userChatData.messages.find(msg => msg.imageUrl === imageUrl || msg.imageUrl === image.originalImageUrl);
+            console.log(`🌐 imageUrlMessage for imageUrl ${imageUrl} or originalImageUrl ${image.originalImageUrl}:`, imageUrlMessage);
+            
+            console.log('\n==============================');
+            console.log(`== Log Image in chat (${userChatId}) ==`);
+            console.log('==============================');
+            userChatData.messages.forEach(msg => {
+          if (msg.imageId || msg.mergeId) {
+              console.log(
+            '🕒 createdAt:', msg.createdAt, '\n' +
+            '⚙️ type:', msg.type || 'N/A', '\n' +
+            '🖼️ imageId:', msg.imageId || '', '\n' +
+            '🔗 mergeId:', msg.mergeId || '', '\n' +
+            '🌐 imageUrl:', msg.imageUrl || '', '\n' +
+            '🏷️ originalImageUrl:', msg.originalImageUrl || ''
+              );
+              console.log('------------------------------');
+          }
+            });
+            console.log(`==============================\n`);
+            console.log(`== End Log ==`);
+            console.log(`==============================\n`);
           } else {
-            console.log(`[handleTaskCompletion] No UserChat data found for userId ${userId} and userChatId ${userChatId}`);
+            console.log(`⚠️ No UserChat data found for userId ${userId} and userChatId ${userChatId}`);
           }
         } catch (error) {
           console.error(`[handleTaskCompletion] Error fetching UserChat data for logging:`, error);
         }
+        // ===========================
+        // == End Section ==
+        // ===========================
       }
     }
   }

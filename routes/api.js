@@ -562,21 +562,33 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
                     response.character = null;
                 }
             }
+            // ===========================
+            // == User Chat Message Image Debug ==
+            // ===========================
             if (response.userChat?.messages) {
+                console.log('\n==============================');
+                console.log(`== User Chat Message (${userChatId}) Image Debug ==`);
+                console.log('==============================');
                 response.userChat.messages.forEach(msg => {
                     if (msg.imageId || msg.mergeId) {
                         console.log(
-                            'createdAt:', msg.createdAt,
-                            'imageId:', msg.imageId || '',
-                            'mergeId:', msg.mergeId || '',
-                            'imageUrl:', msg.imageUrl || '',
-                            'originalImageUrl:', msg.originalImageUrl || ''
+                            '🕒 createdAt:', msg.createdAt, '\n' +
+                            '⚙️ type:', msg.type || 'N/A', '\n' +
+                            '🖼️ imageId:', msg.imageId || '', '\n' +
+                            '🔗 mergeId:', msg.mergeId || '', '\n' +
+                            '🌐 imageUrl:', msg.imageUrl || '', '\n' +
+                            '🏷️ originalImageUrl:', msg.originalImageUrl || ''
                         );
+                        console.log('------------------------------');
                     }
                 });
+                console.log(`== End of User Chat Message (${userChatId}) Image Debug ==\n`);
             } else {
-                console.log('No messages in userChat');
+                console.log('⚠️ No messages in userChat');
             }
+            // ===========================
+            // == End Section ==
+            // ===========================
             return reply.send(response);
         } catch (error) {
             console.error('Failed to retrieve chat or character:', error);

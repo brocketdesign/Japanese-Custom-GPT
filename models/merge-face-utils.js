@@ -1,9 +1,22 @@
 const { ObjectId } = require('mongodb');
 const axios = require('axios');
 const sharp = require('sharp');
+const mergeInProgressLocks = new Map(); // In-memory lock tracking
 
 /**
- * Merge face using Novita AI
+ * Create a unique key for a merge operation
+ * @param {string} faceImageBase64 - Face image
+ * @param {string} originalImageBase64 - Original image
+ * @returns {string} Unique merge key
+ */
+function getMergeKey(faceImageBase64, originalImageBase64) {
+  const crypto = require('crypto');
+  const combined = faceImageBase64 + originalImageBase64;
+  return crypto.createHash('md5').update(combined).digest('hex');
+}
+
+/**
+ * Merge face using Novita AI with deduplication lock
  * @param {Object} params - Parameters for face merging
  * @param {string} params.faceImageBase64 - Base64 encoded face image
  * @param {string} params.originalImageBase64 - Base64 encoded original image
@@ -22,89 +35,134 @@ async function mergeFaceWithNovita({ faceImageBase64, originalImageBase64 }) {
     throw new Error('Novita API key is not configured');
   }
 
-  // Remove data URL prefix if present for face image
-  const cleanFaceImage = faceImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
-  const cleanOriginalImage = originalImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+  // ⭐ CREATE UNIQUE KEY FOR THIS MERGE OPERATION
+  const mergeKey = getMergeKey(faceImageBase64, originalImageBase64);
+  const callId = mergeKey; // Use mergeKey as timespan ID
 
-  // Validate base64 format
-  const base64Regex = /^[A-Za-z0-9+/=]+$/;
-  if (!base64Regex.test(cleanFaceImage) || !base64Regex.test(cleanOriginalImage)) {
-    throw new Error('Invalid base64 image format');
+  // Section header
+  console.log(`🧬 [MERGE] ════════════════════════════════════════════`);
+  console.log(`🧬 [MERGE] ▶️  FACE MERGE STARTED | Call ID: ${callId}`);
+
+  // ⭐ CHECK IF ALREADY MERGING
+  if (mergeInProgressLocks.has(mergeKey)) {
+    console.log(`🧬 [MERGE] ⏳ Merge already in progress, waiting... | Call ID: ${callId}`);
+    // Wait for the existing merge to complete
+    const existingPromise = mergeInProgressLocks.get(mergeKey);
+    try {
+      const result = await existingPromise;
+      console.log(`🧬 [MERGE] ✅ Returning cached result | Call ID: ${callId}`);
+      return result;
+    } catch (error) {
+      console.error(`🧬 [MERGE] ❌ Cached merge failed, retrying... | Call ID: ${callId}`);
+      // Fall through to retry
+    }
   }
 
-  // Check image sizes (Novita has limits)
-  const faceImageSize = Buffer.from(cleanFaceImage, 'base64').length;
-  const originalImageSize = Buffer.from(cleanOriginalImage, 'base64').length;
-  
-  // Novita typically has a 4MB limit per image
-  const maxSize = 4 * 1024 * 1024; // 4MB
-  if (faceImageSize > maxSize || originalImageSize > maxSize) {
-    throw new Error(`Image too large. Face: ${Math.round(faceImageSize / 1024)}KB, Original: ${Math.round(originalImageSize / 1024)}KB. Max: 4MB per image.`);
-  }
+  // ⭐ CREATE MERGE PROMISE
+  const mergePromise = (async () => {
+    try {
+      const cleanFaceImage = faceImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+      const cleanOriginalImage = originalImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
 
-  const requestData = {
-    face_image_file: cleanFaceImage, // Send clean base64 without data URL prefix
-    image_file: cleanOriginalImage,  // Send clean base64 without data URL prefix
-    extra: {
-      response_image_type: "jpeg"
-    }
-  };
-
-  try {
-    const response = await axios.post(apiUrl, requestData, {
-      headers: {
-        'Authorization': `Bearer ${novitaApiKey}`,
-        'Content-Type': 'application/json'
-      },
-      timeout: 120000 // 120 second timeout
-    });
-
-    if (response.data && response.data.image_file) {
-      return {
-        success: true,
-        imageBase64: response.data.image_file,
-        imageType: response.data.image_type || 'jpeg',
-        message: 'Face merge completed successfully'
-      };
-    } else {
-      console.error('Invalid response from Novita API:', response.data);
-      throw new Error('Invalid response from Novita API - no image returned');
-    }
-  } catch (error) {
-    console.error('Error calling Novita merge-face API:', error.response?.data || error.message);
-    
-    // Provide more specific error messages based on response
-    if (error.response) {
-      const status = error.response.status;
-      const errorData = error.response.data;
-      
-      switch (status) {
-        case 400:
-          throw new Error(`Invalid request: ${errorData?.message || 'Bad request to Novita API'}`);
-        case 401:
-          throw new Error('Invalid API key for Novita service');
-        case 403:
-          throw new Error('Access forbidden - check API key permissions');
-        case 429:
-          throw new Error('Rate limit exceeded - please try again later');
-        case 500:
-          if (errorData?.message?.includes('resource not available')) {
-            throw new Error('Novita face merge service is temporarily unavailable. Please try again later.');
-          }
-          throw new Error(`Novita service error: ${errorData?.message || 'Internal server error'}`);
-        case 503:
-          throw new Error('Novita service is temporarily unavailable');
-        default:
-          throw new Error(`Novita API error (${status}): ${errorData?.message || 'Unknown error'}`);
+      // Validate base64 format
+      const base64Regex = /^[A-Za-z0-9+/=]+$/;
+      if (!base64Regex.test(cleanFaceImage) || !base64Regex.test(cleanOriginalImage)) {
+        throw new Error('Invalid base64 image format');
       }
-    } else if (error.code === 'ECONNABORTED') {
-      throw new Error('Request timeout - the face merge operation took too long');
-    } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
-      throw new Error('Cannot connect to Novita API service');
-    } else {
-      throw new Error(`Network error: ${error.message}`);
+
+      // Check image sizes
+      const faceImageSize = Buffer.from(cleanFaceImage, 'base64').length;
+      const originalImageSize = Buffer.from(cleanOriginalImage, 'base64').length;
+      const maxSize = 4 * 1024 * 1024;
+      if (faceImageSize > maxSize || originalImageSize > maxSize) {
+        throw new Error(`Image too large. Face: ${Math.round(faceImageSize / 1024)}KB, Original: ${Math.round(originalImageSize / 1024)}KB. Max: 4MB per image.`);
+      }
+
+      console.log(`🧬 [MERGE] 🚀 Calling Novita API | Call ID: ${callId}`);
+
+      const requestData = {
+        face_image_file: cleanFaceImage,
+        image_file: cleanOriginalImage,
+        extra: {
+          response_image_type: "jpeg"
+        }
+      };
+
+      const response = await axios.post(apiUrl, requestData, {
+        headers: {
+          'Authorization': `Bearer ${novitaApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 120000
+      });
+
+      if (response.data && response.data.image_file) {
+        const result = {
+          success: true,
+          imageBase64: response.data.image_file,
+          imageType: response.data.image_type || 'jpeg',
+          message: 'Face merge completed successfully'
+        };
+
+        console.log(`🧬 [MERGE] 🎉 Merge completed successfully | Call ID: ${callId}`);
+        return result;
+      } else {
+        console.error(`🧬 [MERGE] ❌ Invalid API response | Call ID: ${callId}`);
+        throw new Error('Invalid response from Novita API - no image returned');
+      }
+    } catch (error) {
+      if (error.response) {
+        const status = error.response.status;
+        const errorData = error.response.data;
+        switch (status) {
+          case 400:
+            console.error(`🧬 [MERGE] ❌ Invalid request: ${errorData?.message || 'Bad request to Novita API'} | Call ID: ${callId}`);
+            throw new Error(`Invalid request: ${errorData?.message || 'Bad request to Novita API'}`);
+          case 401:
+            console.error(`🧬 [MERGE] ❌ Invalid API key | Call ID: ${callId}`);
+            throw new Error('Invalid API key for Novita service');
+          case 403:
+            console.error(`🧬 [MERGE] ❌ Access forbidden | Call ID: ${callId}`);
+            throw new Error('Access forbidden - check API key permissions');
+          case 429:
+            console.error(`🧬 [MERGE] ❌ Rate limit exceeded | Call ID: ${callId}`);
+            throw new Error('Rate limit exceeded - please try again later');
+          case 500:
+            if (errorData?.message?.includes('resource not available')) {
+              console.error(`🧬 [MERGE] ❌ Novita service temporarily unavailable | Call ID: ${callId}`);
+              throw new Error('Novita face merge service is temporarily unavailable. Please try again later.');
+            }
+            console.error(`🧬 [MERGE] ❌ Novita service error: ${errorData?.message || 'Internal server error'} | Call ID: ${callId}`);
+            throw new Error(`Novita service error: ${errorData?.message || 'Internal server error'}`);
+          case 503:
+            console.error(`🧬 [MERGE] ❌ Novita service unavailable | Call ID: ${callId}`);
+            throw new Error('Novita service is temporarily unavailable');
+          default:
+            console.error(`🧬 [MERGE] ❌ Novita API error (${status}): ${errorData?.message || 'Unknown error'} | Call ID: ${callId}`);
+            throw new Error(`Novita API error (${status}): ${errorData?.message || 'Unknown error'}`);
+        }
+      } else if (error.code === 'ECONNABORTED') {
+        console.error(`🧬 [MERGE] ❌ Request timeout | Call ID: ${callId}`);
+        throw new Error('Request timeout - the face merge operation took too long');
+      } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+        console.error(`🧬 [MERGE] ❌ Cannot connect to Novita API | Call ID: ${callId}`);
+        throw new Error('Cannot connect to Novita API service');
+      } else {
+        console.error(`🧬 [MERGE] ❌ Network error: ${error.message} | Call ID: ${callId}`);
+        throw new Error(`Network error: ${error.message}`);
+      }
+    } finally {
+      // ⭐ REMOVE LOCK AFTER COMPLETION (success or failure)
+      console.log(`🧬 [MERGE] 🔓 Removing lock | Call ID: ${callId}`);
+      mergeInProgressLocks.delete(mergeKey);
+      console.log(`🧬 [MERGE] ════════════════════════════════════════════`);
     }
-  }
+  })();
+
+  // ⭐ STORE LOCK
+  mergeInProgressLocks.set(mergeKey, mergePromise);
+
+  return mergePromise;
 }
 
 /**
@@ -214,9 +272,12 @@ async function saveMergedFaceToDB({
   userChatId,
   fastify
 }) {
+  const callId = require('crypto').randomUUID();
+
   try {
     const db = fastify.mongo.db;
     const mergedFacesCollection = db.collection('mergedFaces');
+    
     const mergeData = {
       originalImageId: new ObjectId(originalImageId),
       userId: new ObjectId(userId),
@@ -227,12 +288,11 @@ async function saveMergedFaceToDB({
     };
 
     const result = await mergedFacesCollection.insertOne(mergeData);
-    console.log(`[saveMergedFaceToDB] Merge saved with ID: ${result.insertedId}`);
 
     return { ...mergeData, _id: result.insertedId };
   } catch (error) {
-    console.error('[saveMergedFaceToDB] Error saving merged face to DB:', error);
-    throw error; // Re-throw the error to be handled by the caller
+    console.error(`[saveMergedFaceToDB] Call ID: ${callId} - Error: ${error.message}`);
+    throw error;
   }
 }
 /**
@@ -243,6 +303,10 @@ async function saveMergedFaceToDB({
  * @param {Object} fastify - Fastify instance
  */
 async function addMergeFaceMessageToChat(userChatId, mergeId, mergedImageUrl, fastify) {
+  return
+  const callId = require('crypto').randomUUID();
+  console.log(`[addMergeFaceMessageToChat] Call ID: ${callId} - Starting add message`);
+
   try {
     const db = fastify.mongo.db;
     const collectionUserChat = db.collection('userChat');
@@ -252,7 +316,7 @@ async function addMergeFaceMessageToChat(userChatId, mergeId, mergedImageUrl, fa
     });
     
     if (!userChatDoc) {
-      console.error(`[addMergeFaceMessageToChat] UserChat not found: ${userChatId}`);
+      console.error(`[addMergeFaceMessageToChat] Call ID: ${callId} - UserChat not found: ${userChatId}`);
       return;
     }
 
@@ -269,17 +333,17 @@ async function addMergeFaceMessageToChat(userChatId, mergeId, mergedImageUrl, fa
     };
 
     // Add the message to the chat using $push for atomicity
-    await collectionUserChat.updateOne(
+    const updateResult = await collectionUserChat.updateOne(
       { _id: new ObjectId(userChatId) },
       { 
         $push: { messages: assistantMessage },
         $set: { updatedAt: new Date() }
       }
     );
-
-    console.log(`[addMergeFaceMessageToChat] Added merge face message to chat ${userChatId}`);
+    
+    console.log(`[addMergeFaceMessageToChat] Call ID: ${callId} - Message added successfully`);
   } catch (error) {
-    console.error('[addMergeFaceMessageToChat] Error:', error);
+    console.error(`[addMergeFaceMessageToChat] Call ID: ${callId} - Error: ${error.message}`);
   }
 }
 
@@ -304,7 +368,7 @@ async function saveMergedImageToS3(base64Image, mergeId, fastify) {
     
     // Upload to S3 using the tool.js function
     const imageUrl = await uploadToS3(imageBuffer, hash, `merged-face-${mergeId}.jpg`);
-    
+    console.log(`[saveMergedImageToS3] ${new Date().toISOString()} Image uploaded to S3: ${imageUrl}`);
     return imageUrl;
   } catch (error) {
     console.error('[saveMergedImageToS3] Error uploading to S3:', error);
@@ -321,15 +385,11 @@ async function saveMergedImageToS3(base64Image, mergeId, fastify) {
  * @param {Object} fastify - Fastify instance
  */
 const findImageMessageAndUpdateWithMergeAction = async (userChatId, userChatMessages, imageId, mergeId, fastify) => {
-  console.log(`[DEBUG findImageMessageAndUpdateWithMergeAction] CALLED with:`, {
-    userChatId,
-    imageId,
-    mergeId,
-    messageCount: userChatMessages?.messages?.length || 0
-  });
+  const callId = require('crypto').randomUUID();
+  console.log(`[findImageMessageAndUpdateWithMergeAction] Call ID: ${callId} - Starting update for imageId: ${imageId}, mergeId: ${mergeId}`);
   
   if (!userChatMessages || !userChatMessages.messages) {
-    console.log(`[DEBUG findImageMessageAndUpdateWithMergeAction] No messages found`);
+    console.log(`[findImageMessageAndUpdateWithMergeAction] Call ID: ${callId} - No messages found`);
     return;
   }
   
@@ -341,8 +401,6 @@ const findImageMessageAndUpdateWithMergeAction = async (userChatId, userChatMess
   
   if (messageIndex !== -1) {
     const message = userChatMessages.messages[messageIndex];
-    
-    console.log(`[DEBUG findImageMessageAndUpdateWithMergeAction] Updating message at index ${messageIndex}`);
     
     // Initialize actions array if it doesn't exist
     if (!message.actions) {
@@ -359,15 +417,12 @@ const findImageMessageAndUpdateWithMergeAction = async (userChatId, userChatMess
         date: new Date()
       };
       message.actions.push(mergeAction);
-      console.log(`[DEBUG findImageMessageAndUpdateWithMergeAction] Created new merge_face action`);
     }
     
     // Add merge ID if not already present
     if (!mergeAction.mergeIds.includes(mergeId.toString())) {
       mergeAction.mergeIds.push(mergeId.toString());
       mergeAction.date = new Date(); // Update date
-      
-      console.log(`[DEBUG findImageMessageAndUpdateWithMergeAction] About to update userChat with new merge action`);
       
       // Update the userChatMessages in the database
       const collectionUserChat = fastify.mongo.db.collection('userChat');
@@ -376,16 +431,12 @@ const findImageMessageAndUpdateWithMergeAction = async (userChatId, userChatMess
         { $set: { messages: userChatMessages.messages } }
       );
       
-      console.log(`[DEBUG findImageMessageAndUpdateWithMergeAction] User chat messages updated with merge action for imageId: ${imageId}, mergeId: ${mergeId}`);
-      
-      // Verify the update
-      const verifyDoc = await collectionUserChat.findOne({ _id: new fastify.mongo.ObjectId(userChatId) });
-      console.log(`[DEBUG findImageMessageAndUpdateWithMergeAction] Verification - message count: ${verifyDoc.messages.length}`);
+      console.log(`[findImageMessageAndUpdateWithMergeAction] Call ID: ${callId} - Updated successfully`);
     } else {
-      console.log(`[DEBUG findImageMessageAndUpdateWithMergeAction] Merge action already exists for imageId: ${imageId} with mergeId: ${mergeId}`);
+      console.log(`[findImageMessageAndUpdateWithMergeAction] Call ID: ${callId} - Merge action already exists`);
     }
   } else {
-    console.log(`[DEBUG findImageMessageAndUpdateWithMergeAction] No matching message found for imageId: ${imageId}`);
+    console.log(`[findImageMessageAndUpdateWithMergeAction] Call ID: ${callId} - No matching message found`);
   }
 };
 

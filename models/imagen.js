@@ -9,6 +9,8 @@ const { awardImageGenerationReward, awardCharacterImageMilestoneReward } = requi
 const slugify = require('slugify');
 const sharp = require('sharp');
 const { time } = require('console');
+
+
 const default_prompt = {
     sdxl: {
       sfw: {
@@ -118,9 +120,6 @@ async function handleFluxCompletion({
 }) {
   const db = fastify.mongo.db;
   
-  console.log('[handleFluxCompletion] FLUX completed immediately, processing results');
-  console.log('[handleFluxCompletion] Using generated title:', newTitle);
-
   // Process images immediately for FLUX with proper merge handling
   let processedImages = Array.isArray(novitaResult.images) ? novitaResult.images : [novitaResult.images];
   
@@ -128,7 +127,6 @@ async function handleFluxCompletion({
   if (shouldAutoMerge) {
     if (chatCreation && enableMergeFace && image_base64) {
       // Character creation with uploaded face image
-      console.log('[handleFluxCompletion] Character creation merge enabled');
       
       const mergedImages = [];
       for (const imageData of processedImages) {
@@ -160,7 +158,6 @@ async function handleFluxCompletion({
       processedImages = mergedImages;
     } else if (!chatCreation && chat.chatImageUrl && chat.chatImageUrl.length > 0) {
       // Regular auto merge with chat image
-      console.log('[handleFluxCompletion] Regular auto merge enabled');
       
       const mergedImages = [];
       for (const imageData of processedImages) {
@@ -230,7 +227,6 @@ async function handleFluxCompletion({
     taskData.originalRequestData = {
       image_base64: image_base64
     };
-    console.log('[handleFluxCompletion] Stored original request data for character creation merge');
   }
 
   await db.collection('tasks').insertOne(taskData);
@@ -279,7 +275,6 @@ async function handleFluxCompletion({
           userChatId: userChatId ? new ObjectId(userChatId) : null,
           fastify
         });
-        console.log(`[handleFluxCompletion] Created merge relationship: ${imageData.mergeId}`);
       } catch (error) {
         console.error(`[handleFluxCompletion] Error creating merge relationship:`, error);
       }
@@ -373,7 +368,6 @@ async function generateImg({
     if (!user) {
       userId = await db.collection('chats').findOne({ _id: new ObjectId(chatId) }).then(chat => chat.userId);
       user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
-      console.log(`[generateImg] User not found, using chat userId: ${userId}`);
     }
     
     // Fetch user subscription status
@@ -630,7 +624,6 @@ async function generateImg({
         taskData.originalRequestData = {
             image_base64: image_base64
         };
-        console.log('[generateImg] Stored original request data for character creation merge');
     }
     
     // Add custom prompt ID if provided
@@ -792,166 +785,7 @@ async function pollTaskStatus(taskId, fastify) {
     }, interval);
   });
 }
-// Handle task completion: send notifications and save images as needed
-async function handleTaskCompletion(taskStatus, fastify, options = {}) {
-  const { chatCreation, translations, userId, chatId, placeholderId } = options;
-  
-  console.log(`[handleTaskCompletion] CALLED with:`, {
-    chatCreation,
-    userId,
-    chatId,
-    placeholderId,
-    taskStatusStatus: taskStatus?.status,
-    hasImages: !!taskStatus?.result?.images
-  });
-  
-  // CRITICAL FIX: Always use the images from the current task result
-  let images = [];
-  
-  // Try multiple ways to get the correct images with merge data
-  if (taskStatus.result && Array.isArray(taskStatus.result.images)) {
-    images = taskStatus.result.images;
-  } else if (Array.isArray(taskStatus.images)) {
-    images = taskStatus.images;
-  } else if (taskStatus.result && taskStatus.result.images && !Array.isArray(taskStatus.result.images)) {
-    images = [taskStatus.result.images];
-  }
 
-  if (typeof fastify.sendNotificationToUser !== 'function') {
-    console.error('fastify.sendNotificationToUser is not a function');
-    return;
-  }
-  
-  console.log(`[handleTaskCompletion] Processing completion for placeholderId: ${placeholderId}, images: ${images?.length}, chatCreation: ${chatCreation}`);
-  fastify.sendNotificationToUser(userId, 'handleLoader', { imageId: placeholderId, action: 'remove' });
-  fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId: placeholderId, spin: false });
-  fastify.sendNotificationToUser(userId, 'updateImageCount', { chatId, count: images.length });
-
-  if (Array.isArray(images)) {
-
-    try {
-      // Increment image generation count once per task, not per image
-      await fastify.mongo.db.collection('images_generated').updateOne(
-        { userId: new ObjectId(taskStatus.userId), chatId: chatId ? new ObjectId(chatId) : null },
-        { $inc: { generationCount: images.length } }, // Increment by the number of images
-        { upsert: true }
-      );
-    } catch (error) {
-      console.error('[handleTaskCompletion] Error incrementing image generation count:', error);
-    }
-
-    for (let index = 0; index < images.length; index++) {
-      const image = images[index];
-      const { imageId, imageUrl, prompt, title, nsfw, isMerged } = image;
-      const { userId: taskUserId, userChatId } = taskStatus;
-      
-      if (chatCreation) {
-        console.log(`[handleTaskCompletion] Character creation - sending characterImageGenerated for image ${index + 1}/${images.length}`);
-        console.log(`[handleTaskCompletion] Sending notification with chatId: ${chatId}, imageUrl: ${imageUrl?.substring(0, 50)}...`);
-        fastify.sendNotificationToUser(userId, 'characterImageGenerated', { imageUrl, nsfw, chatId });
-        if (index === 0) {
-          await saveChatImageToDB(fastify.mongo.db, chatId, imageUrl);
-        }
-      } else {
-        const notificationData = {
-          id: imageId,
-          imageId,
-          imageUrl,
-          userChatId,
-          title: getTitleForLang(title, translations?.lang || 'en'),
-          prompt,
-          nsfw,
-          isMergeFace: isMerged || false,
-          isAutoMerge: isMerged || false,
-          url: imageUrl // Add url field for compatibility
-        };
-        console.log(`[handleTaskCompletion] notificationData for image ${index + 1}/${images.length}:`, notificationData);
-        fastify.sendNotificationToUser(userId, 'imageGenerated', notificationData);
-      }
-    }
-  }
-
-  if (chatCreation) {
-    console.log(`[handleTaskCompletion] Character creation completed - sending resetCharacterForm and notifications`);
-    fastify.sendNotificationToUser(userId, 'resetCharacterForm');
-    fastify.sendNotificationToUser(userId, 'showNotification', {
-      message: translations?.newCharacter?.imageCompletionDone_message || 'Your image has been generated successfully.',
-      icon: 'success'
-    });
-    const notification = {
-      title: translations?.newCharacter?.imageCompletionDone_title || 'Image generation completed',
-      message: translations?.newCharacter?.imageCompletionDone_message || 'Your image has been generated successfully.',
-      link: `/chat/edit/${chatId}`,
-      ico: 'success'
-    };
-    addNotification(fastify, userId, notification).then(() => {
-      fastify.sendNotificationToUser(userId, 'updateNotificationCountOnLoad', { userId });
-    });
-  }
-
-  console.log('[handleTaskCompletion] Task completion handling finished');
-}
-
-/**
- * Perform auto merge face with base64 image data (for character creation)
- * @param {Object} originalImage - Original generated image object
- * @param {string} faceImageBase64 - Base64 face image data
- * @param {Object} fastify - Fastify instance
- * @returns {Object} Merged image object or null if failed
- */
-async function performAutoMergeFaceWithBase64(originalImage, faceImageBase64, fastify) {
-  try {
-    const { 
-      mergeFaceWithNovita, 
-      optimizeImageForMerge, 
-      saveMergedImageToS3
-    } = require('./merge-face-utils');
-
-    // Convert generated image URL to base64 (original image)
-    const axios = require('axios');
-    const generatedImageResponse = await axios.get(originalImage.imageUrl, { 
-      responseType: 'arraybuffer',
-      timeout: 30000
-    });
-    const generatedImageBuffer = Buffer.from(generatedImageResponse.data);
-    const optimizedGeneratedImage = await optimizeImageForMerge(generatedImageBuffer, 2048);
-    const originalImageBase64 = optimizedGeneratedImage.base64Image;
-
-    // Merge the faces using Novita API
-    const mergeResult = await mergeFaceWithNovita({
-      faceImageBase64,
-      originalImageBase64
-    });
-
-    if (!mergeResult || !mergeResult.success) {
-      console.error('[performAutoMergeFaceWithBase64] Face merge failed:', mergeResult?.error || 'Unknown error');
-      return null;
-    }
-
-    // Generate unique merge ID
-    const mergeId = new ObjectId();
-
-    // Save merged image to S3
-    const mergedImageUrl = await saveMergedImageToS3(
-      `data:image/${mergeResult.imageType};base64,${mergeResult.imageBase64}`,
-      mergeId.toString(),
-      fastify
-    );
-
-    // Return merged image data with ALL original fields preserved
-    return {
-      ...originalImage, // Preserve all original image data
-      imageUrl: mergedImageUrl, // Update with merged URL
-      mergeId: mergeId.toString(),
-      originalImageUrl: originalImage.imageUrl, // Keep reference to original
-      isMerged: true
-    };
-
-  } catch (error) {
-    console.error('[performAutoMergeFaceWithBase64] Error in auto merge:', error);
-    return null;
-  }
-}
 
 /**
  * Fetch original task data including uploaded image base64
@@ -964,7 +798,6 @@ async function fetchOriginalTaskData(taskId, db) {
     const task = await db.collection('tasks').findOne({ taskId });
     
     if (!task || !task.originalRequestData) {
-      console.log('[fetchOriginalTaskData] No original request data found for task:', taskId);
       return null;
     }
 
@@ -984,12 +817,110 @@ async function fetchOriginalTaskData(taskId, db) {
  */
 async function performAutoMergeFace(originalImage, chatImageUrl, fastify) {
   try {
+    
+    const db = fastify.mongo.db;
+    const originalGeneratedImageUrl = originalImage.imageUrl;
+    const startTs = Date.now();
+    console.log(`🧬 [Merge] ${new Date().toISOString()} Start auto-merge for original=${originalGeneratedImageUrl}`);
+
+    // Idempotent cache: reuse if a merged result already exists for this original
+    const mergedStore = db.collection('mergedResults');
+    try { await mergedStore.createIndex({ originalImageUrl: 1 }, { unique: true }); } catch (e) {}
+    const cached = await mergedStore.findOne({ originalImageUrl: originalGeneratedImageUrl });
+    if (cached && cached.mergedImageUrl && cached.mergeId) {
+      console.log(`🗂️  [MergeCache] ${new Date().toISOString()} Cache hit, reuse merged result ⏱️ ${Date.now() - startTs}ms`);
+      return {
+        ...originalImage,
+        imageUrl: cached.mergedImageUrl,
+        mergeId: cached.mergeId,
+        originalImageUrl: originalGeneratedImageUrl,
+        isMerged: true
+      };
+    }
+
+    // Acquire per-original lock to prevent concurrent duplicate merges
+    const locks = db.collection('mergeLocks');
+    try { await locks.createIndex({ key: 1 }, { unique: true }); } catch (e) {}
+    const lockKey = `merge:${originalGeneratedImageUrl}`;
+    try {
+      await locks.insertOne({ key: lockKey, createdAt: new Date() });
+    } catch (e) {
+      if (e && e.code === 11000) {
+        // Another worker is merging this original; wait briefly for result and reuse
+        for (let i = 0; i < 20; i++) {
+          // Check idempotent cache first
+          const cachedWhileWaiting = await mergedStore.findOne({ originalImageUrl: originalGeneratedImageUrl });
+          if (cachedWhileWaiting && cachedWhileWaiting.mergedImageUrl && cachedWhileWaiting.mergeId) {
+            console.log(`🗂️  [MergeCache] ${new Date().toISOString()} Cache hit during wait ⏱️ ${Date.now() - startTs}ms`);
+            return {
+              ...originalImage,
+              imageUrl: cachedWhileWaiting.mergedImageUrl,
+              mergeId: cachedWhileWaiting.mergeId,
+              originalImageUrl: originalGeneratedImageUrl,
+              isMerged: true
+            };
+          }
+          const existingMergeWait = await db.collection('gallery').findOne({
+            'images.originalImageUrl': originalGeneratedImageUrl,
+            'images.isMerged': true
+          });
+          if (existingMergeWait) {
+            const mergedImage = existingMergeWait.images.find(img => img.originalImageUrl === originalGeneratedImageUrl && img.isMerged === true);
+            if (mergedImage) {
+              return {
+                ...originalImage,
+                imageUrl: mergedImage.imageUrl,
+                mergeId: mergedImage.mergeId,
+                originalImageUrl: originalGeneratedImageUrl,
+                isMerged: true
+              };
+            }
+          }
+          await new Promise(r => setTimeout(r, 250));
+        }
+        return null;
+      }
+      throw e;
+    }
+    console.log(`🔒 [MergeLock] ${new Date().toISOString()} Acquired lock ⏱️ ${Date.now() - startTs}ms`);
+
+    // ⭐ CRITICAL: Check if a merge already exists for this original image URL
+    // This prevents duplicate Novita API calls for the same original
+    const existingMerge = await db.collection('gallery').findOne({
+      'images.originalImageUrl': originalGeneratedImageUrl,
+      'images.isMerged': true
+    });
+
+    if (existingMerge) {
+      const mergedImage = existingMerge.images.find(img => 
+        img.originalImageUrl === originalGeneratedImageUrl && img.isMerged === true
+      );
+      
+      if (mergedImage) {
+        try {
+          await mergedStore.updateOne(
+            { originalImageUrl: originalGeneratedImageUrl },
+            { $set: { mergedImageUrl: mergedImage.imageUrl, mergeId: mergedImage.mergeId, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+            { upsert: true }
+          );
+        } catch (_) {}
+        await db.collection('mergeLocks').deleteOne({ key: lockKey });
+        console.log(`🔁 [MergeReuse] ${new Date().toISOString()} Reused from gallery ⏱️ ${Date.now() - startTs}ms`);
+        return {
+          ...originalImage,
+          imageUrl: mergedImage.imageUrl,
+          mergeId: mergedImage.mergeId,
+          originalImageUrl: originalGeneratedImageUrl,
+          isMerged: true
+        };
+      }
+    }
+
     const { 
       mergeFaceWithNovita, 
       optimizeImageForMerge, 
       saveMergedImageToS3
     } = require('./merge-face-utils');
-    
 
     // Convert chat image URL to base64 (face image)
     const axios = require('axios');
@@ -1007,6 +938,7 @@ async function performAutoMergeFace(originalImage, chatImageUrl, fastify) {
       timeout: 30000
     });
     const generatedImageBuffer = Buffer.from(generatedImageResponse.data);
+    
     const optimizedGeneratedImage = await optimizeImageForMerge(generatedImageBuffer, 2048);
     const originalImageBase64 = optimizedGeneratedImage.base64Image;
 
@@ -1020,29 +952,323 @@ async function performAutoMergeFace(originalImage, chatImageUrl, fastify) {
       console.error('[performAutoMergeFace] Face merge failed:', mergeResult?.error || 'Unknown error');
       return null;
     }
+    
+
+    // Generate unique merge ID
+    const mergeId = new ObjectId();
+
+    // Save merged image to S3 add upload emoji at the beginning
+    console.log(`🚀 [performAutoMergeFace] ${new Date().toISOString()} Saving merged image to S3 with mergeId:`, mergeId.toString());
+    let mergedImageUrl;
+    try {
+      mergedImageUrl = await saveMergedImageToS3(
+        `data:image/${mergeResult.imageType};base64,${mergeResult.imageBase64}`,
+        mergeId.toString(),
+        fastify
+      );
+      // Save to idempotent cache BEFORE releasing lock
+      try {
+        await mergedStore.updateOne(
+          { originalImageUrl: originalGeneratedImageUrl },
+          { $set: { mergedImageUrl, mergeId: mergeId.toString(), updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+          { upsert: true }
+        );
+        console.log(`🗂️  [MergeCache] ${new Date().toISOString()} Saved idempotent entry ⏱️ ${Date.now() - startTs}ms`);
+      } catch (e) {}
+    } finally {
+      await db.collection('mergeLocks').deleteOne({ key: lockKey });
+      console.log(`🔓 [MergeLock] ${new Date().toISOString()} Released lock ⏱️ ${Date.now() - startTs}ms`);
+    }
+
+
+    // Return merged image data with ALL original fields preserved
+    const returnData = {
+      ...originalImage,
+      imageUrl: mergedImageUrl,
+      mergeId: mergeId.toString(),
+      originalImageUrl: originalGeneratedImageUrl,
+      isMerged: true
+    };
+    console.log(`✅ [Merge] ${new Date().toISOString()} Completed ⏱️ ${Date.now() - startTs}ms`);
+    
+    return returnData;
+
+  } catch (error) {
+    console.error('[performAutoMergeFace] Error in auto merge:', error);
+    return null;
+  }
+}
+
+/**
+ * Perform auto merge face with base64 image data (for character creation)
+ * @param {Object} originalImage - Original generated image object
+ * @param {string} faceImageBase64 - Base64 face image data
+ * @param {Object} fastify - Fastify instance
+ * @returns {Object} Merged image object or null if failed
+ */
+async function performAutoMergeFaceWithBase64(originalImage, faceImageBase64, fastify) {
+  try {
+    
+    const db = fastify.mongo.db;
+    const originalGeneratedImageUrl = originalImage.imageUrl;
+    const startTs = Date.now();
+    console.log(`🧬 [Merge] ${new Date().toISOString()} Start auto-merge (base64) for original=${originalGeneratedImageUrl}`);
+
+    // Idempotent cache: reuse if a merged result already exists for this original
+    const mergedStore = db.collection('mergedResults');
+    try { await mergedStore.createIndex({ originalImageUrl: 1 }, { unique: true }); } catch (e) {}
+    const cached = await mergedStore.findOne({ originalImageUrl: originalGeneratedImageUrl });
+    if (cached && cached.mergedImageUrl && cached.mergeId) {
+      console.log(`🗂️  [MergeCache] ${new Date().toISOString()} Cache hit, reuse merged result ⏱️ ${Date.now() - startTs}ms`);
+      return {
+        ...originalImage,
+        imageUrl: cached.mergedImageUrl,
+        mergeId: cached.mergeId,
+        originalImageUrl: originalGeneratedImageUrl,
+        isMerged: true
+      };
+    }
+
+    // Acquire per-original lock to prevent concurrent duplicate merges
+    const locks = db.collection('mergeLocks');
+    try { await locks.createIndex({ key: 1 }, { unique: true }); } catch (e) {}
+    const lockKey = `merge:${originalGeneratedImageUrl}`;
+    try {
+      await locks.insertOne({ key: lockKey, createdAt: new Date() });
+    } catch (e) {
+      if (e && e.code === 11000) {
+        // Another worker is merging this original; wait briefly for result and reuse
+        for (let i = 0; i < 20; i++) {
+          // Check idempotent cache first
+          const cachedWhileWaiting = await mergedStore.findOne({ originalImageUrl: originalGeneratedImageUrl });
+          if (cachedWhileWaiting && cachedWhileWaiting.mergedImageUrl && cachedWhileWaiting.mergeId) {
+            console.log(`🗂️  [MergeCache] ${new Date().toISOString()} Cache hit during wait ⏱️ ${Date.now() - startTs}ms`);
+            return {
+              ...originalImage,
+              imageUrl: cachedWhileWaiting.mergedImageUrl,
+              mergeId: cachedWhileWaiting.mergeId,
+              originalImageUrl: originalGeneratedImageUrl,
+              isMerged: true
+            };
+          }
+          const existingMergeWait = await db.collection('gallery').findOne({
+            'images.originalImageUrl': originalGeneratedImageUrl,
+            'images.isMerged': true
+          });
+          if (existingMergeWait) {
+            const mergedImage = existingMergeWait.images.find(img => img.originalImageUrl === originalGeneratedImageUrl && img.isMerged === true);
+            if (mergedImage) {
+              return {
+                ...originalImage,
+                imageUrl: mergedImage.imageUrl,
+                mergeId: mergedImage.mergeId,
+                originalImageUrl: originalGeneratedImageUrl,
+                isMerged: true
+              };
+            }
+          }
+          await new Promise(r => setTimeout(r, 250));
+        }
+        return null;
+      }
+      throw e;
+    }
+    console.log(`🔒 [MergeLock] ${new Date().toISOString()} Acquired lock ⏱️ ${Date.now() - startTs}ms`);
+
+    // ⭐ CRITICAL: Check if a merge already exists for this original image URL
+    const existingMerge = await db.collection('gallery').findOne({
+      'images.originalImageUrl': originalGeneratedImageUrl,
+      'images.isMerged': true
+    });
+
+    if (existingMerge) {
+      const mergedImage = existingMerge.images.find(img => 
+        img.originalImageUrl === originalGeneratedImageUrl && img.isMerged === true
+      );
+      
+      if (mergedImage) {
+        try {
+          await mergedStore.updateOne(
+            { originalImageUrl: originalGeneratedImageUrl },
+            { $set: { mergedImageUrl: mergedImage.imageUrl, mergeId: mergedImage.mergeId, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+            { upsert: true }
+          );
+        } catch (_) {}
+        await db.collection('mergeLocks').deleteOne({ key: lockKey });
+        console.log(`🔁 [MergeReuse] ${new Date().toISOString()} Reused from gallery ⏱️ ${Date.now() - startTs}ms`);
+        return {
+          ...originalImage,
+          imageUrl: mergedImage.imageUrl,
+          mergeId: mergedImage.mergeId,
+          originalImageUrl: originalGeneratedImageUrl,
+          isMerged: true
+        };
+      }
+    }
+
+    const { 
+      mergeFaceWithNovita, 
+      optimizeImageForMerge, 
+      saveMergedImageToS3
+    } = require('./merge-face-utils');
+
+    // Convert generated image URL to base64
+    const axios = require('axios');
+    const generatedImageResponse = await axios.get(originalImage.imageUrl, { 
+      responseType: 'arraybuffer',
+      timeout: 30000
+    });
+    const generatedImageBuffer = Buffer.from(generatedImageResponse.data);
+    
+    const optimizedGeneratedImage = await optimizeImageForMerge(generatedImageBuffer, 2048);
+    const originalImageBase64 = optimizedGeneratedImage.base64Image;
+    // Merge the faces using Novita API
+
+    const mergeResult = await mergeFaceWithNovita({
+      faceImageBase64,
+      originalImageBase64
+    });
+
+    if (!mergeResult || !mergeResult.success) {
+      console.error('[performAutoMergeFaceWithBase64] Face merge failed:', mergeResult?.error || 'Unknown error');
+      return null;
+    }
+    
+
 
     // Generate unique merge ID
     const mergeId = new ObjectId();
 
     // Save merged image to S3
-    const mergedImageUrl = await saveMergedImageToS3(
-      `data:image/${mergeResult.imageType};base64,${mergeResult.imageBase64}`,
-      mergeId.toString(),
-      fastify
-    );
+    console.log(`🚀 [performAutoMergeFaceWithBase64] ${new Date().toISOString()} Saving merged image to S3 with mergeId:`, mergeId.toString());
+    let mergedImageUrl;
+    try {
+      mergedImageUrl = await saveMergedImageToS3(
+        `data:image/${mergeResult.imageType};base64,${mergeResult.imageBase64}`,
+        mergeId.toString(),
+        fastify
+      );
+      // Save to idempotent cache BEFORE releasing lock
+      try {
+        await mergedStore.updateOne(
+          { originalImageUrl: originalGeneratedImageUrl },
+          { $set: { mergedImageUrl, mergeId: mergeId.toString(), updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+          { upsert: true }
+        );
+        console.log(`🗂️  [MergeCache] ${new Date().toISOString()} Saved idempotent entry ⏱️ ${Date.now() - startTs}ms`);
+      } catch (e) {}
+    } finally {
+      await db.collection('mergeLocks').deleteOne({ key: lockKey });
+      console.log(`🔓 [MergeLock] ${new Date().toISOString()} Released lock ⏱️ ${Date.now() - startTs}ms`);
+    }
+
 
     // Return merged image data with ALL original fields preserved
-    return {
-      ...originalImage, // Preserve all original image data
-      imageUrl: mergedImageUrl, // Update with merged URL
+    const returnData = {
+      ...originalImage,
+      imageUrl: mergedImageUrl,
       mergeId: mergeId.toString(),
-      originalImageUrl: originalImage.imageUrl, // Keep reference to original
+      originalImageUrl: originalGeneratedImageUrl,
       isMerged: true
     };
+    
+    console.log(`✅ [Merge] ${new Date().toISOString()} Completed ⏱️ ${Date.now() - startTs}ms`);
+    return returnData;
 
   } catch (error) {
-    console.error('[performAutoMergeFace] Error in auto merge:', error);
+    console.error('[performAutoMergeFaceWithBase64] Error in auto merge:', error);
     return null;
+  }
+}
+
+// Add this helper function before saveImageToDB
+function getTitleString(title) {
+  if (!title) return '';
+  if (typeof title === 'string') return title;
+  if (typeof title === 'object') {
+    return title.en || title.ja || title.fr || Object.values(title).find(v => !!v) || '';
+  }
+  return '';
+}
+
+// Add this helper function before saveImageToDB
+async function addImageMessageToChatHelper(userDataCollection, userId, userChatId, imageUrl, imageId, prompt, title, nsfw, isMerged, mergeId, originalImageUrl) {
+  try {
+    const titleString = getTitleString(title);
+    
+    const imageMessage = {
+      role: "assistant",
+      content: titleString || prompt,
+      imageUrl,
+      imageId: imageId.toString(),
+      type: isMerged ? "mergeFace" : "image",
+      hidden: true,
+      prompt,
+      title: titleString,
+      nsfw,
+      isMerged: isMerged || false,
+      createdAt: new Date(),
+      timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }),
+    };
+
+    if (isMerged) {
+      imageMessage.mergeId = mergeId;
+      imageMessage.originalImageUrl = originalImageUrl;
+    }
+    console.log('Adding image message to chat:', imageMessage);
+    await userDataCollection.updateOne(
+      { userId: new ObjectId(userId), _id: new ObjectId(userChatId) },
+      { $push: { messages: imageMessage } }
+    );
+
+
+  } catch (error) {
+    console.error('Error adding image message to chat:', error.message);
+  }
+}
+
+// Add this helper function before saveImageToDB
+async function updateOriginalMessageWithMerge(userDataCollection, taskId, userId, userChatId, mergeMessage) {
+  try {
+    // Idempotency: if a merged message with this mergeId already exists, do nothing
+    const existing = await userDataCollection.findOne({
+      userId: new ObjectId(userId),
+      _id: new ObjectId(userChatId),
+      'messages.mergeId': mergeMessage.mergeId
+    });
+    if (existing) {
+      console.log(`🧩 mergeId ${mergeMessage.mergeId} already present in chat ${userChatId}`);
+      return true;
+    }
+
+    // Update the specific original message by matching its imageUrl (the original, unmerged URL)
+    const updateResult = await userDataCollection.updateOne(
+      { userId: new ObjectId(userId), _id: new ObjectId(userChatId) },
+      {
+        $set: {
+          'messages.$[m].imageUrl': mergeMessage.imageUrl,
+          'messages.$[m].type': 'mergeFace',
+          'messages.$[m].isMerged': true,
+          'messages.$[m].mergeId': mergeMessage.mergeId,
+          'messages.$[m].originalImageUrl': mergeMessage.originalImageUrl
+        }
+      },
+      {
+        arrayFilters: [
+          { 'm.imageUrl': mergeMessage.originalImageUrl, 'm.isMerged': { $ne: true } }
+        ]
+      }
+    );
+
+    if (updateResult.modifiedCount > 0) {
+      console.log(`🧩 Updated original message → merged (mergeId ${mergeMessage.mergeId})`);
+      return true;
+    }
+    console.log(`🧩 No original message matched imageUrl=${mergeMessage.originalImageUrl} to update`);
+    return false;
+  } catch (error) {
+    console.error(`Error updating message:`, error.message);
+    return false;
   }
 }
 
@@ -1109,7 +1335,7 @@ async function deleteOldTasks(db) {
     const tasksCollection = db.collection('tasks');
     const aDayAgo = new Date(Date.now() - 1 * 60 * 60 * 1000); // 1 hour ago
     const result = await tasksCollection.deleteMany({ createdAt: { $lt: aDayAgo } });
-    console.log(`Deleted ${result.deletedCount} old tasks.`);
+
   } catch (error) {
     console.error('Error deleting old tasks:', error);
   }
@@ -1130,36 +1356,38 @@ async function checkTaskStatus(taskId, fastify) {
   const task = await tasksCollection.findOne({ taskId });
   const chat = await db.collection('chats').findOne({ _id: task.chatId });
 
-  console.log(`[checkTaskStatus] Checking task ${taskId}:`, {
-    exists: !!task,
-    status: task?.status,
-    chatCreation: task?.chatCreation,
-    hasResult: !!task?.result,
-    createdAt: task?.createdAt
-  });
+
+
+  // CRITICAL: Check if already completed FIRST, before any processing
+  if (task?.status === 'completed' || task?.completionNotificationSent === true) {
+
+    return {
+      taskId: task.taskId,
+      userId: task.userId,
+      userChatId: task.userChatId,
+      status: task.status,
+      images: task.result?.images || [],
+      result: task.result || { images: [] }
+    };
+  }
+
+  if (task?.completionNotificationSent === true) {
+
+    return {
+      taskId: task.taskId,
+      userId: task.userId,
+      userChatId: task.userChatId,
+      status: 'completed',
+      images: task.result?.images || [],
+      result: task.result || { images: [] }
+    };
+  }
 
   let processingPercent = 0;
 
   if (!task) {
-    console.log(`Task not found: ${taskId}`);
-    return false;
-  }
 
-  // CRITICAL: If task is already completed, return it immediately 
-  if (task.status === 'completed') {
-    console.log(`[checkTaskStatus] Task ${taskId} is already completed, returning cached result`);
-    // Check if the existing result has proper merge information
-    if (task.result && task.result.images) {
-      const hasProperMergeInfo = task.result.images.some(img => img.isMerged !== undefined);
-      
-      if (hasProperMergeInfo) {
-        console.log(`[checkTaskStatus] Task ${taskId} has proper merge info, returning as-is`);
-        return task;
-      } else {
-        // Continue with reprocessing to add merge information
-        console.log(`[checkTaskStatus] Task ${taskId} needs merge info reprocessing`);
-      }
-    }
+    return false;
   }
 
   if (task.status === 'failed') {
@@ -1167,13 +1395,11 @@ async function checkTaskStatus(taskId, fastify) {
     return task;
   }
 
-  console.log(`[checkTaskStatus] Fetching Novita result for task ${taskId}...`);
+
   const result = await fetchNovitaResult(task.taskId);
-  console.log(`[checkTaskStatus] Novita result for ${taskId}:`, { status: result?.status, error: result?.error });
 
   if (result && result.status === 'processing') {
     processingPercent = result.progress;
-    console.log(`[checkTaskStatus] Task ${taskId} is still processing, progress: ${processingPercent}%`);
     return { taskId: task.taskId, status: 'processing', progress: processingPercent};
   }
   
@@ -1186,16 +1412,41 @@ async function checkTaskStatus(taskId, fastify) {
     return false
   }
 
-  console.log(`[checkTaskStatus] Task ${taskId} completed, processing ${Array.isArray(result) ? result.length : 1} image(s)`);
   const images = Array.isArray(result) ? result : [result];
   
+  // CRITICAL: Lock the task BEFORE processing to prevent parallel execution
+  const lockResult = await tasksCollection.findOneAndUpdate(
+    { 
+      taskId: task.taskId,
+      completionNotificationSent: { $ne: true }  // Only lock if not already locked
+    },
+    { 
+      $set: { 
+        completionNotificationSent: true,
+        updatedAt: new Date() 
+      } 
+    },
+    { returnDocument: 'before' }
+  );
+
+  if (!lockResult.value) {
+    const lockedTask = await tasksCollection.findOne({ taskId: task.taskId });
+    return {
+      taskId: lockedTask.taskId,
+      userId: lockedTask.userId,
+      userChatId: lockedTask.userChatId,
+      status: 'completed',
+      images: lockedTask.result?.images || [],
+      result: lockedTask.result || { images: [] }
+    };
+  }
+
+
   // Process auto merge for ALL images if enabled
   let processedImages = images;
   if (task.shouldAutoMerge) {
     // For character creation with merge face, we need to get the uploaded image data
     if (task.chatCreation && task.enableMergeFace) {
-      console.log('[checkTaskStatus] Character creation merge enabled, getting uploaded face image');
-      
       // Get the original task data to access the uploaded image
       const originalTaskRequest = await fetchOriginalTaskData(task.taskId, db);
       
@@ -1236,7 +1487,6 @@ async function checkTaskStatus(taskId, fastify) {
         
         processedImages = mergedImages; // Only use merged images
       } else {
-        console.log('[checkTaskStatus] No uploaded image found for character creation merge, skipping merge');
         processedImages = images.map(imageData => ({ ...imageData, isMerged: false }));
       }
     } else {
@@ -1244,7 +1494,6 @@ async function checkTaskStatus(taskId, fastify) {
       const faceImageUrl = chat.chatImageUrl;
       
       if (!faceImageUrl || faceImageUrl.length === 0) {
-        console.log('[checkTaskStatus] No chat image available for auto merge, skipping merge');
         processedImages = images.map(imageData => ({ ...imageData, isMerged: false }));
       } else {
         processedImages = await Promise.all(images.map(async (imageData, arrayIndex) => {
@@ -1280,8 +1529,7 @@ async function checkTaskStatus(taskId, fastify) {
     // Ensure all images have isMerged flag set to false when no auto merge
     processedImages = images.map(imageData => ({ ...imageData, isMerged: false }));
   }
-  
-  
+
   // Save processed images to database with timeout to prevent overlapping
   const savedImages = [];
   for (let arrayIndex = 0; arrayIndex < processedImages.length; arrayIndex++) {
@@ -1297,6 +1545,35 @@ async function checkTaskStatus(taskId, fastify) {
       uniqueSlug = `${task.slug}-${arrayIndex + 1}`;
     }
 
+    // CRITICAL FIX: For merged images, save the ORIGINAL image first to establish a message in chat
+    if (task.shouldAutoMerge && imageData.isMerged && imageData.originalImageUrl) {
+      
+      try {
+        await saveImageToDB({
+          taskId: task.taskId,
+          userId: task.userId,
+          chatId: task.chatId,
+          userChatId: task.userChatId,
+          prompt: task.prompt,
+          title: task.title,
+          slug: `${uniqueSlug}-original`,
+          imageUrl: imageData.originalImageUrl, // Save original URL first
+          aspectRatio: task.aspectRatio,
+          seed: imageData.seed,
+          blurredImageUrl: imageData.blurredImageUrl,
+          nsfw: nsfw,
+          fastify,
+          isMerged: false, // Original is not merged
+          originalImageUrl: null,
+          mergeId: null,
+          shouldAutoMerge: false
+        });
+      } catch (error) {
+        console.error(`[checkTaskStatus] Error saving original image:`, error);
+      }
+    }
+
+    // Now save the merged/processed image
     const imageResult = await saveImageToDB({
       taskId: task.taskId,
       userId: task.userId,
@@ -1321,15 +1598,16 @@ async function checkTaskStatus(taskId, fastify) {
     if (task.shouldAutoMerge && imageData.isMerged && imageData.mergeId) {
       try {
         const { saveMergedFaceToDB } = require('./merge-face-utils');
+        
         await saveMergedFaceToDB({
-          originalImageId: imageResult.imageId, // Original image ID before merge
-          mergedImageUrl: imageData.imageUrl,   // Merged image URL
+          originalImageId: imageResult.imageId,
+          mergedImageUrl: imageData.imageUrl,
           userId: task.userId,
           chatId: task.chatId,
           userChatId: task.userChatId,
           fastify
         });
-        console.log(`[checkTaskStatus] Created merge relationship for auto-merged image: ${imageData.mergeId}`);
+        
       } catch (error) {
         console.error(`[checkTaskStatus] Error creating merge relationship:`, error);
       }
@@ -1342,55 +1620,24 @@ async function checkTaskStatus(taskId, fastify) {
 
     // Add small delay between saves to prevent overlapping (except for the last image)
     if (arrayIndex < processedImages.length - 1) {
-      await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
   }
 
   // Update task status to completed with proper merge information
   const updateResult = await tasksCollection.findOneAndUpdate(
     { 
-      taskId: task.taskId,
-      status: { $ne: 'completed' }
+      taskId: task.taskId
     },
     { 
       $set: { 
         status: 'completed', 
-        result: { images: savedImages }, 
+        result: { images: savedImages },
         updatedAt: new Date() 
       } 
     },
     { returnDocument: 'after' }
   );
-
-  if (!updateResult.value) {
-    const existingTask = await tasksCollection.findOne({ taskId: task.taskId });
-    
-    // FIXED: Always return the processed/merged images for character creation
-    if (task.chatCreation && task.shouldAutoMerge) {
-      return { 
-        taskId: task.taskId, 
-        userId: task.userId, 
-        userChatId: task.userChatId, 
-        status: 'completed', 
-        images: savedImages, // Use our processed merged images
-        result: { images: savedImages }
-      };
-    }
-    // CRITICAL FIX: If the existing task has proper merge data, return it
-    // If not, return our processed result
-    if (existingTask?.result?.images?.some(img => img.isMerged !== undefined)) {
-      return existingTask;
-    } else {
-      return { 
-        taskId: task.taskId, 
-        userId: task.userId, 
-        userChatId: task.userChatId, 
-        status: 'completed', 
-        images: savedImages,
-        result: { images: savedImages }
-      };
-    }
-  }
 
   const finalResult = { 
     taskId: task.taskId, 
@@ -1403,7 +1650,6 @@ async function checkTaskStatus(taskId, fastify) {
 
   return finalResult;
 }
-
 // Function to trigger the Novita API for text-to-image generation
 async function fetchNovitaMagic(data, flux = false) {
   try {
@@ -1458,6 +1704,7 @@ async function fetchNovitaMagic(data, flux = false) {
           const buffer = Buffer.from(imageResponse.data, 'binary');
           const hash = createHash('md5').update(buffer).digest('hex');
           const uploadedUrl = await uploadToS3(buffer, hash, 'novita_result_image.png');
+          console.log(`[fetchNovitaMagic] Uploaded image ${index + 1} with hash: ${hash}`);
           return { 
             imageId: hash, 
             imageUrl: uploadedUrl, 
@@ -1515,6 +1762,7 @@ async function fetchNovitaResult(task_id) {
           const buffer = Buffer.from(imageResponse.data, 'binary');
           const hash = createHash('md5').update(buffer).digest('hex');
           const uploadedUrl = await uploadToS3(buffer, hash, 'novita_result_image.png');
+          console.log(`🚀 [fetchNovitaResult] Uploaded image ${index + 1} with hash: ${hash}`);
           return { 
             imageId: hash, 
             imageUrl: uploadedUrl, 
@@ -1705,10 +1953,8 @@ async function getImageSeed(db, imageId) {
   }
 }
 async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title, slug, imageUrl, aspectRatio, seed, blurredImageUrl = null, nsfw = false, fastify, isMerged = false, originalImageUrl = null, mergeId = null, shouldAutoMerge = false}) {
-    
+  
   const db = fastify.mongo.db;
-  console.log(`[saveImageToDB] Attempting to save image for taskId: ${taskId}, imageUrl: ${imageUrl}, isMerged: ${isMerged}`);
-
   try {
     const chatsGalleryCollection = db.collection('gallery');
 
@@ -1716,17 +1962,16 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
     let existingImage;
     
     if (isMerged && mergeId) {
-      // For merged images, check by mergeId to avoid duplicates
       existingImage = await chatsGalleryCollection.findOne({
         userId: new ObjectId(userId),
         chatId: new ObjectId(chatId),
+        'images.taskId': taskId,
         'images.mergeId': mergeId
       });
       
       if (existingImage) {
         const image = existingImage.images.find(img => img.mergeId === mergeId);
         if (image) {
-          console.log(`[saveImageToDB] Merged image already exists with mergeId: ${mergeId}, returning existing data`);
           return { 
             imageId: image._id, 
             imageUrl: image.imageUrl,
@@ -1736,9 +1981,8 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
             isMerged: image.isMerged || false
           };
         }
-      }
+      } 
     } else {
-      // For regular images, check by taskId and imageUrl
       existingImage = await chatsGalleryCollection.findOne({
         userId: new ObjectId(userId),
         chatId: new ObjectId(chatId),
@@ -1751,7 +1995,6 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
           img.imageUrl === imageUrl && img.taskId === taskId
         );
         if (image) {
-          console.log(`[saveImageToDB] Image already exists for this task: ${taskId}, returning existing data`);
           return { 
             imageId: image._id, 
             imageUrl: image.imageUrl,
@@ -1761,7 +2004,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
             isMerged: image.isMerged || false
           };
         }
-      }
+      } 
     }
 
     // Generate slug if not provided
@@ -1791,6 +2034,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       title,
       slug,
       imageUrl, 
+      originalImageUrl: imageUrl,
       blurredImageUrl, 
       aspectRatio, 
       seed,
@@ -1809,8 +2053,9 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
     } else {
       imageDocument.isMerged = false;
     }
+    
 
-    await chatsGalleryCollection.updateOne(
+    const updateResult = await chatsGalleryCollection.updateOne(
       { 
         userId: new ObjectId(userId),
         chatId: new ObjectId(chatId),
@@ -1822,27 +2067,23 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       },
       { upsert: true }
     );
-
-    console.log(`[saveImageToDB] Successfully saved image: ${imageId}, isMerged: ${isMerged}, mergeId: ${mergeId || 'none'}`);
-
+    
+  
     // Update counters
     const chatsCollection = db.collection('chats');
-    await chatsCollection.updateOne(
+    const chatUpdateResult = await chatsCollection.updateOne(
       { _id: new ObjectId(chatId) },
       { $inc: { imageCount: 1 } }
     );
 
     const usersCollection = db.collection('users');
-    await usersCollection.updateOne(
+    const userUpdateResult = await usersCollection.updateOne(
         { _id: new ObjectId(userId) },
         { $inc: { imageCount: 1 } }
     );
     
     try {
-      // Check global milestones (no base points, higher thresholds)
       await awardImageGenerationReward(db, userId, fastify);
-      
-      // Check character-specific milestones (lower thresholds, per chat)
       await awardCharacterImageMilestoneReward(db, userId, chatId, fastify);
     } catch (error) {
       console.error('Error awarding image generation milestones:', error);
@@ -1858,233 +2099,47 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
         isMerged: isMerged || false
       };
     }
-
+    
     const userDataCollection = db.collection('userChat');
     const userData = await userDataCollection.findOne({ 
       userId: new ObjectId(userId), 
       _id: new ObjectId(userChatId) 
     });
+    
 
     if (!userData) {
       throw new Error('User data not found');
     }
 
-    // filepath: models/imagen.js
-    function normalizeImageUrl(url) {
-      // Extract the hash from the image URL - more robust matching
-      try {
-        // Try to extract S3 object key or hash
-        const match = url.match(/([a-f0-9]{32})_novita_result_image\.png/);
-        if (match) {
-          return match[1];
-        }
-        const match2 = url.match(/([a-f0-9]{32})\/novita_result_image\.png/);
-        if (match2) {
-          return match2[1];
-        }
-        // For S3 URLs, extract the object key
-        const match3 = url.match(/\/([^\/]+\.(?:png|jpg|jpeg|webp|gif))$/i);
-        if (match3) {
-          return match3[1];
-        }
-        return url; // Return original URL if no match
-      } catch (e) {
-        return url;
-      }
-    }
+    const titleString = getTitleString(title);
 
-    // Helper function to convert multilingual title object to string
-    function getTitleString(titleObj) {
-      if (!titleObj) return '';
-      
-      // If it's already a string, return it
-      if (typeof titleObj === 'string') {
-        return titleObj;
-      }
-      
-      // If it's an object, try to get the appropriate language
-      if (typeof titleObj === 'object') {
-        // Try to get title in order of preference: en, ja, fr, or any available
-        return titleObj.en || titleObj.ja || titleObj.fr || Object.values(titleObj).find(v => v) || '';
-      }
-      
-      return '';
-    }
-
-    const updateOriginalMessageWithMerge = async (mergeMessage) => {
-      try {
-        const userChatData = await userDataCollection.findOne({
-          userId: new ObjectId(userId),
-          _id: new ObjectId(userChatId),
-        });
-        
-        if (!userChatData || !userChatData.messages) {
-          console.log(`[updateOriginalMessageWithMerge] User chat data not found or has no messages`);
-          return false;
-        }
-        
-        // Find the index of the original message for merge
-        const originalIndex = userChatData.messages.findIndex(msg => {
-          if (msg.imageUrl && msg.role === 'assistant' && (msg.type === 'image' || msg.type === 'mergeFace')) {
-            // Use both normalized and direct URL comparison for robustness
-            const normalizedMsgUrl = normalizeImageUrl(msg.imageUrl);
-            const normalizedOriginalUrl = normalizeImageUrl(mergeMessage.originalImageUrl);
-            const isImageMatch = normalizedMsgUrl === normalizedOriginalUrl || msg.imageUrl === mergeMessage.originalImageUrl;
-            
-            console.log(`[updateOriginalMessageWithMerge] Checking message: normalized: ${normalizedMsgUrl} vs ${normalizedOriginalUrl}, direct: ${msg.imageUrl === mergeMessage.originalImageUrl}, match: ${isImageMatch}`);
-            return isImageMatch && msg.role === 'assistant';
-          }
-        });
-
-        if (originalIndex !== -1) {
-          // Combine originalMessage with mergeMessage
-          const originalMessage = userChatData.messages[originalIndex];
-          const titleString = getTitleString(mergeMessage.title);
-          const resultMessage = {
-            ...originalMessage,
-            imageUrl: mergeMessage.imageUrl,
-            imageId: mergeMessage.imageId,
-            type: "mergeFace",
-            role: "assistant",
-            content: titleString || mergeMessage.content || originalMessage.content, // Ensure content is a string, not object
-            hidden: true,
-            isMerged: true,
-            mergeId: mergeMessage.mergeId,
-            originalImageUrl: mergeMessage.originalImageUrl,
-            title: titleString, // Store as string, not object
-          };
-          console.log(`[updateOriginalMessageWithMerge] Updating message at index ${originalIndex} with resultMessage:`, resultMessage);
-
-          // Use atomic operation to update the specific message
-          await userDataCollection.updateOne(
-            {
-              userId: new ObjectId(userId),
-              _id: new ObjectId(userChatId),
-            },
-            {
-              $set: { [`messages.${originalIndex}`]: resultMessage },
-            }
-          );
-          console.log(`[updateOriginalMessageWithMerge] Message updated successfully`);
-          return true;
-        } else {
-          console.log(`[updateOriginalMessageWithMerge] No matching message found for merge - will add as new message instead`);
-          return false;
-        }
-      } catch (error) {
-        console.error('Error updating original message with merge:', error.message);
-        return false;
-      }
-    };
-    
-    const addImageMessageToChat = async (userId, userChatId, imageUrl, imageId, prompt, title) => {
-      try {
-        // Convert multilingual title to string
-        const titleString = getTitleString(title);
-        
-        const imageMessage = {
-          role: "assistant",
-          content: titleString || prompt,
-          imageUrl,
-          imageId: imageId.toString(),
-          type: isMerged ? "mergeFace" : "image",
-          hidden: true,
-          prompt,
-          title: titleString, // Store as string, not object
-          nsfw,
-          isMerged: isMerged || false,
-          createdAt: new Date(),
-          timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }),
-        };
-
-        // Add merge-specific fields if applicable
-        if (isMerged) {
-          imageMessage.mergeId = mergeId;
-          imageMessage.originalImageUrl = originalImageUrl;
-        }
-
-        // Use atomic operation to add message
-        await userDataCollection.updateOne(
-          { userId: new ObjectId(userId), _id: new ObjectId(userChatId) },
-          { $push: { messages: imageMessage } }
-        );
-
-        console.log(`[addImageMessageToChat] Added image message to user chat: ${imageId}`);
-        
-      } catch (error) {
-        console.error('Error adding image message to chat:', error.message);
-      }
-    };
-
-    const firstAvailableTitle = getTitleString(title);
-    
-    // Handle message addition/update for merged images
     if (userChatId && isMerged) {
-      // For merged images, try to update the original message first
+      
       const mergeMessage = {
-        role: "assistant", 
-        content: firstAvailableTitle || `[MergeFace] ${mergeId}`, 
-        hidden: true, 
-        type: "mergeFace", 
-        imageId: mergeId, 
         imageUrl,
-        prompt, 
-        slug, 
-        aspectRatio, 
-        seed, 
-        nsfw,
-        isMerged: true,
         mergeId: mergeId,
-        originalImageUrl: originalImageUrl,
-        originalImageId: imageId.toString(),
-        title: firstAvailableTitle, // Store title as string
+        originalImageUrl: originalImageUrl
       };
 
-      // Try to update the original message
-      const wasUpdated = await updateOriginalMessageWithMerge(mergeMessage);
-      
-      // If update failed (original message not found), add as new message instead
-      if (!wasUpdated) {
-        console.log(`[saveImageToDB] Adding merged image as new message since original wasn't found`);
-        await addImageMessageToChat(
-          userId, 
-          userChatId, 
-          imageUrl, 
-          imageId, 
-          prompt, 
-          title,
-        );
-      }
+      const wasUpdated = await updateOriginalMessageWithMerge(userDataCollection, taskId, userId, userChatId, mergeMessage);
+      console.log(`updateOriginalMessageWithMerge returned: ${wasUpdated}`);
+   
     } else if (userChatId) {
-      // For non-merged images, always add as new message
-      await addImageMessageToChat(
+      console.log(`💾 Adding image (non merged) message to chat for userChatId: ${userChatId}`)
+      await addImageMessageToChatHelper(
+        userDataCollection,
         userId, 
         userChatId, 
         imageUrl, 
         imageId, 
         prompt, 
         title,
-      );
-    }
-      
-    // Send WebSocket notification for auto-generated images (non-character creation)
-    if (fastify.sendNotificationToUser && userChatId && !shouldAutoMerge) {
-      console.log(`[saveImageToDB] Sending WebSocket notification for image: ${imageId}`);
-      
-      const notificationData = {
-        id: imageId.toString(),
-        imageId: imageId.toString(),
-        imageUrl,
-        userChatId: userChatId.toString(),
-        title,
-        prompt,
         nsfw,
-        isMergeFace: isMerged || false,
-        isAutoMerge: isMerged || false,
-        url: imageUrl
-      };
-      console.log(`[saveImageToDB] Notification data:`, notificationData);
-      fastify.sendNotificationToUser(userId.toString(), 'imageGenerated', notificationData);
+        false,
+        null,
+        null
+      );
+      
     }
 
     return { 
@@ -2097,30 +2152,129 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
     };
     
   } catch (error) {
-    console.log('Error saving image to DB:', error.message);
     return false;
   }
 }
 
-  module.exports = {
-    generateImg,
-    getPromptById,
-    getImageSeed,
-    checkImageDescription,
-    characterDescriptionToString,
-    getTasks,
-    deleteOldTasks,
-    deleteAllTasks,
-    pollTaskStatus,
-    handleTaskCompletion,
-    checkTaskStatus,
-    performAutoMergeFace,
-    performAutoMergeFaceWithBase64,
-    centerCropImage,
-    saveImageToDB,
-    updateSlug,
-    updateTitle,
-    fetchNovitaMagic,
-    fetchNovitaResult,
-    fetchOriginalTaskData
-  };
+// Handle task completion: send notifications and save images as needed
+async function handleTaskCompletion(taskStatus, fastify, options = {}) {
+  const { chatCreation, translations, userId, chatId, placeholderId } = options;
+  let images = [];
+  
+  // Try multiple ways to get the correct images with merge data
+  if (taskStatus.result && Array.isArray(taskStatus.result.images)) {
+    images = taskStatus.result.images;
+  } else if (Array.isArray(taskStatus.images)) {
+    images = taskStatus.images;
+  } else if (taskStatus.result && taskStatus.result.images && !Array.isArray(taskStatus.result.images)) {
+    images = [taskStatus.result.images];
+  }
+
+  if (typeof fastify.sendNotificationToUser !== 'function') {
+    console.error('fastify.sendNotificationToUser is not a function');
+    return;
+  }
+  
+  fastify.sendNotificationToUser(userId, 'handleLoader', { imageId: placeholderId, action: 'remove' });
+  fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId: placeholderId, spin: false });
+  fastify.sendNotificationToUser(userId, 'updateImageCount', { chatId, count: images.length });
+
+  if (Array.isArray(images)) {
+
+    try {
+      // Increment image generation count once per task, not per image
+      await fastify.mongo.db.collection('images_generated').updateOne(
+        { userId: new ObjectId(taskStatus.userId), chatId: chatId ? new ObjectId(chatId) : null },
+        { $inc: { generationCount: images.length } }, // Increment by the number of images
+        { upsert: true }
+      );
+    } catch (error) {
+      console.error('[handleTaskCompletion] Error incrementing image generation count:', error);
+    }
+
+    for (let index = 0; index < images.length; index++) {
+      const image = images[index];
+      const { imageId, imageUrl, prompt, title, nsfw, isMerged } = image;
+      const { userId: taskUserId, userChatId } = taskStatus;
+            
+      if (chatCreation) {
+        fastify.sendNotificationToUser(userId, 'characterImageGenerated', { imageUrl, nsfw, chatId });
+        if (index === 0) {
+          await saveChatImageToDB(fastify.mongo.db, chatId, imageUrl);
+        }
+      } else {
+        const notificationData = {
+          id: imageId?.toString(),
+          imageId: imageId?.toString(),
+          imageUrl,
+          userChatId,
+          title: getTitleString(title),
+          prompt,
+          nsfw,
+          isMergeFace: isMerged || false,
+          isAutoMerge: isMerged || false,
+          url: imageUrl
+        };
+        fastify.sendNotificationToUser(userId, 'imageGenerated', notificationData);
+        // [DEBUG] Log the userChat message
+        const userChatCollection = fastify.mongo.db.collection('userChat');
+        try {
+          const userChatData = await userChatCollection.findOne({ userId: new ObjectId(userId), _id: new ObjectId(userChatId) });
+          if (userChatData) {
+            const imageMessage = userChatData.messages.find(msg => msg.imageId && msg.imageId.toString() === imageId?.toString());
+            console.log(`[handleTaskCompletion] UserChat message for imageId ${imageId}:`, imageMessage);
+            const mergeMessage = userChatData.messages.find(msg => msg.mergeId && msg.mergeId === image.mergeId);
+            console.log(`[handleTaskCompletion] UserChat merge message for mergeId ${image.mergeId}:`, mergeMessage);
+
+            console.log(`[handleTaskCompletion] Full UserChat data for userId ${userId} and userChatId ${userChatId}:`, userChatData.messages);
+          } else {
+            console.log(`[handleTaskCompletion] No UserChat data found for userId ${userId} and userChatId ${userChatId}`);
+          }
+        } catch (error) {
+          console.error(`[handleTaskCompletion] Error fetching UserChat data for logging:`, error);
+        }
+      }
+    }
+  }
+
+  if (chatCreation) {
+    fastify.sendNotificationToUser(userId, 'resetCharacterForm');
+    fastify.sendNotificationToUser(userId, 'showNotification', {
+      message: translations?.newCharacter?.imageCompletionDone_message || 'Your image has been generated successfully.',
+      icon: 'success'
+    });
+    const notification = {
+      title: translations?.newCharacter?.imageCompletionDone_title || 'Image generation completed',
+      message: translations?.newCharacter?.imageCompletionDone_message || 'Your image has been generated successfully.',
+      link: `/chat/edit/${chatId}`,
+      ico: 'success'
+    };
+    addNotification(fastify, userId, notification).then(() => {
+      fastify.sendNotificationToUser(userId, 'updateNotificationCountOnLoad', { userId });
+    });
+  }
+}
+
+module.exports = {
+  generateImg,
+  getPromptById,
+  getImageSeed,
+  checkImageDescription,
+  characterDescriptionToString,
+  getTasks,
+  deleteOldTasks,
+  deleteAllTasks,
+  pollTaskStatus,
+  handleTaskCompletion,
+  checkTaskStatus,
+  performAutoMergeFace,
+  performAutoMergeFaceWithBase64,
+  centerCropImage,
+  saveImageToDB,
+  updateSlug,
+  updateTitle,
+  fetchNovitaMagic,
+  fetchNovitaResult,
+  fetchOriginalTaskData,
+  getTitleString
+};

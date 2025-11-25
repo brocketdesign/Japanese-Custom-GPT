@@ -1,5 +1,6 @@
 const displayedMessageIds = new Set();
 const displayedImageIds = new Set();
+const displayedImageUrls = new Set();
 const displayedVideoIds = new Set();
 
 let language
@@ -730,6 +731,7 @@ function setupChatInterface(chat, character) {
         // Clear the tracking sets when displaying a new chat
         displayedMessageIds.clear();
         displayedImageIds.clear();
+        displayedImageUrls.clear();
         displayedVideoIds.clear();
 
         // Just clear the scenario container display, but keep the data
@@ -740,6 +742,7 @@ function setupChatInterface(chat, character) {
         for (let i = 0; i < userChat.length; i++) {
             let messageHtml = '';
             let chatMessage = userChat[i];
+            const designStep = i + 1;
             
             // Create a unique identifier for each message
             const messageId = chatMessage._id || `${chatMessage.role}_${i}_${chatMessage.content ? chatMessage.content.substring(0, 50) : ''}`;
@@ -771,7 +774,6 @@ function setupChatInterface(chat, character) {
                 const isImage = !!chatMessage?.imageId || chatMessage.content.startsWith("[Image]") || chatMessage.content.startsWith("[image]");
                 const isVideo = !!chatMessage?.videoId || chatMessage.content.startsWith("[Video]") || chatMessage.content.startsWith("[video]");
                 const isMergeFace = !!chatMessage?.mergeId || chatMessage.content.startsWith("[MergeFace]");
-                const designStep = Math.floor(i / 2) + 1;
             
                 if (isNarratorMessage) {
                     const narrationContent = chatMessage.content.replace("[Narrator]", "").trim();
@@ -791,11 +793,12 @@ function setupChatInterface(chat, character) {
                         continue;
                     }
                     
-                    // Use getImageUrlById for all merge faces (including stored ones)
                     let actions = chatMessage.actions || null;
                     const mergeData = await getImageUrlById(mergeId, designStep, thumbnail, actions);
+                    if(!mergeData){
+                        continue
+                    }
                     messageHtml = mergeData ? mergeData.messageHtml : '';
-                    
                     if (messageHtml) {
                         displayedImageIds.add(uniqueMergeIdentifier);
                         displayedMessageIds.add(messageId);
@@ -808,12 +811,13 @@ function setupChatInterface(chat, character) {
                         continue;
                     }
                     
-                    // Use getImageUrlById for ALL images (merged or not)
                     // This ensures consistent NSFW blur logic
                     let actions = chatMessage.actions || null;
                     const imageData = await getImageUrlById(imageId, designStep, thumbnail, actions);
+                    if(!imageData){
+                        continue
+                    }
                     messageHtml = imageData ? imageData.messageHtml : '';
-                    
                     if (messageHtml) {
                         displayedImageIds.add(imageId);
                         displayedMessageIds.add(messageId);
@@ -1018,8 +1022,17 @@ function setupChatInterface(chat, character) {
                 url: `/image/${imageId}`,
                 method: 'GET',
                 success: function(response) {
-                    if (response.imageUrl) {
+                    if(response.originalImageUrl){
+                        console.log(`[getImageUrlById] Fetched originalImageUrl URL for ID ${imageId}: ${response.originalImageUrl}`);
+                        console.log(displayedImageUrls)
+                        if(displayedImageUrls.has(response.originalImageUrl)){
+                            console.log(`[getImageUrlById] Image URL already displayed: ${response.originalImageUrl}`);
 
+                            return;
+                        }
+                        displayedImageUrls.add(response.originalImageUrl);
+                    }
+                    if (response.imageUrl) {
                         // Apply NSFW logic
                         const item = { nsfw: response.nsfw };
                         const subscriptionStatus = user.subscriptionStatus === 'active';
@@ -1063,7 +1076,7 @@ function setupChatInterface(chat, character) {
                                 actions
                             });
                             $(`#image-${imageId}`).closest('.assistant-image-box').after(toolsHtml);
-
+                            generateVideoIcon(imageId, chatId, userChatId);
                             if (shouldBlur || displayMode !== 'show') {
                                 $(`.image-tools[data-id="${imageId}"]`).hide();
                             }
@@ -1528,7 +1541,7 @@ function setupChatInterface(chat, character) {
 
             messageContainer.append(messageElement);
             messageElement.addClass(animationClass).fadeIn();
-            
+            generateVideoIcon(imageId, chatId, userChatId);
             // Apply blur effect if needed
             if (shouldBlur || displayMode !== 'show') {
                 $(`.image-tools[data-id="${imageId}"]`).hide();
@@ -1561,6 +1574,7 @@ function setupChatInterface(chat, character) {
             `).hide();
             $(`#${messageId}`).find('.load').remove()
             $(`#${messageId}`).append(messageElement);
+            generateVideoIcon(imageId, chatId, userChatId);
             messageElement.addClass(animationClass).fadeIn();
             displayImageThumb(imageUrl)
         } 

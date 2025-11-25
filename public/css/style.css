@@ -95,7 +95,7 @@ body {
     display: none;
   }
 
-  .isAdmin,.local-mode {
+  .isAdmin,.local-mode, .clerk-button {
     display:none
   }
   

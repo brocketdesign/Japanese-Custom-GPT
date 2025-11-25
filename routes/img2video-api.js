@@ -90,7 +90,7 @@ async function img2videoRoutes(fastify) {
                 return reply.status(429).send({ error: 'Video generation already in progress for this image' });
             }
 
-            const galleryEntry = await db.collection('gallery').findOne(
+            let galleryEntry = await db.collection('gallery').findOne(
                 {
                     chatId: chatObjectId,
                     'images._id': imageObjectId
@@ -101,6 +101,22 @@ async function img2videoRoutes(fastify) {
                     }
                 }
             );
+            if( !galleryEntry ) {
+                const mergedImageEntry = await db.collection('gallery').findOne(
+                    {
+                        chatId: chatObjectId,
+                        'images.mergeId': imageId
+                    },
+                    {
+                        projection: {
+                            images: { $elemMatch: { mergeId: imageId } }
+                        }
+                    }
+                );
+                if( mergedImageEntry && Array.isArray(mergedImageEntry.images) && mergedImageEntry.images.length > 0 ) {
+                    galleryEntry = mergedImageEntry;
+                }
+            }
 
             if (!galleryEntry || !Array.isArray(galleryEntry.images) || galleryEntry.images.length === 0) {
                 console.warn(`[img2video] Image with ID ${imageId} not found for chatId: ${chatId}`);

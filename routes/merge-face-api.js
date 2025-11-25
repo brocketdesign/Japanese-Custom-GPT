@@ -162,10 +162,14 @@ async function routes(fastify, options) {
 
       // Get the original image
       const galleryCollection = db.collection('gallery');
-      const galleryDoc = await galleryCollection.findOne({
-        userId: new ObjectId(userId),
+      let galleryDoc = await galleryCollection.findOne({
         'images._id': new ObjectId(imageId)
-      });
+      }); 
+      if (!galleryDoc) {
+        galleryDoc = await galleryCollection.findOne({
+        'images.mergeId': new ObjectId(imageId)
+        });
+      }
 
       if (!galleryDoc) {
         return reply.status(404).send({ 
@@ -348,10 +352,6 @@ async function routes(fastify, options) {
         isMergeFace: true,
         originalImageId: imageId
       };
-      
-      // [DEBUG merge-face-api] Log manual merge notification data
-      console.log(`[DEBUG merge-face-api] Manual merge notification data:`, JSON.stringify(notificationData, null, 2));
-      
       fastify.sendNotificationToUser(userId, 'imageGenerated', notificationData);
 
       // Also send merge completion notification

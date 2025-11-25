@@ -562,8 +562,7 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
                     response.character = null;
                 }
             }
-        
-
+            console.log(response.userChat?.messages ? response.userChat.messages : 'No', 'messages in userChat');
             return reply.send(response);
         } catch (error) {
             console.error('Failed to retrieve chat or character:', error);
@@ -713,7 +712,7 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
                 userId: new fastify.mongo.ObjectId(userId),
             });
     
-            chat.lastMessage = lastMessageDoc?.lastMessage || null;
+            chat.lastMessage = lastMessageDoc?.lastMessage || null;            
             return reply.send(chat);
         } catch (error) {
             console.log('chatId:', chatId);

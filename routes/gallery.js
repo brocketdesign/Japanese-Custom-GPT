@@ -295,7 +295,7 @@ async function routes(fastify, options) {
       const chatMessage = buildChatImageMessage(image, { fromGallery: true });
       chatMessage.targetChatId = targetChatId.toString();
 
-  const updateResult = await appendMessageToUserChat(db, targetUserChatId, chatMessage);
+      const updateResult = await appendMessageToUserChat(db, targetUserChatId, chatMessage);
 
       if (!updateResult.modifiedCount) {
         return reply.code(500).send({ error: 'Failed to add image to chat' });

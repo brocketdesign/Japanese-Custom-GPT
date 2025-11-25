@@ -924,6 +924,10 @@ $(document).ready(function(){
         window.addEventListener('load', async function () {
             const clerkLang = Object.keys(clerkTranslations)[0];
             await Clerk.load({localization: clerkTranslations[clerkLang]});
+            // Show Clerk action buttons
+            $('.clerk-button').each(function() {
+                $(this).fadeIn();
+            });
             const signOutParam = new URLSearchParams(window.location.search).get('signOut');
             if(signOutParam){
                 handleSignOut()

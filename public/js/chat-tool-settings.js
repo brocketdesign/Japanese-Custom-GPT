@@ -9,6 +9,7 @@ class ChatToolSettings {
         this.isPremium = false;
         this.translations = window.chatToolSettingsTranslations || {};
         this.onFirstTimeClose = null;
+        this.normalCloseCallback = null;
         this.speechToTextTranslations = window.speechToTextTranslations || {};
         
         this.init();
@@ -368,12 +369,12 @@ class ChatToolSettings {
             if (!hasChatted) {
                 this.openModalForFirstTime(callback);
             } else {
-                if (callback) callback();
+                if (callback) callback(false);
             }
         } catch (error) {
             console.error('[hasUserChatted] Error:', error.message);
             // On error, proceed normally without showing modal
-            if (callback) callback();
+            if (callback) callback(false);
         }
     }
 
@@ -407,7 +408,8 @@ class ChatToolSettings {
         this.openModal();
         
         // Add a welcome message
-        this.showFirstTimeWelcome();
+        // [DEBUG] Temporary disable welcome message need localization & check
+        // this.showFirstTimeWelcome();
         
         // Set up callback for when modal is closed
         if (callback) {
@@ -661,7 +663,7 @@ class ChatToolSettings {
         });
     }
     
-    openModal() {
+    openModal(callback) {
         const overlay = document.getElementById('settings-modal-overlay');
         if (overlay) {
             overlay.classList.add('show');
@@ -681,6 +683,11 @@ class ChatToolSettings {
             
             // Mark settings as opened when manually opened
             this.markSettingsAsOpened();
+
+            // Set up normal close callback if provided
+            if (callback) {
+                this.normalCloseCallback = callback;
+            }
         }
     }
 
@@ -707,6 +714,9 @@ class ChatToolSettings {
                 }, 300); // Small delay to ensure modal is fully closed
             } else {
                 // Normal close, no special action needed
+                const callback = this.normalCloseCallback;
+                this.normalCloseCallback = null; // Clear the callback
+                if (callback) callback(false);
             }
         }
     }

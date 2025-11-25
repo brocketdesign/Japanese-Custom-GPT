@@ -422,6 +422,7 @@ $(document).ready(async function() {
             await checkBackgroundTasks(chatId, userChatId);
         } else {
             displayInitialChatInterface(data.chat);
+
         }
 
         updateParameters(chatId, fetch_userId, userChatId);
@@ -690,7 +691,7 @@ function setupChatInterface(chat, character) {
 
                 
                 if (window.chatToolSettings) {
-                    window.chatToolSettings.hasUserChatted(chatId, async () => {
+                    window.chatToolSettings.hasUserChatted(chatId, async (hasOpenModal) => {
                         const shouldShowScenarios = await shouldGenerateScenariosUI(userChatId);
                         
                         if (shouldShowScenarios) {
@@ -702,9 +703,19 @@ function setupChatInterface(chat, character) {
                                 }
                             }
                         }
-                        generateChatCompletion();
+
+                        // On chat reset open the settings modal if not opened before
+                        if(!hasOpenModal){
+                            window.chatToolSettings.openModal(() => {
+                                generateChatCompletion();
+                            });
+                        } else {
+                            generateChatCompletion();
+                        }
                     });
+
                 } else {
+
                     // Fallback if settings not available
                     generateChatCompletion();
                 }

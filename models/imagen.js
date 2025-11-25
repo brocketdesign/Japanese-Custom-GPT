@@ -516,7 +516,7 @@ async function generateImg({
     // For character creation, use enableMergeFace setting if provided, otherwise use auto merge logic
     const shouldAutoMerge = chatCreation 
         ? (enableMergeFace && image_base64) // Only merge on character creation if explicitly enabled and has uploaded image
-        : (!chatCreation && autoMergeFaceEnabled && isPhotorealistic && chat.chatImageUrl.length > 0); // Regular auto merge logic for non-character creation
+        : (!chatCreation && autoMergeFaceEnabled && isPhotorealistic && chat?.chatImageUrl?.length > 0); // Regular auto merge logic for non-character creation
     
     // Generate title if not provided
     let newTitle = title;

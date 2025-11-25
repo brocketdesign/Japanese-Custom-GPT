@@ -562,7 +562,21 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
                     response.character = null;
                 }
             }
-            console.log(response.userChat?.messages ? response.userChat.messages : 'No', 'messages in userChat');
+            if (response.userChat?.messages) {
+                response.userChat.messages.forEach(msg => {
+                    if (msg.imageId || msg.mergeId) {
+                        console.log(
+                            'createdAt:', msg.createdAt,
+                            'imageId:', msg.imageId || '',
+                            'mergeId:', msg.mergeId || '',
+                            'imageUrl:', msg.imageUrl || '',
+                            'originalImageUrl:', msg.originalImageUrl || ''
+                        );
+                    }
+                });
+            } else {
+                console.log('No messages in userChat');
+            }
             return reply.send(response);
         } catch (error) {
             console.error('Failed to retrieve chat or character:', error);

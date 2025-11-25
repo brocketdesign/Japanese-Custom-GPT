@@ -16,9 +16,11 @@ async function routes(fastify, options) {
         try {
             const userId = request.user._id;
             const { customSlug } = request.body;
+            const lang = request.translations.lang || 'en';
+            console.log('[Affiliate API] User ID:', userId, 'Custom Slug:', customSlug, 'Language:', lang);
             console.log('[Affiliate API] Creating affiliate link for user:', userId, 'with slug:', customSlug);
             
-            const linkData = await createAffiliateLink(fastify.mongo.db, userId, customSlug);
+            const linkData = await createAffiliateLink(fastify.mongo.db, userId, customSlug, lang);
             console.log('[Affiliate API] Affiliate link created successfully:', linkData);
             
             reply.send({ 

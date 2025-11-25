@@ -6,7 +6,7 @@ async function generateSlug() {
     return crypto.randomBytes(4).toString('hex').toUpperCase();
 }
 
-async function createAffiliateLink(db, userId, customSlug = null) {
+async function createAffiliateLink(db, userId, customSlug = null, lang = 'en') {
     const usersCollection = db.collection('users');
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
     if (!user) {
@@ -40,7 +40,7 @@ async function createAffiliateLink(db, userId, customSlug = null) {
     const linkData = {
         userId: new ObjectId(userId),
         slug: slug,
-        link: `${process.env.BASE_URL || 'https://app.chatlamix.com'}?referrer=${slug}`,
+        link: `${`https://${lang}.chatlamix.com`}?referrer=${slug}`,
         clicks: 0,
         conversions: 0,
         createdAt: new Date(),

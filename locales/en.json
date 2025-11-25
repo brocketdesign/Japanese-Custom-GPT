@@ -1,5 +1,25 @@
 {
   "lang": "en",
+  "customPromptModal": {
+    "title": "Custom Prompt Description",
+    "subtitle": "Enter additional description for the image generation",
+    "label": "Description (optional)",
+    "placeholder": "e.g., in a futuristic setting, with dramatic lighting...",
+    "generateButton": "Generate Image",
+    "cancelButton": "Cancel"
+  },
+  "customPromptSettings": {
+    "tabTitle": "Custom Prompts",
+    "description": "Configure custom prompt behavior for image generation.",
+    "enableCustomPrompts": "Enable Custom Prompts",
+    "enableCustomPromptsDescription": "Enable or disable the use of custom prompts for image generation.",
+    "useDefaultDescription": "Use Default Description",
+    "useDefaultDescriptionDescription": "Use the default description instead of showing the input modal.",
+    "defaultDescriptionLabel": "Default Description",
+    "defaultDescriptionHelp": "Enter a default description to append to custom prompts.",
+    "defaultDescriptionPlaceholder": "Enter default description...",
+    "characters": "characters"
+  },
   "sent_image": "Image sent.",
   "image_prompt_request": "I requested the following image",
   "image_liked": "I like this image!",

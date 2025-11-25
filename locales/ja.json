@@ -1,5 +1,25 @@
 {
   "lang": "ja",
+  "customPromptModal": {
+    "title": "カスタムプロンプトの説明",
+    "subtitle": "画像生成のための追加説明を入力してください",
+    "label": "説明（オプション）",
+    "placeholder": "例: 未来的な設定で、劇的な照明を...",
+    "generateButton": "画像を生成",
+    "cancelButton": "キャンセル"
+  },
+  "customPromptSettings": {
+    "tabTitle": "カスタムプロンプト",
+    "description": "画像生成のためのカスタムプロンプトの動作を設定します。",
+    "enableCustomPrompts": "カスタムプロンプトを有効にする",
+    "enableCustomPromptsDescription": "画像生成でカスタムプロンプトを使用するかどうかを有効または無効にします。",
+    "useDefaultDescription": "デフォルトの説明を使用",
+    "useDefaultDescriptionDescription": "入力モーダルを表示する代わりに、デフォルトの説明を使用します。",
+    "defaultDescriptionLabel": "デフォルトの説明",
+    "defaultDescriptionHelp": "カスタムプロンプトに追加するデフォルトの説明を入力してください。",
+    "defaultDescriptionPlaceholder": "デフォルトの説明を入力...",
+    "characters": "文字"
+  },
   "sent_image": "画像が送信されました。",
   "image_prompt_request": "次の画像をリクエストしました",
   "image_liked": "この画像が好きです！",

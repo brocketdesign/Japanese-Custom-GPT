@@ -362,7 +362,7 @@
     </div>
 </div>
 
-<!-- Settings Modal -->
+<!-- Chat Settings Modal -->
 <div id="settings-modal-overlay" class="settings-modal-overlay">
     <div class="settings-modal">
         <div class="settings-modal-header">
@@ -379,6 +379,10 @@
                 <button type="button" class="settings-quick-nav-btn active" data-target="#image-settings">
                     <i class="bi bi-image"></i>
                     <span>{{chatToolSettingsTranslations.imageSettings}}</span>
+                </button>
+                <button type="button" class="settings-quick-nav-btn" data-target="#custom-prompt-settings">
+                    <i class="bi bi-image"></i>
+                    <span>{{translations.customPromptSettings.tabTitle}}</span>
                 </button>
                 <button type="button" class="settings-quick-nav-btn" data-target="#video-settings">
                     <i class="bi bi-camera-video"></i>
@@ -480,6 +484,69 @@
                             <i class="bi bi-star-fill me-1"></i> 
                             {{chatToolSettingsTranslations.autoImagePremiumFeature}}
                         </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom Prompt Settings -->
+            <div class="settings-section" id="custom-prompt-settings">
+                <div class="settings-section-header">
+                    <div class="settings-section-title">
+                        <i class="bi bi-image me-2"></i>
+                        {{translations.customPromptSettings.tabTitle}}
+                    </div>
+                </div>
+                <div class="settings-description text-muted mb-4">
+                    {{translations.customPromptSettings.description}}
+                </div>
+
+                <!-- Enable Custom Prompts Switch -->
+                <div class="settings-field">
+                    <div class="settings-field-header">
+                        <label class="settings-label fw-semibold mb-0">
+                            {{translations.customPromptSettings.enableCustomPrompts}}
+                        </label>
+                        <div class="settings-switch-container">
+                            <label class="settings-switch">
+                                <input type="checkbox" id="custom-prompt-enabled-switch">
+                                <span class="settings-switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="settings-description text-muted small mt-2">
+                        {{translations.customPromptSettings.enableCustomPromptsDescription}}
+                    </div>
+                </div>
+
+                <!-- Use Default Description Switch -->
+                <div class="settings-field">
+                    <div class="settings-field-header">
+                        <label class="settings-label fw-semibold mb-0">
+                            {{translations.customPromptSettings.useDefaultDescription}}
+                        </label>
+                        <div class="settings-switch-container">
+                            <label class="settings-switch">
+                                <input type="checkbox" id="default-description-enabled-switch">
+                                <span class="settings-switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="settings-description text-muted small mt-2">
+                        {{translations.customPromptSettings.useDefaultDescriptionDescription}}
+                    </div>
+                </div>
+
+                <!-- Default Description Textarea -->
+                <div class="settings-field">
+                    <label class="settings-label fw-semibold" for="default-description-textarea">
+                        {{translations.customPromptSettings.defaultDescriptionLabel}}
+                    </label>
+                    <div class="settings-description text-muted mb-3">
+                        {{translations.customPromptSettings.defaultDescriptionHelp}}
+                    </div>
+                    <textarea class="form-control" id="default-description-textarea" rows="3" maxlength="500" placeholder="{{translations.customPromptSettings.defaultDescriptionPlaceholder}}"></textarea>
+                    <div class="form-text">
+                        <span id="default-desc-char-count">0</span>/500 {{translations.customPromptSettings.characters}}
                     </div>
                 </div>
             </div>

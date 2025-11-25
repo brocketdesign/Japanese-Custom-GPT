@@ -33,7 +33,7 @@ class PromptManager {
         });
 
         // Click handler for individual prompt cards
-        $(document).off('click', '.prompt-card').on('click', '.prompt-card', (e) => {
+        $(document).off('click', '.prompt-card').on('click', '.prompt-card', async (e) => {
             e.preventDefault();
             e.stopPropagation();
             const $card = $(e.currentTarget);
@@ -52,9 +52,137 @@ class PromptManager {
                 const imageNsfw = $card.data('nsfw') ? 'nsfw' : 'sfw';
                 const imagePreview = new URL($card.find('img').attr('data-src') || $card.find('img').attr('src'), window.location.origin).href;
 
-                this.sendPromptImageDirectly(promptId, imageNsfw, imagePreview);
+                // Check custom prompt settings
+
+                const defaultDescriptionEnabled = window.chatToolSettings?.getDefaultDescriptionEnabled() ?? false;
+                let description = '';
+                if (defaultDescriptionEnabled) {
+                    description = window.chatToolSettings?.getDefaultDescription() ?? '';
+                }
+
+                const customPromptEnabled = window.chatToolSettings?.getCustomPromptEnabled() ?? true;
+                if (customPromptEnabled) {
+                    description = await this.showCustomPromptModal(description);
+                }
+
+                // Send the prompt image generation request if the user didn't cancel
+                if (description === null) {
+                    this.hide();
+                    return;
+                }
+                
+                this.sendPromptImageDirectly(promptId, imageNsfw, imagePreview, description);
                 this.hide();
             }
+        });
+    }
+
+    // Show modal for custom prompt description input
+    showCustomPromptModal(initialDescription = '') {
+        return new Promise((resolve) => {
+            const translations = window.translations || {};
+            const modalTitle = translations.customPromptModal?.title || "Custom Prompt Description";
+            const modalSubtitle = translations.customPromptModal?.subtitle || "Enter additional description for the image generation";
+            const labelText = translations.customPromptModal?.label || "Description (optional)";
+            const placeholderText = translations.customPromptModal?.placeholder || "e.g., in a futuristic setting, with dramatic lighting...";
+            const generateButtonText = translations.customPromptModal?.generateButton || "Generate Image";
+            const cancelButtonText = translations.customPromptModal?.cancelButton || "Cancel";
+
+            const modalHtml = `
+                <div class="modal fade" id="customPromptModal" tabindex="-1" aria-labelledby="customPromptModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content mx-auto" style="height: auto;">
+                            <div class="modal-header">
+                                <div class="d-flex align-items-center flex-column w-100">
+                                    <h5 class="modal-title" id="customPromptModalLabel">
+                                        <i class="bi bi-image me-2"></i>
+                                        ${modalTitle}
+                                    </h5>
+                                    <span>${modalSubtitle}</span>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label for="customPromptTextarea" class="form-label">
+                                        ${labelText}
+                                    </label>
+                                    <textarea 
+                                        class="form-control" 
+                                        style="min-height: 90px;"
+                                        id="customPromptTextarea" 
+                                        rows="4" 
+                                        maxlength="500" 
+                                        placeholder="${placeholderText}"
+                                    ></textarea>
+                                    <div class="form-text">
+                                        <span id="customCharCount">0</span>/500 characters
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    ${cancelButtonText}
+                                </button>
+                                <button type="button" class="btn btn-primary" id="generateCustomPromptBtn">
+                                    <i class="bi bi-image me-2"></i>
+                                    ${generateButtonText}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Remove existing modal if any
+            $('#customPromptModal').remove();
+            
+            // Add modal to body
+            $('body').append(modalHtml);
+            
+            const modal = new bootstrap.Modal(document.getElementById('customPromptModal'));
+            const textarea = $('#customPromptTextarea');
+            const charCount = $('#customCharCount');
+            const generateBtn = $('#generateCustomPromptBtn');
+
+            // Character counter
+            textarea.on('input', function() {
+                const length = $(this).val().length;
+                charCount.text(length);
+                
+                if (length > 500) {
+                    charCount.addClass('text-danger');
+                } else {
+                    charCount.removeClass('text-danger');
+                }
+            });
+
+            // Set initial description if provided
+            if (initialDescription) {
+                textarea.val(initialDescription);
+                charCount.text(initialDescription.length);
+            }
+
+            // Generate button click
+            generateBtn.on('click', function() {
+                const description = textarea.val().trim();
+                modal.hide();
+                resolve(description);
+            });
+
+            // Modal close events
+            $('#customPromptModal').on('hidden.bs.modal', function() {
+                $(this).remove();
+                resolve(null);
+            });
+
+            // Show modal
+            modal.show();
+            
+            // Focus textarea
+            $('#customPromptModal').on('shown.bs.modal', function() {
+                textarea.focus();
+            });
         });
     }
 
@@ -115,7 +243,7 @@ class PromptManager {
     }
 
     // Send the selected prompt to generate an image
-    sendPromptImageDirectly(promptId, imageNsfw, imagePreview) {
+    sendPromptImageDirectly(promptId, imageNsfw, imagePreview, description) {
         const placeholderId = `${new Date().getTime()}_${Math.random().toString(36).substring(2, 8)}_${promptId}`;
         
         // Check if this prompt is already being generated
@@ -144,7 +272,8 @@ class PromptManager {
             placeholderId, 
             imageNsfw, 
             promptId, 
-            customPrompt: true 
+            customPrompt: true,
+            description
         })
         .then(() => {
             if (this.isDevelopmentMode()) {

@@ -12,5 +12,8 @@
     "speechRecognitionEnabled": true,
     "speechAutoSend": true,
     "scenariosEnabled": false,
-    "autoImageGeneration": true
+    "autoImageGeneration": true,
+    "customPromptEnabled": true,
+    "defaultDescriptionEnabled": false,
+    "defaultDescription": ""
 }

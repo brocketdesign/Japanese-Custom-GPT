@@ -42,6 +42,7 @@ window.novitaImageGeneration = async function(userId, chatId, userChatId, option
             regenerate = option.regenerate || false,
             modelId = option.modelId || null,
             enableMergeFace = option.enableMergeFace || false,
+            description = option.description || null,
         } = option;
 
         let image_base64 = null;
@@ -69,7 +70,8 @@ window.novitaImageGeneration = async function(userId, chatId, userChatId, option
                 regenerate,
                 modelId,
                 chatCreation,
-                enableMergeFace
+                enableMergeFace,
+                description
             })
         });
 

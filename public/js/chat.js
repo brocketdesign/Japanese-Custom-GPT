@@ -1033,11 +1033,7 @@ function setupChatInterface(chat, character) {
                 method: 'GET',
                 success: function(response) {
                     if(response.originalImageUrl){
-                        console.log(`[getImageUrlById] Fetched originalImageUrl URL for ID ${imageId}: ${response.originalImageUrl}`);
-                        console.log(displayedImageUrls)
                         if(displayedImageUrls.has(response.originalImageUrl)){
-                            console.log(`[getImageUrlById] Image URL already displayed: ${response.originalImageUrl}`);
-
                             return;
                         }
                         displayedImageUrls.add(response.originalImageUrl);

@@ -266,6 +266,34 @@ class ChatToolSettings {
                 this.updateAutoSendFeedback();
             });
         }
+
+        // Custom prompt enabled switch
+        const customPromptEnabledSwitch = document.getElementById('custom-prompt-enabled-switch');
+        if (customPromptEnabledSwitch) {
+            customPromptEnabledSwitch.addEventListener('change', (e) => {
+                this.settings.customPromptEnabled = e.target.checked;
+            });
+        }
+
+        // Default description enabled switch
+        const defaultDescriptionEnabledSwitch = document.getElementById('default-description-enabled-switch');
+        if (defaultDescriptionEnabledSwitch) {
+            defaultDescriptionEnabledSwitch.addEventListener('change', (e) => {
+                this.settings.defaultDescriptionEnabled = e.target.checked;
+            });
+        }
+
+        // Default description textarea
+        const defaultDescriptionTextarea = document.getElementById('default-description-textarea');
+        if (defaultDescriptionTextarea) {
+            defaultDescriptionTextarea.addEventListener('input', (e) => {
+                this.settings.defaultDescription = e.target.value;
+                const charCount = document.getElementById('default-desc-char-count');
+                if (charCount) {
+                    charCount.textContent = e.target.value.length;
+                }
+            });
+        }
     }
 
     toggleSpeechButton() {
@@ -1290,6 +1318,28 @@ class ChatToolSettings {
             }
         }
 
+        // Update custom prompt enabled switch
+        const customPromptEnabledSwitch = document.getElementById('custom-prompt-enabled-switch');
+        if (customPromptEnabledSwitch) {
+            customPromptEnabledSwitch.checked = this.getCustomPromptEnabled();
+        }
+
+        // Update default description enabled switch
+        const defaultDescriptionEnabledSwitch = document.getElementById('default-description-enabled-switch');
+        if (defaultDescriptionEnabledSwitch) {
+            defaultDescriptionEnabledSwitch.checked = this.getDefaultDescriptionEnabled();
+        }
+
+        // Update default description textarea
+        const defaultDescriptionTextarea = document.getElementById('default-description-textarea');
+        if (defaultDescriptionTextarea) {
+            defaultDescriptionTextarea.value = this.getDefaultDescription();
+            const charCount = document.getElementById('default-desc-char-count');
+            if (charCount) {
+                charCount.textContent = this.getDefaultDescription().length;
+            }
+        }
+
         // Update suggestions enable switch
         const suggestionsEnableSwitch = document.getElementById('suggestions-enable-switch');
         if (suggestionsEnableSwitch) {
@@ -1436,6 +1486,18 @@ class ChatToolSettings {
 
     getAutoImageGeneration() {
         return this.settings.autoImageGeneration;
+    }
+
+    getCustomPromptEnabled() {
+        return this.settings.customPromptEnabled !== undefined ? this.settings.customPromptEnabled : true;
+    }
+
+    getDefaultDescriptionEnabled() {
+        return this.settings.defaultDescriptionEnabled !== undefined ? this.settings.defaultDescriptionEnabled : false;
+    }
+
+    getDefaultDescription() {
+        return this.settings.defaultDescription || '';
     }
 
     getScenariosEnabled() {

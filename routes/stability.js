@@ -13,7 +13,7 @@ async function routes(fastify, options) {
 
   // Endpoint to initiate generate-img for selected image type
   fastify.post('/novita/generate-img', async (request, reply) => {
-    const { title, prompt, aspectRatio, userId, chatId, userChatId, placeholderId, promptId, giftId, customPrompt, image_base64, chatCreation, modelId, regenerate, enableMergeFace } = request.body;
+    const { title, prompt, aspectRatio, userId, chatId, userChatId, placeholderId, promptId, giftId, customPrompt, image_base64, chatCreation, modelId, regenerate, enableMergeFace, description } = request.body;
     let imageType = request.body.imageType
     const db = fastify.mongo.db;
     const translations = request.translations
@@ -59,13 +59,13 @@ async function routes(fastify, options) {
             //fastify.sendNotificationToUser(userId, 'updateCustomPrompt', { promptId: promptId })
           }
         })
-        const customPrompt = promptData.prompt;
+        const customPromptText = promptData.prompt + (description ? " " + description : "");
         const nsfw = promptData.nsfw == 'on' ? true : false;
         imageType = nsfw ? 'nsfw' : 'sfw'
-        processPromptToTags(db,customPrompt);
+        processPromptToTags(db, customPromptText);
         
         const imageDescription = await checkImageDescription(db, chatId);
-        newPrompt = await createPrompt(customPrompt, imageDescription, nsfw);
+        newPrompt = await createPrompt(customPromptText, imageDescription, nsfw);
       } else if( giftId ) {
         // New gift handling logic
         const giftData = await getGiftById(db, giftId);

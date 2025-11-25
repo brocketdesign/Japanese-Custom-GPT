@@ -2255,7 +2255,7 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
         const userChatCollection = fastify.mongo.db.collection('userChat');
         try {
           const userChatData = await userChatCollection.findOne({ userId: new ObjectId(userId), _id: new ObjectId(userChatId) });
-          if (userChatData) {
+          if (false && userChatData) {
             console.log('\n==============================');
             console.log(`== User Chat Message (${userChatId}) Image Debug ==`);
             console.log('==============================');

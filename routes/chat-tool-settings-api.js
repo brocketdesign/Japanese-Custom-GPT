@@ -114,7 +114,10 @@ async function routes(fastify, options) {
                 autoImageGeneration: isPremium ? Boolean(settings.autoImageGeneration !== undefined ? settings.autoImageGeneration : false) : false,
                 speechRecognitionEnabled: Boolean(settings.speechRecognitionEnabled !== undefined ? settings.speechRecognitionEnabled : true),
                 speechAutoSend: Boolean(settings.speechAutoSend !== undefined ? settings.speechAutoSend : false),
-                scenariosEnabled: Boolean(settings.scenariosEnabled !== undefined ? settings.scenariosEnabled : false)
+                scenariosEnabled: Boolean(settings.scenariosEnabled !== undefined ? settings.scenariosEnabled : false),
+                customPromptEnabled: Boolean(settings.customPromptEnabled !== undefined ? settings.customPromptEnabled : true),
+                defaultDescriptionEnabled: Boolean(settings.defaultDescriptionEnabled !== undefined ? settings.defaultDescriptionEnabled : false),
+                defaultDescription: String(settings.defaultDescription || '')
             };
 
             // Only keep the field that exists in the incoming settings

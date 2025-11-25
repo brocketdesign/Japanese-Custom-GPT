@@ -1,5 +1,25 @@
 {
   "lang": "fr",
+  "customPromptModal": {
+    "title": "Description d'Invite Personnalisée",
+    "subtitle": "Entrez une description supplémentaire pour la génération d'image",
+    "label": "Description (optionnel)",
+    "placeholder": "par exemple, dans un cadre futuriste, avec un éclairage dramatique...",
+    "generateButton": "Générer l'Image",
+    "cancelButton": "Annuler"
+  },
+  "customPromptSettings": {
+    "tabTitle": "Invites Personnalisées",
+    "description": "Configurez le comportement des invites personnalisées pour la génération d'images.",
+    "enableCustomPrompts": "Activer les Invites Personnalisées",
+    "enableCustomPromptsDescription": "Activez ou désactivez l'utilisation des invites personnalisées pour la génération d'images.",
+    "useDefaultDescription": "Utiliser la Description par Défaut",
+    "useDefaultDescriptionDescription": "Utilisez la description par défaut au lieu d'afficher la fenêtre modale de saisie.",
+    "defaultDescriptionLabel": "Description par Défaut",
+    "defaultDescriptionHelp": "Entrez une description par défaut à ajouter aux invites personnalisées.",
+    "defaultDescriptionPlaceholder": "Entrez la description par défaut...",
+    "characters": "caractères"
+  },
   "sent_image": "Image envoyée.",
   "image_prompt_request": "J'ai demandé l'image suivante",
   "image_liked": "J'aime cette image !",

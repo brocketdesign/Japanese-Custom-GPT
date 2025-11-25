@@ -1240,7 +1240,16 @@ async function updateOriginalMessageWithMerge(userDataCollection, taskId, userId
       console.log(`🧩 mergeId ${mergeMessage.mergeId} already present in chat ${userChatId}`);
       return true;
     }
-
+    // log userDataCollection messages
+    const chatDoc = await userDataCollection.findOne({ userId: new ObjectId(userId), _id: new ObjectId(userChatId) });
+    if (!chatDoc) {
+      console.log(`🧩 Chat ${userChatId} not found for user ${userId}`);
+      return false;
+    }
+    console.log(`chatDoc :`, chatDoc);
+    console.log(`🧩 Searching messages in chat ${userChatId} for originalImageUrl=${mergeMessage.originalImageUrl}`);
+    const matchingMessages = chatDoc.messages.filter(m => m.imageUrl === mergeMessage.originalImageUrl && m.isMerged !== true);
+    console.log(`🧩 Found ${matchingMessages.length} matching messages for originalImageUrl=${mergeMessage.originalImageUrl}`);
     // Update the specific original message by matching its imageUrl (the original, unmerged URL)
     const updateResult = await userDataCollection.updateOne(
       { userId: new ObjectId(userId), _id: new ObjectId(userChatId) },

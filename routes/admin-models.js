@@ -5,7 +5,7 @@ const hbs = require('handlebars');
 
 const fetchModels = async (query = false, cursor = false) => {
   try {
-    let url = 'https://api.novita.ai/v3/model?filter.visibility=public&filter.source=civitai&pagination.limit=30&filter.types=checkpoint&filter.is_sdxl=true';
+    let url = 'https://api.novita.ai/v3/model?filter.visibility=public&pagination.limit=30&filter.types=checkpoint';
     if (cursor) {
       url += `&pagination.cursor=${cursor}`;
     }

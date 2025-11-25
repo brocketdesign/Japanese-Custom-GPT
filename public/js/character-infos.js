@@ -78,10 +78,9 @@ $(document).ready(function() {
         $('#charInfoModelName').text(chatData.imageModel || 'Unknown Model');
         $('#charInfoModelStyle').text(chatData.imageStyle || 'Unknown Style');
 
-        // Model image (this would need to be fetched from available models)
-        // For now, hide the image and show placeholder
-        $('#charInfoModelImage').hide();
-        $('#charInfoModelPlaceholder').show();
+ 
+        $('#charInfoModelImage').attr('src', chatData.modelImage || '').show();
+        $('#charInfoModelPlaceholder').removeClass('d-flex').hide();
 
         // Character details
         if (chatData.details_description) {

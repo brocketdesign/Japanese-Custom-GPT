@@ -1,5 +1,9 @@
 {
   "lang": "en",
+  "sent_image": "Image sent.",
+  "image_prompt_request": "I requested the following image",
+  "image_liked": "I like this image!",
+  "video_liked": "I like this video!",
   "recent" : "Recent",
   "recentVideos": "Recent Videos",
   "upgradeNow": "Upgrade Now",

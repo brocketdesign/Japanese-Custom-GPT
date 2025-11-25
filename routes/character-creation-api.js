@@ -155,6 +155,19 @@ function createSystemPayload(prompt, gender, details, imageType) {
     const genderInstruction = gender === 'female' ?
         'Include feminine facial features, elegant makeup, and feminine hairstyle. Avoid masculine traits. IMPORTANT: Ensure clothing fully covers chest and body - no cleavage, no exposed breasts, no bikini or revealing clothing.' : 
         'Include masculine facial features, confident expression, and masculine hairstyle. Avoid feminine traits. IMPORTANT: Ensure the character is fully clothed with appropriate masculine clothing like shirts, jackets, or formal wear - no exposed chest.';
+    
+    console.log(`[createSystemPayload] imageType: ${imageType}, check: ${imageType === 'sfw' ? 'sfw' : 'nsfw'}`);
+    const criticalSfwInstruction = imageType === 'sfw' ? 
+    `CRITICAL SFW REQUIREMENTS:
+    - NO nudity, NO exposed skin beyond neck/shoulders/arms
+    - Character MUST be fully clothed and modestly dressed
+    - NO exposed breasts, NO nudity
+    - NO sexual or suggestive content whatsoever
+    - The prompt must be strictly SFW (safe for work), no explicit or NSFW content`:
+    `CRITICAL NSFW REQUIREMENTS:
+    - Nudity is allowed as per NSFW guidelines
+    - Ensure the character's appearance aligns with NSFW themes appropriately
+    - Use explicit descriptive keywords suitable for NSFW content`;
 
     return [
         {
@@ -162,18 +175,13 @@ function createSystemPayload(prompt, gender, details, imageType) {
             content: `You are an expert Stable Diffusion prompt engineer specializing in SFW character portraits.
             Generate a detailed, keyword-based image prompt (under 1000 characters) for character visualization.
 
-            CRITICAL SFW REQUIREMENTS:
-            - The image MUST be ONLY a face and upper body portrait (shoulders to head, no lower body)
-            - NO nudity, NO exposed skin beyond neck/shoulders/arms
-            - Character MUST be fully clothed and modestly dressed
-            - NO cleavage, NO exposed breasts, NO revealing clothing
-            - NO sexual or suggestive content whatsoever
+            ${criticalSfwInstruction}
+            - The image MUST be ONLY a upper body portrait
             - Use comma-separated descriptive keywords in English
             - Include facial features, emotion, hairstyle, and appropriate clothing
             - Optimize for high-quality, detailed character face generation
             - Maintain consistency with provided character details
             - NO complete sentences, only relevant keywords
-            - The prompt must be strictly SFW (safe for work), no explicit or NSFW content
             - ${genderInstruction}
 
             IMPORTANT OUTPUT REQUIREMENTS:
@@ -191,8 +199,7 @@ function createSystemPayload(prompt, gender, details, imageType) {
             ${detailsString ? `Character details: ${detailsString}` : ''}
 
             Create a comprehensive image prompt that captures all aspects of the given base prompt. 
-            CRITICAL: Only generate an upper body portrait (head and shoulders), no full body or background.
-            CRITICAL: The character must be fully clothed and modest - no nudity or revealing clothing.
+            CRITICAL: Only generate an upper body portrait.No full body or background.
             
             REMEMBER: Output ONLY the keywords, no introduction or explanation.`.replace(/^\s+/gm, '').replace(/\s+/g, ' ').trim(),
         },
@@ -202,10 +209,8 @@ function createSystemPayload(prompt, gender, details, imageType) {
             - Output ONLY comma-separated keywords - NO other text
             - Ensure the prompt is under 1000 characters
             - Formatted for Stable Diffusion with comma-separated keywords only
-            - The image MUST be strictly SFW - no nudity, no exposed breasts, no bikini
-            - Only an upper body portrait (head, neck, shoulders, fully clothed upper torso)
+            - Only an upper body portrait
             - No background or full body
-            - The character must be wearing appropriate clothing that fully covers the body
             - START WITH THE KEYWORDS DIRECTLY - do not write "Here is" or "The prompt is" or any introduction`
         }
     ];

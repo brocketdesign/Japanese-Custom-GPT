@@ -138,7 +138,33 @@
   border-color: var(--primary-color) !important;
   transform: scale(1.1) !important;
 }
+/* ====== IMAGE INFO MODAL ====== */
 
+  .bg-gradient-purple {
+    background: linear-gradient(135deg, #a78bfa, #ec4899) !important;
+  }
+  .modal-content { 
+    background: rgba(255, 255, 255, 0.8) !important;
+    border: none;
+    backdrop-filter: blur(10px);
+ }
+  .modal-dialog { max-width:500px; margin:0 auto; }
+  @media (min-width:576px) { .modal-dialog { margin:1rem auto; } }
+
+/* ====== VIDEO GEN OVERLAY ICON ====== */
+.video-icon-overlay{
+  font-size: 40px !important;
+}
+@media screen and (max-width: 768px) {
+  .video-icon-overlay{
+    font-size: 30px !important;
+  }
+}
+@media screen and (max-width: 480px) {
+  .video-icon-overlay{
+    font-size: 20px !important;
+  }
+}
 /* ====== CARD OVERRIDES ====== */
 .card {
   border-radius: var(--radius-md) !important;
@@ -154,7 +180,6 @@
 }
 
 .card-header {
-  background: linear-gradient(135deg, var(--light-color), var(--light-alt)) !important;
   border-bottom: 1px solid var(--border-light) !important;
   border-radius: var(--radius-md) var(--radius-md) 0 0 !important;
   padding: var(--spacing-lg) !important;
@@ -162,7 +187,6 @@
 }
 
 .card-footer {
-  background: linear-gradient(135deg, var(--light-color), var(--light-alt)) !important;
   border-top: 1px solid var(--border-light) !important;
   border-radius: 0 0 var(--radius-md) var(--radius-md) !important;
   padding: var(--spacing-lg) !important;

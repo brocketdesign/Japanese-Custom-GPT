@@ -93,6 +93,7 @@ async function routes(fastify, options) {
       image, 
       name,
       negativePrompt: '', // Default empty negative prompt
+      defaultSampler: '', // Default empty default sampler
       createdAt: new Date()
     });
     reply.send({ success: true, message: 'Model added successfully.' });
@@ -197,6 +198,39 @@ async function routes(fastify, options) {
       reply.send({ success: true, message: 'Negative prompt updated successfully.' });
     } catch (error) {
       console.error('Error updating negative prompt:', error);
+      reply.status(500).send({ error: 'Internal Server Error' });
+    }
+  });
+
+  // Update model default sampler
+  fastify.put('/admin/models/:modelId/default-sampler', async (req, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, req.user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+
+      const { modelId } = req.params;
+      const { defaultSampler } = req.body;
+      const db = fastify.mongo.db;
+      
+      const result = await db.collection('myModels').updateOne(
+        { modelId },
+        { 
+          $set: { 
+            defaultSampler: defaultSampler || '',
+            updatedAt: new Date()
+          }
+        }
+      );
+
+      if (result.matchedCount === 0) {
+        return reply.status(404).send({ error: 'Model not found' });
+      }
+
+      reply.send({ success: true, message: 'Default sampler updated successfully.' });
+    } catch (error) {
+      console.error('Error updating default sampler:', error);
       reply.status(500).send({ error: 'Internal Server Error' });
     }
   });

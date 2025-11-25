@@ -112,7 +112,7 @@ function transformUserMessages(messages, translations = {}) {
         
         // Handle image messages
         if (message.type === 'image' && message.imageUrl) {
-            let imageContent = translations?.sent_image || 'I sent you the image.';
+            let imageContent = translations?.sent_image || 'I sent you the image.'; 
 
             imageContent += message.content ? ` ${message.content}` : '';
 
@@ -120,7 +120,7 @@ function transformUserMessages(messages, translations = {}) {
                 const userDetailMessage = 
                 {
                     role: 'user',
-                    content: `I asked for the following image : " ${message.prompt} " ]`,
+                    content: `${translations?.image_prompt_request || 'I asked for the following image'} : " ${message.prompt} " ]`,
                     hidden: true
                 };
                 transformedMessages.push(userDetailMessage);

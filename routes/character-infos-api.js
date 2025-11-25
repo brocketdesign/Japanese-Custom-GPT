@@ -40,12 +40,23 @@ async function routes(fastify, options) {
                 chatId: new ObjectId(chatId)
             });
 
+            // Get model image if modelId exists
+            let modelImage = null;
+            if (chat.modelId) {
+                const collectionModels = fastify.mongo.db.collection('myModels');
+                const model = await collectionModels.findOne({ modelId: chat.modelId });
+                if (model) {
+                    modelImage = model.image;
+                }
+            }
+
             reply.send({
                 success: true,
                 chat: {
                     ...chat,
                     messagesCount: messageCount,
-                    imageCount: imageCount
+                    imageCount: imageCount,
+                    modelImage: modelImage
                 }
             });
 

@@ -442,6 +442,8 @@ async function generateImg({
         finalNegativePrompt = ((negativePrompt || finalNegativePrompt) ? (negativePrompt || finalNegativePrompt)  + ',' : '') + genderNegativePrompt;
         finalNegativePrompt = finalNegativePrompt.replace(/,+/g, ',').replace(/^\s*,|\s*,\s*$/g, '').trim();
 
+        const modelSampler = modelData?.defaultSampler || selectedStyle[imageType].sampler_name;
+        console.log(`[generateImg] Using sampler: `, modelSampler);
         // Determine LoRAs: For character creation with SFW, remove feminine-only LoRAs and handle gender-specific ones
         let selectedLoras = imageType === 'sfw' ? [...selectedStyle.sfw.loras] : [...selectedStyle.nsfw.loras];
         
@@ -465,7 +467,7 @@ async function generateImg({
           image_request = {
             type: 'sfw',
             model_name: imageModel.replace('.safetensors', '') + '.safetensors',
-            sampler_name: selectedStyle.sfw.sampler_name || '',
+            sampler_name: modelSampler || selectedStyle.sfw.sampler_name || '',
             loras: selectedLoras,
             prompt: (selectedStyle.sfw.prompt ? selectedStyle.sfw.prompt + prompt : prompt).replace(/^\s+/gm, '').trim(),
             negative_prompt: finalNegativePrompt,
@@ -479,7 +481,7 @@ async function generateImg({
           image_request = {
             type: 'nsfw',
             model_name: imageModel.replace('.safetensors', '') + '.safetensors',
-            sampler_name: selectedStyle.nsfw.sampler_name || '',
+            sampler_name: modelSampler || selectedStyle.nsfw.sampler_name || '',
             loras: selectedLoras,
             prompt: (selectedStyle.nsfw.prompt ? selectedStyle.nsfw.prompt + prompt : prompt),
             negative_prompt: finalNegativePrompt,
@@ -494,7 +496,7 @@ async function generateImg({
 
     // Prepare params
     let requestData = flux ? { ...image_request, image_num } : { ...params, ...image_request, image_num };
-
+    console.log(`[generateImg] Request Data Sampler: `, requestData.sampler_name);
     if(image_base64){
       // Get target dimensions from the selected style
       const targetWidth = image_request.width;

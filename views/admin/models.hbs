@@ -172,6 +172,39 @@
                 <i class="bi bi-save me-1"></i>Save Negative Prompt
               </button>
             </form>
+            
+            <form id="defaultSamplerForm" class="mt-3">
+              <div class="mb-3">
+                <label for="defaultSamplerSelect" class="form-label">Default Sampler</label>
+                <select id="defaultSamplerSelect" class="form-select bg-secondary text-dark border-secondary">
+                  <option value="">Select a sampler...</option>
+                  <option value="Euler">Euler</option>
+                  <option value="Euler a">Euler a</option>
+                  <option value="LMS">LMS</option>
+                  <option value="Heun">Heun</option>
+                  <option value="DPM2">DPM2</option>
+                  <option value="DPM2 a">DPM2 a</option>
+                  <option value="DPM++ 2S a">DPM++ 2S a</option>
+                  <option value="DPM++ 2M">DPM++ 2M</option>
+                  <option value="DPM++ SDE">DPM++ SDE</option>
+                  <option value="DPM fast">DPM fast</option>
+                  <option value="DPM adaptive">DPM adaptive</option>
+                  <option value="LMS Karras">LMS Karras</option>
+                  <option value="DPM2 Karras">DPM2 Karras</option>
+                  <option value="DPM2 a Karras">DPM2 a Karras</option>
+                  <option value="DPM++ 2S a Karras">DPM++ 2S a Karras</option>
+                  <option value="DPM++ 2M Karras">DPM++ 2M Karras</option>
+                  <option value="DPM++ SDE Karras">DPM++ SDE Karras</option>
+                  <option value="DDIM">DDIM</option>
+                  <option value="PLMS">PLMS</option>
+                  <option value="UniPC">UniPC</option>
+                </select>
+                <div class="form-text text-muted">This sampler will be used as default when generating images with this model.</div>
+              </div>
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save me-1"></i>Save Default Sampler
+              </button>
+            </form>
           </div>
         </div>
       </div>
@@ -293,6 +326,7 @@ $(document).ready(function(){
             .done(function(data) {
                 console.log('Fetched model details:', data);
                 $('#negativePromptTextarea').val(data.negativePrompt || '');
+                $('#defaultSamplerSelect').val(data.defaultSampler || '');
                 
                 // Update style radio buttons with database value if available
                 if (data.style) {
@@ -311,6 +345,7 @@ $(document).ready(function(){
             .fail(function(xhr) {
                 console.error('Failed to fetch model details:', xhr);
                 $('#negativePromptTextarea').val('');
+                $('#defaultSamplerSelect').val('');
             });
         
         // Show modal
@@ -430,6 +465,44 @@ $(document).ready(function(){
             },
             error: function(xhr) {
                 const error = xhr.responseJSON ? xhr.responseJSON.error : 'Error saving negative prompt';
+                window.showNotification(error, 'error');
+            },
+            complete: function() {
+                // Restore button state
+                submitBtn.html(originalText).prop('disabled', false);
+            }
+        });
+    });
+
+    // Handle default sampler form submission
+    $('#defaultSamplerForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        if (!currentModelId) {
+            window.showNotification('No model selected', 'error');
+            return;
+        }
+        
+        const defaultSampler = $('#defaultSamplerSelect').val();
+        const submitBtn = $(this).find('button[type="submit"]');
+        const originalText = submitBtn.html();
+        
+        // Show loading state
+        submitBtn.html('<i class="bi bi-hourglass-split me-1"></i>Saving...').prop('disabled', true);
+        
+        $.ajax({
+            url: `/admin/models/${currentModelId}/default-sampler`,
+            method: 'PUT',
+            data: JSON.stringify({ defaultSampler }),
+            contentType: 'application/json',
+            success: function(response) {
+                window.showNotification(response.message, 'success');
+                // Close modal after successful save
+                const modal = bootstrap.Modal.getInstance(document.getElementById('modelDetailsModal'));
+                modal.hide();
+            },
+            error: function(xhr) {
+                const error = xhr.responseJSON ? xhr.responseJSON.error : 'Error saving default sampler';
                 window.showNotification(error, 'error');
             },
             complete: function() {

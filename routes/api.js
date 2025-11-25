@@ -565,7 +565,7 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             // ===========================
             // == User Chat Message Image Debug ==
             // ===========================
-            if (response.userChat?.messages) {
+            if (false && response.userChat?.messages) {
                 console.log('\n==============================');
                 console.log(`== User Chat Message (${userChatId}) Image Debug ==`);
                 console.log('==============================');
@@ -583,8 +583,6 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
                     }
                 });
                 console.log(`== End of User Chat Message (${userChatId}) Image Debug ==\n`);
-            } else {
-                console.log('⚠️ No messages in userChat');
             }
             // ===========================
             // == End Section ==

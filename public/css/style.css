@@ -1029,14 +1029,15 @@ opacity: 0.8;
 
   .assistant-image-box img {
   width:100%;
-  border-radius:0.25em 0.25em 0 0;
-  max-width:200px;
+  border-radius:0.5em 0.5em 0 0;
   cursor:pointer
   }
+  .image-tools, .title.assistant-chat-box, .assistant-image-box img, .assistant-video-box.video-container video{
+    max-width: 270px !important;
+  }
   .assistant-video-box.video-container video {
-  width:100%;
-  max-width: 200px;
-  border-radius:0.25em 0.25em 0 0;
+    width:100%;
+    border-radius:0.5em 0.5em 0 0;
   }
   .isLoading .fa-image {
   display:none
@@ -2278,9 +2279,7 @@ opacity: 0.8;
   transition: all 0.3s ease;
   max-width: 100% !important;
 }
-.image-tools{
-  max-width: 200px !important;
-}
+
 .assistant-image-box:hover {
   transform: scale(1.12) rotate(5deg);
 }

@@ -1,5 +1,9 @@
 {
   "lang": "ja",
+  "sent_image": "画像が送信されました。",
+  "image_prompt_request": "次の画像をリクエストしました",
+  "image_liked": "この画像が好きです！",
+  "video_liked": "この動画が好きです！",
   "recent": "最近",
   "recentVideos": "最近の動画",
   "upgradeNow": "今すぐアップグレード",

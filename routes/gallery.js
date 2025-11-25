@@ -1196,7 +1196,98 @@ fastify.get('/api/query-tags', async (request, reply) => {
         console.error('Error in /api/query-tags:', err);
         reply.code(500).send({ error: 'Internal Server Error' });
     }
-});
+  });
+
+  fastify.get('/gallery/:imageId/info', async (request, reply) => {
+    try {
+      const imageId = request.params.imageId;
+      let objectId;
+      try {
+        objectId = new fastify.mongo.ObjectId(imageId);
+      } catch (e) {
+        return reply.code(400).send({ error: 'Invalid imageId format' });
+      }
+
+      const db = fastify.mongo.db;
+      const galleryCollection = db.collection('gallery');
+      const tasksCollection = db.collection('tasks');
+      const chatsCollection = db.collection('chats');
+
+      // Aggregate to fetch image details with joins
+      const pipeline = [
+        { $unwind: '$images' },
+        { $match: { 'images._id': objectId } },
+        {
+          $lookup: {
+            from: 'tasks',
+            localField: 'images.taskId',
+            foreignField: 'taskId',
+            as: 'task'
+          }
+        },
+        { $unwind: { path: '$task', preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: 'chats',
+            localField: 'chatId',
+            foreignField: '_id',
+            as: 'chat'
+          }
+        },
+        { $unwind: { path: '$chat', preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            _id: 0,
+            image: {
+              _id: '$images._id',
+              prompt: '$images.prompt',
+              title: '$images.title',
+              slug: '$images.slug',
+              imageUrl: '$images.imageUrl',
+              aspectRatio: '$images.aspectRatio',
+              seed: '$images.seed',
+              nsfw: '$images.nsfw',
+              isMerged: '$images.isMerged',
+              mergeId: '$images.mergeId',
+              originalImageUrl: '$images.originalImageUrl',
+              createdAt: '$images.createdAt',
+              likes: '$images.likes',
+              likedBy: '$images.likedBy'
+            },
+            request: {
+              model_name: '$task.model_name',
+              width: '$task.width',
+              height: '$task.height',
+              sampler_name: '$task.sampler_name',
+              guidance_scale: '$task.guidance_scale',
+              steps: '$task.steps',
+              negative_prompt: '$task.negative_prompt',
+              blur: '$task.blur',
+              chatCreation: '$task.chatCreation'
+            },
+            chat: {
+              name: '$chat.name',
+              slug: '$chat.slug',
+              language: '$chat.language'
+            }
+          }
+        }
+      ];
+
+      const result = await galleryCollection.aggregate(pipeline).toArray();
+
+      if (result.length === 0) {
+        return reply.code(404).send({ error: 'Image not found' });
+      }
+
+      const imageInfo = result[0];
+      return reply.send({ success: true, data: imageInfo });
+
+    } catch (error) {
+      console.error('Error in /gallery/:imageId/info:', error);
+      return reply.code(500).send({ error: 'Internal Server Error' });
+    }
+  });
 }
 
 module.exports = routes;

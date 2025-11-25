@@ -710,7 +710,7 @@ class ChatToolSettings {
                 const callback = this.onFirstTimeClose;
                 this.onFirstTimeClose = null; // Clear the callback
                 setTimeout(() => {
-                    callback();
+                    callback(true);
                 }, 300); // Small delay to ensure modal is fully closed
             } else {
                 // Normal close, no special action needed

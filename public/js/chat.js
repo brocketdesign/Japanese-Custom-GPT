@@ -691,7 +691,7 @@ function setupChatInterface(chat, character) {
 
                 
                 if (window.chatToolSettings) {
-                    window.chatToolSettings.hasUserChatted(chatId, async (hasOpenModal) => {
+                    window.chatToolSettings.hasUserChatted(chatId, async (modalAlreadyOpened) => {
                         const shouldShowScenarios = await shouldGenerateScenariosUI(userChatId);
                         
                         if (shouldShowScenarios) {
@@ -705,7 +705,7 @@ function setupChatInterface(chat, character) {
                         }
 
                         // On chat reset open the settings modal if not opened before
-                        if(!hasOpenModal){
+                        if(modalAlreadyOpened === false){
                             window.chatToolSettings.openModal(() => {
                                 generateChatCompletion();
                             });
@@ -715,7 +715,6 @@ function setupChatInterface(chat, character) {
                     });
 
                 } else {
-
                     // Fallback if settings not available
                     generateChatCompletion();
                 }

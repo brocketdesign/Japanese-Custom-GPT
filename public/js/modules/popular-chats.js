@@ -55,8 +55,8 @@ window.loadPopularChats = async (page = 1, reload = false) => {
     if (popularChatsLoading && !reload) return;
     popularChatsLoading = true;
 
-    $('#popular-chats-pagination-controls').css('opacity', '1');
-    $('#popular-chats-pagination-controls').html(
+    $('#chat-pagination-controls').css('opacity', '1').show();
+    $('#chat-pagination-controls').html(
             `
             <div id="popular-chats-loading-spinner" class="text-center my-4">
                 <div class="spinner-border text-purple" role="status" style="width: 3rem; height: 3rem;">
@@ -109,7 +109,7 @@ window.loadPopularChats = async (page = 1, reload = false) => {
         updatePopularChatsPagination(page);
     } catch (e) {
         console.error('[PopularChats] Error:', e);
-        $('#popular-chats-pagination-controls').html(
+        $('#chat-pagination-controls').html(
             '<div class="text-center text-danger my-3">Error loading popular chats.</div>'
         );
     }
@@ -136,9 +136,9 @@ const renderPopularChatsFromCache = (data) => {
 
 const updatePopularChatsPagination = (page) => {
     if (page >= popularChatsTotalPages) {
-        $('#popular-chats-pagination-controls').html('');
+        $('#chat-pagination-controls').html('');
     } else {
-        $('#popular-chats-pagination-controls').html(
+        $('#chat-pagination-controls').html(
             `
             <div id="popular-chats-loading-spinner" class="text-center my-4">
             <div class="spinner-border text-purple" role="status" style="width: 3rem; height: 3rem;">
@@ -155,11 +155,11 @@ const updatePopularChatsPagination = (page) => {
 $(window).off('scroll.popularChats').on('scroll.popularChats', () => {
     // Only trigger if the gallery and controls are both visible (not display:none and not opacity:0)
     const $gallery = $('#chat-gallery');
-    const $controls = $('#popular-chats-pagination-controls');
+    const $controls = $('#chat-pagination-controls');
     if (!$gallery.is(':visible') || $gallery.css('opacity') === '0') return;
     if (!$controls.is(':visible') || $controls.css('opacity') === '0') return;
-    if($('#popular-chats-pagination-controls').length === 0) return;
-    const scrollTresold = $('#popular-chats-pagination-controls').offset().top  - 1000;
+    if($('#chat-pagination-controls').length === 0) return;
+    const scrollTresold = $('#chat-pagination-controls').offset().top  - 1000;
     
     if (
         !popularChatsLoading &&

@@ -372,12 +372,12 @@ function displayGeneratedVideo(videoData) {
         <div id="container-${designStep}">
             <div class="d-flex flex-row justify-content-start mb-4 message-container">
                 <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId || ''}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;">
-                <div class="ms-3 position-relative" style="max-width: 200px;">
-                    <div class="ps-0 text-start assistant-video-box">
+                <div class="ms-3 position-relative" style="max-width: 200px;display: grid;">
+                    <div class="ps-0 text-start assistant-video-box d-flex">
                         <video 
-                            controls 
+                            controls loop
                             class="generated-video" 
-                            style="max-width: 100%; border-radius: 15px;"
+                            style="max-width: 100%;"
                             data-video-id="${videoId}"
                             data-placeholder-id="${placeholderId}"
                         >
@@ -445,25 +445,134 @@ window.downloadVideo = async function(videoUrl, videoId) {
  * @param {string} videoId - Video ID
  * @returns {string} HTML for video tools
  */
-window.getVideoTools = function(videoUrl, duration, videoId) {
+window.getVideoTools = function(videoUrl, duration, videoId, actions = []) {
+        const hasLikeAction = actions?.some(a => a.type === 'like');
+        const likeIcon = hasLikeAction ? 'bi-heart-fill' : 'bi-heart';
+        const likeLabel = hasLikeAction ? (window.translations?.image_tools?.liked || 'Liked') : (window.translations?.image_tools?.like || 'Like');
+        const likeBadgeClass = hasLikeAction ? 'text-danger' : '';
+
         return `
-        <div class="bg-white py-2 d-flex justify-content-around video-tools">
-            <div class="d-flex justify-content-around w-100">
-                <span class="badge bg-white text-secondary download-video" style="cursor: pointer;" onclick="downloadVideo('${videoUrl}', '${videoId}')">
-                    <i class="bi bi-download"></i>
+        <div class="bg-light py-2 video-tools" data-id="${videoId}">
+            <div class="d-flex  gap-2 overflow-auto px-2" style="scrollbar-width: none; -ms-overflow-style: none;">
+                <style>
+                    .video-tools .d-flex::-webkit-scrollbar { display: none; }
+                    .video-tool-badge {
+                        font-size: 10px;
+                        padding: 4px 8px;
+                        border-radius: 12px;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        white-space: nowrap;
+                    }
+                    .video-tool-badge:hover {
+                        transform: scale(1.05);
+                    }
+                    .video-tool-badge i {
+                        margin-right: 4px;
+                    }
+                </style>
+
+                <span class="badge bg-white text-secondary video-tool-badge video-fav" 
+                      data-id="${videoId}" 
+                      onclick="toggleVideoFavorite(this)">
+                    <i class="bi ${likeIcon} ${likeBadgeClass}"></i>${likeLabel}
                 </span>
-                <span class="badge bg-white text-secondary share-video" 
-                      onclick="shareVideo('${videoUrl}')" 
-                      style="cursor: pointer;">
-                    <i class="bi bi-share"></i>
+                
+                <span class="badge bg-white text-secondary video-tool-badge download-video" 
+                            onclick="downloadVideo('${videoUrl}', '${videoId}')" 
+                            title="${window.translations?.image_tools?.download || window.img2videoTranslations?.download || 'Download'}">
+                        <i class="bi bi-download"></i>${window.translations?.image_tools?.download || window.img2videoTranslations?.download || 'Download'}
                 </span>
-                ${duration && !Math.round(duration).isNan() ? `<span class="badge bg-white text-secondary">
+
+                <span class="badge bg-white text-secondary video-tool-badge share-video" 
+                            onclick="shareVideo('${videoUrl}')" 
+                            title="${window.translations?.image_tools?.share || window.img2videoTranslations?.share || 'Share'}">
+                        <i class="bi bi-share"></i>${window.translations?.image_tools?.share || window.img2videoTranslations?.share || 'Share'}
+                </span>
+                
+                ${duration && !Math.round(duration).isNan() ? `<span class="badge bg-white text-secondary video-tool-badge">
                     <i class="bi bi-clock"></i> ${Math.round(duration)}s
                 </span>` : ''}
             </div>
+            ${actions && actions.length > 0 ? `
+                <div class="actions-info text-muted px-3 py-1" style="font-size: 11px;">
+                    ${actions.map(action => {
+                        if (action.type === 'like') {
+                            return `<div><i class="bi bi-heart-fill text-danger me-1"></i>${window.translations?.image_tools?.liked || 'Liked'} ${action.date ? `on ${new Date(action.date).toLocaleDateString()}` : ''}</div>`;
+                        }
+                        return '';
+                    }).join('')}
+                </div>` : ''}
         </div>
     `;
     }
+
+/**
+ * Find the generated video message in the chat and add/remove a like action entry
+ * @param {string} videoId
+ * @param {string} action - 'like' or 'unlike'
+ * @param {boolean} add - whether to add (true) or remove (false) the entry
+ */
+// Message action updates for video likes are handled server-side.
+
+/**
+ * Toggle video favorite status
+ * @param {HTMLElement} el - The clicked element
+ */
+window.toggleVideoFavorite = function(el) {
+    const isTemporary = !!user.isTemporary;
+    if (isTemporary) { 
+        openLoginForm(); 
+        return; 
+    }
+
+    let $this = $(el);
+    const videoId = $this.data('id');
+    const isLiked = $this.find('i').hasClass('bi-heart-fill'); // Check if already liked
+
+    const action = isLiked ? 'unlike' : 'like'; // Determine action
+    const likeIconClass = (action == 'like') ? 'bi-heart-fill text-danger' : 'bi-heart';
+    
+    // Update the clicked element immediately
+    $this.find('i').removeClass('bi-heart bi-heart-fill').addClass(likeIconClass); // Toggle icon class
+
+    // Update ALL instances of this video across the page
+    $(`.video-fav[data-id="${videoId}"]`).each(function() {
+        $(this).find('i').removeClass('bi-heart bi-heart-fill text-danger').addClass(likeIconClass);
+    });
+
+    if(action === 'like') {
+        showNotification(window.translations?.like_grant_points.replace('{point}', '5') || 'Video liked!', 'success');
+    }
+
+    // Message action updates are handled by the server; UI icon updated optimistically above
+
+    $.ajax({
+        url: `/api/video/${videoId}/like-toggle`, // Video like-toggle endpoint
+        method: 'POST',
+        xhrFields: {
+            withCredentials: true
+        },
+        data: { 
+            action
+        },
+        success: function() {
+            // Server confirmed; nothing else to do (UI already updated optimistically)
+        },
+        error: function(xhr, status, error) {
+            console.error('Error toggling video favorite:', error);
+            // Revert the icon on error
+            const revertClass = isLiked ? 'bi-heart-fill text-danger' : 'bi-heart';
+            $this.find('i').removeClass('bi-heart bi-heart-fill text-danger').addClass(revertClass);
+            $(`.video-fav[data-id="${videoId}"]`).each(function() {
+                $(this).find('i').removeClass('bi-heart bi-heart-fill text-danger').addClass(revertClass);
+            });
+            // Server will maintain message actions; just revert icon state locally
+            showNotification('Failed to toggle like', 'error');
+        }
+    });
+};
+
 /**
  * Regenerate video from existing video data
  * @param {string} videoId - Video ID to regenerate

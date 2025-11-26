@@ -1217,7 +1217,6 @@ async function addImageMessageToChatHelper(userDataCollection, userId, userChatI
       imageMessage.mergeId = mergeId;
       imageMessage.originalImageUrl = originalImageUrl;
     }
-    console.log('Adding image message to chat:', imageMessage);
     await userDataCollection.updateOne(
       { userId: new ObjectId(userId), _id: new ObjectId(userChatId) },
       { $push: { messages: imageMessage } }

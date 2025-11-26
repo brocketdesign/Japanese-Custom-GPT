@@ -143,6 +143,11 @@
   .bg-gradient-purple {
     background: linear-gradient(135deg, #a78bfa, #ec4899) !important;
   }
+  #imagePreviewModal .modal-content { 
+    background: none !important; 
+    border: none;
+    backdrop-filter: blur(5px);
+ }
   .modal-content { 
     background: rgba(255, 255, 255, 0.8) !important;
     border: none;

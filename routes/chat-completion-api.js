@@ -155,10 +155,7 @@ function transformUserMessages(messages, translations = {}) {
         
         // Handle video messages
         if (message.type === 'video' && message.videoUrl) {
-            let videoContent = `[Video] ${message.videoId}`;
-            if (message.description) {
-                videoContent += ` - ${message.description}`;
-            }
+            let videoContent = `${translations.video_sent_message}: ${message.content}`;
             
             const videoMessage = {
                 role: message.role,
@@ -533,7 +530,7 @@ async function routes(fastify, options) {
             
             //console.log(`[/api/openai-chat-completion] Using model: ${selectedModel}, Language: ${language}, Premium: ${isPremium}`);
             //console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
-            //console.log(`[/api/openai-chat-completion] Messages for completion:`, messagesForCompletion);
+            console.log(`[/api/openai-chat-completion] Messages for completion:`, messagesForCompletion);
             
             generateCompletion(messagesForCompletion, 600, selectedModel, language, selectedModel, isPremium)
             .then(async (completion) => {

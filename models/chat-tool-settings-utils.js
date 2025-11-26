@@ -115,7 +115,6 @@ async function getUserVideoPrompt(db, userId, chatId = null) {
 async function getVoiceSettings(db, userId, chatId = null) {
     try {
         const settings = await getUserChatToolSettings(db, userId, chatId);
-        console.log(`[getVoiceSettings] User settings:`, settings);
         
         const voiceProviderRaw = settings.voiceProvider || 'standard';
         const normalizedProvider = String(voiceProviderRaw).toLowerCase();

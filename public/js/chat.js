@@ -590,6 +590,25 @@ function setupChatInterface(chat, character) {
         `);
         $('#chat-recommend').append(card);
     }
+    function displayVideoThumb(originalImageUrl, videoUrl, origineUserChatId = null, shouldBlur = false){
+        if(shouldBlur){
+            return;
+        }
+        const messageContainer = $(`#chatContainer[data-id=${origineUserChatId}]`)
+        if(origineUserChatId && messageContainer.length == 0){
+            return
+        }
+        var card = $(`
+            <div 
+            onclick="showVideoPreview(this)"
+            data-video-src="${videoUrl}"
+            class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 mx-1 col-auto" style="cursor:pointer;" data-src="${originalImageUrl}">
+                <div style="background-image:url(${originalImageUrl});border:4px solid white;" class="card-img-top rounded-avatar position-relative m-auto">
+                </div>
+            </div>
+        `);
+        $('#chat-recommend').append(card);
+    }
 
 
     function displayThankMessage(){
@@ -838,8 +857,8 @@ function setupChatInterface(chat, character) {
                     if (displayedVideoIds.has(videoId)) {
                         continue;
                     }
-                    
-                    const videoData = await getVideoUrlById(videoId, designStep, thumbnail);
+                    const videoActions = chatMessage.actions || [];
+                    const videoData = await getVideoUrlById(videoId, designStep, thumbnail, videoActions);
                     messageHtml = videoData.messageHtml;
                     
                     if (messageHtml) {
@@ -957,7 +976,7 @@ function setupChatInterface(chat, character) {
                     <div class="ms-3 position-relative">
                         <div 
                         onclick="showImagePreview(this)"
-                        class="ps-0 text-start assistant-image-box vertical-transition">
+                        class="ps-0 text-start assistant-image-box transition-none">
                             <img id="merge-${mergeId}" data-id="${mergeId}" src="${placeholderImageUrl}" alt="Loading merged image...">
                         </div>
                     </div>
@@ -1019,7 +1038,7 @@ function setupChatInterface(chat, character) {
                     <div class="ms-3 position-relative">
                         <div 
                         onclick="showImagePreview(this)"
-                        class="ps-0 text-start assistant-image-box vertical-transition" style="position: relative;">
+                        class="ps-0 text-start assistant-image-box transition-none" style="position: relative;">
                             <img id="image-${imageId}" data-id="${imageId}" src="${placeholderImageUrl}" alt="Loading image...">
                         </div>
                     </div>
@@ -1103,7 +1122,7 @@ function setupChatInterface(chat, character) {
         });
     }
 
-    function getVideoUrlById(videoId, designStep, thumbnail) {
+    function getVideoUrlById(videoId, designStep, thumbnail, actions = []) {
         const placeholderVideoUrl = '/img/video-placeholder.gif'; // Placeholder video URL
 
         // Return immediately with placeholder and update asynchronously
@@ -1112,8 +1131,8 @@ function setupChatInterface(chat, character) {
             <div id="container-${designStep}">
                 <div class="d-flex flex-row justify-content-start mb-4 message-container">
                     <img src="${thumbnail || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;" onclick="openCharacterInfoModal('${chatId}', event)">
-                    <div class="ms-3 position-relative" style="max-width: 200px;">
-                        <div class="ps-0 text-start assistant-video-box">
+                    <div class="ms-3 position-relative" style="max-width: 200px;display: grid;">
+                        <div class="ps-0 text-start assistant-video-box d-flex">
                             <div id="video-${videoId}" class="video-loading-placeholder">
                                 <img src="${placeholderVideoUrl}" alt="Loading video...">
                             </div>
@@ -1129,13 +1148,15 @@ function setupChatInterface(chat, character) {
                 method: 'GET',
                 success: function(response) {
                     if (response.videoUrl) {
+                        
                         // Replace placeholder with actual video
                         const videoHtml = `
                             <video 
-                                controls 
+                                controls loop
                                 class="generated-video" 
-                                style="max-width: 100%; border-radius: 15px;"
+                                style="max-width: 100%;"
                                 data-video-id="${videoId}"
+                                data-title="${response.videoOriginialImageTitle || ''}"
                             >
                                 <source src="${response.videoUrl}" type="video/mp4">
                                 ${window.translations?.video_not_supported || 'Your browser does not support the video tag.'}
@@ -1145,8 +1166,13 @@ function setupChatInterface(chat, character) {
                         $(`#video-${videoId}`).replaceWith(videoHtml);
                         
                         // Add video tools
-                        const toolsHtml = getVideoTools(response.videoUrl, response.duration, videoId);
+                        const toolsHtml = getVideoTools(response.videoUrl, response.duration, videoId, actions);
                         $(`[data-video-id="${videoId}"]`).closest('.assistant-video-box').after(toolsHtml);
+
+                        // Add video to thumbnail gallery
+                        if(response.videoOriginialImageUrl){
+                            displayVideoThumb(response.videoOriginialImageUrl, response.videoUrl);
+                        }
                     } else {
                         console.error('No video URL returned');
                         $(`#video-${videoId}`).html('<div class="text-muted">Video unavailable</div>');
@@ -1536,7 +1562,7 @@ function setupChatInterface(chat, character) {
                     <div class="ms-3 position-relative">
                         <div 
                         onclick="showImagePreview(this)" 
-                        class="ps-0 text-start assistant-image-box vertical-transition ${shouldBlur ? 'isBlurred' : '' }" data-id="${imageId}" style="position: relative;">
+                        class="ps-0 text-start assistant-image-box transition-none ${shouldBlur ? 'isBlurred' : '' }" data-id="${imageId}" style="position: relative;">
                             ${message.outerHTML}
                             ${nsfwOverlay}
                         </div>
@@ -1572,7 +1598,7 @@ function setupChatInterface(chat, character) {
                     <div class="ms-3 position-relative">
                         <div 
                             onclick="showImagePreview(this)"
-                            class="text-start assistant-image-box vertical-transition" data-id="${imageId}">
+                            class="text-start assistant-image-box transition-none" data-id="${imageId}">
                             ${message.outerHTML}
                         </div>
                         ${getImageTools({chatId, imageId, isLiked:false, title, prompt, nsfw: imageNsfw, imageUrl})}

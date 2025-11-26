@@ -229,11 +229,9 @@ async function img2videoRoutes(fastify) {
      * Check video generation task status
      */
     fastify.get('/api/img2video/task-status/:taskId', async (request, reply) => {
-        console.log('[img2video] GET /api/img2video/task-status/:taskId called');
         try {
             const { taskId } = request.params;
             const userId = request?.user?._id;
-            console.log(`[img2video] Checking status for taskId: ${taskId}, userId: ${userId}`);
 
             if (!userId) {
                 console.warn('[img2video] Unauthorized access attempt');
@@ -470,13 +468,48 @@ async function img2videoRoutes(fastify) {
                 return reply.status(403).send({ error: 'Access denied' });
             }
 
+            // Attempt to find the original image URL from the gallery using the imageId
+            let videoOriginialImageUrl = null;
+            let videoOriginialImageTitle = null;
+            try {
+                const imageId = video.imageId;
+                if (imageId) {
+                    let galleryEntry = null;
+                    // If imageId looks like an ObjectId, try matching by _id first
+                    if (ObjectId.isValid(String(imageId))) {
+                        const imageObjectId = new ObjectId(String(imageId));
+                        galleryEntry = await db.collection('gallery').findOne(
+                            { 'images._id': imageObjectId },
+                            { projection: { images: { $elemMatch: { _id: imageObjectId } } } }
+                        );
+                    }
+
+                    // Fallback: try matching by mergeId (string)
+                    if (!galleryEntry) {
+                        galleryEntry = await db.collection('gallery').findOne(
+                            { 'images.mergeId': String(imageId) },
+                            { projection: { images: { $elemMatch: { mergeId: String(imageId) } } } }
+                        );
+                    }
+
+                    if (galleryEntry && Array.isArray(galleryEntry.images) && galleryEntry.images.length > 0) {
+                        videoOriginialImageUrl = galleryEntry.images[0].imageUrl || null;
+                        videoOriginialImageTitle = galleryEntry.images[0].title[request.translations.lang] || null;
+                    }
+                }
+            } catch (err) {
+                console.error('[img2video] Error looking up original image url for video:', err);
+            }
+
             return reply.send({
                 videoId: video._id,
                 videoUrl: video.videoUrl,
                 duration: video.duration,
                 prompt: video.prompt,
                 createdAt: video.createdAt,
-                imageId: video.imageId
+                imageId: video.imageId,
+                videoOriginialImageUrl,
+                videoOriginialImageTitle
             });
 
         } catch (error) {
@@ -600,6 +633,123 @@ async function img2videoRoutes(fastify) {
             return reply.status(500).send({ error: 'Internal server error' });
         }
     });
+
+    /**
+     * POST /api/video/:videoId/like-toggle
+     * Toggle like status for a video
+     */
+    fastify.post('/api/video/:videoId/like-toggle', async (request, reply) => {
+        try {
+            const videoId = request.params.videoId;
+            const { action } = request.body; // 'like' or 'unlike'
+            const user = request.user;
+            const userId = new ObjectId(user._id);
+
+            if (!userId) {
+                console.warn('[img2video] Unauthorized access attempt to toggle video like');
+                return reply.status(401).send({ error: 'Unauthorized' });
+            }
+
+            if (!['like', 'unlike'].includes(action)) {
+                return reply.status(400).send({ error: 'Invalid action' });
+            }
+
+            const db = fastify.mongo.db;
+            const videosCollection = db.collection('videos');
+            const videoLikesCollection = db.collection('video_likes');
+
+            const video = await videosCollection.findOne({ _id: new ObjectId(videoId) });
+            if (!video) {
+                console.warn(`[img2video] Video not found: ${videoId}`);
+                return reply.status(404).send({ error: 'Video not found' });
+            }
+
+            // Helper: find the video message in the user's chat and add/remove a like action
+            const collectionUserChat = db.collection('userChat');
+            const findVideoMessageAndUpdateLikeAction = async (userChatId, userChatMessages, vidId, act) => {
+                if (!userChatMessages || !userChatMessages.messages) return;
+
+                const messageIndex = userChatMessages.messages.findIndex(msg => {
+                    const content = msg.content || '';
+                    const isMatch = (msg.type == 'video' && String(msg.videoId) === String(vidId)) ||
+                                    content.startsWith('[Video] ' + String(vidId)) ||
+                                    content.startsWith('[video] ' + String(vidId));
+                    return isMatch;
+                });
+
+                if (messageIndex !== -1) {
+                    const message = userChatMessages.messages[messageIndex];
+                    if (!message.actions) message.actions = [];
+
+                    if (act === 'like') {
+                        const existing = message.actions.find(a => a.type === 'like');
+                        if (!existing) {
+                            message.actions.push({ type: 'like', date: new Date() });
+                        }
+                    } else if (act === 'unlike') {
+                        message.actions = message.actions.filter(a => a.type !== 'like');
+                    }
+
+                    await collectionUserChat.updateOne(
+                        { _id: new ObjectId(userChatId) },
+                        { $set: { messages: userChatMessages.messages } }
+                    );
+                }
+            };
+
+            if (action === 'like') {
+                // Add like
+                await videoLikesCollection.updateOne(
+                    { videoId: new ObjectId(videoId), userId },
+                    { $set: { createdAt: new Date() } },
+                    { upsert: true }
+                );
+                await videosCollection.updateOne(
+                    { _id: new ObjectId(videoId) },
+                    { $inc: { likes: 1 } }
+                );
+                // Update message actions in the user's chat to reflect the like
+                try {
+                    if (video.userChatId) {
+                        const userChatMessages = await collectionUserChat.findOne({ _id: new ObjectId(video.userChatId) });
+                        if (userChatMessages) {
+                            await findVideoMessageAndUpdateLikeAction(video.userChatId, userChatMessages, video._id, 'like');
+                        }
+                    }
+                } catch (err) {
+                    console.error('[img2video] Failed to update video message actions for like:', err);
+                }
+            } else {
+                // Remove like
+                const deleteResult = await videoLikesCollection.deleteOne({ videoId: new ObjectId(videoId), userId });
+                if (deleteResult.deletedCount > 0) {
+                    await videosCollection.updateOne(
+                        { _id: new ObjectId(videoId) },
+                        { $inc: { likes: -1 } }
+                    );
+                }
+                // Update message actions in the user's chat to reflect the unlike
+                try {
+                    if (video.userChatId) {
+                        const userChatMessages = await collectionUserChat.findOne({ _id: new ObjectId(video.userChatId) });
+                        if (userChatMessages) {
+                            await findVideoMessageAndUpdateLikeAction(video.userChatId, userChatMessages, video._id, 'unlike');
+                        }
+                    }
+                } catch (err) {
+                    console.error('[img2video] Failed to update video message actions for unlike:', err);
+                }
+            }
+
+            console.log(`[img2video] Video ${videoId} ${action}d by user ${userId}`);
+            return reply.send({ success: true });
+
+        } catch (err) {
+            console.error('[img2video] Error toggling video like:', err);
+            return reply.status(500).send({ error: 'Internal server error' });
+        }
+    });
+
 }
 
 module.exports = img2videoRoutes;

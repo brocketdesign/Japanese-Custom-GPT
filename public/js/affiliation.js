@@ -172,6 +172,12 @@ class AffiliateManager {
     }
 
     async saveAffiliateLink() {
+        const subscriptionStatus = user.subscriptionStatus == 'active'
+        console.log(`subscriptionStatus: ${subscriptionStatus}`);
+        if (!subscriptionStatus) {
+            loadAffiliationPlanPage();
+            return;
+        }
         console.log('[AffiliateManager] Starting affiliate link save...');
         const slugInput = document.getElementById('affiliateSlug');
         if (!slugInput) {

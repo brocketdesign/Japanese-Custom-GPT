@@ -264,6 +264,25 @@ fastify.get('/my-plan', async (request, reply) => {
   });
 });
 
+fastify.get('/affiliation-plan', async (request, reply) => {
+  const db = fastify.mongo.db;
+  let { translations, lang, user } = request;
+  const userId = user._id;
+  user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
+
+  return reply.renderWithGtm(`plan-affiliation.hbs`, {
+    title: translations.plan_page.affiliation_title || 'Affiliate Program - Premium Plan AI Image Generation',
+    seo: [
+      { name: 'description', content: translations.seo.description_plan },
+      { name: 'keywords', content: translations.seo.keywords },
+      { property: 'og:title', content: translations.seo.title_plan },
+      { property: 'og:description', content: translations.seo.description_plan },
+      { property: 'og:image', content: '/img/share.png' },
+      { property: 'og:url', content: 'https://chatlamix/' },
+    ],
+  });
+});
+
 fastify.get('/chat', (request, reply) => {
   const queryString = Object.keys(request.query).length > 0 
     ? `?${new URLSearchParams(request.query).toString()}` 

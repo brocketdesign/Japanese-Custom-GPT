@@ -3798,6 +3798,48 @@ function loadPlanPage() {
         }
     });
 }
+// Load the plan page and open the modal
+function loadAffiliationPlanPage() {
+    if(!user || isTemporary) {
+      console.log('User is not logged in or is temporary, aborting loadPlanPage.');
+      return;
+    }
+    if (modalStatus.isPlanLoading) {
+      return;
+    }
+    modalStatus.isPlanLoading = true;
+
+    closeAllModals();
+
+    const affiliationModal = new bootstrap.Modal(document.getElementById('affiliationModal'));
+    $('#affiliation-container').html('<div class="position-absolute d-flex justify-content-center align-items-center" style="inset:0;"><div class="spinner-border" role="status"></div></div>');
+    affiliationModal.show();
+
+    $.ajax({
+        url: '/affiliation-plan',
+        method: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
+        success: function(data) {
+            $('#affiliation-container').html(data);
+            const script = document.createElement('script');
+            script.src = '/js/plan.js';
+            script.onload = function() {
+                modalStatus.isPlanLoading = false;
+            };
+            script.onerror = function() {
+                console.error('Failed to load plan.js script.');
+                modalStatus.isPlanLoading = false;
+            };
+            document.body.appendChild(script);
+        },
+        error: function(err) {
+            console.error('Failed to load plan page', err);
+            modalStatus.isPlanLoading = false;
+        }
+    });
+}
 
 // Open /character/:id?modal=true to show the character modal
 function openCharacterModal(modalChatId, event) {

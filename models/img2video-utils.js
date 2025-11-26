@@ -3,6 +3,7 @@ const axios = require('axios');
 const { createHash } = require('crypto');
 const { uploadToS3 } = require('../models/tool');
 const { awardVideoGenerationReward, awardCharacterVideoMilestoneReward } = require('./user-points-utils');
+const { Translations } = require('openai/resources/audio/translations.mjs');
 /**
  * Generate video from image using Novita AI
  * @param {Object} params - Parameters for video generation
@@ -295,10 +296,7 @@ async function saveVideoToDB({
   const userData = await userDataCollection.findOne({ 
     userId: new ObjectId(userId), 
     _id: new ObjectId(userChatId),
-    $or: [
-      { 'messages.videoId': result.insertedId },
-      { 'messages.content': `[Video] ${result.insertedId}` }
-    ]
+    'messages.videoId': result.insertedId 
   });
 
   if (userData) {
@@ -307,7 +305,7 @@ async function saveVideoToDB({
     // Only add message if it doesn't exist
     const videoMessage = { 
       role: "assistant", 
-      content: `[Video] ${result.insertedId}`, 
+      content: prompt, 
       hidden: true, 
       type: "video", 
       videoId: result.insertedId, 

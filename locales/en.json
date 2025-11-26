@@ -21,6 +21,7 @@
     "characters": "characters"
   },
   "sent_image": "Image sent.",
+  "video_sent_message": "Video sent.",
   "image_prompt_request": "I requested the following image",
   "image_liked": "I like this image!",
   "video_liked": "I like this video!",

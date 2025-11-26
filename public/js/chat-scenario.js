@@ -307,12 +307,33 @@ window.ChatScenarioModule = (function() {
     }
 
     /**
+     * Helper function to convert a scenario object from API format to the expected currentScenario structure.
+     * @param {Object} apiScenario - The scenario object from the API (e.g., with keys like scenario_title, emotional_tone).
+     * @returns {Object} - The converted scenario object with standardized keys.
+     */
+    function convertScenarioToExpectedFormat(apiScenario) {
+        return {
+            id: apiScenario.id || apiScenario._id, // Prefer 'id', fallback to '_id'
+            title: apiScenario.scenario_title,
+            description: apiScenario.scenario_description,
+            emotionalTone: apiScenario.emotional_tone,
+            conversationDirection: apiScenario.conversation_direction,
+            system_prompt_addition: apiScenario.system_prompt_addition
+        };
+    }
+
+    /**
      * Display selected scenario in chat container
      */
-    function displaySelectedScenario() {
-        if (!currentScenario) {
+    function displaySelectedScenario(providedScenario = null) {
+        console.log('[ChatScenarioModule.displaySelectedScenario] Called with providedScenario:', providedScenario);
+        if (!currentScenario && !providedScenario) {
             removeSelectedScenarioDisplay();
             return;
+        }
+
+        if (providedScenario) {
+            currentScenario = convertScenarioToExpectedFormat(providedScenario);
         }
         
         const chatContainer = document.getElementById(chatContainerId);

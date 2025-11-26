@@ -60,7 +60,7 @@ async function routes(fastify) {
                         content: message
                     }
                 ];
-                systemTone = await generateCompletion(systemToneMessage, 100, 'openai');
+                systemTone = await generateCompletion(systemToneMessage, 100, 'openai-gpt4o');
             } catch (error) {
                 console.log('[openAi txt2speech] generateCompletion error:', error);
             }

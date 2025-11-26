@@ -521,7 +521,7 @@ function setupChatInterface(chat, character) {
         }
 
         // Display chat immediately - don't block on scenario initialization
-        displayChat(userChat.messages, persona, function(){
+        displayChat(userChat, persona, function(){
             setTimeout(() => {
                 const $chatContainer = $('#chatContainer');
                 if ($chatContainer.length) {
@@ -768,9 +768,12 @@ function setupChatInterface(chat, character) {
             window.ChatScenarioModule.removeSelectedScenarioDisplay();
         }
 
-        for (let i = 0; i < userChat.length; i++) {
+        const userChatMessages = userChat.messages || [];
+        const userChatLength = userChatMessages.length;
+
+        for (let i = 0; i < userChatLength; i++) {
             let messageHtml = '';
-            let chatMessage = userChat[i];
+            let chatMessage = userChatMessages[i];
             const designStep = i + 1;
             
             // Create a unique identifier for each message
@@ -907,8 +910,9 @@ function setupChatInterface(chat, character) {
         }
         
         // Display current scenario at the top AFTER all messages are rendered
-        if (window.ChatScenarioModule && userChatId) {
-            window.ChatScenarioModule.displaySelectedScenario();
+        const userChatScenarios = userChat.currentScenario || {};
+        if (window.ChatScenarioModule && userChatId && Object.keys(userChatScenarios).length > 0) {
+            window.ChatScenarioModule.displaySelectedScenario(userChatScenarios);
         }
         
         if( typeof callback == 'function'){
@@ -1686,7 +1690,7 @@ function setupChatInterface(chat, character) {
 });
 
 function logChatDataFetch(data){
-    return
+    
     console.log('[logChatDataFetch] Chat data fetched:', data);
 }
 //.reset-chat,.new-chat

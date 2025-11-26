@@ -999,7 +999,7 @@
   "startChat": "Commencer une discussion",
   "helloWorld": "Bonjour le monde",
   "thankYou": "Merci d'utiliser notre application.",
-  "sendMessage": "Discuter maintenant",
+  "sendMessage": "Écris un message...",
   "lightbulb": "💡",
   "chatHere": "Discutons",
   "userNickname": "{{user.nickname}}",

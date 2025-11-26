@@ -1058,7 +1058,7 @@
   "startChat": "Start Chat",
   "helloWorld": "Hello World",
   "thankYou": "Thank you for using our application.",
-  "sendMessage": "Chat Now",
+  "sendMessage": "Type your message...",
   "lightbulb": "💡",
   "chatHere": "Let's chat",
   "userNickname": "{{user.nickname}}",

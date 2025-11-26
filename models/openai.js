@@ -579,7 +579,7 @@ async function generatePromptTitle(prompt,language) {
           }
     ]
 
-    const completionMessage = await generateCompletion(messages, 600, 'openai');
+    const completionMessage = await generateCompletion(messages, 600, 'openai-gpt4o');
     return completionMessage.replace(/['"]+/g, '');
     
 }

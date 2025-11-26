@@ -495,6 +495,8 @@ async function generateImg({
 
     // Prepare params
     let requestData = flux ? { ...image_request, image_num } : { ...params, ...image_request, image_num };
+    console.log(`🖼️ [GenerateImg] Using model: ${requestData.model_name || 'FLUX Default Model'}`);
+
     if(image_base64){
       // Get target dimensions from the selected style
       const targetWidth = image_request.width;

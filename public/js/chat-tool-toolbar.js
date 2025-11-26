@@ -245,7 +245,7 @@ window.fetchAndShowImageInfo = async function(imageId) {
     modal.show();
 
     try {
-        const res = await fetch(`http://localhost:3000/gallery/${imageId}/info`);
+        const res = await fetch(`/gallery/${imageId}/info`);
         if (!res.ok) throw new Error('Network error');
         const { success, data } = await res.json();
         if (!success || !data) throw new Error('No data received');

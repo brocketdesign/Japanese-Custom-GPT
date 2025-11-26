@@ -443,7 +443,6 @@ async function generateImg({
         finalNegativePrompt = finalNegativePrompt.replace(/,+/g, ',').replace(/^\s*,|\s*,\s*$/g, '').trim();
 
         const modelSampler = modelData?.defaultSampler || selectedStyle[imageType].sampler_name;
-        console.log(`[generateImg] Using sampler: `, modelSampler);
         // Determine LoRAs: For character creation with SFW, remove feminine-only LoRAs and handle gender-specific ones
         let selectedLoras = imageType === 'sfw' ? [...selectedStyle.sfw.loras] : [...selectedStyle.nsfw.loras];
         
@@ -496,7 +495,6 @@ async function generateImg({
 
     // Prepare params
     let requestData = flux ? { ...image_request, image_num } : { ...params, ...image_request, image_num };
-    console.log(`[generateImg] Request Data Sampler: `, requestData.sampler_name);
     if(image_base64){
       // Get target dimensions from the selected style
       const targetWidth = image_request.width;

@@ -285,6 +285,7 @@
   },
   "toolbar": {
     "audio": "Audio",
+    "voice": "Voice",
     "chat": "Chat",
     "persona": "Persona",
     "image": "Image",

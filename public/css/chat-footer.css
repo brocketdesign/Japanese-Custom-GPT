@@ -71,6 +71,7 @@
             
             .toolbar-btn {
                 flex: 0 0 auto;
+                display: flex !important;
                 min-width: 110px;
                 width: auto;
                 height: 48px;
@@ -1840,9 +1841,9 @@
     #userMessage {
         font-size: 16px !important; /* Prevents zoom on iOS */
         min-height: 44px !important; /* iOS touch target size */
-        background-color: #ffffff !important;
-        border: 1px solid #dee2e6 !important;
         border-radius: 8px !important;
+        border: unset!important;
+        border-color: unset!important;
         z-index: 1051 !important;
         position: relative !important;
     }
@@ -2269,9 +2270,9 @@ body.keyboard-open #chatInput {
     #userMessage {
         font-size: 16px !important; /* Prevents zoom on iOS */
         min-height: 44px !important; /* iOS touch target size */
-        background-color: #ffffff !important;
-        border: 1px solid #dee2e6 !important;
         border-radius: 8px !important;
+        border: unset!important;
+        border-color: unset!important;
         z-index: 1051 !important;
         position: relative !important;
     }
@@ -2697,9 +2698,9 @@ body.keyboard-open #chatInput {
     #userMessage {
         font-size: 16px !important; /* Prevents zoom on iOS */
         min-height: 44px !important; /* iOS touch target size */
-        background-color: #ffffff !important;
-        border: 1px solid #dee2e6 !important;
         border-radius: 8px !important;
+        border: unset!important;
+        border-color: unset!important;
         z-index: 1051 !important;
         position: relative !important;
     }
@@ -2735,3 +2736,4 @@ body.keyboard-open #chatInput {
         }
     }
 }
+

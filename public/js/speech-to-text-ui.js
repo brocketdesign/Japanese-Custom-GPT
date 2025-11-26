@@ -8,6 +8,7 @@ class SpeechToTextUI {
         this.containerId = options.containerId || 'chatInput';
         this.buttonClass = options.buttonClass || 'speech-btn';
         this.modalId = options.modalId || 'speech-modal';
+        this.buttonId = options.buttonId || 'voice-input-toggle';
         
         // Initialize speech utility
         this.speechUtils = new SpeechToTextUtils({
@@ -37,41 +38,8 @@ class SpeechToTextUI {
     init() {
         if (this.isInitialized) return;
         
-        this.createSpeechButton();
         this.bindEvents();
         this.isInitialized = true;
-    }
-    
-    /**
-     * Create speech button
-     */
-    createSpeechButton() {
-        const container = document.getElementById(this.containerId);
-        if (!container) {
-            return;
-        }
-        
-        // Find the input group or create one
-        const inputGroup = container.querySelector('.input-group') || container.querySelector('#toolbar-text-input .input-group');
-        if (!inputGroup) {
-            return;
-        }
-        
-        // Create speech button
-        const speechBtn = document.createElement('button');
-        speechBtn.id = 'speech-to-text-btn';
-        speechBtn.className = `btn btn-light d-flex px-3 border-0 chat-utils me-1 ${this.buttonClass}`;
-        speechBtn.type = 'button';
-        speechBtn.innerHTML = '<i class="bi bi-mic"></i>';
-        speechBtn.title = this.translations.startRecording;
-        
-        // Insert before send button
-        const sendButton = inputGroup.querySelector('#sendMessage');
-        if (sendButton) {
-            inputGroup.insertBefore(speechBtn, sendButton);
-        } else {
-            inputGroup.appendChild(speechBtn);
-        }
     }
     
     /**
@@ -79,7 +47,7 @@ class SpeechToTextUI {
      */
     bindEvents() {
         // Speech button click
-        const speechBtn = document.getElementById('speech-to-text-btn');
+        const speechBtn = document.getElementById(this.buttonId);
         if (speechBtn) {
             speechBtn.addEventListener('click', () => this.toggleRecording());
         }
@@ -110,7 +78,7 @@ class SpeechToTextUI {
      * Toggle speech button visibility
      */
     toggleVisibility(enabled) {
-        const speechBtn = document.getElementById('speech-to-text-btn');
+        const speechBtn = document.getElementById(this.buttonId);
         if (speechBtn) {
             if (enabled) {
                 speechBtn.style.display = '';
@@ -179,7 +147,7 @@ class SpeechToTextUI {
      * Update button state
      */
     updateButtonState(state) {
-        const button = document.getElementById('speech-to-text-btn');
+        const button = document.getElementById(this.buttonId);
         if (!button) return;
         
         button.classList.remove('recording', 'processing');
@@ -289,9 +257,13 @@ class SpeechToTextUI {
             this.speechUtils.cancel();
         }
         
-        const button = document.getElementById('speech-to-text-btn');
+        // Reset button state but don't remove it since it's part of existing UI
+        const button = document.getElementById(this.buttonId);
         if (button) {
-            button.remove();
+            button.classList.remove('recording', 'processing');
+            button.innerHTML = '<i class="bi bi-mic"></i>';
+            button.style.backgroundColor = '';
+            button.style.color = '';
         }
         
         this.isInitialized = false;

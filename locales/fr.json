@@ -237,6 +237,7 @@
   },
   "toolbar": {
     "audio": "Audio",
+    "voice": "Voix",
     "chat": "Discussion",
     "persona": "Persona",
     "image": "Image",

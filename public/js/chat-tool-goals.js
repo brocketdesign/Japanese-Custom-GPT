@@ -178,7 +178,24 @@ class GoalsManager {
             completedMilestonesCount: completedMilestones.length
         });
         
+        const totalVideos = data.totalUserVideos || 0;
+        const totalChatVideos = data.totalChatVideos || 0;
+
         let html = '';
+
+        // Top-level stats (videos)
+        html += `
+            <div class="goals-stats d-flex justify-content-between align-items-center mb-3">
+                <div class="text-muted small">
+                    <i class="bi bi-play-circle-fill me-1"></i>
+                    ${window.translations?.goals?.your_videos || 'Your videos'}: <span class="fw-bold">${totalVideos}</span>
+                </div>
+                <div class="text-muted small">
+                    <i class="bi bi-collection-play me-1"></i>
+                    ${window.translations?.goals?.character_videos || 'Character videos'}: <span class="fw-bold">${totalChatVideos}</span>
+                </div>
+            </div>
+        `;
 
         // Milestone Goals Section (Character-specific goals)
         if (Object.keys(milestoneGoals).length > 0) {

@@ -201,6 +201,7 @@ function showVideoPromptModal() {
         textarea.on('input', function() {
             localStorage.setItem(lastPromptKey, $(this).val());
         });
+        
         // Modal close events
         $('#videoPromptModal').on('hidden.bs.modal', function() {
             $(this).remove();

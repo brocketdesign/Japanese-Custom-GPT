@@ -75,6 +75,7 @@ class PromptManager {
                 this.hide();
             }
         });
+
     }
 
     // Show modal for custom prompt description input
@@ -145,6 +146,19 @@ class PromptManager {
             const charCount = $('#customCharCount');
             const generateBtn = $('#generateCustomPromptBtn');
 
+            // Save and restore last prompt using localStorage
+            const lastPromptKey = 'custom_prompt_last_prompt';
+            const savedPrompt = localStorage.getItem(lastPromptKey);
+            if (savedPrompt && !initialDescription) {
+                // Restore last saved prompt if no initial description is provided
+                textarea.val(savedPrompt);
+                charCount.text(savedPrompt.length);
+            } else if (initialDescription) {
+                // Set initial description if provided
+                textarea.val(initialDescription);
+                charCount.text(initialDescription.length);
+            }
+
             // Character counter
             textarea.on('input', function() {
                 const length = $(this).val().length;
@@ -155,13 +169,11 @@ class PromptManager {
                 } else {
                     charCount.removeClass('text-danger');
                 }
-            });
 
-            // Set initial description if provided
-            if (initialDescription) {
-                textarea.val(initialDescription);
-                charCount.text(initialDescription.length);
-            }
+                textarea.on('input', function() {
+                    localStorage.setItem(lastPromptKey, $(this).val());
+                });
+            });
 
             // Generate button click
             generateBtn.on('click', function() {

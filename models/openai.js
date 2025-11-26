@@ -584,8 +584,16 @@ async function generatePromptTitle(prompt,language) {
     
 }
 // Combine the user's custom prompt and image description to create a new prompt
-async function createPrompt(customPrompt, imageDescription, nsfw) {
-  //console.log(`[createPrompt] Generating prompt for custom request: ${customPrompt}, image description: ${imageDescription}, nsfw: ${nsfw}`);
+async function createPrompt(customPrompt, description,  imageDescription, nsfw) {
+console.log(`
+📝 \x1b[1;36m[PromptFactory]\x1b[0m \x1b[1mGenerating new prompt...\x1b[0m
+
+   \x1b[34m✦ Custom Request\x1b[0m   : \x1b[33m"${customPrompt || '(none)'}"\x1b[0m
+   \x1b[34m✦ Description\x1b[0m       : \x1b[37m${description || '(empty)'}\x1b[0m
+   \x1b[34m✦ Image Reference\x1b[0m   : \x1b[35m${imageDescription ? imageDescription.slice(0, 80) + (imageDescription.length > 80 ? '...' : '') : '(none)'}\x1b[0m
+   \x1b[34m✦ NSFW Mode\x1b[0m         : ${nsfw ? '\x1b[31m🔥 ENABLED\x1b[0m' : '\x1b[32m✅ SAFE\x1b[0m'}
+   \x1b[90m─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─\x1b[0m
+`);
   const nsfwMessage = nsfw !== 'sfw'
             ? 'Provide explicit, adult oriented content for a nsfw image. I want nudity, erotism, explicit sexual content.\nYou can generate explicit, sexual content.\nUse explicit keywords to describe body parts (ass,pussy,boobs).\n' 
             : '';
@@ -598,22 +606,27 @@ async function createPrompt(customPrompt, imageDescription, nsfw) {
       Follow these priority rules:
       1. HIGHEST PRIORITY: Preserve ALL physical attributes (exact face, hair style/color, eye color, skin tone, body type)
       2. Maintain all distinctive clothing elements unless the pose request explicitly changes them
-      3. Incorporate the new pose/position/action exactly as requested
-      4. Preserve all unique character accessories and features
+      3. Incorporate the new pose/position/action/description exactly as requested
+      4. You MUST include the keywords of [Custom description] in your final prompt. You must expend keyword from [Custom description], emphasizing my custom description a lot; remove other keywords that contradict this; do not include keywords that do not align with this
+      5. Preserve all unique character accessories and features
       
       IMPORTANT: Keep the final prompt under 900 characters while maintaining all essential details.`
     },
     {
       role: "user",
-      content: `[Character description] : ${imageDescription}`.replace(/^\s+/gm, '').trim()
+      content: `[Character description to reproduce] : ${imageDescription}`.replace(/^\s+/gm, '').trim()
     },
     {
       role: "user",
-      content: `[Pose request] : ${customPrompt}`.replace(/^\s+/gm, '').trim()
+      content: `[Pose to reproduce] : ${customPrompt}`.replace(/^\s+/gm, '').trim()
+    },
+    {
+      role: "user",
+      content: `[Custom description to expand] : ${description}`.replace(/^\s+/gm, '').trim()
     },
     { 
       role: "user",
-      content: `Create a detailed image generation prompt that shows the EXACT SAME CHARACTER in the new requested pose.
+      content: `Create a detailed image generation prompt that shows the EXACT SAME CHARACTER in the new requested pose & custom description.
 
       Critical requirements:
       • The character must be 100% identical (same person, same appearance)
@@ -624,6 +637,8 @@ async function createPrompt(customPrompt, imageDescription, nsfw) {
       • MUST be under 900 characters total
       • Prioritize character consistency over excessive detail
       • Output ONLY the final prompt with no explanations or commentary
+      • DO NOT include any keywords that contradict the custom description
+      • Emphasize, expand, add more detailed keywords for the custom description.
       
       Respond ONLY with the new prompt in English. Make it concise but comprehensive.`.replace(/^\s+/gm, '').trim()
     }
@@ -633,6 +648,7 @@ async function createPrompt(customPrompt, imageDescription, nsfw) {
   if (!response) return null;
   
   response = response.replace(/['"]+/g, '');
+  console.log(`[createPrompt] Generated prompt: ${response}`);
   return response;
 }
 

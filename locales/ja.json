@@ -234,6 +234,7 @@
   },
   "toolbar": {
     "audio": "音声",
+    "voice": "ボイス",
     "chat": "チャット",
     "persona": "ペルソナ",
     "image": "画像",

@@ -59,13 +59,13 @@ async function routes(fastify, options) {
             //fastify.sendNotificationToUser(userId, 'updateCustomPrompt', { promptId: promptId })
           }
         })
-        const customPromptText = promptData.prompt + (description ? " " + description : "");
+        const customPromptText = promptData.prompt
         const nsfw = promptData.nsfw == 'on' ? true : false;
         imageType = nsfw ? 'nsfw' : 'sfw'
         processPromptToTags(db, customPromptText);
         
         const imageDescription = await checkImageDescription(db, chatId);
-        newPrompt = await createPrompt(customPromptText, imageDescription, nsfw);
+        newPrompt = await createPrompt(customPromptText, description,  imageDescription, nsfw);
       } else if( giftId ) {
         // New gift handling logic
         const giftData = await getGiftById(db, giftId);

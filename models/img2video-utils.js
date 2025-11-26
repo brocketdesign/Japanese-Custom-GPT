@@ -520,6 +520,43 @@ async function handleVideoTaskCompletion(taskStatus, fastify, options = {}) {
 
       console.log(`[handleVideoTaskCompletion] Video completion handling finished successfully for task ${taskStatus.taskId}`);
 
+      // Send additional notifications so frontend updates video counts/goals
+      try {
+        const db = fastify.mongo.db;
+        const chatsCollection = db.collection('chats');
+        const usersCollection = db.collection('users');
+
+        const chatDoc = chatId ? await chatsCollection.findOne({ _id: new ObjectId(chatId) }) : null;
+        const userDoc = await usersCollection.findOne({ _id: new ObjectId(userId) });
+
+        const totalVideos = userDoc?.videoCount || 0;
+        const totalChatVideos = chatDoc?.videoCount || 0;
+
+        // Refresh goals / live-goals widget
+        fastify.sendNotificationToUser(userId, 'refreshGoals', {
+          userId,
+          chatId,
+          type: 'video',
+          totalImages: null,
+          totalVideos: totalVideos,
+          totalChatVideos: totalChatVideos
+        });
+
+        // Trigger character video milestone UI update (non-milestone payload so UI refreshes counts)
+        fastify.sendNotificationToUser(userId, 'characterVideoMilestone', {
+          userId,
+          points: 0,
+          reason: 'Video generated',
+          source: 'video_generation',
+          milestone: null,
+          totalVideos: totalVideos,
+          chatId,
+          isMilestone: false
+        });
+      } catch (notifyErr) {
+        console.error('[handleVideoTaskCompletion] Error sending post-video notifications:', notifyErr);
+      }
+
     } catch (error) {
       console.error(`[handleVideoTaskCompletion] Error saving video for task ${taskStatus.taskId}:`, error);
       

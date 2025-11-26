@@ -308,16 +308,13 @@ const processBackgroundVideoTasks = (fastify) => async () => {
     const { checkVideoTaskStatus, handleVideoTaskCompletion } = require('./img2video-utils');
     
     for (const task of backgroundVideoTasks) {
-      console.log(`\n🎬 [CRON] 🔄 Processing video task: ${task.taskId} (Status: ${task.status})`);
+      console.log(`\n🎬 [CRON] 🔄 Processing video task: ${task.taskId}`);
       
       try {
-        console.log(`🎬 [CRON] 📋 Checking status for: ${task.taskId}`);
         
         // Check the current status of the video generation
         const taskStatus = await checkVideoTaskStatus(task.taskId);
-        
-        console.log(`🎬 [CRON] ℹ️  Status: ${taskStatus?.status || 'unknown'}`);
-        
+                
         if (!taskStatus) {
           console.error(`🎬 [CRON] ❌ No status returned for task ${task.taskId}`);
           await db.collection('tasks').updateOne(

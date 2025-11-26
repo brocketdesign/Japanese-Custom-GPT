@@ -3,32 +3,53 @@
     <div id="chatInput" class="input-group rounded-0 rounded-bottom" style="position: absolute;bottom: 10px;left: 0;right: 0;padding: 0px 15px 5px 15px;">
         <div class="chat-toolbar-wrapper w-auto mx-auto">
             <div class="chat-toolbar-container">
+                <div class="input-group w-100">
+                    <input id="userMessage" class="form-control py-2 border-0 ms-3 me-1 female" 
+                    style="margin-bottom: 0.5em;margin-top: 0.5em;height: 50px;max-height: 80px; background-image: none; min-height: auto;padding-top: 5px !important;padding-left: 10px !important; padding-bottom: 0 !important;background-color: transparent!important;" 
+                    placeholder="Type your message here..."></input>
+                    <button id="sendMessage" class="btn btn-primary px-3 mt-2 border-0 chat-utils" type="button">
+                        <i class="bi bi-send"></i>
+                    </button>
+                </div>
                 <!-- Main Toolbar -->
                 <div class="chat-toolbar animate__animated animate__slideInUp">
                     <div id="toolbar-main" class="toolbar-scroll-container mx-2">
+                        <!-- 1. Primary input methods -->
+                        <button type="button" class="toolbar-btn" id="voice-input-toggle">
+                            <i class="bi bi-mic"></i>
+                            <span class="tool-label">{{translations.toolbar.voice}}</span>
+                        </button>
+
+                        <!-- 2. Audio playback (response output) -->
                         <button type="button" class="toolbar-btn" id="audio-play">
                             <i class="bi" id="audio-icon"></i>
                             <span class="tool-label">{{translations.toolbar.audio}}</span>
                         </button>
-                        <button type="button" class="toolbar-btn" id="text-input-toggle">
-                            <i class="bi bi-chat-dots"></i>
-                            <span class="tool-label">{{translations.toolbar.chat}}</span>
-                        </button>
+
+                        <!-- 3. Creative / content generation tools -->
                         <button type="button" class="toolbar-btn" id="showPrompts">
                             <i class="bi bi-image"></i>
                             <span class="tool-label">{{translations.toolbar.image}}</span>
+                        </button>
+                        <button type="button" class="toolbar-btn" id="suggestions-toggle">
+                            <i class="bi bi-lightbulb"></i>
+                            <span class="tool-label">{{translations.toolbar.ideas}}</span>
+                        </button>
+
+                        <!-- 4. Expression & fun -->
+                        <button type="button" class="toolbar-btn" id="emoji-tone-btn">
+                            <i class="bi bi-emoji-smile"></i>
+                            <span class="tool-label">{{translations.toolbar.emojis}}</span>
                         </button>
                         <button type="button" class="toolbar-btn" id="gifts-toggle">
                             <i class="bi bi-gift"></i>
                             <span class="tool-label">{{translations.toolbar.gifts}}</span>
                         </button>
-                        <button type="button" class="toolbar-btn" id="emoji-tone-btn">
-                            <i class="bi bi-emoji-smile"></i>
-                            <span class="tool-label">{{translations.toolbar.emojis}}</span>
-                        </button>
-                        <button type="button" class="toolbar-btn" id="suggestions-toggle">
-                            <i class="bi bi-lightbulb"></i>
-                            <span class="tool-label">{{translations.toolbar.ideas}}</span>
+
+                        <!-- 5. Conversation style & context -->
+                        <button type="button" class="toolbar-btn" id="show-personas-btn">
+                            <i class="bi bi-person-lines-fill"></i>
+                            <span class="tool-label">{{translations.toolbar.persona}}</span>
                         </button>
                         <button type="button" class="toolbar-btn" id="goals-toggle">
                             <i class="bi bi-trophy"></i>
@@ -38,14 +59,14 @@
                             <i class="bi bi-translate"></i>
                             <span class="tool-label">{{translations.toolbar.translate}}</span>
                         </button>
-                        <button type="button" class="toolbar-btn" id="show-personas-btn">
-                            <i class="bi bi-person-lines-fill"></i>
-                            <span class="tool-label">{{translations.toolbar.persona}}</span>
-                        </button>
+
+                        <!-- 6. Session management -->
                         <button type="button" class="toolbar-btn reset-chat" id="reset-chat-btn" onclick="handleChatReset(this)">
                             <i class="bi bi-plus-square"></i>
                             <span class="tool-label">{{translations.toolbar.reset}}</span>
                         </button>
+
+                        <!-- 7. Settings (always last) -->
                         <button type="button" class="toolbar-btn settings-toggle" id="settings-toggle">
                             <i class="bi bi-gear"></i>
                             <span class="tool-label">{{translations.toolbar.settings}}</span>
@@ -116,22 +137,6 @@
                         <button type="button" class="toolbar-back-btn">
                             <i class="bi bi-arrow-left"></i>
                         </button>
-                        <div class="input-group w-100">
-                            <textarea id="userMessage" class="form-control py-2 border-0 me-1" 
-                            style="width: 100%;margin-bottom: 0.5em;margin-top: 0.5em;height: 50px;max-height: 80px; background-image: none; min-height: auto; padding-top: 5px !important; padding-left: 10px !important; padding-bottom: 0 !important;" 
-                            placeholder="チャットしよう"></textarea>
-                            <!-- [DEPRECATED] Send Image Buttons -->
-                            <button id="sendImageMessage" class="btn btn-light px-3 chat-utils border-0 me-1 d-none" type="button">
-                                <i class="bi bi-image"></i>
-                            </button>
-                            <!-- END DEPRECATED -->
-                            <button id="showPrompts-toggle" class="showPrompts-toggle btn btn-light px-3 chat-utils border-0 me-1" type="button">
-                                <i class="bi bi-image"></i>
-                            </button>
-                            <button id="sendMessage" class="btn btn-light px-3 border-0 chat-utils" type="button">
-                                <i class="bi bi-send"></i>
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>

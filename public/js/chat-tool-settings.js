@@ -297,7 +297,7 @@ class ChatToolSettings {
     }
 
     toggleSpeechButton() {
-        const speechBtn = document.getElementById('speech-to-text-btn');
+        const speechBtn = document.getElementById('voice-input-toggle');
         if (speechBtn) {
             if (this.settings.speechRecognitionEnabled) {
                 speechBtn.style.display = 'inline-block';

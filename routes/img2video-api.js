@@ -418,11 +418,9 @@ async function img2videoRoutes(fastify) {
      * Get video data by ID
      */
     fastify.get('/api/video/:videoId', async (request, reply) => {
-        console.log('[img2video] GET /api/video/:videoId called');
         try {
             const { videoId } = request.params;
             const userId = request?.user?._id;
-            console.log(`[img2video] Fetching videoId: ${videoId}, userId: ${userId}`);
 
             if (!userId) {
                 console.warn('[img2video] Unauthorized access attempt');

@@ -1504,9 +1504,9 @@ async function getUserMilestoneProgress(db, userId, chatId = null) {
           userId: new ObjectId(userId),
           chatId: new ObjectId(chatId)
         }
-      },
+      }, 
       { $unwind: { path: '$messages', preserveNullAndEmptyArrays: true } },
-      { $match: { 'messages.video_url': { $exists: true, $ne: null } } },
+      { $match: { 'messages.videoUrl': { $exists: true, $ne: null } } },
       { $group: { _id: null, totalVideos: { $sum: 1 } } }
     ];
     const videoResult = await userChatCollection.aggregate(videoPipeline).toArray();
@@ -1519,7 +1519,7 @@ async function getUserMilestoneProgress(db, userId, chatId = null) {
     const videoPipeline = [
       { $match: { userId: new ObjectId(userId) } },
       { $unwind: { path: '$messages', preserveNullAndEmptyArrays: true } },
-      { $match: { 'messages.video_url': { $exists: true, $ne: null } } },
+      { $match: { 'messages.videoUrl': { $exists: true, $ne: null } } },
       { $group: { _id: null, totalVideos: { $sum: 1 } } }
     ];
     const videoResult = await userChatCollection.aggregate(videoPipeline).toArray();

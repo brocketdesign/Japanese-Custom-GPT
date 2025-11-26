@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize speech-to-text UI
     const speechUI = new SpeechToTextUI({
         containerId: 'chatInput',
+        buttonId: 'voice-input-toggle',
         onTextResult: handleSpeechResult
     });
     
@@ -164,7 +165,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             // Find the speech button and click it
-            const speechBtn = document.getElementById('speech-to-text-btn');
+            const speechBtn = document.getElementById('voice-input-toggle');
             if (speechBtn) {
                 speechBtn.click();
             }

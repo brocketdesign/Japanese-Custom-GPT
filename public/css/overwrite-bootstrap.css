@@ -97,18 +97,31 @@
 /* ====== FORM CONTROLS ====== */
 .form-control {
   border-radius: var(--radius-sm) !important;
-  border: var(--form-border-width) solid var(--border-color) !important;
   padding: var(--form-padding) !important;
   transition: var(--transition-ease) !important;
   background-color: #fff !important;
   font-size: 0.95rem !important;
 }
+#userMessage.form-control {
+  border: unset!important;
+  border-color: unset!important;
+}
 
+/* 1. First, your normal focus style for ALL form-controls */
 .form-control:focus {
-  border-color: var(--primary-color) !important;
-  box-shadow: 0 0 0 0.2rem rgba(130, 64, 255, 0.15) !important;
-  outline: none !important;
-  transform: var(--btn-hover-transform) !important;
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 0.2rem rgba(130, 64, 255, 0.15) !important;
+    outline: none !important;
+    transform: var(--btn-hover-transform) !important;
+}
+
+/* 2. Then override specifically for #userMessage (this rule comes AFTER) */
+#userMessage.form-control:focus,
+#userMessage.form-control:hover {
+    border-color: transparent !important;     /* or whatever color you want */
+    border: 1px solid transparent !important; /* or just `border: none !important;` */
+    box-shadow: none !important;
+    transform: none !important;
 }
 
 .form-control:hover {

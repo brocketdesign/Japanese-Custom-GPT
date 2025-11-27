@@ -518,6 +518,18 @@ async function handleVideoTaskCompletion(taskStatus, fastify, options = {}) {
       
       fastify.sendNotificationToUser(userId, 'videoGenerated', videoNotificationData);
 
+      const img2videoTranslations = fastify.getImg2videoTranslations(fastify.request?.lang || 'en');
+      const notification = {
+        title: img2videoTranslations?.notifications?.videoCompletionDone_title || 'Video generation completed',
+        message: img2videoTranslations?.notifications?.videoCompletionDone_message || 'Your video has been generated successfully.',
+        type: 'video',
+        link: `/chat/${chatId}`,
+        ico: 'success'
+      };
+      addNotification(fastify, userId, notification).then(() => {
+        fastify.sendNotificationToUser(userId, 'updateNotificationCountOnLoad', { userId });
+      });
+
       console.log(`[handleVideoTaskCompletion] Video completion handling finished successfully for task ${taskStatus.taskId}`);
 
       // Send additional notifications so frontend updates video counts/goals

@@ -3,7 +3,9 @@
     "alreadyInProgress": "既に動画生成タスクが進行中です。",
     "generationFailed": "動画生成の開始に失敗しました",
     "videoSaveFailed": "動画は生成されましたが、保存に失敗しました",
-    "noVideoUrl": "動画生成は完了しましたが、動画URLを受信できませんでした"
+    "noVideoUrl": "動画生成は完了しましたが、動画URLを受信できませんでした",
+    "videoCompletionDone_title": "動画生成が完了しました",
+    "videoCompletionDone_message": "動画が正常に生成されました。"
   },
   "video_generation_in_progress": "動画生成中",
   "video_generation_started": "動画生成を開始しました",

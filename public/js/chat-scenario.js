@@ -326,7 +326,6 @@ window.ChatScenarioModule = (function() {
      * Display selected scenario in chat container
      */
     function displaySelectedScenario(providedScenario = null) {
-        console.log('[ChatScenarioModule.displaySelectedScenario] Called with providedScenario:', providedScenario);
         if (!currentScenario && !providedScenario) {
             removeSelectedScenarioDisplay();
             return;

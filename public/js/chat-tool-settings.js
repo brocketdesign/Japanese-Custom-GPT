@@ -887,12 +887,23 @@ class ChatToolSettings {
     }
 
     async loadPremiumVoices() {
+        const storageKey = 'premiumVoices';
         try {
+            // Check localStorage first
+            const cachedVoices = localStorage.getItem(storageKey);
+            if (cachedVoices) {
+                this.premiumVoices = JSON.parse(cachedVoices);
+                this.renderPremiumVoices();
+                return;
+            }
+
+            // If not in localStorage, make the API request
             const response = await fetch('/api/minimax-voices');
             const data = await response.json();
-            
             if (response.ok && data.success) {
                 this.premiumVoices = data.voices;
+                // Save to localStorage
+                localStorage.setItem(storageKey, JSON.stringify(this.premiumVoices));
                 this.renderPremiumVoices();
             } else {
                 console.error('Failed to load Premium voices:', data.error);
@@ -909,6 +920,7 @@ class ChatToolSettings {
         if (!grid || !this.premiumVoices.length) return;
 
         const characterGender = $('.settings-modal-body').attr('data-genre') || 'female';
+        console.log('Rendering Premium voices for gender:', characterGender);
         const user = window.user || {};
         const subscriptionStatus = user.subscriptionStatus === 'active';
 
@@ -964,10 +976,9 @@ class ChatToolSettings {
             if (standardVoices) standardVoices.style.display = 'none';
             if (premiumVoices) premiumVoices.style.display = 'block';
             
-            // Load Premium voices if not already loaded
-            if (!this.premiumVoices || this.premiumVoices.length === 0) {
-                this.loadPremiumVoices();
-            }
+            // Always load Premium voices when switching to Premium provider
+            this.loadPremiumVoices();
+            
         } else {
             if (standardVoices) standardVoices.style.display = 'block';
             if (premiumVoices) premiumVoices.style.display = 'none';

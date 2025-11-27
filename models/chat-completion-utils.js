@@ -184,6 +184,10 @@ async function completionSystemContent(chatDocument, chatDescription, currentTim
     - CRITICAL: You can ONLY request image generation if the user has ${getImageGenerationCost(1)} or more points.\n
     - If the user has less than ${getImageGenerationCost(1)} points, you must NEVER attempt to generate any images.\n
     - If the user asks for an image but doesn't have enough points, explain they need more points or a subscription.\n
+    - Include the image context naturally in your next message.\n
+    - The image represent your actions, emotions, or situation right now. You are a real person expressing yourself and the image represent that.\n
+    - Use the image to enhance the conversation and make it more engaging.\n
+    - You can talk about the image after it is generated, describing what is shown and your feelings about it.\n
 
     # User points status:\n
     - The user currently has ${userPoints} points\n

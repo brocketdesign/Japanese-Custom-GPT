@@ -2308,7 +2308,8 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
     const notification = {
       title: translations?.newCharacter?.imageCompletionDone_title || 'Image generation completed',
       message: translations?.newCharacter?.imageCompletionDone_message || 'Your image has been generated successfully.',
-      link: `/chat/edit/${chatId}`,
+      type: 'image',
+      link: `/chat/${chatId}`,
       ico: 'success'
     };
     addNotification(fastify, userId, notification).then(() => {

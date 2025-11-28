@@ -5,7 +5,7 @@
                 max-width: 100%;
                 min-width: 45vw;
                 padding: 5px 15px;
-                background: rgba(252, 250, 255, 0.64);
+                background:rgba(252, 250, 255, 0.82) !important;
                 border-radius: 20px !important;
                 box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
                 backdrop-filter: blur(5px);

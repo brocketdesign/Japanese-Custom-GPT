@@ -3,9 +3,7 @@
     "alreadyInProgress": "You already have a video generation task in progress.",
     "generationFailed": "Video generation failed to start",
     "videoSaveFailed": "Video generated but failed to save",
-    "noVideoUrl": "Video generation completed but no video URL received",
-    "videoCompletionDone_title": "Video generation completed",
-    "videoCompletionDone_message": "Your video has been generated successfully."
+    "noVideoUrl": "Video generation completed but no video URL received"
   },
   "video_generation_in_progress": "Video generation in progress",
   "video_generation_started": "Video generation started",

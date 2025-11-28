@@ -339,8 +339,41 @@ fastify.get('/chat/:chatId', async (request, reply) => {
 
 fastify.get('/chat/edit/:chatId', async (request, reply) => {
   try {
-    const chatId = request.params.chatId;
-    return reply.redirect(`/chat/${chatId}`);
+    const db = fastify.mongo.db;
+
+    const usersCollection = db.collection('users');
+    const chatsCollection = db.collection('chats');
+
+    let { translations, lang, user } = request;
+    const userId = user._id;
+
+    user = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
+
+    const chats = await chatsCollection.distinct('chatImageUrl', { userId });
+
+    if((user && user.subscriptionStatus !== 'active') && chats.length > 0){
+      return false;
+    }
+
+    let chatId = request.params.chatId || null;
+    const chatImage = request.query.chatImage;
+    const isTemporaryChat = !request.params.chatId;
+
+    request.query.limit = 20;
+    request.query.page = 'random';
+    const { tags, page, totalPages } = await fetchTags(db,request);
+    // Assure that tags are unique by first converting them to lowercasing and then to a set then back to an array
+    const uniqueTags = [...new Set(tags.map(tag => tag.toLowerCase()))];
+    
+
+    return reply.view('character-creation.hbs', {
+      title: 'AIフレンズ',
+      tags,
+      chatId,
+      modelId: request.query.modelId,
+      isTemporaryChat,
+      
+    });
   } catch (error) {
     console.log(error);
     return reply.status(500).send({ error: 'Failed to retrieve chatId' });

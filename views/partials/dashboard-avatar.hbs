@@ -19,7 +19,20 @@
             </div>
         </li>
                 
-¥    {{/if}}
+    {{else}}
+    <li class="nav-item dropdown onchat">
+        <a data-mdb-dropdown-init class="d-none nav-link dropdown-toggle hidden-arrow d-inline align-items-center me-2 position-relative" href="#"
+            id="notificationIcon" role="button" aria-expanded="false" data-userid="{{user._id}}">
+            <div class="btn bg-white rounded-circle border-0 p-1" style="width: 35px; height: 35px;">
+                <i class="bi bi-bell"></i>
+            </div>
+        </a>
+        <ul class="d-none notifications-menu dropdown-menu dropdown-menu-end dropdown-menu-sm-end mx-3 border-0 shadow-0 bg-transparent"
+            aria-labelledby="notificationIcon"
+            style="max-height: 400px; overflow-y: auto;">
+        </ul>
+    </li>
+    {{/if}}
 {{else}}
         <li class="nav-item dropdown">
         <a class="btn btn-secondary custom-gradient-bg shadow-0 " style="border-radius: 50px;" href="/authenticate">
@@ -39,27 +52,6 @@
                     <span class="badge bg-danger text-white">{{translations.admin}}</span>
                 </div>
             {{/if}}
-            <!-- Notifications -->
-            <div class="d-none dropdown">
-                <button class="btn btn-light border-0 shadow-0 p-1 rounded-circle position-relative" 
-                        type="button" 
-                        id="notificationDropdown" 
-                        data-bs-toggle="dropdown" 
-                        aria-expanded="false" 
-                        data-userid="{{user._id}}"
-                        style="width: 35px; height: 35px;">
-                    <i class="bi bi-bell"></i>
-                    <!-- Unread notification badge (populate via JS) -->
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" id="notificationBadge">
-                        <span class="visually-hidden">unread notifications</span>
-                    </span>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end border-0 shadow" 
-                    aria-labelledby="notificationDropdown"
-                    style="max-height: 400px; overflow-y: auto; min-width: 300px;">
-                    <!-- Notifications will be populated here via JavaScript -->
-                </ul>
-            </div>
             <!-- Points Balance -->
             <div id="userPointsContainer" class="d-flex align-items-center gap-2 mt-2">
                 <span class="btn btn-primary text-white shadow-0 my-1" style="font-size: 0.9rem;" data-bs-toggle="modal" data-bs-target="#userPointsModal">

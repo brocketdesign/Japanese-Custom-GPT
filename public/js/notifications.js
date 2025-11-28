@@ -147,7 +147,6 @@ window.addNotification = function(notification) {
     const notificationItem = `
         <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true" data-title="${title}" data-type="${type}" data-message="${message}" data-link="${link}">
             <div class="toast-header">
-                <i class="bi ${type === 'video' ? 'bi-camera-video-fill' : type === 'image' ? 'bi-image-fill' : 'bi-bell-fill'} me-2"></i>
                 <strong class="me-auto">${title}</strong>
                 <small class="text-muted">${time}</small>
             </div>

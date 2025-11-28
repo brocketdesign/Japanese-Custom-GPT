@@ -244,7 +244,7 @@ window.playVideoModal = function(videoUrl, chatName) {
                         <div class="modal-header border-0"
                          style="background-color:rgba(33, 37, 41, 0.8)!important;backdrop-filter: blur(10px);-webkit-backdrop-filter: blur(10px);">
                             <h5 class="modal-title text-white" id="videoPlayModalLabel"></h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body p-0 text-center" 
                         style="display: flex;justify-content: center;align-items: center;border-radius: 0 0 25px 25px !important;background-color:rgba(33, 37, 41, 0.8)!important;backdrop-filter: blur(10px);

@@ -712,6 +712,7 @@ async function routes(fastify, options) {
         userId: user._id,
         userName: user.nickname || 'Unknown User',
         profilePicture: user.profileUrl || '/img/avatar.png',
+        userBio: user.bio || '',
       }));
 
       const totalPages = Math.ceil(totalItems / limit);
@@ -766,7 +767,7 @@ async function routes(fastify, options) {
 
       const isFollowing = currentUser?.following && currentUser?.following.some(followingId => followingId.toString() === user._id.toString());
       const isFollowedBy = user.following && user.following.some(followingId => followingId.toString() === currentUserId.toString());
-      const title = `${user.nickname} の${type === 'followers' ? 'フォロワー' : 'フォロー中'}リスト`;
+      const title = `${user.nickname} ${type === 'followers' ? translations.followers.followersListTitleFollowers : translations.followers.followingListTitle}`;
 
       const translations = request.translations;
       return reply.view('follower.hbs', {

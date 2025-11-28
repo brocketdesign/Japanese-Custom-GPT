@@ -50,7 +50,7 @@ const modelCardTemplate = hbs.compile(`
         </div>
       </div>
       <div class="model-details-panel position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-90 p-3 d-none animate__animated overflow-auto" style="z-index: 2;">
-        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-2 model-gallery-details-close-btn" aria-label="Close"></button>
+        <button type="button" class="btn-close position-absolute top-0 end-0 m-2 model-gallery-details-close-btn" aria-label="Close"></button>
         <h6 class="h5 fw-bold mb-2">{{name}}</h6>
         <p class="small mb-1"><strong>Model:</strong> {{sd_name}}</p>
         <p class="small mb-1"><strong>Base:</strong> {{base_model}}</p>

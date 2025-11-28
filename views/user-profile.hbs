@@ -6,336 +6,429 @@
     <link rel="stylesheet" href="/css/user-profile.css">
 </head>
 <body>
-  {{> dashboard-nav}}
+    {{> dashboard-nav}}
 
-  <div id="swup" class="profile-container">
-      <!-- Profile Header -->
-      <div class="profile-header">
-          <div class="profile-cover">
-              <div class="profile-avatar-container">
-                  <img id="profileImage" src="{{default userData.profileUrl '/img/avatar.png'}}" alt="{{userData.nickname}}" class="profile-avatar">
-                  {{#if (or isMyProfile isAdmin)}}
-                      <div class="profile-avatar-overlay d-none" id="editProfileImageBtn">
-                          <i class="bi bi-pencil"></i>
-                      </div>
-                  {{/if}}
-              </div>
-              
-              <div class="profile-info">
-                  <h1 class="profile-name">{{userData.nickname}}</h1>
-                  {{#if userData.bio}}
-                      <p class="profile-intro">{{userData.bio}}</p>
-                  {{/if}}
-              </div>
-          </div>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="profile-actions {{#if isMyProfile}}d-none{{/if}}">
-          {{#if isMyProfile}}
-          {{else}}
-              <button class="action-btn action-btn-primary follow-button {{#if userData.follow}}following{{/if}}" 
-                      data-user-id="{{userData._id}}"
-                      onclick="toggleFollow(this)">
-                  <i class="bi bi-person-check-fill"></i>
-                  <span class="user-follow fw-bold">
-                      {{#if userData.follow}}
-                          {{translations.profile.following}}
-                      {{else}}
-                          {{translations.profile.follow}}
-                      {{/if}}
-                  </span>
-              </button>
-          {{/if}}
-      </div>
-
-      <!-- Stats Section -->
-      <div class="profile-stats">
-          <div class="stat-item likes-tab" type="button">
-              <span class="stat-number">{{default userData.imageLikeCount 0}}</span>
-              <div class="stat-label"><i class="bi bi-heart-fill"></i> {{translations.profile.likes}}</div>
-          </div>
-          <div class="stat-item characters-tab" type="button">
-              <span class="stat-number">{{default userData.chatCount 0}}</span>
-              <div class="stat-label"><i class="bi bi-chat-dots-fill"></i> {{translations.profile.characters}}</div>
-          </div>
-          <div class="stat-item">
-              <span class="stat-number">{{default userData.followCount 0}}</span>
-              <div class="stat-label">
-                  <a href="/follower/{{userData._id}}?type=following" class="text-decoration-none" style="color: inherit;">
-                      <i class="bi bi-person-check-fill"></i> {{translations.profile.following}}
-                  </a>
-              </div>
-          </div>
-          <div class="stat-item">
-              <span class="stat-number">{{default userData.followerCount 0}}</span>
-              <div class="stat-label">
-                  <a href="/follower/{{userData._id}}?type=followers" class="text-decoration-none" style="color: inherit;">
-                      <i class="bi bi-people-fill"></i> {{translations.profile.followers}}
-                  </a>
-              </div>
-          </div>
-      </div>
-
-      <!-- Image Moderation Alert -->
-      <div id="imageModerationFlagged" class="moderation-alert" style="display: none;">
-          <i class="bi bi-exclamation-triangle"></i>
-          {{translations.setting.imageModerationFlagged}}
-      </div>
-
-      <!-- Content Tabs -->
-      <div class="content-tabs">
-          <div class="tab-nav">
-              <button class="tab-btn active" data-tab="images">
-                  <i class="bi bi-heart-fill"></i>
-                  {{translations.profile.likes}}
-              </button>
-              <button class="tab-btn" data-tab="characters">
-                  <i class="bi bi-chat-dots-fill"></i>
-                  {{translations.profile.characters}}
-              </button>
-          </div>
-      </div>
-
-      <!-- Content Areas -->
-      <div class="tab-content">
-          <!-- Likes Tab -->
-          <div id="images-tab" class="tab-pane p-3 active">
-              <div class="row" id="user-images-gallery">
-                  <!-- Images will be loaded here -->
-              </div>
-              <div id="images-pagination-controls" class="d-flex justify-content-center my-3"></div>
-          </div>
-
-          <!-- Characters Tab -->
-          <div id="characters-tab" class="tab-pane p-3" style="display: none;">
-              <div class="row" id="user-chat-gallery">
-                  <!-- Characters will be loaded here -->
-              </div>
-              <div id="user-chat-pagination-controls" class="d-flex justify-content-center my-3"></div>
-          </div>
-      </div>
-
-      <!-- File Input (Hidden) -->
-      {{#if (or isMyProfile isAdmin)}}
-          <input type="file" class="form-control" id="profileImageInput" name="profileImageInput" accept="image/*" style="display: none;">
-      {{/if}}
-    <section>
-        <div class="col-12 mt-4" style="display: none;">
-            <ul class="nav nav-tabs mb-2" id="characterTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link d-none" id="post-tab" data-bs-toggle="tab" data-bs-target="#post" type="button" role="tab" aria-controls="post" aria-selected="true">{{translations.tabs.posts}}</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link d-none" id="post-like-tab" data-bs-toggle="tab" data-bs-target="#post-like" type="button" role="tab" aria-controls="post-like" aria-selected="true">{{translations.tabs.likedPosts}}</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="image-tab" data-bs-toggle="tab" data-bs-target="#image" type="button" role="tab" aria-controls="image" aria-selected="false">{{translations.tabs.liked}}</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="user-chat-tab" data-bs-toggle="tab" data-bs-target="#user-chat" type="button" role="tab" aria-controls="user-chat" aria-selected="false">{{translations.tabs.characters}}</button>
-                </li>
-            </ul>
-            <div class="tab-content mx-3">
-                <div class="tab-pane fade d-none" id="post" role="tabpanel" aria-labelledby="post-tab">
-                  <div id="user-posts-gallery" class="row g-3"></div>
-                  <div id="pagination-controls" class="d-flex justify-content-center my-3"></div>
+    <div id="swup" class="profile-container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="profile-cover">
+                <div class="profile-avatar-container">
+                    <img id="profileImage" src="{{default userData.profileUrl '/img/avatar.png'}}" alt="{{userData.nickname}}" class="profile-avatar">
+                    {{#if (or isMyProfile isAdmin)}}
+                        <div class="profile-avatar-overlay d-none" id="editProfileImageBtn">
+                            <i class="bi bi-pencil"></i>
+                        </div>
+                    {{/if}}
                 </div>
-                <div class="tab-pane fade d-none" id="post-like" role="tabpanel" aria-labelledby="post-like-tab">
-                  <div id="user-posts-like" class="row g-3"></div>
-                  <div id="posts-like-pagination-controls" class="d-flex justify-content-center my-3"></div>
+                
+                <div class="profile-info">
+                    <h1 class="profile-name">{{userData.nickname}}</h1>
+                    {{#if userData.bio}}
+                        <p class="profile-intro">{{userData.bio}}</p>
+                    {{/if}}
                 </div>
-                <div class="tab-pane fade show active" id="image" role="tabpanel" aria-labelledby="image-tab">
-                  <div id="user-images-gallery" class="row g-3"></div>
-                  <div id="images-pagination-controls" class="d-flex justify-content-center my-3"></div>
-                </div>
-                <div class="tab-pane fade" id="user-chat" role="tabpanel" aria-labelledby="user-chat-tab">
-                  <div id="user-chat-gallery" class="row g-3"></div>
-                  <div id="user-chat-pagination-controls" class="d-flex justify-content-center my-3"></div>
-                </div>
-
             </div>
         </div>
 
-    </section>
+        <!-- Action Buttons -->
+        <div class="profile-actions {{#if isMyProfile}}d-none{{/if}}">
+            {{#if isMyProfile}}
+            {{else}}
+                <button class="action-btn action-btn-primary follow-button {{#if userData.follow}}following{{/if}}" 
+                        data-user-id="{{userData._id}}"
+                        onclick="toggleFollow(this)">
+                    <i class="bi bi-person-check-fill"></i>
+                    <span class="user-follow fw-bold">
+                        {{#if userData.follow}}
+                            {{translations.profile.following}}
+                        {{else}}
+                            {{translations.profile.follow}}
+                        {{/if}}
+                    </span>
+                </button>
+            {{/if}}
+        </div>
 
+        <!-- Stats Section -->
+        <div class="profile-stats">
+            <div class="stat-item likes-tab" type="button">
+                <span class="stat-number">{{default userData.imageLikeCount 0}}</span>
+                <div class="stat-label"><i class="bi bi-heart-fill"></i> {{translations.profile.likes}}</div>
+            </div>
+            <div class="stat-item characters-tab" type="button">
+                <span class="stat-number">{{default userData.chatCount 0}}</span>
+                <div class="stat-label"><i class="bi bi-chat-dots-fill"></i> {{translations.profile.characters}}</div>
+            </div>
+            <div class="stat-item">
+                <button class="btn btn-link stat-label p-0" data-bs-toggle="modal" data-bs-target="#followingModal" style="color: inherit; text-decoration: none;">
+                    <span class="stat-number">{{default userData.followCount 0}}</span>
+                    <div class="stat-label"><i class="bi bi-person-check-fill"></i> {{translations.profile.following}}</div>
+                </button>
+            </div>
+            <div class="stat-item">
+                <button class="btn btn-link stat-label p-0" data-bs-toggle="modal" data-bs-target="#followersModal" style="color: inherit; text-decoration: none;">
+                    <span class="stat-number">{{default userData.followerCount 0}}</span>
+                    <div class="stat-label"><i class="bi bi-people-fill"></i> {{translations.profile.followers}}</div>
+                </button>
+            </div>
+        </div>
 
-    <section class="py-3">
-      <div class="container-0">
-      </div>
-    </section>
-  </div>
+        <!-- Image Moderation Alert -->
+        <div id="imageModerationFlagged" class="moderation-alert" style="display: none;">
+            <i class="bi bi-exclamation-triangle"></i>
+            {{translations.setting.imageModerationFlagged}}
+        </div>
 
-{{> dashboard-footer}}
+        <!-- Content Tabs -->
+        <div class="content-tabs">
+            <div class="tab-nav">
+                <button class="tab-btn active" data-tab="images">
+                    <i class="bi bi-heart-fill"></i>
+                    {{translations.profile.likes}}
+                </button>
+                <button class="tab-btn" data-tab="characters">
+                    <i class="bi bi-chat-dots-fill"></i>
+                    {{translations.profile.characters}}
+                </button>
+            </div>
+        </div>
 
-<script>
-  $(document).ready(function(){
-    const isMyProfile = `{{isMyProfile}}` == 'true'
-    const isAdmin = `{{isAdmin}}` == 'true'
-    const userId = '{{userData._id}}';
-    
-    if(isMyProfile || isAdmin) {
-        // Handle profile image editing
-        $('#editProfileImageBtn').on('click', function() {
-            $('#profileImageInput').click();
-        });
+        <!-- Content Areas -->
+        <div class="tab-content">
+            <!-- Likes Tab -->
+            <div id="images-tab" class="tab-pane p-3 active">
+                <div class="row" id="user-images-gallery">
+                    <!-- Images will be loaded here -->
+                </div>
+                <div id="images-pagination-controls" class="d-flex justify-content-center my-3"></div>
+            </div>
 
-        $('#profileImageInput').change(function(event) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                $('#profileImage').attr('src', e.target.result).show();
+            <!-- Characters Tab -->
+            <div id="characters-tab" class="tab-pane p-3" style="display: none;">
+                <div class="row" id="user-chat-gallery">
+                    <!-- Characters will be loaded here -->
+                </div>
+                <div id="user-chat-pagination-controls" class="d-flex justify-content-center my-3"></div>
+            </div>
+        </div>
+
+        <!-- File Input (Hidden) -->
+        {{#if (or isMyProfile isAdmin)}}
+            <input type="file" class="form-control" id="profileImageInput" name="profileImageInput" accept="image/*" style="display: none;">
+        {{/if}}
+
+        <!-- Followers Modal -->
+        <div class="modal fade" id="followersModal" tabindex="-1" aria-labelledby="followersModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="followersModalLabel">{{userData.nickname}} {{translations.followers.followersListTitleFollowers}}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="followers-list" class="container">
+                            <!-- Followers will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Following Modal -->
+        <div class="modal fade" id="followingModal" tabindex="-1" aria-labelledby="followingModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="followingModalLabel">{{userData.nickname}} {{translations.followers.followingListTitle}}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="following-list" class="container">
+                            <!-- Following will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{> dashboard-footer}}
+
+    <script>
+        $(document).ready(function(){
+            const isMyProfile = `{{isMyProfile}}` == 'true'
+            const isAdmin = `{{isAdmin}}` == 'true'
+            const userId = '{{userData._id}}';
+            
+            if(isMyProfile || isAdmin) {
+                // Handle profile image editing
+                $('#editProfileImageBtn').on('click', function() {
+                    $('#profileImageInput').click();
+                });
+
+                $('#profileImageInput').change(function(event) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        $('#profileImage').attr('src', e.target.result).show();
+                    }
+                    reader.readAsDataURL(event.target.files[0]);
+
+                    const formData = new FormData();
+                    const profileImage = $('#profileImageInput')[0].files[0];
+                    if (profileImage) {
+                        formData.append('profile', profileImage);
+                        $.ajax({
+                            url: '/user/update-info/' + userId,
+                            method: 'POST',
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            success: function(response) {
+                                if (window.Clerk) {
+                                    const clerkUserId = Clerk.user.id;
+                                    const file = new File([profileImage], profileImage.name, { type: profileImage.type });
+                                    Clerk.user.setProfileImage({
+                                        userId: clerkUserId,
+                                        file
+                                    })
+                                        .then(response => {
+                                            console.log("Clerk user profile image updated:", response);
+                                        })
+                                        .catch(error => {
+                                            console.error("Error updating Clerk user profile image:", error);
+                                        });
+                                }
+                            },
+                            error: function(jqXHR) {
+                                console.log(jqXHR.responseJSON.error)
+                            }
+                        });
+                    }
+                });
             }
-            reader.readAsDataURL(event.target.files[0]);
 
-            const formData = new FormData();
-            const profileImage = $('#profileImageInput')[0].files[0];
-            if (profileImage) {
-              formData.append('profile', profileImage);
-              $.ajax({
-                url: '/user/update-info/' + userId,
-                method: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response) {
-                  if (window.Clerk) {
-                    const clerkUserId = Clerk.user.id;
-                    const file = new File([profileImage], profileImage.name, { type: profileImage.type });
-                    Clerk.user.setProfileImage({
-                      userId: clerkUserId,
-                      file
-                    })
-                      .then(response => {
-                      console.log("Clerk user profile image updated:", response);
-                      })
-                      .catch(error => {
-                      console.error("Error updating Clerk user profile image:", error);
-                      });
-                  }
-                },
-                error: function(jqXHR) {
-                  console.log(jqXHR.responseJSON.error)
+            // Tab switching functionality
+            $('.tab-btn').on('click', function() {
+                const tabName = $(this).data('tab');
+                
+                // Update active tab button
+                $('.tab-btn').removeClass('active');
+                $(this).addClass('active');
+                
+                // Hide all tab panes
+                $('.tab-pane').hide();
+                
+                // Show selected tab pane and load data
+                if (tabName === 'images') {
+                    $('#images-tab').show();
+                    loadUserImages(userId, 1, true);
+                } else if (tabName === 'characters') {
+                    $('#characters-tab').show();
+                    displayUserChats(userId, 1, true);
                 }
-              });
-            }
-        });
-    }
+            });
 
-    // Tab switching functionality
-    $('.tab-btn').on('click', function() {
-        const tabName = $(this).data('tab');
-        
-        // Update active tab button
-        $('.tab-btn').removeClass('active');
-        $(this).addClass('active');
-        
-        // Hide all tab panes
-        $('.tab-pane').hide();
-        
-        // Show selected tab pane and load data
-        if (tabName === 'images') {
-            $('#images-tab').show();
+            // Load initial data
             loadUserImages(userId, 1, true);
-        } else if (tabName === 'characters') {
-            $('#characters-tab').show();
-            displayUserChats(userId, 1, true);
-        }
-    });
 
-    // Load initial data
-    loadUserImages(userId, 1, true);
+            // Handle stat tab clicks
+            $('.likes-tab').on('click', function() {
+                $('.tab-btn[data-tab="images"]').click();
+            });
 
-    // Handle stat tab clicks
-    $('.likes-tab').on('click', function() {
-        $('.tab-btn[data-tab="images"]').click();
-    });
-
-    $('.characters-tab').on('click', function() {
-        $('.tab-btn[data-tab="characters"]').click();
-    });
-  });
-</script>
-
-<script>
-  $(document).ready(function(){
-        $(document).on('click', '.open-chat', function(){
-          const chatId = $(this).data('id');
-          if (window.self !== window.top) {
-            window.parent.postMessage({ event: 'openChat', chatId: chatId }, '*');
-          } else {
-            window.location = `/chat/${chatId}`
-          }
+            $('.characters-tab').on('click', function() {
+                $('.tab-btn[data-tab="characters"]').click();
+            });
         });
-  });
-</script>
+    </script>
 
-<style>
-  footer{display: inline !important;}
-  .sticky-bottom{display: inline-block !important;width: 100%;}
-  .isLoading .fa-image{
-      display: none;
-  }
-  .isLoading .fa-spin{
-      display: inherit !important;
-  }
-  .avatar{
-      object-fit: cover;
-      object-position: top;
-      width: 32px;
-  }
-  .card-img-top.girls_avatar {
-      object-fit: cover;
-      object-position: top;
-      width: 100%;  
-      margin: auto;
-      border-radius: 15px;
-      height: 350px;
-      padding: 0 5px;  
-      background-position: top;
-      background-size: cover;
-  }
-  .swal-image.analyze{
-      object-fit: cover;
-      object-position: top;
-      width: auto !important;
-      height: 200px !important;
-      border-radius: 6px !important;
-  }
-  .card-header, .card-footer {
-      flex-shrink: 0;
-  }
-  .card-body {
-      flex-grow: 1;
-      overflow-y: auto;
-      position: relative;
-  }
-  .chat-contain .card-body{
-      width: 100%;
-  }
-  .character-title{
-      font-weight: 600;
-      font-size: 16px;
-      color: black;
-  }
-  .character-short-description {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      font-size: 13px;
-  }
-  .scroll-horizontal {
-      flex-wrap: nowrap;
-      width: 100%;
-      flex-direction: row;
-      overflow-x: scroll;
-  }
-  @media (max-width: 600px) {
-      .chat-contain .card-body{
-          width: 100%;
-      }
-  }
-</style>
+    <script>
+        $(document).ready(function(){
+            $(document).on('click', '.open-chat', function(){
+                const chatId = $(this).data('id');
+                if (window.self !== window.top) {
+                    window.parent.postMessage({ event: 'openChat', chatId: chatId }, '*');
+                } else {
+                    window.location = `/chat/${chatId}`
+                }
+            });
+        });
+    </script>
+
+    <script>
+        function loadFollowList(type, containerId) {
+            const userId = '{{userData._id}}';
+            $(`#${containerId}`).html('<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading...</div>');
+            $.get(`/user/${userId}/followers-or-followings?type=${type}&page=1`, function(data) {
+                let html = '<div class="row">';
+                if (data.users && data.users.length > 0) {
+                    data.users.forEach(user => {
+                        console.log(user);
+                        html += `
+                            <div class="col-md-6 col-lg-4 mb-3" onclick="window.open('/user/${user.userId}')" style="cursor: pointer;">
+                                <div class="follower-card">
+                                    <div class="follower-info">
+                                        <img src="${user.profilePicture || '/img/avatar.png'}" alt="${user.userName}">
+                                        <div class="follower-details">
+                                            <a href="/user/${user.userId}" class="follower-name">${user.userName}</a>
+                                            <div class="follower-stats">
+                                                ${user.userBio ? `<p class="mb-1">${user.userBio}</p>` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html += '<div class="col-12 text-center">No users found.</div>';
+                }
+                html += '</div>';
+                $(`#${containerId}`).html(html);
+            }).fail(function() {
+                $(`#${containerId}`).html('<div class="text-center text-danger">Failed to load list.</div>');
+            });
+        }
+
+        $('#followersModal').on('show.bs.modal', function() {
+            loadFollowList('followers', 'followers-list');
+        });
+
+        $('#followingModal').on('show.bs.modal', function() {
+            loadFollowList('following', 'following-list');
+        });
+    </script>
+
+    <style>
+        footer{display: inline !important;}
+        .sticky-bottom{display: inline-block !important;width: 100%;}
+        .isLoading .fa-image{
+            display: none;
+        }
+        .isLoading .fa-spin{
+            display: inherit !important;
+        }
+        .avatar{
+            object-fit: cover;
+            object-position: top;
+            width: 32px;
+        }
+        .card-img-top.girls_avatar {
+            object-fit: cover;
+            object-position: top;
+            width: 100%;  
+            margin: auto;
+            border-radius: 15px;
+            height: 350px;
+            padding: 0 5px;  
+            background-position: top;
+            background-size: cover;
+        }
+        .swal-image.analyze{
+            object-fit: cover;
+            object-position: top;
+            width: auto !important;
+            height: 200px !important;
+            border-radius: 6px !important;
+        }
+        .card-header, .card-footer {
+            flex-shrink: 0;
+        }
+        .card-body {
+            flex-grow: 1;
+            overflow-y: auto;
+            position: relative;
+        }
+        .chat-contain .card-body{
+            width: 100%;
+        }
+        .character-title{
+            font-weight: 600;
+            font-size: 16px;
+            color: black;
+        }
+        .character-short-description {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            font-size: 13px;
+        }
+        .scroll-horizontal {
+            flex-wrap: nowrap;
+            width: 100%;
+            flex-direction: row;
+            overflow-x: scroll;
+        }
+        @media (max-width: 600px) {
+            .chat-contain .card-body{
+                width: 100%;
+            }
+        }
+        .follower-card {
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            background-color: #fff;
+            box-shadow: 0 2px 8px rgba(130, 64, 255, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .follower-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(130, 64, 255, 0.2);
+        }
+        .follower-card img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            object-position: top;
+            border-radius: 50%;
+            margin-right: 16px;
+            border: 2px solid #8240FF;
+        }
+        .follower-info {
+            display: flex;
+            align-items: center;
+        }
+        .follower-details {
+            flex-grow: 1;
+        }
+        .follower-name {
+            font-weight: 600;
+            color: #8240FF;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        .follower-name:hover {
+            text-decoration: underline;
+            color: #6E20F4;
+        }
+        .follower-stats {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        .pagination-controls {
+            margin-top: 20px;
+        }
+        .btn-primary {
+            background-color: #8240FF;
+            border-color: #8240FF;
+        }
+        .btn-primary:hover {
+            background-color: #6E20F4;
+            border-color: #6E20F4;
+        }
+        @media (max-width: 768px) {
+            .follower-card {
+                padding: 12px;
+            }
+            .follower-card img {
+                width: 50px;
+                height: 50px;
+            }
+        }
+    </style>
 </body>
 </html>

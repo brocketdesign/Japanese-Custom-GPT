@@ -7,7 +7,7 @@ function createPreviewModalIfNeeded() {
             <div class="modal-dialog modal-fullscreen m-0">
                 <div class="modal-content mx-auto w-100">
                     <div class="modal-header border-0 position-absolute" style="top: 0; right: 0; z-index: 10000; background: transparent;">
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body p-0" style="height: 100vh; overflow: hidden;">
                         <div class="swiper-container image-preview-swiper" style="height: 100%; width: 100%;">

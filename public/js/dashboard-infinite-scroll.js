@@ -389,7 +389,7 @@ async function renderImages(images, id, type) {
     images.forEach((item, index) => {
         const isBlur = shouldBlurNSFW(item, subscriptionStatus);
         // Use the isLiked property from API response - it's already computed by the backend
-        const isLiked = item?.likedBy.includes(currentUserId) || false;
+        const isLiked = item?.isLiked ? item?.isLiked : (item?.likedBy?.includes(currentUserId) || false);
         
         // LOG: Track NSFW images
         if (isBlur) {

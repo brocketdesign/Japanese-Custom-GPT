@@ -785,20 +785,20 @@ function constructChatItemHtml(chat, isActive) {
                         <img class="chat-avatar rounded-circle border" 
                              src="${chat.chatImageUrl || '/img/logo.webp'}" 
                              alt="${chat.name}"
-                             style="width: 32px; height: 32px; object-fit: cover;">
-                        ${isActive ? '<div class="position-absolute top-0 end-0 bg-primary rounded-circle" style="width: 8px; height: 8px; border: 1px solid white;"></div>' : ''}
+                             style="width: 40px; height: 40px; object-fit: cover;">
+                        ${isActive ? '<div class="position-absolute top-0 end-0 bg-primary rounded-circle" style="width: 10px; height: 10px; border: 1px solid white;"></div>' : ''}
                     </div>
                     <div class="chat-content flex-grow-1 min-w-0">
                         <div class="d-flex justify-content-between align-items-start">
-                            <h6 class="chat-name mb-0 fw-semibold text-truncate" style="max-width: 120px; font-size: 0.8rem; line-height: 1.1;">${chat.name}</h6>
-                            <small class="chat-time text-muted flex-shrink-0 ms-1" style="font-size: 0.65rem;">${lastMessageTime}</small>
+                            <h6 class="chat-name mb-0 fw-semibold text-truncate" style="max-width: 140px; font-size: 0.9rem; line-height: 1.1;">${chat.name}</h6>
+                            <small class="chat-time text-muted flex-shrink-0 ms-1" style="font-size: 0.75rem;">${lastMessageTime}</small>
                         </div>
                         <div class="mt-1">
                             <p class="chat-preview mb-0 small text-truncate ${chat.lastMessage ? '' : 'd-none'}" 
-                               style="max-width: 130px; font-size: 0.7rem; line-height: 1.2;">
+                               style="max-width: 150px; font-size: 0.8rem; line-height: 1.2;">
                                 ${previewText}
                             </p>
-                            ${!chat.lastMessage ? `<small class="text-muted fst-italic" style="font-size: 0.7rem;">${translations.newChat}</small>` : ''}
+                            ${!chat.lastMessage ? `<small class="text-muted fst-italic" style="font-size: 0.8rem;">${translations.newChat}</small>` : ''}
                         </div>
                     </div>
                 </div>

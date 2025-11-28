@@ -107,6 +107,7 @@
 #chat-latest-content .list-group-item {
     border: none;
     border-bottom: 1px solid #e9ecef;
+    padding: 0.75rem 1rem; /* Increased padding for larger items */
 }
 
 #chat-latest-content .list-group-item:last-child {
@@ -121,6 +122,7 @@
 #chat-favorites-content .list-group-item {
     border: none;
     border-bottom: 1px solid #e9ecef;
+    padding: 0.75rem 1rem; /* Increased padding for larger items */
 }
 
 #chat-favorites-content .list-group-item:last-child {

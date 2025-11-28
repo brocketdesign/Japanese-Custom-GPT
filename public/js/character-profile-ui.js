@@ -142,16 +142,6 @@ function createCharacterImageOverlay(imgElement, imageUrl) {
                 cursor: 'pointer'
             });
 
-        let badge = $('<span></span>')
-            .addClass('badge mb-2')
-            .css({
-                'background': 'linear-gradient(to right, #ef4444, #ff6b6b)',
-                'font-size': '0.85rem',
-                'padding': '0.5rem 1rem',
-                'font-weight': '600'
-            })
-            .html('<i class="bi bi-eye-slash-fill me-2"></i>NSFW Hidden');
-
         let buttonElement = $('<button></button>')
             .addClass('btn btn-sm')
             .css({
@@ -215,7 +205,7 @@ function createCharacterImageOverlay(imgElement, imageUrl) {
                 });
             });
 
-        overlay.append(badge, buttonElement);
+        overlay.append(buttonElement);
         
         // Add click handler to overlay background to also trigger image reveal
         overlay.on('click', function(e) {
@@ -239,16 +229,6 @@ function createCharacterImageOverlay(imgElement, imageUrl) {
                 loadPlanPage();
             });
 
-        let badge = $('<span></span>')
-            .addClass('badge mb-2')
-            .css({
-                'background': 'linear-gradient(to right, #ef4444, #ff6b6b)',
-                'font-size': '0.85rem',
-                'padding': '0.5rem 1rem',
-                'font-weight': '600'
-            })
-            .html('<i class="bi bi-lock-fill me-2"></i>NSFW');
-
         let buttonElement = $('<button></button>')
             .addClass('btn btn-sm')
             .css({
@@ -263,7 +243,7 @@ function createCharacterImageOverlay(imgElement, imageUrl) {
                 'transition': 'all 0.2s ease',
                 'margin-top': '0.75rem'
             })
-            .text(window.translations?.blurButton || 'Unlock Content')
+            .html('<i class="bi bi-lock-fill me-2"></i>' + (window.translations?.blurButton || 'Unlock Content'))
             .on('click', function (e) {
                 e.stopPropagation();
                 loadPlanPage();
@@ -281,7 +261,7 @@ function createCharacterImageOverlay(imgElement, imageUrl) {
                 });
             });
 
-        overlay.append(badge, buttonElement);
+        overlay.append(buttonElement);
     }
 
     $(imgElement)
@@ -321,16 +301,6 @@ function createCharacterVideoOverlay(videoElement, videoSrc) {
                 cursor: 'pointer'
             });
 
-        let badge = $('<span></span>')
-            .addClass('badge mb-2')
-            .css({
-                'background': 'linear-gradient(to right, #ef4444, #ff6b6b)',
-                'font-size': '0.85rem',
-                'padding': '0.5rem 1rem',
-                'font-weight': '600'
-            })
-            .html('<i class="bi bi-eye-slash-fill me-2"></i>NSFW Hidden');
-
         let buttonElement = $('<button></button>')
             .addClass('btn btn-sm')
             .css({
@@ -368,7 +338,7 @@ function createCharacterVideoOverlay(videoElement, videoSrc) {
                 });
             });
 
-        overlay.append(badge, buttonElement);
+        overlay.append(buttonElement);
         
         // Add click handler to overlay background to also trigger video reveal
         overlay.on('click', function(e) {
@@ -456,16 +426,6 @@ function createCharacterVideoNSFWOverlay(videoElement, videoSrc) {
                 loadPlanPage();
             });
 
-        let badge = $('<span></span>')
-            .addClass('badge mb-2')
-            .css({
-                'background': 'linear-gradient(to right, #ef4444, #ff6b6b)',
-                'font-size': '0.85rem',
-                'padding': '0.5rem 1rem',
-                'font-weight': '600'
-            })
-            .html('<i class="bi bi-lock-fill me-2"></i>NSFW');
-
         let buttonElement = $('<button></button>')
             .addClass('btn btn-sm')
             .css({
@@ -481,7 +441,7 @@ function createCharacterVideoNSFWOverlay(videoElement, videoSrc) {
                 'margin-top': '0.75rem',
                 'z-index': 20
             })
-            .text(window.translations?.blurButton || 'Unlock Content')
+            .html('<i class="bi bi-lock-fill me-2"></i>' + (window.translations?.blurButton || 'Unlock Content'))
             .on('click', function (e) {
                 e.stopPropagation();
                 loadPlanPage();
@@ -499,7 +459,7 @@ function createCharacterVideoNSFWOverlay(videoElement, videoSrc) {
                 });
             });
 
-        overlay.append(badge, buttonElement);
+        overlay.append(buttonElement);
     }
     
     if (overlay && videoElement) {

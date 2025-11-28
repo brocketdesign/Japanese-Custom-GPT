@@ -385,11 +385,11 @@ async function renderImages(images, id, type) {
     let duplicatesSkipped = 0;
     let nsfw_count = 0;
     let non_nsfw_count = 0;
-    
+
     images.forEach((item, index) => {
         const isBlur = shouldBlurNSFW(item, subscriptionStatus);
         // Use the isLiked property from API response - it's already computed by the backend
-        const isLiked = item?.isLiked || false;
+        const isLiked = item?.likedBy.includes(currentUserId) || false;
         
         // LOG: Track NSFW images
         if (isBlur) {
@@ -417,7 +417,7 @@ async function renderImages(images, id, type) {
         
         const loadedIndex = window.loadedImages.length - 1;
         const onChatPage = window.location.pathname.includes('/chat');
-        const cardHtml = createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedIndex, id, type, onChatPage);
+        const cardHtml = createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, subscriptionStatus, loadedIndex, id, type, onChatPage);
         
         // Create DOM element
         const tempDiv = document.createElement('div');
@@ -444,7 +444,7 @@ async function renderImages(images, id, type) {
 /**
  * Create HTML for individual image card
  */
-function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedIndex, id, type, onChatPage = false) {
+function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, subscriptionStatus, loadedIndex, id, type, onChatPage = false) {
     const chatId = type === 'chat' ? id : item.chatId;
     const linkUrl = item.chatSlug ? `/character/slug/${item.chatSlug}?imageSlug=${item.slug}` : `/character/${chatId}`;
     const addToChatLabel = window.translations?.image_tools?.add_to_chat || 'Add to Chat';
@@ -475,26 +475,30 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, loadedInde
                         class="image-container image-fav-double-click"
                         data-id="${item._id}" data-chat-id="${chatId}" onclick="toggleImageFavorite(this)">
                         <img data-src="${item.imageUrl}" src="/img/logo.webp" alt="${item.prompt}" class="card-img-top lazy-image" style="object-fit: cover;" loading="lazy">
-                    </div>
+                    </div>`
+                }
+                ${isTemporary || (!subscriptionStatus && isBlur) ? '':
+                    `
                     <div class="position-absolute top-0 start-0 m-1" style="z-index:3;">
                         <span class="btn btn-light image-fav ${isLiked ? 'liked' : ''}" 
                             data-id="${item._id}" data-chat-id="${chatId}" onclick="toggleImageFavorite(this)">
                             <i class="bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}" style="cursor: pointer;"></i>
                         </span>
                     </div>
-                    ${isAdmin ? `
-                        <div class="card-body p-2 row mx-0 px-0 align-items-center justify-content-between">
-                            <button class="btn btn-light col-6 image-nsfw-toggle ${item?.nsfw ? 'nsfw' : 'sfw'}" 
-                                data-id="${item._id}" onclick="toggleImageNSFW(this)">
-                                <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
+                `}
+                ${isAdmin ? `
+                    <div class="card-body p-2 row mx-0 px-0 align-items-center justify-content-between">
+                        <button class="btn btn-light col-6 image-nsfw-toggle ${item?.nsfw ? 'nsfw' : 'sfw'}" 
+                            data-id="${item._id}" onclick="toggleImageNSFW(this)">
+                            <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
+                        </button>
+                        ${type === 'chat' ? `
+                            <button class="btn btn-light col-6 update-chat-image" onclick="updateChatImage(this)" data-id="${chatId}" data-img="${item.imageUrl}" style="cursor: pointer; opacity:0.8;">
+                                <i class="bi bi-image"></i>
                             </button>
-                            ${type === 'chat' ? `
-                                <button class="btn btn-light col-6 update-chat-image" onclick="updateChatImage(this)" data-id="${chatId}" data-img="${item.imageUrl}" style="cursor: pointer; opacity:0.8;">
-                                    <i class="bi bi-image"></i>
-                                </button>
-                            ` : ''}
-                        </div>` : ''
-                    }`
+                        ` : ''}
+                    </div>` : ''
+                    
                 }
             </div>
         </div>

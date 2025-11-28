@@ -1206,16 +1206,6 @@ function createOverlay(img, imageUrl) {
             zIndex: 2
         });
 
-    let badge = $('<span></span>')
-        .addClass('badge mb-2')
-        .css({
-            'background': 'linear-gradient(to right, #ef4444, #ff6b6b)',
-            'font-size': '0.85rem',
-            'padding': '0.5rem 1rem',
-            'font-weight': '600'
-        })
-        .html('<i class="bi bi-eye-slash-fill me-2"></i>NSFW Hidden');
-
     let buttonElement = $('<button></button>')
         .addClass('btn btn-sm')
         .css({
@@ -1253,7 +1243,7 @@ function createOverlay(img, imageUrl) {
             $(this).css({ 'transform': 'translateY(0)', 'box-shadow': 'none' });
         });
 
-    overlay.append(badge, buttonElement);
+    overlay.append(buttonElement);
 
   } else {
     // Non-subscribed user - show unlock overlay with modern design
@@ -1267,16 +1257,6 @@ function createOverlay(img, imageUrl) {
         .on('click', function() {
             loadPlanPage();
         });
-
-    let badge = $('<span></span>')
-        .addClass('badge mb-2')
-        .css({
-            'background': 'linear-gradient(to right, #ef4444, #ff6b6b)',
-            'font-size': '0.85rem',
-            'padding': '0.5rem 1rem',
-            'font-weight': '600'
-        })
-        .html('<i class="bi bi-lock-fill me-2"></i>NSFW');
 
     let buttonElement = $('<button></button>')
         .addClass('btn btn-sm')
@@ -1292,7 +1272,7 @@ function createOverlay(img, imageUrl) {
             'transition': 'all 0.2s ease',
             'margin-top': '0.75rem'
         })
-        .text(window.translations?.blurButton || 'Unlock Content')
+        .html('<i class="bi bi-lock-fill me-2"></i>' + (window.translations?.blurButton || 'Unlock Content'))
         .on('click', function (e) {
             e.stopPropagation();
             loadPlanPage();
@@ -1304,7 +1284,7 @@ function createOverlay(img, imageUrl) {
             $(this).css({ 'transform': 'translateY(0)', 'box-shadow': 'none' });
         });
 
-    overlay.append(badge, buttonElement);
+    overlay.append(buttonElement);
   }
 
   $(img)

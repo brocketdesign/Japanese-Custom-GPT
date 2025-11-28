@@ -285,7 +285,7 @@ async function handleImageGeneration(db, currentUserMessage, lastUserMessage, ge
             console.log(`[handleImageGeneration] Generating ${image_num} images for user ${userId} in chat ${chatId}`);
             
             // Generate unique placeholder ID for tracking
-            const placeholderId = `auto_${new Date().getTime()}_${Math.random().toString(36).substring(2, 8)}`;
+            const placeholderId = `auto_${new Date().getTime()}_${Math.random().toString(36).substring(2, 8)}`; 
             
             // Notify frontend to show loader with the same pattern as prompt generation
             for (let i = 0; i < image_num; i++) {

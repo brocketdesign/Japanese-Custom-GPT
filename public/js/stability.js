@@ -1,3 +1,5 @@
+const { set } = require("zod");
+
 // Semaphore for controlling the number of concurrent requests
 let activeGenerations = 0;
 const MAX_CONCURRENT_GENERATIONS = 5; // Adjust this limit as needed
@@ -253,4 +255,14 @@ window.generateImage = async function(data) {
     img.setAttribute('data-isMergeFace', !!isMergeFace);
 
     displayMessage('bot-image', img, data.userChatId);
+
+    // Check if the image has been added successfully
+    setTimeout(() => {
+        const addedImage = $(`img[data-id='${imageId}']`);
+        if (addedImage.length) {
+            console.log(`[generateImage] Image with ID ${imageId} added successfully to chat ${data.userChatId}`);
+        } else {
+            console.warn(`[generateImage] Failed to add image with ID ${imageId} to chat ${data.userChatId}`);
+        }
+    }, 1000);
 };

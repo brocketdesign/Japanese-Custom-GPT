@@ -676,7 +676,10 @@ const chatGoalSchema = z.object({
 // Function to generate chat scenarios based on character and persona
 const generateChatScenarios = async (charInfo, personaInfo = null, userSettings = null, language = 'en') => {
   try {
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = new OpenAI({ 
+      apiKey: process.env.NOVITA_API_KEY,
+      baseURL: "https://api.novita.ai/openai"
+    });
     
     // Extract character name and description
     const characterName = charInfo.name || 'the character';
@@ -838,15 +841,46 @@ const generateChatScenarios = async (charInfo, personaInfo = null, userSettings 
     });
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: "meta-llama/llama-3-70b-instruct", // Novita-supported model
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
         { role: "user", content: `Example scenarios: ${scenarioExamples}` },
         { role: "user", content: `Ensure ALL instances of "[Character name]" are replaced with "${characterName}" in EVERY field.` }
       ],
-      response_format: zodResponseFormat(scenariosListSchema, "scenarios_list"),
-      max_completion_tokens: 1000,
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "scenarios_list",
+          schema: {
+            type: "object",
+            properties: {
+              scenarios: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    _id: { type: "string", nullable: true },
+                    scenario_title: { type: "string" },
+                    scenario_description: { type: "string" },
+                    emotional_tone: { type: "string" },
+                    conversation_direction: { type: "string" },
+                    system_prompt_addition: { type: "string" }
+                  },
+                  required: ["scenario_title", "scenario_description", "emotional_tone", "conversation_direction", "system_prompt_addition"],
+                  additionalProperties: false
+                },
+                minItems: 3,
+                maxItems: 3
+              }
+            },
+            required: ["scenarios"],
+            additionalProperties: false
+          },
+          strict: true
+        }
+      },
+      max_tokens: 800,
       temperature: 1,
     });
 
@@ -877,7 +911,10 @@ const generateChatScenarios = async (charInfo, personaInfo = null, userSettings 
 // Function to generate chat goals based on character and persona
 const generateChatGoal = async (chatDescription, personaInfo = null, userSettings = null, subscriptionStatus = null, language = 'en') => {
   try {
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = new OpenAI({ 
+      apiKey: process.env.NOVITA_API_KEY,
+      baseURL: "https://api.novita.ai/openai"
+    });
     
     const personaContext = personaInfo ? 
       `\nUser Persona: ${personaInfo.name} - ${personaInfo.short_intro || 'No description available'}` : '';
@@ -922,13 +959,33 @@ const generateChatGoal = async (chatDescription, personaInfo = null, userSetting
     Allow for explicit, emotionally open language and descriptions of physical affection when the relationship context requires it.`;
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: "meta-llama/llama-3-70b-instruct", // Novita-supported model
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
       ],
-      response_format: zodResponseFormat(chatGoalSchema, "chat_goal"),
-      max_completion_tokens: 1600,
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "chat_goal",
+          schema: {
+            type: "object",
+            properties: {
+              goal_type: { type: "string", enum: ["relationship", "activity", "image request"] },
+              goal_description: { type: "string" },
+              completion_condition: { type: "string" },
+              target_phrase: { type: "string", nullable: true },
+              user_action_required: { type: "string", nullable: true },
+              difficulty: { type: "string", enum: ["easy", "medium", "hard"] },
+              estimated_messages: { type: "number", minimum: 1, maximum: 20 }
+            },
+            required: ["goal_type", "goal_description", "completion_condition", "difficulty", "estimated_messages"],
+            additionalProperties: false
+          },
+          strict: true
+        }
+      },
+      max_tokens: 800,
       temperature: 1,
     });
 
@@ -948,7 +1005,10 @@ const checkGoalCompletion = async (goal, messages, language = 'en') => {
   }
 
   try {
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = new OpenAI({ 
+      apiKey: process.env.NOVITA_API_KEY,
+      baseURL: "https://api.novita.ai/openai"
+    });
     
     // Get recent conversation messages (last 10)
     const recentMessages = messages
@@ -982,13 +1042,29 @@ Respond in ${language}`;
     });
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: "meta-llama/llama-3-70b-instruct", // Novita-supported model
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
       ],
-      response_format: zodResponseFormat(completionSchema, "goal_completion"),
-      max_completion_tokens: 1600,
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "goal_completion",
+          schema: {
+            type: "object",
+            properties: {
+              completed: { type: "boolean" },
+              confidence: { type: "number", minimum: 0, maximum: 100 },
+              reason: { type: "string" }
+            },
+            required: ["completed", "confidence", "reason"],
+            additionalProperties: false
+          },
+          strict: true
+        }
+      },
+      max_tokens: 800,
       temperature: 1,
     });
 

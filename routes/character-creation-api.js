@@ -156,7 +156,6 @@ function createSystemPayload(prompt, gender, details, imageType) {
         'Include feminine facial features, elegant makeup, and feminine hairstyle. Avoid masculine traits. IMPORTANT: Ensure clothing fully covers chest and body - no cleavage, no exposed breasts, no bikini or revealing clothing.' : 
         'Include masculine facial features, confident expression, and masculine hairstyle. Avoid feminine traits. IMPORTANT: Ensure the character is fully clothed with appropriate masculine clothing like shirts, jackets, or formal wear - no exposed chest.';
     
-    console.log(`[createSystemPayload] imageType: ${imageType}, check: ${imageType === 'sfw' ? 'sfw' : 'nsfw'}`);
     const criticalSfwInstruction = imageType === 'sfw' ? 
     `CRITICAL SFW REQUIREMENTS:
     - NO nudity, NO exposed skin beyond neck/shoulders/arms
@@ -257,7 +256,7 @@ function extractDetailsFromPrompt(prompt, chatPurpose = '', gender ='female') {
 async function routes(fastify, options) {
     fastify.post('/api/generate-character-comprehensive', async (request, reply) => {
         const startTime = Date.now();
-        console.log('[API/generate-character-comprehensive] Starting comprehensive character generation');
+        console.log('\x1b[36m🚀 ===== CHARACTER CREATION START =====\x1b[0m');
         
         try {
             const { 
@@ -287,13 +286,12 @@ async function routes(fastify, options) {
             const allowNsfw = isPremium && nsfw;
             const finalImageType = allowNsfw ? imageType : 'sfw';
             
-            console.log(`[API/generate-character-comprehensive] NSFW settings - isPremium: ${isPremium}, requested: ${nsfw}, allowed: ${allowNsfw}`);
-            console.log(`[API/generate-character-comprehensive] Input parameters - chatId: ${chatId || 'undefined'}, gender: ${gender || 'undefined'}, language: ${language}, prompt: ${prompt ? prompt.substring(0, 50) + '...' : 'undefined'}, name: ${name || 'undefined'}, hasImageBase64: ${!!image_base64}, enableMergeFace: ${!!enableMergeFace}`);
-            console.log(`Translations Language: ${request.translations.lang}`);
+            console.log(`\x1b[33m⚙️ NSFW: premium=${isPremium}, requested=${nsfw}, allowed=${allowNsfw}\x1b[0m`);
+            console.log(`\x1b[34m📝 Input: chatId=${chatId || 'new'}, gender=${gender || 'auto'}, lang=${language}, prompt=${prompt ? prompt.substring(0, 30) + '...' : 'none'}\x1b[0m`);
 
             if (!prompt || prompt.trim() === '') {
                 fastify.sendNotificationToUser(userId, 'showNotification', { message: 'Please provide a valid prompt.', icon: 'error' });
-                console.log('[API/generate-character-comprehensive] Missing required fields');
+                console.log('\x1b[31m❌ Missing prompt\x1b[0m');
                 return reply.status(400).send({ error: 'Missing required fields: prompt is required.' });
             }
 
@@ -313,10 +311,10 @@ async function routes(fastify, options) {
                     }
                 };
                 chatId = await checkChat(chatId);
-                console.log(`[API/generate-character-comprehensive] New chatId created: ${chatId}`);
+                console.log(`\x1b[32m🆕 New chatId: ${chatId}\x1b[0m`);
             }
             // Step 1: Extract details from prompt
-            console.log('[API/generate-character-comprehensive] Step 1: Extracting details from prompt');
+            console.log('\x1b[34m📋 Step 1: Extracting Details\x1b[0m');
 
             const detailsExtractionPayload = extractDetailsFromPrompt(prompt, chatPurpose, gender);
             const openai = new OpenAI();
@@ -331,13 +329,13 @@ async function routes(fastify, options) {
             try {
                 extractedDetails = JSON.parse(detailsResponse.choices[0].message.content);
                 gender = extractedDetails.appearance.gender || gender;
-                console.log('[API/generate-character-comprehensive] Successfully extracted details');
+                console.log('\x1b[32m✅ Details extracted\x1b[0m');
                 fastify.sendNotificationToUser(userId, 'showNotification', { 
                     message: request.translations.newCharacter.character_analysis_complete, 
                     icon: 'success' 
                 });
             } catch (parseError) {
-                console.error('[API/generate-character-comprehensive] Error parsing extracted details:', parseError);
+                console.error('\x1b[31m❌ Details extraction failed\x1b[0m');
                 fastify.sendNotificationToUser(userId, 'showNotification', { 
                     message: request.translations.newCharacter.character_analysis_error, 
                     icon: 'error' 
@@ -348,8 +346,7 @@ async function routes(fastify, options) {
             let enhancedPrompt = prompt || null;
 
             if(enableEnhancedPrompt) {
-                console.log(`[API/generate-character-comprehensive] Step 2: Generating ${finalImageType} enhanced prompt`);
-                console.log(`[API/generate-character-comprehensive] Gender for prompt: ${gender}`);
+                console.log(`\x1b[34m🎨 Step 2: Generating ${finalImageType} prompt\x1b[0m`);
 
                 const systemPayload = createSystemPayload(prompt, gender, extractedDetails, finalImageType);
                 enhancedPrompt = await generateCompletion(systemPayload, 600, 'llama-3-70b');
@@ -373,11 +370,11 @@ async function routes(fastify, options) {
                         // If comma is close to end, truncate at comma
                         truncatedPrompt = truncatedPrompt.substring(0, lastCommaIndex).trim();
                     }
-                    console.log(`[API/generate-character-comprehensive] Truncated prompt: ${enhancedPrompt.length} → ${truncatedPrompt.length} chars`);
+                    console.log(`\x1b[33m⚠️ Prompt truncated: ${enhancedPrompt.length} → ${truncatedPrompt.length} chars\x1b[0m`);
                     enhancedPrompt = truncatedPrompt;
                 }
                 
-                console.log(`[API/generate-character-comprehensive] Final prompt: ${enhancedPrompt.substring(0, 100)}... (${enhancedPrompt.length} chars)`);
+                console.log(`\x1b[32m✅ Prompt ready: ${enhancedPrompt.length} chars\x1b[0m`);
                 
                 fastify.sendNotificationToUser(userId, 'showNotification', { 
                     message: request.translations.newCharacter.enhancedPrompt_complete, 
@@ -388,7 +385,7 @@ async function routes(fastify, options) {
                     enhancedPrompt
                 });
             } else {
-                console.log('[API/generate-character-comprehensive] Step 2: Skipping enhanced prompt generation');
+                console.log('\x1b[33m⏭️ Skipping prompt enhancement\x1b[0m');
                 fastify.sendNotificationToUser(userId, 'showNotification', {
                     message: request.translations.newCharacter.enhancedPrompt_skipped,
                     icon: 'info'
@@ -396,7 +393,7 @@ async function routes(fastify, options) {
             }
 
             // Step 2.5: Trigger image generation immediately after enhanced prompt is available
-            console.log('[API/generate-character-comprehensive] Step 2.5: Triggering image generation with enhanced prompt');
+            console.log('\x1b[34m🖼️ Step 2.5: Triggering Image Gen\x1b[0m');
 
             try {
                 // First, save gender to chat BEFORE generating images
@@ -404,22 +401,14 @@ async function routes(fastify, options) {
                     { _id: new ObjectId(chatId) },
                     { $set: { gender: gender } }
                 );
-                console.log(`[API/generate-character-comprehensive] ✓ Saved gender to chat: ${gender}`);
+                console.log(`\x1b[32m✓ Gender saved: ${gender}\x1b[0m`);
 
                 const { generateImg } = require('../models/imagen');
                 
                 // Generate placeholder ID for tracking
                 const placeholderId = new fastify.mongo.ObjectId().toString();
 
-                // Trigger image generation asynchronously with enhanced prompt
-                console.log(`[API/generate-character-comprehensive] 🖼️  Triggering async image generation:`);
-                console.log(`  - Enhanced prompt length: ${enhancedPrompt?.length || 0} chars`);
-                console.log(`  - Image type: sfw`);
-                console.log(`  - Placeholder ID: ${placeholderId}`);
-                
-                // Use setImmediate or process.nextTick to ensure image generation runs after response is sent
-                setImmediate(() => {
-                    console.log(`[API/generate-character-comprehensive] 🔄 Image generation started in background (async)`);
+                console.log(`\x1b[32m🔄 Image gen queued\x1b[0m`);
                     
                     generateImg({
                         prompt: enhancedPrompt,
@@ -436,21 +425,19 @@ async function routes(fastify, options) {
                         fastify: fastify,
                         enableMergeFace: enableMergeFace || false
                     }).then(() => {
-                        console.log(`[API/generate-character-comprehensive] ✅ Image generation completed successfully`);
+                        console.log('\x1b[32m✅ Image gen done\x1b[0m');
                     }).catch(error => {
-                        console.error(`[API/generate-character-comprehensive] ❌ Image generation error: ${error.message}`);
-                        console.error(`[API/generate-character-comprehensive] Stack:`, error.stack);
+                        console.error('\x1b[31m❌ Image gen failed\x1b[0m');
                         fastify.sendNotificationToUser(userId, 'showNotification', { 
                             message: request.translations.newCharacter.image_generation_error || 'Image generation failed', 
                             icon: 'error' 
                         });
                     });
-                });
                 
-                console.log(`[API/generate-character-comprehensive] ✓ Image generation queued (will run in background)`);
+                console.log('\x1b[32m✓ Image gen queued\x1b[0m');
                 
             } catch (imageError) {
-                console.error(`[API/generate-character-comprehensive] ⚠️  Error queuing image generation: ${imageError.message}`);
+                console.error('\x1b[31m⚠️ Image queue failed\x1b[0m');
                 // Don't throw - image generation is not critical for chat to start
                 fastify.sendNotificationToUser(userId, 'showNotification', { 
                     message: request.translations.newCharacter.image_generation_error || 'Image generation failed', 
@@ -459,7 +446,7 @@ async function routes(fastify, options) {
             }
 
             // Step 3: Generate character personality
-            console.log('[API/generate-character-comprehensive] Step 3: Generating character personality');
+            console.log('\x1b[34m👤 Step 3: Generating Personality\x1b[0m');
 
             const systemPayloadChat = createSystemPayloadChatRule(prompt, gender, name, extractedDetails, language);
             const personalityResponse = await openai.chat.completions.create({
@@ -469,10 +456,10 @@ async function routes(fastify, options) {
             });
 
             let chatData = JSON.parse(personalityResponse.choices[0].message.content);
-            console.log('[API/generate-character-comprehensive] Character personality generated');
+            console.log('\x1b[32m✅ Personality generated\x1b[0m');
 
             // Step 4: Save to database
-            console.log('[API/generate-character-comprehensive] Step 4: Saving to database');
+            console.log('\x1b[34m💾 Step 4: Saving to DB\x1b[0m');
 
             // Prepare final data
             chatData.language = language;
@@ -499,11 +486,11 @@ async function routes(fastify, options) {
             );
 
             if (firstUpdate.matchedCount === 0) {
-                console.error(`[API/generate-character-comprehensive] ❌ First update failed - Chat not found for ID: ${chatId}`);
+                console.error('\x1b[31m❌ DB update failed\x1b[0m');
                 throw new Error('Chat not found.');
             }
 
-            console.log(`[API/generate-character-comprehensive] ✓ Database saved: system_prompt=${chatData.system_prompt?.length}c, reference_character=${chatData.details_description?.personality?.reference_character}`);
+            console.log('\x1b[32m✅ DB saved\x1b[0m');
 
             // Step 5: Generate unique slug if name is provided
             if (chatData.name) {
@@ -550,7 +537,7 @@ async function routes(fastify, options) {
             );
 
             if (secondUpdate.matchedCount === 0) {
-                console.error(`[API/generate-character-comprehensive] ❌ Second update failed - No documents matched for ID: ${chatId}`);
+                console.error('\x1b[31m❌ DB final update failed\x1b[0m');
                 throw new Error(`Second database update failed - chat document may have been deleted`);
             }
 
@@ -560,18 +547,17 @@ async function routes(fastify, options) {
             });
 
             if (!finalChatDocument) {
-                console.error(`[API/generate-character-comprehensive] ❌ Could not retrieve final document - searched for _id: ${chatObjectId}`);
+                console.error('\x1b[31m❌ DB retrieval failed\x1b[0m');
                 throw new Error('Failed to retrieve final chat document from database');
             }
 
-            // Validate critical fields
             if (!finalChatDocument.system_prompt || !finalChatDocument.details_description?.personality?.reference_character) {
-                console.error(`[API/generate-character-comprehensive] ❌ Final document missing critical fields`);
+                console.error('\x1b[31m❌ Critical fields missing\x1b[0m');
                 throw new Error('Final document missing required fields');
             }
 
             const totalTime = Date.now() - startTime;
-            console.log(`[API/generate-character-comprehensive] ✅ Completed in ${totalTime}ms - chatId: ${chatId}`);
+            console.log(`\x1b[32m✅ ===== CHARACTER CREATION COMPLETE ===== (${totalTime}ms)\x1b[0m`);
             
             fastify.sendNotificationToUser(userId, 'showNotification', { 
                 message: request.translations.newCharacter.character_generation_complete || 'Character generation completed successfully!', 
@@ -588,11 +574,8 @@ async function routes(fastify, options) {
 
         } catch (err) {
             const totalTime = Date.now() - startTime;
-            console.error(`[API/generate-character-comprehensive] ❌ ERROR after ${totalTime}ms`);
-            console.error(`[API/generate-character-comprehensive] Error type: ${err.constructor.name}`);
-            console.error(`[API/generate-character-comprehensive] Error message: ${err.message}`);
-            console.error(`[API/generate-character-comprehensive] Stack trace:`);
-            console.error(err.stack);
+            console.log(`\x1b[31m❌ ===== CHARACTER CREATION ERROR ===== (${totalTime}ms)\x1b[0m`);
+            console.error(`\x1b[31mError: ${err.message}\x1b[0m`);
             
             if (err.cause) {
                 console.error(`[API/generate-character-comprehensive] Cause:`, err.cause);
@@ -604,14 +587,11 @@ async function routes(fastify, options) {
             });
 
             if (err instanceof z.ZodError) {
-                console.error('[API/generate-character-comprehensive] Validation errors:');
-                err.errors.forEach((error, index) => {
-                    console.error(`  ${index + 1}. Path: ${error.path.join('.')} - ${error.message}`);
-                });
+                console.error('\x1b[31m❌ Validation error\x1b[0m');
                 return reply.status(400).send({ error: 'Validation error in response data.', details: err.errors });
             }
 
-            console.error(`[API/generate-character-comprehensive] Sending 500 error to client`);
+            console.error('\x1b[31mSending 500 error\x1b[0m');
             reply.status(500).send({ error: 'An unexpected error occurred.', details: err.message });
         }
     });

@@ -211,6 +211,13 @@
         $('.style-option').removeClass('selected');
         $(this).addClass('selected');
         updateFields($(this));
+
+        // Save the selected model immediately
+        saveSelectedImageModel(chatCreationId, function(error, response) {
+            if (error) {
+                console.error('Error saving selected image model:', error);
+            }
+        });
     });
 
     updateFields($(document).find('.style-option.selected'));
@@ -773,8 +780,20 @@
         resetInfiniteScroll();
 
         const modelId = $('.style-option.selected').data('id')
-        // Generate new images with existing prompt
-        novitaImageGeneration(userId, chatCreationId, null, {
+        // Professional logging of the model, with separator and colors and emojis
+        console.log('%c🚀 Regenerating images with model:', 'color: #4CAF50; font-weight: bold; font-size: 16px;', modelId);
+        // NEW: Save the selected model before regenerating to ensure it's persisted
+        saveSelectedImageModel(chatCreationId, function(error, response) {
+            if (error) {
+                console.error('Error saving selected image model during regeneration:', error);
+                // Optionally show a notification or abort regeneration
+                resetRegenerateButton();
+                hideImageSpinner();
+                return;
+            }
+            
+            // Proceed with generation after saving
+            novitaImageGeneration(userId, chatCreationId, null, {
                 prompt: enhancedPrompt,
                 imageType,
                 file,
@@ -793,6 +812,7 @@
                 resetRegenerateButton();
                 showNotification(translations.newCharacter.regeneration_error, 'error');
             });
+        });
     }
 
     function resetInfiniteScroll() {
@@ -1168,6 +1188,14 @@
                     console.log(`[generateImageInContainer] Image saved successfully`);
                     showNotification(translations.imageForm.image_saved, 'success');
                     resetChatList();
+                }
+            });
+
+            // Save the selected image model
+            const containerChatId = $imageContainer.attr('data-chat-creation-id');
+            saveSelectedImageModel(containerChatId, function(error, response) {
+                if (error) {
+                    console.error('Error saving selected image model:', error);
                 }
             });
         });

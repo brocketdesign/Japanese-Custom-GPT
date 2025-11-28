@@ -100,11 +100,9 @@ async function routes(fastify, options) {
           await removeUserPoints(db, userId, cost, translations.points?.deduction_reasons?.image_generation || 'Image generation', 'image_generation', fastify);
         } catch (error) {
           console.error('Error deducting points:', error);
-          return reply.status(500).send({ error: `${fastify.userPointsTranslations?.need_coins?.replace('{coins}', cost) || `Need: ${cost}`}`
-});
+          return reply.status(500).send({ error: `${fastify.userPointsTranslations?.need_coins?.replace('{coins}', cost) || `Need: ${cost}`}`});
         }
       }
-
       // [DEBUG] use flux model
       const flux = false
 
@@ -138,6 +136,7 @@ async function routes(fastify, options) {
       })
       .catch((error) => {
         console.log('error:', error);
+        return reply.status(500).send({ error: 'Error generating image.' });
       });
       reply.send(result);
     } catch (err) {

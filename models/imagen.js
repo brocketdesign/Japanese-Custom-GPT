@@ -494,6 +494,10 @@ async function generateImg({
     }
 
     // Prepare params
+    // Make sure prompt length is within limits 900 characters
+    if (image_request.prompt.length > 900) {
+      image_request.prompt = image_request.prompt.substring(0, 900);
+    }
     let requestData = flux ? { ...image_request, image_num } : { ...params, ...image_request, image_num };
     console.log(`🖼️ [GenerateImg] Using model: ${requestData.model_name || 'FLUX Default Model'}`);
 

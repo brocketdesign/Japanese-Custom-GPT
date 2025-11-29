@@ -3277,7 +3277,7 @@ $(document).ready(function () {
         
         // Add "All" tag first
         tagsHtml += `
-            <div class="query-tag query-tag-all badge btn-outline-primary ${currentActiveQuery === '' ? 'active' : ''}" 
+            <div class="query-tag query-tag-all badge badge-sm btn-outline-primary ${currentActiveQuery === '' ? 'active' : ''}" 
                 style="line-height: 1.5;"
                 data-query="" 
                 onclick="loadPopularChats(1, true); setActiveQuery(''); loadStyleFilteredChats('');">
@@ -3291,7 +3291,7 @@ $(document).ready(function () {
             const isActive = currentActiveQuery === tag;
             tagsHtml += `
                 <div id="popular-chats-style-${tag}" 
-                class="query-tag badge btn-outline-primary ${isActive ? 'active' : ''}" 
+                class="query-tag badge badge-sm btn-outline-primary ${isActive ? 'active' : ''}" 
                 style="line-height: 1.5;"
                     data-query="${tag === 'photorealistic' ? 'photorealistic' : 'anime'}" 
                     >
@@ -3304,7 +3304,7 @@ $(document).ready(function () {
         availableQueryTags.forEach(tag => {
             const isActive = currentActiveQuery === tag;
             tagsHtml += `
-                <div class="query-tag badge btn-outline-primary ${isActive ? 'active' : ''}" 
+                <div class="query-tag badge badge-sm btn-outline-primary ${isActive ? 'active' : ''}" 
                     style="line-height: 1.5;"
                     data-query="${tag}" 
                     onclick="setActiveQueryAndSearch('${tag}')">
@@ -4004,3 +4004,14 @@ window.showNSFWContent = function(buttonElement, imageUrl) {
     // Display the image tools
     $imageTools.show();
 };
+
+// .toggle-nsfw-btn click handler
+$(document).on('click', '.toggle-nsfw-btn', function() {
+  const subscriptionStatus = window.user ? window.user.subscriptionStatus === 'active' : false;
+  if(isTemporary || !subscriptionStatus) {
+    loadPlanPage();
+    return;
+  }
+  toggleNSFWContent();
+  window.location.reload();
+});

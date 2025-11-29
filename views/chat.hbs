@@ -71,15 +71,19 @@
                     <div class="row g-3 align-items-center">
 
                         <!-- Query Tags Horizontal Scroll Section -->
-                        <div class="query-tags-section mb-1 native-section">
+                        <div class="query-tags-section mb-1 native-section d-flex flex-wrap align-items-center">
 
-                            <!-- Action buttons remain unchanged -->
-                            <div class="col-md-auto d-flex justify-content-center justify-content-md-start mx-3">
-                                <button id="reload-latest-chats" class="btn-flat-border btn-outline-primary" style="border: none!important; background-color: color(srgb 0.5022 0.2316 0.965 / 0.2) !important;">
+                            <!-- Action buttons container -->
+                            <div class="d-flex align-items-center flex-shrink-0 me-3">
+                                <button id="reload-latest-chats" class="btn-flat-border btn-outline-primary me-1" style="border: none!important; background-color: color(srgb 0.5022 0.2316 0.965 / 0.2) !important;font-size: 0.9em;">
                                     <i class="bi bi-arrow-clockwise me-1"></i>{{#if translations.recent}}{{translations.recent}}{{else}}Recent{{/if}}
                                 </button>
-                                <button id="reload-latest-video-chats" class="btn-flat-border btn-outline-primary ms-2" style="border: none!important; background-color: color(srgb 0.5022 0.2316 0.965 / 0.2) !important;">
+                                <button id="reload-latest-video-chats" class="btn-flat-border btn-outline-primary me-1" style="border: none!important; background-color: color(srgb 0.5022 0.2316 0.965 / 0.2) !important;font-size: 0.9em;">
                                     <i class="bi bi-film me-1"></i>{{#if translations.recentVideos}}{{translations.recentVideos}}{{else}}Recent Videos{{/if}}
+                                </button>
+                                <!-- Toggle NSFW button -->
+                                <button id="toggle-nsfw-btn" class="toggle-nsfw-btn btn-flat-border btn-outline-primary me-1" style="border: none!important; background-color: color(srgb 0.5022 0.2316 0.965 / 0.2) !important;font-size: 0.9em;">
+                                    <i class="bi bi-toggle-off mx-2"></i><i class="bi bi-toggle-on mx-2"></i>{{#if translations.toggle_nsfw}}{{translations.toggle_nsfw}}{{else}}NSFW{{/if}}
                                 </button>
 
                                 <div class="dropdown d-none">
@@ -123,8 +127,8 @@
                                 </div>
                                 
                             </div>
-                            <div class="query-tags-scroll-container mx-3">
-                                <div class="query-tags-list d-flex" id="query-tags-list">
+                            <div class="query-tags-scroll-container flex-grow-1">
+                                <div class="query-tags-list d-flex p-0 mt-2" id="query-tags-list" style="overflow-y: none;">
                                     <!-- Query tags will be populated here -->
                                     <div class="spinner-border spinner-border-sm me-3" role="status">
                                         <span class="visually-hidden">Loading...</span>
@@ -138,7 +142,7 @@
                 <div id="popular-chats-section">
 
                     <div id="all-chats-container" class="row g-3 all-chats-gallery mx-0"></div>
-                    <div class="d-flex justify-content-center mt-4" id="all-chats-images-pagination-controls" style="opacity: 0;"></div>
+                    <div class="d-flex justify-content-center" id="all-chats-images-pagination-controls" style="opacity: 0;"></div>
                     
                     <div id="latest-chats-gallery" class="row latest-chats-gallery mx-0"></div>
 

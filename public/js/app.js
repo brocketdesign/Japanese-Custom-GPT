@@ -59,11 +59,9 @@ function getCookie(name) {
     if (parts.length === 2) return parts.pop().split(';').shift();
     return null;
 }
-
-window.showNSFW;
-
+window.showNSFW = sessionStorage.getItem('showNSFW') === 'true' || sessionStorage.getItem('showNSFW') === true ;
 // Always prioritize user.showNSFW if defined
-if (typeof user.showNSFW !== 'undefined') {
+if (!window.showNSFW && typeof user.showNSFW !== 'undefined') {
     window.showNSFW = user.showNSFW === true; // Ensure it's a boolean
     sessionStorage.setItem('showNSFW', window.showNSFW.toString());
 } else {

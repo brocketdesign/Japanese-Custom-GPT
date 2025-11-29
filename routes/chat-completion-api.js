@@ -330,12 +330,7 @@ async function routes(fastify, options) {
                     }
 
                     // Generate scenarios
-                    const scenarios = await generateChatScenarios(
-                        chatDocument,
-                        personaInfo,
-                        userSettings,
-                        language
-                    );
+                    const scenarios = await fetch(`/api/chat-scenarios/${userChatId}/generate`)
 
                     if (scenarios && scenarios.length > 0) {
                         // Store scenarios in the user chat and mark as generated

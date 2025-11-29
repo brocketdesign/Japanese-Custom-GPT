@@ -312,7 +312,9 @@
   font-weight: var(--btn-weight) !important;
   transition: var(--transition-ease) !important;
 }
-
+.tags-container .badge, .badge-sm {
+  padding: 3px 8px !important;
+}
 .badge:hover {
   transform: scale(1.05) !important;
 }

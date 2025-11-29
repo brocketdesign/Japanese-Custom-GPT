@@ -8,6 +8,7 @@ const {
     selectScenario,
     formatScenarioForUI
 } = require('../models/chat-scenario-utils');
+const { chatDataToString } = require('../models/chat-completion-utils');
 
 async function routes(fastify, options) {
     
@@ -83,7 +84,8 @@ async function routes(fastify, options) {
             if (userChatDoc.persona) {
                 personaInfo = await chatsCollection.findOne({ _id: new ObjectId(userChatDoc.persona) });
             }
-
+            //
+            const chatDescriptionString = chatDataToString(chatDoc);
             // Get user's relationship type
             const chatToolSettingsCollection = fastify.mongo.db.collection('chatToolSettings');
             const userSettings = await chatToolSettingsCollection.findOne({
@@ -96,7 +98,7 @@ async function routes(fastify, options) {
             const scenarios = await generateChatScenarios(
                 {
                     name: chatDoc.name,
-                    description: chatDoc.description || '',
+                    description: chatDescriptionString || '',
                     persona: chatDoc.persona || null
                 },
                 personaInfo,

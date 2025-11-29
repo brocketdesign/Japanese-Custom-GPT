@@ -2039,6 +2039,17 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                           loading="lazy"
                           aria-hidden="true"
                         >
+                        <!-- Chat info on top left -->
+                        <div class="position-absolute top-0 start-0 m-2 d-flex flex-row align-items-center gap-1" style="z-index: 3;">
+                          <a href="/character/${chat._id}" class="text-decoration-none user-link text-white" onclick="event.stopPropagation();" style="font-size: 21px;">
+                            <i class="bi bi-person-circle me-1"></i>
+                          </a>
+                          ${chat.nsfw ? `
+                            <span class="badge badge-sm bg-opacity-85 text-white border text-decoration-none" style="backdrop-filter: blur(4px); font-size: 0.75rem;">
+                              <i class="bi bi-exclamation-triangle-fill me-1"></i>NSFW
+                            </span>
+                          ` : ''}
+                        </div>
                         <!-- Chat icon on top right -->
                         <div class="position-absolute top-0 end-0 m-2 d-flex flex-column align-items-end gap-1" style="z-index: 3;">
                           ${chat.hasUserChatted === false ? `
@@ -2053,6 +2064,14 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                         
                         <!-- Content container positioned at bottom -->
                         <div class="position-absolute bottom-0 start-0 w-100 p-3" style="z-index: 2;">
+
+                          <!-- Character name -->
+                          <a href="/character/${chat._id}" class="text-decoration-none" onclick="event.stopPropagation();">
+                            <div class="d-flex align-items-center justify-content-start mb-1">
+                              <h5 class="card-title mb-0 text-truncate text-white" title="${chat.name || chat.chatName}" style="text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${chat.name || chat.chatName}</h5>
+                            </div>
+                          </a>
+
                           <!-- Tags on single line with horizontal scroll -->
                           ${(chat.tags || chat.chatTags || []).length ? `
                           <div class="tags-container">
@@ -2060,19 +2079,8 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                           </div>
                           ` : ''}
 
-                          <!-- Character name -->
-                          <a href="/character/${chat._id}" class="text-decoration-none" onclick="event.stopPropagation();">
-                            <div class="d-flex align-items-center justify-content-start mb-1">
-                              <!-- User icon with badge -->
-                              <span class="rounded-circle px-1 bg-dark bg-opacity-75 text-white border text-decoration-none me-2" style="backdrop-filter: blur(4px);">
-                                <i class="bi bi-info"></i>
-                              </span>
-                              <h5 class="card-title mb-0 fw-semibold text-truncate text-white" title="${chat.name || chat.chatName}" style="text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${chat.name || chat.chatName}</h5>
-                            </div>
-                          </a>
-
                           <!-- First message with smaller text -->
-                          <div class="text-white-50 small text-truncate" style="font-size: 0.75rem; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 0 1px 2px rgba(0,0,0,0.7);">
+                          <div class="text-white-50 small" style="font-size: 0.75rem; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 0 1px 2px rgba(0,0,0,0.7);">
                             ${chat.first_message || ''}
                           </div>
                         </div>

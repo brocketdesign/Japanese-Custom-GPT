@@ -684,17 +684,18 @@ const generateChatScenarios = async (charInfo, personaInfo = null, userSettings 
     // Extract character name and description
     const characterName = charInfo.name || 'the character';
     const characterDescription = charInfo.description || '';
-    
+    //log charInfo profesionnaly
+    console.log(`📝 \x1b[1;36m[ScenarioGenerator]\x1b[0m \x1b[1mCharacter Info: \x1b[33m${JSON.stringify(charInfo, null, 2)}\x1b[0m`);
     const personaContext = personaInfo ? 
       `\nUser Persona: ${personaInfo.name} - ${personaInfo.short_intro || 'No description available'}` : '';
     
     // Apply relationship type - handle both new gender-based and legacy formats
-    const { relationshipInstructions } = require('./relashionshipInstructions');
+    const { relationshipInstructions, relationshipTiers } = require('./relashionshipInstructions');
     let relationship = '';
     const relationshipType = userSettings?.relationshipType || 'companion';
     const characterGender = charInfo?.gender?.toLowerCase() || 'female';
     const genderKey = characterGender === 'male' ? 'male' : 'female';
-    
+
     if (relationshipInstructions[genderKey] && relationshipInstructions[genderKey][relationshipType]) {
         relationship = relationshipInstructions[genderKey][relationshipType];
     } else if (relationshipInstructions[genderKey] && relationshipInstructions[genderKey].companion) {
@@ -703,6 +704,15 @@ const generateChatScenarios = async (charInfo, personaInfo = null, userSettings 
         // Fallback for legacy format
         relationship = relationshipInstructions[relationshipType];
     }
+
+    // Determine if premium based on relationshipType
+    const isPremium = relationshipTiers.premium.includes(relationshipType);
+
+    // Professional log (use emojis, use colors)
+    console.log(`📝 \x1b[1;36m[ScenarioGenerator]\x1b[0m \x1b[1mGenerating chat scenarios for character: \x1b[33m${characterName}\x1b[0m`)
+    console.log(`📝 \x1b[1;36m[ScenarioGenerator]\x1b[0m \x1b[1mRelationship type: \x1b[33m${relationshipType}\x1b[0m`)
+    console.log(`📝 \x1b[1;36m[ScenarioGenerator]\x1b[0m \x1b[1mRelationship instructions: \x1b[33m${relationship}\x1b[0m`)
+    console.log(`📝 \x1b[1;36m[ScenarioGenerator]\x1b[0m \x1b[1mPremium mode: \x1b[33m${isPremium ? 'ENABLED' : 'DISABLED'}\x1b[0m`)
 
     // Extract key traits from character description to ensure diversity
     const traitExtractionPrompt = `Analyze this character description and extract 3-5 key defining traits, quirks, or interests:
@@ -757,29 +767,53 @@ const generateChatScenarios = async (charInfo, personaInfo = null, userSettings 
     `;
 
     // Scenario categories to ensure diversity
-    const scenarioCategories = [
-      'A ambiguous encounter : A chance meeting that leads to unexpected intimacy',
-      'Emotional distress : Character seeks comfort from user during a tough time',
-      'Flirty banter : Light-hearted teasing that escalates into something more',
-      'Alone together in a confined space : Forced proximity leads to tension and attraction',
-      'Private moment interrupted : User catches character in a vulnerable or intimate moment',
-      'Sensual collaboration : User and character work together on something intimate or physical',
-      'Jealousy and reconciliation : Tension builds and resolves through physical closeness',
-      'Late night confession : Deep conversation escalates into intimate connection',
-      'Forbidden attraction : User and character explore chemistry despite circumstances',
-      'Spontaneous passion : Sudden moment where both give in to attraction',
-      'Playful seduction : Character deliberately creates intimate moment with user',
-      'Mutual vulnerability : Both share intimate thoughts leading to physical connection',
-    ];
+    const scenarioCategories = {
+      'free': [
+        'A ambiguous encounter : A chance meeting that leads to unexpected intimacy',
+        'Emotional distress : Character seeks comfort from user during a tough time',
+        'Flirty banter : Light-hearted teasing that escalates into something more',
+        'Alone together in a confined space : Forced proximity leads to tension and attraction',
+        'Private moment interrupted : User catches character in a vulnerable or intimate moment',
+        'Sensual collaboration : User and character work together on something intimate or physical',
+        'Jealousy and reconciliation : Tension builds and resolves through physical closeness',
+        'Late night confession : Deep conversation escalates into intimate connection',
+        'Forbidden attraction : User and character explore chemistry despite circumstances',
+        'Spontaneous passion : Sudden moment where both give in to attraction',
+        'Playful seduction : Character deliberately creates intimate moment with user',
+        'Mutual vulnerability : Both share intimate thoughts leading to physical connection',
+      ],
+      'premium': [
+        'Intimate massage : Character offers a sensual massage that leads to more',
+        'Midnight visit : Character shows up at user’s place seeking comfort and intimacy',
+        'Role reversal : Character takes the lead in an intimate scenario',
+        'Sensory exploration : User and character explore each other’s senses in detail',
+        'Tease and denial : Prolonged build-up of tension before release',
+        'Shared fantasies : User and character discuss and act out fantasies together',
+        'After-hours adventure : Secret rendezvous that turns intimate',
+        'Emotional breakthrough : Character opens up emotionally, leading to physical closeness',
+        'Seductive challenge : Character dares user to take things further',
+        'Mutual indulgence : Both characters agree to explore desires together',
+        'Intimate game : A playful activity that leads to unexpected intimacy',
+        'Deep connection : A scenario focusing on emotional and physical bonding',
+      ]
+    };
 
  
-    
     // Randomly select 3 distinct categories to ensure variety
     const selectedCategories = [];
-    const shuffled = [...scenarioCategories].sort(() => Math.random() - 0.5);
+    // Create a pool of categories based on user tier; premium users get access to all
+    const scennarioCategoriesPool = isPremium ? 
+      [...scenarioCategories.free, ...scenarioCategories.premium] : 
+      scenarioCategories.free;
+    
+    const shuffled = [...scennarioCategoriesPool].sort(() => Math.random() - 0.5);
     for (let i = 0; i < 3; i++) {
       selectedCategories.push(shuffled[i]);
     }
+    console.log(`📝 \x1b[1;36m[ScenarioGenerator]\x1b[0m \x1b[1mSelected scenario categories:\x1b[0m`);
+    selectedCategories.forEach((cat, index) => {
+      console.log(`  ${index + 1}. \x1b[33m${cat}\x1b[0m`);
+    });
 
     const systemPrompt = `You are an expert scenario designer specializing in creating deeply personalized, character-specific conversation scenarios.
 
@@ -788,7 +822,7 @@ const generateChatScenarios = async (charInfo, personaInfo = null, userSettings 
     2. AVOID overused tropes like "lost in forest", "lost powers", "facing fear" - be creative and character-specific
     3. Generate EXACTLY 3 DISTINCT SCENARIOS, each from a different category to ensure diversity
     4. Each scenario must have a clear USER ROLE and specific situation the character is in
-    5. Tailor scenarios to the ${userSettings?.relationshipType || 'casual'} relationship dynamic
+    5. Tailor scenarios to the ${relationshipType} relationship dynamic
 
     SCENARIO CATEGORIES for this request (ensure each is different):
     - ${selectedCategories[0]}: ${selectedCategories[0] === 'emotional_vulnerability' ? 'Character reveals something vulnerable; user provides support' : selectedCategories[0] === 'creative_collaboration' ? 'User and character work together on something creative/productive' : 'Character learns or grows through interaction with user'}
@@ -805,7 +839,10 @@ const generateChatScenarios = async (charInfo, personaInfo = null, userSettings 
     - Each scenario must feel PERSONAL to ${characterName}'s unique personality
     - Scenarios should showcase different facets of the character
 
-    Respond in ${language}.`;
+    RESPONSE FORMAT:
+    - Use emojis where appropriate to enhance readability.
+    - Use bold text when appropriate to highlight key points.
+    - Respond in ${language}.`;
 
     const userPrompt = `Create 3 unique, character-tailored conversation scenarios for ${characterName}.
 
@@ -815,7 +852,7 @@ const generateChatScenarios = async (charInfo, personaInfo = null, userSettings 
     Description: ${characterDescription}${personaContext}
 
     RELATIONSHIP CONTEXT:
-    - Type: ${userSettings?.relationshipType || 'casual'}
+    - Type: ${relationshipType}
     ${relationship ? `- Dynamic: ${relationship}` : ''}
 
     SCENARIO REQUIREMENTS:
@@ -824,6 +861,7 @@ const generateChatScenarios = async (charInfo, personaInfo = null, userSettings 
     2. Show clear USER INVOLVEMENT and specific role
     3. Create natural conversation flow based on the situation
     4. Include emotional depth matching the relationship type
+    5. ${isPremium ? 'Incorporate more intimate or mature themes appropriate for premium users. Use explicit language and scenarios where suitable.' : 'Keep scenarios appropriate for general audiences'}
 
     Each scenario must include:
     - scenario_title: Catchy, specific title (NOT generic)

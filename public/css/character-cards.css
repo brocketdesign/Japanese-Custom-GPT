@@ -150,7 +150,7 @@
 /* Character name - Smaller for full display */
 .gallery-card .card-title {
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 300;
   line-height: 1.2;
   margin-bottom: 0.4rem;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);

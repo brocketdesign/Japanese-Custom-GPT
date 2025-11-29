@@ -414,7 +414,7 @@ $(document).ready(async function() {
         }
 
         setupChatData(data.chat);
-        setupChatInterface(data.chat, data.character);
+        setupChatInterface(data.chat, data.character, data.userChat, isNew);
         updateCurrentChat(chatId);
 
         if (!isNew) {
@@ -453,7 +453,7 @@ $(document).ready(async function() {
         localStorage.setItem('thumbnail',thumbnail)
     }
     
-function setupChatInterface(chat, character) {
+function setupChatInterface(chat, character, userChat, isNew) {
     const gender = determineChatGender(chat);
     const chatNsfw = chat.nsfw || false;
     $('#chat-container').attr('data-genre', gender);
@@ -470,7 +470,8 @@ function setupChatInterface(chat, character) {
         $('#userMessage').removeClass('female').addClass('male');
         $('.settings-modal-body').attr('data-genre', 'male');
     }
-    updateChatBackgroundImage(thumbnail);
+    const bgImage = isNew ? null : (userChat && userChat.backgroundImageUrl ? userChat.backgroundImageUrl : null);
+    updateChatBackgroundImage(bgImage);
     $('#chat-title').text(chatName);
     $('#userMessage').attr('placeholder', `${window.translations.sendMessage}`);
 
@@ -1006,6 +1007,7 @@ function setupChatInterface(chat, character) {
                         // Add tools for merged face image
                         const toolsHtml = getImageTools({
                             chatId, 
+                            userChatId,
                             imageId: mergeId, 
                             isLiked: false,
                             title: 'Merged Face Result', 
@@ -1095,6 +1097,7 @@ function setupChatInterface(chat, character) {
                         if (!response.isUpscaled) {
                             const toolsHtml = getImageTools({
                                 chatId, 
+                                userChatId,
                                 imageId, 
                                 isLiked: response?.likedBy?.some(id => id.toString() === userId.toString()),
                                 title: response?.title?.[lang], 
@@ -1570,7 +1573,7 @@ function setupChatInterface(chat, character) {
                             ${message.outerHTML}
                             ${nsfwOverlay}
                         </div>
-                        ${!isUpscaled ? getImageTools({chatId, imageId, isLiked:false, title, prompt, nsfw: imageNsfw, imageUrl, isMergeFace}) : ''}
+                        ${!isUpscaled ? getImageTools({chatId, userChatId, imageId, isLiked:false, title, prompt, nsfw: imageNsfw, imageUrl, isMergeFace}) : ''}
                     </div>
                 </div>      
             `).hide();
@@ -1605,7 +1608,7 @@ function setupChatInterface(chat, character) {
                             class="text-start assistant-image-box transition-none" data-id="${imageId}">
                             ${message.outerHTML}
                         </div>
-                        ${getImageTools({chatId, imageId, isLiked:false, title, prompt, nsfw: imageNsfw, imageUrl})}
+                        ${getImageTools({chatId, userChatId, imageId, isLiked:false, title, prompt, nsfw: imageNsfw, imageUrl})}
                     </div>  
             `).hide();
             $(`#${messageId}`).find('.load').remove()

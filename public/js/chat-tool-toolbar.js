@@ -1,4 +1,4 @@
-function getImageTools({chatId, imageId, isLiked = false, title, prompt = false, nsfw = false, imageUrl = false, actions = []}) {
+function getImageTools({chatId, userChatId, imageId, isLiked = false, title, prompt = false, nsfw = false, imageUrl = false, actions = []}) {
         prompt = sanitizeString(prompt);
 
         // Check if actions exist and determine icon states
@@ -139,7 +139,7 @@ function getImageTools({chatId, imageId, isLiked = false, title, prompt = false,
                           data-bs-target="#modal-${imageId}">
                         <i class="bi bi-info-circle"></i>${window.translations?.image_tools?.info || 'Info'}
                     </span>
-                    
+
                     ${window.isAdmin ? `
                     <span class="badge bg-white text-secondary image-tool-badge update-chat-image" 
                           onclick="${subscriptionStatus ? 'updateChatImage(this)' : 'loadPlanPage()'}" 
@@ -147,6 +147,14 @@ function getImageTools({chatId, imageId, isLiked = false, title, prompt = false,
                           data-img="${imageUrl}">
                         <i class="bi bi-image"></i>${window.translations?.image_tools?.update_image || 'Update Image'}
                     </span>` : ''}
+
+                    <span class="badge bg-white text-secondary image-tool-badge update-user-chat-background-image" 
+                          onclick="${subscriptionStatus ? 'updateUserChatBackgroundImage(this)' : 'loadPlanPage()'}" 
+                          data-user-chat-id="${userChatId}" 
+                          data-img="${imageUrl}"
+                          data-image-id="${imageId}">
+                        <i class="bi bi-image"></i>${window.translations?.image_tools?.update_background || 'Update Background'}
+                    </span>
                 </div>
                 
                 ${actions && actions.length > 0 ? `

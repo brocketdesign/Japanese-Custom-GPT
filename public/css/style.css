@@ -191,7 +191,14 @@ body {
   height:100%;
   object-fit:cover
   }
-  
+  #chat-wrapper {
+    background-size: contain;
+  }
+  @media (max-width: 768px) {
+    #chat-wrapper {
+    background-size: cover;
+    }
+  }
   .chat-item {
   border-bottom:1px solid #ddd;
   padding-bottom:15px

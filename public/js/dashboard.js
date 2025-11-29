@@ -1090,11 +1090,37 @@ window.updateChatImage = function(el) {
   });
 }
 
+window.updateUserChatBackgroundImage = function(el) {
+  const userChatId = $(el).data('user-chat-id');
+  const imageUrl = $(el).data('img');
+  const imageId = $(el).data('image-id');
+  $.ajax({
+    url: `/api/user-chat/${userChatId}/background-image`,
+    type: 'PUT',
+        xhrFields: {
+            withCredentials: true
+        },
+    contentType: 'application/json',
+    data: JSON.stringify({ imageId, imageUrl }),
+    success: function(response) {
+      // Maybe show a success message or update UI
+      console.log('User chat background updated successfully');
+      updateChatBackgroundImage(imageUrl);
+    },
+    error: function(xhr, status, error) {
+      console.error('Failed to update user chat background:', error);
+    }
+  });
+}
+
     
 window.updateChatBackgroundImage = function(thumbnail) {
   const currentImageUrl = $('#chat-wrapper').css('background-image').replace(/url\(["']?|["']?\)$/g, '');
   if (currentImageUrl !== thumbnail) {
-     // $('#chat-wrapper').css('background-image', `url(${thumbnail})`);
+     $('#chat-wrapper').css('background-image', `url(${thumbnail})`);
+  }
+  if(!thumbnail || thumbnail === 'null' || thumbnail === 'undefined' || thumbnail === '') {
+    $('#chat-wrapper').css('background-image', '');
   }
   resetPeopleChatCache(chatId);
 }

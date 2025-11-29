@@ -797,7 +797,7 @@ function resolveImageTitle(title) {
     return '';
 }
 
-function refreshImageToolsState(imageData, chatId) {
+function refreshImageToolsState(imageData, chatId, userChatId) {
     if (typeof getImageTools !== 'function') {
         return;
     }
@@ -816,6 +816,7 @@ function refreshImageToolsState(imageData, chatId) {
 
     const toolsMarkup = getImageTools({
         chatId,
+        userChatId,
         imageId,
         isLiked: !!imageData.isLiked,
         title: resolveImageTitle(imageData.title),
@@ -877,7 +878,7 @@ window.addGalleryImageToChat = function(el) {
         .attr('disabled', true)
         .addClass('disabled')
         .html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="width: 17px !important; height: 17px !important; font-size: 12px;"></span>');
-
+        
     $.ajax({
         url: `/gallery/${imageId}/add-to-chat`,
         method: 'POST',
@@ -912,7 +913,7 @@ window.addGalleryImageToChat = function(el) {
             }
 
             displayMessage('bot-image', imgEl, userChatId);
-            refreshImageToolsState(imageData, chatId);
+            refreshImageToolsState(imageData, chatId, userChatId);
 
             if (Array.isArray(window.loadedImages)) {
                 const alreadyStored = window.loadedImages.some(stored => stored && stored._id === imageData._id);

@@ -22,6 +22,7 @@ const {
     fetchTags,
     processPromptToTags,
     saveChatImageToDB,
+    saveUserChatBackgroundImageToDB,
     checkUserAdmin,
     getApiUrl
 } = require('../models/tool');
@@ -597,6 +598,13 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
         const { chatId } = request.params;
         const { imageUrl } = request.body;
         await saveChatImageToDB(fastify.mongo.db, chatId, imageUrl);
+        reply.send({ success: true });
+    });
+      
+    fastify.put('/api/user-chat/:userChatId/background-image', async (request, reply) => {
+        const { userChatId } = request.params;
+        const { imageId, imageUrl } = request.body;
+        await saveUserChatBackgroundImageToDB(fastify.mongo.db, userChatId, imageId, imageUrl);
         reply.send({ success: true });
     });
       

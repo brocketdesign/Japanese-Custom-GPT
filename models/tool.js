@@ -566,6 +566,35 @@ async function saveChatImageToDB(db, chatId, imageUrl) {
 
     return updateResult;
 }
+
+async function saveUserChatBackgroundImageToDB(db, userChatId, imageId, imageUrl) {
+    const collectionUserChat = db.collection('userChat');
+
+    // Convert userChatId string to ObjectId
+    let userChatObjectId;
+    try {
+        userChatObjectId = new ObjectId(userChatId);
+    } catch (error) {
+        throw new Error('Invalid userChatId');
+    }
+
+    // Update the 'userChat' collection with backgroundImageId and backgroundImageUrl
+    const updateResult = await collectionUserChat.updateOne(
+        { _id: userChatObjectId },
+        { 
+            $set: { 
+                backgroundImageId: imageId,
+                backgroundImageUrl: imageUrl
+            } 
+        }
+    );
+
+    if (updateResult.matchedCount === 0) {
+        throw new Error('UserChat not found');
+    }
+
+    return updateResult;
+}
     const getApiUrl = (req) => {
         if (process.env.MODE === 'local') {
             // Get the host from the request or use default local IP detection
@@ -618,6 +647,7 @@ module.exports = {
     listFiles,
     addNotification,
     saveChatImageToDB,
+    saveUserChatBackgroundImageToDB,
     addAdminEmails,
     getApiUrl
 };

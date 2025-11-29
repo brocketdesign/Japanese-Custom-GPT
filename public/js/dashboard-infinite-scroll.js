@@ -450,7 +450,7 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, subscripti
     const addToChatLabel = window.translations?.image_tools?.add_to_chat || 'Add to Chat';
     const addToChatButton = onChatPage ? `
         <div class="position-absolute top-0 end-0 m-1" style="z-index:3;">
-            <span class="btn btn-light image-add-to-chat" 
+            <span class="btn badge-sm btn-light image-add-to-chat" 
                   data-image-id="${item._id}" 
                   data-chat-id="${chatId || ''}"
                   data-source-type="${type}"
@@ -462,7 +462,7 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, subscripti
         </div>` : '';
     
     return `
-        <div class="image-card col-6 col-md-3 col-lg-2 mb-2" data-image-id="${item._id}">
+        <div class="image-card col-6 col-md-3 col-lg-2 mb-2 px-1" data-image-id="${item._id}">
             <div class="card shadow-0 position-relative">
                 ${!isBlur ? `${addToChatButton}` : ''}
                 ${isBlur ? 
@@ -480,7 +480,7 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, subscripti
                 ${isTemporary || (!subscriptionStatus && isBlur) ? '':
                     `
                     <div class="position-absolute top-0 start-0 m-1" style="z-index:3;">
-                        <span class="btn btn-light image-fav ${isLiked ? 'liked' : ''}" 
+                        <span class="btn badge-sm btn-light image-fav ${isLiked ? 'liked' : ''}" 
                             data-id="${item._id}" data-chat-id="${chatId}" onclick="toggleImageFavorite(this)">
                             <i class="bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}" style="cursor: pointer;"></i>
                         </span>

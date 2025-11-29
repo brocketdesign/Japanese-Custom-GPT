@@ -481,7 +481,7 @@ function setupChatInterface(chat, character, userChat, isNew) {
     
     // Remove old classes and add the new styling class
     albumLink.removeClass('btn btn-light shadow-0 border border-3 border-dark rounded-circle shadow');
-    albumLink.addClass('album-link-styled');
+    albumLink.addClass('album-link-styled rounded-circle-button-size');
 
     // Clear any inline styles that might conflict or are now handled by the class
     albumLink.removeAttr('style'); 
@@ -584,8 +584,8 @@ function setupChatInterface(chat, character, userChat, isNew) {
         var card = $(`
             <div 
             onclick="showImagePreview(this)"
-            class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 mx-1 col-auto" style="cursor:pointer;" data-src="${imageUrl}">
-                <div style="background-image:url(${imageUrl});border:4px solid white;" class="card-img-top rounded-avatar position-relative m-auto">
+            class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 col-auto" style="cursor:pointer;" data-src="${imageUrl}">
+                <div style="background-image:url(${imageUrl});" class="card-img-top rounded-avatar rounded-circle-button-size position-relative m-auto">
                 </div>
             </div>
         `);
@@ -603,8 +603,8 @@ function setupChatInterface(chat, character, userChat, isNew) {
             <div 
             onclick="showVideoPreview(this)"
             data-video-src="${videoUrl}"
-            class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 mx-1 col-auto" style="cursor:pointer;" data-src="${originalImageUrl}">
-                <div style="background-image:url(${originalImageUrl});border:4px solid white;" class="card-img-top rounded-avatar position-relative m-auto">
+            class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 col-auto" style="cursor:pointer;" data-src="${originalImageUrl}">
+                <div style="background-image:url(${originalImageUrl});" class="card-img-top rounded-avatar rounded-circle-button-size position-relative m-auto">
                 </div>
             </div>
         `);

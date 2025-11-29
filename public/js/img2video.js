@@ -236,8 +236,8 @@ window.displayOrRemoveVideoLoader = function (placeholderId, action) {
         
         // with a video icon in the center
         const card = $(`
-            <div data-id="${placeholderId}" class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 mx-1 col-auto" style="cursor:pointer;">
-                <div class="card-img-top rounded-avatar position-relative m-auto" style="border:4px solid white;">
+            <div data-id="${placeholderId}" class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 col-auto" style="cursor:pointer;">
+                <div class="card-img-top rounded-avatar rounded-circle-button-size position-relative m-auto" >
                     <img src="${loadingSpinerGif}" alt="Loading..." class="position-absolute top-50 start-50 translate-middle" style="z-index:2;"/>
                 </div>
             </div>

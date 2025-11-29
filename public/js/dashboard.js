@@ -3148,7 +3148,7 @@ $(document).ready(function () {
                   : false;
   
                 additionalImagesHtml += `
-                  <div class="image-card horizontal-image-wrapper col-12 col-md-4 col-lg-2 mb-2">
+                  <div class="image-card horizontal-image-wrapper col-12 col-md-4 col-lg-2 mb-2 px-1">
                     <div class="card shadow-0">
                       ${
                         isBlur

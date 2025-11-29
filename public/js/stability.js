@@ -176,12 +176,12 @@ window.displayOrRemoveImageLoader = function (imageId, action, imagePreview) {
         const loadingSpinerGif = "/img/image-placeholder.gif";
         const hasCustomPrompt = imagePreview && imagePreview.trim() !== '';
         const backgroundStyle = hasCustomPrompt 
-            ? `background-image:url(${imagePreview});border:4px solid white;background-size:cover;` 
-            : 'border:4px solid white;';
+            ? `background-image:url(${imagePreview});background-size:cover;` 
+            : '';
         
         const card = $(`
-            <div data-id="${imageId}" class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 mx-1 col-auto" style="cursor:pointer;">
-                <div style="${backgroundStyle}" class="card-img-top rounded-avatar position-relative m-auto">
+            <div data-id="${imageId}" class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 col-auto" style="cursor:pointer;">
+                <div style="${backgroundStyle}" class="card-img-top rounded-avatar rounded-circle-button-size position-relative m-auto">
                     <img src="${loadingSpinerGif}" alt="Loading..." class="position-absolute top-50 start-50 translate-middle" style="z-index:2;${hasCustomPrompt ? 'opacity:0.8;' : ''}"/>
                 </div>
             </div>

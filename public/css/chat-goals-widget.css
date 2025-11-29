@@ -8,9 +8,15 @@
 }
 
 /* Toggle Button */
+#live-goals-widget{
+    top: 130px;
+}
+@media screen and (max-width: 768px) {
+    #live-goals-widget{
+    top: 120px;
+    }
+}
 .goals-toggle-btn {
-    width: 70px;
-    height: 70px;
     background: linear-gradient(to bottom right, rgba(212, 190, 254, 1), rgba(110, 33, 244, 1));
     border-radius: 50%;
     display: flex;
@@ -113,7 +119,7 @@
 .goals-expanded-panel.show {
     opacity: 1;
     visibility: visible;
-    transform: translateY(-50%) translateX(0) scale(1);
+    transform: translateY(-18%) translateX(-14%) scale(1);
 }
 
 .goals-panel-header {
@@ -351,11 +357,6 @@
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
-    
-    .goals-toggle-btn {
-        width: 70px;
-        height: 70px;
-    }
     
     .goals-trophy-icon {
         font-size: 16px;

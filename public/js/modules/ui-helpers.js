@@ -42,7 +42,7 @@ window.renderCircleGrid = function (cardInfos, container) {
     cardInfos.forEach(function (item) {
         const card = $(`
             <div class="card custom-card bg-transparent shadow-0 border-0 px-1 col-3 col-sm-4 col-lg-2" style="cursor:pointer;" data-id="${item._id}">
-                <div style="background-image:url(${item.chatImageUrl})" class="card-img-top rounded-avatar position-relative m-auto" alt="${item.name}"></div>
+                <div style="background-image:url(${item.chatImageUrl})" class="card-img-top rounded-avatar rounded-circle-button-size position-relative m-auto" alt="${item.name}"></div>
             </div>
         `);
         card.on('click', function () {

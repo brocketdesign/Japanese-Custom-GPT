@@ -22,7 +22,7 @@ function createPreviewModalIfNeeded() {
                             </div>
                             <div class="image-info-overlay position-absolute w-100" style="bottom: 20px; left: 0; right: 0; z-index: 1000;">
                                 <div class="container text-center">
-                                    <div class="image-info-container mx-auto" style="max-width: 600px; padding: 15px; border-radius: 12px; backdrop-filter: blur(10px);">
+                                    <div class="d-none image-info-container mx-auto" style="max-width: 600px; padding: 15px; border-radius: 12px; backdrop-filter: blur(10px);">
                                         <div class="image-title text-white fw-bold mb-2" style="font-size: 18px;"></div>
                                         <div class="image-prompt-container d-none" style="max-height: 60px; overflow-y: auto; scrollbar-width: thin;">
                                             <div class="image-prompt text-white-50" style="font-size: 14px; line-height: 1.4;"></div>

@@ -2,7 +2,6 @@
 /* Live Goals Floating Widget */
 .live-goals-floating {
     width: 100%;
-    padding-left: 25px;
     z-index: 1015;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }

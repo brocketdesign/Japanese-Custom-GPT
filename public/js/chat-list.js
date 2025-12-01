@@ -1216,57 +1216,6 @@ function buildChatThumbElement(chat, index = 0, userChatLevel = null) {
     `);
 }
 
-function _buildChatThumbElement(chat, index = 0, userChatLevel = null) {
-    const animationDelay = `${Math.max(index, 0) * 0.1}s`;
-    const ownerId = resolveOwnerId(chat.userId);
-    const updatedAt = getChatTimestamp(chat);
-
-    // Safely get level for this chat – default = 0 (will be updated asynchronously)
-    const level = (userChatLevel && userChatLevel[chat._id] !== undefined) ? userChatLevel[chat._id] : 0;
-
-    // Build the full class string
-    let badgeClass = 'level-badge position-absolute start-50 translate-middle-x text-white fw-bold shadow-lg';
-
-    if (level === 0)          badgeClass += ' zero';
-    else if (level <= 5)      badgeClass += ' bronze';
-    else if (level <= 10)     badgeClass += ' gold';
-    else if (level <= 15)     badgeClass += ' platinum';
-    else if (level <= 20)     badgeClass += ' purple';
-    else                      badgeClass += ' diamond';   // 21+
-
-    // Only diamond tier gets the breathing glow
-    const badgeStyle = level > 20
-        ? 'animation: breathe 4s ease-in-out infinite;'
-        : '';
-
-    return $(`
-        <div class="chat-thumb-container flex-shrink-0 me-2 animate__animated ${chat.nsfw ? 'nsfw-content' : ''}"
-             data-id="${chat._id}"
-             data-user-id="${ownerId}"
-             data-updated-at="${updatedAt}"
-             onclick="handleChatThumbClick(this)"
-             style="cursor: pointer; opacity: 0; animation-delay: ${animationDelay};">
-
-            <div class="chat-thumb-card rounded-circle border border-2 border-light shadow-sm position-relative overflow-visible"
-                 style="width: 60px; height: 60px; background-image: url('${chat.chatImageUrl || '/img/logo.webp'}'); background-size: cover; background-position: center;">
-
-                <!-- LEVEL BADGE – Bottom center -->
-                <div class="${badgeClass}"
-                     style="${badgeStyle}">
-                    ${level}
-                </div>
-
-            </div>
-
-            <div class="chat-thumb-name text-center mt-1 d-none">
-                <small class="text-dark fw-medium text-truncate d-block" style="font-size: 0.7rem; max-width: 60px;">
-                    ${chat.name}
-                </small>
-            </div>
-        </div>
-    `);
-}
-
 // Function to fetch and update levels for chat thumbnails
 async function updateChatThumbLevels(chats) {
     if (!chats || chats.length === 0) return;
@@ -1444,7 +1393,7 @@ function updateHorizontalChatMenu(currentChatId) {
     const chatData = chatCache.data.find(chat => chat._id === currentChatId);
 
     if (currentThumb.length === 0 && chatData) {
-        currentThumb = _buildChatThumbElement(chatData, 0);
+        currentThumb = buildChatThumbElement(chatData, 0);
         currentThumb.css('opacity', '1');
         horizontalList.append(currentThumb);
     }

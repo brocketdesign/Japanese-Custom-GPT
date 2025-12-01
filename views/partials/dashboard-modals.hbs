@@ -637,8 +637,8 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 <h5 class="modal-title" id="characterIntroModalLabel">Character Intro</h5>
             </div>
-            <div class="modal-body position-relative px-2">
-                <div id="character-intro-container">
+            <div class="modal-body position-relative">
+                <div id="character-intro-container" class="px-2 overflow-hidden">
                     <!-- Loading state -->
                     <div class="text-center p-4" id="characterIntroLoading">
                         <div class="spinner-border text-primary" role="status">
@@ -651,7 +651,7 @@
                     <div id="characterIntroContent" style="display: none;">
                         <!-- Character Header -->
                         <div class="d-flex align-items-center mb-3">
-                            <img id="charIntroImage" src="" alt="Character" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover; display: none;">
+                            <img id="charIntroImage" src="" alt="Character" class="rounded-circle me-3 col-3" style="width: 50px; height: 50px; object-fit: cover; display: none;">
                             <div id="charIntroImagePlaceholder" class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 80px; height: 80px;">
                                 <i class="bi bi-person fs-1 text-muted"></i>
                             </div>

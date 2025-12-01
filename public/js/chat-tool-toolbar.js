@@ -149,7 +149,7 @@ function getImageTools({chatId, userChatId, imageId, isLiked = false, title, pro
                     </span>` : ''}
 
                     <span class="badge bg-white text-secondary image-tool-badge update-user-chat-background-image" 
-                          onclick="${subscriptionStatus ? 'updateUserChatBackgroundImage(this)' : 'loadPlanPage()'}" 
+                          onclick="updateUserChatBackgroundImage(this)" 
                           data-user-chat-id="${userChatId}" 
                           data-img="${imageUrl}"
                           data-image-id="${imageId}">

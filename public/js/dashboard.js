@@ -2052,7 +2052,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                           data-src="${primaryImage}" 
                           src="/img/logo.webp" 
                           alt="${chat.name || chat.chatName}" 
-                          class="card-img-top gallery-img gallery-img-primary transition rounded-top ${isBlur ? 'blurred-image' : 'lazy-image'}"
+                          class="card-img-top gallery-img gallery-img-primary transition rounded-top ${isBlur ? 'blurred-image-none lazy-image' : 'lazy-image'}"
                           style="object-fit: cover; width: 100%; height: 100%; min-height: 220px;"
                           loading="lazy"
                         >
@@ -2060,7 +2060,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                           data-src="${secondaryImage}" 
                           src="/img/logo.webp" 
                           alt="${chat.name || chat.chatName} preview"
-                          class="card-img-top gallery-img gallery-img-secondary transition rounded-top ${isBlur ? 'blurred-image' : 'lazy-image'}"
+                          class="card-img-top gallery-img gallery-img-secondary transition rounded-top ${isBlur ? 'blurred-image-none lazy-image' : 'lazy-image'}"
                           style="object-fit: cover; width: 100%; height: 100%; min-height: 220px;"
                           loading="lazy"
                           aria-hidden="true"

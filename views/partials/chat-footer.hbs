@@ -60,13 +60,19 @@
                             <span class="tool-label">{{translations.toolbar.translate}}</span>
                         </button>
 
-                        <!-- 6. Session management -->
+                        <!-- 6. NSFW Toggle -->
+                        <button type="button" class="toolbar-btn toggle-nsfw-btn-chat" id="toggle-nsfw-btn-chat">
+                            <i class="bi bi-toggle-off mx-2"></i><i class="bi bi-toggle-on mx-2"></i>
+                            <span class="tool-label">{{#if translations.toggle_nsfw}}{{translations.toggle_nsfw}}{{else}}NSFW{{/if}}</span>
+                        </button>
+
+                        <!-- 7. Session management -->
                         <button type="button" class="toolbar-btn reset-chat" id="reset-chat-btn" onclick="handleChatReset(this)">
                             <i class="bi bi-plus-square"></i>
                             <span class="tool-label">{{translations.toolbar.reset}}</span>
                         </button>
 
-                        <!-- 7. Settings (always last) -->
+                        <!-- 8. Settings (always last) -->
                         <button type="button" class="toolbar-btn settings-toggle" id="settings-toggle">
                             <i class="bi bi-gear"></i>
                             <span class="tool-label">{{translations.toolbar.settings}}</span>

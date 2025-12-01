@@ -1,5 +1,6 @@
 {
   "lang": "ja",
+  "unlockAll": "すべてアンロック",
   "customPromptModal": {
     "title": "カスタムプロンプトの説明",
     "subtitle": "画像生成のための追加説明を入力してください",

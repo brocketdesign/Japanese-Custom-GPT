@@ -40,13 +40,24 @@ async function routes(fastify, options) {
                 chatId: new ObjectId(chatId)
             });
 
-            // Get model image if modelId exists
-            let modelImage = null;
-            if (chat.modelId) {
-                const collectionModels = fastify.mongo.db.collection('myModels');
-                const model = await collectionModels.findOne({ modelId: chat.modelId });
-                if (model) {
-                    modelImage = model.image;
+            // Get video count
+            const collectionVideos = fastify.mongo.db.collection('videos');
+            const videoCount = await collectionVideos.countDocuments({
+                chatId: new ObjectId(chatId)
+            });
+
+            // Get gallery image if exists
+            let galleryImage = null;
+            const collectionGallery = fastify.mongo.db.collection('gallery');
+            const galleryDoc = await collectionGallery.findOne({ chatId: new ObjectId(chatId) });
+            if (galleryDoc && galleryDoc.images && galleryDoc.images.length > 0) {
+                // Get the first image or the one matching chatImageUrl
+                galleryImage = galleryDoc.images[0].imageUrl;
+                if (chat.chatImageUrl) {
+                    const matchingImage = galleryDoc.images.find(img => img.imageUrl === chat.chatImageUrl);
+                    if (matchingImage) {
+                        galleryImage = matchingImage.imageUrl;
+                    }
                 }
             }
 
@@ -56,7 +67,8 @@ async function routes(fastify, options) {
                     ...chat,
                     messagesCount: messageCount,
                     imageCount: imageCount,
-                    modelImage: modelImage
+                    videoCount: videoCount,
+                    galleryImage: galleryImage
                 }
             });
 

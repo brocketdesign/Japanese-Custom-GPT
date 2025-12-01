@@ -184,4 +184,125 @@ $(document).ready(function() {
         $('#characterInfoContent').hide();
         $.removeCookie('character-info-id', { path: '/' });
     });
+
+    // Function to open character intro modal
+    window.openCharacterIntroModal = function(chatId) {
+        if (!chatId) {
+            showNotification('No character selected', 'error');
+            return;
+        }
+
+        // Store chatId for the modal
+        $.cookie('character-intro-id', chatId, { path: '/' });
+        
+        // Show modal and load data
+        $('#characterIntroModal').modal('show');
+        loadCharacterIntro(chatId);
+    };
+
+    // Load character information for intro
+    function loadCharacterIntro(chatId) {
+        // Show loading state
+        $('#characterIntroLoading').show();
+        $('#characterIntroContent').hide();
+
+        $.ajax({
+            url: `/api/character-info/${chatId}`,
+            method: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    populateCharacterIntro(response.chat);
+                } else {
+                    showIntroError('Failed to load character information');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading character info:', error);
+                showIntroError('Failed to load character information');
+            },
+            complete: function() {
+                $('#characterIntroLoading').hide();
+            }
+        });
+    }
+
+    // Populate character information in the intro modal
+    function populateCharacterIntro(chatData) {
+        // Basic header information
+        $('#charIntroName').text(chatData.name || 'Unnamed Character');
+        $('#charIntroGender').text(chatData.gender || 'Not specified');
+        $('#charIntroCreatedAt').text(chatData.updatedAt || 'Never');
+        $('#charIntroImages').text(chatData.imageCount || 0);
+        $('#charIntroVideos').text(chatData.videoCount || 0);
+
+        // Character image
+        if (chatData.chatImageUrl) {
+            $('#charIntroImage').attr('src', chatData.chatImageUrl).show();
+            $('#charIntroImagePlaceholder').removeClass('d-flex').hide();
+            $.cookie('character-intro-image', chatData.chatImageUrl, { path: '/' });
+        } else {
+            $('#charIntroImage').hide();
+            $('#charIntroImagePlaceholder').addClass('d-flex').show();
+        }
+
+        // Store NSFW status
+        $.cookie('character-intro-nsfw', chatData.nsfw ? 'true' : 'false', { path: '/' });
+
+        // Basic information
+        $('#charIntroShortIntro').text(chatData.short_intro || 'No introduction provided');
+        $('#charIntroNsfw').text(chatData.nsfw ? 'Yes' : 'No');
+        
+        // Tags
+        if (chatData.tags && Array.isArray(chatData.tags) && chatData.tags.length > 0) {
+            const tagsHtml = chatData.tags.map(tag => `<span class="badge bg-secondary me-1">${tag}</span>`).join('');
+            $('#charIntroTags').html(tagsHtml);
+        } else {
+            $('#charIntroTags').text('No tags');
+        }
+
+        // Show content
+        $('#characterIntroContent').show();
+
+        // Load gallery
+        loadIntroImages(chatData._id, 1, true, true);
+    }
+
+    // Show error in intro modal
+    function showIntroError(message) {
+        $('#characterIntroContent').html(`
+            <div class="text-center p-4">
+                <i class="bi bi-exclamation-triangle text-warning fs-1"></i>
+                <div class="mt-2 text-muted">${message}</div>
+            </div>
+        `).show();
+    }
+
+    // Start chatting function
+    window.startChatting = function(event) {
+        const chatId = $.cookie('character-intro-id');
+        const imageUrl = $.cookie('character-intro-image');
+        const isNsfw = $.cookie('character-intro-nsfw') === 'true';
+        const subscriptionStatus = window.user?.subscriptionStatus === 'active';
+
+        $('#characterIntroModal').modal('hide');
+        redirectToChat(chatId, imageUrl);
+        /* 
+        if (isNsfw && !subscriptionStatus) {
+            loadPlanPage();
+        } else {
+            redirectToChat(chatId, imageUrl);
+        }
+        */
+        event.stopPropagation();
+    };
+
+    // Reset intro modal when hidden
+    $('#characterIntroModal').on('hidden.bs.modal', function() {
+        $('#characterIntroLoading').show();
+        $('#characterIntroContent').hide();
+        $('#character-intro-gallery').empty();
+        $.removeCookie('character-intro-id', { path: '/' });
+        $.removeCookie('character-intro-image', { path: '/' });
+        $.removeCookie('character-intro-nsfw', { path: '/' });
+    });
 });

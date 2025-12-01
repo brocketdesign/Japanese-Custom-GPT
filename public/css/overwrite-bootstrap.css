@@ -230,7 +230,7 @@
 .modal-footer {
   border-top: 1px solid var(--border-light) !important;
   padding: var(--spacing-xl) !important;
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg) !important;
+  border-radius: 0px !important;
 }
 
 .modal-title {

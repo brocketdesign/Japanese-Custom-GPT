@@ -105,10 +105,10 @@ body {
   body.nsfw-mode .nsfw-content {
     display: block ; /* Or any other appropriate display value */
   }
-  body.nsfw-mode .toggle-nsfw-btn i.bi-toggle-off {
+  body.nsfw-mode .toggle-nsfw-btn-chat i.bi-toggle-off,body.nsfw-mode .toggle-nsfw-btn-chat i.bi-toggle-off {
     display: none !important;
   }
-  body.sfw-mode .toggle-nsfw-btn i.bi-toggle-on {
+  body.sfw-mode .toggle-nsfw-btn i.bi-toggle-on, body.sfw-mode .toggle-nsfw-btn-chat i.bi-toggle-on {
     display: none !important;
   }
   .cursor-pointer {

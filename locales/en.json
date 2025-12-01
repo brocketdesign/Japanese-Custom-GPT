@@ -1,5 +1,6 @@
 {
   "lang": "en",
+  "unlockAll": "Unlock All",
   "customPromptModal": {
     "title": "Custom Prompt Description",
     "subtitle": "Enter additional description for the image generation",

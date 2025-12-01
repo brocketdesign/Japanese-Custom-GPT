@@ -59,6 +59,8 @@ function getGalleryConfig(type) {
             return { gallery: '#chat-videos-gallery', controls: '#chat-videos-pagination-controls', empty: '#chat-videos-empty', dataAttr: 'data-chat-id' };
         case 'user':
             return { gallery: '#user-images-gallery', controls: '#images-pagination-controls', empty: null };
+        case 'intro':
+            return { gallery: '#character-intro-gallery', empty: null, dataAttr: 'data-chat-id' };
         default:
             return {};
     }
@@ -96,6 +98,18 @@ window.loadChatVideos = function(chatId, page = 1, reload = false, isModal = fal
         return Promise.resolve();
     }
     return loadImages('chatVideo', chatId, page, reload, isModal, `/chat/${chatId}/videos`, onCharacterPage, 'video');
+};
+
+/**
+ * Main function to load intro gallery images with infinite scroll
+ * @param {string} chatId - The chat ID
+ * @param {number} page - Page number to load
+ * @param {boolean} reload - Whether to reload from cache
+ * @param {boolean} isModal - Whether loading in modal context
+ * @returns {Promise}
+ */
+window.loadIntroImages = function(chatId, page = 1, reload = false, isModal = false) {
+    return loadImages('intro', chatId, page, reload, true, `/chat/${chatId}/images`, false, 'image');
 };
 
 /**
@@ -626,7 +640,7 @@ function setupInfiniteScroll(id, isModal = false, type = 'chat') {
         return;
     }
     
-    const scrollContainer = isModal ? $('#characterModal .modal-body') : $(window);
+    const scrollContainer = isModal ? (type === 'intro' ? $('#characterIntroModal .modal-body') : $('#characterModal .modal-body')) : $(window);
     const config = getGalleryConfig(type);
     const cacheKey = `${type}_${id}`;
     
@@ -683,7 +697,7 @@ function handleScroll(id, isModal, cacheKey, type) {
     }
     
     // Get the scroll container
-    const scrollContainer = isModal ? document.querySelector('#characterModal .modal-body') : window;
+    const scrollContainer = isModal ? (type === 'intro' ? document.querySelector('#characterIntroModal .modal-body') : document.querySelector('#characterModal .modal-body')) : window;
     
     // Get the last element in the gallery
     const lastElement = gallery.lastElementChild;
@@ -704,7 +718,7 @@ function handleScroll(id, isModal, cacheKey, type) {
     if (rect.top < visibleBottom + triggerOffset) {
         const nextPage = currentPage + 1;
         
-        const loadFunction = type === 'chat' ? loadChatImages : loadUserImages;
+        const loadFunction = type === 'chat' ? loadChatImages : type === 'intro' ? loadIntroImages : loadUserImages;
         loadFunction(id, nextPage, false, isModal)
             .catch(error => {
                 console.error(`[handleScroll] Failed to load page ${nextPage}:`, error);

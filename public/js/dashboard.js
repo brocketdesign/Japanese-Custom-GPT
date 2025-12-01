@@ -2039,7 +2039,8 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
           const primaryImage = sampleImages[0];
           const secondaryImage = sampleImages.find((img) => img !== primaryImage) || primaryImage;
 
-          const conditionFunc = `${finalNsfwResult ? `(${subscriptionStatus} ? redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}') : loadPlanPage())` : `redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')`}`;
+          //const conditionFunc = `${finalNsfwResult ? `(${subscriptionStatus} ? redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}') : loadPlanPage())` : `redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')`}`;
+          const conditionFunc = `openCharacterIntroModal('${chat.chatId || chat._id}')`
 
           // --- End: Sample image selection logic ---
           htmlContent += `
@@ -3538,7 +3539,7 @@ const modalStatus = {
 
 // Function to close any opened modal
 window.closeAllModals = function() {
-    const modals = ['characterUpdateModal', 'settingsModal', 'characterCreationModal', 'planUpgradeModal', 'characterModal', 'loginModal'];
+    const modals = ['characterUpdateModal', 'settingsModal', 'characterCreationModal', 'planUpgradeModal', 'characterModal', 'loginModal', 'characterIntroModal'];
     modals.forEach(modalId => {
         const modalElement = document.getElementById(modalId);
         if (modalElement) {
@@ -4014,4 +4015,14 @@ $(document).on('click', '.toggle-nsfw-btn', function() {
   }
   toggleNSFWContent();
   window.location.reload();
+});
+// .toggle-nsfw-btn-chat
+$(document).on('click', '.toggle-nsfw-btn-chat', function() {
+  const subscriptionStatus = window.user ? window.user.subscriptionStatus === 'active' : false;
+  if(isTemporary || !subscriptionStatus) {
+    loadPlanPage();
+    return;
+  }
+  toggleNSFWContent();
+  reloadCurrentChat();
 });

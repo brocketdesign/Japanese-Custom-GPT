@@ -1926,3 +1926,11 @@ window.upscaleImage = async function(imageId, imageUrl, chatId, userChatId) {
         showNotification(window.translations?.upscale_error || 'Failed to upscale image', 'error');
     }
 };
+
+window.reloadCurrentChat = function() {
+    // Check if the chat container is open (visible and has content)
+    if ($('#chatContainer').is(':visible') && $('#chatContainer').children().length > 0 && chatId) {
+        // Reload the current chat by fetching data again
+        fetchChatData(chatId, userId);
+    }
+};

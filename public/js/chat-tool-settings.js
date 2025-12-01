@@ -920,7 +920,6 @@ class ChatToolSettings {
         if (!grid || !this.premiumVoices.length) return;
 
         const characterGender = $('.settings-modal-body').attr('data-genre') || 'female';
-        console.log('Rendering Premium voices for gender:', characterGender);
         const user = window.user || {};
         const subscriptionStatus = user.subscriptionStatus === 'active';
 

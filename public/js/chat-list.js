@@ -1,6 +1,31 @@
 var chatsPerPage = 10;
 let initHorizontalChatMenu = false;
 
+// Global heart icon mapping for chat levels
+const HEART_ICONS = {
+    0: 'purple-heart-icon.png',      // Level 0
+    1: 'growing-heart-icon.png',     // Levels 1-5 (Bronze)
+    6: 'green-heart-icon.png',       // Levels 6-10 (Gold)
+    11: 'blue-heart-icon.png',       // Levels 11-15 (Platinum)
+    16: 'red-heart-icon.png',        // Levels 16-20 (Purple)
+    21: 'beating-heart-icon.png'     // Levels 21+ (Diamond/Legendary)
+};
+
+// Helper function to get heart icon based on level
+function getHeartIcon(level) {
+    if (level === 0) return HEART_ICONS[0];
+    if (level <= 5) return HEART_ICONS[1];
+    if (level <= 10) return HEART_ICONS[6];
+    if (level <= 15) return HEART_ICONS[11];
+    if (level <= 20) return HEART_ICONS[16];
+    return HEART_ICONS[21]; // 21+
+}
+
+// Helper function to get badge class for legendary hearts
+function getHeartBadgeClass(level) {
+    return level > 20 ? 'legendary' : '';
+}
+
 // Cache object structure
 let chatCache = {
     data: [],
@@ -1153,28 +1178,9 @@ function buildChatThumbElement(chat, index = 0, userChatLevel = null) {
         : 0;  // Start with 0, update via API
 
     // Choose heart icon per tier
-    let heartIcon = '';
-    let badgeClass = '';
-    let showIcon = false;
-    if (level === 0) {
-        heartIcon = 'purple-heart-icon.png';           // almost invisible or empty
-    } else if (level <= 5) {
-        heartIcon = 'growing-heart-icon.png';
-        showIcon = true;
-    } else if (level <= 10) {
-        heartIcon = 'green-heart-icon.png';
-        showIcon = true;
-    } else if (level <= 15) {
-        heartIcon = 'blue-heart-icon.png';
-        showIcon = true;
-    } else if (level <= 20) {
-        heartIcon = 'red-heart-icon.png';
-        showIcon = true;
-    } else {
-        heartIcon = 'beating-heart-icon.png';   
-        badgeClass = 'legendary';            // legendary animated one
-        showIcon = true;
-    }
+    let heartIcon = getHeartIcon(level);
+    let badgeClass = getHeartBadgeClass(level);
+    let showIcon = level > 0;
 
     const iconHtml = showIcon ? `<img src="/img/heart/${heartIcon}" class="heart-icon ${badgeClass}" alt="♥">` : '';
 
@@ -1282,22 +1288,8 @@ async function updateChatThumbLevels(chats) {
                 const $thumb = horizontalChatList.find(`.chat-thumb-container[data-id="${chat._id}"]`);
                 if ($thumb.length > 0) {
                     // Update the heart badge
-                    let heartIcon = '';
-                    let badgeClass = '';
-                    if (level === 0) {
-                        heartIcon = 'purple-heart-icon.png';
-                    } else if (level <= 5) {
-                        heartIcon = 'growing-heart-icon.png';
-                    } else if (level <= 10) {
-                        heartIcon = 'green-heart-icon.png';
-                    } else if (level <= 15) {
-                        heartIcon = 'blue-heart-icon.png';
-                    } else if (level <= 20) {
-                        heartIcon = 'red-heart-icon.png';
-                    } else {
-                        heartIcon = 'beating-heart-icon.png';   
-                        badgeClass = 'legendary';
-                    }
+                    let heartIcon = getHeartIcon(level);
+                    let badgeClass = getHeartBadgeClass(level);
                     
                     const $card = $thumb.find('.chat-thumb-card');
                     $card.find('.heart-badge').remove(); // Remove existing
@@ -1319,6 +1311,53 @@ async function updateChatThumbLevels(chats) {
         } catch (error) {
             // Silently handle errors to avoid console logs
         }
+    }
+}
+
+// Function to update the current chat level in the avatar menu
+async function updateCurrentChatLevel() {
+    const chatId = localStorage.getItem('chatId');
+    const userId = window.user && window.user._id;
+
+    if (!chatId || !userId) return;
+
+    try {
+        const response = await $.ajax({
+            url: `/api/chat-level/${chatId}`,
+            method: 'GET',
+            xhrFields: {
+                withCredentials: true
+            }
+        });
+
+        if (response.success) {
+            const level = response.level;
+            const container = $('#chatLevelContainer span');
+            if (container.length > 0) {
+                // Choose heart icon based on level
+                let heartIcon = getHeartIcon(level);
+                let badgeClass = getHeartBadgeClass(level);
+
+                const iconHtml = level ? `<img src="/img/heart/${heartIcon}" class="heart-icon ${badgeClass}" alt="♥" style="width: 16px; height: 16px; margin-right: 4px;">` : '';
+                container.html(`${iconHtml}${translations.avatar.lvl || 'Lvl.'} ${level}`);
+
+                // Update button class based on level for professional styling
+                container.removeClass('btn-primary btn-success btn-warning btn-danger btn-info d-none');
+                if (level >= 20) {
+                    container.addClass('btn-danger'); // Diamond or higher - red
+                } else if (level >= 15) {
+                    container.addClass('btn-warning'); // Platinum - yellow
+                } else if (level >= 10) {
+                    container.addClass('btn-success'); // Gold - green
+                } else if (level >= 5) {
+                    container.addClass('btn-info'); // Bronze and below - blue
+                } else {
+                    container.addClass('btn-dark'); // Default
+                }
+            }
+        } 
+    } catch (error) {
+        console.error('Error fetching current chat level:', error);
     }
 }
 
@@ -1711,3 +1750,4 @@ window.displayChatThumbs = displayChatThumbs;
 window.handleChatThumbClick = handleChatThumbClick;
 window.updateHorizontalChatMenu = updateHorizontalChatMenu;
 window.initializeHorizontalChatMenu = initializeHorizontalChatMenu;
+window.updateCurrentChatLevel = updateCurrentChatLevel;

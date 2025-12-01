@@ -155,8 +155,8 @@
     top: 5px !important;
     right: 5px !important;
     z-index: 1040 !important; /* Below offcanvas (1055) */
-    width: 39px;
-    height: 39px;
+    width: 35px;
+    height: 35px;
     display: flex;
     align-items: center;
     justify-content: center;

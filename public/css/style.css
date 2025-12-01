@@ -6,8 +6,8 @@
   --primary-dark: #6E20F4;
   --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
   --primary-gradient-hover: linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #d946ef 100%);
+  --primary-gradient-50: linear-gradient(to bottom right, rgba(99, 102, 241, 0.74), rgba(139, 92, 246, 0.6), rgba(168, 85, 247, 0.54));
 
-  /* Secondary Colors */
   --secondary-color: #6c757d;
   --secondary-dark: #5a6268;
   --success-color: #28a745;
@@ -4359,4 +4359,28 @@ opacity: 0.8;
 @keyframes heartBeat {
     0%, 100% { transform: scale(1); }
     50%      { transform: scale(1.15); }
+}
+/* Chat Level Container Button Styles */
+#chatLevelContainer .btn-primary {
+    background: rgba(0, 123, 255, 0.5) !important; /* Semi-transparent blue */
+}
+
+#chatLevelContainer .btn-success {
+    background: rgba(40, 167, 69, 0.5) !important; /* Semi-transparent green */
+}
+
+#chatLevelContainer .btn-warning {
+    background: rgba(255, 193, 7, 0.5) !important; /* Semi-transparent yellow */
+}
+
+#chatLevelContainer .btn-danger {
+    background: rgba(220, 53, 69, 0.5) !important; /* Semi-transparent red */
+}
+
+#chatLevelContainer .btn-info {
+    background: rgba(23, 162, 184, 0.5) !important; /* Semi-transparent cyan */
+}
+
+#chatLevelContainer .btn-dark {
+    background: rgba(52, 58, 64, 0.5) !important; /* Semi-transparent dark */
 }

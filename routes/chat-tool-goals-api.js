@@ -274,7 +274,8 @@ async function routes(fastify, options) {
             });
 
             if (!chat) {
-                return reply.status(404).send({ error: 'Chat not found or access denied' });
+                // Return level 0 if chat not found to avoid errors in UI
+                return reply.send({ success: true, level: 0 });
             }
 
             const level = await getUserLevelForChat(fastify.mongo.db, userId, chatId);

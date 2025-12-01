@@ -33,7 +33,7 @@
     {{#unless user.isTemporary}}
         <div id="avatarMenuContainer" 
         class="d-flex align-items-center gap-2 position-fixed" 
-        style="top:0px;right:65px;z-index:1059;">
+        style="top:0px;right:50px;z-index:1059;">
             {{#if user.isAdmin}}
                 <div class="d-flex align-items-center gap-2">
                     <span class="badge bg-danger text-white">{{translations.admin}}</span>
@@ -60,21 +60,26 @@
                     <!-- Notifications will be populated here via JavaScript -->
                 </ul>
             </div>
+            <!-- Show current chat level -->
+            <div id="chatLevelContainer" class="d-flex align-items-center gap-2 mt-2 onchat-on" onclick="updateCurrentChatLevel()" style="cursor: pointer;">
+                <span class="btn btn-dark badge-sm text-white shadow-0 my-1" style="font-size: 0.9rem;">
+                </span>
+            </div>
             <!-- Points Balance -->
             <div id="userPointsContainer" class="d-flex align-items-center gap-2 mt-2">
-                <span class="btn btn-primary text-white shadow-0 my-1" style="font-size: 0.9rem;" data-bs-toggle="modal" data-bs-target="#userPointsModal">
+                <span class="btn btn-primary-50 badge-sm text-white shadow-0 my-1" style="font-size: 0.9rem;" data-bs-toggle="modal" data-bs-target="#userPointsModal">
                     <i class="bi bi-coin"></i>
                     <span class="user-points-balance">0</span>
                 </span>
             </div>
             <!-- Avatar Button -->
             <button id="avatarMenuBtn" 
-                class="btn p-0 border-0 shadow-0 bg-transparent avatar-bg {{#if (eq user.subscriptionStatus 'active')}} bg-purple {{/if}}" 
+                class="p-0 border-0 shadow-0 bg-transparent avatar-bg {{#if (eq user.subscriptionStatus 'active')}} bg-purple {{/if}}" 
                 type="button" 
                 data-bs-toggle="offcanvas" 
                 data-bs-target="#userMenuOffcanvas" 
                 aria-controls="userMenuOffcanvas"
-                style="width: 35px; height: 45px; border-radius: 50%; background-size: cover; background-position: top; background-image: url('{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}');">
+                style="border-radius: 50%; background-size: cover; background-position: top; background-image: url('{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}');">
             </button>
         </div>
     {{/unless}}

@@ -26,7 +26,10 @@
   background: var(--primary-gradient-hover) !important;
   box-shadow: var(--shadow-primary) !important;
 }
-
+.btn-primary-50 {
+  background: var(--primary-gradient-50) !important;
+  color: white !important;
+}
 .btn-outline-primary {
   border: var(--form-border-width) solid var(--primary-color) !important;
   color: var(--primary-color) !important;

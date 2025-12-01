@@ -215,7 +215,7 @@
 
 /* ====== MODAL OVERRIDES ====== */
 .modal-content {
-  border-radius: var(--radius-lg) !important;
+  border-radius: 0px !important;
   border: none !important;
   box-shadow: var(--shadow-modal) !important;
   animation: modalSlideIn 0.4s cubic-bezier(0.23, 1, 0.32, 1) !important;

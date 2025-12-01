@@ -388,3 +388,29 @@
     }
 }
 </style>
+
+<style>
+/* Ensure the generate button is always fully visible (including on devices with safe areas) */
+.modal-sidebar-footer {
+    position: sticky;
+    bottom: env(safe-area-inset-bottom, 12px);
+    padding: 12px 12px 12px 12px;
+    z-index: 1070;
+    background: transparent;
+}
+
+.modal-sidebar-footer .btn {
+    width: 100%;
+    margin: 0;
+    /* add extra bottom padding to account for safe area on modern phones */
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 12px));
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+/* Make sure main content has enough bottom padding so content isn't hidden behind fixed/sticky footer */
+@media (max-width: 991px) {
+    .modal-main-content, .modal-main-content-scrollable {
+        padding-bottom: calc(78.5px + env(safe-area-inset-bottom, 12px));
+    }
+}
+</style>

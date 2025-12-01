@@ -583,6 +583,83 @@ window.showDashboardFooter = function() {
         'visibility': ''
     });
 }
+// == FIXED & FINAL VERSION – declare on window ==
+
+window.showChat = function () {
+    const $on  = $('.onchat-on');
+    const $off = $('.onchat-off');
+
+    console.log('Showing chat interface with slide-in animation');
+
+    // Instantly hide the previous screen
+    $off.addClass('d-none');
+
+    // Reset any old transitionend listeners (prevents double-trigger bug)
+    $on.off('transitionend webkitTransitionEnd oTransitionEnd');
+
+    // 1. Prepare: off-screen right + no transition yet
+    $on.css({
+        'transition': 'none',
+        'transform': 'translateX(100%)',
+        'opacity': '0',
+        'pointer-events': 'none',
+        'visibility': 'hidden'
+    }).removeClass('d-none').show();  // force visible
+
+    // 2. Force reflow – THIS IS THE KEY to prevent flicker when re-opening
+    void $on[0].offsetHeight;
+
+    // 3. Now enable transition + slide in
+    $on.css({
+        'transition': 'transform 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.38s ease',
+        'transform': 'translateX(0)',
+        'opacity': '1',
+        'pointer-events': 'auto',
+        'visibility': 'visible'
+    });
+};
+
+window.hideChat = function () {
+    const $on  = $('.onchat-on');
+    const $off = $('.onchat-off');
+
+    console.log('Hiding chat interface with slide-out animation');
+
+    // Animate out to the right
+    $on.css({
+        'transition': 'transform 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.38s ease',
+        'transform': 'translateX(100%)',
+        'opacity': '0',
+        'pointer-events': 'none'
+    });
+
+    // When animation finishes → hide and restore previous screen
+    $on.one('transitionend webkitTransitionEnd oTransitionEnd', function () {
+        $on.addClass('d-none').css({
+            'transition': 'none',           // reset for next open
+            'transform': 'translateX(100%)'
+        });
+
+        $off.removeClass('d-none');
+
+        // Restore flex if needed
+        $off.each(function () {
+            if ($(this).attr('data-display-flex')) {
+                $(this).css('display', 'flex');
+            }
+        });
+    });
+};
+
+// === INITIAL STATE (run once on page load) ===
+$(function () {
+    $('.onchat-on').addClass('d-none').css({
+        'transition': 'none',
+        'transform': 'translateX(100%)'
+    });
+    $('.onchat-off').removeClass('d-none');
+});
+
 window.showDiscovery = function() {
     if (!window.location.pathname.includes('/chat/')) {
         window.location.href = '/chat/';
@@ -590,26 +667,8 @@ window.showDiscovery = function() {
     $('.fullscreen-overlay').fadeOut(); 
     $('body').css('overflow', 'visible');
     
+    window.hideChat();
 
-    $('.onchat-on').hide()
-    $('.onchat-on').addClass('d-none').css({
-        'opacity': 0,
-        'pointer-events': 'none',
-        'visibility': 'hidden'
-    });   
-
-    // Restore display:flex if previously set
-    $('.onchat-off').each(function() {
-        if ($(this).attr('data-display-flex')) {
-            $(this).css('display', 'flex');
-        }
-    });
-    $('.onchat-off').show()
-    $('.onchat-off').removeClass('d-none').css({
-        'opacity': '',
-        'pointer-events': '',
-        'visibility': ''
-    }); 
     $('#chat-list').hide();
     $('#promptContainer').slideUp('fast');
     $('.new-chat').each(function(){

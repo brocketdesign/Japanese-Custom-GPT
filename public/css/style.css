@@ -1340,11 +1340,8 @@ opacity: 0.8;
   height:280px;
   padding:0 5px;
   background-position:top;
-  }
-  
-  .onchat-off,.onchat-on {
-    display:none
-    }
+  }  
+
   .loading-overlay.on{
     display: flex !important;
   }

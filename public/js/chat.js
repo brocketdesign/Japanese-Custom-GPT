@@ -1826,26 +1826,6 @@ window.resetChatUrl = function() {
     window.history.pushState({ path: newUrl }, '', newUrl);
     sessionStorage.setItem('lastChatId', null);
 }
-window.showChat = function() {
-    $('.onchat-off').hide()
-    $('.onchat-off').addClass('d-none').css({
-        'opacity': 0,
-        'pointer-events': 'none',
-        'visibility': 'hidden'
-    });    
-
-    $('.onchat-on').each(function() {
-        if ($(this).attr('data-display-flex')) {
-            $(this).css('display', 'flex');
-        }
-    });
-    $('.onchat-on').show()
-    $('.onchat-on').removeClass('d-none').css({
-        'opacity': '',
-        'pointer-events': '',
-        'visibility': ''
-    }); 
-}
 
 // Add this at the top of the file with other global variables
 const upscaledImages = new Set();

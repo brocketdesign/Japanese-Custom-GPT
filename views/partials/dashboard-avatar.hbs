@@ -33,7 +33,7 @@
     {{#unless user.isTemporary}}
         <div id="avatarMenuContainer" 
         class="d-flex align-items-center gap-2 position-fixed" 
-        style="top:0px;right:50px;z-index:1059;">
+        style="top:6px;right:50px;z-index:1059;">
             {{#if user.isAdmin}}
                 <div class="d-flex align-items-center gap-2">
                     <span class="badge bg-danger text-white">{{translations.admin}}</span>
@@ -103,7 +103,7 @@
                         </small>
                     {{/if}}
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-right" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
         </div>
         <div class="offcanvas-body px-3">

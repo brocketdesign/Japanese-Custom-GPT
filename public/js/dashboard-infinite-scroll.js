@@ -430,7 +430,7 @@ async function renderImages(images, id, type) {
         }
         
         const loadedIndex = window.loadedImages.length - 1;
-        const onChatPage = window.location.pathname.includes('/chat');
+        const onChatPage = window.location.pathname.includes('/chat') && $('#chatContainer').is(':visible') && $('#chatContainer').children().length > 0 && chatId === $(gallerySelector).attr('data-chat-id');
         const cardHtml = createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, subscriptionStatus, loadedIndex, id, type, onChatPage);
         
         // Create DOM element

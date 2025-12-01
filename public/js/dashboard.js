@@ -4026,3 +4026,13 @@ $(document).on('click', '.toggle-nsfw-btn-chat', function() {
   toggleNSFWContent();
   reloadCurrentChat();
 });
+
+const modals = document.querySelectorAll('.modal');
+modals.forEach(m => {
+  m.addEventListener('hide.bs.modal', e => {
+    m.querySelector('.modal-dialog').classList.add('modal-out');
+  });
+  m.addEventListener('hidden.bs.modal', e => {
+    m.querySelector('.modal-dialog').classList.remove('modal-out');
+  });
+});

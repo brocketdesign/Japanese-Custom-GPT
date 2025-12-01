@@ -246,16 +246,12 @@
   padding: 0.5rem !important;
   transition: var(--transition-ease) !important;
   background: rgba(0, 0, 0, 0.1) !important;
-  /* Ensure the X icon appears */
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='m.235.847 6.13 6.132L12.487.847a.596.596 0 1 1 .842.842L7.207 7.821l6.122 6.122a.596.596 0 1 1-.842.842L6.365 8.663.235 14.793a.596.596 0 1 1-.842-.842L5.523 7.821-.607 1.689a.596.596 0 1 1 .842-.842Z'/%3e%3c/svg%3e") !important;
+  /* Ensure the < icon appears */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23333'%3E%3Cpath fill-rule='evenodd' d='M10.854 4.146a.5.5 0 0 1 0 .708L6.707 8l4.147 4.146a.5.5 0 0 1-.708.708l-4.5-4.5a.5.5 0 0 1 0-.708l4.5-4.5a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
   background-repeat: no-repeat !important;
   background-position: center !important;
   background-size: 1em !important;
-}
-
-.btn-close:hover {
-  transform: scale(1.1) rotate(90deg) !important;
-  background: rgba(255, 64, 64, 0.2) !important;
+  margin: unset !important;
 }
 
 @keyframes modalSlideIn {
@@ -534,4 +530,51 @@
   background-size: contain;
   width: 1em;
   height: 1em;
+}
+/* FULL-HEIGHT RIGHT-SLIDE MODAL – works 100% with Bootstrap 5 */
+
+.modal.fade .modal-dialog {
+  /* Start off-screen to the right */
+  transform: translateX(100%) !important;
+  transition: transform 0.3s ease-out !important;
+
+  /* Full height + stick to right edge */
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: auto !important;
+
+  /* Layout */
+  margin: 0 !important;
+  max-width: 420px;           /* change as needed */
+  width: 100%;
+  height: 100vh !important;  /* full viewport height */
+
+  /* Remove Bootstrap's default centering */
+  transform: translateX(100%) !important;
+}
+
+.modal.fade.show .modal-dialog {
+  transform: translateX(0) !important;
+}
+
+/* When closing – slide back out */
+.modal.fade .modal-dialog.modal-out {
+  transform: translateX(100%) !important;
+}
+
+/* Make modal content fill the full height */
+.modal.fade .modal-dialog .modal-content {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: -2px 0 20px rgba(0,0,0,0.15);
+}
+
+/* Optional: full-width on mobile */
+@media (max-width: 576px) {
+  .modal.fade .modal-dialog {
+    max-width: 100% !important;
+  }
 }

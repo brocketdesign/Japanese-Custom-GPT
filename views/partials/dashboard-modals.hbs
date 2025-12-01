@@ -286,8 +286,8 @@
     <div class="modal-dialog mx-0">
         <div class="modal-content mx-auto">
             <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 <h5 class="modal-title" id="shareModalLabel">Share</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body d-flex flex-column align-items-center">
                 <button id="twitterShareButton" class="btn btn-outline-primary mb-2 col-lg-8 col-12">
@@ -317,8 +317,8 @@
     <div class="modal-dialog modal-dialog-scrollable mx-0">
         <div class="modal-content mx-auto">
             <div class="modal-header">
-                <h5 class="modal-title" id="settingsModalLabel">{{translations.avatar.settings}}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="settingsModalLabel">{{translations.avatar.settings}}</h5>
             </div>
             <div class="modal-body position-relative p-0">
             <!-- Tab Navigation -->
@@ -361,8 +361,8 @@
     <div class="modal-dialog modal-xl mx-0">
         <div class="modal-content mx-auto">
             <div class="modal-header">
-                <h5 class="modal-title" id="characterCreationModalLabel">{{translations.newCharacter.characterCreationForm}}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="characterCreationModalLabel">{{translations.newCharacter.characterCreationForm}}</h5>
             </div>
             <div class="modal-body p-0 position-relative">
                 <div id="character-creation-container" class="character-creation-sidebar-layout">
@@ -377,8 +377,8 @@
     <div class="modal-dialog modal-dialog-scrollable mx-0">
         <div class="modal-content mx-auto">
             <div class="modal-header">
-                <h5 class="modal-title" id="characterModalLabel">{{translations.character.title}}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="characterModalLabel">{{translations.character.title}}</h5>
             </div>
             <div class="modal-body position-relative px-1">
                 <div id="character-modal-container"></div>
@@ -391,8 +391,8 @@
     <div class="modal-dialog modal-dialog-scrollable mx-0">
         <div class="modal-content mx-auto">
             <div class="modal-header">
-                <h5 class="modal-title" id="planUpgradeModalLabel">{{translations.plan_page.features}}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="planUpgradeModalLabel">{{translations.plan_page.features}}</h5>
             </div>
             <div class="modal-body m-0 p-0 position-relative">
                 <div id="plan-container"></div>
@@ -405,8 +405,8 @@
     <div class="modal-dialog modal-dialog-scrollable mx-0">
         <div class="modal-content mx-auto">
             <div class="modal-header">
-                <h5 class="modal-title" id="affiliationModalLabel">{{affiliationTranslations.modal_title}}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="affiliationModalLabel">{{affiliationTranslations.modal_title}}</h5>
             </div>
             <div class="modal-body m-0 p-0 position-relative">
                 <div id="affiliation-container"></div>
@@ -419,8 +419,8 @@
     <div class="modal-dialog modal-dialog-centered mx-0">
         <div class="modal-content mx-auto">
             <div class="modal-header">
-                <h5 class="modal-title" id="cancelSubscriptionModalLabel">{{translations.cancel_subscription_modal_title}}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="cancelSubscriptionModalLabel">{{translations.cancel_subscription_modal_title}}</h5>
             </div>
             <div class="modal-body">
                 <p>{{translations.cancel_subscription_warning}}</p>
@@ -501,10 +501,10 @@
     <div class="modal-dialog modal-lg modal-dialog-scrollable mx-0">
         <div class="modal-content mx-auto">
             <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 <h5 class="modal-title" id="characterInfoModalLabel">
                     <i class="bi bi-info-circle me-2"></i>{{translations.characterInfo.title}}
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div id="character-info-container">
@@ -634,8 +634,8 @@
     <div class="modal-dialog modal-xl modal-dialog-scrollable mx-0">
         <div class="modal-content mx-auto">
             <div class="modal-header">
-                <h5 class="modal-title" id="characterIntroModalLabel">Character Intro</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="characterIntroModalLabel">Character Intro</h5>
             </div>
             <div class="modal-body position-relative px-2">
                 <div id="character-intro-container">
@@ -680,9 +680,9 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer position-fixed bottom-0 start-50 translate-middle-x w-100 bg-white border-top" style="z-index: 1050;">
+            <div class="modal-footer position-fixed bottom-0 start-50 translate-middle-x w-100 bg-transparent border-top" style="z-index: 1050;">
                 <div class="d-flex justify-content-center w-100">
-                    <button type="button" class="btn btn-outline-primary me-2 is-free-user" onclick="loadPlanPage()">{{translations.unlockAll}}</button>
+                    <button type="button" class="btn btn-dark me-2 is-free-user" onclick="loadPlanPage()">{{translations.unlockAll}}</button>
                     <button type="button" class="btn btn-primary" onclick="startChatting(event)">{{translations.startChatting}}</button>
                 </div>
             </div>

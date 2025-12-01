@@ -24,6 +24,7 @@ const {
 } = require('./chat-tool-settings-utils');
 const { addUserPoints, removeUserPoints, getUserPoints } = require('./user-points-utils');
 const { getImageGenerationCost } = require('../config/pricing');
+const { user } = require('@elevenlabs/elevenlabs-js/api');
 
 // Fetches user info from 'users' collection
 async function getUserInfo(db, userId) {
@@ -337,8 +338,9 @@ async function handleImageGeneration(db, currentUserMessage, lastUserMessage, ge
         }
     } else {
         genImage.image_request = false;
-        imgMessage[0].content = `\n\n${translations.image_generation?.insufficient_points || 'I asked for an other image but I do not have enough points.\n Tell me that I need to earn more points by chatting with you or by subscribing to Lamix Premium in order to receive unlimited images, even hot images. Provide a concise answer to inform me of that and tell me if I want to subscribe there is 70% promotion right now. Stay in your character, keep the same tone as previously. Respond in the language we were talking until now.'}`.trim();
+        imgMessage[0].content = `\n\n${translations.image_generation?.insufficient_points || 'I asked for an other image but I do not have enough points.\n Tell me that I can buy points. Provide a concise answer to inform me of that and tell me if I want to subscribe there is 70% promotion right now. Stay in your character, keep the same tone as previously. Respond in the language we were talking until now.'}`.trim();
         currentUserMessage.name = 'context';
+        fastify.sendNotificationToUser(userId, 'openBuyPointsModal', { userId });
     }
 
     return { imgMessage, genImage };

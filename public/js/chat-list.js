@@ -1142,30 +1142,184 @@ function displayHorizontalChatList(userId, options = {}) {
         }
     });
 }
-
-function buildChatThumbElement(chat, index = 0) {
+function buildChatThumbElement(chat, index = 0, userChatLevel = null) {
     const animationDelay = `${Math.max(index, 0) * 0.1}s`;
     const ownerId = resolveOwnerId(chat.userId);
     const updatedAt = getChatTimestamp(chat);
 
+    // Use real data when available, fallback to 0 (will be updated asynchronously)
+    const level = (userChatLevel && userChatLevel[chat._id] !== undefined)
+        ? userChatLevel[chat._id]
+        : 0;  // Start with 0, update via API
+
+    // Choose heart icon per tier
+    let heartIcon = '';
+    let badgeClass = '';
+    let showIcon = false;
+    if (level === 0) {
+        heartIcon = 'purple-heart-icon.png';           // almost invisible or empty
+    } else if (level <= 5) {
+        heartIcon = 'growing-heart-icon.png';
+        showIcon = true;
+    } else if (level <= 10) {
+        heartIcon = 'green-heart-icon.png';
+        showIcon = true;
+    } else if (level <= 15) {
+        heartIcon = 'blue-heart-icon.png';
+        showIcon = true;
+    } else if (level <= 20) {
+        heartIcon = 'red-heart-icon.png';
+        showIcon = true;
+    } else {
+        heartIcon = 'beating-heart-icon.png';   
+        badgeClass = 'legendary';            // legendary animated one
+        showIcon = true;
+    }
+
+    const iconHtml = showIcon ? `<img src="/img/heart/${heartIcon}" class="heart-icon ${badgeClass}" alt="♥">` : '';
+
+    const badgeHtml = level > 0 ? `
+                <!-- HEART LEVEL BADGE – bottom center -->
+                <div class="heart-badge position-absolute start-50 translate-middle-x d-flex align-items-center justify-content-center ${badgeClass}">
+                    ${iconHtml}
+                    <span class="heart-number text-white fw-bold">${level}</span>
+                </div>
+    ` : '';
+
     return $(`
-        <div class="chat-thumb-container flex-shrink-0 me-2 animate__animated ${chat.nsfw ? 'nsfw-content' : ''}" 
-             data-id="${chat._id}" 
+        <div class="chat-thumb-container flex-shrink-0 me-2 animate__animated ${chat.nsfw ? 'nsfw-content' : ''}"
+             data-id="${chat._id}"
              data-user-id="${ownerId}"
              data-updated-at="${updatedAt}"
              onclick="handleChatThumbClick(this)"
              style="cursor: pointer; opacity: 0; animation-delay: ${animationDelay};">
-            <div class="chat-thumb-card rounded-circle border border-2 border-light shadow-sm position-relative" 
-                 style="width: 60px; height: 60px; background-image: url('${chat.chatImageUrl || '/img/logo.webp'}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+
+            <div class="chat-thumb-card rounded-circle border border-2 border-light shadow-sm position-relative overflow-visible"
+                 style="width: 60px; height: 60px; background-image: url('${chat.chatImageUrl || '/img/logo.webp'}'); background-size: cover; background-position: center;">
+
+                ${badgeHtml}
+
             </div>
+
             <div class="chat-thumb-name text-center mt-1 d-none">
-                <small class="text-dark fw-medium text-truncate d-block" 
-                       style="font-size: 0.7rem; max-width: 60px; line-height: 1.1;">
+                <small class="text-dark fw-medium text-truncate d-block" style="font-size: 0.7rem; max-width: 60px;">
                     ${chat.name}
                 </small>
             </div>
         </div>
     `);
+}
+
+function _buildChatThumbElement(chat, index = 0, userChatLevel = null) {
+    const animationDelay = `${Math.max(index, 0) * 0.1}s`;
+    const ownerId = resolveOwnerId(chat.userId);
+    const updatedAt = getChatTimestamp(chat);
+
+    // Safely get level for this chat – default = 0 (will be updated asynchronously)
+    const level = (userChatLevel && userChatLevel[chat._id] !== undefined) ? userChatLevel[chat._id] : 0;
+
+    // Build the full class string
+    let badgeClass = 'level-badge position-absolute start-50 translate-middle-x text-white fw-bold shadow-lg';
+
+    if (level === 0)          badgeClass += ' zero';
+    else if (level <= 5)      badgeClass += ' bronze';
+    else if (level <= 10)     badgeClass += ' gold';
+    else if (level <= 15)     badgeClass += ' platinum';
+    else if (level <= 20)     badgeClass += ' purple';
+    else                      badgeClass += ' diamond';   // 21+
+
+    // Only diamond tier gets the breathing glow
+    const badgeStyle = level > 20
+        ? 'animation: breathe 4s ease-in-out infinite;'
+        : '';
+
+    return $(`
+        <div class="chat-thumb-container flex-shrink-0 me-2 animate__animated ${chat.nsfw ? 'nsfw-content' : ''}"
+             data-id="${chat._id}"
+             data-user-id="${ownerId}"
+             data-updated-at="${updatedAt}"
+             onclick="handleChatThumbClick(this)"
+             style="cursor: pointer; opacity: 0; animation-delay: ${animationDelay};">
+
+            <div class="chat-thumb-card rounded-circle border border-2 border-light shadow-sm position-relative overflow-visible"
+                 style="width: 60px; height: 60px; background-image: url('${chat.chatImageUrl || '/img/logo.webp'}'); background-size: cover; background-position: center;">
+
+                <!-- LEVEL BADGE – Bottom center -->
+                <div class="${badgeClass}"
+                     style="${badgeStyle}">
+                    ${level}
+                </div>
+
+            </div>
+
+            <div class="chat-thumb-name text-center mt-1 d-none">
+                <small class="text-dark fw-medium text-truncate d-block" style="font-size: 0.7rem; max-width: 60px;">
+                    ${chat.name}
+                </small>
+            </div>
+        </div>
+    `);
+}
+
+// Function to fetch and update levels for chat thumbnails
+async function updateChatThumbLevels(chats) {
+    if (!chats || chats.length === 0) return;
+
+    const horizontalChatList = $('#horizontal-chat-list');
+    
+    for (const chat of chats) {
+        try {
+            const response = await $.ajax({
+                url: `/api/chat-level/${chat._id}`,
+                method: 'GET',
+                xhrFields: {
+                    withCredentials: true
+                }
+            });
+            
+            if (response.success) {
+                const level = response.level;
+                const $thumb = horizontalChatList.find(`.chat-thumb-container[data-id="${chat._id}"]`);
+                if ($thumb.length > 0) {
+                    // Update the heart badge
+                    let heartIcon = '';
+                    let badgeClass = '';
+                    if (level === 0) {
+                        heartIcon = 'purple-heart-icon.png';
+                    } else if (level <= 5) {
+                        heartIcon = 'growing-heart-icon.png';
+                    } else if (level <= 10) {
+                        heartIcon = 'green-heart-icon.png';
+                    } else if (level <= 15) {
+                        heartIcon = 'blue-heart-icon.png';
+                    } else if (level <= 20) {
+                        heartIcon = 'red-heart-icon.png';
+                    } else {
+                        heartIcon = 'beating-heart-icon.png';   
+                        badgeClass = 'legendary';
+                    }
+                    
+                    const $card = $thumb.find('.chat-thumb-card');
+                    $card.find('.heart-badge').remove(); // Remove existing
+                    
+                    if (level > 0) {
+                        const iconHtml = level > 0 ? `<img src="/img/heart/${heartIcon}" class="heart-icon ${badgeClass}" alt="♥">` : '';
+                        $card.append(`
+                            <div class="heart-badge position-absolute start-50 translate-middle-x d-flex align-items-center justify-content-center ${badgeClass}">
+                                ${iconHtml}
+                                <span class="heart-number text-white fw-bold">${level}</span>
+                            </div>
+                        `);
+                    }
+                    
+                } else {
+                    console.warn('⚠️ [UI WARNING] Thumb not found for chat:', chat._id);
+                }
+            }
+        } catch (error) {
+            // Silently handle errors to avoid console logs
+        }
+    }
 }
 
 // Display chat thumbnails in horizontal menu (similar to displayImageThumb)
@@ -1193,9 +1347,12 @@ function displayChatThumbs(chats, userId) {
     horizontalChatList.empty();
     
     sortedChats.forEach(function(chat, index) {
-        const chatThumb = buildChatThumbElement(chat, index);
+        const chatThumb = buildChatThumbElement(chat, index); // Use the heart version
         horizontalChatList.append(chatThumb);
     });
+    
+    // Fetch and update levels for all chats
+    updateChatThumbLevels(sortedChats);
     
     // Trigger bouncing animation for each thumbnail with staggered timing
     horizontalChatList.find('.chat-thumb-container').each(function(index) {
@@ -1248,7 +1405,7 @@ function updateHorizontalChatMenu(currentChatId) {
     const chatData = chatCache.data.find(chat => chat._id === currentChatId);
 
     if (currentThumb.length === 0 && chatData) {
-        currentThumb = buildChatThumbElement(chatData, 0);
+        currentThumb = _buildChatThumbElement(chatData, 0);
         currentThumb.css('opacity', '1');
         horizontalList.append(currentThumb);
     }
@@ -1447,6 +1604,49 @@ const horizontalChatStyles = `
         font-size: 0.6rem !important;
         max-width: 50px !important;
     }
+}
+
+/* Level badge styles */
+.level-badge {
+    bottom: -5px;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 20px;
+    text-align: center;
+    line-height: 1;
+}
+
+.level-badge.zero {
+    background-color: #6c757d;
+}
+
+.level-badge.bronze {
+    background-color: #cd7f32;
+}
+
+.level-badge.gold {
+    background-color: #ffd700;
+    color: #000;
+}
+
+.level-badge.platinum {
+    background-color: #e5e4e2;
+    color: #000;
+}
+
+.level-badge.purple {
+    background-color: #6f42c1;
+}
+
+.level-badge.diamond {
+    background-color: #b9f2ff;
+    color: #000;
+}
+
+@keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
 }
 </style>
 `;

@@ -7,7 +7,8 @@ const {
     getUserGoalsHistory,
     updateGoalsAnalytics,
     getMilestoneGoalsData,
-    getCompletedMilestones
+    getCompletedMilestones,
+    getUserLevelForChat
 } = require('../models/chat-tool-goals-utils');
 const { getUserChatToolSettings } = require('../models/chat-tool-settings-utils');
 
@@ -252,6 +253,39 @@ async function routes(fastify, options) {
                 error: 'Failed to fetch milestone goals',
                 details: error.message 
             });
+        }
+    });
+
+    // Get user level for a specific chat
+    fastify.get('/api/chat-level/:chatId', async (request, reply) => {
+        try {
+            const { chatId } = request.params;
+            const userId = request.user._id;
+            
+            if (!ObjectId.isValid(chatId)) {
+                return reply.status(400).send({ error: 'Invalid chat ID format' });
+            }
+
+            // Verify chat belongs to user
+            const chatsCollection = fastify.mongo.db.collection('chats');
+            const chat = await chatsCollection.findOne({
+                _id: new ObjectId(chatId),
+                userId: new ObjectId(userId)
+            });
+
+            if (!chat) {
+                return reply.status(404).send({ error: 'Chat not found or access denied' });
+            }
+
+            const level = await getUserLevelForChat(fastify.mongo.db, userId, chatId);
+            
+            return reply.send({
+                success: true,
+                level
+            });
+        } catch (error) {
+            console.error('Error fetching chat level:', error);
+            return reply.status(500).send({ error: 'Failed to fetch chat level' });
         }
     });
 }

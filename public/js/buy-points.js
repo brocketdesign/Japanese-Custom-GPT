@@ -39,6 +39,7 @@ $(document).ready(function() {
     container.empty();
 
     packages.forEach((pkg, index) => {
+      console.log('Rendering package:', pkg);
       const isPopular = index === 1;
       const pointsPerUnit = (parseFloat(pkg.points) / parseFloat(pkg.price)).toFixed(1);
       const popularBadge = isPopular 
@@ -46,30 +47,51 @@ $(document).ready(function() {
         : '';
 
       const cardHTML = `
-        <div class="col-12 col-md-6 col-lg-6 mb-3">
-          <div class="card buy-points-card h-100 cursor-pointer position-relative" data-package-id="${pkg.id}" style="border: 2px solid #e9ecef; transition: all 0.3s ease;">
-            ${popularBadge}
-            <div class="card-body d-flex flex-column">
-              <h5 class="card-title text-center fw-bold">${pkg.points} <i class="bi bi-coin"></i></h5>
-              <p class="text-center text-muted small mb-2">${pkg.description}</p>
-              
-              <div class="my-3">
-                <h3 class="text-center mb-1">
-                  ${pkg.currency === 'JPY' ? '¥' : (pkg.currency === 'EUR' ? '€' : '$')}${pkg.price}
-                </h3>
-                <p class="text-center small text-decoration-line-through text-muted mb-2">
-                  ${pkg.currency === 'JPY' ? '¥' : (pkg.currency === 'EUR' ? '€' : '$')}${pkg.originalPrice}
-                </p>
-                ${pkg.discount !== '0%' ? `<span class="badge bg-danger d-block text-center">${pkg.discount}</span>` : ''}
-              </div>
+  <div class="col-6 col-md-4 col-lg-3 mb-3">
+    <div class="card h-100 border-0 shadow-sm position-relative buy-points-card p-2 rounded-4" 
+         data-package-id="${pkg.id}"
+         style="background: #ffffff;">
 
-              <button class="btn btn-primary mt-auto purchase-points-btn" data-package-id="${pkg.id}">
-                ${window.buyPointsTranslations.buy_points.purchase_button || 'Get Started'}
-              </button>
-            </div>
-          </div>
+      ${isPopular ? `
+        <span class="badge bg-gradient position-absolute top-0 start-0 m-2 px-3 py-1 rounded-pill" 
+              style="background: linear-gradient(90deg,#ff8a80,#ff5f9e); font-size: 0.7rem;">
+          ${window.buyPointsTranslations.buy_points.most_popular}
+        </span>` : ''}
+
+      <div class="text-center mt-3">
+        <img src="/img/coin.png" style="width:34px;height:34px;">
+      </div>
+
+      <h5 class="text-center fw-bold mt-2">${pkg.points}</h5>
+
+      <div class="text-center mt-1 mb-2 small text-muted">${pkg.description}</div>
+
+      <div class="text-center py-2 px-3 rounded-4 mt-2"
+           style="background: linear-gradient(90deg,#ff4f9a,#ff6fd8); color:white;">
+        <div class="fw-bold" style="font-size:1.1rem;">
+          ${pkg.currency === 'JPY' ? '¥' : (pkg.currency === 'EUR' ? '€' : '$')}${pkg.price}
         </div>
-      `;
+        <div class="text-decoration-line-through opacity-75" style="font-size:0.75rem;">
+          ${pkg.currency === 'JPY' ? '¥' : (pkg.currency === 'EUR' ? '€' : '$')}${pkg.originalPrice}
+        </div>
+      </div>
+
+      ${pkg.discount !== '0%' ? `
+        <div class="badge bg-primary bg-gradient mt-3 mx-auto d-block px-3 py-2 rounded-pill" 
+             style="background: linear-gradient(90deg,#6a11cb,#2575fc); font-size:0.75rem;">
+          ${pkg.discount}
+        </div>
+      ` : ''}
+
+      <button class="btn btn-light border mt-3 w-100 fw-semibold purchase-points-btn rounded-4"
+              data-package-id="${pkg.id}">
+        ${window.buyPointsTranslations.buy_points.purchase_button || 'Purchase'}
+      </button>
+
+    </div>
+  </div>
+`;
+
 
       container.append(cardHTML);
     });
@@ -309,3 +331,8 @@ $(document).ready(function() {
     }
   });
 });
+
+window.openBuyPointsModal = function() {
+  const userPointsModal = new bootstrap.Modal(document.getElementById('userPointsModal'));
+  userPointsModal.show();
+};

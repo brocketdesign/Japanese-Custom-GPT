@@ -559,7 +559,7 @@ async function routes(fastify, options) {
                     // Check if the assistant's new message was an image request [ONLY IF THE USER SETTING IS ENABLED] // New Update
                     const newUserPointsBalance = await getUserPoints(db, userId);
                     const autoImageGenerationEnabled = await getAutoImageGenerationSetting(db, userId, chatId);
-                      if( messagesForCompletion.length > 2 && newUserPointsBalance >= 10 && autoImageGenerationEnabled ) {
+                      if( messagesForCompletion.length > 2 && newUserPointsBalance >= 50 && autoImageGenerationEnabled ) {
                         const assistantImageRequest = await checkImageRequest(newAssistantMessage.content, lastUserMessage.content);
                         if (assistantImageRequest && assistantImageRequest.image_request) {
                             lastUserMessage.content += ' ' + newAssistantMessage.content;

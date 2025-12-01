@@ -48,7 +48,6 @@ async function routes(fastify, options) {
         try {
           await removeUserPoints(db, userId, promptCost, translations.points?.deduction_reasons?.custom_prompt || 'Prompt', 'prompt', fastify);
         } catch (error) {
-          console.error('Error deducting points for prompt:', error);
           return reply.status(500).send({ error: `${fastify.userPointsTranslations?.need_coins?.replace('{coins}', promptCost) || `Need: ${promptCost}`}` });
         }
 
@@ -78,7 +77,6 @@ async function routes(fastify, options) {
         try {
           await removeUserPoints(db, userId, giftCost, translations.points?.deduction_reasons?.gift || 'Gift', 'gift', fastify);
         } catch (error) {
-          console.error('Error deducting points for gift:', error);
           return reply.status(500).send({ error: `${fastify.userPointsTranslations?.need_coins?.replace('{coins}', giftCost) || `Need: ${giftCost}`}` });
         }
         saveGiftIdToChat(db, chatId, userChatId, giftId)
@@ -99,7 +97,6 @@ async function routes(fastify, options) {
         try {
           await removeUserPoints(db, userId, cost, translations.points?.deduction_reasons?.image_generation || 'Image generation', 'image_generation', fastify);
         } catch (error) {
-          console.error('Error deducting points:', error);
           return reply.status(500).send({ error: `${fastify.userPointsTranslations?.need_coins?.replace('{coins}', cost) || `Need: ${cost}`}`});
         }
       }
@@ -156,7 +153,6 @@ async function routes(fastify, options) {
               await removeUserPoints(db, userId, cost, request.translations?.points?.deduction_reasons?.upscale_image || 'Upscale image', 'upscale_image', fastify);
             } catch (error) {
               console.error('Error deducting points:', error);
-              return reply.status(500).send({ error: `${fastify.userPointsTranslations?.need_coins?.replace('{coins}', cost) || `Need: ${cost}`}` });
             }
             
             // console.log('Upscale request received on backend:', request.body);

@@ -524,3 +524,11 @@
   padding: var(--spacing-md) !important;
   border-bottom: 1px solid var(--border-light) !important;
 }
+
+.bi.bi-coin::before {
+  content: "";
+  background: url('/img/coin.png') no-repeat center center;
+  background-size: contain;
+  width: 1em;
+  height: 1em;
+}

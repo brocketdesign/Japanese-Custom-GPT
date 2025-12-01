@@ -84,7 +84,17 @@ async function removeUserPoints(db, userId, points, reason = 'Points deducted', 
   
   const currentPoints = user.points || 0;
   if (currentPoints < points) {
-    throw new Error(`Insufficient points. User has ${currentPoints}, trying to deduct ${points}`);
+    // send nottifcation openBuyPointsModal
+    if (fastify && fastify.sendNotificationToUser) {
+      try {
+        await fastify.sendNotificationToUser(userId.toString(), 'openBuyPointsModal', {
+          userId: userId.toString()
+        });
+      } catch (notificationError) {
+        console.error('Error sending openBuyPointsModal notification:', notificationError);
+      }
+    }
+    throw new Error('Insufficient points');
   }
   
   // Create transaction record

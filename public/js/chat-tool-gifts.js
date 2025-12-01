@@ -32,6 +32,7 @@ class GiftManager {
             if ($card.hasClass('inactive')) {
                 const cost = $card.data('cost');
                 showNotification(`${window.userPointsTranslations?.need_coins?.replace('{coins}', cost) || `Need: ${cost}`}`, 'warning');
+                openBuyPointsModal();
                 return;
             }
 

@@ -92,13 +92,13 @@
                 <div class="container-fluid p-3">
                     <ul class="nav nav-tabs border-0" id="pointsTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active fw-semibold" id="history-tab" data-bs-toggle="tab" data-bs-target="#history-pane" type="button" role="tab">
-                                <i class="bi bi-clock-history me-2"></i>{{userPointsTranslations.points.history}}
+                            <button class="nav-link active fw-semibold" id="buy-points-tab" data-bs-toggle="tab" data-bs-target="#buy-points-pane" type="button" role="tab">
+                                <i class="bi bi-bag-plus me-2"></i>{{buyPointsTranslations.buy_points.title}}
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link fw-semibold" id="buy-points-tab" data-bs-toggle="tab" data-bs-target="#buy-points-pane" type="button" role="tab">
-                                <i class="bi bi-bag-plus me-2"></i>{{buyPointsTranslations.buy_points.title}}
+                            <button class="nav-link fw-semibold" id="history-tab" data-bs-toggle="tab" data-bs-target="#history-pane" type="button" role="tab">
+                                <i class="bi bi-clock-history me-2"></i>{{userPointsTranslations.points.history}}
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -110,7 +110,7 @@
 
                     <div class="tab-content mt-3" id="pointsTabContent">
                         <!-- Points History Tab -->
-                        <div class="tab-pane fade show active" id="history-pane" role="tabpanel">
+                        <div class="tab-pane fade " id="history-pane" role="tabpanel">
                             <div class="points-history bg-white rounded shadow-sm">
                                 <div class="points-history-header d-flex justify-content-between align-items-center">
                                     <span>{{userPointsTranslations.points.history}}</span>
@@ -130,7 +130,7 @@
                         </div>
 
                         <!-- Buy Points Tab -->
-                        <div class="tab-pane fade" id="buy-points-pane" role="tabpanel">
+                        <div class="tab-pane fade show active" id="buy-points-pane" role="tabpanel">
                             <div class="buy-points-container bg-white rounded shadow-sm p-4">
                                 <h5 class="mb-4 text-center">
                                     <i class="bi bi-bag-plus me-2 text-success"></i>{{buyPointsTranslations.buy_points.subtitle}}

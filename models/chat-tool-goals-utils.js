@@ -277,11 +277,29 @@ async function getCompletedMilestones(db, userId, chatId = null, limit = 20) {
     }
 }
 
+/**
+ * Get user level for a specific chat based on completed milestones
+ * @param {Object} db - MongoDB database instance
+ * @param {string} userId - User ID
+ * @param {string} chatId - Chat ID
+ * @returns {number} Number of completed milestones (level)
+ */
+async function getUserLevelForChat(db, userId, chatId) {
+    try {
+        const milestones = await getCompletedMilestones(db, userId, chatId, 1000); // Get all for count
+        return milestones.length;
+    } catch (error) {
+        console.error('Error getting user level for chat:', error);
+        throw error;
+    }
+}
+
 module.exports = {
     getChatGoalsData,
     getUserGoalsStats,
     getUserGoalsHistory,
     updateGoalsAnalytics,
     getMilestoneGoalsData,
-    getCompletedMilestones
+    getCompletedMilestones,
+    getUserLevelForChat
 };

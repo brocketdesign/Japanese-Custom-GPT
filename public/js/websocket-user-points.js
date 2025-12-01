@@ -16,6 +16,11 @@ class WebSocketUserPointsHandler {
     if (!data.notification) return false;
 
     switch (data.notification.type) {
+      case 'openBuyPointsModal':
+        if (window.openBuyPointsModal) {
+          window.openBuyPointsModal();
+        }
+        return true;
       case 'likeRewardNotification':
         this.handleLikeRewardNotification(data.notification);
         return true;

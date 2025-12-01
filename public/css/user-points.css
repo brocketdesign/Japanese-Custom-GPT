@@ -995,3 +995,14 @@
   50% { transform: scale(0.95) rotate(-1deg); }
   75% { transform: scale(1.05) rotate(1deg); }
 }
+
+.buy-points-card {
+  cursor: pointer;
+  transition: transform .2s ease, box-shadow .2s ease;
+  border-radius: 1.4rem !important;
+}
+
+.buy-points-card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0.75rem 1.5rem rgba(0,0,0,0.08);
+}

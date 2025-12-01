@@ -1,5 +1,6 @@
 {
   "lang": "ja",
+  "daysAgo": " 日前",
   "unlockAll": "すべてアンロック",
   "customPromptModal": {
     "title": "カスタムプロンプトの説明",

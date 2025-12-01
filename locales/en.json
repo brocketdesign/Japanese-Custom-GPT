@@ -1,5 +1,6 @@
 {
   "lang": "en",
+  "daysAgo": " day(s) ago",
   "unlockAll": "Unlock All",
   "customPromptModal": {
     "title": "Custom Prompt Description",

@@ -34,31 +34,19 @@ async function routes(fastify, options) {
                 chatId: new ObjectId(chatId)
             });
 
-            // Get image count
-            const collectionImages = fastify.mongo.db.collection('chatimages');
-            const imageCount = await collectionImages.countDocuments({
-                chatId: new ObjectId(chatId)
-            });
-
             // Get video count
             const collectionVideos = fastify.mongo.db.collection('videos');
             const videoCount = await collectionVideos.countDocuments({
                 chatId: new ObjectId(chatId)
             });
 
-            // Get gallery image if exists
+            // Get image count from gallery
+            let imageCount = 0;
             let galleryImage = null;
             const collectionGallery = fastify.mongo.db.collection('gallery');
             const galleryDoc = await collectionGallery.findOne({ chatId: new ObjectId(chatId) });
             if (galleryDoc && galleryDoc.images && galleryDoc.images.length > 0) {
-                // Get the first image or the one matching chatImageUrl
-                galleryImage = galleryDoc.images[0].imageUrl;
-                if (chat.chatImageUrl) {
-                    const matchingImage = galleryDoc.images.find(img => img.imageUrl === chat.chatImageUrl);
-                    if (matchingImage) {
-                        galleryImage = matchingImage.imageUrl;
-                    }
-                }
+                imageCount = galleryDoc.images.length;
             }
 
             reply.send({

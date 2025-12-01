@@ -2093,11 +2093,11 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                         <div class="position-absolute bottom-0 start-0 w-100 p-3" style="z-index: 2;">
 
                           <!-- Character name -->
-                          <a href="/character/${chat._id}" class="text-decoration-none" onclick="event.stopPropagation();">
+                          <span class="text-decoration-none" onclick="event.stopPropagation();">
                             <div class="d-flex align-items-center justify-content-start mb-1">
                               <h5 class="card-title mb-0 text-truncate text-white" title="${chat.name || chat.chatName}" style="text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${chat.name || chat.chatName}</h5>
                             </div>
-                          </a>
+                          </span>
 
                           <!-- Tags on single line with horizontal scroll -->
                           ${(chat.tags || chat.chatTags || []).length ? `
@@ -2848,7 +2848,7 @@ function gridLayout(selector) {
   // Create the slider control HTML with an icon
   const sliderHtml = `
     <div class="grid-control mb-3">
-      <label for="${sliderId}" class="form-label d-flex justify-content-between align-items-center">
+      <label for="${sliderId}" class="d-flex justify-content-between align-items-center">
         <span><i class="bi bi-grid"></i> ${translations?.gridSize || 'Grid Size'}</span>
         <span class="grid-size-display badge bg-light text-dark">${currentValue} ${translations?.perRow || 'per row'}</span>
       </label>
@@ -2899,7 +2899,8 @@ function gridLayout(selector) {
     // On small screens (<768px), cap at 2 columns max
     if (screenWidth < 768 && effectiveValue > 2) {
       effectiveValue = 2;
-      $sizeDisplay.text(`2 ${translations?.perRow || 'per row'} (max on small screens)`);
+      $sizeDisplay.text(`2 ${translations?.perRow || 'per row'}`);
+      $slider.attr('max', 2);
     }
 
     // Remove ALL Bootstrap grid classes and custom col-20p class

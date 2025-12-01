@@ -1,5 +1,6 @@
 {
   "lang": "fr",
+  "daysAgo": " jour(s) auparavant",
   "unlockAll": "Déverrouiller tout",
   "customPromptModal": {
     "title": "Description d'Invite Personnalisée",

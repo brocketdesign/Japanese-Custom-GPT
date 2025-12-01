@@ -230,8 +230,13 @@ $(document).ready(function() {
     function populateCharacterIntro(chatData) {
         // Basic header information
         $('#charIntroName').text(chatData.name || 'Unnamed Character');
-        $('#charIntroGender').text(chatData.gender || 'Not specified');
-        $('#charIntroCreatedAt').text(chatData.updatedAt || 'Never');
+        $('#charIntroGender').html(chatData.gender == 'male' ? '<i class="bi bi-gender-male"></i>' : (chatData.gender == 'female' ? '<i class="bi bi-gender-female"></i>' : (chatData.gender == 'non-binary' ? '<i class="bi bi-gender-ambiguous"></i>' : '')));
+        // Show as how many days ago it was updated
+        const updatedAt = new Date(chatData.updatedAt);
+        const now = new Date();
+        const diffTime = Math.abs(now - updatedAt);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        $('#charIntroCreatedAt').text(`${diffDays}${translations.daysAgo || ' day(s) ago'}`);
         $('#charIntroImages').text(chatData.imageCount || 0);
         $('#charIntroVideos').text(chatData.videoCount || 0);
 
@@ -250,15 +255,12 @@ $(document).ready(function() {
 
         // Basic information
         $('#charIntroShortIntro').text(chatData.short_intro || 'No introduction provided');
-        $('#charIntroNsfw').text(chatData.nsfw ? 'Yes' : 'No');
-        
         // Tags
         if (chatData.tags && Array.isArray(chatData.tags) && chatData.tags.length > 0) {
             const tagsHtml = chatData.tags.map(tag => `<span class="badge bg-secondary me-1">${tag}</span>`).join('');
             $('#charIntroTags').html(tagsHtml);
-        } else {
-            $('#charIntroTags').text('No tags');
-        }
+        } 
+        $('#charIntroTags').prepend(chatData.nsfw ? '<span class="badge bg-primary bg-secondary me-1">🔞NSFW</span>' : '');
 
         // Show content
         $('#characterIntroContent').show();

@@ -53,7 +53,7 @@ async function routes(fastify, options) {
                 }
             }
 
-            console.log('[eventlab text-to-speech] Using voice:', selectedVoice);
+            //console.log('[eventlab text-to-speech] Using voice:', selectedVoice);
 
             // Generate speech using EvenLab
             const audioBuffer = await generateSpeech(text, selectedVoice, {

@@ -197,7 +197,7 @@ async function routes(fastify) {
             }
 
             const voiceConfig = getMinimaxVoiceConfig(selectedVoice, fastify);
-            console.log('[minimax text-to-speech] Using voice:', voiceConfig.key);
+            //console.log('[minimax text-to-speech] Using voice:', voiceConfig.key);
 
             const { audioBuffer, audioFormat } = await generateMinimaxSpeech(
                 text,

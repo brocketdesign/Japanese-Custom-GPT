@@ -120,7 +120,7 @@ class GiftManager {
         addMessageToChat(chatId, userChatId, {
             role: 'user',
             message: window.translations.sendGiftImageDirectly,
-            name: 'gift',
+            name: 'gift_request',
             hidden: true
         }, function(error, res) {
 

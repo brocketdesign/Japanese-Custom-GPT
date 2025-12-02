@@ -548,7 +548,10 @@ async function routes(fastify, options) {
                     const newUserPointsBalance = await getUserPoints(db, userId);
                     const autoImageGenerationEnabled = await getAutoImageGenerationSetting(db, userId, chatId);
                       if( messagesForCompletion.length > 2 && newUserPointsBalance >= 50 && autoImageGenerationEnabled ) {
-                        const assistantImageRequest = await checkImageRequest(newAssistantMessage.content, lastUserMessage.content);
+                        let assistantImageRequest = null;
+                        if(lastUserMessage.name !== 'pose_request' && lastUserMessage.name !== 'gift_request') {
+                            assistantImageRequest = await checkImageRequest(newAssistantMessage.content, lastUserMessage.content);
+                        }
                         if (assistantImageRequest && assistantImageRequest.image_request) {
                             lastUserMessage.content += ' ' + newAssistantMessage.content;
                             // [OVERWRITE] Use the character nsfw setting for auto image generation

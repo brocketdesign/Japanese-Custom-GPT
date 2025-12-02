@@ -314,7 +314,8 @@ const formatSchema = z.object({
   nsfw: z.boolean(),
 });
 const checkImageRequest = async (lastAssistantMessage,lastUserMessage) => {
-
+console.log('Analyzing messages for image request:', { lastAssistantMessage, lastUserMessage });
+  
   try {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -648,7 +649,7 @@ console.log(`
   if (!response) return null;
   
   response = response.replace(/['"]+/g, '');
-  console.log(`[createPrompt] Generated prompt: ${response}`);
+  //console.log(`[createPrompt] Generated prompt: ${response}`);
   return response;
 }
 

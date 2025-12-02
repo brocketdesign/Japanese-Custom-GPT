@@ -267,17 +267,35 @@ class PromptManager {
             showNotification('Image generation for this prompt is already in progress', 'warning');
             return;
         }
-        
+        let c_userChatId = sessionStorage.getItem('userChatId');
+        let c_chatId = sessionStorage.getItem('chatId');
         // Store generation metadata
         this.activeGenerations.set(promptId, {
             placeholderId,
             startTime: Date.now(),
-            userChatId: sessionStorage.getItem('userChatId') || window.userChatId,
+            userChatId: c_userChatId || window.userChatId,
             imagePreview
         });
         
         displayOrRemoveImageLoader(placeholderId, 'show', imagePreview);
         
+        // Get prompt from promptId
+        const promptTitle = $('.prompt-card[data-id="' + promptId + '"]').find('.prompt-image').attr('alt')
+        // Add a new message to the chat container for sending a gift
+        addMessageToChat(c_chatId, c_userChatId, {
+            role: 'user',
+            message: window.translations.sendPoseRequest + promptTitle +' '+ description,
+            name: 'pose_request',
+            hidden: true
+        }, function(error, res) {
+
+            generateChatCompletion();
+
+            if (error) {
+            console.error('Error adding gift message:', error);
+            }
+        });
+
         const chatId = sessionStorage.getItem('chatId') || window.chatId;
         const userChatId = sessionStorage.getItem('userChatId') || window.userChatId;
         

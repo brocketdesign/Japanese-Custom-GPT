@@ -205,6 +205,7 @@ window.updateImageCount = function(chatId, count) {
 
 // Example usage: debugUpdateImageCount(5); // This will update the image count badge for the last chat session
 const sentImageIds = new Set();
+const trasckedImageTitles = new Set();
 window.generateImage = async function(data) {
     // Validate essential data
     if (!data || !data.userChatId || (!data.imageUrl && !data.url)) {
@@ -263,4 +264,9 @@ window.generateImage = async function(data) {
             console.warn(`[generateImage] Failed to add image with ID ${imageId} to chat ${data.userChatId}`);
         }
     }, 1000);
+    
+    if(!trasckedImageTitles.has(titleText)){
+        trasckedImageTitles.add(titleText);
+        generateChatCompletion();
+    }
 };

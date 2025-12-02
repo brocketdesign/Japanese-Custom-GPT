@@ -1,5 +1,9 @@
 {
   "lang": "ja",
+  "sendGiftImageDirectly": "ギフトを送りました、待っててください！",
+  "sendPoseRequest": "あなたの新しいポーズの画像をリクエストしました、今生成します。使用したプロンプトはこちら：",
+    "receivedGift": "ギフトを受け取りました！",
+    "image_prompt_result": "リクエストした画像が生成されました！",
   "daysAgo": " 日前",
   "unlockAll": "すべてアンロック",
   "customPromptModal": {

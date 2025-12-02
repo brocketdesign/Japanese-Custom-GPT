@@ -1,5 +1,9 @@
 {
-  "lang": "en",
+    "lang": "en",
+    "sendGiftImageDirectly": "I sent you a gift wait for it!",
+    "sendPoseRequest": "I requested a new image pose of you, about to generate it now. Here is the prompt I used:",
+    "receivedGift": "You have received a gift!",
+    "image_prompt_result": "The image I requested has been generated!",
   "daysAgo": " day(s) ago",
   "unlockAll": "Unlock All",
   "customPromptModal": {

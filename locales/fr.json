@@ -1,5 +1,9 @@
 {
   "lang": "fr",
+    "sendGiftImageDirectly": "Je vous ai envoyé un cadeau, attendez-le !",
+    "sendPoseRequest": "J'ai demandé une nouvelle pose d'image de vous, sur le point de la générer maintenant. Voici l'invite que j'ai utilisée :",
+    "receivedGift": "Vous avez reçu un cadeau !",
+    "image_prompt_result": "L'image que j'ai demandée a été générée !",
   "daysAgo": " jour(s) auparavant",
   "unlockAll": "Déverrouiller tout",
   "customPromptModal": {

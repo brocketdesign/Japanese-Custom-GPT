@@ -112,30 +112,16 @@ function transformUserMessages(messages, translations = {}) {
         
         // Handle image messages
         if (message.type === 'image' && message.imageUrl) {
-            let imageContent = translations?.sent_image || 'I sent you the image.'; 
-
-            imageContent += message.content ? ` ${message.content}` : '';
-
+ 
             if (message.prompt) {
                 const userDetailMessage = 
                 {
                     role: 'user',
-                    content: `${translations?.image_prompt_request || 'I asked for the following image'} : " ${message.prompt} " ]`,
+                    content: `${translations?.image_prompt_result || 'The image of you I requested has been generated!'} : " ${message.prompt} " ]`,
                     hidden: true
                 };
                 transformedMessages.push(userDetailMessage);
             }
-            
-            const imageMessage = {
-                role: message.role,
-                content: imageContent
-            };
-            
-            if (message.name) imageMessage.name = message.name;
-            if (message.timestamp) imageMessage.timestamp = message.timestamp;
-            if (message.custom_relation) imageMessage.custom_relation = message.custom_relation;
-            
-            transformedMessages.push(imageMessage);
             
             // Check for actions (like) and add user response
             if (message.actions && message.actions.length > 0) {
@@ -524,8 +510,8 @@ async function routes(fastify, options) {
             const isPremium = subscriptionStatus;
             
             //console.log(`[/api/openai-chat-completion] Using model: ${selectedModel}, Language: ${language}, Premium: ${isPremium}`);
-            console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
-            //console.log(`[/api/openai-chat-completion] Messages for completion:`, messagesForCompletion.slice(1,messagesForCompletion.length)); // Exclude system message from log
+            //console.log(`[/api/openai-chat-completion] System message:`, messagesForCompletion[0]);
+            console.log(`[/api/openai-chat-completion] Messages for completion:`, messagesForCompletion.slice(1,messagesForCompletion.length)); // Exclude system message from log
             
             generateCompletion(messagesForCompletion, 600, selectedModel, language, selectedModel, isPremium)
             .then(async (completion) => {

@@ -119,7 +119,7 @@ class GiftManager {
         // Add a new message to the chat container for sending a gift
         addMessageToChat(chatId, userChatId, {
             role: 'user',
-            message: `🎁 I sent a gift to you! Wait for it!`,
+            message: window.translations.sendGiftImageDirectly,
             name: 'gift',
             hidden: true
         }, function(error, res) {

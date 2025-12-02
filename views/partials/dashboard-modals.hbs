@@ -3,18 +3,18 @@
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content mx-auto">
             <div class="modal-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <button type="button" class="btn-close btn-close-rigth btn-close-dark" data-bs-dismiss="modal" aria-label="Close"></button>
                 <h5 class="modal-title d-flex align-items-center" id="userPointsModalLabel">
-                    <i class="bi bi-star-fill me-2" style="color: #ffd700;"></i>
+                    <i class="bi bi-coin me-2" style="color: #ffd700;"></i>
                     {{userPointsTranslations.points.title}}
                 </h5>
-                <button type="button" class="btn-close btn-close-dark" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0">
                 <!-- Current Points Balance Section -->
                 <div class="points-container mx-3">
                     <div class="points-balance text-center">
                         <div class="d-flex align-items-center justify-content-center mb-2">
-                            <i class="bi bi-star-fill points-icon me-2" style="font-size: 1.5rem;"></i>
+                            <i class="bi bi-coin points-icon me-2" style="font-size: 1.5rem;"></i>
                             <h2 class="user-points-balance mb-0" style="font-size: 2.5rem; font-weight: bold;">{{user.points}}</h2>
                         </div>
                         <div class="points-label" style="opacity: 0.9;">{{userPointsTranslations.points.balance}}</div>
@@ -131,7 +131,7 @@
 
                         <!-- Buy Points Tab -->
                         <div class="tab-pane fade show active" id="buy-points-pane" role="tabpanel">
-                            <div class="buy-points-container bg-white rounded shadow-sm p-4">
+                            <div class="buy-points-container rounded shadow-sm p-4">
                                 <h5 class="mb-4 text-center">
                                     <i class="bi bi-bag-plus me-2 text-success"></i>{{buyPointsTranslations.buy_points.subtitle}}
                                 </h5>
@@ -695,6 +695,7 @@
         <div class="modal-content mx-auto">
             <div class="modal-header daily-rewards-header">
                 <div class="d-flex align-items-center">
+                    <button type="button" class="btn-close btn-close-rigth btn-close-dark" data-bs-dismiss="modal" aria-label="Close"></button>
                     <div class="daily-rewards-icon me-3">
                         <i class="bi bi-fire text-warning fs-2"></i>
                     </div>
@@ -715,7 +716,6 @@
                         </small>
                     </div>
                 </div>
-                <button type="button" class="btn-close btn-close-dark" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <!-- Current Streak Display -->

@@ -1,17 +1,4 @@
 $(document).ready(function() {
-    // Initialize audio settings
-    window.initializeAudio = function() {
-        let autoPlay = localStorage.getItem('audioAutoPlay') === 'true';
-        $('#audio-icon').addClass(autoPlay ? 'bi-volume-up' : 'bi-volume-mute');
-        $('#audio-play').click(function() {
-            if(!subscriptionStatus){
-                loadPlanPage();
-                return;
-            }
-            autoPlay = !autoPlay;
-            localStorage.setItem('audioAutoPlay', autoPlay);
-        });
-    };
 
         // Track used suggestions to prevent showing them again
         let usedSuggestions = new Set();

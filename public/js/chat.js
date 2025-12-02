@@ -472,8 +472,10 @@ function setupChatInterface(chat, character, userChat, isNew) {
     }
     const bgImage = isNew ? null : (userChat && userChat.backgroundImageUrl ? userChat.backgroundImageUrl : null);
     updateChatBackgroundImage(bgImage);
-    // Update the current chat level in the avatar
+    
     updateCurrentChatLevel();
+    initializeAudio();
+
     $('#chat-title').text(chatName);
     $('#userMessage').attr('placeholder', `${window.translations.sendMessage}`);
 
@@ -1679,8 +1681,6 @@ function setupChatInterface(chat, character, userChat, isNew) {
 
 
     }
-
-    initializeAudio();
 
     // Check if 'newSubscription' is true
     if (newSubscription) {

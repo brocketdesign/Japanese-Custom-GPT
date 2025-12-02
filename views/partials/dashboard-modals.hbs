@@ -90,22 +90,25 @@
 
                 <!-- Content Tabs -->
                 <div class="container-fluid p-3">
-                    <ul class="nav nav-tabs border-0" id="pointsTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active fw-semibold" id="buy-points-tab" data-bs-toggle="tab" data-bs-target="#buy-points-pane" type="button" role="tab">
-                                <i class="bi bi-bag-plus me-2"></i>{{buyPointsTranslations.buy_points.title}}
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link fw-semibold" id="history-tab" data-bs-toggle="tab" data-bs-target="#history-pane" type="button" role="tab">
-                                <i class="bi bi-clock-history me-2"></i>{{userPointsTranslations.points.history}}
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link fw-semibold" id="leaderboard-tab" data-bs-toggle="tab" data-bs-target="#leaderboard-pane" type="button" role="tab">
-                                <i class="bi bi-trophy me-2"></i>{{userPointsTranslations.points.leaderboard}}
-                            </button>
-                        </li>
+                    <div class="d-flex overflow-auto">
+                        <ul class="nav nav-tabs border-0 flex-nowrap" id="pointsTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active fw-semibold" id="buy-points-tab" data-bs-toggle="tab" data-bs-target="#buy-points-pane" type="button" role="tab">
+                                    <i class="bi bi-bag-plus me-2"></i>{{buyPointsTranslations.buy_points.title}}
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link fw-semibold" id="history-tab" data-bs-toggle="tab" data-bs-target="#history-pane" type="button" role="tab">
+                                    <i class="bi bi-clock-history me-2"></i>{{userPointsTranslations.points.history}}
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link fw-semibold" id="leaderboard-tab" data-bs-toggle="tab" data-bs-target="#leaderboard-pane" type="button" role="tab">
+                                    <i class="bi bi-trophy me-2"></i>{{userPointsTranslations.points.leaderboard}}
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
                     </ul>
 
                     <div class="tab-content mt-3" id="pointsTabContent">
@@ -131,10 +134,7 @@
 
                         <!-- Buy Points Tab -->
                         <div class="tab-pane fade show active" id="buy-points-pane" role="tabpanel">
-                            <div class="buy-points-container rounded shadow-sm p-4">
-                                <h5 class="mb-4 text-center">
-                                    <i class="bi bi-bag-plus me-2 text-success"></i>{{buyPointsTranslations.buy_points.subtitle}}
-                                </h5>
+                            <div class="buy-points-container rounded shadow-sm px-1">
                                 
                                 <!-- Point Packages -->
                                 <div id="buyPointsPackagesContainer" class="row g-3 mb-4">

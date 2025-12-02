@@ -59,26 +59,25 @@ $(document).ready(function() {
         </span>` : ''}
 
       <div class="text-center mt-3">
-        <img src="/img/coin.png" style="width:34px;height:34px;">
+        <img src="/img/coins/coins-${index + 1}.png" style="width:34px;height:34px;">
       </div>
 
-      <h5 class="text-center fw-bold mt-2">${pkg.points}</h5>
+      <h6 class="text-center mt-2 mb-0">${pkg.points} ${window.buyPointsTranslations.buy_points.points}</h6>
 
-      <div class="text-center mt-1 mb-2 small text-muted">${pkg.description}</div>
+      <div class="d-none text-center mt-1 mb-2 small text-muted">${pkg.description}</div>
 
-      <div class="text-center py-2 px-3 rounded-4 mt-2"
-           style="background: linear-gradient(90deg,#ff4f9a,#ff6fd8); color:white;">
+      <div class="justify-content-center d-flex">
         <div class="fw-bold" style="font-size:1.1rem;">
           ${pkg.currency === 'JPY' ? '¥' : (pkg.currency === 'EUR' ? '€' : '$')}${pkg.price}
         </div>
-        <div class="text-decoration-line-through opacity-75" style="font-size:0.75rem;">
+        <div class="${pkg.discount == '0%' ? 'd-none' : ''} text-decoration-line-through opacity-75" style="font-size:0.75rem;">
           ${pkg.currency === 'JPY' ? '¥' : (pkg.currency === 'EUR' ? '€' : '$')}${pkg.originalPrice}
         </div>
       </div>
 
       ${pkg.discount !== '0%' ? `
-        <div class="badge bg-primary bg-gradient mt-3 mx-auto d-block px-3 py-2 rounded-pill" 
-             style="background: linear-gradient(90deg,#6a11cb,#2575fc); font-size:0.75rem;">
+        <div class="badge bg-primary bg-gradient mx-auto d-block px-3 py-2 rounded-pill position-absolute"
+             style="background: linear-gradient(90deg,#6a11cb,#2575fc); font-size: 0.5rem; top: 0; left: -5px; padding: 3px 5px 3px 20px !important;">
           ${pkg.discount}
         </div>
       ` : ''}

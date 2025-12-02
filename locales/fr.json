@@ -996,7 +996,7 @@
   "create": "Créer",
   "library": "Bibliothèque",
   "explore": "Explorer",
-  "chatList": "Liste des discussions",
+  "chatList": "Discussions",
   "totalChats": "{{chats.length}}",
   "startChat": "Commencer une discussion",
   "helloWorld": "Bonjour le monde",

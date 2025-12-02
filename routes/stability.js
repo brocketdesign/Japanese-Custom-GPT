@@ -17,6 +17,7 @@ async function routes(fastify, options) {
     let imageType = request.body.imageType
     const db = fastify.mongo.db;
     const translations = request.translations
+    const userPointsTranslations = request.userPointsTranslations
 
     try {
       // Get fresh user data from database to check subscription
@@ -48,7 +49,7 @@ async function routes(fastify, options) {
         try {
           await removeUserPoints(db, userId, promptCost, translations.points?.deduction_reasons?.custom_prompt || 'Prompt', 'prompt', fastify);
         } catch (error) {
-          return reply.status(500).send({ error: `${fastify.userPointsTranslations?.need_coins?.replace('{coins}', promptCost) || `Need: ${promptCost}`}` });
+          return reply.status(500).send({ error: `${userPointsTranslations?.need_coins?.replace('{coins}', promptCost) || `Need: ${promptCost}`}` });
         }
 
         savePromptIdtoChat(db, chatId, userChatId, promptId)
@@ -77,7 +78,7 @@ async function routes(fastify, options) {
         try {
           await removeUserPoints(db, userId, giftCost, translations.points?.deduction_reasons?.gift || 'Gift', 'gift', fastify);
         } catch (error) {
-          return reply.status(500).send({ error: `${fastify.userPointsTranslations?.need_coins?.replace('{coins}', giftCost) || `Need: ${giftCost}`}` });
+          return reply.status(500).send({ error: `${userPointsTranslations?.need_coins?.replace('{coins}', giftCost) || `Need: ${giftCost}`}` });
         }
         saveGiftIdToChat(db, chatId, userChatId, giftId)
         .then((response) => {
@@ -97,7 +98,7 @@ async function routes(fastify, options) {
         try {
           await removeUserPoints(db, userId, cost, translations.points?.deduction_reasons?.image_generation || 'Image generation', 'image_generation', fastify);
         } catch (error) {
-          return reply.status(500).send({ error: `${fastify.userPointsTranslations?.need_coins?.replace('{coins}', cost) || `Need: ${cost}`}`});
+          return reply.status(500).send({ error: `${userPointsTranslations?.need_coins?.replace('{coins}', cost) || `Need: ${cost}`}`});
         }
       }
       // [DEBUG] use flux model

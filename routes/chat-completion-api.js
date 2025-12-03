@@ -37,7 +37,7 @@ const {
     getLanguageDirectiveMessage
 } = require('../models/chat-completion-utils');
 const { relationshipInstructions } = require('../models/relashionshipInstructions');
-
+const { getImageGenerationCost } = require('../config/pricing');
 // Fetches chat document from 'chats' collection
 async function getChatDocument(request, db, chatId) {
     let chatdoc = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
@@ -564,7 +564,7 @@ async function routes(fastify, options) {
                             );
                             
                             if(!imageResult.genImage.canAfford) {
-                                fastify.sendNotificationToUser(userId, 'showNotification', { message: request.userPointsTranslations.insufficientFunds.replace('{{points}}', 10), icon: 'warning' });
+                                fastify.sendNotificationToUser(userId, 'showNotification', { message: request.userPointsTranslations.insufficientFunds.replace('{{points}}', getImageGenerationCost()), icon: 'warning' });
                             }   
                         }
                     } else {

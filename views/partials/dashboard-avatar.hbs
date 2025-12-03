@@ -60,6 +60,15 @@
                     <!-- Notifications will be populated here via JavaScript -->
                 </ul>
             </div>
+            <!-- Show Premium Badge -->
+            {{#if (eq user.subscriptionStatus 'active')}}
+            {{else}}
+                <div class="d-flex align-items-center gap-2">
+                    <span class="btn btn-primary badge-sm text-white shadow-0 my-1" style="font-size: 0.9rem;" onclick="loadPlanPage()">
+                        💎 {{translations.avatar.premium}}
+                    </span>
+                </div>
+            {{/if}}
             <!-- Show current chat level -->
             <div id="chatLevelContainer" class="d-flex align-items-center gap-2 mt-1 onchat-on" onclick="updateCurrentChatLevel()" style="cursor: pointer;">
                 <span class="btn btn-dark badge-sm text-white shadow-0 my-1" style="font-size: 0.9rem;">

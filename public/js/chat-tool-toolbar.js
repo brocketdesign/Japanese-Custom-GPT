@@ -66,12 +66,19 @@ function getImageTools({chatId, userChatId, imageId, isLiked = false, title, pro
                             cursor: pointer;
                             transition: all 0.2s ease;
                             white-space: nowrap;
+                            position: relative;
                         }
                         .image-tool-badge:hover {
                             transform: scale(1.05);
                         }
                         .image-tool-badge i {
                             margin-right: 4px;
+                        }
+                        .premium-icon {
+                            position: absolute;
+                            top: 2px;
+                            right: 2px;
+                            font-size: 10px;
                         }
                     </style>
 
@@ -86,7 +93,7 @@ function getImageTools({chatId, userChatId, imageId, isLiked = false, title, pro
                           data-prompt="${prompt}" 
                           data-nsfw="${nsfw}" 
                           data-id="${imageId}">
-                        <i class="bi bi-arrow-clockwise"></i>${window.translations?.image_tools?.regenerate || 'Regenerate'}
+                        <i class="bi bi-arrow-clockwise"></i>${window.translations?.image_tools?.regenerate || 'Regenerate'}${!subscriptionStatus ? '<span class="premium-icon">💎</span>' : ''}
                     </span>
                     
                     <span class="${upscaleBadgeClass} image-tool-badge upscale-img" 
@@ -95,7 +102,7 @@ function getImageTools({chatId, userChatId, imageId, isLiked = false, title, pro
                           data-url="${imageUrl}"
                           ${upscaleDisabled}
                           title="${upscaleTooltip}">
-                        <i class="bi ${upscaleIcon}"></i>${upscaleLabel}
+                        <i class="bi ${upscaleIcon}"></i>${upscaleLabel}${!subscriptionStatus ? '<span class="premium-icon">💎</span>' : ''}
                     </span>
                     
                     <span class="${nsfw ? 'd-none-test' : ''} ${videoBadgeClass} image-tool-badge img2video-btn" 
@@ -105,7 +112,7 @@ function getImageTools({chatId, userChatId, imageId, isLiked = false, title, pro
                           ${nsfw ? 'data-nsfw="true"' : ''}
                           ${videoDisabled}
                           title="${videoTooltip}">
-                        <i class="bi ${videoIcon}"></i>${videoLabel}
+                        <i class="bi ${videoIcon}"></i>${videoLabel}${!subscriptionStatus ? '<span class="premium-icon">💎</span>' : ''}
                     </span>
                     
                     <span class="${mergeFaceBadgeClass} image-tool-badge merge-face-btn" 
@@ -114,7 +121,7 @@ function getImageTools({chatId, userChatId, imageId, isLiked = false, title, pro
                           data-url="${imageUrl}"
                           data-chat-id="${chatId}"
                           title="${mergeFaceTooltip}">
-                        <i class="bi ${mergeFaceIcon}"></i>${mergeFaceLabel}
+                        <i class="bi ${mergeFaceIcon}"></i>${mergeFaceLabel}${!subscriptionStatus ? '<span class="premium-icon">💎</span>' : ''}
                     </span>
                     
                     
@@ -145,7 +152,7 @@ function getImageTools({chatId, userChatId, imageId, isLiked = false, title, pro
                           onclick="${subscriptionStatus ? 'updateChatImage(this)' : 'loadPlanPage()'}" 
                           data-id="${chatId}" 
                           data-img="${imageUrl}">
-                        <i class="bi bi-image"></i>${window.translations?.image_tools?.update_image || 'Update Image'}
+                        <i class="bi bi-image"></i>${window.translations?.image_tools?.update_image || 'Update Image'}${!subscriptionStatus ? '<span class="premium-icon">💎</span>' : ''}
                     </span>` : ''}
 
                     <span class="badge bg-white text-secondary image-tool-badge update-user-chat-background-image" 

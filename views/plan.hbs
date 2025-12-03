@@ -1,334 +1,143 @@
 <script>startCountdown();</script>
 <link rel="stylesheet" href="/css/plan.css">
 
-<div class="container">
-    <div id="pricing-container" class="container pricing-container">
-        <h2 class="text-center mb-4 fw-bold">{{translations.plan_page.choose_your_plan}}</h2>
-        <p class="pricing-description fs-6 text-muted">
-            {{translations.premium_advantage.all_features_including_chat_image_generation_and_message_suggestions_are_available_without_limit}} 
-            <br>
-            {{translations.premium_advantage.early_access_and_multiple_chat_options_included}}
-        </p>
-        
-        <!-- Subscription Plans Section -->
-        <div class="subscription-plans-section">
-            <div class="row justify-content-center g-4" id="planCards">
-                <!-- Subscription plan cards will be dynamically inserted here by plan.js -->
-            </div>
-        </div>
+<style>
+/* filepath: /Users/user/Documents/GitHub/Japanese-Custom-GPT/views/plan.hbs (inline styles for mobile-first layout) */
+/* Mobile-native feel: large touch targets, smooth scrolling, sticky bottom plan bar */
+body, html { height: 100%; }
+.plan-page-root { display: flex; flex-direction: column; min-height: 100vh; background: var(--bs-body-bg, #fff); }
+.header-compact { padding: 14px; text-align: center; }
+.header-compact h2 { font-size: 1.1rem; margin: 0; font-weight: 700; }
+.countdown-banner { display:flex; justify-content:center; align-items:center; gap:12px; padding:10px; background:linear-gradient(90deg,#2e2b6f,#5b2ebf); color:#fff; border-radius:12px; margin:10px; font-weight:700; }
 
-        <!-- Section Divider -->
-        <div class="section-divider">
-            <span>{{translations.plan_page.or_try_first}}</span>
-        </div>
+/* Top features scrollable area */
+.features-scroll {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+  padding: 12px;
+  display: block;
+  max-height: calc(100vh - 140px); /* leave space for sticky bottom plan bar */
+}
+.feature-item { display:flex; gap:10px; align-items:flex-start; padding:12px; border-radius:12px; background: rgba(255,255,255,0.02); margin-bottom:10px; }
+.feature-item i { font-size: 1.6rem; color: var(--bs-indigo, #5b2ebf); }
 
-        <!-- Day Pass Section -->
-        <div class="day-pass-section">
-            <div class="day-pass-header">
-                <h3>{{translations.plan_page.try_before_commit}}</h3>
-                <p>{{translations.plan_page.try_before_commit_desc}}</p>
-            </div>
-            <div class="row justify-content-center g-4" id="dayPassCards">
-                <!-- Day pass card will be dynamically inserted here by plan.js -->
-            </div>
-        </div>
+/* Sticky bottom plan list */
+.plan-list-bottom {
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), #fff);
+  border-top: 1px solid rgba(0,0,0,0.06);
+  padding: 10px 8px;
+  z-index: 1200;
+  box-shadow: 0 -6px 18px rgba(12,12,20,0.06);
+}
+.plan-list-scroll {
+  display:flex;
+  gap:12px;
+  overflow-x:auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 10px;
+}
+.plan-compact {
+  min-width: 220px;
+  max-width: 280px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  gap:8px;
+  cursor:pointer;
+  border: 1px solid var(--primary-color);
+}
+.plan-compact:hover {
+  box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+  transition: all 0.2s ease-in-out;
+}
+.plan-compact .name { font-weight:700; font-size: 1rem; }
+.plan-compact .price { font-size:1.4rem; font-weight:900; color:#111; }
+.plan-compact .cta {
+  margin-top:8px;
+  background: #4f2bdc;
+  color: #fff;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-weight:700;
+  text-align:center;
+}
+
+/* make icons & text comfortable on touch */
+.plan-compact .meta { font-size:0.85rem; color:#666; }
+
+@media(min-width: 768px) {
+  .features-scroll { max-height: calc(100vh - 220px); }
+  .plan-list-bottom { padding: 14px 20px; }
+}
+</style>
+
+<div class="plan-page-root container-fluid">
+  <!-- Header -->
+  <div class="header-compact">
+    <h2 class="mb-1">{{translations.plan_page.choose_your_plan}}</h2>
+    <div class="countdown-banner">
+      <span class="fw-bold"><span class="bi bi-coin"></span> {{translations.new_user_points_bonus}}</span>
+      <div id="countdown-timer" class="countdown-timer"></div>
+    </div>
+  </div>
+
+  <!-- Top: features in a scrollable area -->
+  <div id="featuresScroll" class="features-scroll">
+    <!-- Features rendered by plan.js -->
+    <div class="feature-item">
+      <i class="bi bi-infinity"></i>
+      <div>
+        <div class="fw-bold">{{translations.plan_page.unlimited_generation}}</div>
+        <div class="text-muted small">{{translations.plan_page.unlimited_generation_desc}}</div>
+      </div>
     </div>
 
-    <div class="row">
-        <div class="col text-center mb-4">
-            <h1 class="display-4 fw-bold">{{translations.plan_page.unlock_everything}}</h1>
-            <p class="fs-5 text-muted mb-2">{{translations.plan_page.choose_your_plan_description}}</p>
-            <div class="limited-time-offer">
-                <i class="bi bi-lightning-charge-fill me-2"></i>
-                {{translations.plan_page.limited_time_offer}}
-                <i class="bi bi-lightning-charge-fill ms-2"></i>
-            </div>
-        </div>
+    <div class="feature-item">
+      <i class="bi bi-unlock-fill"></i>
+      <div>
+        <div class="fw-bold">{{translations.plan_page.all_content_access}}</div>
+        <div class="text-muted small">{{translations.plan_page.all_content_access_desc}}</div>
+      </div>
     </div>
 
-    <!-- Image auto infinite loop carousel /img/plan_slider/image{1 to 5}.webp-->
-    {{!-- Existing Carousel Code - Kept Intact --}}
-    <style>
-    .carousel-container {
-        position: relative;
-        width: 100%;
-        max-width: 900px;
-        margin: 0rem auto;
-        overflow: hidden;
-        padding: 5rem 0;
-    }
-    .carousel-cards {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        position: relative;
-        height: 260px;
-    }
-    .carousel-card {
-        position: absolute;
-        transition: 
-            transform 0.6s cubic-bezier(0.65, 0, 0.35, 1), 
-            box-shadow 0.4s ease-in-out, 
-            opacity 0.4s ease-in-out;
-        border-radius: 1.5rem;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1.5px 8px rgba(0,0,0,0.08);
-        background: #fff;
-        overflow: hidden;
-        max-height: 260px;
-        max-width: 340px;
-        opacity: 0;
-        z-index: 0;
-        width: 200px;
-        cursor: pointer;
-        filter: blur(0.5px);
-        transform: translateX(150%) scale(0.85);
-        pointer-events: none;
-    }
-    .carousel-card.active {
-        transform: translateX(0) scale(1.15) translateY(-12px);
-        box-shadow: 0 16px 48px rgba(0,0,0,0.22), 0 2px 12px rgba(0,0,0,0.12);
-        opacity: 1;
-        z-index: 2;
-        filter: none;
-    }
-    .carousel-card.prev {
-        transform: translateX(-90%) scale(0.95);
-        opacity: 0.7;
-        z-index: 1;
-        filter: none;
-        pointer-events: auto;
-    }
-    .carousel-card.next {
-        transform: translateX(90%) scale(0.95);
-        opacity: 0.7;
-        z-index: 1;
-        filter: none;
-        pointer-events: auto;
-    }
-    .carousel-card img {
-        width: 100%;
-        height: auto;
-        display: block;
-        border-radius: 1.5rem;
-        max-height: 260px;
-        object-fit: cover;
-    }
-    @media (max-width: 700px) {
-        .carousel-card, .carousel-card img {
-            max-width: 45vw;
-            max-height: auto;
-        }
-        .carousel-card.prev {
-            transform: translateX(-70%) scale(0.95);
-        }
-        .carousel-card.next {
-            transform: translateX(70%) scale(0.95);
-        }
-    }
-    </style>
-    <div class="carousel-container">
-        <div class="carousel-cards" id="planCarouselCards">
-            {{#each (range 1 5)}}
-            <div class="carousel-card{{#if @first}} active{{/if}}" data-index="{{@index}}">
-                <img src="/img/plan_slider/image{{this}}.webp" alt="Plan Image {{this}}">
-            </div>
-            {{/each}}
-        </div>
+    <div class="feature-item">
+      <i class="bi bi-shield-check"></i>
+      <div>
+        <div class="fw-bold">{{translations.plan_page.priority_processing}}</div>
+        <div class="text-muted small">{{translations.plan_page.priority_processing_desc}}</div>
+      </div>
     </div>
-    <script>
-    (function() {
-        const cards = document.querySelectorAll('#planCarouselCards .carousel-card');
-        let current = 0;
-        
-        function updateCards() {
-            cards.forEach((card, idx) => {
-                card.classList.remove('active', 'prev', 'next');
-                if (idx === current) {
-                    card.classList.add('active');
-                } 
-                else if (idx === (current - 1 + cards.length) % cards.length) {
-                    card.classList.add('prev');
-                } 
-                else if (idx === (current + 1) % cards.length) {
-                    card.classList.add('next');
-                }
-            });
-        }
-        function next() {
-            current = (current + 1) % cards.length;
-            updateCards();
-        }
-        function prev() {
-            current = (current - 1 + cards.length) % cards.length;
-            updateCards();
-        }
-        cards.forEach((card, idx) => {
-            card.addEventListener('click', () => {
-                if (idx === (current + 1) % cards.length) next();
-                else if (idx === (current - 1 + cards.length) % cards.length) prev();
-            });
-        });
-        setInterval(next, 3500);
-        updateCards(); 
-    })();
-    </script>
-    {{!-- End of Existing Carousel Code --}}
 
-    <!-- Key benefits section -->
-    <div class="row feature-icon-container gy-4">
-        <div class="col-md-4 feature-icon-item">
-            <i class="bi bi-infinity"></i>
-            <h4>{{translations.plan_page.unlimited_generation}}</h4>
-            <p class="text-muted">{{translations.plan_page.unlimited_generation_desc}}</p>
-        </div>
-        <div class="col-md-4 feature-icon-item">
-            <i class="bi bi-unlock-fill"></i>
-            <h4>{{translations.plan_page.all_content_access}}</h4>
-            <p class="text-muted">{{translations.plan_page.all_content_access_desc}}</p>
-        </div>
-        <div class="col-md-4 feature-icon-item">
-            <i class="bi bi-shield-check"></i>
-            <h4>{{translations.plan_page.priority_processing}}</h4>
-            <p class="text-muted">{{translations.plan_page.priority_processing_desc}}</p>
-        </div>
+    <!-- Optionally: more features filled dynamically by JS -->
+    <div id="additionalFeatures"></div>
+  </div>
+
+  <!-- Sticky bottom: horizontally scrollable plan cards with price/CTA visible -->
+  <div class="plan-list-bottom">
+    <div id="planListBottom" class="plan-list-scroll">
+      <!-- Plan cards inserted by plan.js -->
     </div>
-    <div 
-    class="container d-flex justify-content-center align-items-center text-center text-white w-100 shadow px-3"
-    style="min-height: 100px; border-bottom: 4px solid var(--bs-indigo); z-index: 1000; border-radius: 1em; background: linear-gradient(to right, color(display-p3 0.094 0 0.2), color(srgb 0.3974 0 0.6667));padding: 20px 0;">
-        <h1 class="me-3 mb-0 text-uppercase fw-bold">{{translations.new_user_points_bonus}}</h1>
-        <div id="countdown-timer" class="countdown-timer fs-4"></div>
+
+    <!-- keep Trust badges and payment info -->
+    <!-- Trust badges and payment info -->
+    <div class="mt-2 text-center small" style="opacity:0.9;">
+      <p class="mb-1 fw-semibold">{{translations.plan_page.secure_payment}}</p>
+      <a href="https://stripe.com/jp/resources/more/secure-payment-systems-explained" target="_blank">
+        <img src="/img/stripe-logo.png" style="height: 28px; width: auto;" alt="Stripe" class="mb-1">
+      </a>
+      <div class="d-flex justify-content-center gap-2 mt-2">
+        <img src="/img/payment-methods/visa.png" alt="Visa" title="Visa" style="height:20px;">
+        <img src="/img/payment-methods/mastercard.png" alt="Mastercard" title="Mastercard" style="height:20px;">
+        <img src="/img/payment-methods/amex.png" alt="American Express" title="American Express" style="height:20px;">
+        <img src="/img/payment-methods/applepay.png" alt="Apple Pay" title="Apple Pay" style="height:20px;">
+      </div>
     </div>
-    <div class="container">
-        <!-- Comparison table -->
-        <div class="mt-5 pt-4">
-            <h3 class="text-center mb-4 fw-bold">{{translations.plan_page.feature_comparison}}</h3>
-            <div class="table-responsive">
-                <table class="plan-comparison-table" id="planComparisonTable">
-                    <thead>
-                        <tr>
-                            <th>{{translations.plan_page.features}}</th>
-                            <th>{{translations.plan_page.free}}</th>
-                            <th>{{translations.plan_page.one_day}}</th>
-                            <th>{{translations.plan_page.premium}}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Feature rows will be populated via JavaScript -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Testimonials section -->
-        <div class="mt-5 pt-4">
-            <h3 class="text-center mb-4 fw-bold">{{translations.plan_page.what_users_say}}</h3>
-            <div class="row gy-4">
-                <div class="col-md-4">
-                    <div class="testimonial-card">
-                        <i class="bi bi-quote testimonial-quote"></i>
-                        <div class="d-flex align-items-center mb-3">
-                            <img src="/img/testimonials/user1.jpeg" alt="{{translations.plan_page.testimonial_name_1}}" class="testimonial-avatar me-3">
-                            <div>
-                                <h5 class="mb-0 fw-semibold">{{translations.plan_page.testimonial_name_1}}</h5>
-                                <div class="text-warning">
-                                    <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <p class="text-muted">"{{translations.plan_page.testimonial_text_1}}"</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="testimonial-card">
-                        <i class="bi bi-quote testimonial-quote"></i>
-                        <div class="d-flex align-items-center mb-3">
-                            <img src="/img/testimonials/user2.jpeg.webp" alt="{{translations.plan_page.testimonial_name_2}}" class="testimonial-avatar me-3">
-                            <div>
-                                <h5 class="mb-0 fw-semibold">{{translations.plan_page.testimonial_name_2}}</h5>
-                                <div class="text-warning">
-                                    <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <p class="text-muted">"{{translations.plan_page.testimonial_text_2}}"</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="testimonial-card">
-                        <i class="bi bi-quote testimonial-quote"></i>
-                        <div class="d-flex align-items-center mb-3">
-                            <img src="/img/testimonials/user3.jpeg" alt="{{translations.plan_page.testimonial_name_3}}" class="testimonial-avatar me-3">
-                            <div>
-                                <h5 class="mb-0 fw-semibold">{{translations.plan_page.testimonial_name_3}}</h5>
-                                <div class="text-warning">
-                                    <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <p class="text-muted">"{{translations.plan_page.testimonial_text_3}}"</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- FAQ Section -->
-        <div class="mt-5 pt-4">
-            <h3 class="text-center mb-4 fw-bold">{{translations.plan_page.faq_heading}}</h3>
-            <div class="accordion" id="faqAccordion">
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="faqOneHeading">
-                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faqOne" aria-expanded="true" aria-controls="faqOne">
-                            {{translations.plan_page.faq_q1}}
-                        </button>
-                    </h2>
-                    <div id="faqOne" class="accordion-collapse collapse show" aria-labelledby="faqOneHeading" data-bs-parent="#faqAccordion">
-                        <div class="accordion-body">
-                            {{translations.plan_page.faq_a1}}
-                        </div>
-                    </div>
-                </div>
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="faqTwoHeading">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqTwo" aria-expanded="false" aria-controls="faqTwo">
-                            {{translations.plan_page.faq_q2}}
-                        </button>
-                    </h2>
-                    <div id="faqTwo" class="accordion-collapse collapse" aria-labelledby="faqTwoHeading" data-bs-parent="#faqAccordion">
-                        <div class="accordion-body">
-                            {{translations.plan_page.faq_a2}}
-                        </div>
-                    </div>
-                </div>
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="faqThreeHeading">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqThree" aria-expanded="false" aria-controls="faqThree">
-                            {{translations.plan_page.faq_q3}}
-                        </button>
-                    </h2>
-                    <div id="faqThree" class="accordion-collapse collapse" aria-labelledby="faqThreeHeading" data-bs-parent="#faqAccordion">
-                        <div class="accordion-body">
-                            {{translations.plan_page.faq_a3}}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Trust badges and payment info -->
-        <div class="text-center mt-5 pt-4">
-            <p class="mb-2 fw-semibold">{{translations.plan_page.secure_payment}}</p>
-            <a href="https://stripe.com/jp/resources/more/secure-payment-systems-explained" target="_blank">
-                <img src="/img/stripe-logo.png" style="height: 40px; width: auto;" alt="Stripe" class="mb-3">
-            </a>
-            <p class="small text-muted"><i class="bi bi-shield-lock-fill me-1"></i>{{translations.plan_page.ssl_encrypted}}</p>
-            <div class="payment-methods mt-2">
-                <img src="/img/payment-methods/visa.png" alt="Visa" title="Visa">
-                <img src="/img/payment-methods/mastercard.png" alt="Mastercard" title="Mastercard">
-                <img src="/img/payment-methods/amex.png" alt="American Express" title="American Express">
-                <img src="/img/payment-methods/applepay.png" alt="Apple Pay" title="Apple Pay">
-                <img src="/img/payment-methods/jcb.png" alt="JCB" title="JCB">
-                <img src="/img/payment-methods/id.png" alt="ID" title="ID">
-            </div>
-        </div>
-    </div>
+  </div>
 </div>

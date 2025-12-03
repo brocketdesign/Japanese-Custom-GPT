@@ -30,10 +30,22 @@
   background: var(--primary-gradient-50) !important;
   color: white !important;
 }
+.btn-gradient-border {
+  border: 2px solid !important;
+  border-image-slice: 1;
+  border-width: 2px;
+  border-image-source: var(--primary-gradient);
+  background: transparent !important;
+  color: var(--primary-color) !important;
+}
 .btn-outline-primary {
   border: var(--form-border-width) solid var(--primary-color) !important;
   color: var(--primary-color) !important;
-  background: transparent !important;
+  text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.2) !important;
+  background: rgba(255, 255, 255, 0.33) !important;
+  backdrop-filter: blur(10px);
+  /* glowing effect */
+  box-shadow: 0 0 8px rgba(130, 64, 255, 0.6);
 }
 
 .btn-outline-primary:hover {

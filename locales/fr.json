@@ -648,8 +648,9 @@
   "premium": " 💎 Premium",
   "discount": "70% off",
   "new_user_discount": "💎 70% de réduction pour les nouveaux utilisateurs",
-  "new_user_points_bonus": "🪙 1000 points bonus pour les utilisateurs premium tous les jours",
+  "new_user_points_bonus": "1000 points bonus pour les utilisateurs premium tous les jours",
   "plan_page": {
+    "processing": "Traitement en cours...",
     "unlock_everything": "Débloquez toutes les fonctionnalités Premium",
     "choose_your_plan_description": "Choisissez le plan parfait pour vos besoins. 100% anonyme. Annulez à tout moment.",
     "choose_your_plan": "Sélectionnez votre plan",
@@ -1664,6 +1665,7 @@
   "cardMenuDescription": "Découvrez et interagissez avec une variété de personnages IA.",
   "createCharacterRestriction": "Passez à la version supérieure pour créer plus de personnages",
   "refresh": "Rafraîchir",
+  "refresh_page": "Rafraîchir la page ...",
   "analytics_title": "Tableau de bord analytique",
   "system_prompt": {
     "title": "Gestion des invites système",

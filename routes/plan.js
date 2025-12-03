@@ -211,9 +211,36 @@ async function routes(fastify, options) {
       },
     ],
     features: {
-      en : ["Unlimited Daily Chats", "Create & Personalize Characters", "Early Access to New Features", "Generate Unlimited Images", "Access All Visuals", "Explore Endless Message Suggestions", "Generate NSFW Images", "Unlock more than 10,000 images"],
-      fr : ["Chats quotidiens illimités", "Créez et personnalisez des personnages", "Accès anticipé aux nouvelles fonctionnalités", "Générez des images illimitées", "Accédez à tous les visuels", "Explorez des suggestions de messages infinies", "Générez des images NSFW", "Débloquez plus de 10 000 images"],
-      ja : ["毎日無制限のチャット", "キャラクターの作成とパーソナライズ", "新機能への早期アクセス", "無制限の画像生成", "すべてのビジュアルにアクセス", "無限のメッセージ提案を探索", "NSFW 画像生成", "10,000 枚以上の画像をアンロック"]
+      en: [
+        { icon: 'bi bi-infinity', title: 'Unlimited Chats & Generation', description: 'Create unlimited chats and images every day with no caps.' },
+        { icon: 'bi bi-pencil-square', title: 'Create & Personalize Characters', description: 'Design unique AI characters and tailor their personalities.' },
+        { icon: 'bi bi-lightning-charge-fill', title: 'Priority & Early Access', description: 'Get faster processing and early access to new features.' },
+        { icon: 'bi bi-image', title: 'Unlimited Image Generation', description: 'Generate high-quality images in multiple styles, including photorealistic and anime.' },
+        { icon: 'bi bi-collection', title: 'Full Content Access', description: 'Access all visuals and content types, including advanced options.' },
+        { icon: 'bi bi-chat-dots', title: 'Smart Message Suggestions', description: 'Explore endless message suggestions to enrich conversations.' },
+        { icon: 'bi bi-shield-check', title: 'NSFW & Advanced Tools', description: 'Unlock NSFW image generation and advanced creative tools.' },
+        { icon: 'bi bi-box-seam', title: 'Massive Library Unlock', description: 'Unlock thousands of images and assets for inspiration.' }
+      ],
+      fr: [
+        { icon: 'bi bi-infinity', title: 'Chats et Génération Illimités', description: 'Créez des chats et des images illimités chaque jour, sans limites.' },
+        { icon: 'bi bi-pencil-square', title: 'Créer et Personnaliser', description: 'Créez des personnages IA uniques et personnalisez leur personnalité.' },
+        { icon: 'bi bi-lightning-charge-fill', title: 'Priorité & Accès Anticipé', description: 'Traitement plus rapide et accès en avant-première aux nouveautés.' },
+        { icon: 'bi bi-image', title: 'Génération d\'Images Illimitée', description: 'Générez des images de haute qualité dans plusieurs styles.' },
+        { icon: 'bi bi-collection', title: 'Accès Complet au Contenu', description: 'Accédez à tous les visuels et types de contenu.' },
+        { icon: 'bi bi-chat-dots', title: 'Suggestions de Messages', description: 'Explorez des suggestions de messages pour enrichir vos conversations.' },
+        { icon: 'bi bi-shield-check', title: 'NSFW & Outils Avancés', description: 'Débloquez la génération NSFW et des outils créatifs avancés.' },
+        { icon: 'bi bi-box-seam', title: 'Bibliothèque Étendue', description: 'Débloquez des milliers d\'images et ressources.' }
+      ],
+      ja: [
+        { icon: 'bi bi-infinity', title: '無制限チャット＆生成', description: '毎日無制限にチャットや画像を生成できます。' },
+        { icon: 'bi bi-pencil-square', title: 'キャラ作成＆パーソナライズ', description: 'ユニークなAIキャラクターを作成し、性格をカスタマイズできます。' },
+        { icon: 'bi bi-lightning-charge-fill', title: '優先処理＆先行アクセス', description: '高速処理と新機能への先行アクセスが可能です。' },
+        { icon: 'bi bi-image', title: '無制限画像生成', description: 'フォトリアルやアニメなど、多様なスタイルで高品質画像を生成できます。' },
+        { icon: 'bi bi-collection', title: '全コンテンツアクセス', description: '高度なオプションを含むすべてのビジュアルにアクセスできます。' },
+        { icon: 'bi bi-chat-dots', title: 'メッセージ提案', description: '会話を豊かにする無限のメッセージ提案を利用できます。' },
+        { icon: 'bi bi-shield-check', title: 'NSFW＆高度ツール', description: 'NSFW画像生成や高度なクリエイティブツールを解除します。' },
+        { icon: 'bi bi-box-seam', title: '膨大なライブラリ', description: '何千もの画像とアセットをアンロックします。' }
+      ]
     }
   
 };

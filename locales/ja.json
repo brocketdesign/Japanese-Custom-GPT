@@ -259,6 +259,7 @@
     "message": "サーバーへの接続が失われました。再接続を試みるか、ページをリフレッシュしてください。",
     "retry": "再接続を試みる",
     "refresh": "ページをリフレッシュ",
+    "refresh_page": "ページをリフレッシュ中...",
     "attempting": "再接続を試みています...",
     "success": "再接続に成功しました！",
     "failed": "接続に失敗しました。ページをリフレッシュしてください。"
@@ -665,8 +666,9 @@
   "premium": " 💎 プレミアム",
   "discount": "70%オフ",
   "new_user_discount": "💎 新規ユーザーに70%割引",
-  "new_user_points_bonus": "🪙 毎日1000ポイントをゲット（新規プレミアムユーザー向け）",
+  "new_user_points_bonus": "毎日1000ポイントをゲット（新規プレミアムユーザー向け）",
   "plan_page": {
+    "processing": "処理中...",
     "unlock_everything": "すべてのプレミアム機能を解除",
     "choose_your_plan_description": "あなたに最適なプランを選択してください。100%匿名。いつでもキャンセル可能。",
     "choose_your_plan": "プランを選択",

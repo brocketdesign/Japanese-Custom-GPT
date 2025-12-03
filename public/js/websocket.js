@@ -419,8 +419,11 @@ window.showReconnectPrompt = function() {
     };
     
     // Refresh page handler
+    refreshBtn.textContent = window.translations.reconnect.refresh_page || 'Refresh Page';
     refreshBtn.onclick = function() {
-        window.location.reload();
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
     };
     
     function attemptReconnection() {

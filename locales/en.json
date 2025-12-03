@@ -309,6 +309,7 @@
     "message": "The connection to the server has been lost. You can try to reconnect or refresh the page.",
     "retry": "Try Reconnecting",
     "refresh": "Refresh Page",
+    "refresh_page": "Refresh Page ...",
     "attempting": "Attempting to reconnect...",
     "success": "Successfully reconnected!",
     "failed": "Connection failed. Please refresh the page."
@@ -659,9 +660,10 @@
   "premium": " 💎 Premium",
   "discount": "70% off",
   "new_user_discount": "💎 70% off for new users",
-  "new_user_points_bonus": "🪙 1000 points bonus for premium users daily",
+  "new_user_points_bonus": "1000 points bonus for premium users daily",
   "new_user_points_bonus_description": "Get 1000 bonus points when you upgrade to premium for the first time. Use these points to create more images and chat with characters.",
   "plan_page": {
+    "processing": "Processing...",
     "unlock_everything": "Unlock All Premium Features",
     "choose_your_plan_description": "Choose the perfect plan for your needs. 100% anonymous. Cancel anytime.",
     "choose_your_plan": "Select Your Plan",

@@ -53,23 +53,23 @@
         <div class="profile-stats">
             <div class="stat-item likes-tab" type="button">
                 <span class="stat-number">{{default userData.imageLikeCount 0}}</span>
-                <div class="stat-label"><i class="bi bi-heart-fill"></i> {{translations.profile.likes}}</div>
+                <div class="stat-label"><i class="bi bi-heart-fill"></i></div>
             </div>
             <div class="stat-item characters-tab" type="button">
                 <span class="stat-number">{{default userData.chatCount 0}}</span>
-                <div class="stat-label"><i class="bi bi-chat-dots-fill"></i> {{translations.profile.characters}}</div>
+                <div class="stat-label"><i class="bi bi-chat-dots-fill"></i> </div>
             </div>
             <div class="stat-item">
-                <button class="btn btn-link stat-label p-0" data-bs-toggle="modal" data-bs-target="#followingModal" style="color: inherit; text-decoration: none;">
+                <div class="stat-label p-0" data-bs-toggle="modal" data-bs-target="#followingModal" style="color: inherit; text-decoration: none;cursor: pointer;">
                     <span class="stat-number">{{default userData.followCount 0}}</span>
-                    <div class="stat-label"><i class="bi bi-person-check-fill"></i> {{translations.profile.following}}</div>
-                </button>
+                    <div class="stat-label"><i class="bi bi-person-check-fill"></i></div>
+                </div>
             </div>
             <div class="stat-item">
-                <button class="btn btn-link stat-label p-0" data-bs-toggle="modal" data-bs-target="#followersModal" style="color: inherit; text-decoration: none;">
+                <div class="stat-label p-0" data-bs-toggle="modal" data-bs-target="#followersModal" style="color: inherit; text-decoration: none;cursor: pointer;">
                     <span class="stat-number">{{default userData.followerCount 0}}</span>
-                    <div class="stat-label"><i class="bi bi-people-fill"></i> {{translations.profile.followers}}</div>
-                </button>
+                    <div class="stat-label"><i class="bi bi-people-fill"></i></div>
+                </div>
             </div>
         </div>
 

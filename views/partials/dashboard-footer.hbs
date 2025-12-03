@@ -594,8 +594,6 @@ window.showChat = function () {
         return;
     }
 
-    console.log('Showing chat interface with slide-in animation');
-
     // Instantly hide the previous screen
     $off.addClass('d-none');
 
@@ -627,8 +625,6 @@ window.showChat = function () {
 window.hideChat = function () {
     const $on  = $('.onchat-on');
     const $off = $('.onchat-off');
-
-    console.log('Hiding chat interface with slide-out animation');
 
     // Animate out to the right
     $on.css({

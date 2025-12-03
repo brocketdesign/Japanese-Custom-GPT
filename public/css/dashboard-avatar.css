@@ -152,7 +152,7 @@
     padding: 2px;
     transition: all 0.3s ease;
     position: fixed !important;
-    top: 5px !important;
+    top: 11px !important;
     right: 5px !important;
     z-index: 1040 !important; /* Below offcanvas (1055) */
     width: 35px;
@@ -249,7 +249,7 @@
     }
     
     #avatarMenuBtn {
-        top: 15px !important;
+        top: 11px !important;
         right: 5px !important;
     }
     
@@ -294,7 +294,7 @@
     }
     
     #avatarMenuBtn {
-        top: 10px !important;
+        top: 11px !important;
         right: 5px !important;
     }
     
@@ -331,7 +331,7 @@
 /* Large screen specific styles */
 @media (min-width: 992px) {
     #avatarMenuBtn {
-        top: 5px !important;
+        top: 11px !important;
         right: 5px !important;
         z-index: 1040 !important;
     }

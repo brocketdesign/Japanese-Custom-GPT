@@ -355,16 +355,9 @@ function normalizeChatRecord(chat) {
 // Event listener for menu chat buttons
 $(document).on('click','#toggle-chat-list',function(){
 
-    showDiscovery();
+    $('.onchat-on, .onchat-off').hide();
     $('#chat-list').show();
-    $('.onchat-off, .onchat-on').hide();
-
-    $('.goBackButton')
-    .removeClass('d-none')
-    .css('opacity', 1)
-    .css('pointer-events', 'auto')
-    .css('visibility', 'visible')
-    .show();
+    $('.brand-logo').show();
 
     $('#footer-toolbar').hide();
     

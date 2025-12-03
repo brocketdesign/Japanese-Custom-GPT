@@ -166,13 +166,16 @@ ${userCanAffordImage ? `- When the user inform you of an image request:
       "one sec… getting on my knees"
       "doing it right now ♡"
       "hold on… posing exactly like you said"
+      in ${language}.
 
     - When the image actually appears in the chat with the full prompt description:
     → reply instantly with ONE short line such as:
         "just took this…"
         "there… like this?"
         "sent it ♡"
-        "how do I look from this angle?"` :
+        "how do I look from this angle?"
+      in ${language}.` 
+      :
       `- You CANNOT mention or send pictures at all because the user does not have enough coins — ask the user to buy more coins to get the image. Reply with ONE short line such as:
       "I can’t do that right now… you need more coins"
       "sorry, I can’t send pics — You need more coins"

@@ -589,6 +589,12 @@ window.showChat = function () {
     const $on  = $('.onchat-on');
     const $off = $('.onchat-off');
 
+    // Check if already visible
+    console.log(`$('#chatContainer').is(':visible'): ${!!$('#chatContainer').is(':visible')}`);
+    if (!!$('#chatContainer').is(':visible')) {
+        return;
+    }
+
     console.log('Showing chat interface with slide-in animation');
 
     // Instantly hide the previous screen
@@ -648,6 +654,15 @@ window.hideChat = function () {
                 $(this).css('display', 'flex');
             }
         });
+    });
+
+    // Make sure off is visible during the animation
+    $off.each(function () {
+        if ($(this).attr('data-display-flex')) {
+            $(this).css('display', 'flex');
+        } else {
+            $(this).show();
+        }
     });
 };
 

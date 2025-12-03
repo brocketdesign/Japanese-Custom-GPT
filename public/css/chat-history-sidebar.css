@@ -24,8 +24,8 @@
 
 .chat-avatar {
     transition: transform 0.3s ease;
-    width: 32px !important; /* Smaller avatar for compact design */
-    height: 32px !important;
+    width: 48px !important; /* Smaller avatar for compact design */
+    height: 48px !important;
 }
 
 .chat-item-enhanced:hover .chat-avatar {
@@ -448,8 +448,8 @@
     }
     
     .chat-avatar {
-        width: 28px !important; /* Even smaller on mobile */
-        height: 28px !important;
+        width: 48px !important; /* Even smaller on mobile */
+        height: 48px !important;
     }
     
     .chat-name {

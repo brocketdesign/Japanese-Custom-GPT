@@ -577,10 +577,7 @@ function setupChatInterface(chat, character, userChat, isNew) {
     }
     
 
-    function displayImageThumb(imageUrl, origineUserChatId = null, shouldBlur = false){
-        if(shouldBlur){
-            return;
-        }
+    function displayImageThumb(imageId, imageUrl, origineUserChatId = null, shouldBlur = false){
         const messageContainer = $(`#chatContainer[data-id=${origineUserChatId}]`)
         if(origineUserChatId && messageContainer.length == 0){
             return
@@ -588,9 +585,9 @@ function setupChatInterface(chat, character, userChat, isNew) {
         var card = $(`
             <div 
             onclick="showImagePreview(this)"
-            class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 col-auto" style="cursor:pointer;" data-src="${imageUrl}">
-                <div style="background-image:url(${imageUrl});" class="card-img-top rounded-avatar rounded-circle-button-size position-relative m-auto">
-                </div>
+            class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 col-auto" style="cursor:pointer;" data-src="${imageUrl}" data-id="${imageId}">
+                <div style="background-image:url(${imageUrl});" class="card-img-top rounded-avatar rounded-circle-button-size position-relative m-auto"></div>
+                ${shouldBlur ? `<div class="blur-overlay rounded-avatar rounded-circle-button-size position-absolute m-auto"></div>` : ''}
             </div>
         `);
         $('#chat-recommend').append(card);
@@ -1015,9 +1012,8 @@ function setupChatInterface(chat, character, userChat, isNew) {
                     if (response.success && response.result) {
                         const mergeResult = response.result;
                         const mergedImageUrl = mergeResult.mergedImageUrl;
-                        console.log(response)
                         // Update the placeholder image
-                        displayImageThumb(mergedImageUrl);
+                        displayImageThumb(mergeId, mergedImageUrl);
                         $(`#merge-${mergeId}`).attr('src', mergedImageUrl).fadeIn();
                         $(`#merge-${mergeId}`).attr('alt', 'Merged Face Result').fadeIn();
                         $(`#merge-${mergeId}`).attr('data-prompt', 'Face merge completed');
@@ -1091,7 +1087,7 @@ function setupChatInterface(chat, character, userChat, isNew) {
                         const displayMode = getNSFWDisplayMode(item, subscriptionStatus);
                         
                         // Update the placeholder image
-                        displayImageThumb(response.imageUrl, null, shouldBlur);
+                        displayImageThumb(imageId, response.imageUrl, null, shouldBlur);
                         
                         if (shouldBlur || displayMode !== 'show') {
                             // Apply blur effect - set data-src and add blur class
@@ -1603,6 +1599,7 @@ function setupChatInterface(chat, character, userChat, isNew) {
             messageElement.addClass(animationClass).fadeIn();
             generateVideoIcon(imageId, chatId, userChatId);
             // Apply blur effect if needed
+            console.log({shouldBlur, displayMode});
             if (shouldBlur || displayMode !== 'show') {
                 $(`.image-tools[data-id="${imageId}"]`).hide();
                 messageElement.find('.img-blur').each(function() {
@@ -1610,8 +1607,9 @@ function setupChatInterface(chat, character, userChat, isNew) {
                 });
             }
 
+            displayImageThumb(imageId, imageUrl, origineUserChatId, shouldBlur);
             if (subscriptionStatus || !imageNsfw) {
-                displayImageThumb(imageUrl, origineUserChatId, shouldBlur);
+                
             }
         } 
 
@@ -1636,7 +1634,7 @@ function setupChatInterface(chat, character, userChat, isNew) {
             $(`#${messageId}`).append(messageElement);
             generateVideoIcon(imageId, chatId, userChatId);
             messageElement.addClass(animationClass).fadeIn();
-            displayImageThumb(imageUrl)
+            displayImageThumb(imageId, imageUrl)
         } 
     
         else if (messageClass === 'assistant' && typeof message === 'string' && message.trim() !== '') {

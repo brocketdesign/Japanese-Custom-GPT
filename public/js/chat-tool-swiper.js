@@ -115,7 +115,8 @@ function showPreview(type, el) {
     }
 
     const clickedUrl = $(el).find('img').attr('src') || $(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-video-src') || $(el).data('video-src') || ($(el).find('video').attr('src') || $(el).find('video source').attr('src'));
-    const clickedIndex = Math.max(0, items.findIndex(it => it.url === clickedUrl || it.poster === clickedUrl));
+    const clickedId = $(el).find('img').attr('data-id') || $(el).attr('data-id') || $(el).attr('data-video-id') || $(el).data('video-id') || ($(el).find('video').attr('data-id') || $(el).find('video source').attr('data-id'));
+    const clickedIndex = Math.max(0, items.findIndex(it => it.id === clickedId || it.poster === clickedUrl));
 
     createPreviewModalIfNeeded();
     // For mixed mode, we'll toggle the info overlay per-slide (updatePreviewInfo will manage it)

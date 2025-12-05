@@ -2010,7 +2010,9 @@ opacity: 0.8;
   opacity: 1;
   pointer-events: auto;
 }
-
+.assistant-image-box .blur-overlay {
+backdrop-filter: blur(3px);
+}
 /* New gradient styles for plan differentiation */
 .premium-gradient {
   background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);

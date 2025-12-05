@@ -206,7 +206,7 @@ window.updateImageCount = function(chatId, count) {
 // Example usage: debugUpdateImageCount(5); // This will update the image count badge for the last chat session
 const sentImageIds = new Set();
 const trasckedImageTitles = new Set();
-window.generateImage = async function(data) {
+window.generateImage = async function(data, disableCompletion = false) {
     // Validate essential data
     if (!data || !data.userChatId || (!data.imageUrl && !data.url)) {
         console.error('[generateImage] Missing essential data:', {
@@ -258,15 +258,15 @@ window.generateImage = async function(data) {
     // Check if the image has been added successfully
     setTimeout(() => {
         const addedImage = $(`img[data-id='${imageId}']`);
-        if (addedImage.length) {
-            console.log(`[generateImage] Image with ID ${imageId} added successfully to chat ${data.userChatId}`);
-        } else {
+        if (!addedImage.length) {
             console.warn(`[generateImage] Failed to add image with ID ${imageId} to chat ${data.userChatId}`);
         }
     }, 1000);
 
     if(!trasckedImageTitles.has(titleText)){
         trasckedImageTitles.add(titleText);
-        generateChatCompletion(null, false, true);
+        if(!disableCompletion){
+            generateChatCompletion(null, false, true);
+        }
     }
 };

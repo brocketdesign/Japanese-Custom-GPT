@@ -794,7 +794,7 @@ function setupChatInterface(chat, character, userChat, isNew) {
                 const isHidden = chatMessage?.hidden === true || chatMessage?.content?.startsWith("[Hidden]") || chatMessage?.name === 'master';
                 const image_request = chatMessage.image_request
                 if (!isStarter && !isHidden) {
-                    const isGift = chatMessage.name === 'gift';
+                    const isGift = chatMessage.name === 'gift' || chatMessage.name === 'gift_request' ;
                     if (isGift) {
                         const text = chatMessage.content;
                         const imageUrl = chatMessage.imageUrl;

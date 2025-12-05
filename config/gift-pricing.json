@@ -1,15 +1,6 @@
 {
   "gifts": [
     {
-      "id": "68400f7c664ce9fb6e839d9c",
-      "title": "Love Letter",
-      "oldCost": 5,
-      "newCost": 50,
-      "nsfw": false,
-      "category": "SFW_BASIC",
-      "reasoning": "SFW romantic gift - basic tier at minimum 50 points"
-    },
-    {
       "id": "684022a6664ce9fb6e839d9f",
       "title": "Ice Cream",
       "oldCost": 5,
@@ -89,22 +80,103 @@
       "nsfw": true,
       "category": "NSFW_EXTREME",
       "reasoning": "Extreme NSFW explicit sexual act - ultimate premium content"
+    },
+    {
+      "id": "6932a080d96e92de23115a5f",
+      "title": "Bikini",
+      "oldCost": 270,
+      "newCost": 250,
+      "nsfw": true,
+      "category": "NSFW_MEDIUM",
+      "reasoning": "Medium NSFW swimwear - revealing bikini"
+    },
+    {
+      "id": "6932a0e9d96e92de23115a60",
+      "title": "Castle",
+      "oldCost": 1500,
+      "newCost": 100,
+      "nsfw": false,
+      "category": "SFW_ADVANCED",
+      "reasoning": "SFW luxury location - castle background setting"
+    },
+    {
+      "id": "6932a113d96e92de23115a61",
+      "title": "Choker",
+      "oldCost": 450,
+      "newCost": 400,
+      "nsfw": true,
+      "category": "NSFW_HIGH",
+      "reasoning": "High NSFW BDSM accessory - choker with leashes"
+    },
+    {
+      "id": "6932a16dd96e92de23115a62",
+      "title": "Cat ears ",
+      "oldCost": 120,
+      "newCost": 70,
+      "nsfw": false,
+      "category": "SFW_ADVANCED",
+      "reasoning": "SFW cute accessory - cat ears headband"
+    },
+    {
+      "id": "6932a19fd96e92de23115a63",
+      "title": "Nuisette",
+      "oldCost": 310,
+      "newCost": 280,
+      "nsfw": true,
+      "category": "NSFW_MEDIUM",
+      "reasoning": "Medium NSFW lingerie - transparent nightwear"
+    },
+    {
+      "id": "6932a1f2d96e92de23115a64",
+      "title": "Stocking",
+      "oldCost": 500,
+      "newCost": 350,
+      "nsfw": true,
+      "category": "NSFW_HIGH",
+      "reasoning": "High NSFW legwear - sexy stockings with ass view"
+    },
+    {
+      "id": "6932a21dd96e92de23115a65",
+      "title": "Chocolate",
+      "oldCost": 50,
+      "newCost": 50,
+      "nsfw": false,
+      "category": "SFW_BASIC",
+      "reasoning": "SFW food gift - chocolate treat"
+    },
+    {
+      "id": "6932a24ed96e92de23115a66",
+      "title": "Underwear",
+      "oldCost": 390,
+      "newCost": 300,
+      "nsfw": true,
+      "category": "NSFW_MEDIUM",
+      "reasoning": "Medium NSFW underwear - sexy undergarments"
+    },
+    {
+      "id": "6932a27ad96e92de23115a67",
+      "title": "Whip",
+      "oldCost": 740,
+      "newCost": 500,
+      "nsfw": true,
+      "category": "NSFW_EXTREME",
+      "reasoning": "Extreme NSFW BDSM tool - whip for dominance"
     }
   ],
   "summary": {
-    "totalGifts": 10,
+    "totalGifts": 19,
     "categories": {
       "SFW_BASIC": {
-        "count": 3,
+        "count": 4,
         "priceRange": "50",
-        "description": "Basic SFW gifts - romantic and fun items",
-        "affordability": "Regular users: 1 per login, Premium users: 20 per login"
+        "description": "Basic SFW gifts - romantic, fun, and food items",
+        "affordability": "Regular users: 2 per login, Premium users: 20 per login"
       },
       "SFW_ADVANCED": {
-        "count": 3,
-        "priceRange": "70-90",
-        "description": "Premium SFW gifts - luxury and suggestive but covered",
-        "affordability": "Regular users: limited access with savings, Premium users: 11-14 per login"
+        "count": 5,
+        "priceRange": "70-100",
+        "description": "Premium SFW gifts - luxury, beauty, and location items",
+        "affordability": "Regular users: limited access with savings, Premium users: 10-14 per login"
       },
       "NSFW_LIGHT": {
         "count": 1,
@@ -113,21 +185,21 @@
         "affordability": "Regular users: rare treat, Premium users: 7 per login"
       },
       "NSFW_MEDIUM": {
-        "count": 1,
-        "priceRange": "200",
-        "description": "Medium NSFW gifts - explicit clothing/lingerie",
-        "affordability": "Regular users: significant saving, Premium users: 5 per login"
+        "count": 4,
+        "priceRange": "200-300",
+        "description": "Medium NSFW gifts - explicit clothing/lingerie and swimwear",
+        "affordability": "Regular users: significant saving, Premium users: 3-5 per login"
       },
       "NSFW_HIGH": {
-        "count": 1,
-        "priceRange": "380",
-        "description": "High NSFW gifts - explicit sexual content",
-        "affordability": "Regular users: 1 per 3-4 days, Premium users: 2 per login"
+        "count": 3,
+        "priceRange": "350-400",
+        "description": "High NSFW gifts - explicit sexual accessories and legwear",
+        "affordability": "Regular users: 1 per 2-3 days, Premium users: 2-3 per login"
       },
       "NSFW_EXTREME": {
-        "count": 1,
-        "priceRange": "550",
-        "description": "Extreme NSFW gifts - ultimate explicit content",
+        "count": 2,
+        "priceRange": "500-550",
+        "description": "Extreme NSFW gifts - ultimate explicit content and BDSM tools",
         "affordability": "Regular users: 1 per week, Premium users: 1-2 per login"
       }
     },

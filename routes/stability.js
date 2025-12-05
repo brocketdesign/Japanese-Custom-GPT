@@ -86,9 +86,11 @@ async function routes(fastify, options) {
             fastify.sendNotificationToUser(userId, 'updateCustomGift', { giftId: giftId })
           }
         })
-        const giftPrompt = giftData.prompt || giftData.description;
-        const giftNsfw = giftData.category.toUpperCase().includes('NSFW');
-        processPromptToTags(db, giftPrompt);
+        const giftPrompt = giftData.prompt || giftData.description || '';
+        const giftNsfw = (giftData.category && typeof giftData.category === 'string') ? giftData.category.toUpperCase().includes('NSFW') : false;
+        if (giftPrompt) {
+          processPromptToTags(db, giftPrompt);
+        }
         const imageDescription = await checkImageDescription(db, chatId);
         newPrompt = await createGiftPrompt( giftPrompt, null, imageDescription, giftNsfw);
         console.log('Generated prompt from gift:', newPrompt);

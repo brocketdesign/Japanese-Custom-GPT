@@ -1235,9 +1235,6 @@
 }
 
 @media (max-width: 576px) {
-    .gift-card {
-        margin-bottom: 16px;
-    }
     
     .modern-gift-container {
         border-radius: 16px;

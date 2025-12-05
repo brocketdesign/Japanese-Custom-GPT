@@ -549,8 +549,13 @@ async function routes(fastify, options) {
                     const autoImageGenerationEnabled = await getAutoImageGenerationSetting(db, userId, chatId);
                       if( messagesForCompletion.length > 2 && newUserPointsBalance >= 50 && autoImageGenerationEnabled ) {
                         let assistantImageRequest = null;
-                        if(lastUserMessage.name !== 'pose_request' && lastUserMessage.name !== 'gift_request') {
+                        const disableImageAnalysis = request.body.disableImageAnalysis === true ? true : false;
+                        if(!disableImageAnalysis && lastUserMessage.name !== 'pose_request' && lastUserMessage.name !== 'gift_request') {
+                            console.log('📷🔍 Analyzing messages for image request:', { lastAssistantMessage, lastUserMessage });
                             assistantImageRequest = await checkImageRequest(newAssistantMessage.content, lastUserMessage.content);
+                            console.log('📷🔍 Image request analysis result:', assistantImageRequest);
+                        } else {
+                            console.log(`📷🔍  [openai-chat-completion:${requestId}] Skipping auto image generation for ${disableImageAnalysis ? 'request disableImageAnalysis: '+disableImageAnalysis : 'message name: '+lastUserMessage.name}`);
                         }
                         if (assistantImageRequest && assistantImageRequest.image_request) {
                             lastUserMessage.content += ' ' + newAssistantMessage.content;

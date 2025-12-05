@@ -3,7 +3,7 @@ const axios = require('axios');
 const fs = require('fs');
 const { processPromptToTags, saveChatImageToDB } = require('../models/tool')
 const { generateImg, getPromptById, getImageSeed, checkImageDescription, getTasks } = require('../models/imagen');
-const { createPrompt, moderateText } = require('../models/openai');
+const { createPrompt, createGiftPrompt, moderateText } = require('../models/openai');
 const { upscaleImg } = require('../models/upscale-utils');
 const { removeUserPoints } = require('../models/user-points-utils');
 const { getUserMinImages } = require('../models/chat-tool-settings-utils');
@@ -86,11 +86,12 @@ async function routes(fastify, options) {
             fastify.sendNotificationToUser(userId, 'updateCustomGift', { giftId: giftId })
           }
         })
-        
         const giftPrompt = giftData.prompt || giftData.description;
+        const giftNsfw = giftData.category.toUpperCase().includes('NSFW');
         processPromptToTags(db, giftPrompt);
         const imageDescription = await checkImageDescription(db, chatId);
-        newPrompt = await createPrompt(giftPrompt, imageDescription, false);
+        newPrompt = await createGiftPrompt( giftPrompt, null, imageDescription, giftNsfw);
+        console.log('Generated prompt from gift:', newPrompt);
       } else {
         // Charge points for image generation
         const cost = getImageGenerationCost(image_num);

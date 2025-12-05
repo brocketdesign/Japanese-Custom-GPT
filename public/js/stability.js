@@ -264,9 +264,9 @@ window.generateImage = async function(data) {
             console.warn(`[generateImage] Failed to add image with ID ${imageId} to chat ${data.userChatId}`);
         }
     }, 1000);
-    
+
     if(!trasckedImageTitles.has(titleText)){
         trasckedImageTitles.add(titleText);
-        generateChatCompletion();
+        generateChatCompletion(null, false, true);
     }
 };

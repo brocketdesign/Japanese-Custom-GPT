@@ -1990,7 +1990,15 @@ opacity: 0.8;
   text-decoration: none;
   box-shadow: 0 2px 8px rgba(0,123,255,0.08);
 }
-
+.gif-message-image{
+  width: 100%;
+  border-radius: 15px;
+  max-height: 60px;
+  object-fit: contain;
+  margin-left: auto;
+  object-position: right;
+  padding: 10px;
+}
 .prompt-card.inactive, .gift-card.inactive {
   opacity: 0.5;
 }

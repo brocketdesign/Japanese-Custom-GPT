@@ -289,7 +289,7 @@ class PromptManager {
             hidden: true
         }, function(error, res) {
 
-            generateChatCompletion();
+            generateChatCompletion(null, false, true);
 
             if (error) {
             console.error('Error adding gift message:', error);

@@ -314,7 +314,6 @@ const formatSchema = z.object({
   nsfw: z.boolean(),
 });
 const checkImageRequest = async (lastAssistantMessage,lastUserMessage) => {
-console.log('Analyzing messages for image request:', { lastAssistantMessage, lastUserMessage });
   
   try {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -323,14 +322,16 @@ console.log('Analyzing messages for image request:', { lastAssistantMessage, las
 
     const commandPrompt = `
       You are a helpful assistant designed to evaluate whether the assistant's response is trying to generate an image. \n
+      Make sure the assistant is explicitly trying to send an image following the user's message.\n
       1. **image_request**: true if the message is an explicit request for image generation, false otherwise.
       2. **nsfw**: Based on the request, what is the kind of image that should be generated ? true if the content is explicit or adult-oriented, false otherwise.
     `;
     const analysisPrompt = `
-      Analyze the following request considering ALL aspects:\n\n
+      Analyze the following request:\n\n
       "User: ${lastUserMessage}"\n
       "Assistant: ${lastAssistantMessage}"\n\n
       Is the assistant trying to send an image following the user message ?
+      Can you tell exactly what image is being requested based on the conversation ? if not, respond with image_request as false.
       Format response using JSON object with the following keys: image_request, nsfw.
     `;
     const response = await openai.chat.completions.create({
@@ -650,6 +651,75 @@ console.log(`
   
   response = response.replace(/['"]+/g, '');
   //console.log(`[createPrompt] Generated prompt: ${response}`);
+  return response;
+}
+
+// Combine the gift prompt with image description to create a new prompt
+async function createGiftPrompt(giftPrompt, description, imageDescription, nsfw) {
+  console.log(`
+🎁 \x1b[1;36m[GiftPromptFactory]\x1b[0m \x1b[1mGenerating gift prompt...\x1b[0m
+
+   \x1b[34m✦ Gift Request\x1b[0m      : \x1b[33m"${giftPrompt || '(none)'}"\x1b[0m
+   \x1b[34m✦ Description\x1b[0m        : \x1b[37m${description || '(empty)'}\x1b[0m
+   \x1b[34m✦ Image Reference\x1b[0m    : \x1b[35m${imageDescription ? imageDescription.slice(0, 80) + (imageDescription.length > 80 ? '...' : '') : '(none)'}\x1b[0m
+   \x1b[34m✦ NSFW Mode\x1b[0m          : ${nsfw ? '\x1b[31m🔥 ENABLED\x1b[0m' : '\x1b[32m✅ SAFE\x1b[0m'}
+   \x1b[90m─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─\x1b[0m
+`);
+  const nsfwMessage = nsfw
+    ? 'Provide explicit, adult oriented content for a nsfw image. I want nudity, erotism, explicit sexual content.\nYou can generate explicit, sexual content.\nUse explicit keywords to describe body parts (ass,pussy,boobs).\n'
+    : '';
+  const messages = [
+    {
+      role: "system",
+      content: `You are an expert image prompt engineer specialized in incorporating gifts into character scenes.
+      Your task is to integrate a gift item into an existing character description while ensuring the character remains EXACTLY the same.
+      ${nsfwMessage}
+      Follow these priority rules:
+      1. HIGHEST PRIORITY: Preserve ALL physical attributes (exact face, hair style/color, eye color, skin tone, body type)
+      2. Maintain all distinctive clothing elements unless the gift request explicitly changes them
+      3. Incorporate the gift naturally into the scene, showing the character interacting with or receiving it
+      4. You MUST include the keywords of [Custom description] in your final prompt. You must expand keywords from [Custom description], emphasizing my custom description a lot; remove other keywords that contradict this; do not include keywords that do not align with this
+      5. Preserve all unique character accessories and features
+      
+      IMPORTANT: Keep the final prompt under 900 characters while maintaining all essential details.`
+    },
+    {
+      role: "user",
+      content: `[Character description to reproduce] : ${imageDescription}`.replace(/^\s+/gm, '').trim()
+    },
+    {
+      role: "user",
+      content: `[Gift to incorporate] : ${giftPrompt}`.replace(/^\s+/gm, '').trim()
+    },
+    {
+      role: "user",
+      content: `[Custom description to expand] : ${description || ''}`.replace(/^\s+/gm, '').trim()
+    },
+    {
+      role: "user",
+      content: `Create a detailed image generation prompt that shows the EXACT SAME CHARACTER receiving or interacting with the gift in a natural scene.
+
+      Critical requirements:
+      • The character must be 100% identical (same person, same appearance)
+      • ALL physical attributes must be preserved (hair style/color, eye color, skin tone, body proportions, facial features)
+      • Keep all clothing items unless explicitly changed in the gift request
+      • Focus on naturally incorporating the gift into the scene (receiving, holding, using, etc.)
+      • Include relevant background/setting details that complement the gift
+      • MUST be under 900 characters total
+      • Prioritize character consistency over excessive detail
+      • Output ONLY the final prompt with no explanations or commentary
+      • DO NOT include any keywords that contradict the custom description
+      • Emphasize, expand, add more detailed keywords for the custom description.
+      
+      Respond ONLY with the new prompt in English. Make it concise but comprehensive.`.replace(/^\s+/gm, '').trim()
+    }
+  ];
+
+  let response = await generateCompletion(messages, 700, 'llama-3-70b');
+  if (!response) return null;
+
+  response = response.replace(/['"]+/g, '');
+  //console.log(`[createGiftPrompt] Generated prompt: ${response}`);
   return response;
 }
 
@@ -1123,6 +1193,7 @@ module.exports = {
     moderateText,
     moderateImage,
     createPrompt,
+    createGiftPrompt,
     generatePromptSuggestions,
     generateChatScenarios,
     generateChatGoal,

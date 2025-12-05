@@ -609,7 +609,7 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
     });
       
     fastify.post('/api/chat/add-message', async (request, reply) => {
-        const { chatId, userChatId, role, message, image_request, name, hidden } = request.body;
+        const { chatId, userChatId, role, message, image_request, name, hidden, imageUrl } = request.body;
         
         const messageType = image_request ? 'IMAGE_REQUEST' : (name ? `SUGGESTION_${name.toUpperCase()}` : 'TEXT');
 
@@ -625,6 +625,7 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             newMessage.name = name || null;
             newMessage.hidden = hidden || false;
             newMessage.image_request = image_request || false;
+            newMessage.imageUrl = imageUrl || null;
             const now = new Date();
             const nowIsoString = now.toISOString();
             newMessage.timestamp = nowIsoString;

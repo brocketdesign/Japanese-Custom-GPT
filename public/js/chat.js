@@ -280,7 +280,7 @@ $(document).ready(async function() {
             setTimeout(() => {
                 $('#userMessage').val('')
                     .attr('placeholder', window.translations.sendMessage);
-            }, 500);
+            }, 0);
         };
     
         const message = customMessage || $('#userMessage').val();
@@ -794,15 +794,29 @@ function setupChatInterface(chat, character, userChat, isNew) {
                 const isHidden = chatMessage?.hidden === true || chatMessage?.content?.startsWith("[Hidden]") || chatMessage?.name === 'master';
                 const image_request = chatMessage.image_request
                 if (!isStarter && !isHidden) {
-                    messageHtml = `
-                        <div class="d-flex flex-row justify-content-end mb-4 message-container" style="position: relative;">
-                            <div class="p-3 me-3 border-0 text-start user-message" style="border-radius: 15px; background-color: #fbfbfbdb;">
-                                ${marked.parse(chatMessage.content)}
+                    const isGift = chatMessage.name === 'gift';
+                    if (isGift) {
+                        const text = chatMessage.content;
+                        const imageUrl = chatMessage.imageUrl;
+                        messageHtml = `
+                            <div class="d-flex flex-row justify-content-end mb-4 message-container" style="position: relative;">
+                                <div>
+                                    ${imageUrl ? `<div class="image-container me-3" style="max-width: 300px; margin-bottom: 10px;"><img src="${imageUrl}" alt="Gift" class="gif-message-image"></div>` : ''}
+                                </div>
+                                ${persona ? `<img src="${persona.chatImageUrl || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">` : ''}
                             </div>
-                            ${persona ? `<img src="${persona.chatImageUrl || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">` : ''}
-                            ${image_request ? `<i class="bi bi-image message-icon" style="position: absolute; top: 0; right: 25px;opacity: 0.7;"></i>` : ''}
-                        </div>
-                    `;
+                        `;
+                    } else {
+                        messageHtml = `
+                            <div class="d-flex flex-row justify-content-end mb-4 message-container" style="position: relative;">
+                                <div class="p-3 me-3 border-0 text-start user-message" style="border-radius: 15px; background-color: #fbfbfbdb;">
+                                    ${marked.parse(chatMessage.content)}
+                                </div>
+                                ${persona ? `<img src="${persona.chatImageUrl || '/img/logo.webp'}" alt="avatar 1" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">` : ''}
+                                ${image_request ? `<i class="bi bi-image message-icon" style="position: absolute; top: 0; right: 25px;opacity: 0.7;"></i>` : ''}
+                            </div>
+                        `;
+                    }
                     displayedMessageIds.add(messageId);
                 }
             } else if (chatMessage.role === "assistant") {
@@ -1490,7 +1504,7 @@ function setupChatInterface(chat, character, userChat, isNew) {
         $(`#completion-${uniqueId}`).fadeOut();
     };
 
-    window.generateChatCompletion = function(callback, isHidden = false) {
+    window.generateChatCompletion = function(callback, isHidden = false, disableImageAnalysis = false) {
         const uniqueId = `${currentStep}-${Date.now()}`;
         const container = createBotResponseContainer(uniqueId); 
         // Hide chat suggestions when completion starts
@@ -1501,7 +1515,7 @@ function setupChatInterface(chat, character, userChat, isNew) {
             url: API_URL + '/api/openai-chat-completion',
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ userId, chatId, userChatId, isHidden, uniqueId }),
+            data: JSON.stringify({ userId, chatId, userChatId, isHidden, uniqueId, disableImageAnalysis }),
             success: function() {
                 // Remove all regenerate buttons from previous messages
                 $('#chatContainer .message-regenerate-btn').fadeOut(300, function() {
@@ -1514,19 +1528,22 @@ function setupChatInterface(chat, character, userChat, isNew) {
         });
     }
   
-    window.displayMessage = function(sender, message, origineUserChatId, callback) {
+    window.displayMessage = function(sender, message, origineUserChatId, imageUrl, callback) {
         const messageContainer = $(`#chatContainer[data-id=${origineUserChatId}]`)
         const messageClass = sender === 'user' ? 'user-message' : sender;
         const animationClass = 'animate__animated animate__slideInUp';
         let messageElement;
 
         if (messageClass === 'user-message') {
-            if (typeof message === 'string' && message.trim() !== '') {
+            if ((typeof message === 'string' && message.trim() !== '') || imageUrl) {
                 message = message.replace('[Hidden]','').replace('[user] ','').replace('[context] ','')
                 messageElement = $(`
                     <div class="d-flex flex-row justify-content-end mb-4 message-container ${messageClass} ${animationClass}">
-                        <div class="p-3 me-3 border-0 text-start user-message" style="border-radius: 15px; background-color: #fbfbfbdb;">
-                            <span>${message}</span>
+                        <div>
+                            ${message.trim() ? `<div class="p-3 me-3 border-0 text-start user-message" style="border-radius: 15px; background-color: #fbfbfbdb;">
+                                <span>${message}</span>
+                            </div>` : ''}
+                            ${imageUrl ? `<div class="image-container me-3" style="max-width: 300px; margin-bottom: 10px;"><img src="${imageUrl}" alt="Gift" class="gif-message-image"></div>` : ''}
                         </div>
                         ${persona ? `<img src="${persona.chatImageUrl || '/img/logo.webp'}" alt="avatar" class="rounded-circle user-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;">` : ''}
                     </div>
@@ -1791,7 +1808,7 @@ window.enableToggleDropdown = function(el) {
 }
   
 window.addMessageToChat = function(chatId, userChatId, option, callback) {
-    const { message, role, name, hidden, image_request } = option;
+    const { message, role, name, hidden, image_request, imageUrl } = option;
     $.ajax({
         url: '/api/chat/add-message',
         type: 'POST',
@@ -1803,7 +1820,8 @@ window.addMessageToChat = function(chatId, userChatId, option, callback) {
             name: name || null,
             hidden: hidden || false,
             message: message,
-            image_request: image_request || null
+            image_request: image_request || null,
+            imageUrl: imageUrl || null
         }),
         success: function(response) {
             if(typeof callback == 'function'){

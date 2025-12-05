@@ -1,3 +1,4 @@
+
 /**
  * Gifts Management
  * Handles all client-side operations for the gifts tool.
@@ -109,37 +110,48 @@ class GiftManager {
         });
     }
 
-    sendGiftImageDirectly(giftId, giftImagePreview) {
-        const placeholderId = new Date().getTime() + "_gift_" + giftId;
-        displayOrRemoveImageLoader(placeholderId, 'show', giftImagePreview);
-        
-        const chatId = sessionStorage.getItem('chatId') || window.chatId;
-        const userChatId = sessionStorage.getItem('userChatId') || window.userChatId;
-
-        // Add a new message to the chat container for sending a gift
-        addMessageToChat(chatId, userChatId, {
-            role: 'user',
-            message: window.translations.sendGiftImageDirectly,
-            name: 'gift_request',
-            hidden: true
-        }, function(error, res) {
-
-            generateChatCompletion();
-
-            if (error) {
-            console.error('Error adding gift message:', error);
+    async sendGiftImageDirectly(giftId, giftImagePreview) {
+        try {
+            const response = await fetch(`/api/gifts/${giftId}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch gift data');
             }
-        });
+            const gift = await response.json();
+            const disclosureMessage = `I sent you a gift: ${gift.title}!`;
+            const chatId = sessionStorage.getItem('chatId') || window.chatId;
+            const userChatId = sessionStorage.getItem('userChatId') || window.userChatId;
+            
+            // Display only the image in the chat UI
+            window.displayMessage('user', '', userChatId, gift.image, function() {
+                // After displaying, add to database with hidden message
+                addMessageToChat(chatId, userChatId, {
+                    role: 'user',
+                    message: disclosureMessage,
+                    name: 'gift_request',
+                    imageUrl: gift.image,
+                    hidden: false,
+                }, function(error, res) {
+                    // Generate assistant message
+                    generateChatCompletion(null, false, true)
 
-        // Generate the gift image
-        novitaImageGeneration(window.user._id, chatId, userChatId, {
-            placeholderId,
-            giftId: giftId,
-        })
-        .catch(error => {
-            console.error('Error generating gift image:', error);
-            displayOrRemoveImageLoader(placeholderId, 'remove');
-        });
+                    // Generate the gift image
+                    const placeholderId = new Date().getTime() + "_gift_" + giftId;
+                    displayOrRemoveImageLoader(placeholderId, 'show', giftImagePreview);
+                    novitaImageGeneration(window.user._id, chatId, userChatId, {
+                        placeholderId,
+                        giftId: giftId,
+                    })
+                    .catch(error => {
+                        console.error('Error generating gift image:', error);
+                    });
+                    if (error) {
+                        console.error('Error adding gift message:', error);
+                    }
+                });
+            });
+        } catch (error) {
+            console.error('Error sending gift:', error);
+        }
     }
 }
 

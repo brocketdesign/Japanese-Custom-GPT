@@ -1366,6 +1366,9 @@
   "character_is_sfw_only": "This character is SFW only and cannot generate adult content",
   "upgrade_now": "Upgrade Now",
   "newCharacter": {
+    "chatPurposeLabel": "Describe the character background and purpose",
+    "chatPurposePlaceholder": "E.g., A cute friend who loves cats and enjoys chatting about daily life.",
+    "physicalDescriptionLabel": "Physical Description",
     "ai_generate_if_empty": "AI generate if empty",
     "selectedKeywords": "Selected Keywords:",
     "clickKeywordsPlaceholder": "Click keywords above to add them...",

@@ -1254,6 +1254,8 @@
   "character_is_sfw_only": "Ce personnage est uniquement SFW et ne peut pas générer de contenu adulte",
   "upgrade_now": "Mettre à niveau maintenant",
   "newCharacter": {
+    "chatPurposeLabel": "Décrivez le contexte et l'objectif du personnage",
+    "chatPurposePlaceholder": "Par exemple, un ami mignon qui aime les chats et aime discuter de la vie quotidienne.",
     "imageCompletionDone_message": "La nouvelle image de votre personnage est disponible.",
     "ai_generate_if_empty": "Générer avec l'IA si vide",
     "selectedKeywords": "Mots-clés sélectionnés:",

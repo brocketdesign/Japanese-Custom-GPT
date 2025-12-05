@@ -1167,10 +1167,8 @@ opacity: 0.8;
   height:70px;
   border-radius:50%
   }
-.message-container .assistant-chat-box,.message-container .user-message {
-    max-width: 79%;
-  }
-  .assistant-chat-box {
+
+.assistant-chat-box {
   border-radius:0 15px 15px 15px;
   background-color:#151213b0;
   color:#fff;

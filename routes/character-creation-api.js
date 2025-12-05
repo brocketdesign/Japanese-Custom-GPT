@@ -447,8 +447,8 @@ async function routes(fastify, options) {
 
             // Step 3: Generate character personality
             console.log('\x1b[34m👤 Step 3: Generating Personality\x1b[0m');
-
-            const systemPayloadChat = createSystemPayloadChatRule(prompt, gender, name, extractedDetails, language);
+            const finalPurpose = chatPurpose && chatPurpose.trim() !== '' ? chatPurpose : prompt;
+            const systemPayloadChat = createSystemPayloadChatRule(finalPurpose, gender, name, extractedDetails, language);
             const personalityResponse = await openai.chat.completions.create({
                 model: "gpt-4o",
                 messages: systemPayloadChat,
@@ -456,6 +456,9 @@ async function routes(fastify, options) {
             });
 
             let chatData = JSON.parse(personalityResponse.choices[0].message.content);
+            // show personnality data in console for debugging
+            console.log('\x1b[34m👤 Generated Personality Data:\x1b[0m');
+            console.log(chatData);
             console.log('\x1b[32m✅ Personality generated\x1b[0m');
 
             // Step 4: Save to database

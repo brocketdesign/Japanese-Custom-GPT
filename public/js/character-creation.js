@@ -58,6 +58,7 @@
         $('#characterPrompt').prop('disabled', false);
         $('#chatName').prop('disabled', false);
         $('#chatPurpose').prop('disabled', false);
+        $('#userCustomChatPurpose').prop('disabled', false);
         $('#generateButton').prop('disabled', false);
         $('#generateButton').html('<i class="bi bi-magic me-2"></i>' + translations.newCharacter.generate_with_AI);
 
@@ -914,7 +915,8 @@
         const prompt = characterPrompt = $('#characterPrompt').val().trim();
         const gender = $('#gender').val();
         const name = $('#chatName').val().trim();
-        const chatPurpose = $('#chatPurpose').val().trim();
+        const userCustomChatPurpose = $('#userCustomChatPurpose').val().trim();
+        const chatPurpose = userCustomChatPurpose + ', ' + $('#chatPurpose').val().trim();
         let modelId = $('#modelId').val();
 
         if (!modelId) {
@@ -940,6 +942,7 @@
         $('#characterPrompt').prop('disabled', true);
         $('#chatName').prop('disabled', true);
         $('#chatPurpose').prop('disabled', true);
+        $('#userCustomChatPurpose').prop('disabled', true);
 
         let moderationResult = {
             flagged: false

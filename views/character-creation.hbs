@@ -145,6 +145,18 @@
                             <input type="text" class="form-control" id="chatName" name="chatName" placeholder="{{translations.newCharacter.namePlaceholder}}">
                         </div>
                         
+                         {{! User custom chat purpose (visible) }}
+                        <div class="mb-3">
+                            <label for="userCustomChatPurpose" class="form-label fw-semibold">{{translations.newCharacter.chatPurposeLabel}}:</label>
+                            <textarea
+                                class="form-control"
+                                id="userCustomChatPurpose"
+                                name="userCustomChatPurpose"
+                                rows="3"
+                                maxlength="1000"
+                                placeholder="{{translations.newCharacter.chatPurposePlaceholder}}"
+                            ></textarea>
+                        </div>
                         {{! Hide the original textarea but keep it for form submission }}
                         <textarea id="chatPurpose" name="chatPurpose" style="display: none;"></textarea>
                         

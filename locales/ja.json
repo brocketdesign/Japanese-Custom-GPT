@@ -1307,6 +1307,8 @@
   "character_is_sfw_only": "このキャラクターはSFW専用で、成人向けコンテンツを生成することはできません。",
   "upgrade_now": "今すぐアップグレード",
   "newCharacter": {
+    "chatPurposeLabel": "キャラクターの背景と目的を説明してください",
+    "chatPurposePlaceholder": "例：猫が大好きで日常生活について話すのが好きなかわいい友達。",
     "imageCompletionDone_message": "画像の補完が完了しました！",
     "ai_generate_if_empty": "空欄の場合、AIで生成",
     "selectedKeywords": "選択されたキーワード:",

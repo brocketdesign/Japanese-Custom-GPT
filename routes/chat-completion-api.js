@@ -551,7 +551,6 @@ async function routes(fastify, options) {
                         let assistantImageRequest = null;
                         const disableImageAnalysis = request.body.disableImageAnalysis === true ? true : false;
                         if(!disableImageAnalysis && lastUserMessage.name !== 'pose_request' && lastUserMessage.name !== 'gift_request') {
-                            console.log('📷🔍 Analyzing messages for image request:', { lastAssistantMessage, lastUserMessage });
                             assistantImageRequest = await checkImageRequest(newAssistantMessage.content, lastUserMessage.content);
                             console.log('📷🔍 Image request analysis result:', assistantImageRequest);
                         } else {

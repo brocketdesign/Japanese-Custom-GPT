@@ -221,8 +221,9 @@ window.generateImage = async function(data, disableCompletion = false) {
     // Use either imageUrl or url for backward compatibility
     const imageUrl = data.imageUrl || data.url;
     const imageId = data.imageId || data.id;
-    
-    if (!imageId || sentImageIds.has(imageId)) {
+    const checkImageExist = $(`.assistant-image-box[data-id='${imageId}']`);
+    if ((!imageId || sentImageIds.has(imageId)) && checkImageExist.length) {
+        console.warn(`[generateImage] Image with ID ${imageId} has already been sent to chat ${data.userChatId}`);
         return;
     }
     

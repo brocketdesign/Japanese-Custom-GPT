@@ -1599,7 +1599,6 @@ function setupChatInterface(chat, character, userChat, isNew) {
             messageElement.addClass(animationClass).fadeIn();
             generateVideoIcon(imageId, chatId, userChatId);
             // Apply blur effect if needed
-            console.log({shouldBlur, displayMode});
             if (shouldBlur || displayMode !== 'show') {
                 $(`.image-tools[data-id="${imageId}"]`).hide();
                 messageElement.find('.img-blur').each(function() {

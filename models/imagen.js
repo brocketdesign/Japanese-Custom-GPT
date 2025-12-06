@@ -493,14 +493,6 @@ async function generateImg({
         }
     }
 
-    // Prepare params
-    // Make sure prompt length is within limits 900 characters
-    if (image_request.prompt.length > 900) {
-      image_request.prompt = image_request.prompt.substring(0, 900);
-    }
-    let requestData = flux ? { ...image_request, image_num } : { ...params, ...image_request, image_num };
-    console.log(`🖼️ [GenerateImg] Using model: ${requestData.model_name || 'FLUX Default Model'}`);
-
     if(image_base64){
       // Get target dimensions from the selected style
       const targetWidth = image_request.width;
@@ -508,9 +500,29 @@ async function generateImg({
       
       // Center crop the image to match the target aspect ratio
       const croppedImage = await centerCropImage(image_base64, targetWidth, targetHeight);
-      requestData.image_base64 = croppedImage;
-    }
+      image_request.image_base64 = croppedImage;
 
+      // [TEST] Remove negative prompt when uploading image & use prompt only
+      image_request.negative_prompt = '';
+      image_request.prompt = prompt;
+      image_request.guidance_scale = 9.5;
+      // End [TEST]
+    }
+    // Prepare params
+    // Make sure prompt length is within limits 900 characters
+    if (image_request.prompt.length > 900) {
+      image_request.prompt = image_request.prompt.substring(0, 900);
+    }
+    let requestData = flux ? { ...image_request, image_num } : { ...params, ...image_request, image_num };
+    
+    if(process.env.MODE !== 'production'){
+      // Log prompt & negative prompt
+      console.log(`\x1b[36m=== 🎨 Image Generation Details ===\x1b[0m`);
+      console.log(`📝 \x1b[32mPrompt:\x1b[0m ${image_request.prompt}`);
+      console.log(`🚫 \x1b[33mNegative Prompt:\x1b[0m ${image_request.negative_prompt}`);
+      console.log(`📸 \x1b[35mImage Base64 Present:\x1b[0m ${!!image_request.image_base64 ? '✅ Yes' : '❌ No'}`);
+      console.log(`\x1b[36m===================================\x1b[0m`);
+    }
     // Find modelId style
     const imageStyle = modelData ? modelData.style : 'anime';
     chat.imageStyle = chat.imageStyle || imageStyle; // Use chat image style or default to model style

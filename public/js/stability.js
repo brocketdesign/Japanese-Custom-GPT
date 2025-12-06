@@ -36,6 +36,8 @@ window.novitaImageGeneration = async function(userId, chatId, userChatId, option
             imageType = option.imageType || 'sfw',
             placeholderId = option.placeholderId || null,
             customPrompt = option.customPrompt || false,
+            editPrompt = option.editPrompt || null,
+            imagePrompt = option.imagePrompt || null,
             promptId = option.promptId || null,
             giftId = option.giftId || null,
             chatCreation = option.chatCreation || false,
@@ -45,18 +47,43 @@ window.novitaImageGeneration = async function(userId, chatId, userChatId, option
             description = option.description || null,
         } = option;
 
-        let image_base64 = null;
+        let image_base64 = option.image_base64 || null
         if(file){
             image_base64 = await uploadAndConvertToBase64(file);
         }
 
+        let newEditPrompt = null;
+
+        // [TEMPORARY DISABLE]
+        // If both editPrompt and imagePrompt are provided, generate a new prompt
+        if(false && editPrompt && imagePrompt){
+            // Fetch the new prompt from the editPrompt API
+            const editResponse = await fetch('/api/edit-prompt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ imagePrompt, editPrompt })
+            });
+            const editData = await editResponse.json();
+            if(editData.error){
+                console.error('Error in fetching edited prompt:', editData.error);
+                showNotification(editData.error, 'error');
+                throw new Error(editData.error);
+            }
+            if(editData.newPrompt){
+                console.log('Edited prompt received:', editData.newPrompt);
+                newEditPrompt = editData.newPrompt;
+            }
+        }
+
+        newEditPrompt = editPrompt ;
+ 
         const API_ENDPOINT = `${API_URL}/novita/generate-img`;
         const response = await fetch(API_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 title,
-                prompt, 
+                prompt: newEditPrompt || prompt, 
                 aspectRatio, 
                 userId, 
                 chatId, 

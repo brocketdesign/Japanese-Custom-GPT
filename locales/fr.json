@@ -1748,6 +1748,7 @@
   "confirmDelete": "Êtes-vous sûr de vouloir supprimer ceci ?",
   "actionCannotBeUndone": "Cette action est irréversible !",
   "image_tools": {
+    "edit": "Éditer",
     "like": "J'aime",
     "liked": "Aimé",
     "regenerate": "Régénérer",

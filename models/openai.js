@@ -161,6 +161,21 @@ const moderateImage = async (imageUrl) => {
   }
 };
 
+async function generateEditPrompt(imagePrompt, editPrompt) {
+  const systemMessage = `You are an expert image prompt engineer specialized in adapting prompts for image editing tasks.
+  Your task is to take an original image prompt and a set of edit instructions, and generate a new, detailed prompt that reflects the requested edits while preserving the core elements of the original prompt.
+  Follow these guidelines:
+  1. Understand the original prompt and identify its key elements (subject, style, setting, mood, etc.).
+  2. Carefully incorporate the edit instructions, ensuring that the new prompt clearly reflects the desired changes.
+  3. The final prompt should be less than 900 characters, concise yet comprehensive.`;
+  const messages = [
+    { role: "system", content: systemMessage },
+    { role: "user", content: `Original prompt: ${imagePrompt}` },
+    { role: "user", content: `Edit instructions: ${editPrompt}` }
+  ];
+  const completion = await generateCompletion(messages, 1000, 'llama-3-70b', 'en', null, false);
+  return completion || null;
+}
 
 async function generateCompletion(messages, maxToken = 1000, model = null, lang = 'en', userModelPreference = null, isPremium = false) {
   try {
@@ -1187,6 +1202,7 @@ Respond in ${language}`;
 };
 module.exports = {
     generateCompletion,
+    generateEditPrompt,
     checkImageRequest,
     analyzeConversationContext,
     generatePromptTitle,

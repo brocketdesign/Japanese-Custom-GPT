@@ -3,6 +3,7 @@ const slugify = require('slugify');
 const {
     checkImageRequest, 
     generateCompletion,
+    generateEditPrompt,
     generatePromptSuggestions,
     createPrompt,
     generateChatGoal,
@@ -1328,7 +1329,21 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             return reply.status(500).send({ error: 'Failed to fetch chat goal' });
         }
     });
-    
+
+    fastify.post('/api/edit-prompt', async (request, reply) => {
+        const { imagePrompt, editPrompt } = request.body;
+        try {
+            console.log(`✏️ [EditPrompt] Generating edited prompt...`);
+            const newPrompt = await generateEditPrompt(imagePrompt, editPrompt);
+            if (!newPrompt) {
+                return reply.status(500).send({ error: 'Failed to generate edited prompt' });
+            }
+            return reply.send({ newPrompt });
+        } catch (error) {
+            return reply.status(500).send({ error: 'Error editing prompt' });
+        }
+    });
+
     fastify.post('/api/generate-completion', async (request, reply) => {
         const { systemPrompt, userMessage } = request.body;
         try {

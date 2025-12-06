@@ -1779,6 +1779,7 @@
   "confirmDelete": "本当に削除しますか？",
   "actionCannotBeUndone": "この操作は元に戻せません！",
   "image_tools": {
+    "edit": "編集",
     "like": "いいね",
     "liked": "いいね済み",
     "regenerate": "再生成",

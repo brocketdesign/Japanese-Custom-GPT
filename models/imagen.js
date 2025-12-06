@@ -504,7 +504,6 @@ async function generateImg({
 
       // [TEST] Remove negative prompt when uploading image & use prompt only
       image_request.negative_prompt = '';
-      image_request.prompt = prompt;
       image_request.guidance_scale = 8.5;
       // End [TEST]
     }

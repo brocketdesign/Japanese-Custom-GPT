@@ -96,6 +96,12 @@ function getImageTools({chatId, userChatId, imageId, isLiked = false, title, pro
                         <i class="bi bi-arrow-clockwise"></i>${window.translations?.image_tools?.regenerate || 'Regenerate'}${!subscriptionStatus ? '<span class="premium-icon">💎</span>' : ''}
                     </span>
                     
+                    <span class="badge bg-white text-secondary image-tool-badge edit-image" 
+                          onclick="openEditModal('${imageId}', '${chatId}', '${userChatId}')" 
+                          data-id="${imageId}">
+                        <i class="bi bi-pencil"></i>${window.translations?.image_tools?.edit || 'Edit'}
+                    </span>
+                    
                     <span class="${upscaleBadgeClass} image-tool-badge upscale-img" 
                           onclick="${!hasUpscaleAction && subscriptionStatus ? `upscaleImage('${imageId}', '${imageUrl}', '${chatId}', '${userChatId}')` : hasUpscaleAction ? '' : 'loadPlanPage()'}" 
                           data-id="${imageId}" 
@@ -122,12 +128,6 @@ function getImageTools({chatId, userChatId, imageId, isLiked = false, title, pro
                           data-chat-id="${chatId}"
                           title="${mergeFaceTooltip}">
                         <i class="bi ${mergeFaceIcon}"></i>${mergeFaceLabel}${!subscriptionStatus ? '<span class="premium-icon">💎</span>' : ''}
-                    </span>
-                    
-                    <span class="badge bg-white text-secondary image-tool-badge edit-image" 
-                          onclick="openEditModal('${imageId}', '${chatId}', '${userChatId}')" 
-                          data-id="${imageId}">
-                        <i class="bi bi-pencil"></i>${window.translations?.image_tools?.edit || 'Edit'}
                     </span>
 
                     <span class="badge bg-white text-secondary image-tool-badge share-image"

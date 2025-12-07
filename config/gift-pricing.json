@@ -161,10 +161,19 @@
       "nsfw": true,
       "category": "NSFW_EXTREME",
       "reasoning": "Extreme NSFW BDSM tool - whip for dominance"
+    },
+    {
+      "id": "693585465cb80798f50d26e4",
+      "title": "Handcuffs",
+      "oldCost": 270,
+      "newCost": 400,
+      "nsfw": true,
+      "category": "NSFW_HIGH",
+      "reasoning": "High NSFW BDSM accessory - handcuffs for restraint"
     }
   ],
   "summary": {
-    "totalGifts": 19,
+    "totalGifts": 20,
     "categories": {
       "SFW_BASIC": {
         "count": 4,
@@ -191,7 +200,7 @@
         "affordability": "Regular users: significant saving, Premium users: 3-5 per login"
       },
       "NSFW_HIGH": {
-        "count": 3,
+        "count": 4,
         "priceRange": "350-400",
         "description": "High NSFW gifts - explicit sexual accessories and legwear",
         "affordability": "Regular users: 1 per 2-3 days, Premium users: 2-3 per login"

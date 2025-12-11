@@ -187,7 +187,7 @@ class GoalsManager {
         html += `
             <div class="goals-stats d-flex justify-content-between align-items-center mb-3">
                 <div class="text-muted small">
-                    <i class="bi bi-play-circle-fill me-1"></i>
+                    <i class="bi bi-film me-1"></i>
                     ${window.translations?.goals?.your_videos || 'Your videos'}: <span class="fw-bold">${totalVideos}</span>
                 </div>
                 <div class="text-muted small">

@@ -4387,3 +4387,7 @@ backdrop-filter: blur(3px);
 #chatLevelContainer .btn-dark {
     background: rgba(52, 58, 64, 0.5) !important; /* Semi-transparent dark */
 }
+.btn.btn-outline-primary.edit-strength-btn.active {
+background: var(--primary-gradient) !important;
+color: #fff !important;
+}

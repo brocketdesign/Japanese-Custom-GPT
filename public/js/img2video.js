@@ -151,7 +151,7 @@ function showVideoPromptModal() {
                                 ${window.img2videoTranslations.cancel || 'Cancel'}
                             </button>
                             <button type="button" class="btn btn-primary" id="generateVideoBtn">
-                                <i class="bi bi-play-circle me-2"></i>
+                                <i class="bi bi-film me-2"></i>
                                 ${window.img2videoTranslations.generate_video || 'Generate Video'}
                             </button>
                         </div>

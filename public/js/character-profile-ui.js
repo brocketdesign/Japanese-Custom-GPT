@@ -966,7 +966,7 @@ function displayVideosInGrid() {
     
     if (videos.length === 0) {
         grid.innerHTML = `<div style="padding: 60px 20px; text-align: center; color: #999; grid-column: 1/-1; font-size: 0.95rem;">
-            <i class="bi bi-play-circle" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5; display: block;"></i>
+            <i class="bi bi-film" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5; display: block;"></i>
             No videos available
         </div>`;
         return;
@@ -1043,7 +1043,7 @@ function displayVideosInGrid() {
                 </div>
                 <div class="media-item-overlay">
                     <div class="media-item-info">
-                        <i class="bi bi-play-circle" style="margin-right: 4px;"></i>
+                        <i class="bi bi-film" style="margin-right: 4px;"></i>
                         ${index + 1}
                     </div>
                 </div>
@@ -1085,7 +1085,7 @@ function displayVideosInGrid() {
                          onerror="this.style.display='none'">
                     <div class="media-item-overlay">
                         <div class="media-item-info">
-                            <i class="bi bi-play-circle" style="margin-right: 4px;"></i>
+                            <i class="bi bi-film" style="margin-right: 4px;"></i>
                             ${index + 1}
                         </div>
                     </div>
@@ -1106,7 +1106,7 @@ function displayVideosInGrid() {
                 </div>
                 <div class="media-item-overlay">
                     <div class="media-item-info">
-                        <i class="bi bi-play-circle" style="margin-right: 4px;"></i>
+                        <i class="bi bi-film" style="margin-right: 4px;"></i>
                         ${index + 1}
                     </div>
                 </div>

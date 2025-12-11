@@ -173,7 +173,7 @@ function getImageTools({chatId, userChatId, imageId, isLiked = false, title, pro
                 <div class="actions-info text-muted px-3 py-1" style="font-size: 11px;">
                     ${actions.map(action => {
                         if (action.type === 'video_generated') {
-                            return `<div><i class="bi bi-play-circle-fill text-success me-1"></i>Video generated ${action.date ? `on ${new Date(action.date).toLocaleDateString()}` : ''}</div>`;
+                            return `<div><i class="bi bi-film text-success me-1"></i>Video generated ${action.date ? `on ${new Date(action.date).toLocaleDateString()}` : ''}</div>`;
                         } else if (action.type === 'upscaled') {
                             return `<div><i class="bi bi-badge-hd-fill text-success me-1"></i>Upscaled ${action.scale_factor}x ${action.date ? `on ${new Date(action.date).toLocaleDateString()}` : ''}</div>`;
                         } else if (action.type === 'like') {
@@ -215,7 +215,7 @@ function getImageTools({chatId, userChatId, imageId, isLiked = false, title, pro
             let $parent = assistantImageBox.parent();
             if ($parent.find('.video-icon-overlay').length === 0) {
             const $icon = $('<i>')
-                .addClass('bi bi-play-circle-fill video-icon-overlay')
+                .addClass('bi bi-film video-icon-overlay')
                 .css({
                 position: 'absolute',
                 bottom: '8px',

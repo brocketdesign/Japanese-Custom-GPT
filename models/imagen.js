@@ -350,7 +350,8 @@ async function generateImg({
     flux = false, 
     customPromptId = null, 
     customGiftId = null, 
-    enableMergeFace = false
+    enableMergeFace = false,
+    editStrength = 'medium'
 }) {
     const db = fastify.mongo.db;
     
@@ -504,7 +505,11 @@ async function generateImg({
 
       // [TEST] Remove negative prompt when uploading image & use prompt only
       image_request.negative_prompt = '';
-      image_request.guidance_scale = 8.5;
+      // Set guidance_scale based on edit strength
+      let guidance_scale = 8.5; // default medium
+      if (editStrength === 'low') guidance_scale = 5;
+      else if (editStrength === 'high') guidance_scale = 12;
+      image_request.guidance_scale = guidance_scale;
       // End [TEST]
     }
     // Prepare params

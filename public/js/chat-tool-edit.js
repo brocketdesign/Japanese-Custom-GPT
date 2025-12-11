@@ -18,6 +18,7 @@
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content mx-auto" style="height: auto;">
                         <div class="modal-header">
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             <div class="d-flex align-items-center flex-column w-100">
                                 <h5 class="modal-title" id="${modalId}Label">
                                     <i class="bi bi-pencil me-2"></i>
@@ -25,11 +26,23 @@
                                 </h5>
                                 <span>Enter what you want to edit in the image</span>
                             </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             <div class="text-center mb-3">
                                 <img src="${imageUrl}" style="max-width: 200px; max-height: 200px;" alt="Image to edit" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    Edit Strength
+                                </label>
+                                <div class="d-flex justify-content-center gap-2" id="editStrengthBadges-${imageId}">
+                                    <button type="button" class="btn btn-outline-primary edit-strength-btn" data-strength="low">Low</button>
+                                    <button type="button" class="btn btn-outline-primary edit-strength-btn active" data-strength="medium">Medium</button>
+                                    <button type="button" class="btn btn-outline-primary edit-strength-btn" data-strength="high">High</button>
+                                </div>
+                                <div class="form-text text-center">
+                                    Choose how much to modify the original image
+                                </div>
                             </div>
                             <div class="mb-3">
                                 <label for="editPromptTextarea-${imageId}" class="form-label">
@@ -70,6 +83,7 @@
         const textarea = $(`#editPromptTextarea-${imageId}`);
         const charCount = $(`#editCharCount-${imageId}`);
         const generateBtn = $(`#submitEdit-${imageId}`);
+        const strengthBadges = $(`#editStrengthBadges-${imageId} .edit-strength-btn`);
 
         // Save and restore last prompt using localStorage
         const lastPromptKey = 'edit_prompt_last_prompt';
@@ -78,6 +92,20 @@
             textarea.val(savedPrompt);
             charCount.text(savedPrompt.length);
         }
+
+        // Save and restore last edit strength using localStorage
+        const lastStrengthKey = 'edit_prompt_last_strength';
+        let selectedStrength = localStorage.getItem(lastStrengthKey) || 'medium';
+        strengthBadges.removeClass('active');
+        strengthBadges.filter(`[data-strength="${selectedStrength}"]`).addClass('active');
+
+        // Handle strength badge clicks
+        strengthBadges.on('click', function() {
+            strengthBadges.removeClass('active');
+            $(this).addClass('active');
+            selectedStrength = $(this).data('strength');
+            localStorage.setItem(lastStrengthKey, selectedStrength);
+        });
 
         // Character counter
         textarea.on('input', function() {
@@ -101,6 +129,7 @@
                 showNotification('Please enter edit instructions.', 'warning');
                 return;
             }
+            const editStrength = selectedStrength;
             modal.hide();
 
             try {
@@ -140,7 +169,8 @@
                     image_base64,
                     imageType: nsfw ? 'nsfw' : 'sfw',
                     regenerate: true,
-                    title: title || 'Edited Image'
+                    title: title || 'Edited Image',
+                    editStrength: editStrength
                 });
             } catch (error) {
                 console.error('Error in edit image:', error);

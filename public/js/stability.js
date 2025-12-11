@@ -45,6 +45,7 @@ window.novitaImageGeneration = async function(userId, chatId, userChatId, option
             modelId = option.modelId || null,
             enableMergeFace = option.enableMergeFace || false,
             description = option.description || null,
+            editStrength = option.editStrength || 'medium',
         } = option;
 
         let image_base64 = option.image_base64 || null
@@ -98,7 +99,8 @@ window.novitaImageGeneration = async function(userId, chatId, userChatId, option
                 modelId,
                 chatCreation,
                 enableMergeFace,
-                description
+                description,
+                editStrength
             })
         });
 

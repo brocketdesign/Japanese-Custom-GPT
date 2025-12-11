@@ -13,7 +13,7 @@ async function routes(fastify, options) {
 
   // Endpoint to initiate generate-img for selected image type
   fastify.post('/novita/generate-img', async (request, reply) => {
-    const { title, prompt, aspectRatio, userId, chatId, userChatId, placeholderId, promptId, giftId, customPrompt, image_base64, chatCreation, modelId, regenerate, enableMergeFace, description } = request.body;
+    const { title, prompt, aspectRatio, userId, chatId, userChatId, placeholderId, promptId, giftId, customPrompt, image_base64, chatCreation, modelId, regenerate, enableMergeFace, description, editStrength } = request.body;
     let imageType = request.body.imageType
     const db = fastify.mongo.db;
     const translations = request.translations
@@ -131,7 +131,8 @@ async function routes(fastify, options) {
           translations: request.translations, 
           fastify,
           customPromptId: promptId,
-          enableMergeFace: enableMergeFace || false
+          enableMergeFace: enableMergeFace || false,
+          editStrength: editStrength || 'medium'
       })      
       .then((response) => {
       })

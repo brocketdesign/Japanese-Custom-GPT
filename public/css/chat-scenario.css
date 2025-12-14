@@ -247,6 +247,124 @@
   box-shadow: 0 0 0 3px rgba(110, 32, 244, 0.15);
 }
 
+/* Swiper-specific adjustments to match design and avoid overlap/click-through */
+.scenario-swiper,
+.scenario-debug-swiper {
+  width: 100%;
+  max-width: 520px;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.scenario-swiper .swiper-wrapper,
+.scenario-debug-swiper .swiper-wrapper {
+  align-items: center;
+}
+
+.scenario-swiper .swiper-slide,
+.scenario-debug-swiper .swiper-slide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Style Swiper nav buttons to match existing arrows and ensure they sit above slides */
+.scenario-swiper .swiper-button-prev,
+.scenario-debug-swiper .swiper-button-prev,
+.scenario-swiper .swiper-button-next,
+.scenario-debug-swiper .swiper-button-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #8240FF 0%, #5A18E0 100%);
+  color: white;
+  font-size: 1.5rem;
+  z-index: 1200;
+  box-shadow: 0 4px 15px rgba(110, 32, 244, 0.2);
+  cursor: pointer;
+}
+
+.scenario-swiper .swiper-button-prev,
+.scenario-debug-swiper .swiper-button-prev {
+  left: 8px;
+}
+
+.scenario-swiper .swiper-button-next,
+.scenario-debug-swiper .swiper-button-next {
+  right: 8px;
+}
+
+/* Ensure nav buttons don't allow clicks to pass through */
+.scenario-swiper .swiper-button-prev,
+.scenario-swiper .swiper-button-next,
+.scenario-debug-swiper .swiper-button-prev,
+.scenario-debug-swiper .swiper-button-next {
+  pointer-events: auto;
+}
+
+/* Pagination styling */
+.scenario-swiper .swiper-pagination,
+.scenario-debug-swiper .swiper-pagination {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 1200;
+  pointer-events: auto;
+}
+
+/* Swiper pagination bullets (dots) */
+.scenario-swiper .swiper-pagination-bullet,
+.scenario-debug-swiper .swiper-pagination-bullet {
+  width: 10px;
+  height: 10px;
+  background: #DCD6F7;
+  opacity: 1;
+  border-radius: 50%;
+  margin: 0 6px !important;
+  transition: all 0.25s ease;
+  box-shadow: none;
+}
+
+.scenario-swiper .swiper-pagination-bullet-active,
+.scenario-debug-swiper .swiper-pagination-bullet-active {
+  background: #6E20F4; /* purple */
+  width: 18px;
+  height: 10px;
+  border-radius: 6px;
+  box-shadow: 0 0 0 3px rgba(110, 32, 244, 0.12);
+}
+
+/* Arrow chevrons */
+.scenario-swiper .swiper-button-prev::after,
+.scenario-debug-swiper .swiper-button-prev::after {
+  content: '\2039';
+  font-size: 22px;
+  color: #fff;
+}
+
+.scenario-swiper .swiper-button-next::after,
+.scenario-debug-swiper .swiper-button-next::after {
+  content: '\203A';
+  font-size: 22px;
+  color: #fff;
+}
+
+/* Make sure slides and card area remain clickable but nav sits above */
+.scenario-swiper .swiper-slide .scenario-card,
+.scenario-debug-swiper .swiper-slide .scenario-card {
+  pointer-events: auto;
+}
+
+
 /* Loading Spinner */
 .scenario-loading-container {
   display: flex;

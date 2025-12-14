@@ -26,6 +26,49 @@ const fetchModels = async (query = false, cursor = false) => {
   }
 };
 
+// Normalize incoming style values to either 'anime' or 'photorealistic'
+function normalizeStyle(style) {
+  // Defensive normalization: accept strings, array-like strings, CSVs, and common variants
+  if (style === undefined || style === null) return null;
+
+  let s = String(style).trim();
+  if (!s) return null;
+
+  // Try to parse JSON arrays like "[\"photorealistic\"]"
+  try {
+    if ((s.startsWith('[') && s.endsWith(']')) || s.startsWith('\"[')) {
+      const parsed = JSON.parse(s);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        s = String(parsed[0]);
+      }
+    }
+  } catch (e) {
+    // ignore parse errors
+  }
+
+  // If CSV or list, take first token
+  if (s.includes(',')) s = s.split(',')[0];
+
+  // Strip surrounding quotes/brackets and normalize
+  s = s.replace(/^\s*["'\[\]]+|["'\[\]]+\s*$/g, '').trim().toLowerCase();
+  if (!s) return null;
+
+  const animeVariants = new Set(['anime', 'anime-style', 'anime_style', 'anime style', 'manga']);
+  const photoVariants = new Set(['photorealistic', 'photorealism', 'photoreal', 'photo', 'photorealistic-style', 'photorealistic_style', 'photorealistic style', 'realistic', 'realism']);
+
+  if (animeVariants.has(s)) return 'anime';
+  if (photoVariants.has(s)) return 'photorealistic';
+
+  // Tokenize and search tokens for known variants
+  const tokens = s.split(/[^a-z0-9]+/).filter(Boolean);
+  for (const t of tokens) {
+    if (animeVariants.has(t)) return 'anime';
+    if (photoVariants.has(t)) return 'photorealistic';
+  }
+
+  return null;
+}
+
 const modelCardTemplate = hbs.compile(`
   {{#each models}}
   <div class="col-sm-6 col-md-4 col-lg-3 p-2 animate__animated animate__fadeIn">
@@ -85,10 +128,12 @@ async function routes(fastify, options) {
   fastify.post('/admin/models/add', async (req, reply) => {
     const { modelId, model, style, version, image, name } = req.body;
     const db = fastify.mongo.db;
+    // Normalize style before saving (store either 'anime' or 'photorealistic' or empty string)
+    const normalizedStyle = normalizeStyle(style) || '';
     await db.collection('myModels').insertOne({ 
       modelId, 
       model, 
-      style, 
+      style: normalizedStyle, 
       version, 
       image, 
       name,
@@ -142,17 +187,22 @@ async function routes(fastify, options) {
       const { style } = req.body;
       const db = fastify.mongo.db;
       
-      // Validate style value
-      const validStyles = ['anime', 'photorealistic'];
-      if (!validStyles.includes(style)) {
-        return reply.status(400).send({ error: 'Invalid style. Must be either "anime" or "photorealistic".' });
+      // Normalize and validate style value (accept common variants)
+      let normalized = normalizeStyle(style);
+      // If incoming style is empty (client bug), fallback to 'anime' to avoid rejecting the request
+      if (!normalized) {
+        if (style === '' || style === undefined || style === null) {
+          normalized = 'anime';
+        } else {
+          return reply.status(400).send({ error: 'Invalid style. Must be either "anime" or "photorealistic".' });
+        }
       }
-      
+
       const result = await db.collection('myModels').updateOne(
         { modelId },
         { 
           $set: { 
-            style: style,
+            style: normalized,
             updatedAt: new Date()
           }
         }

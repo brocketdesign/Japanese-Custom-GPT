@@ -98,7 +98,7 @@
               <input class="form-check-input model-switch" type="checkbox" checked
                 data-model-id="{{modelId}}"
                 data-model="{{model}}"
-                data-style="{{style}}"
+                data-style="{{#if style}}{{style}}{{else}}anime{{/if}}"
                 data-version="{{version}}"
                 data-image="{{image}}"
                 data-name="{{model}}">
@@ -106,7 +106,7 @@
             <button class="btn btn-sm btn-outline-light active-model-info-btn p-1" type="button" title="View Details"
               data-model-id="{{modelId}}"
               data-model="{{model}}"
-              data-style="{{style}}"
+              data-style="{{#if style}}{{style}}{{else}}anime{{/if}}"
               data-version="{{version}}"
               data-image="{{image}}"
               data-name="{{name}}">

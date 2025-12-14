@@ -9,6 +9,7 @@ window.ChatScenarioModule = (function() {
     let userChatId = null;
     let isLoadingScenarios = false;
     let currentSlideIndex = 0;
+    let swiper = null;
     const containerSelector = '.scenario-container';
     const chatContainerId = 'chatContainer';
     
@@ -166,115 +167,75 @@ window.ChatScenarioModule = (function() {
             return;
         }
         
-        // Create carousel wrapper
-        const carouselWrapper = document.createElement('div');
-        carouselWrapper.className = 'scenario-carousel-wrapper';
+        // Create Swiper container
+        const swiperContainer = document.createElement('div');
+        swiperContainer.className = 'swiper scenario-swiper';
         
-        // Create carousel track
-        const track = document.createElement('div');
-        track.className = 'scenario-carousel-track';
-        track.style.transform = 'translateX(0%)';
+        // Create swiper wrapper
+        const swiperWrapper = document.createElement('div');
+        swiperWrapper.className = 'swiper-wrapper';
         
-        // Create scenario cards
+        // Create scenario slides
         scenarios.forEach((scenario, index) => {
+            const slide = document.createElement('div');
+            slide.className = 'swiper-slide';
             const card = createScenarioCard(scenario, index);
-            track.appendChild(card);
+            slide.appendChild(card);
+            swiperWrapper.appendChild(slide);
         });
         
-        carouselWrapper.appendChild(track);
+        swiperContainer.appendChild(swiperWrapper);
         
-        // Create navigation arrows
-        const prevButton = document.createElement('button');
-        prevButton.className = 'scenario-carousel-arrow prev';
-        prevButton.innerHTML = '&#8249;';
-        prevButton.setAttribute('aria-label', 'Previous scenario');
-        prevButton.addEventListener('click', () => goToPreviousSlide(track));
+        // Add pagination
+        const pagination = document.createElement('div');
+        pagination.className = 'swiper-pagination';
+        swiperContainer.appendChild(pagination);
         
-        const nextButton = document.createElement('button');
-        nextButton.className = 'scenario-carousel-arrow next';
-        nextButton.innerHTML = '&#8250;';
-        nextButton.setAttribute('aria-label', 'Next scenario');
-        nextButton.addEventListener('click', () => goToNextSlide(track));
+        // Add navigation
+        const prevButton = document.createElement('div');
+        prevButton.className = 'swiper-button-prev';
+        // Prevent nav clicks from bubbling to slides (which would trigger selection)
+        prevButton.addEventListener('click', function(e) { e.stopPropagation(); });
+        prevButton.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+        swiperContainer.appendChild(prevButton);
         
-        carouselWrapper.appendChild(prevButton);
-        carouselWrapper.appendChild(nextButton);
+        const nextButton = document.createElement('div');
+        nextButton.className = 'swiper-button-next';
+        // Prevent nav clicks from bubbling to slides (which would trigger selection)
+        nextButton.addEventListener('click', function(e) { e.stopPropagation(); });
+        nextButton.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+        swiperContainer.appendChild(nextButton);
         
-        // Create dots navigation
-        const dotsContainer = document.createElement('div');
-        dotsContainer.className = 'scenario-carousel-dots';
+        // Prevent pagination clicks from bubbling to slides
+        pagination.addEventListener('click', function(e) { e.stopPropagation(); });
+
+        container.appendChild(swiperContainer);
         
-        scenarios.forEach((_, index) => {
-            const dot = document.createElement('button');
-            dot.className = 'scenario-carousel-dot';
-            if (index === 0) dot.classList.add('active');
-            dot.setAttribute('aria-label', `Go to scenario ${index + 1}`);
-            dot.addEventListener('click', () => goToSlide(index, track, dotsContainer));
-            dotsContainer.appendChild(dot);
+        // Initialize Swiper
+        swiper = new Swiper('.scenario-swiper', {
+            slidesPerView: 1,
+            spaceBetween: 10,
+            loop: false,
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            on: {
+                slideChange: function () {
+                    currentSlideIndex = this.activeIndex;
+                },
+            },
         });
-        
-        container.appendChild(carouselWrapper);
-        container.appendChild(dotsContainer);
         
         // Reset slide index
         currentSlideIndex = 0;
     }
 
-    /**
-     * Navigate to next slide
-     */
-    function goToNextSlide(track) {
-        if (currentSlideIndex < scenarios.length - 1) {
-            currentSlideIndex++;
-            updateCarouselPosition(track);
-        }
-    }
 
-    /**
-     * Navigate to previous slide
-     */
-    function goToPreviousSlide(track) {
-        if (currentSlideIndex > 0) {
-            currentSlideIndex--;
-            updateCarouselPosition(track);
-        }
-    }
-
-    /**
-     * Navigate to specific slide
-     */
-    function goToSlide(index, track, dotsContainer) {
-        currentSlideIndex = index;
-        updateCarouselPosition(track);
-        updateDotsIndicators(dotsContainer);
-    }
-
-    /**
-     * Update carousel position
-     */
-    function updateCarouselPosition(track) {
-        const offset = currentSlideIndex * 100;
-        track.style.transform = `translateX(-${offset}%)`;
-        
-        // Update dots
-        const dotsContainer = document.querySelector('.scenario-carousel-dots');
-        if (dotsContainer) {
-            updateDotsIndicators(dotsContainer);
-        }
-    }
-
-    /**
-     * Update active dot indicator
-     */
-    function updateDotsIndicators(dotsContainer) {
-        const dots = dotsContainer.querySelectorAll('.scenario-carousel-dot');
-        dots.forEach((dot, index) => {
-            if (index === currentSlideIndex) {
-                dot.classList.add('active');
-            } else {
-                dot.classList.remove('active');
-            }
-        });
-    }
 
     /**
      * Create a scenario card element
@@ -563,6 +524,11 @@ window.ChatScenarioModule = (function() {
         currentScenario = null;
         isLoadingScenarios = false;
         
+        if (swiper) {
+            swiper.destroy();
+            swiper = null;
+        }
+        
         const container = document.querySelector(containerSelector);
         if (container) {
             container.innerHTML = '';
@@ -650,7 +616,7 @@ window.ScenarioDebug = {
 
     /**
      * Show placeholder scenarios for testing enhanced carousel design
-     * Displays mock scenario cards with carousel navigation
+     * Displays mock scenario cards with Swiper carousel navigation
      * Usage: ScenarioDebug.showScenarioPlaceholder()
      */
     showScenarioPlaceholder: function() {
@@ -695,21 +661,19 @@ window.ScenarioDebug = {
         container.style.display = 'flex';
         container.innerHTML = '';
 
-        // Track current slide state
-        let currentSlideIndex = 0;
-        const totalSlides = placeholderScenarios.length;
-
-        // Create carousel wrapper
-        const carouselWrapper = document.createElement('div');
-        carouselWrapper.className = 'scenario-carousel-wrapper';
+        // Create Swiper container
+        const swiperContainer = document.createElement('div');
+        swiperContainer.className = 'swiper scenario-debug-swiper';
         
-        // Create carousel track
-        const track = document.createElement('div');
-        track.className = 'scenario-carousel-track';
-        track.style.transform = 'translateX(0%)';
+        // Create swiper wrapper
+        const swiperWrapper = document.createElement('div');
+        swiperWrapper.className = 'swiper-wrapper';
         
-        // Create scenario cards
+        // Create scenario slides
         placeholderScenarios.forEach((scenario, index) => {
+            const slide = document.createElement('div');
+            slide.className = 'swiper-slide';
+            
             const card = document.createElement('div');
             card.className = 'scenario-card w-100';
             card.dataset.scenarioId = scenario.id;
@@ -732,83 +696,70 @@ window.ScenarioDebug = {
                 <p class="scenario-description">${scenario.description}</p>
             `;
             
-            track.appendChild(card);
+            slide.appendChild(card);
+            swiperWrapper.appendChild(slide);
         });
         
-        carouselWrapper.appendChild(track);
+        swiperContainer.appendChild(swiperWrapper);
         
-        // Helper function to update carousel position and dots
-        const updateCarousel = () => {
-            const offset = currentSlideIndex * 100;
-            track.style.transform = `translateX(-${offset}%)`;
-            
-            // Sync dots with current slide
-            const dots = document.querySelectorAll('.scenario-carousel-dot');
-            dots.forEach((dot, idx) => {
-                if (idx === currentSlideIndex) {
-                    dot.classList.add('active');
-                } else {
-                    dot.classList.remove('active');
-                }
-            });
-        };
+        // Add pagination
+        const pagination = document.createElement('div');
+        pagination.className = 'swiper-pagination';
+        swiperContainer.appendChild(pagination);
         
-        // Create navigation arrows
-        const prevButton = document.createElement('button');
-        prevButton.className = 'scenario-carousel-arrow prev';
-        prevButton.innerHTML = '&#8249;';
-        prevButton.setAttribute('aria-label', 'Previous scenario');
-        prevButton.addEventListener('click', () => {
-            currentSlideIndex = (currentSlideIndex - 1 + totalSlides) % totalSlides;
-            updateCarousel();
-            console.log(`[ScenarioDebug] ⬅️ Moved to slide ${currentSlideIndex + 1}/${totalSlides}`);
-        });
+        // Add navigation
+        const prevButton = document.createElement('div');
+        prevButton.className = 'swiper-button-prev';
+        // Prevent nav clicks from bubbling to slides (which would trigger selection)
+        prevButton.addEventListener('click', function(e) { e.stopPropagation(); });
+        prevButton.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+        swiperContainer.appendChild(prevButton);
         
-        const nextButton = document.createElement('button');
-        nextButton.className = 'scenario-carousel-arrow next';
-        nextButton.innerHTML = '&#8250;';
-        nextButton.setAttribute('aria-label', 'Next scenario');
-        nextButton.addEventListener('click', () => {
-            currentSlideIndex = (currentSlideIndex + 1) % totalSlides;
-            updateCarousel();
-            console.log(`[ScenarioDebug] ➡️ Moved to slide ${currentSlideIndex + 1}/${totalSlides}`);
-        });
+        const nextButton = document.createElement('div');
+        nextButton.className = 'swiper-button-next';
+        // Prevent nav clicks from bubbling to slides (which would trigger selection)
+        nextButton.addEventListener('click', function(e) { e.stopPropagation(); });
+        nextButton.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+        swiperContainer.appendChild(nextButton);
         
-        carouselWrapper.appendChild(prevButton);
-        carouselWrapper.appendChild(nextButton);
-        
-        // Create dots navigation
-        const dotsContainer = document.createElement('div');
-        dotsContainer.className = 'scenario-carousel-dots';
-        
-        placeholderScenarios.forEach((_, index) => {
-            const dot = document.createElement('button');
-            dot.className = 'scenario-carousel-dot';
-            if (index === 0) dot.classList.add('active');
-            dot.setAttribute('aria-label', `Go to scenario ${index + 1}`);
-            dot.addEventListener('click', () => {
-                currentSlideIndex = index;
-                updateCarousel();
-                console.log(`[ScenarioDebug] 🔴 Jumped to slide ${currentSlideIndex + 1}/${totalSlides}`);
-            });
-            dotsContainer.appendChild(dot);
-        });
-        
-        container.appendChild(carouselWrapper);
-        container.appendChild(dotsContainer);
+        // Prevent pagination clicks from bubbling to slides
+        pagination.addEventListener('click', function(e) { e.stopPropagation(); });
 
-        console.log('%c[ScenarioDebug] ✅ Enhanced Carousel Displayed', 'color: #28a745; font-weight: bold; font-size: 14px;');
-        console.log('%c📋 Bug Fixes Applied:', 'color: #dc3545; font-weight: bold;');
+        container.appendChild(swiperContainer);
+
+        // Initialize Swiper for debug
+        const debugSwiper = new Swiper('.scenario-debug-swiper', {
+            slidesPerView: 1,
+            spaceBetween: 10,
+            loop: false,
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            on: {
+                slideChange: function () {
+                    console.log(`[ScenarioDebug] 🔄 Swiped to slide ${this.activeIndex + 1}/${placeholderScenarios.length}`);
+                },
+            },
+        });
+
+        console.log('%c[ScenarioDebug] ✅ Swiper Carousel Displayed', 'color: #28a745; font-weight: bold; font-size: 14px;');
+        console.log('%c📋 Swiper Features Enabled:', 'color: #dc3545; font-weight: bold;');
         console.log(`
-  ✅ Infinite scroll enabled (arrows wrap around)
-  ✅ Space added left/right for arrow visibility
-  ✅ Dots synced with arrow navigation
+  ✅ Touch/swipe navigation on mobile devices
+  ✅ Clickable pagination dots
+  ✅ Arrow button navigation
+  ✅ Smooth slide transitions
   
-  Total scenarios: ${totalSlides}
+  Total scenarios: ${placeholderScenarios.length}
         `);
-        console.log('%b📋 What to verify:', 'color: #007bff; font-weight: bold;');
+        console.log('%c📋 What to verify:', 'color: #007bff; font-weight: bold;');
         console.log(`
-  ✓ Carousel is CENTERED on screen
+  ✓ Swiper carousel is CENTERED on screen
   ✓ Cards display with proper spacing
   ✓ All card content is visible (no overflow)
   ✓ Cards have max-height with scrollable overflow-y
@@ -817,19 +768,21 @@ window.ScenarioDebug = {
   ✓ Smooth transitions between slides
   ✓ Hover effects on cards (lift + shadow)
   ✓ Click to select (turns card purple)
+  ✓ Swipe gestures work on touch devices
   
-  ➡️ Arrow wraps from slide 4 → slide 1
-  ⬅️ Arrow wraps from slide 1 → slide 4
+  ➡️ Swipe right to go to next scenario
+  ⬅️ Swipe left to go to previous scenario
   🔴 Dots always match current slide
         `);
         console.log('%c💡 Interactive Tests:', 'color: #6E20F4; font-weight: bold;');
         console.log(`
-  1. Hover over cards → should lift with enhanced shadow
-  2. Click cards → should turn green/purple and be marked as selected
-  3. Use arrow buttons → navigate between scenarios smoothly (infinite scroll)
-  4. Click dots → jump to specific scenario and sync with arrows
-  5. Resize browser → test responsive breakpoints
-  6. Scroll card content → if description is long
+  1. Swipe left/right on mobile or drag on desktop → navigate between scenarios smoothly
+  2. Hover over cards → should lift with enhanced shadow
+  3. Click cards → should turn green/purple and be marked as selected
+  4. Use arrow buttons → navigate between scenarios smoothly
+  5. Click dots → jump to specific scenario and sync with arrows
+  6. Resize browser → test responsive breakpoints
+  7. Scroll card content → if description is long
         `);
     },
 
@@ -879,8 +832,8 @@ window.ScenarioDebug = {
      → Hide the spinner and clear container
      
   3. ScenarioDebug.showScenarioPlaceholder()
-     → Display 3 placeholder scenario cards
-     → Test: hover effects, click to select, responsive layout
+     → Display 4 placeholder scenario cards with Swiper carousel
+     → Test: swipe navigation, hover effects, click to select, responsive layout
      → Click any card to see selection feedback
 
   4. ScenarioDebug.testResponsive()
@@ -898,8 +851,11 @@ window.ScenarioDebug = {
     ✓ Blue color (#007bff)
     ✓ Animated dots beneath text
     
-  SCENARIO CARDS:
-    ✓ flex layout: 1 col (mobile) → 2 cols (tablet) → 3 cols (desktop)
+  SWIPER CAROUSEL:
+    ✓ Touch/swipe navigation on mobile devices
+    ✓ Clickable pagination dots
+    ✓ Arrow button navigation
+    ✓ Smooth slide transitions
     ✓ Hover: card lifts 4px, shadow enhances, border turns blue
     ✓ Click: card turns green, shows checkmark
     ✓ Consistent spacing and typography
@@ -915,10 +871,11 @@ window.ScenarioDebug = {
   1. Run: ScenarioDebug.showSpinner()
   2. Wait 3 seconds, then run: ScenarioDebug.hideSpinner()
   3. Run: ScenarioDebug.showScenarioPlaceholder()
-  4. Hover over cards to test hover effect
-  5. Click a card to test selection
-  6. Run: ScenarioDebug.testResponsive()
-  7. Resize browser window and repeat step 4-5
+  4. Swipe left/right or drag on desktop → navigate between scenarios
+  5. Hover over cards to test hover effect
+  6. Click a card to test selection
+  7. Run: ScenarioDebug.testResponsive()
+  8. Resize browser window and repeat step 4-6
         `);
     }
 };

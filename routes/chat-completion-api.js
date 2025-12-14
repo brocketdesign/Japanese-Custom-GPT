@@ -574,6 +574,7 @@ async function routes(fastify, options) {
                     } else {
                     }
                 } else {
+                    console.error(`[openai-chat-completion:${requestId}] ERROR - No completion received from generateCompletion`);
                     fastify.sendNotificationToUser(userId, 'hideCompletionMessage', { uniqueId });
                 }
                 

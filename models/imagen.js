@@ -421,6 +421,7 @@ async function generateImg({
     }
 
     // Prepare task based on imageType and model
+    console.log(`\x1b[36m[generateImg] Preparing image generation request for user ${userId} (Type: ${imageType.toUpperCase()}, FLUX: ${flux})\x1b[0m`);
     let image_request;
     if (flux) {
         // FLUX-specific request structure

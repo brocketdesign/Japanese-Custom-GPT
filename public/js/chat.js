@@ -1352,10 +1352,15 @@ function setupChatInterface(chat, character, userChat, isNew) {
         // Add this process to active renders
         activeRenderProcesses.add(uniqueId);
         
-        const completionElement = $(`#completion-${uniqueId}`);
-        
+        let completionElement = $(`#completion-${uniqueId}`);
+        // If the completion element doesn't exist (race or was removed), recreate its container
+        if (!completionElement.length) {
+            createBotResponseContainer(uniqueId);
+            completionElement = $(`#completion-${uniqueId}`);
+        }
+
         // Check if the message has already been fully rendered
-        const currentText = completionElement.text().trim();
+        const currentText = (completionElement && completionElement.length) ? completionElement.text().trim() : '';
         if (currentText === message.trim()) {
             console.log(`Message ${uniqueId} already fully rendered, skipping`);
             activeRenderProcesses.delete(uniqueId);
@@ -1403,10 +1408,28 @@ function setupChatInterface(chat, character, userChat, isNew) {
 
     // Add cleanup function for when containers are removed
     window.hideCompletionMessage = function(uniqueId) {
-        // Clean up active render process
-        activeRenderProcesses.delete(uniqueId);
-        $(`#completion-${uniqueId}`).closest('message-container').closest('div').fadeOut().remove();
-    }
+            // Clean up active render process
+            activeRenderProcesses.delete(uniqueId);
+
+            // Prefer removing the whole container we created for this completion
+            const container = $(`#container-${uniqueId}`);
+            if (container.length) {
+                container.fadeOut(200, function() { $(this).remove(); });
+                return;
+            }
+
+            // Fallback: try to find the message container wrapping the completion element
+            const completionEl = $(`#completion-${uniqueId}`);
+            if (completionEl.length) {
+                const msgContainer = completionEl.closest('.message-container');
+                if (msgContainer.length) {
+                    msgContainer.fadeOut(200, function() { $(this).remove(); });
+                    return;
+                }
+                // Last resort: remove the completion element itself
+                completionEl.fadeOut(200, function() { $(this).remove(); });
+            }
+        }
 
 
     // Update the createBotResponseContainer function to use the new structure
@@ -1430,7 +1453,7 @@ function setupChatInterface(chat, character, userChat, isNew) {
                         </button>
                     </div>
                     <div class="ms-3 p-3 text-start assistant-chat-box flex-grow-1 position-relative">
-                        <div id="completion-${uniqueId}""><img src="/img/load-dot.gif" width="50px"></div>
+                        <div id="completion-${uniqueId}"><img src="/img/load-dot.gif" width="50px"></div>
                         <!-- Message tools will be added here after streaming completes -->
                     </div>
                 </div>

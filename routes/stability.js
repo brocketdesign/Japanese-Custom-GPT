@@ -60,8 +60,8 @@ async function routes(fastify, options) {
           }
         })
         const customPromptText = promptData.prompt
-        const nsfw = promptData.nsfw == 'on' ? true : false;
-        imageType = nsfw ? 'nsfw' : 'sfw'
+        const nsfw = promptData.nsfw == 'on' || true ? true : false;
+        imageType = nsfw ? 'nsfw' : 'sfw';
         processPromptToTags(db, customPromptText);
         
         const imageDescription = await checkImageDescription(db, chatId);

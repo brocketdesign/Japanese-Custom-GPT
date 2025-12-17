@@ -221,7 +221,8 @@ async function handleImageGeneration(db, currentUserMessage, lastUserMessage, ge
     genImage.image_request = true;
     genImage.canAfford = true;
     genImage.image_num = 1;
-    genImage.nsfw = nsfw || false;
+    genImage.nsfw = genImage.nsfw;
+    console.log(`[HandleImageGeneration] Image request details:`, genImage);
 
     // Check for custom prompt
     let customPromptData = null;
@@ -277,7 +278,9 @@ async function handleImageGeneration(db, currentUserMessage, lastUserMessage, ge
             }
             
             const imageType = genImage.nsfw ? 'nsfw' : 'sfw';
+            console.log(`[handleImageGeneration] Image type set to: ${imageType}`);
             
+            // Create prompt and generate image
             createPrompt(lastUserMessage.content, characterDescription, imageType)
                 .then(async(promptResponse) => {
                     const prompt = promptResponse.replace(/(\r\n|\n|\r)/gm, " ").trim();

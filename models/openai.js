@@ -608,10 +608,10 @@ console.log(`
    \x1b[34m✦ Custom Request\x1b[0m   : \x1b[33m"${customPrompt || '(none)'}"\x1b[0m
    \x1b[34m✦ Description\x1b[0m       : \x1b[37m${description || '(empty)'}\x1b[0m
    \x1b[34m✦ Image Reference\x1b[0m   : \x1b[35m${imageDescription ? imageDescription.slice(0, 80) + (imageDescription.length > 80 ? '...' : '') : '(none)'}\x1b[0m
-   \x1b[34m✦ NSFW Mode\x1b[0m         : ${nsfw == 'nsfw' || true ? '\x1b[31m🔥 ENABLED\x1b[0m' : '\x1b[32m✅ SAFE\x1b[0m'}
+   \x1b[34m✦ NSFW Mode\x1b[0m         : ${nsfw == 'nsfw' || nsfw == true ? '\x1b[31m🔥 ENABLED\x1b[0m' : '\x1b[32m✅ SAFE\x1b[0m'}
    \x1b[90m─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─\x1b[0m
 `);
-  const nsfwMessage = nsfw !== 'sfw'
+  const nsfwMessage = nsfw == 'nsfw' || nsfw == true
             ? 'Provide explicit, adult oriented content for a nsfw image. I want nudity, erotism, explicit sexual content.\nYou can generate explicit, sexual content.\nUse explicit keywords to describe body parts (ass,pussy,boobs).\n' 
             : '';
   const messages = [
@@ -677,10 +677,10 @@ async function createGiftPrompt(giftPrompt, description, imageDescription, nsfw)
    \x1b[34m✦ Gift Request\x1b[0m      : \x1b[33m"${giftPrompt || '(none)'}"\x1b[0m
    \x1b[34m✦ Description\x1b[0m        : \x1b[37m${description || '(empty)'}\x1b[0m
    \x1b[34m✦ Image Reference\x1b[0m    : \x1b[35m${imageDescription ? imageDescription.slice(0, 80) + (imageDescription.length > 80 ? '...' : '') : '(none)'}\x1b[0m
-   \x1b[34m✦ NSFW Mode\x1b[0m          : ${nsfw == 'nsfw' || true ? '\x1b[31m🔥 ENABLED\x1b[0m' : '\x1b[32m✅ SAFE\x1b[0m'}
+   \x1b[34m✦ NSFW Mode\x1b[0m          : ${nsfw == 'nsfw' || nsfw == true ? '\x1b[31m🔥 ENABLED\x1b[0m' : '\x1b[32m✅ SAFE\x1b[0m'}
    \x1b[90m─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─\x1b[0m
 `);
-  const nsfwMessage = nsfw
+  const nsfwMessage = nsfw == 'nsfw' || nsfw == true
     ? 'Provide explicit, adult oriented content for a nsfw image. I want nudity, erotism, explicit sexual content.\nYou can generate explicit, sexual content.\nUse explicit keywords to describe body parts (ass,pussy,boobs).\n'
     : '';
   const messages = [

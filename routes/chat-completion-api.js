@@ -559,7 +559,7 @@ async function routes(fastify, options) {
                         if (assistantImageRequest && assistantImageRequest.image_request) {
                             lastUserMessage.content += ' ' + newAssistantMessage.content;
                             // [OVERWRITE] Use the character nsfw setting for auto image generation
-                            assistantImageRequest.nsfw = nsfw;
+                            // assistantImageRequest.nsfw = nsfw;
 
                             // [FIND FIX] Duplication of the parameters assistantImageRequest; it should be currentUserMessage
                             const imageResult = await handleImageGeneration(

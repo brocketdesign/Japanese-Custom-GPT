@@ -25,18 +25,18 @@ const apiDetails = {
 
 // Default model config
 let currentModelConfig = {
-  provider: 'openai',
-  modelName: null
+  provider: 'novita',
+  modelName: 'deepseek',
 };
 
 // Enhanced model config with categorization
 const modelConfig = {
   free: {
-    openai: {
-      provider: 'openai',
-      modelName: null,
-      displayName: 'OpenAI gpt-4o',
-      description: 'Advanced reasoning and creativity'
+    deepseek: {
+      provider: 'novita',
+      modelName: 'deepseek',
+      displayName: 'DeepSeek V3 Turbo',
+      description: 'Advanced coding and reasoning'
     },
   },
   premium: {
@@ -45,12 +45,6 @@ const modelConfig = {
       modelName: 'llama',
       displayName: 'Llama 3 70B',
       description: 'Large-scale reasoning and analysis'
-    },
-    deepseek: {
-      provider: 'novita',
-      modelName: 'deepseek',
-      displayName: 'DeepSeek V3 Turbo',
-      description: 'Advanced coding and reasoning'
     },
     hermes: {
       provider: 'novita',

@@ -519,6 +519,11 @@ window.redirectToChat = function(chatId,chatImage) {
     $(`#spinner-${chatId}`).addClass('on').show()
     const user = {{{json user}}}
     const userId = user._id
+    // If user is not logged in yet show login form
+    if(user.isTemporary){
+        openLoginForm();
+        return
+    }
     // if on chat page fetchChatData else redirect to chat/${chatID}
     if (window.location.pathname.includes('/chat/')) {
         //send message to parent window fetchChatData

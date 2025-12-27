@@ -986,11 +986,11 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
           tags: ['ninja', 'shinobi', 'stealth', 'assassin'], 
           icon: 'bi-person-dash' 
         },
-        { 
-          nameKey: 'robot',
-          name: categoryTranslations.robot || 'Robot', 
-          tags: ['robot', 'android', 'cyborg', 'mecha'], 
-          icon: 'bi-robot' 
+        {
+          nameKey: 'Schoolgirl',
+          name: categoryTranslations.schoolgirl || 'Schoolgirl',
+          tags: ['schoolgirl', 'uniform', 'student', 'school'],
+          icon: 'bi-mortarboard'
         },
         { 
           nameKey: 'demon',

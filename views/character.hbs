@@ -192,7 +192,7 @@
         {{else}}
             <!-- Character Gallery for when no specific character is selected -->
             <div class="character-gallery px-0">
-                <div class="container">
+                <div class="container-fluid">
                     <h2 class="fw-bold">{{translations.cardMenuTitle}}</h2>
                     <p class="text-muted text-center mb-4">{{translations.exploreCharactersDescription}}</p>
 
@@ -231,6 +231,11 @@
         {{/if}}
     </div>
 
+    <style>
+        #footer-toolbar {
+            display: none !important;
+        }
+    </style>
     <!-- Include required scripts -->
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
@@ -239,7 +244,9 @@
     <script src="/js/character-profile-ui.js"></script>
     <script src="/js/character-profile-interactions.js"></script>
     <!-- Main character profile initialization -->
+    <script src="/js/ui-helpers.js"></script>
     <script src="/js/character.js"></script>
+    <script src="/js/character-infos.js"></script>
     <script src="/js/dashboard-category.js"></script>
 
     {{> dashboard-footer}}

@@ -149,7 +149,7 @@ function displayCategoryCards(categories) {
 }
 
 window.handleCategoryClick = function(category) {
-  setActiveQuery(category.toLowerCase());
+  setActiveQueryAndSearch(category.toLowerCase());
 };
 
 // Load categories when document is ready

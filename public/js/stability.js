@@ -251,6 +251,11 @@ window.generateImage = async function(data, disableCompletion = false) {
     const imageUrl = data.imageUrl || data.url;
     const imageId = data.imageId || data.id;
     const checkImageExist = $(`.assistant-image-box[data-id='${imageId}']`);
+    console.log(`[generateImage] Processing image with ID ${imageId} for chat ${data.userChatId}`);
+    if(!imageId || imageId === '' || imageId === null || imageId === undefined) {
+        console.warn(`[generateImage] Invalid image ID for chat ${data.userChatId}`);
+        return;
+    }
     if ((!imageId || sentImageIds.has(imageId)) && checkImageExist.length) {
         console.warn(`[generateImage] Image with ID ${imageId} has already been sent to chat ${data.userChatId}`);
         return;

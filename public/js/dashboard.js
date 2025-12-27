@@ -2044,7 +2044,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
 
           // --- End: Sample image selection logic ---
           htmlContent += `
-                  <div class="gallery-card col-6 col-sm-4 col-lg-2 mb-0 px-1 ${finalNsfwResult ? "nsfw-content":''} ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} ${chat.imageStyle ? 'chat-style-'+chat.imageStyle : ''} nsfw-${finalNsfwResult}" data-id="${chat._id}" style="cursor:pointer;">
+                  <div class="gallery-card col-6 col-sm-4 col-lg-3 mb-0 px-1 ${finalNsfwResult ? "nsfw-content":''} ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} ${chat.imageStyle ? 'chat-style-'+chat.imageStyle : ''} nsfw-${finalNsfwResult}" data-id="${chat._id}" style="cursor:pointer;">
                     <div class="card shadow border-0 h-100 position-relative gallery-hover" style="overflow: hidden;">
                       <!-- Clickable image area -->
                       <div class="gallery-image-wrapper position-relative chat-card-clickable-area" style="aspect-ratio: 4/5; background: #f8f9fa; cursor: pointer;"
@@ -2078,7 +2078,7 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                           ` : ''}
                         </div>
                         <!-- Chat icon on top right -->
-                        <div class="position-absolute top-0 end-0 m-2 d-flex flex-column align-items-end gap-1" style="z-index: 3;" onclick="event.stopPropagation();redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')">
+                        <div class="position-absolute top-0 end-0 m-2 d-flex flex-column align-items-end gap-1 start-chat-icon" style="z-index: 3;" onclick="event.stopPropagation();redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')">
                           ${chat.hasUserChatted === false ? `
                             <span class="badge bg-warning bg-opacity-85 text-dark border text-decoration-none" style="backdrop-filter: blur(4px); font-size: 0.75rem;">
                               <i class="bi bi-star-fill me-1"></i>New

@@ -499,6 +499,41 @@ class OnboardingFunnel {
                 card.classList.remove('selected');
             });
             
+            //Update onclick event
+            container.querySelectorAll('.gallery-card').forEach(card => {
+                const startIcon = card.querySelector('.start-chat-icon');
+                const clickableArea = card.querySelector('.chat-card-clickable-area');
+                if (!startIcon || !clickableArea) return;
+
+                try {
+                    // Transfer inline onclick attribute if present
+                    const inlineHandler = startIcon.getAttribute && startIcon.getAttribute('onclick');
+                    if (inlineHandler) {
+                        clickableArea.setAttribute('onclick', inlineHandler);
+                        startIcon.removeAttribute('onclick');
+                    } else if (startIcon.onclick) {
+                        // Transfer assigned onclick function if present
+                        clickableArea.onclick = startIcon.onclick;
+                        startIcon.onclick = null;
+                    } else {
+                        // Fallback: make clickable area trigger the icon's click (fires attached listeners)
+                        clickableArea.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            startIcon.click();
+                        });
+                    }
+
+                    // Prevent direct interaction on the icon to avoid duplicate triggers
+                    startIcon.style.pointerEvents = 'none';
+                    startIcon.style.cursor = 'default';
+                    clickableArea.style.cursor = 'pointer';
+                } catch (err) {
+                    // Fail silently (but log for debugging)
+                    console.error('Error transferring onclick to clickable area', err);
+                }
+            });
+
             // Add selected class to the chosen card
             const selectedCard = container.querySelector(`[data-id="${characterId}"]`);
             if (selectedCard) {

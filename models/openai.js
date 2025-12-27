@@ -590,8 +590,8 @@ async function generatePromptTitle(prompt,language) {
           }
     ]
 
-    const completionMessage = await generateCompletion(messages, 600, 'openai-gpt4o');
-    return completionMessage.replace(/['"]+/g, '');
+    const completionMessage = await generateCompletion(messages, 600, 'deepseek-v3-turbo');
+    return completionMessage ? completionMessage.replace(/['"]+/g, '') : null;
     
 }
 // Combine the user's custom prompt and image description to create a new prompt

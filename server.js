@@ -216,7 +216,7 @@ fastify.get('/signin-redirection', async (request, reply) => {
   user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
   return reply.renderWithGtm(`signin.hbs`, {
-    title: 'LAMIXAI画像生成',
+    title: 'Sign In - AI Image Generation | ChatLamix',
   });
 });
 
@@ -228,7 +228,7 @@ fastify.get('/signout-redirection', async (request, reply) => {
   user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
   return reply.renderWithGtm(`signout.hbs`, {
-    title: 'LAMIXAI画像生成',
+    title: 'Sign Out - AI Image Generation | ChatLamix',
   });
 });
 
@@ -240,7 +240,7 @@ fastify.get('/login', async (request, reply) => {
   user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
   return reply.renderWithGtm(`login.hbs`, {
-    title: 'LAMIXAI画像生成',
+    title: 'Login - AI Image Generation | ChatLamix',
   });
 });
 
@@ -251,7 +251,7 @@ fastify.get('/my-plan', async (request, reply) => {
   user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
   return reply.renderWithGtm(`plan.hbs`, {
-    title: 'プレミアムプランAI画像生成',
+    title: 'Premium Plan - AI Image Generation | ChatLamix',
     
     seo: [
       { name: 'description', content: translations.seo.description_plan },
@@ -367,7 +367,7 @@ fastify.get('/chat/edit/:chatId', async (request, reply) => {
     
 
     return reply.view('character-creation.hbs', {
-      title: 'AIフレンズ',
+      title: 'Create Character - AI Image Generation | ChatLamix',
       tags,
       chatId,
       modelId: request.query.modelId,
@@ -982,7 +982,7 @@ fastify.get('/discover', async (request, reply) => {
 
 fastify.get('/users', (request, reply) => {
   if (process.env.MODE === 'local') {
-    reply.view('user-list.hbs', { title: 'AIフレンズ' });
+    reply.view('user-list.hbs', { title: 'Users - AI Image Generation | ChatLamix' });
   } else {
     reply.redirect('/');
   }
@@ -990,7 +990,7 @@ fastify.get('/users', (request, reply) => {
 
 fastify.get('/generate/:userid', (request, reply) => {
   const userId = request.params.userid;
-  reply.view('generate.hbs', { title: 'AIフレンズ', userId });
+  reply.view('generate.hbs', { title: 'Generate - AI Image Generation | ChatLamix', userId });
 });
 
 fastify.get('/dashboard', async (request, reply) => {
@@ -1042,7 +1042,7 @@ fastify.get('/settings', async (request, reply) => {
     const isAdmin = await checkUserAdmin(fastify, userId);
 
     return reply.view('/settings', {
-      title: 'AIフレンズ',
+      title: 'Settings - AI Image Generation | ChatLamix',
       isAdmin,
       user: userData,
     });

@@ -971,31 +971,31 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
         { 
           nameKey: 'princess',
           name: categoryTranslations.princess || 'Princess', 
-          tags: ['princess', 'zelda'], 
+          tags: ['princess', 'zelda', 'royalty', 'crown', 'castle'], 
           icon: 'bi-gem' 
         },
         { 
           nameKey: 'fantasy',
           name: categoryTranslations.fantasy || 'Fantasy', 
-          tags: ['forest elfe', 'forest elf', 'fantasy', 'magical'], 
+          tags: ['forest elfe', 'forest elf', 'fantasy', 'magical', 'elfe', 'elf', 'fairy'], 
           icon: 'bi-emoji-smile' 
         },
         { 
           nameKey: 'ninja',
           name: categoryTranslations.ninja || 'Ninja', 
-          tags: ['ninja', 'shinobi', 'stealth', 'assassin'], 
+          tags: ['ninja', 'shinobi', 'stealth', 'assassin', 'kunai'], 
           icon: 'bi-person-dash' 
         },
         {
           nameKey: 'Schoolgirl',
           name: categoryTranslations.schoolgirl || 'Schoolgirl',
-          tags: ['schoolgirl', 'uniform', 'student', 'school'],
+          tags: ['schoolgirl', 'uniform', 'student', 'school', 'teen', 'academy'],
           icon: 'bi-mortarboard'
         },
         { 
           nameKey: 'demon',
           name: categoryTranslations.demon || 'Demon', 
-          tags: ['demon', 'devil', 'fiend', 'satanic'], 
+          tags: ['demon', 'devil', 'fiend', 'satanic', 'succubus', 'imp', 'hell', 'tails'], 
           icon: 'bi-emoji-angry' 
         }
       ];

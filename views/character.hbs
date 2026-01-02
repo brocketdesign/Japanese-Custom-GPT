@@ -207,13 +207,13 @@
                     </div>
 
                     <!-- Query Tags Section -->
-                    <div class="query-tags-section mb-4">
-                        <div class="d-flex align-items-center justify-content-center mb-3">
+                    <div class="query-tags-section mb-4 d-none">
+                        <div class="d-flex align-items-center justify-content-between mb-3" style="padding: 0 20px;">
                             <h6 class="me-3 mb-0">{{translations.browseByCategory}}:</h6>
                             <small class="text-muted">{{translations.scrollForMore}}</small>
                         </div>
                         <div class="query-tags-scroll-container">
-                            <div class="query-tags-list d-flex justify-content-center" id="query-tags-list">
+                            <div class="query-tags-list d-flex" id="query-tags-list">
                                 <!-- Query tags will be populated here -->
                                 <div class="spinner-border spinner-border-sm me-3" role="status">
                                     <span class="visually-hidden">Loading...</span>
@@ -237,6 +237,7 @@
         }
     </style>
     <!-- Include required scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
     <!-- Character profile modules -->
@@ -244,7 +245,9 @@
     <script src="/js/character-profile-ui.js"></script>
     <script src="/js/character-profile-interactions.js"></script>
     <!-- Main character profile initialization -->
-    <script src="/js/ui-helpers.js"></script>
+    <script src="/js/modules/chat-filters.js"></script>
+    <script src="/js/modules/ui-helpers.js"></script>
+    <script src="/js/modules/popular-chats.js"></script>
     <script src="/js/character.js"></script>
     <script src="/js/character-infos.js"></script>
     <script src="/js/dashboard-category.js"></script>

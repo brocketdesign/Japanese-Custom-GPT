@@ -3067,8 +3067,12 @@ backdrop-filter: blur(3px);
   /* Query Tags Styles */
   .query-tags-scroll-container {
     overflow-x: auto;
+    overflow-y: hidden;
     scrollbar-width: thin;
     scrollbar-color: #ddd transparent;
+    padding: 0 20px;
+    margin: 0 -20px;
+    scroll-behavior: smooth;
   }
   
   .query-tags-scroll-container::-webkit-scrollbar {
@@ -3093,6 +3097,9 @@ backdrop-filter: blur(3px);
     padding: 10px 0;
     white-space: nowrap;
     gap: 8px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
   }
   
   .query-tag {

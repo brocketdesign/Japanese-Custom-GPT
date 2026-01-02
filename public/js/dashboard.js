@@ -1055,10 +1055,10 @@ window.redirectToChatPage = function(el) {
 window.blurImage = function(img) {
     if ($(img).data('processed') === "true") return;
     let imageUrl = $(img).data('src');
-    fetchBlurredImageAndCreateOverlay(img, imageUrl);
+    window.fetchBlurredImageAndCreateOverlay(img, imageUrl);
 }
 
-function fetchBlurredImageAndCreateOverlay(img, imageUrl) {
+window.fetchBlurredImageAndCreateOverlay = function(img, imageUrl) {
     $.ajax({
         url: '/blur-image?url=' + encodeURIComponent(imageUrl),
         method: 'GET',
@@ -1169,7 +1169,7 @@ function handleImageSuccess(img, blob, imageUrl, call) {
     }
 }
 
-function createOverlay(img, imageUrl) {
+window.createOverlay = function(img, imageUrl) {
   let overlay;
   const isTemporary = !!window.user?.isTemporary; // Access global user object
   const subscriptionStatus = window.user?.subscriptionStatus === 'active';

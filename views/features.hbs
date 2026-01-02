@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="{{translations.lang}}">
+   {{> dashboard-header}}
+<body>
+    {{> dashboard-nav}}
+
+<section>
+    <style>
+    #features-intro {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background-size: cover;
+        background-position: center;
+        min-height: 500px;
+        display: flex;
+        align-items: center;
+        color: white;
+    }
+    #features-intro h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    #features-intro p {
+        font-size: 1.25rem;
+        margin-bottom: 2rem;
+        opacity: 0.95;
+    }
+    .feature-card {
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        height: 100%;
+    }
+    .feature-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        background: none;
+    }
+    .feature-card h4 {
+        color: #333;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    .feature-card p {
+        color: #666;
+        font-size: 0.95rem;
+        margin-bottom: 1.5rem;
+        flex-grow: 1;
+    }
+    .feature-link {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    .feature-link:hover {
+        transform: scale(1.05);
+        color: white;
+        text-decoration: none;
+    }
+    #footer-toolbar {
+        display: none;
+    }
+    @media (max-width: 768px) {
+        #features-intro h1 {
+            font-size: 2rem;
+        }
+        #features-intro p {
+            font-size: 1rem;
+        }
+    }
+    </style>
+    
+    <div id="features-intro" class="shadow-0">
+        <div class="container">
+            <div class="row align-items-center h-100">
+                <div class="col-12 text-center">
+                    <h1 class="animate__animated" data-animate="animate__fadeInDown">
+                        {{translations.features_page.heading}}
+                    </h1>
+                    <p class="animate__animated" data-animate="animate__fadeInUp">
+                        {{translations.features_page.subheading}}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Grid Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4">
+            {{#each features}}
+            <div class="col-md-6 col-lg-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body d-flex flex-column text-center p-4">
+                        <div class="feature-icon">
+                            <i class="{{icon}}"></i>
+                        </div>
+                        <h4 class="card-title">{{title}}</h4>
+                        <p class="card-text">{{description}}</p>
+                        <a href="{{link}}" class="feature-link mt-auto">
+                            {{../translations.features_page.explore_button}} <i class="fas fa-arrow-right ms-2"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {{/each}}
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h2 class="fw-bold mb-4 u-color-grad">
+                    {{translations.features_page.cta_heading}}
+                </h2>
+                <p class="lead mb-4">
+                    {{translations.features_page.cta_description}}
+                </p>
+                <a href="#" onclick="openLoginForm()" class="btn custom-gradient-bg text-white btn-lg px-5 py-3 fw-bold" role="button" style="border-radius: 50px;">
+                    {{translations.lp.cta_button}}
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Why Choose Our Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold u-color-grad mb-4">
+                {{translations.features_page.why_choose_heading}}
+            </h2>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="d-flex gap-3">
+                    <div>
+                        <i class="fas fa-check-circle fa-2x" style="color: #667eea;"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold">{{translations.features_page.benefit1_title}}</h5>
+                        <p class="text-muted">{{translations.features_page.benefit1_desc}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex gap-3">
+                    <div>
+                        <i class="fas fa-check-circle fa-2x" style="color: #667eea;"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold">{{translations.features_page.benefit2_title}}</h5>
+                        <p class="text-muted">{{translations.features_page.benefit2_desc}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex gap-3">
+                    <div>
+                        <i class="fas fa-check-circle fa-2x" style="color: #667eea;"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold">{{translations.features_page.benefit3_title}}</h5>
+                        <p class="text-muted">{{translations.features_page.benefit3_desc}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex gap-3">
+                    <div>
+                        <i class="fas fa-check-circle fa-2x" style="color: #667eea;"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold">{{translations.features_page.benefit4_title}}</h5>
+                        <p class="text-muted">{{translations.features_page.benefit4_desc}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .sticky-bottom {
+        display: none;
+    }
+    footer {
+        display: inline !important;
+    }
+</style>
+
+{{> dashboard-footer}}
+
+<script>
+    // Smooth scroll animations
+    document.addEventListener('DOMContentLoaded', function() {
+        const elements = document.querySelectorAll('[data-animate]');
+        elements.forEach(el => {
+            const animationClass = el.getAttribute('data-animate');
+            el.classList.add(animationClass);
+        });
+    });
+</script>
+</body>
+</html>

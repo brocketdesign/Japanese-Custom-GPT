@@ -134,7 +134,7 @@ class GallerySearchManager {
       const params = new URLSearchParams({
         query: this.currentQuery,
         page: this.currentPage,
-        limit: 24
+        limit: 36
       });
 
       const response = await fetch(`${endpoint}?${params}`, {
@@ -316,13 +316,31 @@ class GallerySearchManager {
       const imgEl = container.querySelector('.gallery-media');
       if (imgEl && item.imageUrl) {
         try {
-          if (window.fetchBlurredImage) {
-            window.fetchBlurredImage(imgEl, item.imageUrl);
-          } else if (typeof fetchBlurredImage === 'function') {
-            fetchBlurredImage(imgEl, item.imageUrl);
+          // Use fetchBlurredImageAndCreateOverlay from dashboard.js which handles
+          // both blurring the image and creating the appropriate unlock overlay
+          if (typeof window.fetchBlurredImageAndCreateOverlay === 'function') {
+            window.fetchBlurredImageAndCreateOverlay(imgEl, item.imageUrl);
+          } else {
+            // Fallback: fetch blurred image via API and create overlay manually
+            $.ajax({
+              url: '/blur-image?url=' + encodeURIComponent(item.imageUrl),
+              method: 'GET',
+              xhrFields: { responseType: 'blob' },
+              success: function(blob) {
+                const objectUrl = URL.createObjectURL(blob);
+                $(imgEl).attr('src', objectUrl).data('processed', 'true');
+                // Create overlay using dashboard.js createOverlay function
+                if (typeof window.createOverlay === 'function') {
+                  window.createOverlay(imgEl, item.imageUrl);
+                }
+              },
+              error: function() {
+                console.error('[GallerySearchManager] Failed to load blurred image.');
+              }
+            });
           }
         } catch (e) {
-          console.error('[GallerySearchManager] Failed to blur image via fetchBlurredImage', e);
+          console.error('[GallerySearchManager] Failed to blur image', e);
         }
       }
     }

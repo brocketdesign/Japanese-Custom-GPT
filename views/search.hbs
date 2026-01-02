@@ -240,11 +240,16 @@
             isTemporary: {{#if user.isTemporary}}true{{else}}false{{/if}},
             lang: '{{user.lang}}'
         };
+        
+        // Expose showNSFW setting for blur logic
+        window.showNSFW = {{#if showNSFW}}true{{else}}false{{/if}};
 
         // Expose translations to global scope
         window.translations = {
             loading: '{{translations.loading}}',
-            start_searching: '{{translations.start_searching}}'
+            start_searching: '{{translations.start_searching}}',
+            blurButton: '{{translations.blurButton}}',
+            showContent: '{{translations.showContent}}'
         };
 
         document.addEventListener('DOMContentLoaded', function() {

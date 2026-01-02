@@ -1,5 +1,6 @@
 {
   "lang": "fr",
+    "feature": "Fonctionnalité",
     "sendGiftImageDirectly": "Je vous ai envoyé un cadeau, attendez-le !",
     "sendPoseRequest": "J'ai demandé une nouvelle pose d'image de vous, sur le point de la générer maintenant. Voici l'invite que j'ai utilisée :",
     "receivedGift": "Vous avez reçu un cadeau !",
@@ -893,7 +894,31 @@
     "title_character": "Toutes les images des personnages IA - LAMIX",
     "description_character": "Discutez avec de beaux personnages IA et générez des images avec eux ! Profitez de la génération d'images IA gratuite tout en discutant avec de beaux personnages IA.",
     "title_tags": "Résultats de recherche pour les tags | LAMIX",
-    "description_tags": "Affichage des résultats de recherche pour les tags. Trouvez vos images préférées sur Lamix."
+    "description_tags": "Affichage des résultats de recherche pour les tags. Trouvez vos images préférées sur Lamix.",
+    "title_features": "Explorez les fonctionnalités - LAMIX",
+    "description_features": "Découvrez toutes les fonctionnalités étonnantes que LAMIX propose pour le chat avec des personnages IA et la génération d'images."
+  },
+  "features_page": {
+    "heading": "Explorez nos fonctionnalités",
+    "subheading": "Découvrez la puissance de l'IA avec notre suite complète d'outils",
+    "feature1_title": "Génération d'images IA",
+    "feature1_description": "Générez de superbes images IA avec la technologie avancée de génération d'images. Créez des images belles et uniques en décrivant ce que vous voulez.",
+    "ai_influencer_title": "Influenceur IA",
+    "ai_influencer_description": "Interagissez avec des influenceurs IA et créez du contenu exclusif. Construisez des connexions avec des personnalités IA uniques.",
+    "nsfw_video_generator_title": "Générateur de vidéos pour adultes",
+    "nsfw_video_generator_description": "Créez des vidéos pour adultes avec notre technologie avancée de génération vidéo. Réservé aux adultes uniquement.",
+    "explore_button": "Explorer",
+    "cta_heading": "Prêt à commencer ?",
+    "cta_description": "Rejoignez des milliers d'utilisateurs créant du contenu incroyable avec nos outils alimentés par l'IA",
+    "why_choose_heading": "Pourquoi choisir nos fonctionnalités ?",
+    "benefit1_title": "IA de pointe",
+    "benefit1_desc": "Alimenté par la dernière technologie d'IA",
+    "benefit2_title": "Facile à utiliser",
+    "benefit2_desc": "Interface intuitive que n'importe qui peut maîtriser",
+    "benefit3_title": "Résultats de haute qualité",
+    "benefit3_desc": "Résultats de qualité professionnelle à chaque fois",
+    "benefit4_title": "Support 24/7",
+    "benefit4_desc": "Toujours là pour vous aider quand vous en avez besoin"
   },
   "characterDescription": {
     "traits": "Traits",

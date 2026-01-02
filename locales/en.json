@@ -1,5 +1,6 @@
 {
     "lang": "en",
+    "feature": "Feature",
     "sendGiftImageDirectly": "I sent you a gift wait for it!",
     "sendPoseRequest": "I requested a new image pose of you, about to generate it now. Here is the prompt I used:",
     "receivedGift": "You have received a gift!",
@@ -949,7 +950,31 @@
     "title_character": "All images of AI characters - LAMIX",
     "description_character": "Chat with beautiful AI characters and generate images with them! Enjoy free AI image generation while chatting with beautiful AI characters.",
     "title_tags": "Search results for tags - LAMIX",
-    "description_tags": "Displaying search results for tags. Find your favorite images on Lamix."
+    "description_tags": "Displaying search results for tags. Find your favorite images on Lamix.",
+    "title_features": "Explore Features - LAMIX",
+    "description_features": "Discover all the amazing features LAMIX has to offer for AI character chat and image generation."
+  },
+  "features_page": {
+    "heading": "Explore Our Features",
+    "subheading": "Discover the power of AI with our comprehensive suite of tools",
+    "feature1_title": "AI Image Generation",
+    "feature1_description": "Generate stunning AI images with advanced image generation technology. Create beautiful, unique images by describing what you want.",
+    "ai_influencer_title": "AI Influencer",
+    "ai_influencer_description": "Interact with AI influencers and create exclusive content. Build connections with unique AI personalities.",
+    "nsfw_video_generator_title": "NSFW Video Generator",
+    "nsfw_video_generator_description": "Create adult-oriented videos with our advanced video generation technology. For mature audiences only.",
+    "explore_button": "Explore",
+    "cta_heading": "Ready to Get Started?",
+    "cta_description": "Join thousands of users creating amazing content with our AI-powered tools",
+    "why_choose_heading": "Why Choose Our Features?",
+    "benefit1_title": "Cutting-Edge AI",
+    "benefit1_desc": "Powered by the latest AI technology",
+    "benefit2_title": "Easy to Use",
+    "benefit2_desc": "Intuitive interface that anyone can master",
+    "benefit3_title": "High Quality Output",
+    "benefit3_desc": "Professional-grade results every time",
+    "benefit4_title": "24/7 Support",
+    "benefit4_desc": "Always here to help when you need us"
   },
   "characterDescription": {
     "traits": "Traits",

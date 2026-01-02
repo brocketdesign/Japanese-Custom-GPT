@@ -1,5 +1,6 @@
 {
   "lang": "ja",
+    "feature": "機能",
   "sendGiftImageDirectly": "ギフトを送りました、待っててください！",
   "sendPoseRequest": "あなたの新しいポーズの画像をリクエストしました、今生成します。使用したプロンプトはこちら：",
     "receivedGift": "ギフトを受け取りました！",
@@ -947,7 +948,31 @@
     "title_character": "AIキャラクターのすべての画像 - LAMIX",
     "description_character": "美しいAIキャラクターとチャットして画像を生成しよう！美しいAIキャラクターとチャットしながら、無料でAI画像生成を楽しめます。",
     "title_tags": "タグの検索結果 | LAMIX",
-    "description_tags": "タグの検索結果を表示しています。Lamixでお気に入りの画像を見つけましょう。"
+    "description_tags": "タグの検索結果を表示しています。Lamixでお気に入りの画像を見つけましょう。",
+    "title_features": "機能を探索 - LAMIX",
+    "description_features": "LAMIXがAIキャラクターチャットと画像生成のために提供するすべての素晴らしい機能を発見してください。"
+  },
+  "features_page": {
+    "heading": "機能を探索",
+    "subheading": "包括的なツール群でAIの力を発見する",
+    "feature1_title": "AI画像生成",
+    "feature1_description": "高度な画像生成技術で素晴らしいAI画像を生成します。あなたが望むものを説明することで、美しくユニークな画像を作成します。",
+    "ai_influencer_title": "AIインフルエンサー",
+    "ai_influencer_description": "AIインフルエンサーと交流し、独占コンテンツを作成します。ユニークなAIパーソナリティとのつながりを構築します。",
+    "nsfw_video_generator_title": "成人向けビデオジェネレーター",
+    "nsfw_video_generator_description": "高度なビデオ生成技術で成人向けビデオを作成します。成人のみを対象としています。",
+    "explore_button": "探索",
+    "cta_heading": "始める準備はできていますか？",
+    "cta_description": "AI搭載ツールで素晴らしいコンテンツを作成している何千人ものユーザーに参加してください",
+    "why_choose_heading": "なぜ私たちの機能を選ぶのか？",
+    "benefit1_title": "最先端のAI",
+    "benefit1_desc": "最新のAI技術で強化",
+    "benefit2_title": "使いやすい",
+    "benefit2_desc": "誰もが習得できる直感的なインターフェース",
+    "benefit3_title": "高品質の出力",
+    "benefit3_desc": "毎回プロフェッショナルグレードの結果",
+    "benefit4_title": "24時間サポート",
+    "benefit4_desc": "必要なときはいつでもお手伝いします"
   },
   "characterDescription": {
     "traits": "特徴",

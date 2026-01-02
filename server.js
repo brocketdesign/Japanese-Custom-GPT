@@ -160,6 +160,7 @@ fastify.register(require('./plugins/websocket')); // Add this line
 
 // Load global plugins
 const fastifyPluginGlobals = require('./plugins/globals');
+const { title } = require('process');
 fastify.register(fastifyPluginGlobals);
 
 // Register all routes from the routes plugin
@@ -863,7 +864,35 @@ fastify.get('/character/:chatId', async (request, reply) => {
   // Redirect to slug route for SEO, keeping query params
   return reply.redirect(`/character/slug/${chat.slug}${queryString}`);
 });
+// feature
+fastify.get('/features', async (request, reply) => {
+  const db = fastify.mongo.db;
+  let { translations, lang, user } = request;
+  const userId = user._id;
+  user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
+  const features = [
+    //features list
+    { title: translations.features_page.feature1_title, description: translations.features_page.feature1_description, icon: 'fas fa-robot', link: 'landingpage/features-en' },
+    // ai influencer  
+    { title: translations.features_page.ai_influencer_title, description: translations.features_page.ai_influencer_description, icon: 'fas fa-user-astronaut', link: '/landingpage/influencer-en'  },
+    // NSFW video generator
+    { title: translations.features_page.nsfw_video_generator_title, description: translations.features_page.nsfw_video_generator_description, icon: 'fas fa-video', link: '/landingpage/nsfw-video-generator-en'  },
+  ]
+  return reply.renderWithGtm('features.hbs', {
+    title: translations.seo.title_features || 'Ai images generator & Ai chat',
+    features,
+    user,
+    seo: [
+      { name: 'description', content: translations.seo.description_features },
+      { name: 'keywords', content: translations.seo.keywords },
+      { property: 'og:title', content: translations.seo.title_features },
+      { property: 'og:description', content: translations.seo.description_features },
+      { property: 'og:image', content: '/img/share.png' },
+      { property: 'og:url', content: 'https://chatlamix/' },
+    ],
+  });
+});
 fastify.get('/tags', async (request, reply) => {
   try {
     const db = fastify.mongo.db;

@@ -1628,7 +1628,174 @@
     "debrided_generation_started": "キャラクターの性格を強化しています...",
     "debrided_generation_error": "性格の強化が警告付きで完了しました",
     "saving_character_data": "キャラクターデータを保存しています...",
-    "comprehensive_generation_started": "包括的なキャラクター生成を開始しています..."
+    "comprehensive_generation_started": "包括的なキャラクター生成を開始しています...",
+    
+    "step1_title": "スタイルを選択",
+    "step1_subtitle": "どのようなキャラクターを作成しますか？",
+    "step2_title": "民族と年齢を選択",
+    "step2_subtitle": "キャラクターの民族と年齢を選択してください",
+    "step3_title": "髪型を選択",
+    "step3_subtitle": "理想の髪型と色を選んでください",
+    "step4_title": "体型を選択",
+    "step4_subtitle": "体の特徴を選択してください",
+    "step5_title": "性格を選択",
+    "step5_subtitle": "キャラクターの性格特性を定義してください",
+    "step6_title": "声を選択",
+    "step6_subtitle": "キャラクターの声を選んでください",
+    "step7_title": "画像を生成",
+    "step7_subtitle": "キャラクターのユニークな画像を作成",
+    "step8_title": "確認",
+    "step8_subtitle": "キャラクターを確認してチャットを開始",
+    
+    "style_realistic": "リアル",
+    "style_anime": "アニメ",
+    
+    "age_title": "年齢を選択",
+    "age_label": "年齢",
+    "age_years": "歳",
+    
+    "hair_color_title": "髪色を選択",
+    "breast_size_title": "バストサイズを選択",
+    "butt_size_title": "ヒップサイズを選択",
+    
+    "name_title": "キャラクター名",
+    "name_placeholder": "名前を入力...",
+    "generate_name": "名前を生成",
+    
+    "personality_title": "性格",
+    "relationship_title": "関係",
+    "occupation_title": "職業",
+    "kinks_title": "好み",
+    "custom_prompt_title": "カスタム詳細",
+    "custom_prompt_placeholder": "キャラクターについての追加詳細を入力...",
+    
+    "voice_title": "声",
+    "play_sample": "サンプル再生",
+    "stop_sample": "停止",
+    
+    "generate_image": "画像を生成",
+    "regenerate_image": "再生成",
+    "generating_image": "キャラクターを生成中...",
+    "select_image": "この画像を選択",
+    "image_selected": "画像が選択されました",
+    "no_image_generated": "まだ画像が生成されていません",
+    "click_generate": "上のボタンをクリックしてキャラクターの画像を生成してください",
+    
+    "review_title": "あなたのキャラクター",
+    "start_chatting": "チャットを開始",
+    "generating_character": "キャラクターを作成中...",
+    "please_wait": "少々お待ちください",
+    
+    "next": "次へ",
+    
+    "ethnicities": {
+      "caucasian": "白人",
+      "asian": "アジア人",
+      "black": "黒人",
+      "latina": "ラテン系",
+      "arab": "アラブ系",
+      "indian": "インド人",
+      "japanese": "日本人",
+      "korean": "韓国人"
+    },
+    
+    "hair_styles": {
+      "straight": "ストレート",
+      "bangs": "前髪あり",
+      "curly": "カーリー",
+      "bun": "お団子",
+      "short": "ショート",
+      "ponytail": "ポニーテール",
+      "braids": "三つ編み",
+      "wavy": "ウェーブ"
+    },
+    
+    "hair_colors": {
+      "brunette": "ブルネット",
+      "blonde": "ブロンド",
+      "black": "黒",
+      "redhead": "赤毛",
+      "pink": "ピンク",
+      "blue": "青",
+      "white": "白",
+      "purple": "紫"
+    },
+    
+    "body_types": {
+      "skinny": "スリム",
+      "slim": "細身",
+      "athletic": "アスレチック",
+      "average": "標準",
+      "curvy": "グラマラス",
+      "voluptuous": "豊満"
+    },
+    
+    "breast_sizes": {
+      "flat": "フラット",
+      "small": "小さめ",
+      "medium": "普通",
+      "large": "大きめ",
+      "xl": "特大"
+    },
+    
+    "butt_sizes": {
+      "small": "小さめ",
+      "medium": "普通",
+      "athletic": "引き締まった",
+      "large": "大きめ",
+      "xl": "特大"
+    },
+    
+    "personalities": {
+      "submissive": "従順",
+      "dominant": "支配的",
+      "shy": "恥ずかしがり屋",
+      "confident": "自信家",
+      "playful": "遊び好き",
+      "serious": "真面目",
+      "romantic": "ロマンチック",
+      "adventurous": "冒険好き",
+      "caring": "思いやりがある",
+      "mysterious": "ミステリアス"
+    },
+    
+    "relationships": {
+      "stranger": "他人",
+      "friend": "友達",
+      "girlfriend": "彼女",
+      "wife": "妻",
+      "crush": "片想い",
+      "colleague": "同僚",
+      "neighbor": "隣人",
+      "ex": "元カノ",
+      "first_date": "初デート",
+      "roommate": "ルームメイト"
+    },
+    
+    "occupations": {
+      "student": "学生",
+      "teacher": "教師",
+      "nurse": "看護師",
+      "model": "モデル",
+      "artist": "アーティスト",
+      "athlete": "アスリート",
+      "businesswoman": "ビジネスウーマン",
+      "influencer": "インフルエンサー",
+      "scientist": "科学者",
+      "musician": "ミュージシャン"
+    },
+    
+    "kinks": {
+      "vanilla": "バニラ",
+      "daddy_dom": "パパ系",
+      "roleplay": "ロールプレイ",
+      "bdsm": "BDSM",
+      "exhibitionism": "露出",
+      "feet": "足フェチ",
+      "lingerie": "ランジェリー",
+      "outdoor": "野外",
+      "toys": "おもちゃ"
+    }
   },
   "imageGenerationForm": "画像生成フォーム",
   "selectImageType": "画像の種類を選択",

@@ -1,0 +1,246 @@
+{
+    "meta": {
+        "title": "Créer un Personnage | ChatLamix",
+        "description": "Créez votre compagnon IA personnalisé. Choisissez l'apparence, la personnalité, la voix et générez une image."
+    },
+    
+    "page_title": "Créez Votre Personnage",
+    
+    "step_indicator": "Étape {{current}} sur {{total}}",
+    
+    "step1": {
+        "title": "Choisissez Votre Style",
+        "subtitle": "Quel type de personnage souhaitez-vous créer ?",
+        "style_realistic": "Réaliste",
+        "style_anime": "Anime",
+        "gender_title": "Genre du Personnage",
+        "gender_girls": "Filles",
+        "gender_boys": "Garçons",
+        "gender_trans": "Trans"
+    },
+    
+    "step2": {
+        "title": "Choisissez l'Ethnicité",
+        "subtitle": "Sélectionnez l'ethnicité de votre personnage",
+        "ethnicities": {
+            "caucasian": "Caucasien",
+            "asian": "Asiatique",
+            "black": "Noir / Afro",
+            "latina": "Latina",
+            "arab": "Arabe",
+            "indian": "Indien",
+            "japanese": "Japonais",
+            "korean": "Coréen",
+            "mixed": "Métis"
+        },
+        "age_title": "Choisissez l'Âge",
+        "age_years": "Ans"
+    },
+    
+    "step3": {
+        "title": "Choisissez la Coiffure",
+        "subtitle": "Choisissez la coiffure parfaite",
+        "hair_styles": {
+            "straight": "Lisse",
+            "bangs": "Frange",
+            "curly": "Bouclé",
+            "bun": "Chignon",
+            "short": "Court",
+            "ponytail": "Queue de Cheval",
+            "braids": "Tresses",
+            "wavy": "Ondulé",
+            "long": "Long"
+        },
+        "hair_color_title": "Choisissez la Couleur de Cheveux",
+        "hair_colors": {
+            "brunette": "Brune",
+            "blonde": "Blonde",
+            "black": "Noir",
+            "redhead": "Rousse",
+            "pink": "Rose",
+            "blue": "Bleu",
+            "white": "Blanc",
+            "purple": "Violet",
+            "green": "Vert"
+        }
+    },
+    
+    "step4": {
+        "title": "Choisissez le Type de Corps",
+        "subtitle": "Sélectionnez les caractéristiques corporelles",
+        "body_types": {
+            "skinny": "Maigre",
+            "slim": "Mince",
+            "athletic": "Athlétique",
+            "average": "Moyenne",
+            "curvy": "Pulpeuse",
+            "voluptuous": "Voluptueuse",
+            "muscular": "Musclé",
+            "bbw": "BBW"
+        },
+        "breast_size_title": "Choisissez la Taille des Seins",
+        "breast_sizes": {
+            "flat": "Plat",
+            "small": "Petit",
+            "medium": "Moyen",
+            "large": "Grand",
+            "xl": "Très Grand"
+        },
+        "butt_size_title": "Choisissez la Taille des Fesses",
+        "butt_sizes": {
+            "small": "Petit",
+            "skinny": "Maigre",
+            "athletic": "Athlétique",
+            "medium": "Moyen",
+            "large": "Grand"
+        }
+    },
+    
+    "step5": {
+        "title": "Choisissez la Personnalité",
+        "subtitle": "Cliquez pour modifier les options",
+        "name_title": "Choisissez un Nom",
+        "name_placeholder": "Entrez un nom ou générez-en un",
+        "generate_name": "Générer un Nom",
+        "personality_title": "Choisissez la Personnalité",
+        "personalities": {
+            "submissive": "Soumise",
+            "dominant": "Dominante",
+            "shy": "Timide",
+            "confident": "Confiante",
+            "playful": "Joueuse",
+            "serious": "Sérieuse",
+            "romantic": "Romantique",
+            "adventurous": "Aventureuse",
+            "caring": "Attentionnée",
+            "mysterious": "Mystérieuse"
+        },
+        "relationship_title": "Choisissez la Relation",
+        "relationships": {
+            "stranger": "Inconnue",
+            "friend": "Amie",
+            "girlfriend": "Petite Amie",
+            "wife": "Épouse",
+            "crush": "Béguin",
+            "colleague": "Collègue",
+            "neighbor": "Voisine",
+            "ex": "Ex",
+            "first_date": "Premier Rendez-vous",
+            "roommate": "Colocataire"
+        },
+        "occupation_title": "Choisissez la Profession",
+        "occupations": {
+            "student": "Étudiante",
+            "teacher": "Professeure",
+            "nurse": "Infirmière",
+            "model": "Mannequin",
+            "artist": "Artiste",
+            "athlete": "Athlète",
+            "businesswoman": "Femme d'Affaires",
+            "influencer": "Influenceuse",
+            "scientist": "Scientifique",
+            "musician": "Musicienne"
+        },
+        "kinks_title": "Quels sont ses kinks ?",
+        "kinks": {
+            "vanilla": "Vanille",
+            "daddy_dom": "Domination Daddy",
+            "roleplay": "Jeu de Rôle",
+            "bdsm": "BDSM",
+            "exhibitionism": "Exhibitionnisme",
+            "feet": "Pieds",
+            "lingerie": "Lingerie",
+            "outdoor": "Plein Air",
+            "toys": "Jouets"
+        },
+        "custom_prompt_title": "Prompt Personnalisé (Optionnel)",
+        "custom_prompt_placeholder": "Ajoutez des détails supplémentaires sur votre personnage..."
+    },
+    
+    "step6": {
+        "title": "Choisissez la Voix",
+        "subtitle": "Écoutez et sélectionnez la voix de votre personnage",
+        "play_sample": "Écouter l'Échantillon",
+        "playing": "Lecture en cours...",
+        "voices": {
+            "Wise_Woman": {
+                "name": "Femme Sage",
+                "description": "Chaleureuse et expressive, parfaite pour les conversations profondes"
+            },
+            "Friendly_Person": {
+                "name": "Personne Amicale",
+                "description": "Enjouée et accessible avec une articulation claire"
+            },
+            "Inspirational_girl": {
+                "name": "Fille Inspirante",
+                "description": "Encourageante avec une voix lumineuse"
+            },
+            "Calm_Woman": {
+                "name": "Femme Calme",
+                "description": "Apaisante et mesurée, idéale pour les discussions détendues"
+            },
+            "Lively_Girl": {
+                "name": "Fille Dynamique",
+                "description": "Animée et énergique avec un rythme rapide"
+            },
+            "Lovely_Girl": {
+                "name": "Fille Charmante",
+                "description": "Douce et charmante avec une intonation délicate"
+            },
+            "Abbess": {
+                "name": "Abbesse",
+                "description": "Sereine et digne avec une douce autorité"
+            },
+            "Sweet_Girl_2": {
+                "name": "Fille Douce",
+                "description": "Lumineuse et jeune avec une chaleur affectueuse"
+            },
+            "Exuberant_Girl": {
+                "name": "Fille Exubérante",
+                "description": "Voix haute énergie débordante d'enthousiasme"
+            }
+        }
+    },
+    
+    "step7": {
+        "title": "Générer l'Image",
+        "subtitle": "Créez des images pour votre personnage",
+        "generate_button": "Générer les Images",
+        "regenerate_button": "Générer Plus",
+        "generating": "Génération en cours...",
+        "select_image": "Sélectionnez une image pour continuer",
+        "placeholder_text": "Cliquez sur générer pour créer des images"
+    },
+    
+    "step8": {
+        "title": "Votre Personnage est Prêt !",
+        "subtitle": "Révisez votre personnage et commencez à discuter",
+        "character_summary": "Résumé du Personnage",
+        "start_chat": "Commencer à Discuter"
+    },
+    
+    "buttons": {
+        "next": "Suivant",
+        "back": "Retour",
+        "create": "Créer le Personnage",
+        "start_chat": "Commencer à Discuter",
+        "generating": "Génération..."
+    },
+    
+    "errors": {
+        "select_style": "Veuillez sélectionner un style",
+        "select_ethnicity": "Veuillez sélectionner une ethnicité",
+        "select_hair": "Veuillez sélectionner une coiffure et une couleur",
+        "select_body": "Veuillez sélectionner un type de corps",
+        "select_personality": "Veuillez sélectionner les options de personnalité",
+        "select_voice": "Veuillez sélectionner une voix",
+        "select_image": "Veuillez sélectionner une image",
+        "enter_name": "Veuillez entrer un nom pour votre personnage",
+        "generation_failed": "Échec de la génération d'image. Veuillez réessayer."
+    },
+    
+    "loading": "Chargement...",
+    "generating_image": "Génération des images de votre personnage...",
+    "creating_character": "Création de votre personnage...",
+    "please_wait": "Veuillez patienter..."
+}

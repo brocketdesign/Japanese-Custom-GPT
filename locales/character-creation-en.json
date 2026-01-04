@@ -1,0 +1,246 @@
+{
+    "meta": {
+        "title": "Create Character | ChatLamix",
+        "description": "Create your custom AI companion. Choose appearance, personality, voice and generate an image."
+    },
+    
+    "page_title": "Create Your Character",
+    
+    "step_indicator": "Step {{current}} of {{total}}",
+    
+    "step1": {
+        "title": "Choose Your Style",
+        "subtitle": "What type of character would you like to create?",
+        "style_realistic": "Realistic",
+        "style_anime": "Anime",
+        "gender_title": "Character Gender",
+        "gender_girls": "Girls",
+        "gender_boys": "Boys",
+        "gender_trans": "Trans"
+    },
+    
+    "step2": {
+        "title": "Choose Ethnicity",
+        "subtitle": "Select your character's ethnicity",
+        "ethnicities": {
+            "caucasian": "Caucasian",
+            "asian": "Asian",
+            "black": "Black / Afro",
+            "latina": "Latina",
+            "arab": "Arab",
+            "indian": "Indian",
+            "japanese": "Japanese",
+            "korean": "Korean",
+            "mixed": "Mixed"
+        },
+        "age_title": "Choose Age",
+        "age_years": "Years"
+    },
+    
+    "step3": {
+        "title": "Choose Hair Style",
+        "subtitle": "Pick the perfect hairstyle",
+        "hair_styles": {
+            "straight": "Straight",
+            "bangs": "Bangs",
+            "curly": "Curly",
+            "bun": "Bun",
+            "short": "Short",
+            "ponytail": "Ponytail",
+            "braids": "Braids",
+            "wavy": "Wavy",
+            "long": "Long"
+        },
+        "hair_color_title": "Choose Hair Color",
+        "hair_colors": {
+            "brunette": "Brunette",
+            "blonde": "Blonde",
+            "black": "Black",
+            "redhead": "Redhead",
+            "pink": "Pink",
+            "blue": "Blue",
+            "white": "White",
+            "purple": "Purple",
+            "green": "Green"
+        }
+    },
+    
+    "step4": {
+        "title": "Choose Body Type",
+        "subtitle": "Select body characteristics",
+        "body_types": {
+            "skinny": "Skinny",
+            "slim": "Slim",
+            "athletic": "Athletic",
+            "average": "Average",
+            "curvy": "Curvy",
+            "voluptuous": "Voluptuous",
+            "muscular": "Muscular",
+            "bbw": "BBW"
+        },
+        "breast_size_title": "Choose Breast Size",
+        "breast_sizes": {
+            "flat": "Flat",
+            "small": "Small",
+            "medium": "Medium",
+            "large": "Large",
+            "xl": "Extra Large"
+        },
+        "butt_size_title": "Choose Butt Size",
+        "butt_sizes": {
+            "small": "Small",
+            "skinny": "Skinny",
+            "athletic": "Athletic",
+            "medium": "Medium",
+            "large": "Large"
+        }
+    },
+    
+    "step5": {
+        "title": "Choose Personality",
+        "subtitle": "Click to change options",
+        "name_title": "Choose a Name",
+        "name_placeholder": "Enter name or generate one",
+        "generate_name": "Generate Name",
+        "personality_title": "Choose Personality",
+        "personalities": {
+            "submissive": "Submissive",
+            "dominant": "Dominant",
+            "shy": "Shy",
+            "confident": "Confident",
+            "playful": "Playful",
+            "serious": "Serious",
+            "romantic": "Romantic",
+            "adventurous": "Adventurous",
+            "caring": "Caring",
+            "mysterious": "Mysterious"
+        },
+        "relationship_title": "Choose Relationship",
+        "relationships": {
+            "stranger": "Stranger",
+            "friend": "Friend",
+            "girlfriend": "Girlfriend",
+            "wife": "Wife",
+            "crush": "Crush",
+            "colleague": "Colleague",
+            "neighbor": "Neighbor",
+            "ex": "Ex",
+            "first_date": "First Date",
+            "roommate": "Roommate"
+        },
+        "occupation_title": "Choose Occupation",
+        "occupations": {
+            "student": "Student",
+            "teacher": "Teacher",
+            "nurse": "Nurse",
+            "model": "Model",
+            "artist": "Artist",
+            "athlete": "Athlete",
+            "businesswoman": "Businesswoman",
+            "influencer": "Influencer",
+            "scientist": "Scientist",
+            "musician": "Musician"
+        },
+        "kinks_title": "What kinks are they into?",
+        "kinks": {
+            "vanilla": "Vanilla",
+            "daddy_dom": "Daddy Dominance",
+            "roleplay": "Roleplay",
+            "bdsm": "BDSM",
+            "exhibitionism": "Exhibitionism",
+            "feet": "Feet",
+            "lingerie": "Lingerie",
+            "outdoor": "Outdoor",
+            "toys": "Toys"
+        },
+        "custom_prompt_title": "Custom Prompt (Optional)",
+        "custom_prompt_placeholder": "Add any additional details about your character..."
+    },
+    
+    "step6": {
+        "title": "Choose Voice",
+        "subtitle": "Listen and select your character's voice",
+        "play_sample": "Play Sample",
+        "playing": "Playing...",
+        "voices": {
+            "Wise_Woman": {
+                "name": "Wise Woman",
+                "description": "Warm and expressive, perfect for deep conversations"
+            },
+            "Friendly_Person": {
+                "name": "Friendly Person",
+                "description": "Upbeat and approachable with clear articulation"
+            },
+            "Inspirational_girl": {
+                "name": "Inspirational Girl",
+                "description": "Encouraging and bright delivery"
+            },
+            "Calm_Woman": {
+                "name": "Calm Woman",
+                "description": "Soothing and measured, ideal for relaxed chats"
+            },
+            "Lively_Girl": {
+                "name": "Lively Girl",
+                "description": "Animated and energetic with quick cadence"
+            },
+            "Lovely_Girl": {
+                "name": "Lovely Girl",
+                "description": "Gentle and charming with soft intonation"
+            },
+            "Abbess": {
+                "name": "Abbess",
+                "description": "Serene and dignified with gentle authority"
+            },
+            "Sweet_Girl_2": {
+                "name": "Sweet Girl",
+                "description": "Bright and youthful with affectionate warmth"
+            },
+            "Exuberant_Girl": {
+                "name": "Exuberant Girl",
+                "description": "High-energy delivery bursting with enthusiasm"
+            }
+        }
+    },
+    
+    "step7": {
+        "title": "Generate Image",
+        "subtitle": "Create images for your character",
+        "generate_button": "Generate Images",
+        "regenerate_button": "Generate More",
+        "generating": "Generating...",
+        "select_image": "Select an image to continue",
+        "placeholder_text": "Click generate to create images"
+    },
+    
+    "step8": {
+        "title": "Your Character is Ready!",
+        "subtitle": "Review your character and start chatting",
+        "character_summary": "Character Summary",
+        "start_chat": "Start Chat"
+    },
+    
+    "buttons": {
+        "next": "Next",
+        "back": "Back",
+        "create": "Create Character",
+        "start_chat": "Start Chat",
+        "generating": "Generating..."
+    },
+    
+    "errors": {
+        "select_style": "Please select a style",
+        "select_ethnicity": "Please select an ethnicity",
+        "select_hair": "Please select hair style and color",
+        "select_body": "Please select body type",
+        "select_personality": "Please select personality options",
+        "select_voice": "Please select a voice",
+        "select_image": "Please select an image",
+        "enter_name": "Please enter a name for your character",
+        "generation_failed": "Failed to generate image. Please try again."
+    },
+    
+    "loading": "Loading...",
+    "generating_image": "Generating your character images...",
+    "creating_character": "Creating your character...",
+    "please_wait": "Please wait..."
+}

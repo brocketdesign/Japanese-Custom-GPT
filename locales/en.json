@@ -1691,7 +1691,174 @@
     "debrided_generation_started": "Enhancing character personality...",
     "debrided_generation_error": "Personality enhancement completed with warnings",
     "saving_character_data": "Saving character data...",
-    "comprehensive_generation_started": "Starting comprehensive character generation..."
+    "comprehensive_generation_started": "Starting comprehensive character generation...",
+    
+    "step1_title": "Choose Your Style",
+    "step1_subtitle": "What type of character would you like to create?",
+    "step2_title": "Choose Ethnicity & Age",
+    "step2_subtitle": "Select your character's ethnicity and age",
+    "step3_title": "Choose Hair Style",
+    "step3_subtitle": "Pick the perfect hairstyle and color",
+    "step4_title": "Choose Body Type",
+    "step4_subtitle": "Select body characteristics",
+    "step5_title": "Choose Personality",
+    "step5_subtitle": "Define your character's personality traits",
+    "step6_title": "Choose Voice",
+    "step6_subtitle": "Select a voice for your character",
+    "step7_title": "Generate Image",
+    "step7_subtitle": "Create a unique image for your character",
+    "step8_title": "Review & Confirm",
+    "step8_subtitle": "Review your character and start chatting",
+    
+    "style_realistic": "Realistic",
+    "style_anime": "Anime",
+    
+    "age_title": "Choose Age",
+    "age_label": "Age",
+    "age_years": "Years",
+    
+    "hair_color_title": "Choose Hair Color",
+    "breast_size_title": "Choose Breast Size",
+    "butt_size_title": "Choose Butt Size",
+    
+    "name_title": "Character Name",
+    "name_placeholder": "Enter a name...",
+    "generate_name": "Generate Name",
+    
+    "personality_title": "Personality",
+    "relationship_title": "Relationship",
+    "occupation_title": "Occupation",
+    "kinks_title": "Preferences",
+    "custom_prompt_title": "Custom Details",
+    "custom_prompt_placeholder": "Add any custom details about your character...",
+    
+    "voice_title": "Voice",
+    "play_sample": "Play Sample",
+    "stop_sample": "Stop",
+    
+    "generate_image": "Generate Image",
+    "regenerate_image": "Regenerate",
+    "generating_image": "Generating your character...",
+    "select_image": "Select this image",
+    "image_selected": "Image Selected",
+    "no_image_generated": "No image generated yet",
+    "click_generate": "Click the button above to generate your character's image",
+    
+    "review_title": "Your Character",
+    "start_chatting": "Start Chatting",
+    "generating_character": "Creating your character...",
+    "please_wait": "This may take a moment",
+    
+    "next": "Next",
+    
+    "ethnicities": {
+      "caucasian": "Caucasian",
+      "asian": "Asian",
+      "black": "Black",
+      "latina": "Latina",
+      "arab": "Arab",
+      "indian": "Indian",
+      "japanese": "Japanese",
+      "korean": "Korean"
+    },
+    
+    "hair_styles": {
+      "straight": "Straight",
+      "bangs": "Bangs",
+      "curly": "Curly",
+      "bun": "Bun",
+      "short": "Short",
+      "ponytail": "Ponytail",
+      "braids": "Braids",
+      "wavy": "Wavy"
+    },
+    
+    "hair_colors": {
+      "brunette": "Brunette",
+      "blonde": "Blonde",
+      "black": "Black",
+      "redhead": "Redhead",
+      "pink": "Pink",
+      "blue": "Blue",
+      "white": "White",
+      "purple": "Purple"
+    },
+    
+    "body_types": {
+      "skinny": "Skinny",
+      "slim": "Slim",
+      "athletic": "Athletic",
+      "average": "Average",
+      "curvy": "Curvy",
+      "voluptuous": "Voluptuous"
+    },
+    
+    "breast_sizes": {
+      "flat": "Flat",
+      "small": "Small",
+      "medium": "Medium",
+      "large": "Large",
+      "xl": "Extra Large"
+    },
+    
+    "butt_sizes": {
+      "small": "Small",
+      "medium": "Medium",
+      "athletic": "Athletic",
+      "large": "Large",
+      "xl": "Extra Large"
+    },
+    
+    "personalities": {
+      "submissive": "Submissive",
+      "dominant": "Dominant",
+      "shy": "Shy",
+      "confident": "Confident",
+      "playful": "Playful",
+      "serious": "Serious",
+      "romantic": "Romantic",
+      "adventurous": "Adventurous",
+      "caring": "Caring",
+      "mysterious": "Mysterious"
+    },
+    
+    "relationships": {
+      "stranger": "Stranger",
+      "friend": "Friend",
+      "girlfriend": "Girlfriend",
+      "wife": "Wife",
+      "crush": "Crush",
+      "colleague": "Colleague",
+      "neighbor": "Neighbor",
+      "ex": "Ex",
+      "first_date": "First Date",
+      "roommate": "Roommate"
+    },
+    
+    "occupations": {
+      "student": "Student",
+      "teacher": "Teacher",
+      "nurse": "Nurse",
+      "model": "Model",
+      "artist": "Artist",
+      "athlete": "Athlete",
+      "businesswoman": "Businesswoman",
+      "influencer": "Influencer",
+      "scientist": "Scientist",
+      "musician": "Musician"
+    },
+    
+    "kinks": {
+      "vanilla": "Vanilla",
+      "daddy_dom": "Daddy Dom",
+      "roleplay": "Roleplay",
+      "bdsm": "BDSM",
+      "exhibitionism": "Exhibitionism",
+      "feet": "Feet",
+      "lingerie": "Lingerie",
+      "outdoor": "Outdoor",
+      "toys": "Toys"
+    }
   },
   "previous_page": "Previous",
   "next_page": "Next",

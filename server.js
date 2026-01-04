@@ -233,6 +233,31 @@ fastify.get('/signout-redirection', async (request, reply) => {
   });
 });
 
+// Cold onboarding - character creation for new users from ads/SNS
+fastify.get('/create-character', async (request, reply) => {
+  let { coldOnboardingTranslations, clerkTranslations, translations, lang, user } = request;
+  
+  // If user is already logged in and has completed onboarding, redirect to chat
+  if (user && !user.isTemporary && user.onboardingCompleted) {
+    return reply.redirect('/chat');
+  }
+  
+  return reply.renderWithGtm(`cold-onboarding.hbs`, {
+    title: coldOnboardingTranslations.meta?.title || 'Create Your AI Character | ChatLamix',
+    seo: [
+      { name: 'description', content: coldOnboardingTranslations.meta?.description || 'Create your perfect AI companion with custom style, personality, and voice.' },
+      { name: 'keywords', content: coldOnboardingTranslations.meta?.keywords || 'AI character, AI companion, custom AI, chatbot, AI girlfriend, AI boyfriend' },
+      { property: 'og:title', content: coldOnboardingTranslations.meta?.title || 'Create Your AI Character | ChatLamix' },
+      { property: 'og:description', content: coldOnboardingTranslations.meta?.description || 'Create your perfect AI companion with custom style, personality, and voice.' },
+      { property: 'og:image', content: '/img/cold-onboarding-share.png' },
+      { property: 'og:url', content: 'https://chatlamix/create-character' },
+    ],
+    coldOnboardingTranslations: coldOnboardingTranslations,
+    clerkTranslations: clerkTranslations,
+    mode: process.env.MODE || 'development'
+  });
+});
+
 // old login
 fastify.get('/login', async (request, reply) => {
   const db = fastify.mongo.db;
@@ -373,7 +398,9 @@ fastify.get('/chat/edit/:chatId', async (request, reply) => {
       chatId,
       modelId: request.query.modelId,
       isTemporaryChat,
-      
+      translations,
+      lang,
+      user
     });
   } catch (error) {
     console.log(error);

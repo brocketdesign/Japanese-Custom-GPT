@@ -33,6 +33,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     const speechToTextTranslationsCache = {}; // Add cache for speech-to-text translations
     const buyPointsTranslationsCache = {}; // Add cache for buy-points translations
     const chatModelTestTranslationsCache = {}; // Add cache for chat model test translations
+    const coldOnboardingTranslationsCache = {}; // Add cache for cold onboarding translations
     
     // Decorate Fastify with user, lang, and translations functions
     fastify.decorate('getUser', getUser);
@@ -53,6 +54,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorate('getSpeechToTextTranslations', getSpeechToTextTranslations); // Add speech-to-text translations decorator
     fastify.decorate('getBuyPointsTranslations', getBuyPointsTranslations); // Add buy-points translations decorator
     fastify.decorate('getChatModelTestTranslations', getChatModelTestTranslations); // Add chat model test translations decorator
+    fastify.decorate('getColdOnboardingTranslations', getColdOnboardingTranslations); // Add cold onboarding translations decorator
     
     // Attach `lang` and `user` dynamically
     Object.defineProperty(fastify, 'lang', {
@@ -85,6 +87,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorateRequest('speechToTextTranslations', null); // Add speech-to-text translations to request
     fastify.decorateRequest('buyPointsTranslations', null); // Add buy-points translations to request
     fastify.decorateRequest('chatModelTestTranslations', null); // Add chat model test translations to request
+    fastify.decorateRequest('coldOnboardingTranslations', null); // Add cold onboarding translations to request
 
     // Pre-handler to set user, lang, and translations
     fastify.addHook('preHandler', async (request, reply) => {
@@ -107,6 +110,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         request.speechToTextTranslations = getSpeechToTextTranslations(request.lang); // Load speech-to-text translations
         request.buyPointsTranslations = getBuyPointsTranslations(request.lang); // Load buy-points translations
         request.chatModelTestTranslations = getChatModelTestTranslations(request.lang); // Load chat model test translations
+        request.coldOnboardingTranslations = getColdOnboardingTranslations(request.lang); // Load cold onboarding translations
    
         // Make translations available in Handlebars templates
         reply.locals = {
@@ -127,6 +131,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             speechToTextTranslations: request.speechToTextTranslations, // Make speech-to-text translations available
             buyPointsTranslations: request.buyPointsTranslations, // Make buy-points translations available
             chatModelTestTranslations: request.chatModelTestTranslations, // Make chat model test translations available
+            coldOnboardingTranslations: request.coldOnboardingTranslations, // Make cold onboarding translations available
             user: request.user, // Make user available
             isUserAdmin: request.isUserAdmin, // Make admin status available
             mode: process.env.MODE,
@@ -642,5 +647,25 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             }
         }
         return chatModelTestTranslationsCache[currentLang];
+    }
+
+    /** Load ColdOnboardingTranslations for a specific language (cached for performance) */
+    function getColdOnboardingTranslations(currentLang) {
+        if (!currentLang) currentLang = 'en';
+        
+        if (!coldOnboardingTranslationsCache[currentLang]) {
+            const coldOnboardingTranslationFile = path.join(__dirname, '..', 'locales', `cold-onboarding-${currentLang}.json`);
+            if (fs.existsSync(coldOnboardingTranslationFile)) {
+                try {
+                    coldOnboardingTranslationsCache[currentLang] = JSON.parse(fs.readFileSync(coldOnboardingTranslationFile, 'utf-8'));
+                } catch (e) {
+                    fastify.log.error(`Error reading cold onboarding translations for ${currentLang}:`, e);
+                    coldOnboardingTranslationsCache[currentLang] = {};
+                }
+            } else {
+                coldOnboardingTranslationsCache[currentLang] = {}; // Fallback to empty object if translation file is missing
+            }
+        }
+        return coldOnboardingTranslationsCache[currentLang];
     }
 });

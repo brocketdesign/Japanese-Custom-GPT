@@ -1,0 +1,1474 @@
+/**
+ * Cold Onboarding Styles
+ * Theme matching ChatLamix Design Documentation
+ * - Violet/Purple gradient theme with glassmorphism effects
+ */
+
+:root {
+    /* Background colors */
+    --cold-bg: #1a1a1a;
+    --cold-bg-secondary: #2d2d2d;
+    --cold-surface: rgba(255, 255, 255, 0.05);
+    --cold-surface-hover: rgba(255, 255, 255, 0.1);
+    --cold-border: rgba(255, 255, 255, 0.1);
+    
+    /* Primary violet/purple colors matching design docs */
+    --cold-primary: #8240FF;
+    --cold-primary-light: #D2B8FF;
+    --cold-primary-dark: #6E20F4;
+    
+    /* Text colors */
+    --cold-text: #ffffff;
+    --cold-text-secondary: #aeb0b4;
+    --cold-text-muted: #8d8b8b;
+    
+    /* Functional colors */
+    --cold-success: #28a745;
+    --cold-error: #dc3545;
+    --cold-warning: #ffc107;
+    --cold-info: #007bff;
+    
+    /* Premium gradient from design docs */
+    --cold-gradient: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+    --cold-gradient-hover: linear-gradient(90.9deg, #E0CBFF 2.74%, #9E5CFF 102.92%);
+    
+    /* Glassmorphism */
+    --cold-glass-bg: rgba(255, 255, 255, 0.05);
+    --cold-glass-border: rgba(255, 255, 255, 0.1);
+    --cold-blur: 10px;
+    
+    /* Shadows */
+    --cold-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --cold-shadow-md: 0 4px 15px rgba(110, 32, 244, 0.15);
+    --cold-shadow-lg: 0 8px 32px rgba(110, 32, 244, 0.15), 0 1.5px 8px rgba(0,0,0,0.08);
+    --cold-shadow-premium: 0 15px 30px rgba(110, 32, 244, 0.2);
+    
+    /* Border radius from design docs */
+    --cold-radius-sm: 8px;
+    --cold-radius-md: 12px;
+    --cold-radius-lg: 15px;
+    --cold-radius-xl: 25px;
+    --cold-radius-full: 50%;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+video {
+    width: 100%;
+}
+
+.cold-onboarding-body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--cold-bg);
+    color: var(--cold-text);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Background with gradient overlay */
+.cold-onboarding-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(145deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+    z-index: -2;
+}
+
+/* Animated gradient orbs in background */
+.cold-onboarding-bg::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(130, 64, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(210, 184, 255, 0.1) 0%, transparent 40%);
+    z-index: -1;
+    animation: backgroundPulse 15s ease-in-out infinite;
+}
+
+@keyframes backgroundPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.1); }
+}
+
+/* Main Container */
+.cold-onboarding-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
+/* Header with glassmorphism */
+.cold-onboarding-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    position: sticky;
+    top: 0;
+    background: rgba(26, 26, 26, 0.8);
+    backdrop-filter: blur(var(--cold-blur));
+    -webkit-backdrop-filter: blur(var(--cold-blur));
+    z-index: 100;
+    border-bottom: 1px solid var(--cold-glass-border);
+    margin: 0 -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+#clerk-auth-container .cl-cardBox{
+    margin: auto;
+    width: 100%;
+    border: 1px solid var(--cold-glass-border);
+}
+
+.brand-logo img {
+    height: 32px;
+    filter: brightness(1);
+    transition: transform 0.3s ease;
+}
+
+.brand-logo:hover img {
+    transform: scale(1.05);
+}
+
+.header-actions .btn {
+    border-radius: var(--cold-radius-xl);
+    font-size: 0.875rem;
+    padding: 8px 20px;
+    border: 1px solid var(--cold-primary-light);
+    color: var(--cold-primary-light);
+    background: transparent;
+    transition: all 0.3s ease;
+}
+
+.header-actions .btn:hover {
+    background: var(--cold-gradient);
+    border-color: transparent;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--cold-shadow-md);
+}
+
+/* Progress Bar */
+.progress-container {
+    padding: 12px 0 20px;
+    position: sticky;
+    top: 65px;
+    background: rgba(26, 26, 26, 0.9);
+    backdrop-filter: blur(var(--cold-blur));
+    -webkit-backdrop-filter: blur(var(--cold-blur));
+    z-index: 99;
+    margin: 0 -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+.progress-bar-wrapper {
+    height: 6px;
+    background: var(--cold-glass-bg);
+    border-radius: var(--cold-radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--cold-glass-border);
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--cold-gradient);
+    border-radius: var(--cold-radius-sm);
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 10px rgba(130, 64, 255, 0.5);
+}
+
+.step-indicator {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 0.875rem;
+    color: var(--cold-text-muted);
+    font-weight: 500;
+}
+
+.step-indicator .current-step {
+    background: var(--cold-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+/* Steps Wrapper */
+.steps-wrapper {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.step-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.4s ease;
+    overflow-y: auto;
+    padding-bottom: 100px;
+}
+
+.step-slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    position: relative;
+}
+
+.step-slide.prev {
+    transform: translateX(-100%);
+}
+
+.step-content {
+    padding: 8px 0;
+}
+
+/* Step Titles */
+.step-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 12px;
+    background: var(--cold-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.step-subtitle {
+    font-size: 0.9375rem;
+    text-align: center;
+    color: var(--cold-text-secondary);
+    margin-bottom: 28px;
+    line-height: 1.5;
+}
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 16px;
+    color: var(--cold-text);
+}
+
+/* Selection Section */
+.selection-section {
+    margin-bottom: 16px;
+}
+
+/* Gender Toggle - Glassmorphism style */
+.gender-toggle-group {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.gender-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    background: var(--cold-glass-bg);
+    backdrop-filter: blur(var(--cold-blur));
+    -webkit-backdrop-filter: blur(var(--cold-blur));
+    border: 1px solid var(--cold-glass-border);
+    border-radius: var(--cold-radius-xl);
+    color: var(--cold-text-secondary);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gender-toggle:hover {
+    border-color: var(--cold-primary-light);
+    color: var(--cold-text);
+    transform: translateY(-2px);
+    box-shadow: var(--cold-shadow-sm);
+}
+
+.gender-toggle.active {
+    background: var(--cold-gradient);
+    border-color: transparent;
+    color: var(--cold-text);
+    box-shadow: var(--cold-shadow-md);
+}
+
+.gender-toggle i {
+    font-size: 1.125rem;
+}
+
+/* Style Cards (Step 1) - Premium card styling */
+.style-cards {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+}
+
+.style-card {
+    position: relative;
+    width: calc(50% - 8px);
+    max-width: 180px;
+    cursor: pointer;
+    border-radius: var(--cold-radius-lg);
+    overflow: hidden;
+    border: 2px solid var(--cold-glass-border);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    background: var(--cold-glass-bg);
+}
+
+.style-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: var(--cold-shadow-premium);
+    border-color: var(--cold-primary-light);
+}
+
+.style-card.selected {
+    border-color: var(--cold-primary);
+    box-shadow: var(--cold-shadow-lg);
+}
+
+.style-card-image {
+    position: relative;
+    aspect-ratio: 3/4;
+    overflow: hidden;
+}
+
+.style-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.style-card:hover .style-card-image img {
+    transform: scale(1.05);
+}
+
+.style-card-overlay {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    background: var(--cold-gradient);
+    border-radius: var(--cold-radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: var(--cold-shadow-sm);
+}
+
+.style-card.selected .style-card-overlay {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.style-card-overlay i {
+    color: white;
+    font-size: 0.875rem;
+}
+
+.style-card-label {
+    display: block;
+    text-align: center;
+    padding: 14px;
+    font-weight: 600;
+    color: var(--cold-text);
+    background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.style-card.selected .style-card-label {
+    background: linear-gradient(0deg, rgba(130, 64, 255, 0.9) 0%, rgba(130, 64, 255, 0.4) 60%, transparent 100%);
+}
+
+/* Ethnicity Grid (Step 2) - Glassmorphism cards */
+.ethnicity-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.ethnicity-card {
+    position: relative;
+    aspect-ratio: 3/4;
+    border-radius: var(--cold-radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid var(--cold-glass-border);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--cold-glass-bg);
+}
+
+.ethnicity-card:hover {
+    border-color: var(--cold-primary-light);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: var(--cold-shadow-md);
+}
+
+.ethnicity-card.selected {
+    border-color: var(--cold-primary);
+    box-shadow: var(--cold-shadow-lg);
+}
+
+.ethnicity-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.ethnicity-card:hover img {
+    transform: scale(1.05);
+}
+
+.ethnicity-card span {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 10px;
+    background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, transparent 100%);
+    color: var(--cold-text);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.ethnicity-card.selected span {
+    background: linear-gradient(0deg, rgba(130, 64, 255, 0.85) 0%, transparent 100%);
+}
+
+.check-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    background: var(--cold-gradient);
+    border-radius: var(--cold-radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: var(--cold-shadow-sm);
+}
+
+.ethnicity-card.selected .check-badge,
+.hair-style-card.selected .check-badge,
+.hair-color-card.selected .check-badge,
+.body-type-card.selected .check-badge,
+.breast-size-card.selected .check-badge,
+.butt-size-card.selected .check-badge,
+.voice-card.selected .check-badge {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.check-badge i {
+    color: white;
+    font-size: 0.75rem;
+}
+
+/* Age Selector - Glassmorphism */
+.age-selector {
+    background: var(--cold-glass-bg);
+    backdrop-filter: blur(var(--cold-blur));
+    -webkit-backdrop-filter: blur(var(--cold-blur));
+    border: 1px solid var(--cold-glass-border);
+    border-radius: var(--cold-radius-lg);
+    padding: 24px;
+}
+
+.age-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.age-label {
+    color: var(--cold-text-secondary);
+    font-size: 0.9375rem;
+}
+
+.age-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    background: var(--cold-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    padding: 6px 20px;
+    border-radius: var(--cold-radius-sm);
+    border: 2px solid var(--cold-primary);
+    box-shadow: var(--cold-shadow-sm);
+}
+
+.age-unit {
+    color: var(--cold-text-secondary);
+    font-size: 0.9375rem;
+}
+
+.age-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 8px;
+    background: var(--cold-glass-border);
+    border-radius: var(--cold-radius-sm);
+    outline: none;
+}
+
+.age-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 28px;
+    height: 28px;
+    background: var(--cold-gradient);
+    border-radius: var(--cold-radius-full);
+    cursor: pointer;
+    box-shadow: var(--cold-shadow-md);
+    transition: transform 0.2s ease;
+}
+
+.age-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+.age-slider::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+    background: var(--cold-gradient);
+    border-radius: var(--cold-radius-full);
+    cursor: pointer;
+    border: none;
+    box-shadow: var(--cold-shadow-md);
+}
+
+/* Hair Style Grid (Step 3) */
+.hair-style-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.hair-style-card {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: var(--cold-radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid var(--cold-glass-border);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--cold-glass-bg);
+}
+
+.hair-style-card:hover {
+    border-color: var(--cold-primary-light);
+    transform: translateY(-4px);
+    box-shadow: var(--cold-shadow-md);
+}
+
+.hair-style-card.selected {
+    border-color: var(--cold-primary);
+    box-shadow: var(--cold-shadow-lg);
+}
+
+.hair-style-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.hair-style-card:hover img {
+    transform: scale(1.05);
+}
+
+.hair-style-card span {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 10px;
+    background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, transparent 100%);
+    color: var(--cold-text);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Hair Color Strip */
+.hair-color-strip {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding: 8px 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.hair-color-strip::-webkit-scrollbar {
+    display: none;
+}
+
+.hair-color-card {
+    position: relative;
+    flex: 0 0 80px;
+    height: 100px;
+    border-radius: var(--cold-radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid var(--cold-glass-border);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--cold-glass-bg);
+}
+
+.hair-color-card:hover {
+    border-color: var(--cold-primary-light);
+    transform: translateY(-4px);
+    box-shadow: var(--cold-shadow-md);
+}
+
+.hair-color-card.selected {
+    border-color: var(--cold-primary);
+    box-shadow: var(--cold-shadow-lg);
+}
+
+.hair-color-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.hair-color-card span {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 6px;
+    background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+    color: var(--cold-text);
+    font-size: 0.625rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Body Type Grid (Step 4) */
+.body-type-grid {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding: 8px 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.body-type-grid::-webkit-scrollbar {
+    display: none;
+}
+
+.body-type-card {
+    position: relative;
+    flex: 0 0 100px;
+    height: 140px;
+    border-radius: var(--cold-radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid var(--cold-glass-border);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--cold-glass-bg);
+}
+
+.body-type-card:hover {
+    border-color: var(--cold-primary-light);
+    transform: translateY(-4px);
+    box-shadow: var(--cold-shadow-md);
+}
+
+.body-type-card.selected {
+    border-color: var(--cold-primary);
+    box-shadow: var(--cold-shadow-lg);
+}
+
+.body-type-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.body-type-card span {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 8px;
+    background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+    color: var(--cold-text);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Breast & Butt Size Grids */
+.breast-size-grid,
+.butt-size-grid {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding: 8px 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.breast-size-grid::-webkit-scrollbar,
+.butt-size-grid::-webkit-scrollbar {
+    display: none;
+}
+
+.breast-size-card,
+.butt-size-card {
+    position: relative;
+    flex: 0 0 90px;
+    height: 120px;
+    border-radius: var(--cold-radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid var(--cold-glass-border);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--cold-glass-bg);
+}
+
+.breast-size-card:hover,
+.butt-size-card:hover {
+    border-color: var(--cold-primary-light);
+    transform: translateY(-4px);
+    box-shadow: var(--cold-shadow-md);
+}
+
+.breast-size-card.selected,
+.butt-size-card.selected {
+    border-color: var(--cold-primary);
+    box-shadow: var(--cold-shadow-lg);
+}
+
+.breast-size-card img,
+.butt-size-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.breast-size-card span,
+.butt-size-card span {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 6px;
+    background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+    color: var(--cold-text);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Name Input (Step 5) - Glassmorphism */
+.name-input-group {
+    display: flex;
+    gap: 12px;
+    background: var(--cold-glass-bg);
+    backdrop-filter: blur(var(--cold-blur));
+    -webkit-backdrop-filter: blur(var(--cold-blur));
+    border: 1px solid var(--cold-glass-border);
+    border-radius: var(--cold-radius-md);
+    padding: 6px;
+    margin-bottom: 28px;
+}
+
+.name-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 14px 18px;
+    color: var(--cold-text);
+    font-size: 1rem;
+    outline: none;
+}
+
+.name-input::placeholder {
+    color: var(--cold-text-muted);
+}
+
+.name-input:focus {
+    color: var(--cold-text);
+}
+
+.generate-name-btn {
+    background: var(--cold-gradient);
+    border: none;
+    padding: 14px 18px;
+    border-radius: var(--cold-radius-sm);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.generate-name-btn:hover {
+    transform: scale(1.05);
+    box-shadow: var(--cold-shadow-md);
+}
+
+.generate-name-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Personality Grid - Glassmorphism cards */
+.personality-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.personality-option-card {
+    background: var(--cold-glass-bg);
+    backdrop-filter: blur(var(--cold-blur));
+    -webkit-backdrop-filter: blur(var(--cold-blur));
+    border: 1px solid var(--cold-glass-border);
+    border-radius: var(--cold-radius-md);
+    padding: 18px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.personality-option-card:hover {
+    background: var(--cold-surface-hover);
+    border-color: var(--cold-primary-light);
+    transform: translateY(-2px);
+    box-shadow: var(--cold-shadow-sm);
+}
+
+.personality-option-card .option-label {
+    display: block;
+    font-size: 0.625rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--cold-text-muted);
+    margin-bottom: 6px;
+}
+
+.personality-option-card .option-value {
+    display: block;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--cold-text);
+}
+
+.personality-option-card .edit-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: var(--cold-glass-border);
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--cold-radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--cold-text-secondary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.personality-option-card .edit-btn:hover {
+    background: var(--cold-gradient);
+    color: white;
+    box-shadow: var(--cold-shadow-sm);
+}
+
+/* Voice Grid (Step 6) - Glassmorphism cards */
+.voice-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.voice-card {
+    background: var(--cold-glass-bg);
+    backdrop-filter: blur(var(--cold-blur));
+    -webkit-backdrop-filter: blur(var(--cold-blur));
+    border: 1px solid var(--cold-glass-border);
+    border-radius: var(--cold-radius-md);
+    padding: 18px;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.voice-card:hover {
+    border-color: var(--cold-primary-light);
+    background: var(--cold-surface-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--cold-shadow-sm);
+}
+
+.voice-card.selected {
+    border-color: var(--cold-primary);
+    background: rgba(130, 64, 255, 0.1);
+    box-shadow: var(--cold-shadow-md);
+}
+
+.voice-card-content {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.voice-icon {
+    width: 52px;
+    height: 52px;
+    background: var(--cold-gradient);
+    border-radius: var(--cold-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--cold-shadow-sm);
+}
+
+.voice-icon i {
+    font-size: 1.25rem;
+    color: white;
+}
+
+.voice-info {
+    flex: 1;
+}
+
+.voice-name {
+    display: block;
+    font-weight: 600;
+    color: var(--cold-text);
+    margin-bottom: 4px;
+}
+
+.voice-description {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--cold-text-secondary);
+}
+
+.play-sample-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--cold-glass-bg);
+    border: 1px solid var(--cold-glass-border);
+    padding: 12px 18px;
+    border-radius: var(--cold-radius-sm);
+    color: var(--cold-text);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.play-sample-btn:hover {
+    background: var(--cold-gradient);
+    border-color: transparent;
+    box-shadow: var(--cold-shadow-sm);
+}
+
+.play-sample-btn.playing {
+    background: var(--cold-gradient);
+    border-color: transparent;
+    animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.voice-card .check-badge {
+    top: 18px;
+    right: 18px;
+}
+
+/* Registration Step (Step 7) */
+.registration-step {
+    text-align: center;
+}
+
+.benefits-list {
+    background: var(--cold-glass-bg);
+    backdrop-filter: blur(var(--cold-blur));
+    -webkit-backdrop-filter: blur(var(--cold-blur));
+    border: 1px solid var(--cold-glass-border);
+    border-radius: var(--cold-radius-lg);
+    padding: 24px;
+    margin-bottom: 28px;
+    text-align: left;
+}
+
+.benefits-list h4 {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--cold-text);
+    margin-bottom: 16px;
+}
+
+.benefits-list ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.benefits-list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    font-size: 0.9375rem;
+    color: var(--cold-text-secondary);
+}
+
+.benefits-list li i {
+    color: var(--cold-success);
+    font-size: 1rem;
+}
+
+/* Auth Container */
+.auth-container {
+    margin-bottom: 28px;
+}
+
+#clerk-auth-container {
+    min-height: 300px;
+}
+
+/* Clerk component styling overrides */
+#clerk-auth-container .cl-card {
+    background: var(--cold-glass-bg) !important;
+    backdrop-filter: blur(var(--cold-blur)) !important;
+    -webkit-backdrop-filter: blur(var(--cold-blur)) !important;
+    border: 1px solid var(--cold-glass-border) !important;
+    border-radius: var(--cold-radius-lg) !important;
+}
+
+#clerk-auth-container .cl-formButtonPrimary {
+    background: var(--cold-gradient) !important;
+    border: none !important;
+}
+
+.fallback-auth {
+    text-align: center;
+}
+
+.social-buttons {
+    margin-bottom: 24px;
+}
+
+.social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 24px;
+    background: white;
+    border: none;
+    border-radius: var(--cold-radius-md);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.social-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--cold-shadow-md);
+}
+
+.social-btn img {
+    width: 20px;
+    height: 20px;
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    margin: 24px 0;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--cold-glass-border);
+}
+
+.divider span {
+    padding: 0 16px;
+    color: var(--cold-text-muted);
+    font-size: 0.8125rem;
+}
+
+.email-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.email-form .form-control {
+    background: var(--cold-glass-bg);
+    backdrop-filter: blur(var(--cold-blur));
+    -webkit-backdrop-filter: blur(var(--cold-blur));
+    border: 1px solid var(--cold-glass-border);
+    border-radius: var(--cold-radius-md);
+    padding: 16px 18px;
+    color: var(--cold-text);
+    font-size: 0.9375rem;
+}
+
+.email-form .form-control:focus {
+    border-color: var(--cold-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(130, 64, 255, 0.2);
+}
+
+.email-form .form-control::placeholder {
+    color: var(--cold-text-muted);
+}
+
+.terms-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    text-align: left;
+    margin: 10px 0;
+}
+
+.terms-checkbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--cold-primary);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.terms-checkbox label {
+    font-size: 0.8125rem;
+    color: var(--cold-text-secondary);
+    line-height: 1.5;
+}
+
+.btn-create {
+    background: var(--cold-gradient);
+    border: none;
+    padding: 16px 28px;
+    border-radius: var(--cold-radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-create:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--cold-shadow-premium);
+}
+
+.login-link {
+    font-size: 0.9375rem;
+    color: var(--cold-text-secondary);
+}
+
+.login-link a {
+    background: var(--cold-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}
+
+/* Footer Navigation - Glassmorphism */
+.cold-onboarding-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(26, 26, 26, 0.9);
+    backdrop-filter: blur(var(--cold-blur));
+    -webkit-backdrop-filter: blur(var(--cold-blur));
+    border-top: 1px solid var(--cold-glass-border);
+    padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+}
+
+.cold-onboarding-footer .btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    border-radius: var(--cold-radius-xl);
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-back {
+    background: transparent;
+    border: 1px solid var(--cold-glass-border);
+    color: var(--cold-text);
+}
+
+.btn-back:hover {
+    border-color: var(--cold-text);
+    background: var(--cold-glass-bg);
+    transform: translateX(-4px);
+}
+
+.btn-next {
+    background: var(--cold-gradient);
+    border: none;
+    color: white;
+    flex: 1;
+    max-width: 200px;
+    justify-content: center;
+    box-shadow: var(--cold-shadow-md);
+}
+
+.btn-next:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--cold-shadow-premium);
+}
+
+/* Option Picker Modal - Glassmorphism */
+.option-picker-modal .modal-content {
+    background: rgba(26, 26, 26, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--cold-glass-border);
+    border-radius: var(--cold-radius-xl);
+}
+
+.option-picker-modal .modal-header {
+    border-bottom: 1px solid var(--cold-glass-border);
+    padding: 18px 24px;
+}
+
+.option-picker-modal .modal-title {
+    color: var(--cold-text);
+    font-weight: 600;
+    font-size: 1.125rem;
+}
+
+.option-picker-modal .btn-close {
+    filter: invert(1);
+}
+
+.option-picker-modal .modal-body {
+    padding: 16px;
+}
+
+.option-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.option-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 18px;
+    background: var(--cold-glass-bg);
+    border: 1px solid var(--cold-glass-border);
+    border-radius: var(--cold-radius-md);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.option-item:hover {
+    background: var(--cold-surface-hover);
+    border-color: var(--cold-primary-light);
+    transform: translateX(4px);
+}
+
+.option-item.selected {
+    background: rgba(130, 64, 255, 0.15);
+    border-color: var(--cold-primary);
+}
+
+.option-item span {
+    color: var(--cold-text);
+    font-size: 0.9375rem;
+}
+
+.option-item i {
+    color: var(--cold-primary);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.option-item.selected i {
+    opacity: 1;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(26, 26, 26, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-content {
+    text-align: center;
+}
+
+.loading-content .spinner-border {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 20px;
+    border-width: 3px;
+    color: var(--cold-primary-light) !important;
+}
+
+.loading-content p {
+    background: var(--cold-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.loading-content small {
+    color: var(--cold-text-secondary);
+    font-size: 0.9375rem;
+}
+
+/* Error Toast */
+.error-toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--cold-error);
+    color: white;
+    padding: 14px 24px;
+    border-radius: var(--cold-radius-md);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.9375rem;
+    z-index: 10000;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 20px rgba(220, 53, 69, 0.4);
+}
+
+.error-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Responsive */
+@media (min-width: 768px) {
+    .cold-onboarding-container {
+        max-width: 560px;
+    }
+    
+    .ethnicity-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .hair-style-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 375px) {
+    .step-title {
+        font-size: 1.25rem;
+    }
+    
+    .style-card {
+        max-width: 140px;
+    }
+    
+    .gender-toggle {
+        padding: 8px 16px;
+        font-size: 0.75rem;
+    }
+}
+
+/* Placeholder images for development */
+.ethnicity-card img,
+.hair-style-card img,
+.hair-color-card img,
+.body-type-card img,
+.breast-size-card img,
+.butt-size-card img,
+.style-card-image img {
+    background: linear-gradient(135deg, var(--cold-surface) 0%, var(--cold-bg) 100%);
+    object-fit: cover;
+}

@@ -39,7 +39,7 @@ $(document).ready(function() {
     container.empty();
 
     packages.forEach((pkg, index) => {
-      console.log('Rendering package:', pkg);
+      //console.log('Rendering package:', pkg);
       const isPopular = index === 1;
       const pointsPerUnit = (parseFloat(pkg.points) / parseFloat(pkg.price)).toFixed(1);
       const popularBadge = isPopular 

@@ -1,691 +1,332 @@
 <script>
-    chatCreationId = '{{chatId}}';
+    window.chatCreationId = '{{chatId}}';
     window.isTemporaryChat = {{isTemporaryChat}};
+    window.characterCreationTranslations = {{{json translations.newCharacter}}};
+    window.translations = {{{json translations}}};
+    window.lang = '{{lang}}';
+    window.user = {{{json user}}};
 </script>
 
-<!-- 1. キャラクター画像 -->
-<div id="step1" class="step">
-    <!-- Character Creation Form with Modal Sidebar Layout -->
-    <div id="characterCreationForm" class="character-creation-sidebar-layout" style="overflow-y: hidden;">
-        
-        <!-- Modal Sidebar (Left Column) -->
-        <div class="modal-sidebar-fixed">
-            <!-- Scrollable Content -->
-            <div class="modal-sidebar-content">
-                <!-- Image Style Selection -->
-                <div class="section-container">
-                    <h4 class="section-header">{{translations.newCharacter.imageStyleSelectionTitle}}</h4>
-                    <div class="section-content">
-                        <p class="text-muted mb-3">
-                            {{translations.newCharacter.imageStyleSelectionDescription}}
-                        </p>
-                        <label class="form-label fw-semibold">{{translations.newCharacter.image_model}}</label>
-                        
-                        <!-- Model Filter Tabs -->
-                        <div class="model-tabs mb-2">
-                            <ul class="nav nav-tabs nav-tabs-sm" id="modelSourceTabs" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active small" id="system-models-tab" data-bs-toggle="tab" data-bs-target="#systemModelsPane" type="button" role="tab">
-                                        {{translations.newCharacter.systemModels}}
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link small" id="custom-models-tab" data-bs-toggle="tab" data-bs-target="#customModelsPane" type="button" role="tab">
-                                        {{translations.newCharacter.myCustomModels}}
-                                        <span class="badge bg-secondary ms-1" id="customModelsCount">0</span>
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
-                        
-                        <!-- Model Tab Content -->
-                        <div class="tab-content" id="modelSourceTabContent">
-                            <!-- System Models Pane -->
-                            <div class="tab-pane fade show active" id="systemModelsPane" role="tabpanel">
-                                <div id="imageStyleSelectionCharacterCreation" class="d-flex flex-row flex-nowrap overflow-auto mb-3"></div>
-                            </div>
-                            
-                            <!-- Custom Models Pane -->
-                            <div class="tab-pane fade" id="customModelsPane" role="tabpanel">
-                                <!-- Premium feature notice for non-subscribers -->
-                                <div id="customModelsPremiumNotice" class="alert alert-light border mb-3" style="display: none;">
-                                    <div class="d-flex align-items-start">
-                                        <i class="bi bi-gem text-primary fs-4 me-3"></i>
-                                        <div>
-                                            <strong>{{translations.newCharacter.premiumFeature}}</strong>
-                                            <p class="mb-2 small text-muted">{{translations.newCharacter.customModelsPremiumDescription}}</p>
-                                            <a href="#" onclick="loadPlanPage()" class="btn btn-sm btn-primary">
-                                                <i class="bi bi-star me-1"></i>{{translations.upgrade_now}}
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="userCustomModels" class="d-flex flex-row flex-nowrap overflow-auto mb-3">
-                                    <!-- Add model button -->
-                                    <div class="add-model-card position-relative me-2" id="addCustomModelBtn" style="cursor: pointer;">
-                                        <div class="add-model-placeholder d-flex flex-column align-items-center justify-content-center rounded" 
-                                             style="width: 80px; height: 80px; border: 2px dashed #6c757d; background: #f8f9fa;">
-                                            <i class="bi bi-plus-lg fs-3 text-muted"></i>
-                                            <small class="text-muted text-center" style="font-size: 10px;">{{translations.newCharacter.addCustomModel}}</small>
-                                        </div>
-                                    </div>
-                                    <!-- User models will be dynamically inserted here -->
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <input type="hidden" id="modelId" name="modelId" required>
-                        <input type="hidden" id="imageStyle" name="imageStyle" required>
-                        <input type="hidden" id="imageModel" name="imageModel" required>
-                        <input type="hidden" id="imageVersion" name="imageVersion" required>
-                        <input type="hidden" id="isUserModel" name="isUserModel" value="false">
-                    </div>
-                </div>
+<!-- Character Creation CSS -->
+<link rel="stylesheet" href="/css/character-creation.css">
 
-                <div class="section-container character-generator">
-                    <h4 class="section-header">{{translations.newCharacter.characterPhysicalDescriptionTitle}}</h4>
-                    <div class="section-content">
-                        <p class="text-muted mb-4">
-                            {{translations.newCharacter.characterPhysicalDescriptionDescription}}
-                        </p>
-
-                        <!-- Gender -->
-                        <div class="mb-3">
-                            <label for="gender" class="form-label fw-semibold"><i class="bi bi-asterisk text-danger me-2"></i>{{translations.newCharacter.genderLabel}}:</label>
-                            <select class="form-select" id="gender" name="gender">
-                                <option value="female" selected>{{translations.newCharacter.female}}</option>
-                                <option value="male">{{translations.newCharacter.male}}</option>
-                            </select>
-                        </div>
-                        
-                        <!-- NSFW selector -->
-                        <div class="mb-3">
-                            <div class="nsfw-toggle-container" id="nsfwToggleContainer">
-                                <div class="nsfw-label-container">
-                                    <label class="nsfw-main-label" for="basic_nsfw">
-                                        <i class="bi bi-exclamation-triangle nsfw-warning-icon"></i>
-                                        {{translations.newCharacter.contentRating}}
-                                    </label>
-                                    <div class="nsfw-status-indicator disabled" id="nsfwStatusIndicator">
-                                        {{translations.newCharacter.sfw}}
-                                    </div>
-                                </div>
-                                
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <div class="nsfw-description">
-                                        {{translations.newCharacter.nsfwDescription}}
-                                    </div>
-                                    <div class="nsfw-switch">
-                                        <input type="checkbox" id="basic_nsfw" name="basic_nsfw" disabled>
-                                        <span class="nsfw-switch-slider"></span>
-                                    </div>
-                                </div>
-                                
-                                <!-- Premium upgrade prompt for non-subscribers -->
-                                <div id="nsfwPremiumPrompt" class="nsfw-premium-prompt" style="display: none;">
-                                    <i class="bi bi-star"></i>{{translations.newCharacter.nsfwPremiumRequired}}
-                                    <a href="#" onclick="loadPlanPage()" class="alert-link">{{translations.upgrade_now}}</a>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Character Prompt Input -->
-                        <div class="mb-3">
-                            <label for="characterPrompt" class="form-label fw-semibold"><i class="bi bi-asterisk text-danger me-2"></i>{{translations.newCharacter.character_prompt}}</label>
-                            <!-- List of tags -->
-                            <div class="mb-2">
-                                <div class="scroll-container">
-                                    {{#each tags}}
-                                        <span type="button" class="badge bg-light text-secondary me-1 add-tag fw-light border">{{this}}</span>
-                                    {{/each}}
-                                </div>
-                            </div>
-                            <textarea
-                                class="form-control"
-                                id="characterPrompt"
-                                name="characterPrompt"
-                                rows="4"
-                                maxlength="2000"
-                                placeholder="{{translations.newCharacter.character_appearance_description}}"
-                            ></textarea>
-                        </div>
-
-                        <div class="mb-3 d-none">
-                            <textarea
-                                class="form-control"
-                                id="enhancedPrompt"
-                                name="enhancedPrompt"
-                                rows="3"
-                                readonly
-                            ></textarea>
-                        </div>
-
-                        <!-- Field to upload an image with an area -->
-                        <div class="mb-3">
-                            <label for="imageUpload" class="form-label fw-semibold">{{translations.imageForm.uploadAreaLabel}}</label>
-                            <div class="upload-area" id="uploadArea">
-                                <input type="file" class="form-control" id="imageUpload" name="imageUpload" accept="image/*" onchange="previewImage(event)" disabled>
-                            </div>
-                            <img id="imagePreview" src="#" alt="Image Preview" style="display: none; max-width: 100%; margin-top: 10px;">
-                            
-                            <!-- Merge Face Toggle -->
-                            <div class="mt-3" id="mergeFaceContainer" style="display: none;">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="enableMergeFace" name="enableMergeFace" disabled>
-                                    <label class="form-check-label fw-semibold" for="enableMergeFace">
-                                        <i class="bi bi-person-check me-2"></i>{{translations.newCharacter.enableMergeFace}}
-                                    </label>
-                                </div>
-                                <small class="text-muted">{{translations.newCharacter.mergeFaceDescription}}</small>
-                            </div>
-
-                            <a href="#" onclick="loadPlanPage()" class="is-premium card p-2 custom-gradient-bg mt-3 rounded">{{translations.unlock_more_customization_fields}}</a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="section-container character-personnality-">
-                    <!-- 3. Character Personality -->
-                    <h4 class="section-header">{{translations.newCharacter.characterPersonalityTitle}}</h4>
-                    <div class="section-content">
-                        <p class="text-muted">
-                            {{translations.newCharacter.characterPersonalityDescription}}
-                        </p>
-                        <p class="text-muted fw-bold mb-4">
-                            <i class="bi bi-magic text-danger me-2"></i>{{translations.newCharacter.ai_generate_if_empty}}
-                        </p>
-                        <!-- Name -->
-                        <div class="mb-3">
-                            <label for="chatName" class="form-label fw-semibold">{{translations.newCharacter.nameLabel}}:</label>
-                            <input type="text" class="form-control" id="chatName" name="chatName" placeholder="{{translations.newCharacter.namePlaceholder}}">
-                        </div>
-                        
-                         {{! User custom chat purpose (visible) }}
-                        <div class="mb-3">
-                            <label for="userCustomChatPurpose">{{translations.newCharacter.chatPurposeLabel}}:</label>
-                            <textarea
-                                class="form-control"
-                                id="userCustomChatPurpose"
-                                name="userCustomChatPurpose"
-                                rows="3"
-                                maxlength="1000"
-                                placeholder="{{translations.newCharacter.chatPurposePlaceholder}}"
-                            ></textarea>
-                        </div>
-                        {{! Hide the original textarea but keep it for form submission }}
-                        <textarea id="chatPurpose" name="chatPurpose" style="display: none;"></textarea>
-                        
-                        {{! Keyword Cloud Sections }}
-                        <div class="keyword-cloud-container">
-                            <div class="keyword-section mb-4">
-                                <h6 class="keyword-section-title mb-3">
-                                    <i class="bi bi-person-heart me-2"></i>
-                                    <span data-translate="newCharacter.keywordSections.personality"></span>
-                                </h6>
-                                <div class="keyword-tags" data-section="personality">
-                                    {{! Keywords will be populated by JavaScript }}
-                                </div>
-                            </div>
-                            
-                            <div class="keyword-section mb-4">
-                                <h6 class="keyword-section-title mb-3">
-                                    <i class="bi bi-briefcase me-2"></i>
-                                    <span data-translate="newCharacter.keywordSections.occupation"></span>
-                                </h6>
-                                <div class="keyword-tags" data-section="occupation">
-                                    {{! Keywords will be populated by JavaScript }}
-                                </div>
-                            </div>
-                            
-                            <div class="keyword-section mb-4">
-                                <h6 class="keyword-section-title mb-3">
-                                    <i class="bi bi-palette me-2"></i>
-                                    <span data-translate="newCharacter.keywordSections.hobbies"></span>
-                                </h6>
-                                <div class="keyword-tags" data-section="hobbies">
-                                    {{! Keywords will be populated by JavaScript }}
-                                </div>
-                            </div>
-                            
-                            <div class="keyword-section mb-4">
-                                <h6 class="keyword-section-title mb-3">
-                                    <i class="bi bi-stars me-2"></i>
-                                    <span data-translate="newCharacter.keywordSections.style"></span>
-                                </h6>
-                                <div class="keyword-tags" data-section="style">
-                                    {{! Keywords will be populated by JavaScript }}
-                                </div>
-                            </div>
-                            
-                            <div class="keyword-section mb-4">
-                                <h6 class="keyword-section-title mb-3">
-                                    <i class="bi bi-gem me-2"></i>
-                                    <span data-translate="newCharacter.keywordSections.traits"></span>
-                                </h6>
-                                <div class="keyword-tags" data-section="traits">
-                                    {{! Keywords will be populated by JavaScript }}
-                                </div>
-                            </div>
-                            
-                            {{! Selected keywords display }}
-                            <div class="selected-keywords-container mt-4 d-none">
-                                <h6 class="mb-2"><i class="bi bi-check-circle me-2"></i>Selected Keywords:</h6>
-                                <div id="selectedKeywords" class="selected-keywords-display">
-                                    <span class="text-muted">Click keywords above to add them...</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Button to navigate to the generated image -->
-                <div class="text-center my-4 d-lg-none">
-                    <span 
-                    type="button" 
-                    id="navigateToImageButton" 
-                    class="badge bg-transparent text-secondary shadow-sm border-light align-items-center justify-content-center mx-auto"
-                    style="display: none;cursor: pointer;">
-                        <i class="bi bi-arrow-right me-2"></i>{{translations.newCharacter.navigateToImageButton}}
-                    </span>
-                </div>
-            </div>
-            <!-- Sticky Generate Button -->
-            <div class="modal-sidebar-footer">
-                <button type="button" id="generateButton" class="btn custom-gradient-bg btn-lg text-white d-flex align-items-center justify-content-center w-100">
-                    <i class="bi bi-magic me-2"></i>{{translations.newCharacter.generate_with_AI}}
-                </button>
-            </div>
-        </div>
-
-        <!-- Modal Main Content Area (Right Column) -->
-        <div class="modal-main-content pb-0" id="modalMainContent">
-            <!-- Mobile Navigation Header -->
-            <div class="modal-main-content-header d-flex justify-content-start mt-2 d-lg-none">
-                <span type="button" class="btn-back badge text-secondary shadow-sm border ms-4 me-2" id="backToSidebar">
-                    <i class="bi bi-arrow-left"></i>
-                </span>
-                <label class="mb-0 fw-semibold">{{translations.newCharacter.generatedImageLabel}}</label>
-            </div>
-            
-            <!-- Scrollable Content -->
-            <div class="modal-main-content-scrollable">
-                <!-- 3. Generated Image Display -->
-                <div id="imageContainer" class="mb-4 w-100 text-center position-relative">
-                    <!-- Spinner overlay -->
-                    <div id="imageGenerationSpinner" class="position-absolute top-50 start-50 translate-middle" style="display: none; z-index: 10;">
-                        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                    <img
-                        id="generatedImage"
-                        src="/img/default-character.png"
-                        alt="{{translations.newCharacter.generatedImageAlt}}"
-                        class="img-fluid"
-                        style="width: 100%;"
-                    >
-                    <p id="imageGenerationDescription" class="text-muted mt-1 mb-0" style="display:none;">{{translations.newCharacter.start_chat_and_image_generation_description}}</p>
-                </div>
-
-                <div id="imageUploaderContainer" class="w-100" style="cursor: pointer;">
-                    <!-- You can add an image uploader here if needed -->
-                </div>
-                
-                <!-- Regenerate Images Button -->
-                <div class="regenerateImages w-100 text-center my-3" style="display:none;">
-                    <span 
-                    type="button" 
-                    id="regenerateImagesButton" 
-                    class="badge bg-transparent shadow-sm text-secondary border-light align-items-center justify-content-center mx-auto"
-                    style="cursor: pointer;">
-                        <i class="bi bi-arrow-clockwise me-2"></i>{{translations.newCharacter.regenerate_images}}
-                    </span>
-                </div>
-            </div>
-            
-            <!-- Fixed Chat Redirection Footer -->
-            <div class="modal-main-content-footer" style="min-height: 78.5px;">
-                <div class="chatRedirection w-100 text-center" style="display:none;">
-                    <button type="button" id="redirectToChat" class="btn custom-gradient-bg btn-lg fw-bold">{{translations.newCharacter.start_chat}}</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script src="/js/civitai-model-search.js"></script>
-
-<style>
-.keyword-cloud-container {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-.keyword-section-title {
-    color: #495057;
-    font-weight: 600;
-    border-bottom: 2px solid #e9ecef;
-    padding-bottom: 8px;
-}
-
-.keyword-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 16px;
-}
-
-.keyword-tag {
-    display: inline-flex;
-    align-items: center;
-    padding: 6px 12px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border: 2px solid #dee2e6;
-    border-radius: 20px;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #495057;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    user-select: none;
-    position: relative;
-    overflow: hidden;
-}
-
-.keyword-tag:hover {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-    border-color: #0056b3;
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-}
-
-.keyword-tag.selected {
-    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
-    border-color: #1e7e34;
-    color: white;
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-}
-
-.keyword-tag.selected::after {
-    content: '✓';
-    position: absolute;
-    right: 4px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-weight: bold;
-    font-size: 0.75rem;
-}
-
-.selected-keywords-display {
-    min-height: 50px;
-    padding: 12px;
-    background: #f8f9fa;
-    border: 2px dashed #dee2e6;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    line-height: 1.5;
-}
-
-.selected-keywords-display .selected-keyword {
-    display: inline-block;
-    margin: 2px 4px;
-    padding: 4px 8px;
-    background: #007bff;
-    color: white;
-    border-radius: 12px;
-    font-size: 0.75rem;
-}
-
-.keyword-section {
-    border-bottom: 1px solid #f0f0f0;
-    padding-bottom: 20px;
-}
-
-.keyword-section:last-child {
-    border-bottom: none;
-}
-
-@media (max-width: 768px) {
-    .keyword-tag {
-        font-size: 0.8rem;
-        padding: 5px 10px;
-    }
+<!-- Character Creation Full Page -->
+<div class="character-creation-wrapper">
+    <!-- Background with gradient -->
+    <div class="character-creation-bg"></div>
     
-    .keyword-section-title {
-        font-size: 0.95rem;
-    }
-}
-</style>
-
-<style>
-/* Ensure the generate button is always fully visible (including on devices with safe areas) */
-.modal-sidebar-footer {
-    position: sticky;
-    bottom: env(safe-area-inset-bottom, 12px);
-    padding: 12px 12px 12px 12px;
-    z-index: 1070;
-    background: transparent;
-}
-
-.modal-sidebar-footer .btn {
-    width: 100%;
-    margin: 0;
-    /* add extra bottom padding to account for safe area on modern phones */
-    padding-bottom: calc(12px + env(safe-area-inset-bottom, 12px));
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-}
-
-/* Make sure main content has enough bottom padding so content isn't hidden behind fixed/sticky footer */
-@media (max-width: 991px) {
-    .modal-main-content, .modal-main-content-scrollable {
-        padding-bottom: calc(78.5px + env(safe-area-inset-bottom, 12px));
-    }
-}
-
-/* Civitai Search Modal Styles */
-.civitai-search-modal .modal-dialog {
-    max-width: 600px;
-    height: 85vh;
-    max-height: 85vh;
-}
-
-.civitai-search-modal .modal-content {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-.civitai-search-modal .modal-header {
-    flex-shrink: 0;
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.civitai-search-modal .modal-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1rem;
-    padding-bottom: 1.5rem;
-}
-
-/* Search input group styling */
-.civitai-search-modal .input-group {
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-.civitai-search-modal .input-group .form-control {
-    border: 1px solid #dee2e6;
-    border-right: none;
-    border-radius: 8px 0 0 8px;
-    padding: 0.625rem 1rem;
-    font-size: 0.95rem;
-}
-
-.civitai-search-modal .input-group .form-control:focus {
-    border-color: #86b7fe;
-    box-shadow: none;
-}
-
-.civitai-search-modal .input-group .btn {
-    border: 1px solid #0d6efd;
-    border-radius: 0 8px 8px 0;
-    padding: 0.625rem 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.civitai-search-modal .input-group .btn i {
-    font-size: 1rem;
-}
-
-.civitai-model-card {
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 12px;
-    margin-bottom: 12px;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
-
-.civitai-model-card:hover {
-    border-color: #007bff;
-    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
-}
-
-.civitai-model-card.selected {
-    border-color: #28a745;
-    background-color: rgba(40, 167, 69, 0.05);
-}
-
-.civitai-model-image {
-    width: 80px;
-    height: 80px;
-    object-fit: cover;
-    border-radius: 6px;
-}
-
-.civitai-model-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.civitai-model-name {
-    font-weight: 600;
-    font-size: 0.95rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.civitai-model-stats {
-    font-size: 0.8rem;
-    color: #6c757d;
-}
-
-.civitai-model-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-top: 6px;
-}
-
-.civitai-model-tags .badge {
-    font-size: 0.7rem;
-    font-weight: 400;
-}
-
-.version-select-dropdown {
-    font-size: 0.85rem;
-}
-
-.model-tabs .nav-tabs .nav-link {
-    font-size: 0.85rem;
-    padding: 0.4rem 0.8rem;
-}
-
-.user-model-card {
-    position: relative;
-}
-
-.user-model-card .remove-btn {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #dc3545;
-    color: white;
-    border: none;
-    font-size: 10px;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 10;
-}
-
-.user-model-card:hover .remove-btn {
-    display: flex;
-}
-
-.preferred-indicator {
-    position: absolute;
-    bottom: 2px;
-    left: 2px;
-    font-size: 12px;
-    color: #ffc107;
-}
-</style>
-
-<!-- Image Model Search Modal -->
-<div class="modal fade civitai-search-modal" id="civitaiSearchModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header flex-row-reverse">
-                <h5 class="modal-title ms-auto">
-                    <i class="bi bi-search me-2"></i>{{translations.newCharacter.searchImageModels}}
-                </h5>
-                <button type="button" class="btn-close me-0" id="closeImageModelSearchModal" aria-label="Close"></button>
+    <!-- Main Container -->
+    <div class="character-creation-container">
+        
+        <!-- Progress Bar -->
+        <div class="progress-container">
+            <div class="progress-bar-wrapper">
+                <div class="progress-bar" id="progressBar" style="width: 12.5%"></div>
             </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <div class="input-group">
-                        <input type="text" 
-                            class="form-control" 
-                            id="civitaiModalSearch" 
-                            placeholder="{{translations.newCharacter.searchImageModelsPlaceholder}}"
-                            autocomplete="off">
-                        <button class="btn btn-primary" type="button" id="civitaiModalSearchBtn">
-                            <i class="bi bi-search"></i>
+            <div class="step-indicator" id="stepIndicator">
+                <span class="current-step">1</span>/<span class="total-steps">8</span>
+            </div>
+        </div>
+        
+        <!-- Steps Container -->
+        <div class="steps-wrapper" id="stepsWrapper">
+            
+            <!-- Step 1: Style Selection (Realistic/Anime) - Female Only -->
+            <div class="step-slide active" data-step="1" id="step1">
+                <div class="step-content">
+                    <h1 class="step-title">{{translations.newCharacter.step1_title}}</h1>
+                    <p class="step-subtitle">{{translations.newCharacter.step1_subtitle}}</p>
+                    
+                    <!-- Style Selection -->
+                    <div class="selection-section">
+                        <div class="style-cards">
+                            <div class="style-card selected" data-style="realistic">
+                                <div class="style-card-image">
+                                    <video src="/img/cold-onboarding/style-realistic.mp4" alt="Realistic" autoplay loop muted playsinline></video>
+                                    <div class="style-card-overlay">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                    </div>
+                                </div>
+                                <span class="style-card-label">{{translations.newCharacter.style_realistic}}</span>
+                            </div>
+                            <div class="style-card" data-style="anime">
+                                <div class="style-card-image">
+                                    <video src="/img/cold-onboarding/style-anime.mp4" alt="Anime" autoplay loop muted playsinline></video>
+                                    <div class="style-card-overlay">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                    </div>
+                                </div>
+                                <span class="style-card-label">{{translations.newCharacter.style_anime}}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 2: Ethnicity & Age -->
+            <div class="step-slide" data-step="2" id="step2">
+                <div class="step-content">
+                    <h1 class="step-title">{{translations.newCharacter.step2_title}}</h1>
+                    <p class="step-subtitle">{{translations.newCharacter.step2_subtitle}}</p>
+                    
+                    <!-- Ethnicity Grid -->
+                    <div class="selection-section">
+                        <div class="ethnicity-grid" id="ethnicityGrid">
+                            <!-- Populated by JS based on style -->
+                        </div>
+                    </div>
+                    
+                    <!-- Age Slider -->
+                    <div class="selection-section mt-4">
+                        <h3 class="section-title">{{translations.newCharacter.age_title}}</h3>
+                        <div class="age-selector">
+                            <div class="age-display">
+                                <span class="age-label">{{translations.newCharacter.age_label}}</span>
+                                <span class="age-value" id="ageValue">21</span>
+                                <span class="age-unit">{{translations.newCharacter.age_years}}</span>
+                            </div>
+                            <input type="range" class="age-slider" id="ageSlider" min="18" max="50" value="21">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 3: Hair Style & Color -->
+            <div class="step-slide" data-step="3" id="step3">
+                <div class="step-content">
+                    <h1 class="step-title">{{translations.newCharacter.step3_title}}</h1>
+                    <p class="step-subtitle">{{translations.newCharacter.step3_subtitle}}</p>
+                    
+                    <!-- Hair Style Grid -->
+                    <div class="selection-section">
+                        <div class="hair-style-grid" id="hairStyleGrid">
+                            <!-- Populated by JS based on style -->
+                        </div>
+                    </div>
+                    
+                    <!-- Hair Color Selection -->
+                    <div class="selection-section mt-4">
+                        <h3 class="section-title">{{translations.newCharacter.hair_color_title}}</h3>
+                        <div class="hair-color-strip" id="hairColorStrip">
+                            <!-- Populated by JS based on style -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 4: Body Type & Features -->
+            <div class="step-slide" data-step="4" id="step4">
+                <div class="step-content">
+                    <h1 class="step-title">{{translations.newCharacter.step4_title}}</h1>
+                    <p class="step-subtitle">{{translations.newCharacter.step4_subtitle}}</p>
+                    
+                    <!-- Body Type -->
+                    <div class="selection-section">
+                        <div class="body-type-grid" id="bodyTypeGrid">
+                            <!-- Populated by JS based on style -->
+                        </div>
+                    </div>
+                    
+                    <!-- Breast Size -->
+                    <div class="selection-section mt-4" id="breastSizeSection">
+                        <h3 class="section-title">{{translations.newCharacter.breast_size_title}}</h3>
+                        <div class="breast-size-grid" id="breastSizeGrid">
+                            <!-- Populated by JS based on style -->
+                        </div>
+                    </div>
+                    
+                    <!-- Butt Size -->
+                    <div class="selection-section mt-4">
+                        <h3 class="section-title">{{translations.newCharacter.butt_size_title}}</h3>
+                        <div class="butt-size-grid" id="buttSizeGrid">
+                            <!-- Populated by JS based on style -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 5: Personality & Name -->
+            <div class="step-slide" data-step="5" id="step5">
+                <div class="step-content">
+                    <h1 class="step-title">{{translations.newCharacter.step5_title}}</h1>
+                    <p class="step-subtitle">{{translations.newCharacter.step5_subtitle}}</p>
+                    
+                    <!-- Name Input -->
+                    <div class="selection-section">
+                        <div class="name-input-group">
+                            <input type="text" class="name-input" id="characterName" placeholder="{{translations.newCharacter.name_placeholder}}">
+                            <button type="button" class="generate-name-btn" id="generateNameBtn">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Personality Options Grid -->
+                    <div class="personality-grid">
+                        <!-- Personality -->
+                        <div class="personality-option-card" data-option="personality" data-value="submissive">
+                            <span class="option-label">{{translations.newCharacter.personality_title}}</span>
+                            <span class="option-value">{{translations.newCharacter.personalities.submissive}}</span>
+                            <button type="button" class="edit-btn"><i class="bi bi-pencil"></i></button>
+                        </div>
+                        
+                        <!-- Relationship -->
+                        <div class="personality-option-card" data-option="relationship" data-value="stranger">
+                            <span class="option-label">{{translations.newCharacter.relationship_title}}</span>
+                            <span class="option-value">{{translations.newCharacter.relationships.stranger}}</span>
+                            <button type="button" class="edit-btn"><i class="bi bi-pencil"></i></button>
+                        </div>
+                        
+                        <!-- Occupation -->
+                        <div class="personality-option-card" data-option="occupation" data-value="student">
+                            <span class="option-label">{{translations.newCharacter.occupation_title}}</span>
+                            <span class="option-value">🎓 {{translations.newCharacter.occupations.student}}</span>
+                            <button type="button" class="edit-btn"><i class="bi bi-pencil"></i></button>
+                        </div>
+                        
+                        <!-- Kinks -->
+                        <div class="personality-option-card" data-option="kinks" data-value="vanilla">
+                            <span class="option-label">{{translations.newCharacter.kinks_title}}</span>
+                            <span class="option-value">{{translations.newCharacter.kinks.vanilla}}</span>
+                            <button type="button" class="edit-btn"><i class="bi bi-pencil"></i></button>
+                        </div>
+                    </div>
+                    
+                    <!-- Custom Prompt (Optional) -->
+                    <div class="selection-section mt-4">
+                        <div class="custom-prompt-container">
+                            <label class="custom-prompt-label">{{translations.newCharacter.custom_prompt_label}}</label>
+                            <textarea class="custom-prompt-input" id="customPrompt" placeholder="{{translations.newCharacter.custom_prompt_placeholder}}" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 6: Voice Selection -->
+            <div class="step-slide" data-step="6" id="step6">
+                <div class="step-content">
+                    <h1 class="step-title">{{translations.newCharacter.step6_title}}</h1>
+                    <p class="step-subtitle">{{translations.newCharacter.step6_subtitle}}</p>
+                    
+                    <!-- Voice Grid -->
+                    <div class="selection-section">
+                        <div class="voice-grid" id="voiceGrid">
+                            <!-- Voices will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 7: Image Generation -->
+            <div class="step-slide" data-step="7" id="step7">
+                <div class="step-content">
+                    <h1 class="step-title">{{translations.newCharacter.step7_title}}</h1>
+                    <p class="step-subtitle">{{translations.newCharacter.step7_subtitle}}</p>
+                    
+                    <!-- Image Generation Area -->
+                    <div class="image-generation-section">
+                        <!-- Generated Images Grid -->
+                        <div class="generated-images-grid" id="generatedImagesGrid">
+                            <!-- Images will be populated by JavaScript -->
+                            <div class="image-placeholder" id="imagePlaceholder">
+                                <div class="placeholder-content">
+                                    <i class="bi bi-image"></i>
+                                    <span>{{translations.newCharacter.click_generate_image}}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Generate/Regenerate Button -->
+                        <div class="image-generation-controls">
+                            <button type="button" class="btn-generate-image" id="generateImageBtn">
+                                <i class="bi bi-magic"></i>
+                                <span>{{translations.newCharacter.generate_image}}</span>
+                            </button>
+                            <button type="button" class="btn-regenerate-image" id="regenerateImageBtn" style="display: none;">
+                                <i class="bi bi-arrow-repeat"></i>
+                                <span>{{translations.newCharacter.regenerate_image}}</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Image Selection Info -->
+                        <p class="image-selection-info" id="imageSelectionInfo" style="display: none;">
+                            {{translations.newCharacter.select_image_info}}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 8: Confirmation & Start Chat -->
+            <div class="step-slide" data-step="8" id="step8">
+                <div class="step-content">
+                    <h1 class="step-title">{{translations.newCharacter.step8_title}}</h1>
+                    <p class="step-subtitle">{{translations.newCharacter.step8_subtitle}}</p>
+                    
+                    <!-- Character Summary -->
+                    <div class="character-summary">
+                        <div class="summary-image-container">
+                            <img id="summaryImage" src="/img/default-character.png" alt="Character">
+                        </div>
+                        <div class="summary-details">
+                            <h3 class="summary-name" id="summaryName">-</h3>
+                            <div class="summary-traits">
+                                <span class="trait-badge" id="summaryAge">-</span>
+                                <span class="trait-badge" id="summaryEthnicity">-</span>
+                                <span class="trait-badge" id="summaryPersonality">-</span>
+                            </div>
+                            <p class="summary-description" id="summaryDescription">-</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Start Chat Button -->
+                    <div class="start-chat-section">
+                        <button type="button" class="btn-start-chat" id="startChatBtn">
+                            <i class="bi bi-chat-heart"></i>
+                            <span>{{translations.newCharacter.start_chat}}</span>
                         </button>
                     </div>
-                    <small class="text-muted">{{translations.newCharacter.searchImageModelsDescription}}</small>
                 </div>
-                
-                <!-- Search Results -->
-                <div id="civitaiSearchResults">
-                    <div class="text-center text-muted py-4" id="civitaiSearchPlaceholder">
-                        <i class="bi bi-box-seam fs-1 d-block mb-2"></i>
-                        <p>{{translations.newCharacter.searchImageModelsDescription}}</p>
-                    </div>
-                    <div class="text-center py-4 d-none" id="civitaiSearchLoading">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="mt-2 text-muted">{{translations.newCharacter.searchingImageModels}}</p>
-                    </div>
-                    <div id="civitaiSearchResultsList"></div>
-                    <div class="text-center py-4 d-none" id="civitaiNoResults">
-                        <i class="bi bi-emoji-frown fs-1 d-block mb-2 text-muted"></i>
-                        <p class="text-muted">{{translations.newCharacter.noModelsFound}}</p>
-                        <small class="text-muted">{{translations.newCharacter.tryDifferentSearch}}</small>
-                    </div>
+            </div>
+            
+        </div>
+        
+        <!-- Footer Navigation -->
+        <footer class="character-creation-footer">
+            <button type="button" class="btn btn-back" id="backBtn" style="visibility: hidden;">
+                <i class="bi bi-chevron-left"></i>
+                {{translations.newCharacter.back}}
+            </button>
+            <button type="button" class="btn btn-next" id="nextBtn">
+                {{translations.newCharacter.next}}
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </footer>
+    </div>
+    
+    <!-- Option Picker Modal -->
+    <div class="modal fade option-picker-modal" id="optionPickerModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="optionPickerTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="option-list" id="optionList"></div>
                 </div>
             </div>
         </div>
     </div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-content">
+            <div class="spinner-border text-light" role="status"></div>
+            <p id="loadingMessage">{{translations.newCharacter.generating_character}}</p>
+            <small>{{translations.newCharacter.please_wait}}</small>
+        </div>
+    </div>
+    
+    <!-- Hidden audio element for voice samples -->
+    <audio id="voiceSamplePlayer" preload="none"></audio>
 </div>

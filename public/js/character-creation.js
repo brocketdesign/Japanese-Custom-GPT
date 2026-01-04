@@ -1,1329 +1,1436 @@
+/**
+ * Character Creation System
+ * For logged-in users to create their AI companion (Female only)
+ * Guides them through character customization with image generation
+ */
+
 (function() {
-
-    fetchAndAppendModels();
-
-    if (typeof chatCreationId === 'undefined') {
-        window.chatCreationId = '';
-    }
-    if (typeof isTemporaryChat === 'undefined') {
-        window.isTemporaryChat = true;
-    }
+    'use strict';
     
-    // Initialize data-chat-creation-id attribute at page load
-    setTimeout(function() {
-        const $imageContainer = $(document).find('#imageContainer');
-        if ($imageContainer.length) {
-            const currentDataId = $imageContainer.attr('data-chat-creation-id');
-            if (!currentDataId || currentDataId === '') {
-                $imageContainer.attr('data-chat-creation-id', window.chatCreationId);
-                console.log(`[Init] Set initial data-chat-creation-id to: ${window.chatCreationId}`);
-            }
+    // Prevent multiple initializations
+    if (window.characterCreationInitialized) {
+        console.log('[CharacterCreation] Already initialized, skipping');
+        return;
+    }
+    window.characterCreationInitialized = true;
+
+    class CharacterCreation {
+        constructor() {
+            this.currentStep = 1;
+            this.totalSteps = 8;
+            this.translations = window.characterCreationTranslations || window.translations?.newCharacter || {};
+            this.lang = window.lang || 'en';
+            this.user = window.user || {};
+            this.chatId = window.chatCreationId || null;
             
-            // Process any pending character images that arrived before the container was ready
-            console.log(`[Init] Checking for pending character images...`);
-            if (window.pendingCharacterImages && window.pendingCharacterImages.length > 0) {
-                console.log(`[Init] Found ${window.pendingCharacterImages.length} pending images, processing...`);
-                while (window.pendingCharacterImages.length > 0) {
-                    const { imageUrl, nsfw, chatId } = window.pendingCharacterImages.shift();
-                    console.log(`[Init] Processing pending image - chatId: ${chatId}`);
-                    
-                    // Sync if needed
-                    if (chatId && chatId !== window.chatCreationId) {
-                        if (window.syncChatCreationId) {
-                            window.syncChatCreationId(chatId);
-                        }
-                    }
-                    
-                    generateCharacterImage(imageUrl, nsfw, chatId);
-                }
-            }
-        }
-    }, 100);
-
-    // Show/hide spinner overlay
-    function showImageSpinner() {
-        $('#imageGenerationSpinner').show();
-        $('#generatedImage').css('opacity', '0.5');
-    }
-
-    function hideImageSpinner() {
-        $('#imageGenerationSpinner').hide();
-        $('#generatedImage').css('opacity', '1');
-    }
-
-    // After the image is generated, save the image and redirect to the chat
-    function resetCharacterForm() {
-        // Enable buttons and reset text
-        $('.chatRedirection').show();
-        $('#characterPrompt').prop('disabled', false);
-        $('#chatName').prop('disabled', false);
-        $('#chatPurpose').prop('disabled', false);
-        $('#userCustomChatPurpose').prop('disabled', false);
-        $('#generateButton').prop('disabled', false);
-        $('#generateButton').html('<i class="bi bi-magic me-2"></i>' + translations.newCharacter.generate_with_AI);
-
-        // Reset regenerate button if it was disabled
-        resetRegenerateButton();
-    }
-
-    // Add these functions to window for global access
-    window.showImageSpinner = showImageSpinner;
-    window.hideImageSpinner = hideImageSpinner;
-    window.resetCharacterForm = resetCharacterForm;
-
-    // Helper function to sync chatCreationId with data-chat-creation-id attribute
-    function syncChatCreationId(newId) {
-        const oldId = window.chatCreationId;
-        window.chatCreationId = newId;
-        $(document).find('#imageContainer').attr('data-chat-creation-id', newId);
-        
-        if (oldId !== newId) {
-            console.log(`[chatCreationId] Synced: ${oldId} → ${newId}`);
-        }
-        
-        return newId;
-    }
-    
-    // Helper function to verify and fix sync between chatCreationId and data-chat-creation-id
-    function verifyChatIdSync() {
-        const windowId = window.chatCreationId;
-        const $imageContainer = $(document).find('#imageContainer');
-        const attributeId = $imageContainer.attr('data-chat-creation-id');
-        
-        const isSynced = windowId === attributeId;
-        const status = isSynced ? '✓ SYNCED' : '✗ OUT OF SYNC';
-        
-        console.log(`[verifyChatIdSync] ${status}`);
-        console.log(`  window.chatCreationId: ${windowId}`);
-        console.log(`  data-chat-creation-id: ${attributeId}`);
-        
-        if (!isSynced) {
-            console.log(`[verifyChatIdSync] Fixing sync...`);
-            syncChatCreationId(windowId);
-            console.log(`[verifyChatIdSync] Sync fixed`);
-        }
-        
-        return isSynced;
-    }
-    
-    window.syncChatCreationId = syncChatCreationId;
-    window.verifyChatIdSync = verifyChatIdSync;
-    
-    // Monitor for dynamic container creation (handles post-refresh scenarios)
-    const containerObserver = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.addedNodes.length) {
-                // Check if #imageContainer was added
-                let containerAdded = false;
-                mutation.addedNodes.forEach(function(node) {
-                    if (node.id === 'imageContainer' || (node.querySelectorAll && node.querySelectorAll('#imageContainer').length > 0)) {
-                        containerAdded = true;
-                    }
-                });
+            // Character data stored throughout the flow (Female only)
+            this.characterData = {
+                // Step 1: Style
+                style: 'realistic',
+                gender: 'female', // Fixed to female
                 
-                if (containerAdded && window.pendingCharacterImages && window.pendingCharacterImages.length > 0) {
-                    console.log(`[MutationObserver] #imageContainer detected in DOM, processing ${window.pendingCharacterImages.length} pending images`);
-                    
-                    // Small delay to ensure container is fully rendered
-                    setTimeout(function() {
-                        while (window.pendingCharacterImages && window.pendingCharacterImages.length > 0) {
-                            const { imageUrl, nsfw, chatId } = window.pendingCharacterImages.shift();
-                            console.log(`[MutationObserver] Processing queued image - chatId: ${chatId}`);
-                            
-                            if (chatId && chatId !== window.chatCreationId) {
-                                if (window.syncChatCreationId) {
-                                    window.syncChatCreationId(chatId);
-                                }
-                            }
-                            
-                            if (window.generateCharacterImage) {
-                                generateCharacterImage(imageUrl, nsfw, chatId);
-                            }
-                        }
-                    }, 100);
-                }
-            }
-        });
-    });
-    
-    // Start observing the document for container additions
-    containerObserver.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
-
-
-    // Add a small delay before accessing DOM elements
-    setTimeout(function() {
-        const $uploadArea = $('#uploadArea');
-        const $fileInput = $('#imageUpload');
-        const uploadArea = $uploadArea.length ? $uploadArea[0] : null;
-        const fileInput = $fileInput.length ? $fileInput[0] : null;
-
-        const subscriptionStatus = user.subscriptionStatus == 'active';
-        if (subscriptionStatus && fileInput) {
-            $('#imageUpload').prop('disabled', false);
-        }
-
-        // Only access uploadArea if it exists in the DOM
-        if (uploadArea) {
-            if (!uploadArea.hasEventListener) {
-                uploadArea.addEventListener('dragover', (event) => {
-                    event.preventDefault();
-                    uploadArea.classList.add('dragover');
-                });
-
-                uploadArea.addEventListener('dragleave', () => {
-                    uploadArea.classList.remove('dragover');
-                });
-
-                uploadArea.addEventListener('drop', (event) => {
-                    event.preventDefault();
-                    uploadArea.classList.remove('dragover');
-                    fileInput.files = event.dataTransfer.files;
-                    previewImage(event);
-                });
-
-                uploadArea.hasEventListener = true;
-            }
-        } else {
-            console.log('Upload area element not found in DOM yet');
-        }
-    }, 500); // 500ms delay to ensure DOM is fully rendered
-
-    $(document).on('click', '.add-tag', function() {
-        const tag = $(this).text();
-        const $characterPrompt = $('#characterPrompt');
-        const prompt = $characterPrompt.val();
-        $characterPrompt.val(prompt + ',' + tag);
-    });
-
-    $('#language').val(lang)
-
-    $('#characterPrompt').on('input change', function() {
-        $('#enhancedPrompt').val('');
-    });
-
-    $(document).on('click', '.style-option', function() {
-        if ($(this).hasClass('is-premium')) {
-            showUpgradePopup('image-generation')
-            return
-        }
-        // Remove selection from ALL style options (both system and user models)
-        $('#imageStyleSelectionCharacterCreation .style-option').removeClass('selected');
-        $('#userCustomModels .style-option').removeClass('selected');
-        
-        $(this).addClass('selected');
-        updateFields($(this));
-
-        // Determine if this is a user model
-        const isUserModel = $(this).data('is-user-model') === true || $(this).attr('data-is-user-model') === 'true';
-        $('#isUserModel').val(isUserModel ? 'true' : 'false');
-        
-        // Save to localStorage for persistence
-        localStorage.setItem('imageModelId', $(this).data('id'));
-        localStorage.setItem('isUserModel', isUserModel ? 'true' : 'false');
-
-        // Save the selected model immediately
-        saveSelectedImageModel(chatCreationId, function(error, response) {
-            if (error) {
-                console.error('Error saving selected image model:', error);
-            }
-        });
-    });
-
-    updateFields($(document).find('.style-option.selected'));
-
-    function updateFields(element) {
-        const fields = ['id', 'style', 'model', 'version'];
-        fields.forEach(field => {
-            $(`#${field === 'id' ? 'modelId' : 'image' + field.charAt(0).toUpperCase() + field.slice(1)}`).val(element.data(field));
-        });
-    }
-
-
-    if (chatCreationId && chatCreationId.trim() !== '') {
-        $(".chatRedirection").show();
-        $(document).on('click', '#redirectToChat', function() {
-            if (!$('#chatContainer').length) {
-                window.location.href = `/chat/${chatCreationId}`;
-                return
-            }
-            closeAllModals();
-            callFetchChatData(chatCreationId, userId);
-        });
-    }
-
-    var count = 0
-    const subscriptionStatus = user.subscriptionStatus == 'active'
-    let isAutoGen = false
-
-    if (subscriptionStatus) {
-        $('#characterCreationModal .is-premium').each(function() {
-            $(this).toggleClass('d-none')
-        })
-    }
-
-    // Enable NSFW toggle for premium users only
-    if (subscriptionStatus) {
-        $('#basic_nsfw').prop('disabled', false);
-        $('#nsfwPremiumPrompt').hide();
-        updateNsfwToggleState(false); 
-    } else {
-        $('#basic_nsfw').prop('disabled', true).prop('checked', false);
-        $('#nsfwPremiumPrompt').show();
-        updateNsfwToggleState(false); 
-    }
-    
-    // Handle NSFW toggle click - both checkbox and slider
-    $('#basic_nsfw, .nsfw-switch-slider').on('click', function(e) {
-        // If clicked on slider, toggle the checkbox
-        if ($(this).hasClass('nsfw-switch-slider')) {
-            const $checkbox = $('#basic_nsfw');
-            if (!$checkbox.prop('disabled')) {
-                $checkbox.prop('checked', !$checkbox.prop('checked')).trigger('change');
-            }
-            return;
-        }
-        
-        // Handle checkbox click for non-premium users
-        if (!subscriptionStatus && $(this).is(':checked')) {
-            $(this).prop('checked', false);
-            showUpgradePopup('nsfw-content');
-            return false;
-        }
-    });
-
-    // Handle NSFW toggle state change
-    $('#basic_nsfw').on('change', function() {
-        const isChecked = $(this).is(':checked');
-        updateNsfwToggleState(isChecked);
-    });
-
-    // Function to update NSFW toggle visual state
-    function updateNsfwToggleState(isEnabled) {
-        const $container = $('#nsfwToggleContainer');
-        const $statusIndicator = $('#nsfwStatusIndicator');
-        
-        if (isEnabled) {
-            $container.removeClass('nsfw-disabled').addClass('enabled');
-            $statusIndicator.removeClass('disabled').addClass('enabled');
-            $statusIndicator.text(translations.newCharacter.nsfw || 'NSFW');
-        } else {
-            $container.removeClass('enabled').addClass('nsfw-disabled');
-            $statusIndicator.removeClass('enabled').addClass('disabled');
-            $statusIndicator.text(translations.newCharacter.sfw || 'SFW');
-        }
-    }
-
-    // Prevent default behavior on slider to avoid double-triggering
-    $('.nsfw-switch').on('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    });
-
-
-    $('input, textarea').val('');
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const chatImageUrl = urlParams.get('chatImage');
-    if (chatImageUrl) {
-        setTimeout(function() {
-            $('#chatImageUrl').val(chatImageUrl).change();
-        }, 500)
-        $('#chatImage').attr('src', chatImageUrl).show().addClass('on');
-    }
-
-    if (isTemporaryChat == 'false' || isTemporaryChat == false) {
-        fetchchatCreationData(chatCreationId, function() {
-            $('.chatRedirection').show();
-            $('.regenerateImages').show();
-            $('#navigateToImageButton').show();
-            // Initialize mobile view after data is loaded
-            setTimeout(function() {
-                if (window.isMobile && window.isMobile()) {
-                    showMobileRightColumn();
-                }
-            }, 200);
-        });
-    }
-
-    $('textarea').each(function() {
-        resizeTextarea(this);
-        $(this).on('input change', function() {
-            resizeTextarea(this);
-        });
-    });
-
-    function resizeTextarea(element) {
-        if ($(element).val().trim() != '') {
-            element.style.height = 'auto';
-            element.style.height = (element.scrollHeight) + 'px';
-        } else {
-            element.style.height = 'auto';
-        }
-    }
-
-
-
-    // Initialize keyword cloud after DOM is ready
-    $(document).ready(function() {
-        // Add delay to ensure translations are loaded
-        setTimeout(function() {
-            initializeKeywordCloud();
-        }, 500);
-    });
-
-    // Initialize the keyword cloud
-    function initializeKeywordCloud() {
-        // Check if translations are available
-        if (typeof translations === 'undefined' || !translations.newCharacter?.keywordSections) {
-            console.log('Translations not yet loaded, retrying...');
-            setTimeout(initializeKeywordCloud, 1000);
-            return;
-        }
-
-        const keywordSections = ['personality', 'occupation', 'hobbies', 'style', 'traits'];
-        
-        keywordSections.forEach(section => {
-            const sectionContainer = $(`.keyword-tags[data-section="${section}"]`);
-            const keywords = translations.newCharacter?.keywords?.[section];
-            
-            if (keywords && sectionContainer.length) {
-                // Clear existing content
-                sectionContainer.empty();
+                // Step 2: Ethnicity & Age
+                ethnicity: 'caucasian',
+                age: 21,
                 
-                // Add keywords as clickable tags
-                Object.keys(keywords).forEach(key => {
-                    const keyword = keywords[key];
-                    const keywordTag = $(`
-                        <span class="keyword-tag" 
-                            data-section="${section}" 
-                            data-keyword="${key}"
-                            data-value="${keyword}">
-                            ${keyword}
-                        </span>
-                    `);
-                    
-                    sectionContainer.append(keywordTag);
-                });
-
-                // Add section counter display
-                const sectionTitle = sectionContainer.closest('.keyword-section').find('.keyword-section-title');
-                if (sectionTitle.length && !sectionTitle.find('.keyword-counter').length) {
-                    sectionTitle.append(`<span class="keyword-counter ms-2 text-muted">(0/3)</span>`);
-                }
-            }
-        });
-
-        // Update section titles with translations
-        $('.keyword-section-title [data-translate]').each(function() {
-            const key = $(this).data('translate');
-            const translation = getTranslationByKey(key);
-            if (translation) {
-                $(this).text(translation);
-            }
-        });
-
-        // Update "Selected Keywords" text
-        $('.selected-keywords-container h6').html(
-            `<i class="bi bi-check-circle me-2"></i>${translations.newCharacter?.selectedKeywords || 'Selected Keywords:'}`
-        );
-
-        // Update placeholder text
-        $('#selectedKeywords .text-muted').text(
-            translations.newCharacter?.clickKeywordsPlaceholder || 'Click keywords above to add them...'
-        );
-    }
-
-    // Helper function to get nested translation
-    function getTranslationByKey(key) {
-        const keys = key.split('.');
-        let value = translations;
-        
-        for (const k of keys) {
-            if (value && value[k]) {
-                value = value[k];
-            } else {
-                return null;
-            }
-        }
-        
-        return value;
-    }
-
-    // Handle keyword tag clicks
-    $(document).on('click', '.keyword-tag', function() {
-        const $tag = $(this);
-        const keyword = $tag.data('value');
-        const section = $tag.data('section');
-        const isSelected = $tag.hasClass('selected');
-        const isDisabled = $tag.hasClass('disabled');
-        
-        // Don't allow clicking on disabled tags
-        if (isDisabled && !isSelected) {
-            // Show a brief message about the limit
-            showLimitMessage($tag, section);
-            return;
-        }
-        
-        if (isSelected) {
-            // Remove keyword
-            $tag.removeClass('selected');
-            removeKeywordFromPurpose(keyword);
-        } else {
-            // Check if we can add more keywords to this section
-            const selectedCount = getSelectedKeywordsCountInSection(section);
-            if (selectedCount >= 3) {
-                showLimitMessage($tag, section);
-                return;
-            }
-            
-            // Add keyword
-            $tag.addClass('selected');
-            addKeywordToPurpose(keyword);
-        }
-        
-        // Update counters and availability for this section
-        updateSectionCounter(section);
-        updateSectionAvailability(section);
-        
-        updateSelectedKeywordsDisplay();
-        updateChatPurposeTextarea();
-    });
-
-    // Add keyword to the purpose
-    function addKeywordToPurpose(keyword) {
-        const currentPurpose = $('#chatPurpose').val();
-        const keywords = currentPurpose ? currentPurpose.split(', ').filter(k => k.trim()) : [];
-        
-        if (!keywords.includes(keyword)) {
-            keywords.push(keyword);
-            $('#chatPurpose').val(keywords.join(', '));
-        }
-    }
-
-    // Remove keyword from the purpose  
-    function removeKeywordFromPurpose(keyword) {
-        const currentPurpose = $('#chatPurpose').val();
-        const keywords = currentPurpose ? currentPurpose.split(', ').filter(k => k.trim()) : [];
-        const filteredKeywords = keywords.filter(k => k !== keyword);
-        
-        $('#chatPurpose').val(filteredKeywords.join(', '));
-    }
-
-    // Update the visual display of selected keywords
-    function updateSelectedKeywordsDisplay() {
-        const selectedKeywordsBySection = {};
-        const keywordSections = ['personality', 'occupation', 'hobbies', 'style', 'traits'];
-        
-        // Group selected keywords by section
-        $('.keyword-tag.selected').each(function() {
-            const section = $(this).data('section');
-            const keyword = $(this).data('value');
-            
-            if (!selectedKeywordsBySection[section]) {
-                selectedKeywordsBySection[section] = [];
-            }
-            selectedKeywordsBySection[section].push(keyword);
-        });
-        
-        const $display = $('#selectedKeywords');
-        
-        if (Object.keys(selectedKeywordsBySection).length === 0) {
-            const placeholderText = translations.newCharacter?.clickKeywordsPlaceholder || 'Click keywords above to add them...';
-            $display.html(`<span class="text-muted">${placeholderText}</span>`);
-        } else {
-            let html = '';
-            
-            keywordSections.forEach(section => {
-                if (selectedKeywordsBySection[section] && selectedKeywordsBySection[section].length > 0) {
-                    const sectionName = getTranslationByKey(`newCharacter.keywordSections.${section}`) || section;
-                    const sectionKeywords = selectedKeywordsBySection[section];
-                    
-                    html += `<div class="selected-section mb-2">
-                        <small class="section-label text-muted fw-bold">${sectionName}:</small><br>
-                        ${sectionKeywords.map(keyword => 
-                            `<span class="selected-keyword">${keyword}</span>`
-                        ).join(' ')}
-                    </div>`;
-                }
-            });
-            
-            $display.html(html);
-        }
-    }
-
-    // Update the hidden textarea
-    function updateChatPurposeTextarea() {
-        const selectedKeywords = [];
-        $('.keyword-tag.selected').each(function() {
-            selectedKeywords.push($(this).data('value'));
-        });
-        
-        $('#chatPurpose').val(selectedKeywords.join(', '));
-    }
-
-    // Helper function to count selected keywords in a section
-    function getSelectedKeywordsCountInSection(section) {
-        return $(`.keyword-tag[data-section="${section}"].selected`).length;
-    }
-
-    // Helper function to update section counter
-    function updateSectionCounter(section) {
-        const count = getSelectedKeywordsCountInSection(section);
-        const counter = $(`.keyword-tags[data-section="${section}"]`).closest('.keyword-section').find('.keyword-counter');
-        if (counter.length) {
-            counter.text(`(${count}/3)`);
-            // Change color based on limit
-            if (count >= 3) {
-                counter.removeClass('text-muted').addClass('text-warning fw-bold');
-            } else {
-                counter.removeClass('text-warning fw-bold').addClass('text-muted');
-            }
-        }
-    }
-
-    // Helper function to update section availability
-    function updateSectionAvailability(section) {
-        const selectedCount = getSelectedKeywordsCountInSection(section);
-        const sectionContainer = $(`.keyword-tags[data-section="${section}"]`);
-        
-        // If 3 keywords are selected, disable non-selected keywords in this section
-        if (selectedCount >= 3) {
-            sectionContainer.find('.keyword-tag:not(.selected)').addClass('disabled');
-        } else {
-            sectionContainer.find('.keyword-tag').removeClass('disabled');
-        }
-    }
-
-    // Function to show limit message
-    function showLimitMessage($tag, section) {
-        // Get section name from translations
-        const sectionName = getTranslationByKey(`newCharacter.keywordSections.${section}`) || section;
-        const message = `Maximum 3 keywords per section (${sectionName})`;
-        
-        // Create temporary tooltip
-        const tooltip = $(`<div class="keyword-limit-tooltip">${message}</div>`);
-        tooltip.css({
-            position: 'absolute',
-            background: '#dc3545',
-            color: 'white',
-            padding: '6px 12px',
-            borderRadius: '4px',
-            fontSize: '12px',
-            zIndex: 1000,
-            whiteSpace: 'nowrap',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-        });
-        
-        // Position tooltip near the clicked tag
-        const tagOffset = $tag.offset();
-        tooltip.css({
-            top: tagOffset.top - 40,
-            left: tagOffset.left + ($tag.width() / 2) - (tooltip.width() / 2)
-        });
-        
-        $('body').append(tooltip);
-        
-        // Add visual feedback to the tag
-        $tag.addClass('limit-reached');
-        
-        // Remove tooltip and visual feedback after 2 seconds
-        setTimeout(() => {
-            tooltip.fadeOut(200, () => tooltip.remove());
-            $tag.removeClass('limit-reached');
-        }, 2000);
-    }
-    // Load existing keywords when editing a character
-    function loadExistingKeywords(chatPurpose) {
-        if (!chatPurpose) return;
-        
-        const keywords = chatPurpose.split(', ').map(k => k.trim()).filter(k => k);
-        
-        // Clear all selections first
-        $('.keyword-tag').removeClass('selected disabled');
-        
-        // Reset all counters
-        $('.keyword-counter').text('(0/3)').removeClass('text-warning fw-bold').addClass('text-muted');
-        
-        // Select matching keywords
-        keywords.forEach(keyword => {
-            const $tag = $(`.keyword-tag[data-value="${keyword}"]`);
-            if ($tag.length) {
-                $tag.addClass('selected');
-                const section = $tag.data('section');
-                updateSectionCounter(section);
-                updateSectionAvailability(section);
-            }
-        });
-        
-        updateSelectedKeywordsDisplay();
-    }
-
-    // Update the existing fetchchatCreationData function to load keywords
-    const originalFetchchatCreationData = window.fetchchatCreationData || fetchchatCreationData;
-
-    function fetchchatCreationData(chatCreationId, callback) {
-        $.ajax({
-            url: `/api/chat-data/${chatCreationId}`,
-            type: 'GET',
-            dataType: 'json',
-            success: function(chatData) {
-
-                if (chatData.modelId) {
-                    $('#modelId').val(chatData.modelId);
-                    $(document).find(`.style-option[data-id="${chatData.modelId}"]`).click();
-                }
-
-                if (chatData.imageStyle) {
-                    $('#imageStyle').val(chatData.imageStyle);
-                }
-                if (chatData.imageModel) {
-                    $('#imageModel').val(chatData.imageModel);
-                    $(document).find(`.style-option[data-model="${chatData.imageModel}"]`).click();
-                }
-                if (chatData.imageVersion) {
-                    $('#imageVersion').val(chatData.imageVersion);
-                }
-
-                if (chatData.characterPrompt) {
-                    $('#characterPrompt').val(chatData.characterPrompt);
-                    resizeTextarea($('#characterPrompt')[0]);
-                }
-
-                if (chatData.enhancedPrompt && chatData.enhancedPrompt !== '') {
-                    $('#enhancedPrompt').val(chatData.enhancedPrompt);
-                }
-
-                if (chatData.imageDescription) {
-                    $('#enhancedPrompt').val(chatData.imageDescription);
-                }
-
-                if (chatData.chatImageUrl) {
-                    $('#generatedImage').attr('src', chatData.chatImageUrl).show().addClass('on');
-                }
-
-                if (chatData.language) {
-                    $('#language').val(chatData.language);
-                }
-
-                if (chatData.gender) {
-                    $('#gender').val(chatData.gender);
-                }
-
-                if (chatData.name) {
-                    $('#chatName').val(chatData.name).show();
-                    $('#sendForm span').text(`${chatData.name}とチャットする`);
-                }
-
-                if (chatData.description) {
-                    $('#chatDescription').val(chatData.description).show();
-                    resizeTextarea($('#chatDescription')[0]);
-                }
-
-                // Callback if provided
-                if (typeof callback === 'function') {
-                    callback();
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('Error fetching chat data:', error);
-            }
-        });
-    }
-
-    function saveModeration(moderationResult, chatCreationId, callback) {
-
-        $.ajax({
-            url: '/novita/save-moderation',
-            method: 'POST',
-            dataType: 'json',
-            contentType: 'application/json',
-            data: JSON.stringify({
-                moderation: moderationResult,
-                chatId: chatCreationId
-            }),
-            success: function(response) {
-                if (typeof callback === 'function') {
-                    callback(null, response);
-                }
-            },
-            error: function(error) {
-                if (typeof callback === 'function') {
-                    callback(error);
-                }
-            }
-        });
-    }
-
-    // Add new function for regenerating images
-    function regenerateImages() {
-        const $button = $('#regenerateImagesButton');
-        const $generateButton = $('#generateButton');
-
-        // Disable regenerate button during generation
-        $button.prop('disabled', true);
-        $button.html(`<i class="bi bi-arrow-clockwise spin"></i>${translations.newCharacter.regenerating_images}`);
-
-        // Also disable main generate button
-        $generateButton.prop('disabled', true);
-
-        // Show spinner overlay
-        showImageSpinner();
-
-        // Get current enhanced prompt and other settings
-        const enhancedPrompt = $('#enhancedPrompt').val().trim();
-        const file = $('#imageUpload')[0].files[0];
-        const enableMergeFace = $('#enableMergeFace').is(':checked');
-
-        // Check if we have the necessary data
-        if (!enhancedPrompt || !chatCreationId) {
-            showNotification(translations.newCharacter.regeneration_error, 'error');
-            resetRegenerateButton();
-            hideImageSpinner();
-            return;
-        }
-
-        // Determine image type based on previous moderation (you might want to store this)
-        const imageType = 'sfw'; // Default to sfw, you can enhance this later
-
-        // Reset infinite scroll cache for new generation
-        resetInfiniteScroll();
-
-        const modelId = $('.style-option.selected').data('id')
-        // Professional logging of the model, with separator and colors and emojis
-        console.log('%c🚀 Regenerating images with model:', 'color: #4CAF50; font-weight: bold; font-size: 16px;', modelId);
-        // NEW: Save the selected model before regenerating to ensure it's persisted
-        saveSelectedImageModel(chatCreationId, function(error, response) {
-            if (error) {
-                console.error('Error saving selected image model during regeneration:', error);
-                // Optionally show a notification or abort regeneration
-                resetRegenerateButton();
-                hideImageSpinner();
-                return;
-            }
-            
-            // Proceed with generation after saving
-            novitaImageGeneration(userId, chatCreationId, null, {
-                prompt: enhancedPrompt,
-                imageType,
-                file,
-                chatCreation: true,
-                enableMergeFace: enableMergeFace,
-                regenerate: true,
-                modelId: modelId
-            })
-            .then(() => {
-                resetRegenerateButton();
-                $('.regenerateImages').show();
-            })
-            .catch((error) => {
-                console.error('Error regenerating images:', error);
-                hideImageSpinner();
-                resetRegenerateButton();
-                showNotification(translations.newCharacter.regeneration_error, 'error');
-            });
-        });
-    }
-
-    function resetInfiniteScroll() {
-        const imageStyle = $('.style-option.selected').data('style')
-        const imageModel = $('.style-option.selected').data('model')
-        const searchId = `peopleChatCache_${imageStyle}-${imageModel}--false`
-        localStorage.removeItem(searchId)
-    };
-
-    // Save selected image model
-    function saveSelectedImageModel(chatCreationId, callback) {
-        // If no chat ID, we can't save to DB yet. This is normal for new character creation.
-        if (!chatCreationId) {
-            if (typeof callback === 'function') {
-                callback(null, { message: 'No chat ID, skipped saving' });
-            }
-            return;
-        }
-
-        const modelId = $('.style-option.selected').data('id')
-        // Ensure style is not empty, default to 'general' if missing
-        const imageStyle = $('.style-option.selected').data('style') || 'general'
-        const imageModel = $('.style-option.selected').data('model')
-        const imageVersion = $('.style-option.selected').data('version')
-
-        // Validate required fields
-        if (!modelId || !imageModel || !imageVersion) {
-            console.warn('[saveSelectedImageModel] Missing required fields:', { modelId, imageModel, imageVersion });
-            if (typeof callback === 'function') {
-                callback(new Error('Missing required fields'));
-            }
-            return;
-        }
-
-        $.ajax({
-            url: '/novita/save-image-model',
-            method: 'POST',
-            dataType: 'json',
-            data: {
-                chatId: chatCreationId,
-                modelId,
-                imageStyle,
-                imageModel,
-                imageVersion
-            },
-            success: function(response) {
-                if (typeof callback === 'function') {
-                    callback(null, response);
-                }
-            },
-            error: function(error) {
-                if (typeof callback === 'function') {
-                    callback(error);
-                }
-            }
-        });
-    }
-
-    async function checkChat(chatCreationId) {
-        try {
-            const response = await $.post('/api/check-chat', {
-                chatId: chatCreationId
-            });
-            if (response.message === 'Chat exists') {
-                return false;
-            } else {
-                return response.chatId;
-            }
-        } catch (error) {
-            console.error('Request failed:', error);
-            throw error;
-        }
-    }
-    window.moderateContent = async function(chatCreationId, content) {
-        try {
-            const response = await $.ajax({
-                url: '/novita/moderate',
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    chatId: chatCreationId,
-                    content
-                })
-            });
-            return response.results[0];
-        } catch (error) {
-            console.error('Moderation request failed:', error);
-            throw error;
-        }
-    }
-
-    $('#navigateToImageButton').on('click', function() {
-        showMobileRightColumn();
-    });
-    $('#generateButton').on('click', async function() {
-
-        const $button = $(this);
-        $button.prop('disabled', true);
-
-        resetInfiniteScroll();
-        let newchatId = await checkChat(chatCreationId)
-
-        if (newchatId) {
-            syncChatCreationId(newchatId);
-            
-            $(document).on('click', '#redirectToChat', function() {
-                if (!$('#chatContainer').length) {
-                    window.location.href = `/chat/${newchatId}`;
-                    return
-                }
-                closeAllModals();
-                callFetchChatData(newchatId, userId);
-            });
-        }
-
-        const prompt = characterPrompt = $('#characterPrompt').val().trim();
-        const gender = $('#gender').val();
-        const name = $('#chatName').val().trim();
-        const userCustomChatPurpose = $('#userCustomChatPurpose').val().trim();
-        const chatPurpose = userCustomChatPurpose + ', ' + $('#chatPurpose').val().trim();
-        let modelId = $('#modelId').val();
-
-        if (!modelId) {
-            const initial_modelId = `{{modelId}}`
-            if (initial_modelId) {
-                modelId = initial_modelId
-                $(document).find(`.style-option[data-id="${initial_modelId}"]`).click();
-            }
-        }
-
-        await saveSelectedImageModel(chatCreationId, function(error, response) {
-            if (error) {
-                console.error('Error saving image model:', error);
-            }
-        });
-
-        if (!modelId || !prompt || !gender || !chatCreationId) {
-            showNotification(translations.newCharacter.allFieldsRequired, 'error');
-            return;
-        }
-
-        $('#imageGenerationDescription').show();
-        $('#characterPrompt').prop('disabled', true);
-        $('#chatName').prop('disabled', true);
-        $('#chatPurpose').prop('disabled', true);
-        $('#userCustomChatPurpose').prop('disabled', true);
-
-        let moderationResult = {
-            flagged: false
-        };
-        try {
-
-            // Start image generation with enhanced prompt
-            $button.html(`${translations.imageForm.generatingImages}`);
-            $('.genexp').fadeIn();
-            showImageSpinner(); // Show spinner overlay
-
-            const imageType = moderationResult.flagged ? 'nsfw' : 'sfw';
-            const file = $('#imageUpload')[0].files[0];
-            const enableMergeFace = $('#enableMergeFace').is(':checked');
-
-            let image_base64 = null;
-            if (file) {
-                image_base64 = await uploadAndConvertToBase64(file);
-            }
-            const nsfw = subscriptionStatus && $('#basic_nsfw').is(':checked');
-            // Use new comprehensive generation route
-            const comprehensiveData = {
-                prompt,
-                gender,
-                chatPurpose,
-                name,
-                nsfw,
-                imageType: nsfw ? 'nsfw' : 'sfw',
-                image_base64,
-                enableMergeFace,
-                chatId: chatCreationId,
-                language: lang
+                // Step 3: Hair
+                hairStyle: 'straight',
+                hairColor: 'brunette',
+                
+                // Step 4: Body
+                bodyType: 'slim',
+                breastSize: 'medium',
+                buttSize: 'medium',
+                
+                // Step 5: Personality
+                name: '',
+                personality: 'submissive',
+                relationship: 'stranger',
+                occupation: 'student',
+                kinks: 'vanilla',
+                customPrompt: '',
+                
+                // Step 6: Voice
+                voice: 'Wise_Woman',
+                
+                // Step 7: Generated Images
+                generatedImages: [],
+                selectedImageUrl: null
             };
-
-            const comprehensiveResponse = await $.ajax({
-                url: '/api/generate-character-comprehensive',
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(comprehensiveData)
-            });
-
-            // Ensure we're showing the right column on mobile after generation
-            if (isMobile()) {
-                showMobileRightColumn();
-            }
-
-        } catch (error) {
-            console.error('Comprehensive generation error:', error);
-            resetCharacterForm();
-            showNotification(translations.newCharacter.character_generation_error, 'error');
-        }
-    });
-
-    // Add regenerate images functionality
-    $('#regenerateImagesButton').on('click', function() {
-        // Stay on right column during regeneration on mobile
-        regenerateImages();
-    });
-
-    // Make mobile navigation functions globally available
-    window.isMobile = isMobile;
-    window.showMobileLeftColumn = showMobileLeftColumn;
-    window.showMobileRightColumn = showMobileRightColumn;
-
-
-    window.previewImage = function(event) {
-        const file = event.target.files[0];
-        if (file && file.type.startsWith('image/')) {
-            if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                showNotification(translations.imageForm.image_size_limit, 'error');
-                return;
-            }
-            const reader = new FileReader();
-            const imagePreview = document.getElementById('imagePreview');
-            reader.onload = function() {
-                imagePreview.src = reader.result;
-                imagePreview.style.display = 'block';
-
-                // Show and enable merge face toggle when image is uploaded
-                $('#mergeFaceContainer').show();
-                $('#enableMergeFace').prop('disabled', false);
+            
+            // Voice samples manifest
+            this.voiceSamples = null;
+            this.audioPlayer = null;
+            this.currentPlayingVoice = null;
+            
+            // Image generation state
+            this.isGeneratingImage = false;
+            
+            // Option picker data
+            this.optionData = this.getOptionData();
+            
+            // Asset paths based on style
+            this.assetPaths = {
+                realistic: '/img/cold-onboarding/realistic',
+                anime: '/img/cold-onboarding/anime'
             };
-            reader.readAsDataURL(file);
-        } else {
-            showNotification(translations.imageForm.image_invalid_format, 'error');
-            // Hide merge face toggle for invalid files
-            $('#mergeFaceContainer').hide();
-            $('#enableMergeFace').prop('disabled', true).prop('checked', false);
-        }
-    }
-
-
-    // Helper function to reset regenerate button state
-    function resetRegenerateButton() {
-        const $button = $('#regenerateImagesButton');
-        const $generateButton = $('#generateButton');
-
-        $button.prop('disabled', false);
-        $button.html('<i class="bi bi-arrow-clockwise me-2"></i>' + translations.newCharacter.regenerate_images);
-
-        $generateButton.prop('disabled', false);
-    }
-
-    function resetChatList() {
-        const imageModel = $('.style-option.selected').data('model')
-        $(document).find(`#imageStyleTabs button[data-model="${imageModel}"]`).click()
-    }
-    // Global function to update chat data in the frontend
-    window.updateChatData = function(chatData) {
-        if (!chatData) return;
-
-        $('#chatName').val(chatData.name || '');
-        $('#chatPurpose').val(chatData.short_intro || '');
-
-        // Show relevant UI elements
-        $('.chatRedirection').show();
-        $('.regenerateImages').show();
-        $('#navigateToImageButton').show();
-
-        // Reset form state
-        resetCharacterForm();
-
-    };
-
-    // Global function to update enhanced prompt in the frontend
-    window.updateEnhancedPrompt = function(enhancedPrompt) {
-        if (!enhancedPrompt) return;
-
-        $('#enhancedPrompt').val(enhancedPrompt);
-
-        // Resize textarea if needed
-        const promptTextarea = $('#enhancedPrompt')[0];
-        if (promptTextarea && typeof resizeTextarea === 'function') {
-            resizeTextarea(promptTextarea);
-        }
-    };
-
-    window.saveSelectedImage = function(imageUrl, callback) {
-        $.ajax({
-            url: '/novita/save-image',
-            method: 'POST',
-            dataType: 'json',
-            data: {
-                imageUrl,
-                chatId: chatCreationId
-            },
-            success: function(response) {
-                if (typeof callback === 'function') {
-                    callback(null, response);
-                }
-            },
-            error: function(error) {
-                if (typeof callback === 'function') {
-                    callback(error);
-                }
-            }
-        });
-    }
-    window.generateCharacterImage = function(url, nsfw, receivedChatCreationId) {
-        console.log(`[generateCharacterImage] CALLED with url, nsfw: ${nsfw}, receivedChatCreationId: ${receivedChatCreationId}`);
-        console.log(`[generateCharacterImage] Current state - window.chatCreationId: ${window.chatCreationId}`);
-        
-        // Ensure data-chat-creation-id is in sync with the current chatCreationId
-        const currentId = window.chatCreationId || '';
-        
-        if (receivedChatCreationId !== currentId && currentId) {
-            console.warn(`[generateCharacterImage] Chat ID mismatch. Received: ${receivedChatCreationId}, Current: ${currentId}. Syncing received ID.`);
-            syncChatCreationId(receivedChatCreationId);
-        }
-        
-        // Try to find container by received ID first
-        let $imageContainer = $(document).find('#imageContainer[data-chat-creation-id="' + receivedChatCreationId + '"]');
-        
-        if (!$imageContainer.length) {
-            console.warn(`[generateCharacterImage] Container not found for received ID: ${receivedChatCreationId}`);
             
-            // Fallback 1: Try finding by current window ID
-            if (currentId && currentId !== receivedChatCreationId) {
-                console.log(`[generateCharacterImage] Attempting fallback with current ID: ${currentId}`);
-                $imageContainer = $(document).find('#imageContainer[data-chat-creation-id="' + currentId + '"]');
-                
-                if ($imageContainer.length) {
-                    console.log(`[generateCharacterImage] Found container using current ID, syncing both`);
-                    syncChatCreationId(receivedChatCreationId);
-                    // Re-query to ensure attribute is updated
-                    $imageContainer = $(document).find('#imageContainer[data-chat-creation-id="' + receivedChatCreationId + '"]');
-                }
-            }
+            this.init();
+        }
+        
+        /**
+         * Initialize the character creation flow
+         */
+        async init() {
+            console.log('[CharacterCreation] Initializing...');
             
-            // Fallback 2: Try finding any #imageContainer (last resort)
-            if (!$imageContainer.length) {
-                console.log(`[generateCharacterImage] Using fallback - finding any #imageContainer`);
-                const $anyContainer = $(document).find('#imageContainer');
-                
-                if ($anyContainer.length) {
-                    console.log(`[generateCharacterImage] Found generic container, syncing ID`);
-                    syncChatCreationId(receivedChatCreationId);
-                    // Re-query with synced ID
-                    $imageContainer = $(document).find('#imageContainer[data-chat-creation-id="' + receivedChatCreationId + '"]');
-                    
-                    if (!$imageContainer.length) {
-                        $imageContainer = $anyContainer;
-                    }
+            // Load saved character data from sessionStorage if exists
+            this.loadSavedData();
+            
+            // Initialize audio player
+            this.audioPlayer = document.getElementById('voiceSamplePlayer');
+            
+            // Load voice samples manifest
+            await this.loadVoiceSamples();
+            
+            // Render dynamic grids
+            this.renderEthnicityGrid();
+            this.renderHairStyleGrid();
+            this.renderHairColorStrip();
+            this.renderBodyTypeGrid();
+            this.renderBreastSizeGrid();
+            this.renderButtSizeGrid();
+            this.renderVoiceGrid();
+            
+            // Bind events
+            this.bindEvents();
+            
+            // Update UI state
+            this.updateUI();
+            
+            console.log('[CharacterCreation] Initialized successfully');
+        }
+        
+        /**
+         * Get option data for the option picker modal
+         */
+        getOptionData() {
+            return {
+                personality: {
+                    title: this.t('personality_title', 'Personality'),
+                    options: [
+                        { value: 'submissive', label: this.t('personalities.submissive', 'Submissive') },
+                        { value: 'dominant', label: this.t('personalities.dominant', 'Dominant') },
+                        { value: 'shy', label: this.t('personalities.shy', 'Shy') },
+                        { value: 'confident', label: this.t('personalities.confident', 'Confident') },
+                        { value: 'playful', label: this.t('personalities.playful', 'Playful') },
+                        { value: 'serious', label: this.t('personalities.serious', 'Serious') },
+                        { value: 'romantic', label: this.t('personalities.romantic', 'Romantic') },
+                        { value: 'adventurous', label: this.t('personalities.adventurous', 'Adventurous') },
+                        { value: 'caring', label: this.t('personalities.caring', 'Caring') },
+                        { value: 'mysterious', label: this.t('personalities.mysterious', 'Mysterious') }
+                    ]
+                },
+                relationship: {
+                    title: this.t('relationship_title', 'Relationship'),
+                    options: [
+                        { value: 'stranger', label: this.t('relationships.stranger', 'Stranger') },
+                        { value: 'friend', label: this.t('relationships.friend', 'Friend') },
+                        { value: 'girlfriend', label: this.t('relationships.girlfriend', 'Girlfriend') },
+                        { value: 'wife', label: this.t('relationships.wife', 'Wife') },
+                        { value: 'crush', label: this.t('relationships.crush', 'Crush') },
+                        { value: 'colleague', label: this.t('relationships.colleague', 'Colleague') },
+                        { value: 'neighbor', label: this.t('relationships.neighbor', 'Neighbor') },
+                        { value: 'ex', label: this.t('relationships.ex', 'Ex') },
+                        { value: 'first_date', label: this.t('relationships.first_date', 'First Date') },
+                        { value: 'roommate', label: this.t('relationships.roommate', 'Roommate') }
+                    ]
+                },
+                occupation: {
+                    title: this.t('occupation_title', 'Occupation'),
+                    options: [
+                        { value: 'student', label: '🎓 ' + this.t('occupations.student', 'Student') },
+                        { value: 'teacher', label: '👩‍🏫 ' + this.t('occupations.teacher', 'Teacher') },
+                        { value: 'nurse', label: '👩‍⚕️ ' + this.t('occupations.nurse', 'Nurse') },
+                        { value: 'model', label: '💃 ' + this.t('occupations.model', 'Model') },
+                        { value: 'artist', label: '🎨 ' + this.t('occupations.artist', 'Artist') },
+                        { value: 'athlete', label: '⚽ ' + this.t('occupations.athlete', 'Athlete') },
+                        { value: 'businesswoman', label: '💼 ' + this.t('occupations.businesswoman', 'Businesswoman') },
+                        { value: 'influencer', label: '📱 ' + this.t('occupations.influencer', 'Influencer') },
+                        { value: 'scientist', label: '🔬 ' + this.t('occupations.scientist', 'Scientist') },
+                        { value: 'musician', label: '🎵 ' + this.t('occupations.musician', 'Musician') }
+                    ]
+                },
+                kinks: {
+                    title: this.t('kinks_title', 'Preferences'),
+                    options: [
+                        { value: 'vanilla', label: this.t('kinks.vanilla', 'Vanilla') },
+                        { value: 'daddy_dom', label: this.t('kinks.daddy_dom', 'Daddy Dom') },
+                        { value: 'roleplay', label: this.t('kinks.roleplay', 'Roleplay') },
+                        { value: 'bdsm', label: this.t('kinks.bdsm', 'BDSM') },
+                        { value: 'exhibitionism', label: this.t('kinks.exhibitionism', 'Exhibitionism') },
+                        { value: 'feet', label: this.t('kinks.feet', 'Feet') },
+                        { value: 'lingerie', label: this.t('kinks.lingerie', 'Lingerie') },
+                        { value: 'outdoor', label: this.t('kinks.outdoor', 'Outdoor') },
+                        { value: 'toys', label: this.t('kinks.toys', 'Toys') }
+                    ]
                 }
-            }
+            };
         }
         
-        if (!$imageContainer.length) {
-            console.error(`[generateCharacterImage] CRITICAL: Image container not found for chat ID: ${receivedChatCreationId}, current: ${currentId}`);
-            console.error(`[generateCharacterImage] Available containers:`, $(document).find('#imageContainer').length);
-            return;
-        }
-        
-        console.log(`[generateCharacterImage] Successfully found container for ID: ${receivedChatCreationId}`);
-        generateImageInContainer($imageContainer, url);
-    };
-    
-    // Helper function to generate image in a container
-    function generateImageInContainer($imageContainer, url) {
-        console.log(`[generateImageInContainer] Called with container data-chat-creation-id: ${$imageContainer.attr('data-chat-creation-id')}`);
-        
-        // Clear the container
-        $imageContainer.find('#generatedImage').remove();
-        $imageContainer.find('#imageGenerationDescription').hide();
-
-        // For each image URL, create an image element and append to the container
-        const colDiv = $('<div>').addClass('col-12 mb-3');
-        const imgElement = $('<img>')
-            .attr('src', url)
-            .addClass('img-fluid img-thumbnail')
-            .css('cursor', 'pointer');
-
-        // Add click handler to each image
-        imgElement.on('click', function() {
-            $('.img-thumbnail').each(function() {
-                $(this).removeClass('select')
-            });
-            $(this).addClass('select');
-
-            // Save the selected image
-            saveSelectedImage(url, function(error, response) {
-                if (error) {
-                    console.error(`[generateImageInContainer] Error saving image:`, error);
-                    showNotification(translations.imageForm.image_save_failed, 'error');
+        /**
+         * Translation helper
+         */
+        t(key, fallback = key) {
+            const keys = key.split('.');
+            let value = this.translations;
+            
+            for (const k of keys) {
+                if (value && typeof value === 'object' && k in value) {
+                    value = value[k];
                 } else {
-                    console.log(`[generateImageInContainer] Image saved successfully`);
-                    showNotification(translations.imageForm.image_saved, 'success');
-                    resetChatList();
+                    return fallback;
                 }
-            });
-
-            // Save the selected image model
-            const containerChatId = $imageContainer.attr('data-chat-creation-id');
-            saveSelectedImageModel(containerChatId, function(error, response) {
-                if (error) {
-                    console.error('Error saving selected image model:', error);
-                }
-            });
-        });
-
-        colDiv.append(imgElement);
-        $imageContainer.append(colDiv);
-        
-        console.log(`[generateImageInContainer] Image element appended to container`);
-
-        $('.regenerateImages').show();
-        $('#regenerateImagesButton').show();
-        $('#navigateToImageButton').show();
-    }
-
-    // Add character update functionality
-    window.loadCharacterUpdatePage = function(chatId) {
-        if (!chatId) {
-            return;
-        }
-
-        // Load the character update form
-        $.ajax({
-            url: `/character-update/${chatId}`,
-            method: 'GET',
-            success: function(html) {
-                $('#character-update-container').html(html);
-                $('#characterUpdateModal').modal('show');
-            },
-            error: function(xhr, status, error) {
-                console.error('Error loading character update page:', error);
             }
+            
+            return value || fallback;
+        }
+        
+        /**
+         * Get asset path based on current style
+         */
+        getAssetPath() {
+            return this.assetPaths[this.characterData.style] || this.assetPaths.realistic;
+        }
+        
+        /**
+         * Load voice samples manifest
+         */
+        async loadVoiceSamples() {
+            try {
+                const response = await fetch('/audio/voice-samples/manifest.json');
+                if (response.ok) {
+                    this.voiceSamples = await response.json();
+                    console.log('[CharacterCreation] Voice samples loaded:', this.voiceSamples.voices?.length || 0);
+                }
+            } catch (error) {
+                console.error('[CharacterCreation] Failed to load voice samples:', error);
+                this.voiceSamples = this.getFallbackVoiceData();
+            }
+        }
+        
+        /**
+         * Fallback voice data if manifest fails to load
+         */
+        getFallbackVoiceData() {
+            return {
+                voices: [
+                    { key: 'Wise_Woman', gender: 'female', languages: ['en', 'fr', 'ja'] },
+                    { key: 'Friendly_Person', gender: 'female', languages: ['en', 'fr', 'ja'] },
+                    { key: 'Inspirational_girl', gender: 'female', languages: ['en', 'fr', 'ja'] },
+                    { key: 'Calm_Woman', gender: 'female', languages: ['en', 'fr', 'ja'] },
+                    { key: 'Lively_Girl', gender: 'female', languages: ['en', 'fr', 'ja'] },
+                    { key: 'Lovely_Girl', gender: 'female', languages: ['en', 'fr', 'ja'] },
+                    { key: 'Sweet_Girl_2', gender: 'female', languages: ['en', 'fr', 'ja'] },
+                    { key: 'Exuberant_Girl', gender: 'female', languages: ['en', 'fr', 'ja'] }
+                ],
+                files: []
+            };
+        }
+        
+        /**
+         * Bind all event listeners
+         */
+        bindEvents() {
+            const self = this;
+            
+            // Navigation buttons
+            const nextBtn = document.getElementById('nextBtn');
+            const backBtn = document.getElementById('backBtn');
+            
+            if (nextBtn) {
+                nextBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    self.nextStep();
+                });
+            }
+            
+            if (backBtn) {
+                backBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    self.prevStep();
+                });
+            }
+            
+            // Step 1: Style selection (using event delegation)
+            document.querySelectorAll('.style-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.selectStyle(e.currentTarget);
+                });
+            });
+            
+            // Age slider
+            const ageSlider = document.getElementById('ageSlider');
+            if (ageSlider) {
+                ageSlider.addEventListener('input', (e) => this.updateAge(e.target.value));
+            }
+            
+            // Step 5: Personality options (using event delegation)
+            document.querySelectorAll('.personality-option-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.openOptionPicker(e.currentTarget);
+                });
+            });
+            
+            // Name input
+            const characterName = document.getElementById('characterName');
+            if (characterName) {
+                characterName.addEventListener('input', (e) => {
+                    this.characterData.name = e.target.value;
+                    this.saveData();
+                });
+            }
+            
+            // Generate name button
+            const generateNameBtn = document.getElementById('generateNameBtn');
+            if (generateNameBtn) {
+                generateNameBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.generateRandomName();
+                });
+            }
+            
+            // Custom prompt
+            const customPrompt = document.getElementById('customPrompt');
+            if (customPrompt) {
+                customPrompt.addEventListener('input', (e) => {
+                    this.characterData.customPrompt = e.target.value;
+                    this.saveData();
+                });
+            }
+            
+            // Step 7: Image generation
+            const generateImageBtn = document.getElementById('generateImageBtn');
+            if (generateImageBtn) {
+                generateImageBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.generateImage();
+                });
+            }
+            
+            const regenerateImageBtn = document.getElementById('regenerateImageBtn');
+            if (regenerateImageBtn) {
+                regenerateImageBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.generateImage();
+                });
+            }
+            
+            // Step 8: Start chat
+            const startChatBtn = document.getElementById('startChatBtn');
+            if (startChatBtn) {
+                startChatBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.startChat();
+                });
+            }
+            
+            // Audio player events
+            if (this.audioPlayer) {
+                this.audioPlayer.addEventListener('ended', () => this.onAudioEnded());
+                this.audioPlayer.addEventListener('error', (e) => this.onAudioError(e));
+            }
+            
+            console.log('[CharacterCreation] Events bound');
+        }
+        
+        // ===================
+        // RENDER METHODS
+        // ===================
+        
+        /**
+         * Render ethnicity grid based on style
+         */
+        renderEthnicityGrid() {
+            const grid = document.getElementById('ethnicityGrid');
+            if (!grid) return;
+            
+            const basePath = this.getAssetPath();
+            const ethnicities = [
+                { key: 'caucasian', label: this.t('ethnicities.caucasian', 'Caucasian') },
+                { key: 'asian', label: this.t('ethnicities.asian', 'Asian') },
+                { key: 'black', label: this.t('ethnicities.black', 'Black') },
+                { key: 'latina', label: this.t('ethnicities.latina', 'Latina') },
+                { key: 'arab', label: this.t('ethnicities.arab', 'Arab') },
+                { key: 'indian', label: this.t('ethnicities.indian', 'Indian') },
+                { key: 'japanese', label: this.t('ethnicities.japanese', 'Japanese') },
+                { key: 'korean', label: this.t('ethnicities.korean', 'Korean') }
+            ];
+            
+            grid.innerHTML = ethnicities.map(eth => `
+                <div class="ethnicity-card${this.characterData.ethnicity === eth.key ? ' selected' : ''}" data-ethnicity="${eth.key}">
+                    <video src="${basePath}/ethnicity-${eth.key}.mp4" alt="${eth.label}" autoplay loop muted playsinline></video>
+                    <span>${eth.label}</span>
+                    <div class="check-badge"><i class="bi bi-check"></i></div>
+                </div>
+            `).join('');
+            
+            // Bind click events
+            grid.querySelectorAll('.ethnicity-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.selectEthnicity(e.currentTarget);
+                });
+            });
+        }
+        
+        /**
+         * Render hair style grid based on style
+         */
+        renderHairStyleGrid() {
+            const grid = document.getElementById('hairStyleGrid');
+            if (!grid) return;
+            
+            const basePath = this.getAssetPath();
+            const hairStyles = [
+                { key: 'straight', label: this.t('hair_styles.straight', 'Straight') },
+                { key: 'bangs', label: this.t('hair_styles.bangs', 'Bangs') },
+                { key: 'curly', label: this.t('hair_styles.curly', 'Curly') },
+                { key: 'bun', label: this.t('hair_styles.bun', 'Bun') },
+                { key: 'short', label: this.t('hair_styles.short', 'Short') },
+                { key: 'ponytail', label: this.t('hair_styles.ponytail', 'Ponytail') }
+            ];
+            
+            grid.innerHTML = hairStyles.map(style => `
+                <div class="hair-style-card${this.characterData.hairStyle === style.key ? ' selected' : ''}" data-hairstyle="${style.key}">
+                    <video src="${basePath}/hair-${style.key}.mp4" alt="${style.label}" autoplay loop muted playsinline></video>
+                    <span>${style.label}</span>
+                    <div class="check-badge"><i class="bi bi-check"></i></div>
+                </div>
+            `).join('');
+            
+            // Bind click events
+            grid.querySelectorAll('.hair-style-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.selectHairStyle(e.currentTarget);
+                });
+            });
+        }
+        
+        /**
+         * Render hair color strip based on style
+         */
+        renderHairColorStrip() {
+            const strip = document.getElementById('hairColorStrip');
+            if (!strip) return;
+            
+            const basePath = this.getAssetPath();
+            const hairColors = [
+                { key: 'brunette', label: this.t('hair_colors.brunette', 'Brunette') },
+                { key: 'blonde', label: this.t('hair_colors.blonde', 'Blonde') },
+                { key: 'black', label: this.t('hair_colors.black', 'Black') },
+                { key: 'redhead', label: this.t('hair_colors.redhead', 'Redhead') },
+                { key: 'pink', label: this.t('hair_colors.pink', 'Pink') }
+            ];
+            
+            strip.innerHTML = hairColors.map(color => `
+                <div class="hair-color-card${this.characterData.hairColor === color.key ? ' selected' : ''}" data-haircolor="${color.key}">
+                    <img src="${basePath}/haircolor-${color.key}.png" alt="${color.label}">
+                    <span>${color.label}</span>
+                    <div class="check-badge"><i class="bi bi-check"></i></div>
+                </div>
+            `).join('');
+            
+            // Bind click events
+            strip.querySelectorAll('.hair-color-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.selectHairColor(e.currentTarget);
+                });
+            });
+        }
+        
+        /**
+         * Render body type grid based on style
+         */
+        renderBodyTypeGrid() {
+            const grid = document.getElementById('bodyTypeGrid');
+            if (!grid) return;
+            
+            const basePath = this.getAssetPath();
+            const bodyTypes = [
+                { key: 'slim', label: this.t('body_types.slim', 'Slim') },
+                { key: 'athletic', label: this.t('body_types.athletic', 'Athletic') },
+                { key: 'voluptuous', label: this.t('body_types.voluptuous', 'Voluptuous') },
+                { key: 'curvy', label: this.t('body_types.curvy', 'Curvy') },
+                { key: 'muscular', label: this.t('body_types.muscular', 'Muscular') }
+            ];
+            
+            grid.innerHTML = bodyTypes.map(type => `
+                <div class="body-type-card${this.characterData.bodyType === type.key ? ' selected' : ''}" data-bodytype="${type.key}">
+                    <img src="${basePath}/body-${type.key}.png" alt="${type.label}">
+                    <span>${type.label}</span>
+                    <div class="check-badge"><i class="bi bi-check"></i></div>
+                </div>
+            `).join('');
+            
+            // Bind click events
+            grid.querySelectorAll('.body-type-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.selectBodyType(e.currentTarget);
+                });
+            });
+        }
+        
+        /**
+         * Render breast size grid based on style
+         */
+        renderBreastSizeGrid() {
+            const grid = document.getElementById('breastSizeGrid');
+            if (!grid) return;
+            
+            const basePath = this.getAssetPath();
+            const sizes = [
+                { key: 'flat', label: this.t('breast_sizes.flat', 'Flat') },
+                { key: 'small', label: this.t('breast_sizes.small', 'Small') },
+                { key: 'medium', label: this.t('breast_sizes.medium', 'Medium') },
+                { key: 'large', label: this.t('breast_sizes.large', 'Large') },
+                { key: 'xl', label: this.t('breast_sizes.xl', 'XL') }
+            ];
+            
+            grid.innerHTML = sizes.map(size => `
+                <div class="breast-size-card${this.characterData.breastSize === size.key ? ' selected' : ''}" data-breastsize="${size.key}">
+                    <img src="${basePath}/breast-${size.key}.png" alt="${size.label}">
+                    <span>${size.label}</span>
+                    <div class="check-badge"><i class="bi bi-check"></i></div>
+                </div>
+            `).join('');
+            
+            // Bind click events
+            grid.querySelectorAll('.breast-size-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.selectBreastSize(e.currentTarget);
+                });
+            });
+        }
+        
+        /**
+         * Render butt size grid based on style
+         */
+        renderButtSizeGrid() {
+            const grid = document.getElementById('buttSizeGrid');
+            if (!grid) return;
+            
+            const basePath = this.getAssetPath();
+            const sizes = [
+                { key: 'small', label: this.t('butt_sizes.small', 'Small') },
+                { key: 'medium', label: this.t('butt_sizes.medium', 'Medium') },
+                { key: 'athletic', label: this.t('butt_sizes.athletic', 'Athletic') },
+                { key: 'large', label: this.t('butt_sizes.large', 'Large') }
+            ];
+            
+            grid.innerHTML = sizes.map(size => `
+                <div class="butt-size-card${this.characterData.buttSize === size.key ? ' selected' : ''}" data-buttsize="${size.key}">
+                    <img src="${basePath}/butt-${size.key}.jpg" alt="${size.label}">
+                    <span>${size.label}</span>
+                    <div class="check-badge"><i class="bi bi-check"></i></div>
+                </div>
+            `).join('');
+            
+            // Bind click events
+            grid.querySelectorAll('.butt-size-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.selectButtSize(e.currentTarget);
+                });
+            });
+        }
+        
+        /**
+         * Render the voice selection grid
+         */
+        renderVoiceGrid() {
+            const voiceGrid = document.getElementById('voiceGrid');
+            if (!voiceGrid || !this.voiceSamples) return;
+            
+            // Filter for female voices only
+            const femaleVoices = this.voiceSamples.voices?.filter(v => v.gender === 'female') || [];
+            
+            voiceGrid.innerHTML = femaleVoices.map(voice => {
+                const voiceName = this.t(`voices.${voice.key}.name`, voice.key.replace(/_/g, ' '));
+                const voiceDesc = this.t(`voices.${voice.key}.description`, 'Select this voice');
+                const isSelected = this.characterData.voice === voice.key;
+                
+                return `
+                    <div class="voice-card${isSelected ? ' selected' : ''}" data-voice="${voice.key}">
+                        <div class="voice-card-content">
+                            <div class="voice-icon">
+                                <i class="bi bi-mic-fill"></i>
+                            </div>
+                            <div class="voice-info">
+                                <span class="voice-name">${voiceName}</span>
+                                <span class="voice-description">${voiceDesc}</span>
+                            </div>
+                        </div>
+                        <button type="button" class="play-sample-btn" data-voice="${voice.key}">
+                            <i class="bi bi-play-fill"></i>
+                            <span>${this.t('play_sample', 'Play Sample')}</span>
+                        </button>
+                        <div class="check-badge"><i class="bi bi-check"></i></div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Bind events for voice cards
+            voiceGrid.querySelectorAll('.voice-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (!e.target.closest('.play-sample-btn')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.selectVoice(card);
+                    }
+                });
+            });
+            
+            // Bind events for play buttons
+            voiceGrid.querySelectorAll('.play-sample-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.playVoiceSample(btn.dataset.voice);
+                });
+            });
+        }
+        
+        // ===================
+        // SELECTION METHODS
+        // ===================
+        
+        selectStyle(card) {
+            const style = card.dataset.style;
+            if (!style) return;
+            
+            document.querySelectorAll('.style-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            
+            this.characterData.style = style;
+            this.saveData();
+            
+            // Re-render grids with new style assets
+            this.renderEthnicityGrid();
+            this.renderHairStyleGrid();
+            this.renderHairColorStrip();
+            this.renderBodyTypeGrid();
+            this.renderBreastSizeGrid();
+            this.renderButtSizeGrid();
+        }
+        
+        selectEthnicity(card) {
+            const ethnicity = card.dataset.ethnicity;
+            if (!ethnicity) return;
+            
+            document.querySelectorAll('.ethnicity-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            
+            this.characterData.ethnicity = ethnicity;
+            this.saveData();
+        }
+        
+        updateAge(value) {
+            this.characterData.age = parseInt(value);
+            const ageValue = document.getElementById('ageValue');
+            if (ageValue) ageValue.textContent = value;
+            this.saveData();
+        }
+        
+        selectHairStyle(card) {
+            const hairStyle = card.dataset.hairstyle;
+            if (!hairStyle) return;
+            
+            document.querySelectorAll('.hair-style-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            
+            this.characterData.hairStyle = hairStyle;
+            this.saveData();
+        }
+        
+        selectHairColor(card) {
+            const hairColor = card.dataset.haircolor;
+            if (!hairColor) return;
+            
+            document.querySelectorAll('.hair-color-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            
+            this.characterData.hairColor = hairColor;
+            this.saveData();
+        }
+        
+        selectBodyType(card) {
+            const bodyType = card.dataset.bodytype;
+            if (!bodyType) return;
+            
+            document.querySelectorAll('.body-type-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            
+            this.characterData.bodyType = bodyType;
+            this.saveData();
+        }
+        
+        selectBreastSize(card) {
+            const breastSize = card.dataset.breastsize;
+            if (!breastSize) return;
+            
+            document.querySelectorAll('.breast-size-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            
+            this.characterData.breastSize = breastSize;
+            this.saveData();
+        }
+        
+        selectButtSize(card) {
+            const buttSize = card.dataset.buttsize;
+            if (!buttSize) return;
+            
+            document.querySelectorAll('.butt-size-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            
+            this.characterData.buttSize = buttSize;
+            this.saveData();
+        }
+        
+        selectVoice(card) {
+            const voice = card.dataset.voice;
+            if (!voice) return;
+            
+            document.querySelectorAll('.voice-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            
+            this.characterData.voice = voice;
+            this.saveData();
+        }
+        
+        selectImage(card) {
+            const imageUrl = card.dataset.imageUrl;
+            if (!imageUrl) return;
+            
+            document.querySelectorAll('.generated-image-item').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            
+            this.characterData.selectedImageUrl = imageUrl;
+            this.saveData();
+            
+            // Update summary image
+            const summaryImage = document.getElementById('summaryImage');
+            if (summaryImage) {
+                summaryImage.src = imageUrl;
+            }
+        }
+        
+        // ===================
+        // VOICE PLAYBACK
+        // ===================
+        
+        playVoiceSample(voiceKey) {
+            if (!this.audioPlayer) return;
+            
+            // If already playing this voice, stop it
+            if (this.currentPlayingVoice === voiceKey) {
+                this.stopAudio();
+                return;
+            }
+            
+            // Stop any currently playing audio
+            this.stopAudio();
+            
+            // Find the sample file
+            const langMap = { 'en': 'en', 'ja': 'ja', 'fr': 'fr' };
+            const sampleLang = langMap[this.lang] || 'en';
+            const sampleFile = this.voiceSamples?.files?.find(f => 
+                f.voice === voiceKey && f.language === sampleLang
+            );
+            
+            if (sampleFile) {
+                this.currentPlayingVoice = voiceKey;
+                this.audioPlayer.src = sampleFile.path;
+                this.audioPlayer.play().catch(err => {
+                    console.error('[CharacterCreation] Failed to play voice sample:', err);
+                    this.stopAudio();
+                });
+                
+                // Update button state
+                this.updatePlayButton(voiceKey, true);
+            }
+        }
+        
+        stopAudio() {
+            if (this.audioPlayer) {
+                this.audioPlayer.pause();
+                this.audioPlayer.currentTime = 0;
+            }
+            
+            if (this.currentPlayingVoice) {
+                this.updatePlayButton(this.currentPlayingVoice, false);
+                this.currentPlayingVoice = null;
+            }
+        }
+        
+        updatePlayButton(voiceKey, isPlaying) {
+            const btn = document.querySelector(`.play-sample-btn[data-voice="${voiceKey}"]`);
+            if (btn) {
+                const icon = btn.querySelector('i');
+                const text = btn.querySelector('span');
+                
+                if (isPlaying) {
+                    btn.classList.add('playing');
+                    if (icon) icon.className = 'bi bi-stop-fill';
+                    if (text) text.textContent = this.t('playing', 'Playing...');
+                } else {
+                    btn.classList.remove('playing');
+                    if (icon) icon.className = 'bi bi-play-fill';
+                    if (text) text.textContent = this.t('play_sample', 'Play Sample');
+                }
+            }
+        }
+        
+        onAudioEnded() {
+            if (this.currentPlayingVoice) {
+                this.updatePlayButton(this.currentPlayingVoice, false);
+                this.currentPlayingVoice = null;
+            }
+        }
+        
+        onAudioError(error) {
+            console.error('[CharacterCreation] Audio error:', error);
+            this.stopAudio();
+        }
+        
+        // ===================
+        // OPTION PICKER
+        // ===================
+        
+        openOptionPicker(card) {
+            const optionType = card.dataset.option;
+            const data = this.optionData[optionType];
+            if (!data) return;
+            
+            // Set modal title
+            const title = document.getElementById('optionPickerTitle');
+            if (title) title.textContent = data.title;
+            
+            // Render options
+            const optionList = document.getElementById('optionList');
+            if (optionList) {
+                optionList.innerHTML = data.options.map(opt => `
+                    <div class="option-item${this.characterData[optionType] === opt.value ? ' selected' : ''}" 
+                         data-option-type="${optionType}" 
+                         data-value="${opt.value}">
+                        <span>${opt.label}</span>
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                `).join('');
+                
+                // Bind click events
+                optionList.querySelectorAll('.option-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.selectOption(item);
+                    });
+                });
+            }
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('optionPickerModal'));
+            modal.show();
+        }
+        
+        selectOption(item) {
+            const optionType = item.dataset.optionType;
+            const value = item.dataset.value;
+            
+            // Update selection in modal
+            document.querySelectorAll('.option-item').forEach(i => i.classList.remove('selected'));
+            item.classList.add('selected');
+            
+            // Update character data
+            this.characterData[optionType] = value;
+            this.saveData();
+            
+            // Update the card display
+            const data = this.optionData[optionType];
+            const selectedOption = data.options.find(o => o.value === value);
+            const card = document.querySelector(`.personality-option-card[data-option="${optionType}"]`);
+            if (card && selectedOption) {
+                card.dataset.value = value;
+                const valueDisplay = card.querySelector('.option-value');
+                if (valueDisplay) valueDisplay.textContent = selectedOption.label;
+            }
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('optionPickerModal'));
+            if (modal) modal.hide();
+        }
+        
+        // ===================
+        // NAME GENERATION
+        // ===================
+        
+        async generateRandomName() {
+            const btn = document.getElementById('generateNameBtn');
+            const input = document.getElementById('characterName');
+            if (!btn || !input) return;
+            
+            btn.disabled = true;
+            const icon = btn.querySelector('i');
+            if (icon) icon.classList.add('spin');
+            
+            try {
+                // Generate name based on ethnicity
+                const names = this.getNamesByEthnicity(this.characterData.ethnicity);
+                const randomName = names[Math.floor(Math.random() * names.length)];
+                
+                input.value = randomName;
+                this.characterData.name = randomName;
+                this.saveData();
+            } catch (error) {
+                console.error('[CharacterCreation] Failed to generate name:', error);
+            } finally {
+                btn.disabled = false;
+                if (icon) icon.classList.remove('spin');
+            }
+        }
+        
+        getNamesByEthnicity(ethnicity) {
+            const namesByEthnicity = {
+                caucasian: ['Emma', 'Sophia', 'Olivia', 'Ava', 'Isabella', 'Mia', 'Charlotte', 'Amelia', 'Harper', 'Evelyn'],
+                asian: ['Mei', 'Lily', 'Yuki', 'Sakura', 'Hana', 'Lin', 'Jade', 'Luna', 'Chloe', 'Aria'],
+                black: ['Aaliyah', 'Zara', 'Jasmine', 'Destiny', 'Imani', 'Nia', 'Aisha', 'Keisha', 'Ebony', 'Destiny'],
+                latina: ['Sofia', 'Isabella', 'Valentina', 'Camila', 'Lucia', 'Elena', 'Rosa', 'Carmen', 'Maria', 'Ana'],
+                arab: ['Fatima', 'Aisha', 'Layla', 'Noor', 'Yasmin', 'Zara', 'Amira', 'Salma', 'Dana', 'Hana'],
+                indian: ['Priya', 'Ananya', 'Aisha', 'Neha', 'Riya', 'Kavya', 'Simran', 'Pooja', 'Diya', 'Sara'],
+                japanese: ['Yuki', 'Sakura', 'Hana', 'Mei', 'Aoi', 'Rin', 'Miku', 'Yuna', 'Kaori', 'Nana'],
+                korean: ['Jiyeon', 'Soyeon', 'Minji', 'Yuna', 'Hana', 'Seo-yeon', 'Ji-woo', 'Min-ji', 'Eun-bi', 'Ha-na']
+            };
+            
+            return namesByEthnicity[ethnicity] || namesByEthnicity.caucasian;
+        }
+        
+        // ===================
+        // IMAGE GENERATION
+        // ===================
+        
+        async generateImage() {
+            if (this.isGeneratingImage) return;
+            
+            const generateBtn = document.getElementById('generateImageBtn');
+            const regenerateBtn = document.getElementById('regenerateImageBtn');
+            const placeholder = document.getElementById('imagePlaceholder');
+            const grid = document.getElementById('generatedImagesGrid');
+            
+            this.isGeneratingImage = true;
+            
+            // Update buttons
+            if (generateBtn) {
+                generateBtn.disabled = true;
+                generateBtn.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div><span>' + this.t('generating', 'Generating...') + '</span>';
+            }
+            if (regenerateBtn) {
+                regenerateBtn.disabled = true;
+            }
+            
+            // Show loading placeholder
+            if (placeholder) {
+                placeholder.innerHTML = `
+                    <div class="placeholder-content">
+                        <div class="spinner-border text-light mb-3" role="status"></div>
+                        <span>${this.t('generating_image', 'Generating your character...')}</span>
+                    </div>
+                `;
+                placeholder.style.display = 'flex';
+            }
+            
+            try {
+                // Build the character prompt
+                const prompt = this.buildCharacterPrompt();
+                
+                // Call API
+                const response = await fetch('/api/generate-character-comprehensive', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        name: this.characterData.name,
+                        gender: 'female',
+                        chatPurpose: this.characterData.customPrompt || '',
+                        language: this.lang,
+                        imageType: 'sfw',
+                        chatId: this.chatId,
+                        enableEnhancedPrompt: true
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.chatId) {
+                    this.chatId = result.chatId;
+                    
+                    // Wait for image to be generated via socket
+                    // For now, show a message to wait
+                    if (placeholder) {
+                        placeholder.innerHTML = `
+                            <div class="placeholder-content">
+                                <div class="spinner-border text-light mb-3" role="status"></div>
+                                <span>${this.t('waiting_for_image', 'Image is being generated...')}</span>
+                            </div>
+                        `;
+                    }
+                    
+                    // Poll for image or listen to socket event
+                    this.pollForImage(result.chatId);
+                } else {
+                    throw new Error(result.error || 'Failed to generate');
+                }
+                
+            } catch (error) {
+                console.error('[CharacterCreation] Image generation error:', error);
+                this.showError(this.t('generation_failed', 'Failed to generate image. Please try again.'));
+                
+                // Reset placeholder
+                if (placeholder) {
+                    placeholder.innerHTML = `
+                        <div class="placeholder-content">
+                            <i class="bi bi-image"></i>
+                            <span>${this.t('click_generate_image', 'Click generate to create images')}</span>
+                        </div>
+                    `;
+                }
+            } finally {
+                this.isGeneratingImage = false;
+                
+                // Reset buttons
+                if (generateBtn) {
+                    generateBtn.disabled = false;
+                    generateBtn.innerHTML = '<i class="bi bi-magic"></i><span>' + this.t('generate_image', 'Generate Images') + '</span>';
+                }
+                if (regenerateBtn) {
+                    regenerateBtn.disabled = false;
+                }
+            }
+        }
+        
+        /**
+         * Poll for image generation completion
+         */
+        async pollForImage(chatId) {
+            const maxAttempts = 30;
+            let attempts = 0;
+            
+            const checkImage = async () => {
+                attempts++;
+                
+                try {
+                    const response = await fetch(`/api/chat/${chatId}`, {
+                        credentials: 'include'
+                    });
+                    const chat = await response.json();
+                    
+                    if (chat && chat.image_url) {
+                        this.onImageGenerated(chat.image_url);
+                        return;
+                    }
+                    
+                    if (attempts < maxAttempts) {
+                        setTimeout(checkImage, 2000);
+                    } else {
+                        this.showError(this.t('generation_timeout', 'Image generation timed out'));
+                        this.resetImagePlaceholder();
+                    }
+                } catch (error) {
+                    console.error('[CharacterCreation] Poll error:', error);
+                    if (attempts < maxAttempts) {
+                        setTimeout(checkImage, 2000);
+                    }
+                }
+            };
+            
+            setTimeout(checkImage, 3000);
+        }
+        
+        /**
+         * Called when image is generated
+         */
+        onImageGenerated(imageUrl) {
+            const placeholder = document.getElementById('imagePlaceholder');
+            const grid = document.getElementById('generatedImagesGrid');
+            const generateBtn = document.getElementById('generateImageBtn');
+            const regenerateBtn = document.getElementById('regenerateImageBtn');
+            const infoText = document.getElementById('imageSelectionInfo');
+            
+            // Add to generated images
+            this.characterData.generatedImages.push(imageUrl);
+            
+            // Hide placeholder, show grid
+            if (placeholder) placeholder.style.display = 'none';
+            
+            // Render images
+            if (grid) {
+                const existingImages = grid.querySelectorAll('.generated-image-item');
+                
+                const imageHtml = `
+                    <div class="generated-image-item${this.characterData.generatedImages.length === 1 ? ' selected' : ''}" data-image-url="${imageUrl}">
+                        <img src="${imageUrl}" alt="Generated Character">
+                        <div class="image-overlay">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                    </div>
+                `;
+                
+                if (existingImages.length === 0) {
+                    grid.innerHTML = imageHtml;
+                } else {
+                    grid.insertAdjacentHTML('beforeend', imageHtml);
+                }
+                
+                // Bind click event to new image
+                const newImage = grid.querySelector('.generated-image-item:last-child');
+                if (newImage) {
+                    newImage.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.selectImage(e.currentTarget);
+                    });
+                }
+                
+                // Auto-select first image
+                if (this.characterData.generatedImages.length === 1) {
+                    this.characterData.selectedImageUrl = imageUrl;
+                    this.saveData();
+                    
+                    // Update summary image
+                    const summaryImage = document.getElementById('summaryImage');
+                    if (summaryImage) summaryImage.src = imageUrl;
+                }
+            }
+            
+            // Update buttons
+            if (generateBtn) generateBtn.style.display = 'none';
+            if (regenerateBtn) regenerateBtn.style.display = 'flex';
+            if (infoText) infoText.style.display = 'block';
+        }
+        
+        resetImagePlaceholder() {
+            const placeholder = document.getElementById('imagePlaceholder');
+            if (placeholder) {
+                placeholder.style.display = 'flex';
+                placeholder.innerHTML = `
+                    <div class="placeholder-content">
+                        <i class="bi bi-image"></i>
+                        <span>${this.t('click_generate_image', 'Click generate to create images')}</span>
+                    </div>
+                `;
+            }
+        }
+        
+        buildCharacterPrompt() {
+            const d = this.characterData;
+            
+            const styleDesc = d.style === 'anime' ? 'anime style' : 'realistic photorealistic';
+            
+            const parts = [
+                `${styleDesc}`,
+                `beautiful ${d.ethnicity} woman`,
+                `${d.age} years old`,
+                `${d.hairStyle} ${d.hairColor} hair`,
+                `${d.bodyType} body`,
+                `${d.breastSize} breasts`,
+                `${d.buttSize} butt`,
+                `${d.personality} personality`,
+                `${d.occupation}`
+            ];
+            
+            if (d.customPrompt) {
+                parts.push(d.customPrompt);
+            }
+            
+            return parts.join(', ');
+        }
+        
+        // ===================
+        // NAVIGATION
+        // ===================
+        
+        nextStep() {
+            if (this.currentStep >= this.totalSteps) return;
+            
+            // Validate current step
+            if (!this.validateStep(this.currentStep)) return;
+            
+            // Update step
+            const prevStep = document.querySelector(`.step-slide[data-step="${this.currentStep}"]`);
+            this.currentStep++;
+            const nextStepEl = document.querySelector(`.step-slide[data-step="${this.currentStep}"]`);
+            
+            if (prevStep) prevStep.classList.remove('active');
+            if (prevStep) prevStep.classList.add('prev');
+            if (nextStepEl) nextStepEl.classList.add('active');
+            
+            // Update UI
+            this.updateUI();
+            this.saveData();
+            
+            // Update summary on last step
+            if (this.currentStep === this.totalSteps) {
+                this.updateSummary();
+            }
+        }
+        
+        prevStep() {
+            if (this.currentStep <= 1) return;
+            
+            const currentStepEl = document.querySelector(`.step-slide[data-step="${this.currentStep}"]`);
+            this.currentStep--;
+            const prevStepEl = document.querySelector(`.step-slide[data-step="${this.currentStep}"]`);
+            
+            if (currentStepEl) currentStepEl.classList.remove('active');
+            if (prevStepEl) prevStepEl.classList.remove('prev');
+            if (prevStepEl) prevStepEl.classList.add('active');
+            
+            this.updateUI();
+        }
+        
+        validateStep(step) {
+            switch (step) {
+                case 1:
+                    return !!this.characterData.style;
+                case 2:
+                    return !!this.characterData.ethnicity;
+                case 3:
+                    return !!this.characterData.hairStyle && !!this.characterData.hairColor;
+                case 4:
+                    return !!this.characterData.bodyType;
+                case 5:
+                    return true; // Name is optional
+                case 6:
+                    return !!this.characterData.voice;
+                case 7:
+                    if (!this.characterData.selectedImageUrl) {
+                        this.showError(this.t('errors.select_image', 'Please select an image'));
+                        return false;
+                    }
+                    return true;
+                default:
+                    return true;
+            }
+        }
+        
+        updateUI() {
+            // Update progress bar
+            const progress = (this.currentStep / this.totalSteps) * 100;
+            const progressBar = document.getElementById('progressBar');
+            if (progressBar) progressBar.style.width = `${progress}%`;
+            
+            // Update step indicator
+            const currentStepEl = document.querySelector('.step-indicator .current-step');
+            if (currentStepEl) currentStepEl.textContent = this.currentStep;
+            
+            // Update back button visibility
+            const backBtn = document.getElementById('backBtn');
+            if (backBtn) {
+                backBtn.style.visibility = this.currentStep > 1 ? 'visible' : 'hidden';
+            }
+            
+            // Update next button text
+            const nextBtn = document.getElementById('nextBtn');
+            if (nextBtn) {
+                if (this.currentStep === this.totalSteps) {
+                    nextBtn.style.display = 'none';
+                } else {
+                    nextBtn.style.display = 'flex';
+                    nextBtn.innerHTML = this.t('next', 'Next') + ' <i class="bi bi-chevron-right"></i>';
+                }
+            }
+        }
+        
+        updateSummary() {
+            const d = this.characterData;
+            
+            // Update summary image
+            const summaryImage = document.getElementById('summaryImage');
+            if (summaryImage && d.selectedImageUrl) {
+                summaryImage.src = d.selectedImageUrl;
+            }
+            
+            // Update name
+            const summaryName = document.getElementById('summaryName');
+            if (summaryName) {
+                summaryName.textContent = d.name || this.t('unnamed', 'Unnamed');
+            }
+            
+            // Update traits
+            const summaryAge = document.getElementById('summaryAge');
+            if (summaryAge) summaryAge.textContent = `${d.age} ${this.t('years', 'years')}`;
+            
+            const summaryEthnicity = document.getElementById('summaryEthnicity');
+            if (summaryEthnicity) {
+                summaryEthnicity.textContent = this.t(`ethnicities.${d.ethnicity}`, d.ethnicity);
+            }
+            
+            const summaryPersonality = document.getElementById('summaryPersonality');
+            if (summaryPersonality) {
+                summaryPersonality.textContent = this.t(`personalities.${d.personality}`, d.personality);
+            }
+            
+            // Update description
+            const summaryDescription = document.getElementById('summaryDescription');
+            if (summaryDescription) {
+                const occupation = this.t(`occupations.${d.occupation}`, d.occupation);
+                const relationship = this.t(`relationships.${d.relationship}`, d.relationship);
+                summaryDescription.textContent = `${occupation} • ${relationship}`;
+            }
+        }
+        
+        // ===================
+        // START CHAT
+        // ===================
+        
+        async startChat() {
+            if (!this.chatId) {
+                this.showError(this.t('no_character', 'Please generate a character first'));
+                return;
+            }
+            
+            this.showLoading(this.t('creating_character', 'Creating your character...'));
+            
+            try {
+                // Save character image if not already saved
+                if (this.characterData.selectedImageUrl) {
+                    try {
+                        await fetch(`/api/chat/${this.chatId}/set-image`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({
+                                imageUrl: this.characterData.selectedImageUrl
+                            })
+                        });
+                    } catch (imgErr) {
+                        console.warn('[CharacterCreation] Failed to save character image, continuing anyway');
+                    }
+                }
+                
+                // Clear session storage
+                this.clearSavedData();
+                
+                // Redirect to chat
+                window.location.href = `/chat/${this.chatId}`;
+                
+            } catch (error) {
+                console.error('[CharacterCreation] Start chat error:', error);
+                this.hideLoading();
+                this.showError(this.t('start_chat_error', 'Failed to start chat. Please try again.'));
+            }
+        }
+        
+        // ===================
+        // UTILITY METHODS
+        // ===================
+        
+        showLoading(message) {
+            const overlay = document.getElementById('loadingOverlay');
+            const msg = document.getElementById('loadingMessage');
+            if (overlay) overlay.style.display = 'flex';
+            if (msg) msg.textContent = message;
+        }
+        
+        hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.style.display = 'none';
+        }
+        
+        showError(message) {
+            // Use existing toast or create one
+            let toast = document.querySelector('.error-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.className = 'error-toast';
+                document.body.appendChild(toast);
+            }
+            
+            toast.innerHTML = `<i class="bi bi-exclamation-circle"></i> ${message}`;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 4000);
+        }
+        
+        saveData() {
+            try {
+                sessionStorage.setItem('characterCreation', JSON.stringify({
+                    step: this.currentStep,
+                    data: this.characterData,
+                    chatId: this.chatId
+                }));
+            } catch (e) {
+                // Ignore storage errors
+            }
+        }
+        
+        loadSavedData() {
+            try {
+                const saved = sessionStorage.getItem('characterCreation');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.data) {
+                        // Keep gender as female always
+                        parsed.data.gender = 'female';
+                        this.characterData = { ...this.characterData, ...parsed.data };
+                    }
+                    if (parsed.chatId) {
+                        this.chatId = parsed.chatId;
+                    }
+                    // Don't restore step - always start fresh
+                }
+            } catch (error) {
+                console.error('[CharacterCreation] Failed to load saved data:', error);
+            }
+        }
+        
+        clearSavedData() {
+            sessionStorage.removeItem('characterCreation');
+            window.characterCreationInitialized = false;
+        }
+    }
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            window.characterCreation = new CharacterCreation();
         });
-    };
-
-    // Mobile navigation state
-    let isMobileViewInitialized = false;
-
-    // Check if we're on mobile
-    function isMobile() {
-        return window.innerWidth <= 768;
+    } else {
+        window.characterCreation = new CharacterCreation();
     }
-
-    // Initialize mobile view based on chat data availability
-    function initializeMobileView() {
-        if (!isMobile() || isMobileViewInitialized) return;
-
-        isMobileViewInitialized = true;
-
-        // Check if chat data exists (image or other data)
-        const hasExistingImage = $('#generatedImage').attr('src') !== '/img/default-character.png';
-        const hasRegenerateButton = $('.regenerateImages').is(':visible');
-
-        if (hasExistingImage || hasRegenerateButton || (isTemporaryChat === 'false' || isTemporaryChat === false)) {
-            // Show right column first if chat data exists
-            showMobileRightColumn();
-        } else {
-            // Show left column first for new character creation
-            showMobileLeftColumn();
-        }
-    }
-
-    // Show mobile left column (form)
-    function showMobileLeftColumn() {
-        if (!isMobile()) return;
-
-        $('.modal-sidebar-fixed').removeClass('mobile-hidden');
-        $('.modal-main-content').removeClass('mobile-visible mobile-visible-initial');
-    }
-
-    // Show mobile right column (image)
-    function showMobileRightColumn() {
-        if (!isMobile()) return;
-
-        $('.modal-sidebar-fixed').addClass('mobile-hidden');
-        $('.modal-main-content').addClass('mobile-visible');
-    }
-
-    // Back button functionality
-    $(document).on('click', '#backToSidebar', function() {
-        showMobileLeftColumn();
-    });
-
-    // Handle window resize
-    $(window).on('resize', function() {
-        if (!isMobile()) {
-            // Reset mobile classes when not on mobile
-            $('.modal-sidebar-fixed').removeClass('mobile-hidden');
-            $('.modal-main-content').removeClass('mobile-visible mobile-visible-initial');
-            isMobileViewInitialized = false;
-        } else {
-            initializeMobileView();
-        }
-    });
-
-    // Initialize mobile view on page load
-    setTimeout(function() {
-        initializeMobileView();
-    }, 100);
-
+    
 })();

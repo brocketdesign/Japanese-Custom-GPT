@@ -1575,7 +1575,174 @@
     "debrided_generation_started": "Amélioration de la personnalité du personnage en cours...",
     "debrided_generation_error": "Amélioration de la personnalité terminée avec des avertissements",
     "saving_character_data": "Enregistrement des données du personnage...",
-    "comprehensive_generation_started": "Démarrage de la génération complète du personnage..."
+    "comprehensive_generation_started": "Démarrage de la génération complète du personnage...",
+    
+    "step1_title": "Choisissez Votre Style",
+    "step1_subtitle": "Quel type de personnage souhaitez-vous créer ?",
+    "step2_title": "Choisissez l'Ethnie et l'Âge",
+    "step2_subtitle": "Sélectionnez l'ethnie et l'âge de votre personnage",
+    "step3_title": "Choisissez la Coiffure",
+    "step3_subtitle": "Choisissez la coiffure et la couleur parfaites",
+    "step4_title": "Choisissez le Type de Corps",
+    "step4_subtitle": "Sélectionnez les caractéristiques corporelles",
+    "step5_title": "Choisissez la Personnalité",
+    "step5_subtitle": "Définissez les traits de personnalité de votre personnage",
+    "step6_title": "Choisissez la Voix",
+    "step6_subtitle": "Sélectionnez une voix pour votre personnage",
+    "step7_title": "Générer l'Image",
+    "step7_subtitle": "Créez une image unique pour votre personnage",
+    "step8_title": "Réviser et Confirmer",
+    "step8_subtitle": "Révisez votre personnage et commencez à discuter",
+    
+    "style_realistic": "Réaliste",
+    "style_anime": "Anime",
+    
+    "age_title": "Choisissez l'Âge",
+    "age_label": "Âge",
+    "age_years": "Ans",
+    
+    "hair_color_title": "Choisissez la Couleur des Cheveux",
+    "breast_size_title": "Choisissez la Taille de Poitrine",
+    "butt_size_title": "Choisissez la Taille des Fesses",
+    
+    "name_title": "Nom du Personnage",
+    "name_placeholder": "Entrez un nom...",
+    "generate_name": "Générer un Nom",
+    
+    "personality_title": "Personnalité",
+    "relationship_title": "Relation",
+    "occupation_title": "Profession",
+    "kinks_title": "Préférences",
+    "custom_prompt_title": "Détails Personnalisés",
+    "custom_prompt_placeholder": "Ajoutez des détails personnalisés sur votre personnage...",
+    
+    "voice_title": "Voix",
+    "play_sample": "Écouter",
+    "stop_sample": "Arrêter",
+    
+    "generate_image": "Générer l'Image",
+    "regenerate_image": "Régénérer",
+    "generating_image": "Génération de votre personnage...",
+    "select_image": "Sélectionner cette image",
+    "image_selected": "Image Sélectionnée",
+    "no_image_generated": "Aucune image générée",
+    "click_generate": "Cliquez sur le bouton ci-dessus pour générer l'image de votre personnage",
+    
+    "review_title": "Votre Personnage",
+    "start_chatting": "Commencer à Discuter",
+    "generating_character": "Création de votre personnage...",
+    "please_wait": "Cela peut prendre un moment",
+    
+    "next": "Suivant",
+    
+    "ethnicities": {
+      "caucasian": "Caucasien",
+      "asian": "Asiatique",
+      "black": "Noir",
+      "latina": "Latina",
+      "arab": "Arabe",
+      "indian": "Indien",
+      "japanese": "Japonais",
+      "korean": "Coréen"
+    },
+    
+    "hair_styles": {
+      "straight": "Lisses",
+      "bangs": "Frange",
+      "curly": "Bouclés",
+      "bun": "Chignon",
+      "short": "Courts",
+      "ponytail": "Queue de cheval",
+      "braids": "Tresses",
+      "wavy": "Ondulés"
+    },
+    
+    "hair_colors": {
+      "brunette": "Brune",
+      "blonde": "Blonde",
+      "black": "Noir",
+      "redhead": "Rousse",
+      "pink": "Rose",
+      "blue": "Bleu",
+      "white": "Blanc",
+      "purple": "Violet"
+    },
+    
+    "body_types": {
+      "skinny": "Maigre",
+      "slim": "Mince",
+      "athletic": "Athlétique",
+      "average": "Moyenne",
+      "curvy": "Pulpeuse",
+      "voluptuous": "Voluptueuse"
+    },
+    
+    "breast_sizes": {
+      "flat": "Plate",
+      "small": "Petite",
+      "medium": "Moyenne",
+      "large": "Grande",
+      "xl": "Très Grande"
+    },
+    
+    "butt_sizes": {
+      "small": "Petit",
+      "medium": "Moyen",
+      "athletic": "Athlétique",
+      "large": "Grand",
+      "xl": "Très Grand"
+    },
+    
+    "personalities": {
+      "submissive": "Soumise",
+      "dominant": "Dominante",
+      "shy": "Timide",
+      "confident": "Confiante",
+      "playful": "Joueuse",
+      "serious": "Sérieuse",
+      "romantic": "Romantique",
+      "adventurous": "Aventurière",
+      "caring": "Attentionnée",
+      "mysterious": "Mystérieuse"
+    },
+    
+    "relationships": {
+      "stranger": "Inconnue",
+      "friend": "Amie",
+      "girlfriend": "Petite Amie",
+      "wife": "Épouse",
+      "crush": "Béguin",
+      "colleague": "Collègue",
+      "neighbor": "Voisine",
+      "ex": "Ex",
+      "first_date": "Premier Rendez-vous",
+      "roommate": "Colocataire"
+    },
+    
+    "occupations": {
+      "student": "Étudiante",
+      "teacher": "Professeure",
+      "nurse": "Infirmière",
+      "model": "Mannequin",
+      "artist": "Artiste",
+      "athlete": "Athlète",
+      "businesswoman": "Femme d'Affaires",
+      "influencer": "Influenceuse",
+      "scientist": "Scientifique",
+      "musician": "Musicienne"
+    },
+    
+    "kinks": {
+      "vanilla": "Classique",
+      "daddy_dom": "Daddy Dom",
+      "roleplay": "Jeu de Rôle",
+      "bdsm": "BDSM",
+      "exhibitionism": "Exhibitionnisme",
+      "feet": "Pieds",
+      "lingerie": "Lingerie",
+      "outdoor": "Extérieur",
+      "toys": "Jouets"
+    }
   },
   "imageGenerationForm": "Formulaire de génération d'image",
   "selectImageType": "Sélectionner le type d'image",

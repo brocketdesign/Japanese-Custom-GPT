@@ -3730,19 +3730,19 @@ function loadCharacterCreationPage(chatId) {
                 });
                 cssPromises.push(imageUploaderCSS);
                 
-                // Load sidebar CSS
-                const sidebarCSS = new Promise((resolve) => {
-                    const sidebarLink = document.createElement('link');
-                    sidebarLink.rel = 'stylesheet';
-                    sidebarLink.href = '/css/character-creation-sidebar-layout.css';
-                    sidebarLink.onload = resolve;
-                    sidebarLink.onerror = (err) => {
-                        console.error('Failed to load /css/character-creation-sidebar-layout.css', err);
+                // Load character creation CSS
+                const characterCreationCSS = new Promise((resolve) => {
+                    const ccLink = document.createElement('link');
+                    ccLink.rel = 'stylesheet';
+                    ccLink.href = '/css/character-creation.css';
+                    ccLink.onload = resolve;
+                    ccLink.onerror = (err) => {
+                        console.error('Failed to load /css/character-creation.css', err);
                         resolve(); // Continue even if CSS fails
                     };
-                    document.head.appendChild(sidebarLink);
+                    document.head.appendChild(ccLink);
                 });
-                cssPromises.push(sidebarCSS);
+                cssPromises.push(characterCreationCSS);
 
                 // Wait for CSS to load, then load scripts in order
                 Promise.all(cssPromises).then(() => {

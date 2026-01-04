@@ -1,0 +1,266 @@
+{
+    "meta": {
+        "title": "AIコンパニオンを作成 | ChatLamix",
+        "description": "理想のAIガールフレンドを作成しましょう。外見、性格、声を選べます。",
+        "keywords": "AIコンパニオン, AI彼女, AI彼氏, カスタムAIキャラクター, バーチャルコンパニオン"
+    },
+    
+    "page_title": "AIコンパニオンを作成",
+    "meta_description": "理想のAIガールフレンドを作成しましょう。外見、性格、声を選べます。",
+    
+    "step_indicator": "ステップ {{current}} / {{total}}",
+    
+    "step1": {
+        "title": "スタイルを選択",
+        "subtitle": "どんなタイプのキャラクターを作りたいですか？",
+        "style_realistic": "リアル",
+        "style_anime": "アニメ",
+        "gender_title": "キャラクターの性別",
+        "gender_girls": "女の子",
+        "gender_boys": "男の子",
+        "gender_trans": "トランス"
+    },
+    
+    "step2": {
+        "title": "民族を選択",
+        "subtitle": "キャラクターの民族を選んでください",
+        "ethnicities": {
+            "caucasian": "白人",
+            "asian": "アジア人",
+            "black": "黒人",
+            "latina": "ラテン系",
+            "arab": "アラブ系",
+            "indian": "インド系",
+            "japanese": "日本人",
+            "korean": "韓国人",
+            "mixed": "ミックス"
+        },
+        "age_title": "年齢を選択",
+        "age_years": "歳"
+    },
+    
+    "step3": {
+        "title": "ヘアスタイルを選択",
+        "subtitle": "ぴったりの髪型を選んでください",
+        "hair_styles": {
+            "straight": "ストレート",
+            "bangs": "前髪あり",
+            "curly": "カーリー",
+            "bun": "お団子",
+            "short": "ショート",
+            "ponytail": "ポニーテール",
+            "braids": "三つ編み",
+            "wavy": "ウェーブ",
+            "long": "ロング"
+        },
+        "hair_color_title": "髪の色を選択",
+        "hair_colors": {
+            "brunette": "ブルネット",
+            "blonde": "ブロンド",
+            "black": "黒髪",
+            "redhead": "赤毛",
+            "pink": "ピンク",
+            "blue": "青",
+            "white": "白",
+            "purple": "紫",
+            "green": "緑"
+        }
+    },
+    
+    "step4": {
+        "title": "体型を選択",
+        "subtitle": "体の特徴を選んでください",
+        "body_types": {
+            "skinny": "痩せ型",
+            "slim": "スリム",
+            "athletic": "アスレチック",
+            "average": "標準",
+            "curvy": "グラマー",
+            "voluptuous": "ボリューム",
+            "muscular": "筋肉質",
+            "bbw": "ぽっちゃり"
+        },
+        "breast_size_title": "バストサイズを選択",
+        "breast_sizes": {
+            "flat": "フラット",
+            "small": "小さめ",
+            "medium": "普通",
+            "large": "大きめ",
+            "xl": "特大"
+        },
+        "butt_size_title": "ヒップサイズを選択",
+        "butt_sizes": {
+            "small": "小さめ",
+            "skinny": "細め",
+            "athletic": "引き締まった",
+            "medium": "普通",
+            "large": "大きめ"
+        }
+    },
+    
+    "step5": {
+        "title": "性格を選択",
+        "subtitle": "クリックして変更できます",
+        "name_title": "名前を決める",
+        "name_placeholder": "名前を入力または生成",
+        "generate_name": "名前を生成",
+        "personality_title": "性格",
+        "personalities": {
+            "submissive": "従順",
+            "dominant": "支配的",
+            "shy": "シャイ",
+            "confident": "自信家",
+            "playful": "遊び心",
+            "serious": "真面目",
+            "romantic": "ロマンチック",
+            "adventurous": "冒険好き",
+            "caring": "思いやり",
+            "mysterious": "ミステリアス"
+        },
+        "relationship_title": "関係性",
+        "relationships": {
+            "stranger": "初対面",
+            "friend": "友達",
+            "girlfriend": "彼女",
+            "wife": "妻",
+            "crush": "片思い",
+            "colleague": "同僚",
+            "neighbor": "隣人",
+            "ex": "元カノ",
+            "first_date": "初デート",
+            "roommate": "ルームメイト"
+        },
+        "occupation_title": "職業",
+        "occupations": {
+            "student": "学生",
+            "teacher": "先生",
+            "nurse": "看護師",
+            "model": "モデル",
+            "artist": "アーティスト",
+            "athlete": "アスリート",
+            "businesswoman": "ビジネスウーマン",
+            "influencer": "インフルエンサー",
+            "scientist": "科学者",
+            "musician": "ミュージシャン"
+        },
+        "kinks_title": "好きなこと",
+        "kinks": {
+            "vanilla": "バニラ",
+            "daddy_dom": "パパ系",
+            "roleplay": "ロールプレイ",
+            "bdsm": "BDSM",
+            "exhibitionism": "露出",
+            "feet": "足フェチ",
+            "lingerie": "ランジェリー",
+            "outdoor": "野外",
+            "toys": "おもちゃ"
+        }
+    },
+    
+    "step6": {
+        "title": "声を選択",
+        "subtitle": "キャラクターの声を聴いて選んでください",
+        "play_sample": "再生",
+        "playing": "再生中...",
+        "voices": {
+            "Wise_Woman": {
+                "name": "賢い女性",
+                "description": "温かく表現力豊か、深い会話に最適"
+            },
+            "Friendly_Person": {
+                "name": "フレンドリー",
+                "description": "明るく親しみやすい、はっきりとした発音"
+            },
+            "Inspirational_girl": {
+                "name": "励まし系女子",
+                "description": "元気づける明るい声"
+            },
+            "Calm_Woman": {
+                "name": "穏やかな女性",
+                "description": "落ち着いた癒しの声、リラックスした会話に最適"
+            },
+            "Lively_Girl": {
+                "name": "元気な女の子",
+                "description": "活発でエネルギッシュ、テンポの良い話し方"
+            },
+            "Lovely_Girl": {
+                "name": "可愛い女の子",
+                "description": "優しく魅力的、柔らかい口調"
+            },
+            "Abbess": {
+                "name": "修道女",
+                "description": "穏やかで威厳のある、優しい権威"
+            },
+            "Sweet_Girl_2": {
+                "name": "スイートガール",
+                "description": "明るく若々しい、愛情のこもった温かさ"
+            },
+            "Exuberant_Girl": {
+                "name": "ハイテンション女子",
+                "description": "エネルギー溢れる熱狂的な話し方"
+            }
+        }
+    },
+    
+    "step7": {
+        "title": "キャラクター確認",
+        "subtitle": "もう少しです！確認してAIコンパニオンを作成しましょう",
+        "character_preview": "キャラクタープレビュー",
+        "appearance": "外見",
+        "personality": "性格",
+        "voice": "声"
+    },
+    
+    "registration": {
+        "title": "あと少し！",
+        "subtitle": "無料アカウントを作成してキャラクターを保存",
+        "benefits": {
+            "title": "特典：",
+            "benefit1": "カスタムAIコンパニオンを永久保存",
+            "benefit2": "無制限の無料会話",
+            "benefit3": "画像生成機能へのアクセス",
+            "benefit4": "すべてのデバイスでチャット履歴を同期"
+        },
+        "email_placeholder": "メールアドレスを入力",
+        "password_placeholder": "パスワードを作成",
+        "confirm_password": "パスワードを確認",
+        "terms_agree": "利用規約とプライバシーポリシーに同意します",
+        "create_account": "アカウント作成 & キャラクター生成",
+        "already_have_account": "すでにアカウントをお持ちですか？",
+        "sign_in": "ログイン",
+        "or_continue_with": "または",
+        "google": "Googleで続ける",
+        "creating": "キャラクターを作成中..."
+    },
+    
+    "buttons": {
+        "next": "次へ",
+        "back": "戻る",
+        "create": "キャラクター作成",
+        "skip": "スキップ",
+        "generating": "生成中..."
+    },
+    
+    "errors": {
+        "select_style": "スタイルを選択してください",
+        "select_ethnicity": "民族を選択してください",
+        "select_hair": "髪型と髪色を選択してください",
+        "select_body": "体型を選択してください",
+        "select_personality": "性格オプションを選択してください",
+        "select_voice": "声を選択してください",
+        "enter_name": "キャラクターの名前を入力してください",
+        "invalid_email": "有効なメールアドレスを入力してください",
+        "password_short": "パスワードは8文字以上必要です",
+        "passwords_mismatch": "パスワードが一致しません",
+        "agree_terms": "利用規約に同意してください",
+        "generation_failed": "キャラクター生成に失敗しました。もう一度お試しください。"
+    },
+    
+    "premium_badge": "プレミアム",
+    "premium_feature": "プレミアム機能",
+    "unlock_premium": "プレミアムで解除",
+    
+    "loading": "読み込み中...",
+    "generating_character": "AIコンパニオンを作成中...",
+    "please_wait": "キャラクターに命を吹き込んでいます。お待ちください"
+}

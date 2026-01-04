@@ -1,0 +1,246 @@
+{
+    "meta": {
+        "title": "キャラクター作成 | ChatLamix",
+        "description": "カスタムAIコンパニオンを作成しましょう。外見、性格、声を選び、画像を生成します。"
+    },
+    
+    "page_title": "キャラクターを作成",
+    
+    "step_indicator": "ステップ {{current}} / {{total}}",
+    
+    "step1": {
+        "title": "スタイルを選択",
+        "subtitle": "どのタイプのキャラクターを作成しますか？",
+        "style_realistic": "リアル",
+        "style_anime": "アニメ",
+        "gender_title": "キャラクターの性別",
+        "gender_girls": "女性",
+        "gender_boys": "男性",
+        "gender_trans": "トランス"
+    },
+    
+    "step2": {
+        "title": "民族を選択",
+        "subtitle": "キャラクターの民族を選択",
+        "ethnicities": {
+            "caucasian": "白人",
+            "asian": "アジア人",
+            "black": "黒人 / アフロ",
+            "latina": "ラティーナ",
+            "arab": "アラブ人",
+            "indian": "インド人",
+            "japanese": "日本人",
+            "korean": "韓国人",
+            "mixed": "ミックス"
+        },
+        "age_title": "年齢を選択",
+        "age_years": "歳"
+    },
+    
+    "step3": {
+        "title": "髪型を選択",
+        "subtitle": "完璧な髪型を選んでください",
+        "hair_styles": {
+            "straight": "ストレート",
+            "bangs": "前髪あり",
+            "curly": "カーリー",
+            "bun": "お団子",
+            "short": "ショート",
+            "ponytail": "ポニーテール",
+            "braids": "三つ編み",
+            "wavy": "ウェーブ",
+            "long": "ロング"
+        },
+        "hair_color_title": "髪の色を選択",
+        "hair_colors": {
+            "brunette": "ブルネット",
+            "blonde": "ブロンド",
+            "black": "黒髪",
+            "redhead": "赤毛",
+            "pink": "ピンク",
+            "blue": "青",
+            "white": "白",
+            "purple": "紫",
+            "green": "緑"
+        }
+    },
+    
+    "step4": {
+        "title": "体型を選択",
+        "subtitle": "体の特徴を選択",
+        "body_types": {
+            "skinny": "痩せ型",
+            "slim": "スリム",
+            "athletic": "アスレチック",
+            "average": "普通",
+            "curvy": "カービー",
+            "voluptuous": "ボリューム",
+            "muscular": "筋肉質",
+            "bbw": "BBW"
+        },
+        "breast_size_title": "バストサイズを選択",
+        "breast_sizes": {
+            "flat": "フラット",
+            "small": "小さい",
+            "medium": "中くらい",
+            "large": "大きい",
+            "xl": "特大"
+        },
+        "butt_size_title": "ヒップサイズを選択",
+        "butt_sizes": {
+            "small": "小さい",
+            "skinny": "スレンダー",
+            "athletic": "アスレチック",
+            "medium": "中くらい",
+            "large": "大きい"
+        }
+    },
+    
+    "step5": {
+        "title": "性格を選択",
+        "subtitle": "クリックしてオプションを変更",
+        "name_title": "名前を選択",
+        "name_placeholder": "名前を入力または生成",
+        "generate_name": "名前を生成",
+        "personality_title": "性格を選択",
+        "personalities": {
+            "submissive": "従順",
+            "dominant": "支配的",
+            "shy": "シャイ",
+            "confident": "自信家",
+            "playful": "遊び心",
+            "serious": "真面目",
+            "romantic": "ロマンチック",
+            "adventurous": "冒険好き",
+            "caring": "思いやり",
+            "mysterious": "ミステリアス"
+        },
+        "relationship_title": "関係を選択",
+        "relationships": {
+            "stranger": "知らない人",
+            "friend": "友達",
+            "girlfriend": "彼女",
+            "wife": "妻",
+            "crush": "片思い",
+            "colleague": "同僚",
+            "neighbor": "隣人",
+            "ex": "元カノ",
+            "first_date": "初デート",
+            "roommate": "ルームメイト"
+        },
+        "occupation_title": "職業を選択",
+        "occupations": {
+            "student": "学生",
+            "teacher": "先生",
+            "nurse": "看護師",
+            "model": "モデル",
+            "artist": "アーティスト",
+            "athlete": "アスリート",
+            "businesswoman": "ビジネスウーマン",
+            "influencer": "インフルエンサー",
+            "scientist": "科学者",
+            "musician": "ミュージシャン"
+        },
+        "kinks_title": "どんな趣味？",
+        "kinks": {
+            "vanilla": "バニラ",
+            "daddy_dom": "パパ支配",
+            "roleplay": "ロールプレイ",
+            "bdsm": "BDSM",
+            "exhibitionism": "露出",
+            "feet": "足フェチ",
+            "lingerie": "ランジェリー",
+            "outdoor": "野外",
+            "toys": "おもちゃ"
+        },
+        "custom_prompt_title": "カスタムプロンプト（任意）",
+        "custom_prompt_placeholder": "キャラクターについて追加の詳細を入力..."
+    },
+    
+    "step6": {
+        "title": "声を選択",
+        "subtitle": "聴いてキャラクターの声を選択",
+        "play_sample": "サンプルを再生",
+        "playing": "再生中...",
+        "voices": {
+            "Wise_Woman": {
+                "name": "賢い女性",
+                "description": "深い会話に最適な、温かく表現豊かな声"
+            },
+            "Friendly_Person": {
+                "name": "フレンドリーな人",
+                "description": "明るくて親しみやすい、はっきりした発音"
+            },
+            "Inspirational_girl": {
+                "name": "インスピレーショナルガール",
+                "description": "励ましと明るさを持った声"
+            },
+            "Calm_Woman": {
+                "name": "穏やかな女性",
+                "description": "リラックスした会話に最適な、落ち着いた声"
+            },
+            "Lively_Girl": {
+                "name": "活発な女の子",
+                "description": "元気でエネルギッシュな速いテンポ"
+            },
+            "Lovely_Girl": {
+                "name": "可愛い女の子",
+                "description": "優しくて魅力的な、柔らかいイントネーション"
+            },
+            "Abbess": {
+                "name": "修道院長",
+                "description": "穏やかな威厳を持つ、静かで品のある声"
+            },
+            "Sweet_Girl_2": {
+                "name": "スウィートガール",
+                "description": "明るく若々しい、愛情のある温かさ"
+            },
+            "Exuberant_Girl": {
+                "name": "元気な女の子",
+                "description": "熱意に満ちたハイエナジーな声"
+            }
+        }
+    },
+    
+    "step7": {
+        "title": "画像を生成",
+        "subtitle": "キャラクターの画像を作成",
+        "generate_button": "画像を生成",
+        "regenerate_button": "もっと生成",
+        "generating": "生成中...",
+        "select_image": "画像を選択して続行",
+        "placeholder_text": "生成をクリックして画像を作成"
+    },
+    
+    "step8": {
+        "title": "キャラクター完成！",
+        "subtitle": "キャラクターを確認してチャットを開始",
+        "character_summary": "キャラクターサマリー",
+        "start_chat": "チャットを開始"
+    },
+    
+    "buttons": {
+        "next": "次へ",
+        "back": "戻る",
+        "create": "キャラクター作成",
+        "start_chat": "チャットを開始",
+        "generating": "生成中..."
+    },
+    
+    "errors": {
+        "select_style": "スタイルを選択してください",
+        "select_ethnicity": "民族を選択してください",
+        "select_hair": "髪型と色を選択してください",
+        "select_body": "体型を選択してください",
+        "select_personality": "性格オプションを選択してください",
+        "select_voice": "声を選択してください",
+        "select_image": "画像を選択してください",
+        "enter_name": "キャラクターの名前を入力してください",
+        "generation_failed": "画像生成に失敗しました。もう一度お試しください。"
+    },
+    
+    "loading": "読み込み中...",
+    "generating_image": "キャラクター画像を生成中...",
+    "creating_character": "キャラクターを作成中...",
+    "please_wait": "お待ちください..."
+}

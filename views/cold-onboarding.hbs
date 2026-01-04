@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="{{lang}}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{coldOnboardingTranslations.page_title}} | ChatLamix</title>
+    <meta name="description" content="{{coldOnboardingTranslations.meta_description}}">
+    
+    <!-- SEO Meta Tags -->
+    {{#each seo}}
+    <meta {{#if this.name}}name="{{this.name}}"{{/if}}{{#if this.property}}property="{{this.property}}"{{/if}} content="{{this.content}}">
+    {{/each}}
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/img/favicon.png">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Cold Onboarding CSS -->
+    <link rel="stylesheet" href="/css/cold-onboarding.css">
+    
+    <!-- Clerk styles for better integration -->
+    <style>
+        /* Clerk component theming to match our gradient theme */
+        .cl-rootBox {
+            width: 100%;
+        }
+        .cl-card {
+            background: rgba(255, 255, 255, 0.05) !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 15px !important;
+            box-shadow: 0 8px 32px rgba(110, 32, 244, 0.15) !important;
+        }
+        .cl-headerTitle, .cl-headerSubtitle {
+            color: #ffffff !important;
+        }
+        .cl-formButtonPrimary {
+            background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%) !important;
+            border: none !important;
+            border-radius: 12px !important;
+            font-weight: 600 !important;
+            transition: all 0.3s ease !important;
+        }
+        .cl-formButtonPrimary:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 20px rgba(130, 64, 255, 0.4) !important;
+        }
+        .cl-socialButtonsBlockButton {
+            border-radius: 12px !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+        .cl-formFieldInput {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 12px !important;
+            color: #ffffff !important;
+        }
+        .cl-formFieldInput:focus {
+            border-color: #8240FF !important;
+            box-shadow: 0 0 0 3px rgba(130, 64, 255, 0.2) !important;
+        }
+        .cl-footerActionLink {
+            color: #D2B8FF !important;
+        }
+        .cl-internal-b3fm6y {
+            color: #aeb0b4 !important;
+        }
+    </style>
+</head>
+<body class="cold-onboarding-body">
+    <!-- Background with gradient -->
+    <div class="cold-onboarding-bg"></div>
+    
+    <!-- Main Container -->
+    <div class="cold-onboarding-container">
+        <!-- Header -->
+        <header class="cold-onboarding-header">
+            <a href="/" class="brand-logo">
+                <img src="/img/logo.png" alt="ChatLamix" height="36">
+            </a>
+        </header>
+        
+        <!-- Progress Bar -->
+        <div class="progress-container">
+            <div class="progress-bar-wrapper">
+                <div class="progress-bar" id="progressBar" style="width: 14.28%"></div>
+            </div>
+            <div class="step-indicator" id="stepIndicator">
+                <span class="current-step">1</span>/<span class="total-steps">7</span>
+            </div>
+        </div>
+        
+        <!-- Steps Container -->
+        <div class="steps-wrapper" id="stepsWrapper">
+            
+            <!-- Step 1: Style Selection (Realistic/Anime + Gender) -->
+            <div class="step-slide active" data-step="1" id="step1">
+                <div class="step-content">
+                    <h1 class="step-title">{{coldOnboardingTranslations.step1.title}}</h1>
+                    <p class="step-subtitle">{{coldOnboardingTranslations.step1.subtitle}}</p>
+                    
+                    <!-- Gender Selection -->
+                    <div class="selection-section mb-4">
+                        <div class="gender-toggle-group">
+                            <button type="button" class="gender-toggle active" data-gender="female">
+                                <i class="bi bi-gender-female"></i>
+                                {{coldOnboardingTranslations.step1.gender_girls}}
+                            </button>
+                            <button type="button" class="gender-toggle" data-gender="trans">
+                                <i class="bi bi-gender-trans"></i>
+                                {{coldOnboardingTranslations.step1.gender_trans}}
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Style Selection -->
+                    <div class="selection-section">
+                        <div class="style-cards">
+                            <div class="style-card selected" data-style="realistic">
+                                <div class="style-card-image">
+                                    <video src="/img/cold-onboarding/style-realistic.mp4" alt="Realistic" autoplay loop muted playsinline></video>
+                                    <div class="style-card-overlay">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                    </div>
+                                </div>
+                                <span class="style-card-label">{{coldOnboardingTranslations.step1.style_realistic}}</span>
+                            </div>
+                            <div class="style-card" data-style="anime">
+                                <div class="style-card-image">
+                                    <video src="/img/cold-onboarding/style-anime.mp4" alt="Anime" autoplay loop muted playsinline></video>
+                                    <div class="style-card-overlay">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                    </div>
+                                </div>
+                                <span class="style-card-label">{{coldOnboardingTranslations.step1.style_anime}}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 2: Ethnicity & Age -->
+            <div class="step-slide" data-step="2" id="step2">
+                <div class="step-content">
+                    <h1 class="step-title">{{coldOnboardingTranslations.step2.title}}</h1>
+                    <p class="step-subtitle">{{coldOnboardingTranslations.step2.subtitle}}</p>
+                    
+                    <!-- Ethnicity Grid -->
+                    <div class="selection-section">
+                        <div class="ethnicity-grid">
+                            <div class="ethnicity-card selected" data-ethnicity="caucasian">
+                                <video src="/img/cold-onboarding/realistic/ethnicity-caucasian.mp4" alt="Caucasian" autoplay loop muted playsinline></video>
+                                <span>{{coldOnboardingTranslations.step2.ethnicities.caucasian}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="ethnicity-card" data-ethnicity="asian">
+                                <video src="/img/cold-onboarding/realistic/ethnicity-asian.mp4" alt="Asian" autoplay loop muted playsinline></video>
+                                <span>{{coldOnboardingTranslations.step2.ethnicities.asian}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="ethnicity-card" data-ethnicity="black">
+                                <video src="/img/cold-onboarding/realistic/ethnicity-black.mp4" alt="Black" autoplay loop muted playsinline></video>
+                                <span>{{coldOnboardingTranslations.step2.ethnicities.black}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="ethnicity-card" data-ethnicity="latina">
+                                <video src="/img/cold-onboarding/realistic/ethnicity-latina.mp4" alt="Latina" autoplay loop muted playsinline></video>
+                                <span>{{coldOnboardingTranslations.step2.ethnicities.latina}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="ethnicity-card" data-ethnicity="arab">
+                                <video src="/img/cold-onboarding/realistic/ethnicity-arab.mp4" alt="Arab" autoplay loop muted playsinline></video>
+                                <span>{{coldOnboardingTranslations.step2.ethnicities.arab}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="ethnicity-card" data-ethnicity="indian">
+                                <video src="/img/cold-onboarding/realistic/ethnicity-indian.mp4" alt="Indian" autoplay loop muted playsinline></video>
+                                <span>{{coldOnboardingTranslations.step2.ethnicities.indian}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="ethnicity-card" data-ethnicity="japanese">
+                                <video src="/img/cold-onboarding/realistic/ethnicity-japanese.mp4" alt="Japanese" autoplay loop muted playsinline></video>
+                                <span>{{coldOnboardingTranslations.step2.ethnicities.japanese}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="ethnicity-card" data-ethnicity="korean">
+                                <video src="/img/cold-onboarding/realistic/ethnicity-korean.mp4" alt="Korean" autoplay loop muted playsinline></video>
+                                <span>{{coldOnboardingTranslations.step2.ethnicities.korean}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Age Slider -->
+                    <div class="selection-section mt-4">
+                        <h3 class="section-title">{{coldOnboardingTranslations.step2.age_title}}</h3>
+                        <div class="age-selector">
+                            <div class="age-display">
+                                <span class="age-label">Age</span>
+                                <span class="age-value" id="ageValue">21</span>
+                                <span class="age-unit">{{coldOnboardingTranslations.step2.age_years}}</span>
+                            </div>
+                            <input type="range" class="age-slider" id="ageSlider" min="18" max="50" value="21">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 3: Hair Style & Color -->
+            <div class="step-slide" data-step="3" id="step3">
+                <div class="step-content">
+                    <h1 class="step-title">{{coldOnboardingTranslations.step3.title}}</h1>
+                    <p class="step-subtitle">{{coldOnboardingTranslations.step3.subtitle}}</p>
+                    
+                    <!-- Hair Style Grid -->
+                    <div class="selection-section">
+                        <div class="hair-style-grid">
+                            <div class="hair-style-card selected" data-hairstyle="straight">
+                                <video src="/img/cold-onboarding/realistic/hair-straight.mp4" alt="Straight" autoplay loop muted playsinline></video>
+                                <span>{{coldOnboardingTranslations.step3.hair_styles.straight}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="hair-style-card" data-hairstyle="bangs">
+                                <video src="/img/cold-onboarding/realistic/hair-bangs.mp4" alt="Bangs" autoplay loop muted playsinline></video>
+                                <span>{{coldOnboardingTranslations.step3.hair_styles.bangs}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="hair-style-card" data-hairstyle="curly">
+                                <video src="/img/cold-onboarding/realistic/hair-curly.mp4" alt="Curly" autoplay loop muted playsinline></video>
+                                <span>{{coldOnboardingTranslations.step3.hair_styles.curly}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="hair-style-card" data-hairstyle="bun">
+                                <video src="/img/cold-onboarding/realistic/hair-bun.mp4" alt="Bun" autoplay loop muted playsinline></video>
+                                <span>{{coldOnboardingTranslations.step3.hair_styles.bun}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="hair-style-card" data-hairstyle="short">
+                                <video src="/img/cold-onboarding/realistic/hair-short.mp4" alt="Short" autoplay loop muted playsinline></video>
+                                <span>{{coldOnboardingTranslations.step3.hair_styles.short}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="hair-style-card" data-hairstyle="ponytail">
+                                <video src="/img/cold-onboarding/realistic/hair-ponytail.mp4" alt="Ponytail" autoplay loop muted playsinline></video>
+                                <span>{{coldOnboardingTranslations.step3.hair_styles.ponytail}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hair Color Selection -->
+                    <div class="selection-section mt-4">
+                        <h3 class="section-title">{{coldOnboardingTranslations.step3.hair_color_title}}</h3>
+                        <div class="hair-color-strip">
+                            <div class="hair-color-card selected" data-haircolor="brunette">
+                                <img src="/img/cold-onboarding/realistic/haircolor-brunette.png" alt="Brunette">
+                                <span>{{coldOnboardingTranslations.step3.hair_colors.brunette}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="hair-color-card" data-haircolor="blonde">
+                                <img src="/img/cold-onboarding/realistic/haircolor-blonde.png" alt="Blonde">
+                                <span>{{coldOnboardingTranslations.step3.hair_colors.blonde}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="hair-color-card" data-haircolor="black">
+                                <img src="/img/cold-onboarding/realistic/haircolor-black.png" alt="Black">
+                                <span>{{coldOnboardingTranslations.step3.hair_colors.black}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="hair-color-card" data-haircolor="redhead">
+                                <img src="/img/cold-onboarding/realistic/haircolor-redhead.png" alt="Redhead">
+                                <span>{{coldOnboardingTranslations.step3.hair_colors.redhead}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="hair-color-card" data-haircolor="pink">
+                                <img src="/img/cold-onboarding/realistic/haircolor-pink.png" alt="Pink">
+                                <span>{{coldOnboardingTranslations.step3.hair_colors.pink}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 4: Body Type & Features -->
+            <div class="step-slide" data-step="4" id="step4">
+                <div class="step-content">
+                    <h1 class="step-title">{{coldOnboardingTranslations.step4.title}}</h1>
+                    <p class="step-subtitle">{{coldOnboardingTranslations.step4.subtitle}}</p>
+                    
+                    <!-- Body Type -->
+                    <div class="selection-section">
+                        <div class="body-type-grid">
+                            <div class="body-type-card selected" data-bodytype="slim">
+                                <img src="/img/cold-onboarding/realistic/body-slim.png" alt="Slim" >
+                                <span>{{coldOnboardingTranslations.step4.body_types.slim}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="body-type-card" data-bodytype="athletic">
+                                <img src="/img/cold-onboarding/realistic/body-athletic.png" alt="Athletic" >
+                                <span>{{coldOnboardingTranslations.step4.body_types.athletic}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="body-type-card" data-bodytype="voluptuous">
+                                <img src="/img/cold-onboarding/realistic/body-voluptuous.png" alt="Voluptuous" >
+                                <span>{{coldOnboardingTranslations.step4.body_types.voluptuous}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="body-type-card" data-bodytype="curvy">
+                                <img src="/img/cold-onboarding/realistic/body-curvy.png" alt="Curvy" >
+                                <span>{{coldOnboardingTranslations.step4.body_types.curvy}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="body-type-card" data-bodytype="muscular">
+                                <img src="/img/cold-onboarding/realistic/body-muscular.png" alt="Muscular" >
+                                <span>{{coldOnboardingTranslations.step4.body_types.muscular}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Breast Size -->
+                    <div class="selection-section mt-4">
+                        <h3 class="section-title">{{coldOnboardingTranslations.step4.breast_size_title}}</h3>
+                        <div class="breast-size-grid">
+                            <div class="breast-size-card" data-breastsize="flat">
+                                <img src="/img/cold-onboarding/realistic/breast-flat.png" alt="Flat" >
+                                <span>{{coldOnboardingTranslations.step4.breast_sizes.flat}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="breast-size-card" data-breastsize="small">
+                                <img src="/img/cold-onboarding/realistic/breast-small.png" alt="Small" >
+                                <span>{{coldOnboardingTranslations.step4.breast_sizes.small}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="breast-size-card selected" data-breastsize="medium">
+                                <img src="/img/cold-onboarding/realistic/breast-medium.png" alt="Medium" >
+                                <span>{{coldOnboardingTranslations.step4.breast_sizes.medium}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="breast-size-card" data-breastsize="large">
+                                <img src="/img/cold-onboarding/realistic/breast-large.png" alt="Large" >
+                                <span>{{coldOnboardingTranslations.step4.breast_sizes.large}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="breast-size-card" data-breastsize="xl">
+                                <img src="/img/cold-onboarding/realistic/breast-xl.png" alt="XL" >
+                                <span>{{coldOnboardingTranslations.step4.breast_sizes.xl}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Butt Size -->
+                    <div class="selection-section mt-4">
+                        <h3 class="section-title">{{coldOnboardingTranslations.step4.butt_size_title}}</h3>
+                        <div class="butt-size-grid">
+                            <div class="butt-size-card" data-buttsize="small">
+                                <img src="/img/cold-onboarding/realistic/butt-small.jpg" alt="Small" ></video>
+                                <span>{{coldOnboardingTranslations.step4.butt_sizes.small}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="butt-size-card selected" data-buttsize="medium">
+                                <img src="/img/cold-onboarding/realistic/butt-medium.jpg" alt="Medium" >
+                                <span>{{coldOnboardingTranslations.step4.butt_sizes.medium}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="butt-size-card" data-buttsize="athletic">
+                                <img src="/img/cold-onboarding/realistic/butt-athletic.jpg" alt="Athletic" >
+                                <span>{{coldOnboardingTranslations.step4.butt_sizes.athletic}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                            <div class="butt-size-card" data-buttsize="large">
+                                <img src="/img/cold-onboarding/realistic/butt-large.jpg" alt="Large" >
+                                <span>{{coldOnboardingTranslations.step4.butt_sizes.large}}</span>
+                                <div class="check-badge"><i class="bi bi-check"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 5: Personality & Name -->
+            <div class="step-slide" data-step="5" id="step5">
+                <div class="step-content">
+                    <h1 class="step-title">{{coldOnboardingTranslations.step5.title}}</h1>
+                    <p class="step-subtitle">{{coldOnboardingTranslations.step5.subtitle}}</p>
+                    
+                    <!-- Name Input -->
+                    <div class="selection-section">
+                        <div class="name-input-group">
+                            <input type="text" class="name-input" id="characterName" placeholder="{{coldOnboardingTranslations.step5.name_placeholder}}">
+                            <button type="button" class="generate-name-btn" id="generateNameBtn">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Personality Options Grid -->
+                    <div class="personality-grid">
+                        <!-- Personality -->
+                        <div class="personality-option-card" data-option="personality" data-value="submissive">
+                            <span class="option-label">{{coldOnboardingTranslations.step5.personality_title}}</span>
+                            <span class="option-value">{{coldOnboardingTranslations.step5.personalities.submissive}}</span>
+                            <button type="button" class="edit-btn"><i class="bi bi-pencil"></i></button>
+                        </div>
+                        
+                        <!-- Relationship -->
+                        <div class="personality-option-card" data-option="relationship" data-value="stranger">
+                            <span class="option-label">{{coldOnboardingTranslations.step5.relationship_title}}</span>
+                            <span class="option-value">{{coldOnboardingTranslations.step5.relationships.stranger}}</span>
+                            <button type="button" class="edit-btn"><i class="bi bi-pencil"></i></button>
+                        </div>
+                        
+                        <!-- Occupation -->
+                        <div class="personality-option-card" data-option="occupation" data-value="student">
+                            <span class="option-label">{{coldOnboardingTranslations.step5.occupation_title}}</span>
+                            <span class="option-value">🎓 {{coldOnboardingTranslations.step5.occupations.student}}</span>
+                            <button type="button" class="edit-btn"><i class="bi bi-pencil"></i></button>
+                        </div>
+                        
+                        <!-- Kinks -->
+                        <div class="personality-option-card" data-option="kinks" data-value="vanilla">
+                            <span class="option-label">{{coldOnboardingTranslations.step5.kinks_title}}</span>
+                            <span class="option-value">{{coldOnboardingTranslations.step5.kinks.vanilla}}</span>
+                            <button type="button" class="edit-btn"><i class="bi bi-pencil"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 6: Voice Selection -->
+            <div class="step-slide" data-step="6" id="step6">
+                <div class="step-content">
+                    <h1 class="step-title">{{coldOnboardingTranslations.step6.title}}</h1>
+                    <p class="step-subtitle">{{coldOnboardingTranslations.step6.subtitle}}</p>
+                    
+                    <!-- Voice Grid -->
+                    <div class="selection-section">
+                        <div class="voice-grid" id="voiceGrid">
+                            <!-- Voices will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 7: Registration -->
+            <div class="step-slide" data-step="7" id="step7">
+                <div class="step-content registration-step">
+                    <h1 class="step-title">{{coldOnboardingTranslations.registration.title}}</h1>
+                    <p class="step-subtitle">{{coldOnboardingTranslations.registration.subtitle}}</p>
+                    
+                    <!-- Benefits List -->
+                    <div class="benefits-list">
+                        <h4>{{coldOnboardingTranslations.registration.benefits.title}}</h4>
+                        <ul>
+                            <li><i class="bi bi-check-circle-fill"></i> {{coldOnboardingTranslations.registration.benefits.benefit1}}</li>
+                            <li><i class="bi bi-check-circle-fill"></i> {{coldOnboardingTranslations.registration.benefits.benefit2}}</li>
+                            <li><i class="bi bi-check-circle-fill"></i> {{coldOnboardingTranslations.registration.benefits.benefit3}}</li>
+                            <li><i class="bi bi-check-circle-fill"></i> {{coldOnboardingTranslations.registration.benefits.benefit4}}</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Clerk Sign-In/Up Component -->
+                    <div class="auth-container">
+                        <div id="clerk-auth-container"></div>
+                        
+                        <!-- Fallback form if Clerk fails -->
+                        <div class="fallback-auth" id="fallbackAuth" style="display: none;">
+                            <div class="social-buttons">
+                                <button type="button" class="social-btn google-btn" id="googleSignInBtn">
+                                    <img src="/img/google-icon.svg" alt="Google">
+                                    {{coldOnboardingTranslations.registration.google}}
+                                </button>
+                            </div>
+                            
+                            <div class="divider">
+                                <span>{{coldOnboardingTranslations.registration.or_continue_with}}</span>
+                            </div>
+                            
+                            <form id="emailSignupForm" class="email-form">
+                                <input type="email" class="form-control" id="signupEmail" 
+                                       placeholder="{{coldOnboardingTranslations.registration.email_placeholder}}" required>
+                                <input type="password" class="form-control" id="signupPassword" 
+                                       placeholder="{{coldOnboardingTranslations.registration.password_placeholder}}" required>
+                                <div class="terms-checkbox">
+                                    <input type="checkbox" id="termsAgree" required>
+                                    <label for="termsAgree">{{coldOnboardingTranslations.registration.terms_agree}}</label>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-create">
+                                    {{coldOnboardingTranslations.registration.create_account}}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="login-link">
+                        {{coldOnboardingTranslations.registration.already_have_account}}
+                        <a href="/">{{coldOnboardingTranslations.registration.sign_in}}</a>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- Footer Navigation -->
+        <footer class="cold-onboarding-footer">
+            <button type="button" class="btn btn-back" id="backBtn" style="visibility: hidden;">
+                <i class="bi bi-chevron-left"></i>
+                {{coldOnboardingTranslations.buttons.back}}
+            </button>
+            <button type="button" class="btn btn-next" id="nextBtn">
+                {{coldOnboardingTranslations.buttons.next}}
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </footer>
+    </div>
+    
+    <!-- Option Picker Modal -->
+    <div class="modal fade option-picker-modal" id="optionPickerModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="optionPickerTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="option-list" id="optionList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-content">
+            <div class="spinner-border text-light" role="status"></div>
+            <p>{{coldOnboardingTranslations.generating_character}}</p>
+            <small>{{coldOnboardingTranslations.please_wait}}</small>
+        </div>
+    </div>
+    
+    <!-- Hidden audio element for voice samples -->
+    <audio id="voiceSamplePlayer" preload="none"></audio>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Pass translations to JavaScript -->
+    <script>
+        window.coldOnboardingTranslations = {{{json coldOnboardingTranslations}}};
+        window.clerkTranslations = {{{json clerkTranslations}}};
+        window.lang = '{{lang}}';
+        window.MODE = '{{mode}}';
+    </script>
+    
+    <!-- Clerk Authentication Setup (like dashboard-footer.hbs) -->
+    <script>
+        // Determine Clerk publishable key based on environment
+        const clerkKey = window.MODE === 'production'
+            ? 'pk_live_Y2xlcmsuY2hhdGxhbWl4LmNvbSQ'
+            : 'pk_test_Z29vZC10ZXJtaXRlLTU2LmNsZXJrLmFjY291bnRzLmRldiQ';
+        
+        window.clerkPublishableKey = clerkKey;
+        
+        // Dynamically load Clerk script
+        const clerkScript = document.createElement('script');
+        clerkScript.src = 'https://good-termite-56.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js';
+        clerkScript.async = true;
+        clerkScript.crossOrigin = 'anonymous';
+        clerkScript.setAttribute('data-clerk-publishable-key', clerkKey);
+        document.head.appendChild(clerkScript);
+        
+        // Initialize Clerk when loaded
+        window.addEventListener('load', async function() {
+            try {
+                // Wait for Clerk to be available
+                if (typeof Clerk === 'undefined') {
+                    console.warn('[ColdOnboarding] Waiting for Clerk...');
+                    await new Promise((resolve) => {
+                        const checkClerk = setInterval(() => {
+                            if (typeof Clerk !== 'undefined') {
+                                clearInterval(checkClerk);
+                                resolve();
+                            }
+                        }, 100);
+                        // Timeout after 10 seconds
+                        setTimeout(() => {
+                            clearInterval(checkClerk);
+                            resolve();
+                        }, 10000);
+                    });
+                }
+                
+                if (typeof Clerk !== 'undefined') {
+                    // Load Clerk with localization
+                    const clerkLang = window.clerkTranslations ? Object.keys(window.clerkTranslations)[0] : null;
+                    const localization = clerkLang && window.clerkTranslations[clerkLang] 
+                        ? { localization: window.clerkTranslations[clerkLang] }
+                        : {};
+                    
+                    await Clerk.load(localization);
+                    window.Clerk = Clerk;
+                    
+                    console.log('[ColdOnboarding] Clerk loaded successfully');
+                    
+                    // Show sign-in button
+                    const signInBtn = document.getElementById('headerSignInBtn');
+                    if (signInBtn) {
+                        signInBtn.style.display = 'block';
+                        signInBtn.addEventListener('click', () => {
+                            openClerkSignIn();
+                        });
+                    }
+                    
+                    // Check if user is already signed in
+                    if (Clerk.user) {
+                        console.log('[ColdOnboarding] User already signed in:', Clerk.user.id);
+                        // Optionally redirect or update UI
+                    }
+                    
+                    // Listen for sign-in events
+                    Clerk.addListener(({ user }) => {
+                        if (user) {
+                            console.log('[ColdOnboarding] User signed in:', user.id);
+                            handleClerkUserUpdate();
+                        }
+                    });
+                } else {
+                    console.warn('[ColdOnboarding] Clerk not available, showing fallback');
+                    showFallbackAuth();
+                }
+            } catch (error) {
+                console.error('[ColdOnboarding] Error initializing Clerk:', error);
+                showFallbackAuth();
+            }
+        });
+        
+        // Open Clerk sign-in modal
+        function openClerkSignIn() {
+            if (window.Clerk) {
+                const langUrl = window.location.hostname.split('.')[0];
+                Clerk.openSignIn({
+                    redirectUrl: window.location.origin + '/chat/?source=cold-onboarding&status=success',
+                    language: window.lang || langUrl || 'ja',
+                });
+            } else {
+                showFallbackAuth();
+            }
+        }
+        
+        // Open Clerk sign-up modal
+        function openClerkSignUp() {
+            if (window.Clerk) {
+                const langUrl = window.location.hostname.split('.')[0];
+                Clerk.openSignUp({
+                    redirectUrl: window.location.origin + '/chat/?source=cold-onboarding&status=success',
+                    afterSignUpUrl: window.location.origin + '/chat/?source=cold-onboarding&status=success',
+                    language: window.lang || langUrl || 'ja',
+                });
+            } else {
+                showFallbackAuth();
+            }
+        }
+        
+        // Update user data after Clerk sign-in
+        function handleClerkUserUpdate() {
+            if (!window.Clerk?.user) {
+                console.warn('[ColdOnboarding] No Clerk user data available');
+                return;
+            }
+            
+            fetch('/user/clerk-update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Clerk-Session-Id': window.Clerk?.session?.id || '',
+                },
+                credentials: 'include',
+                body: JSON.stringify(window.Clerk.user)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('[ColdOnboarding] User data updated:', data);
+            })
+            .catch(error => {
+                console.error('[ColdOnboarding] Failed to update user data:', error);
+            });
+        }
+        
+        // Show fallback authentication
+        function showFallbackAuth() {
+            const clerkContainer = document.getElementById('clerk-auth-container');
+            const fallbackAuth = document.getElementById('fallbackAuth');
+            
+            if (clerkContainer) clerkContainer.style.display = 'none';
+            if (fallbackAuth) fallbackAuth.style.display = 'block';
+        }
+        
+        // Expose functions globally
+        window.openClerkSignIn = openClerkSignIn;
+        window.openClerkSignUp = openClerkSignUp;
+        window.handleClerkUserUpdate = handleClerkUserUpdate;
+        window.showFallbackAuth = showFallbackAuth;
+    </script>
+    
+    <!-- Cold Onboarding JavaScript -->
+    <script src="/js/cold-onboarding.js"></script>
+</body>
+</html>

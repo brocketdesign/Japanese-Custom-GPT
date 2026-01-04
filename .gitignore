@@ -7,8 +7,9 @@
 # Old views
 /views/old
 
-# Audio files
-/public/audio
+# Audio files & but include the folder voice-samples
+!/public/audio/voice-samples
+/public/audio/*.mp3
 
 # Environment variables
 .env

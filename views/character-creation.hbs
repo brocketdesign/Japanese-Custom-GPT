@@ -225,13 +225,29 @@
                     
                     <!-- Image Generation Area -->
                     <div class="image-generation-section">
-                        <!-- Generated Images Grid -->
+                        <!-- Generated Images Grid (2x2 for 4 images) -->
                         <div class="generated-images-grid" id="generatedImagesGrid">
-                            <!-- Images will be populated by JavaScript -->
-                            <div class="image-placeholder" id="imagePlaceholder">
-                                <div class="placeholder-content">
-                                    <i class="bi bi-image"></i>
-                                    <span>{{translations.newCharacter.click_generate_image}}</span>
+                            <!-- Placeholder shown before generation -->
+                            <div class="image-placeholder-grid" id="imagePlaceholder">
+                                <div class="placeholder-item">
+                                    <div class="placeholder-content">
+                                        <i class="bi bi-image"></i>
+                                    </div>
+                                </div>
+                                <div class="placeholder-item">
+                                    <div class="placeholder-content">
+                                        <i class="bi bi-image"></i>
+                                    </div>
+                                </div>
+                                <div class="placeholder-item">
+                                    <div class="placeholder-content">
+                                        <i class="bi bi-image"></i>
+                                    </div>
+                                </div>
+                                <div class="placeholder-item">
+                                    <div class="placeholder-content">
+                                        <i class="bi bi-image"></i>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -301,21 +317,6 @@
                 <i class="bi bi-chevron-right"></i>
             </button>
         </footer>
-    </div>
-    
-    <!-- Option Picker Modal -->
-    <div class="modal fade option-picker-modal" id="optionPickerModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="optionPickerTitle"></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="option-list" id="optionList"></div>
-                </div>
-            </div>
-        </div>
     </div>
     
     <!-- Loading Overlay -->

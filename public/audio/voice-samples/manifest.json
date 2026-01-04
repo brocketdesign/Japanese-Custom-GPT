@@ -1,0 +1,295 @@
+{
+  "generated": "2026-01-04T06:32:45.401Z",
+  "voices": [
+    {
+      "key": "Wise_Woman",
+      "gender": "female",
+      "languages": [
+        "en",
+        "fr",
+        "ja"
+      ]
+    },
+    {
+      "key": "Friendly_Person",
+      "gender": "female",
+      "languages": [
+        "en",
+        "fr",
+        "ja"
+      ]
+    },
+    {
+      "key": "Inspirational_girl",
+      "gender": "female",
+      "languages": [
+        "en",
+        "fr",
+        "ja"
+      ]
+    },
+    {
+      "key": "Calm_Woman",
+      "gender": "female",
+      "languages": [
+        "en",
+        "fr",
+        "ja"
+      ]
+    },
+    {
+      "key": "Lively_Girl",
+      "gender": "female",
+      "languages": [
+        "en",
+        "fr",
+        "ja"
+      ]
+    },
+    {
+      "key": "Lovely_Girl",
+      "gender": "female",
+      "languages": [
+        "en",
+        "fr",
+        "ja"
+      ]
+    },
+    {
+      "key": "Abbess",
+      "gender": "female",
+      "languages": [
+        "en",
+        "fr",
+        "ja"
+      ]
+    },
+    {
+      "key": "Sweet_Girl_2",
+      "gender": "female",
+      "languages": [
+        "en",
+        "fr",
+        "ja"
+      ]
+    },
+    {
+      "key": "Exuberant_Girl",
+      "gender": "female",
+      "languages": [
+        "en",
+        "fr",
+        "ja"
+      ]
+    },
+    {
+      "key": "Deep_Voice_Man",
+      "gender": "male",
+      "languages": [
+        "en",
+        "fr",
+        "ja"
+      ]
+    },
+    {
+      "key": "Casual_Guy",
+      "gender": "male",
+      "languages": [
+        "en",
+        "fr",
+        "ja"
+      ]
+    },
+    {
+      "key": "Patient_Man",
+      "gender": "male",
+      "languages": [
+        "en",
+        "fr",
+        "ja"
+      ]
+    }
+  ],
+  "files": [
+    {
+      "voice": "Wise_Woman",
+      "lang": "en",
+      "url": "/audio/voice-samples/en/Wise_Woman_en.mp3"
+    },
+    {
+      "voice": "Wise_Woman",
+      "lang": "fr",
+      "url": "/audio/voice-samples/fr/Wise_Woman_fr.mp3"
+    },
+    {
+      "voice": "Wise_Woman",
+      "lang": "ja",
+      "url": "/audio/voice-samples/ja/Wise_Woman_ja.mp3"
+    },
+    {
+      "voice": "Friendly_Person",
+      "lang": "en",
+      "url": "/audio/voice-samples/en/Friendly_Person_en.mp3"
+    },
+    {
+      "voice": "Friendly_Person",
+      "lang": "fr",
+      "url": "/audio/voice-samples/fr/Friendly_Person_fr.mp3"
+    },
+    {
+      "voice": "Friendly_Person",
+      "lang": "ja",
+      "url": "/audio/voice-samples/ja/Friendly_Person_ja.mp3"
+    },
+    {
+      "voice": "Inspirational_girl",
+      "lang": "en",
+      "url": "/audio/voice-samples/en/Inspirational_girl_en.mp3"
+    },
+    {
+      "voice": "Inspirational_girl",
+      "lang": "fr",
+      "url": "/audio/voice-samples/fr/Inspirational_girl_fr.mp3"
+    },
+    {
+      "voice": "Inspirational_girl",
+      "lang": "ja",
+      "url": "/audio/voice-samples/ja/Inspirational_girl_ja.mp3"
+    },
+    {
+      "voice": "Calm_Woman",
+      "lang": "en",
+      "url": "/audio/voice-samples/en/Calm_Woman_en.mp3"
+    },
+    {
+      "voice": "Calm_Woman",
+      "lang": "fr",
+      "url": "/audio/voice-samples/fr/Calm_Woman_fr.mp3"
+    },
+    {
+      "voice": "Calm_Woman",
+      "lang": "ja",
+      "url": "/audio/voice-samples/ja/Calm_Woman_ja.mp3"
+    },
+    {
+      "voice": "Lively_Girl",
+      "lang": "en",
+      "url": "/audio/voice-samples/en/Lively_Girl_en.mp3"
+    },
+    {
+      "voice": "Lively_Girl",
+      "lang": "fr",
+      "url": "/audio/voice-samples/fr/Lively_Girl_fr.mp3"
+    },
+    {
+      "voice": "Lively_Girl",
+      "lang": "ja",
+      "url": "/audio/voice-samples/ja/Lively_Girl_ja.mp3"
+    },
+    {
+      "voice": "Lovely_Girl",
+      "lang": "en",
+      "url": "/audio/voice-samples/en/Lovely_Girl_en.mp3"
+    },
+    {
+      "voice": "Lovely_Girl",
+      "lang": "fr",
+      "url": "/audio/voice-samples/fr/Lovely_Girl_fr.mp3"
+    },
+    {
+      "voice": "Lovely_Girl",
+      "lang": "ja",
+      "url": "/audio/voice-samples/ja/Lovely_Girl_ja.mp3"
+    },
+    {
+      "voice": "Abbess",
+      "lang": "en",
+      "url": "/audio/voice-samples/en/Abbess_en.mp3"
+    },
+    {
+      "voice": "Abbess",
+      "lang": "fr",
+      "url": "/audio/voice-samples/fr/Abbess_fr.mp3"
+    },
+    {
+      "voice": "Abbess",
+      "lang": "ja",
+      "url": "/audio/voice-samples/ja/Abbess_ja.mp3"
+    },
+    {
+      "voice": "Sweet_Girl_2",
+      "lang": "en",
+      "url": "/audio/voice-samples/en/Sweet_Girl_2_en.mp3"
+    },
+    {
+      "voice": "Sweet_Girl_2",
+      "lang": "fr",
+      "url": "/audio/voice-samples/fr/Sweet_Girl_2_fr.mp3"
+    },
+    {
+      "voice": "Sweet_Girl_2",
+      "lang": "ja",
+      "url": "/audio/voice-samples/ja/Sweet_Girl_2_ja.mp3"
+    },
+    {
+      "voice": "Exuberant_Girl",
+      "lang": "en",
+      "url": "/audio/voice-samples/en/Exuberant_Girl_en.mp3"
+    },
+    {
+      "voice": "Exuberant_Girl",
+      "lang": "fr",
+      "url": "/audio/voice-samples/fr/Exuberant_Girl_fr.mp3"
+    },
+    {
+      "voice": "Exuberant_Girl",
+      "lang": "ja",
+      "url": "/audio/voice-samples/ja/Exuberant_Girl_ja.mp3"
+    },
+    {
+      "voice": "Deep_Voice_Man",
+      "lang": "en",
+      "url": "/audio/voice-samples/en/Deep_Voice_Man_en.mp3"
+    },
+    {
+      "voice": "Deep_Voice_Man",
+      "lang": "fr",
+      "url": "/audio/voice-samples/fr/Deep_Voice_Man_fr.mp3"
+    },
+    {
+      "voice": "Deep_Voice_Man",
+      "lang": "ja",
+      "url": "/audio/voice-samples/ja/Deep_Voice_Man_ja.mp3"
+    },
+    {
+      "voice": "Casual_Guy",
+      "lang": "en",
+      "url": "/audio/voice-samples/en/Casual_Guy_en.mp3"
+    },
+    {
+      "voice": "Casual_Guy",
+      "lang": "fr",
+      "url": "/audio/voice-samples/fr/Casual_Guy_fr.mp3"
+    },
+    {
+      "voice": "Casual_Guy",
+      "lang": "ja",
+      "url": "/audio/voice-samples/ja/Casual_Guy_ja.mp3"
+    },
+    {
+      "voice": "Patient_Man",
+      "lang": "en",
+      "url": "/audio/voice-samples/en/Patient_Man_en.mp3"
+    },
+    {
+      "voice": "Patient_Man",
+      "lang": "fr",
+      "url": "/audio/voice-samples/fr/Patient_Man_fr.mp3"
+    },
+    {
+      "voice": "Patient_Man",
+      "lang": "ja",
+      "url": "/audio/voice-samples/ja/Patient_Man_ja.mp3"
+    }
+  ]
+}

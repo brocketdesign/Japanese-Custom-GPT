@@ -7,12 +7,13 @@
 (function() {
     'use strict';
     
-    // Prevent multiple initializations
-    if (window.characterCreationInitialized) {
-        console.log('[CharacterCreation] Already initialized, skipping');
-        return;
+    // Cleanup previous instance if exists
+    if (window.characterCreation) {
+        window.characterCreation.destroy();
     }
-    window.characterCreationInitialized = true;
+    
+    // Reset initialization flag
+    window.characterCreationInitialized = false;
 
     class CharacterCreation {
         constructor() {
@@ -75,7 +76,30 @@
                 anime: '/img/cold-onboarding/anime'
             };
             
+            // Track bound event handlers for cleanup
+            this.boundHandlers = [];
+            
+            // Active popup
+            this.activePopup = null;
+            
             this.init();
+            
+            // Listen for modal close to cleanup
+            const modal = document.getElementById('characterCreationModal');
+            if (modal) {
+                modal.addEventListener('hidden.bs.modal', () => this.destroy());
+            }
+        }
+        
+        /**
+         * Destroy instance and cleanup
+         */
+        destroy() {
+            console.log('[CharacterCreation] Destroying instance');
+            this.stopAudio();
+            this.closeOptionPopup();
+            window.characterCreationInitialized = false;
+            window.characterCreation = null;
         }
         
         /**
@@ -832,44 +856,87 @@
             const data = this.optionData[optionType];
             if (!data) return;
             
-            // Set modal title
-            const title = document.getElementById('optionPickerTitle');
-            if (title) title.textContent = data.title;
+            // Close any existing popup
+            this.closeOptionPopup();
             
-            // Render options
-            const optionList = document.getElementById('optionList');
-            if (optionList) {
-                optionList.innerHTML = data.options.map(opt => `
-                    <div class="option-item${this.characterData[optionType] === opt.value ? ' selected' : ''}" 
-                         data-option-type="${optionType}" 
-                         data-value="${opt.value}">
-                        <span>${opt.label}</span>
-                        <i class="bi bi-check-circle-fill"></i>
-                    </div>
-                `).join('');
-                
-                // Bind click events
-                optionList.querySelectorAll('.option-item').forEach(item => {
-                    item.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        this.selectOption(item);
-                    });
+            // Create popup element
+            const popup = document.createElement('div');
+            popup.className = 'option-picker-popup';
+            popup.innerHTML = `
+                <div class="option-picker-popup-header">
+                    <span>${data.title}</span>
+                    <button type="button" class="popup-close-btn"><i class="bi bi-x-lg"></i></button>
+                </div>
+                <div class="option-picker-popup-body">
+                    ${data.options.map(opt => `
+                        <div class="popup-option-item${this.characterData[optionType] === opt.value ? ' selected' : ''}" 
+                             data-option-type="${optionType}" 
+                             data-value="${opt.value}">
+                            <span>${opt.label}</span>
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            // Position popup below the card
+            const cardRect = card.getBoundingClientRect();
+            const containerRect = card.closest('.step-content').getBoundingClientRect();
+            
+            popup.style.position = 'absolute';
+            popup.style.top = (card.offsetTop + card.offsetHeight + 8) + 'px';
+            popup.style.left = '0';
+            popup.style.right = '0';
+            
+            // Append to card's parent
+            card.parentElement.style.position = 'relative';
+            card.parentElement.appendChild(popup);
+            this.activePopup = popup;
+            
+            // Bind close button
+            popup.querySelector('.popup-close-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.closeOptionPopup();
+            });
+            
+            // Bind option click events
+            popup.querySelectorAll('.popup-option-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.selectOptionFromPopup(item, card);
                 });
-            }
+            });
             
-            // Show modal
-            const modal = new bootstrap.Modal(document.getElementById('optionPickerModal'));
-            modal.show();
+            // Close popup when clicking outside
+            setTimeout(() => {
+                const closeHandler = (e) => {
+                    if (!popup.contains(e.target) && !card.contains(e.target)) {
+                        this.closeOptionPopup();
+                        document.removeEventListener('click', closeHandler);
+                    }
+                };
+                document.addEventListener('click', closeHandler);
+            }, 100);
         }
         
-        selectOption(item) {
+        closeOptionPopup() {
+            if (this.activePopup) {
+                this.activePopup.remove();
+                this.activePopup = null;
+            }
+        }
+        
+        selectOptionFromPopup(item, card) {
             const optionType = item.dataset.optionType;
             const value = item.dataset.value;
             
-            // Update selection in modal
-            document.querySelectorAll('.option-item').forEach(i => i.classList.remove('selected'));
-            item.classList.add('selected');
+            // Update selection in popup
+            if (this.activePopup) {
+                this.activePopup.querySelectorAll('.popup-option-item').forEach(i => i.classList.remove('selected'));
+                item.classList.add('selected');
+            }
             
             // Update character data
             this.characterData[optionType] = value;
@@ -878,16 +945,14 @@
             // Update the card display
             const data = this.optionData[optionType];
             const selectedOption = data.options.find(o => o.value === value);
-            const card = document.querySelector(`.personality-option-card[data-option="${optionType}"]`);
             if (card && selectedOption) {
                 card.dataset.value = value;
                 const valueDisplay = card.querySelector('.option-value');
                 if (valueDisplay) valueDisplay.textContent = selectedOption.label;
             }
             
-            // Close modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('optionPickerModal'));
-            if (modal) modal.hide();
+            // Close popup
+            this.closeOptionPopup();
         }
         
         // ===================
@@ -957,15 +1022,9 @@
                 regenerateBtn.disabled = true;
             }
             
-            // Show loading placeholder
+            // Show loading state on placeholder grid
             if (placeholder) {
-                placeholder.innerHTML = `
-                    <div class="placeholder-content">
-                        <div class="spinner-border text-light mb-3" role="status"></div>
-                        <span>${this.t('generating_image', 'Generating your character...')}</span>
-                    </div>
-                `;
-                placeholder.style.display = 'flex';
+                placeholder.classList.add('loading');
             }
             
             try {
@@ -996,18 +1055,7 @@
                 if (result.success && result.chatId) {
                     this.chatId = result.chatId;
                     
-                    // Wait for image to be generated via socket
-                    // For now, show a message to wait
-                    if (placeholder) {
-                        placeholder.innerHTML = `
-                            <div class="placeholder-content">
-                                <div class="spinner-border text-light mb-3" role="status"></div>
-                                <span>${this.t('waiting_for_image', 'Image is being generated...')}</span>
-                            </div>
-                        `;
-                    }
-                    
-                    // Poll for image or listen to socket event
+                    // Poll for images
                     this.pollForImage(result.chatId);
                 } else {
                     throw new Error(result.error || 'Failed to generate');
@@ -1017,25 +1065,20 @@
                 console.error('[CharacterCreation] Image generation error:', error);
                 this.showError(this.t('generation_failed', 'Failed to generate image. Please try again.'));
                 
-                // Reset placeholder
+                // Reset placeholder loading state
                 if (placeholder) {
-                    placeholder.innerHTML = `
-                        <div class="placeholder-content">
-                            <i class="bi bi-image"></i>
-                            <span>${this.t('click_generate_image', 'Click generate to create images')}</span>
-                        </div>
-                    `;
+                    placeholder.classList.remove('loading');
                 }
             } finally {
-                this.isGeneratingImage = false;
-                
-                // Reset buttons
-                if (generateBtn) {
-                    generateBtn.disabled = false;
-                    generateBtn.innerHTML = '<i class="bi bi-magic"></i><span>' + this.t('generate_image', 'Generate Images') + '</span>';
-                }
-                if (regenerateBtn) {
-                    regenerateBtn.disabled = false;
+                // Reset buttons (but keep generating state if polling)
+                if (!this.isGeneratingImage) {
+                    if (generateBtn) {
+                        generateBtn.disabled = false;
+                        generateBtn.innerHTML = '<i class="bi bi-magic"></i><span>' + this.t('generate_image', 'Generate Images') + '</span>';
+                    }
+                    if (regenerateBtn) {
+                        regenerateBtn.disabled = false;
+                    }
                 }
             }
         }
@@ -1044,7 +1087,7 @@
          * Poll for image generation completion
          */
         async pollForImage(chatId) {
-            const maxAttempts = 30;
+            const maxAttempts = 60; // Increased for 4 images
             let attempts = 0;
             
             const checkImage = async () => {
@@ -1056,8 +1099,17 @@
                     });
                     const chat = await response.json();
                     
-                    if (chat && chat.image_url) {
-                        this.onImageGenerated(chat.image_url);
+                    // Check for multiple images (chatImageUrl array or image_url)
+                    let images = [];
+                    
+                    if (chat && chat.chatImageUrl && Array.isArray(chat.chatImageUrl)) {
+                        images = chat.chatImageUrl.filter(url => url);
+                    } else if (chat && chat.image_url) {
+                        images = Array.isArray(chat.image_url) ? chat.image_url : [chat.image_url];
+                    }
+                    
+                    if (images.length > 0) {
+                        this.onImagesGenerated(images);
                         return;
                     }
                     
@@ -1079,78 +1131,115 @@
         }
         
         /**
-         * Called when image is generated
+         * Called when images are generated (handles multiple images)
          */
-        onImageGenerated(imageUrl) {
+        onImagesGenerated(imageUrls) {
             const placeholder = document.getElementById('imagePlaceholder');
             const grid = document.getElementById('generatedImagesGrid');
             const generateBtn = document.getElementById('generateImageBtn');
             const regenerateBtn = document.getElementById('regenerateImageBtn');
             const infoText = document.getElementById('imageSelectionInfo');
             
-            // Add to generated images
-            this.characterData.generatedImages.push(imageUrl);
+            console.log('[CharacterCreation] Images generated:', imageUrls);
             
-            // Hide placeholder, show grid
-            if (placeholder) placeholder.style.display = 'none';
+            // Store all images
+            this.characterData.generatedImages = imageUrls;
             
-            // Render images
+            // Clear the grid and render images (replaces placeholder)
             if (grid) {
-                const existingImages = grid.querySelectorAll('.generated-image-item');
-                
-                const imageHtml = `
-                    <div class="generated-image-item${this.characterData.generatedImages.length === 1 ? ' selected' : ''}" data-image-url="${imageUrl}">
-                        <img src="${imageUrl}" alt="Generated Character">
+                grid.innerHTML = imageUrls.map((url, index) => `
+                    <div class="generated-image-item${index === 0 ? ' selected' : ''}" data-image-url="${url}">
+                        <img src="${url}" alt="Generated Character ${index + 1}" onerror="this.parentElement.classList.add('error')">
                         <div class="image-overlay">
                             <i class="bi bi-check-circle-fill"></i>
                         </div>
                     </div>
-                `;
+                `).join('');
                 
-                if (existingImages.length === 0) {
-                    grid.innerHTML = imageHtml;
-                } else {
-                    grid.insertAdjacentHTML('beforeend', imageHtml);
-                }
-                
-                // Bind click event to new image
-                const newImage = grid.querySelector('.generated-image-item:last-child');
-                if (newImage) {
-                    newImage.addEventListener('click', (e) => {
+                // Bind click events to all images
+                grid.querySelectorAll('.generated-image-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         this.selectImage(e.currentTarget);
                     });
-                }
+                });
                 
                 // Auto-select first image
-                if (this.characterData.generatedImages.length === 1) {
-                    this.characterData.selectedImageUrl = imageUrl;
-                    this.saveData();
-                    
-                    // Update summary image
-                    const summaryImage = document.getElementById('summaryImage');
-                    if (summaryImage) summaryImage.src = imageUrl;
-                }
+                this.characterData.selectedImageUrl = imageUrls[0];
+                this.saveData();
+                
+                // Update summary image
+                const summaryImage = document.getElementById('summaryImage');
+                if (summaryImage) summaryImage.src = imageUrls[0];
             }
             
             // Update buttons
-            if (generateBtn) generateBtn.style.display = 'none';
-            if (regenerateBtn) regenerateBtn.style.display = 'flex';
+            if (generateBtn) {
+                generateBtn.style.display = 'none';
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<i class="bi bi-magic"></i><span>' + this.t('generate_image', 'Generate Images') + '</span>';
+            }
+            if (regenerateBtn) {
+                regenerateBtn.style.display = 'flex';
+                regenerateBtn.disabled = false;
+            }
             if (infoText) infoText.style.display = 'block';
+            
+            // Reset loading state
+            this.isGeneratingImage = false;
+        }
+        
+        /**
+         * Called when single image is generated (legacy support)
+         */
+        onImageGenerated(imageUrl) {
+            this.onImagesGenerated([imageUrl]);
         }
         
         resetImagePlaceholder() {
-            const placeholder = document.getElementById('imagePlaceholder');
-            if (placeholder) {
-                placeholder.style.display = 'flex';
-                placeholder.innerHTML = `
-                    <div class="placeholder-content">
-                        <i class="bi bi-image"></i>
-                        <span>${this.t('click_generate_image', 'Click generate to create images')}</span>
+            const grid = document.getElementById('generatedImagesGrid');
+            const generateBtn = document.getElementById('generateImageBtn');
+            const regenerateBtn = document.getElementById('regenerateImageBtn');
+            
+            if (grid) {
+                grid.innerHTML = `
+                    <div class="image-placeholder-grid" id="imagePlaceholder">
+                        <div class="placeholder-item">
+                            <div class="placeholder-content">
+                                <i class="bi bi-image"></i>
+                            </div>
+                        </div>
+                        <div class="placeholder-item">
+                            <div class="placeholder-content">
+                                <i class="bi bi-image"></i>
+                            </div>
+                        </div>
+                        <div class="placeholder-item">
+                            <div class="placeholder-content">
+                                <i class="bi bi-image"></i>
+                            </div>
+                        </div>
+                        <div class="placeholder-item">
+                            <div class="placeholder-content">
+                                <i class="bi bi-image"></i>
+                            </div>
+                        </div>
                     </div>
                 `;
             }
+            
+            // Reset buttons
+            if (generateBtn) {
+                generateBtn.style.display = 'flex';
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<i class="bi bi-magic"></i><span>' + this.t('generate_image', 'Generate Images') + '</span>';
+            }
+            if (regenerateBtn) {
+                regenerateBtn.style.display = 'none';
+            }
+            
+            this.isGeneratingImage = false;
         }
         
         buildCharacterPrompt() {

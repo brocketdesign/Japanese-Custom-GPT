@@ -35,7 +35,7 @@ async function routes(fastify, options) {
       }
     
       // Add number of images to request
-      let image_num = chatCreation ? 1 : 1;
+      let image_num = chatCreation ? 4 : 1;
       const userMinImage = await getUserMinImages(db, userId, chatId);
       image_num = Math.max(image_num || 1, userMinImage || 1); // Ensure at least 1 image is requested and respect user setting
 

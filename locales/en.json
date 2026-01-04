@@ -1,5 +1,14 @@
 {
     "lang": "en",
+    "contactUs": "Contact Us",
+    "contactDescription": "Connect with us on social media for updates and support.",
+    "quickLinks": "Quick Links",
+    "legal": "Legal & Support",
+    "brandTagline": "Connect. Create. Experience.",
+    "allRightsReserved": "All Rights Reserved.",
+    "madeWithLove": "Made with",
+    "forYou": "for you",
+    "all": "All",
     "feature": "Feature",
     "sendGiftImageDirectly": "I sent you a gift wait for it!",
     "sendPoseRequest": "I requested a new image pose of you, about to generate it now. Here is the prompt I used:",
@@ -363,6 +372,10 @@
     "noData": "-",
     "enabled": "Enabled",
     "disabled": "Disabled"
+  },
+  "characterIntro": {
+    "title": "Character Intro",
+    "loading": "Loading character information..."
   },
   "characterUpdate": {
     "viewCharacter": "View Character",

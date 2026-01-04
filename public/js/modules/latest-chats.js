@@ -88,7 +88,7 @@ window.loadLatestChats = async (page = 1, reload = false) => {
 
 $(document).on('click', '#reload-latest-chats', () => window.loadLatestChats(1, true));
 
-$('#reload-latest-video-chats').on('click', () => {
+$(document).on('click', '#reload-latest-video-chats', () => {
     if (typeof window.loadLatestVideoChats === 'function') {
         window.loadLatestVideoChats(1, true);
     }

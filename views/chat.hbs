@@ -72,61 +72,7 @@
 
                         <!-- Query Tags Horizontal Scroll Section -->
                         <div class="query-tags-section mb-1 native-section d-flex flex-wrap align-items-center">
-
-                            <!-- Action buttons container -->
-                            <div class="d-flex align-items-center flex-shrink-0 me-3">
-                                <button id="reload-latest-chats" class="btn-flat-border btn-outline-primary me-1" style="border: none!important; background-color: color(srgb 0.5022 0.2316 0.965 / 0.2) !important;font-size: 0.9em;">
-                                    <i class="bi bi-arrow-clockwise me-1"></i>{{#if translations.recent}}{{translations.recent}}{{else}}Recent{{/if}}
-                                </button>
-                                <button id="reload-latest-video-chats" class="btn-flat-border btn-outline-primary me-1" style="border: none!important; background-color: color(srgb 0.5022 0.2316 0.965 / 0.2) !important;font-size: 0.9em;">
-                                    <i class="bi bi-film me-1"></i>{{#if translations.recentVideos}}{{translations.recentVideos}}{{else}}Recent Videos{{/if}}
-                                </button>
-                                <!-- Toggle NSFW button -->
-                                <button id="toggle-nsfw-btn" class="toggle-nsfw-btn btn-flat-border btn-outline-primary me-1 d-none" style="border: none!important; background-color: color(srgb 0.5022 0.2316 0.965 / 0.2) !important;font-size: 0.9em;">
-                                    <i class="bi bi-toggle-off mx-2"></i><i class="bi bi-toggle-on mx-2"></i>{{#if translations.toggle_nsfw}}{{translations.toggle_nsfw}}{{else}}NSFW{{/if}}
-                                </button>
-
-                                <div class="dropdown d-none">
-                                    <button class="btn-flat-border btn-outline-primary dropdown-toggle d-flex align-items-center gap-2" 
-                                            type="button" 
-                                            data-bs-toggle="dropdown" 
-                                            aria-expanded="false"
-                                            style="border: none!important; 
-                                                background-color: color(srgb 0.5022 0.2316 0.965 / 0.2) !important;">
-                                        <span id="selected-gender-text">
-                                            <i class="bi bi-gender-female me-1"></i>{{translations.sort.female}}
-                                        </span>
-                                    </button>
-
-                                    <ul class="dropdown-menu shadow-sm" style="border-radius: 16px; overflow: hidden;">
-                                        <li>
-                                            <button class="dropdown-item d-flex align-items-center gap-2 px-3 py-2" 
-                                                    data-gender="female"
-                                                    type="button">
-                                                <i class="bi bi-gender-female text-primary"></i>
-                                                <span>{{translations.sort.female}}</span>
-                                            </button>
-                                        </li>
-                                        <li>
-                                            <button class="dropdown-item d-flex align-items-center gap-2 px-3 py-2" 
-                                                    data-gender="male"
-                                                    type="button">
-                                                <i class="bi bi-gender-male text-info"></i>
-                                                <span>{{translations.sort.male}}</span>
-                                            </button>
-                                        </li>
-                                        <li>
-                                            <button class="dropdown-item d-flex align-items-center gap-2 px-3 py-2" 
-                                                    data-gender="nonbinary"
-                                                    type="button">
-                                                <i class="bi bi-gender-trans text-success"></i>
-                                                <span>{{translations.sort.nonBinary}}</span>
-                                            </button>
-                                        </li>
-                                    </ul>
-                                </div>
-                                
-                            </div>
+                            
                             <div class="query-tags-scroll-container flex-grow-1">
                                 <div class="query-tags-list d-flex p-0 mt-2" id="query-tags-list" style="overflow-y: none;">
                                     <!-- Query tags will be populated here -->

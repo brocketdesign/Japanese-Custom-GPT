@@ -3286,6 +3286,19 @@ $(document).ready(function () {
                 <i class="bi bi-grid me-1"></i>${translations.all || 'All'}
             </div>
         `;
+        
+        // Add "Recent" and "Recent Videos" buttons
+        tagsHtml += `
+            <div id="reload-latest-chats" class="query-tag badge badge-sm btn-outline-primary" 
+            style="line-height: 1.5;">
+                <i class="bi bi-arrow-clockwise me-1"></i>${translations.recent || 'Recent'}
+            </div>
+            <div id="reload-latest-video-chats" class="query-tag badge badge-sm btn-outline-primary" 
+            style="line-height: 1.5;">
+                <i class="bi bi-film me-1"></i>${translations.recentVideos || 'Recent Videos'}
+            </div>
+        `;
+        
 
         // Add "Realistic" and "Anime" tags
         const specialTags = ['photorealistic', 'anime'];
@@ -3297,7 +3310,7 @@ $(document).ready(function () {
                 style="line-height: 1.5;"
                     data-query="${tag === 'photorealistic' ? 'photorealistic' : 'anime'}" 
                     >
-                    #${tag.charAt(0).toUpperCase() + tag.slice(1)}
+                    #${tag == 'photorealistic' ? translations.photorealistic : translations.anime}
                 </div>
             `;
         });

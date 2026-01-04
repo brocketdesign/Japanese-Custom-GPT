@@ -60,9 +60,9 @@ $(document).ready(function() {
         }
 
         // Basic information
-        $('#charInfoShortIntro').text(chatData.short_intro || 'No introduction provided');
+        $('#charInfoShortIntro').text(chatData.short_intro || '');
         const characterDescription = chatData?.enhancedPrompt || chatData?.imageDescription || chatData?.characterPrompt || null;
-        $('#charInfoDescription').text(characterDescription || 'No description provided');
+        $('#charInfoDescription').text(characterDescription || '');
         $('#charInfoNsfw').text(chatData.nsfw ? 'Yes' : 'No');
         
         // Tags
@@ -192,8 +192,22 @@ $(document).ready(function() {
             return;
         }
 
+        // Clear any existing cache for intro galleries to prevent stale data
+        if (window.clearImageCache) {
+            // Clear previous character's intro cache if different
+            const previousChatId = $.cookie('character-intro-id');
+            if (previousChatId && previousChatId !== chatId) {
+                window.clearImageCache('intro', previousChatId);
+            }
+            // Also clear current character's cache to ensure fresh data
+            window.clearImageCache('intro', chatId);
+        }
+
         // Store chatId for the modal
         $.cookie('character-intro-id', chatId, { path: '/' });
+        
+        // Set data attribute on gallery for validation
+        $('#character-intro-gallery').attr('data-current-chat-id', chatId).empty();
         
         // Show modal and load data
         $('#characterIntroModal').modal('show');
@@ -300,9 +314,17 @@ $(document).ready(function() {
 
     // Reset intro modal when hidden
     $('#characterIntroModal').on('hidden.bs.modal', function() {
+        // Get the current chat ID before clearing
+        const chatId = $.cookie('character-intro-id');
+        
+        // Clear image cache and scroll handlers for this character
+        if (chatId && window.clearImageCache) {
+            window.clearImageCache('intro', chatId);
+        }
+        
         $('#characterIntroLoading').show();
         $('#characterIntroContent').hide();
-        $('#character-intro-gallery').empty();
+        $('#character-intro-gallery').empty().removeAttr('data-current-chat-id');
         $.removeCookie('character-intro-id', { path: '/' });
         $.removeCookie('character-intro-image', { path: '/' });
         $.removeCookie('character-intro-nsfw', { path: '/' });

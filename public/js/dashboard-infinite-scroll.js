@@ -382,6 +382,15 @@ async function renderImages(images, id, type) {
 
     const gallerySelector = getGalleryConfig(type)?.gallery || '#chat-images-gallery';
     
+    // Validate that the gallery is still for the correct character (prevents race condition)
+    if (type === 'intro') {
+        const currentChatId = $(gallerySelector).attr('data-current-chat-id');
+        if (currentChatId && currentChatId !== id) {
+            console.warn(`[renderImages] Skipping render - gallery is for ${currentChatId}, but trying to render ${id}`);
+            return;
+        }
+    }
+    
     // Set data attribute for chat galleries to track which chat is being rendered
     if (type === 'chat') {
         const gallerySelector = '#chat-images-gallery';
@@ -679,6 +688,16 @@ function handleScroll(id, isModal, cacheKey, type) {
     // Check if gallery is visible
     if (config?.gallery && !isGalleryVisible(config.gallery)) {
         return;
+    }
+    
+    // For intro type, validate that we're still loading for the correct character
+    if (type === 'intro') {
+        const gallerySelector = config?.gallery || '#character-intro-gallery';
+        const currentChatId = $(gallerySelector).attr('data-current-chat-id');
+        if (currentChatId && currentChatId !== id) {
+            console.warn(`[handleScroll] Skipping scroll load - gallery is for ${currentChatId}, but scroll handler is for ${id}`);
+            return;
+        }
     }
 
     const currentPage = manager.currentPages.get(cacheKey);

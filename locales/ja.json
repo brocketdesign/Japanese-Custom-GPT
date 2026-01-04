@@ -1,5 +1,14 @@
 {
   "lang": "ja",
+    "contactUs": "お問い合わせ",
+    "contactDescription": "最新情報やサポートについては、ソーシャルメディアでお気軽にお声かけください。",
+    "quickLinks": "クイックリンク",
+    "legal": "法的情報・サポート",
+    "brandTagline": "つながる。創る。体験する。",
+    "allRightsReserved": "無断転載を禁じます。",
+    "madeWithLove": "愛を込めて",
+    "forYou": "あなたのために",
+    "all": "すべて",
     "feature": "機能",
   "sendGiftImageDirectly": "ギフトを送りました、待っててください！",
   "sendPoseRequest": "あなたの新しいポーズの画像をリクエストしました、今生成します。使用したプロンプトはこちら：",
@@ -1823,6 +1832,10 @@
     "noData": "-",
     "enabled": "有効",
     "disabled": "無効"
+  },
+  "characterIntro": {
+    "title": "キャラクター紹介",
+    "loading": "キャラクター情報を読み込み中..."
   },
   "topFreeChats": "人気の無料チャット",
   "image_model": "画像モデル",

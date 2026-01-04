@@ -1,5 +1,14 @@
 {
   "lang": "fr",
+    "contactUs": "Nous Contacter",
+    "contactDescription": "Connectez-vous avec nous sur les réseaux sociaux pour les mises à jour et le support.",
+    "quickLinks": "Liens Rapides",
+    "legal": "Légal et Support",
+    "brandTagline": "Connecter. Créer. Expérimenter.",
+    "allRightsReserved": "Tous droits réservés.",
+    "madeWithLove": "Fait avec",
+    "forYou": "pour vous",
+    "all": "Tout",
     "feature": "Fonctionnalité",
     "sendGiftImageDirectly": "Je vous ai envoyé un cadeau, attendez-le !",
     "sendPoseRequest": "J'ai demandé une nouvelle pose d'image de vous, sur le point de la générer maintenant. Voici l'invite que j'ai utilisée :",
@@ -1786,6 +1795,10 @@
     "noData": "-",
     "enabled": "Activé",
     "disabled": "Désactivé"
+  },
+  "characterIntro": {
+    "title": "Présentation du personnage",
+    "loading": "Chargement des informations du personnage..."
   },
   "topFreeChats": "Meilleurs chats gratuits",
   "new_plan": "Nouveau forfait",

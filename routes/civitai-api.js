@@ -428,6 +428,309 @@ async function routes(fastify, options) {
     }
   });
 
+  // ============================================
+  // User Model Search & Preferences (using Novita API)
+  // ============================================
+
+  /**
+   * Fetch models from Novita API
+   */
+  async function fetchNovitaModels(query = '', cursor = '') {
+    try {
+      const axios = require('axios');
+      let url = 'https://api.novita.ai/v3/model?filter.visibility=public&pagination.limit=30&filter.types=checkpoint';
+      if (cursor) {
+        url += `&pagination.cursor=${cursor}`;
+      }
+      if (query) {
+        url += `&filter.query=${encodeURIComponent(query)}`;
+      }
+
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${process.env.NOVITA_API_KEY}`,
+        },
+        timeout: 15000
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('[fetchNovitaModels] Error fetching models:', error.message);
+      return { models: [], pagination: {} };
+    }
+  }
+
+  /**
+   * Search models using Novita API - accessible to all users
+   */
+  fastify.get('/api/civitai/search', async (request, reply) => {
+    try {
+      const { query, cursor } = request.query;
+      
+      if (!query || query.trim().length < 2) {
+        return reply.status(400).send({ error: 'Query must be at least 2 characters' });
+      }
+
+      console.log(`[/api/civitai/search] Searching Novita models: ${query}`);
+      
+      const data = await fetchNovitaModels(query, cursor);
+      
+      // Process and format results to match frontend expectations
+      const models = (data.models || []).map(model => {
+        // Determine style from tags
+        const tags = model.tags || [];
+        const style = tags.find(t => 
+          t.toLowerCase().includes('anime') || 
+          t.toLowerCase().includes('photorealistic') ||
+          t.toLowerCase().includes('realistic')
+        ) || tags[0] || 'general';
+        
+        return {
+          id: model.id,
+          name: model.name,
+          type: 'Checkpoint',
+          nsfw: false,
+          description: model.description?.substring(0, 200) || '',
+          tags: tags.slice(0, 5),
+          creator: model.author || 'Unknown',
+          stats: {
+            downloadCount: model.download_count || 0,
+            favoriteCount: model.favorite_count || 0,
+            rating: model.rating || 0
+          },
+          modelVersions: [{
+            id: model.id,
+            name: model.base_model || 'Default',
+            baseModel: model.base_model || 'SD 1.5',
+            files: [{
+              name: model.sd_name || model.name,
+              sizeKB: 0,
+              downloadUrl: null
+            }]
+          }],
+          previewImage: model.cover_url || '/img/default-model.png',
+          // Additional Novita-specific fields
+          sd_name: model.sd_name,
+          base_model: model.base_model,
+          cover_url: model.cover_url
+        };
+      });
+
+      return reply.send({
+        success: true,
+        models,
+        metadata: {
+          nextCursor: data.pagination?.next_cursor || null,
+          totalCount: data.pagination?.total_count || models.length
+        }
+      });
+    } catch (error) {
+      console.error('[/api/civitai/search] Error searching models:', error.message);
+      return reply.status(500).send({ error: 'Failed to search models' });
+    }
+  });
+
+  /**
+   * Get user's saved custom models
+   */
+  fastify.get('/api/user/models', async (request, reply) => {
+    try {
+      const user = request.user;
+      if (!user) {
+        return reply.status(401).send({ error: 'Authentication required' });
+      }
+
+      const db = fastify.mongo.db;
+      const userModelsCollection = db.collection('userModels');
+      
+      const userModels = await userModelsCollection.find({
+        userId: new ObjectId(user._id)
+      }).sort({ createdAt: -1 }).toArray();
+
+      return reply.send({ success: true, models: userModels });
+    } catch (error) {
+      console.error('[/api/user/models] Error fetching user models:', error);
+      return reply.status(500).send({ error: 'Failed to fetch user models' });
+    }
+  });
+
+  /**
+   * Add a custom Civitai model to user's collection
+   */
+  fastify.post('/api/user/models', async (request, reply) => {
+    try {
+      const user = request.user;
+      if (!user) {
+        return reply.status(401).send({ error: 'Authentication required' });
+      }
+
+      const { 
+        civitaiModelId,
+        civitaiVersionId,
+        modelName, 
+        versionName,
+        fileName,
+        image, 
+        style,
+        baseModel
+      } = request.body;
+
+      if (!civitaiModelId || !civitaiVersionId || !modelName || !fileName) {
+        return reply.status(400).send({ error: 'Missing required fields: civitaiModelId, civitaiVersionId, modelName, fileName' });
+      }
+
+      const db = fastify.mongo.db;
+      const userModelsCollection = db.collection('userModels');
+
+      // Check if model already exists for this user
+      const existingModel = await userModelsCollection.findOne({
+        userId: new ObjectId(user._id),
+        civitaiVersionId: civitaiVersionId.toString()
+      });
+
+      if (existingModel) {
+        return reply.status(400).send({ error: 'Model already exists in your collection' });
+      }
+
+      // Normalize style
+      const normalizedStyle = style?.toLowerCase().includes('anime') ? 'anime' : 
+                             style?.toLowerCase().includes('realistic') ? 'photorealistic' : 
+                             style || '';
+
+      const newModel = {
+        userId: new ObjectId(user._id),
+        civitaiModelId: civitaiModelId.toString(),
+        civitaiVersionId: civitaiVersionId.toString(),
+        modelId: civitaiVersionId.toString(), // For compatibility with existing system
+        model: fileName,
+        name: modelName,
+        versionName: versionName || 'Default',
+        image: image || '/img/default-model.png',
+        style: normalizedStyle,
+        baseModel: baseModel || 'Unknown',
+        version: civitaiVersionId.toString(),
+        isUserModel: true,
+        createdAt: new Date()
+      };
+
+      const result = await userModelsCollection.insertOne(newModel);
+      
+      console.log(`[/api/user/models] User ${user._id} added custom model: ${modelName}`);
+
+      return reply.send({ 
+        success: true, 
+        model: { ...newModel, _id: result.insertedId },
+        message: 'Model added successfully'
+      });
+    } catch (error) {
+      console.error('[/api/user/models] Error adding user model:', error);
+      return reply.status(500).send({ error: 'Failed to add model' });
+    }
+  });
+
+  /**
+   * Remove a custom model from user's collection
+   */
+  fastify.delete('/api/user/models/:modelId', async (request, reply) => {
+    try {
+      const user = request.user;
+      if (!user) {
+        return reply.status(401).send({ error: 'Authentication required' });
+      }
+
+      const { modelId } = request.params;
+      const db = fastify.mongo.db;
+      const userModelsCollection = db.collection('userModels');
+
+      const result = await userModelsCollection.deleteOne({
+        _id: new ObjectId(modelId),
+        userId: new ObjectId(user._id)
+      });
+
+      if (result.deletedCount === 0) {
+        return reply.status(404).send({ error: 'Model not found or unauthorized' });
+      }
+
+      console.log(`[/api/user/models] User ${user._id} removed model: ${modelId}`);
+
+      return reply.send({ success: true, message: 'Model removed successfully' });
+    } catch (error) {
+      console.error('[/api/user/models] Error removing user model:', error);
+      return reply.status(500).send({ error: 'Failed to remove model' });
+    }
+  });
+
+  /**
+   * Save user's preferred/favorite model
+   */
+  fastify.post('/api/user/model-preference', async (request, reply) => {
+    try {
+      const user = request.user;
+      if (!user) {
+        return reply.status(401).send({ error: 'Authentication required' });
+      }
+
+      const { modelId, modelName, isUserModel } = request.body;
+      
+      if (!modelId) {
+        return reply.status(400).send({ error: 'modelId is required' });
+      }
+
+      const db = fastify.mongo.db;
+      const usersCollection = db.collection('users');
+
+      await usersCollection.updateOne(
+        { _id: new ObjectId(user._id) },
+        { 
+          $set: { 
+            preferredModelId: modelId,
+            preferredModelName: modelName || null,
+            preferredModelIsUserModel: isUserModel || false,
+            preferredModelUpdatedAt: new Date()
+          }
+        }
+      );
+
+      console.log(`[/api/user/model-preference] User ${user._id} set preferred model: ${modelId}`);
+
+      return reply.send({ success: true, message: 'Model preference saved' });
+    } catch (error) {
+      console.error('[/api/user/model-preference] Error saving model preference:', error);
+      return reply.status(500).send({ error: 'Failed to save model preference' });
+    }
+  });
+
+  /**
+   * Get user's model preference
+   */
+  fastify.get('/api/user/model-preference', async (request, reply) => {
+    try {
+      const user = request.user;
+      if (!user) {
+        return reply.status(401).send({ error: 'Authentication required' });
+      }
+
+      const db = fastify.mongo.db;
+      const usersCollection = db.collection('users');
+      const userData = await usersCollection.findOne(
+        { _id: new ObjectId(user._id) },
+        { projection: { preferredModelId: 1, preferredModelName: 1, preferredModelIsUserModel: 1 } }
+      );
+
+      return reply.send({ 
+        success: true, 
+        preference: {
+          modelId: userData?.preferredModelId || null,
+          modelName: userData?.preferredModelName || null,
+          isUserModel: userData?.preferredModelIsUserModel || false
+        }
+      });
+    } catch (error) {
+      console.error('[/api/user/model-preference] Error fetching model preference:', error);
+      return reply.status(500).send({ error: 'Failed to fetch model preference' });
+    }
+  });
+
   
 }
 

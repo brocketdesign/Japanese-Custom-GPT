@@ -60,7 +60,7 @@ async function routes(fastify) {
                         content: message
                     }
                 ];
-                systemTone = await generateCompletion(systemToneMessage, 100, 'openai-gpt4o');
+                systemTone = await generateCompletion(systemToneMessage, 100, 'deepseek-v3-turbo');
             } catch (error) {
                 console.log('[openAi txt2speech] generateCompletion error:', error);
             }

@@ -207,7 +207,7 @@ const initializeDefaultModels = async () => {
     const defaultModels = [
       {
         _id: new ObjectId(),
-        key: 'openai-gpt4o',
+        key: 'deepseek-v3-turbo',
         displayName: 'OpenAI GPT-4o',
         description: 'Advanced reasoning and creativity',
         provider: 'openai',

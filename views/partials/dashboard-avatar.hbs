@@ -65,7 +65,7 @@
             {{else}}
                 <div class="d-flex align-items-center gap-2">
                     <span class="btn btn-outline-primary btn-gradient-border badge-sm text-white shadow-0 my-1" style="font-size: 0.9rem;" onclick="loadPlanPage()">
-                        💎 {{translations.avatar.premium}}
+                        <i class="bi bi-gem"></i> {{translations.avatar.premium}}
                     </span>
                 </div>
             {{/if}}
@@ -120,7 +120,7 @@
 
                 {{#if (eq user.subscriptionStatus 'active')}}
                 {{else}}
-                    <a class="list-group-item list-group-item-action text-white border-0 menu-item" style="background: linear-gradient(to bottom right, #cdb3fb, #6e20f4);" href="#" onclick="loadPlanPage()">
+                    <a class="list-group-item list-group-item-action text-white border-0 menu-item" style="background: linear-gradient(to bottom right, rgb(129, 81, 214) 21.85%, #cdb3fb 100%, #6e20f4);" href="#" onclick="loadPlanPage()">
                         <i class="bi bi-gem me-3"></i>{{translations.avatar.premium}}
                     </a>
                 {{/if}}
@@ -133,11 +133,6 @@
                     <i class="bi bi-coin me-3"></i>
                     {{userPointsTranslations.points.title}}: <span class="user-points-balance ms-1">0</span>
                 </a>
-                
-                <a class="list-group-item list-group-item-action border-0 menu-item" href="#" onclick="toggleChatList()">
-                    <i class="bi bi-chat me-3"></i>{{translations.chatList}}
-                </a>
-                
                 
                 <div class="d-none">
                     <a class="list-group-item list-group-item-action border-0 menu-item" href="/chat/list/{{user._id}}">

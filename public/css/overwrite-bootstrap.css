@@ -554,6 +554,55 @@ background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/s
   width: 1em;
   height: 1em;
 }
+.bi.bi-compass::before{
+  content: "";
+  background: url('/img/compass.png') no-repeat center center;
+  background-size: contain;
+  width: 1em;
+  height: 1em;
+}
+.bi.bi-gear::before{
+  content: "";
+  background: url('/img/gear.png') no-repeat center center;
+  background-size: contain;
+  width: 1em;
+  height: 1em;
+}
+.bi.bi-chat-left-text::before{
+  content: "";
+  background: url('/img/chat.png') no-repeat center center;
+  background-size: contain;
+  width: 1em;
+  height: 1em;
+}
+.bi.bi-gem::before{
+  content: "";
+  background: url('/img/zirconia.png') no-repeat center center;
+  background-size: contain;
+  width: 1em;
+  height: 1em;
+}
+.bi.bi-person-circle::before{
+  content: "";
+  background: url('/img/user.png') no-repeat center center;
+  background-size: contain;
+  width: 1em;
+  height: 1em;
+}
+.bi.bi-link::before{
+  content: "";
+  background: url('/img/affiliate-marketing.png') no-repeat center center;
+  background-size: contain;
+  width: 1em;
+  height: 1em;
+}
+.bi.bi-plus-circle::before{
+  content: "";
+  background: url('/img/magic-wand.png') no-repeat center center;
+  background-size: contain;
+  width: 1em;
+  height: 1em;
+}
 /* FULL-HEIGHT RIGHT-SLIDE MODAL – works 100% with Bootstrap 5 */
 
 .modal.fade .modal-dialog {

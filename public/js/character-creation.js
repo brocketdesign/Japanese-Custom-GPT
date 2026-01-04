@@ -209,9 +209,20 @@
             showUpgradePopup('image-generation')
             return
         }
-        $('.style-option').removeClass('selected');
+        // Remove selection from ALL style options (both system and user models)
+        $('#imageStyleSelectionCharacterCreation .style-option').removeClass('selected');
+        $('#userCustomModels .style-option').removeClass('selected');
+        
         $(this).addClass('selected');
         updateFields($(this));
+
+        // Determine if this is a user model
+        const isUserModel = $(this).data('is-user-model') === true || $(this).attr('data-is-user-model') === 'true';
+        $('#isUserModel').val(isUserModel ? 'true' : 'false');
+        
+        // Save to localStorage for persistence
+        localStorage.setItem('imageModelId', $(this).data('id'));
+        localStorage.setItem('isUserModel', isUserModel ? 'true' : 'false');
 
         // Save the selected model immediately
         saveSelectedImageModel(chatCreationId, function(error, response) {
@@ -825,11 +836,28 @@
 
     // Save selected image model
     function saveSelectedImageModel(chatCreationId, callback) {
+        // If no chat ID, we can't save to DB yet. This is normal for new character creation.
+        if (!chatCreationId) {
+            if (typeof callback === 'function') {
+                callback(null, { message: 'No chat ID, skipped saving' });
+            }
+            return;
+        }
 
         const modelId = $('.style-option.selected').data('id')
-        const imageStyle = $('.style-option.selected').data('style')
+        // Ensure style is not empty, default to 'general' if missing
+        const imageStyle = $('.style-option.selected').data('style') || 'general'
         const imageModel = $('.style-option.selected').data('model')
         const imageVersion = $('.style-option.selected').data('version')
+
+        // Validate required fields
+        if (!modelId || !imageModel || !imageVersion) {
+            console.warn('[saveSelectedImageModel] Missing required fields:', { modelId, imageModel, imageVersion });
+            if (typeof callback === 'function') {
+                callback(new Error('Missing required fields'));
+            }
+            return;
+        }
 
         $.ajax({
             url: '/novita/save-image-model',

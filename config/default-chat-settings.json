@@ -7,7 +7,7 @@
     "voiceProvider": "standard",
     "minimaxVoice": "Wise_Woman",
     "autoMergeFace": true,
-    "selectedModel": "openai-gpt4o",
+    "selectedModel": "deepseek-v3-turbo",
     "suggestionsEnabled": true,
     "speechRecognitionEnabled": true,
     "speechAutoSend": true,

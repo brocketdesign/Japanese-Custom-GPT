@@ -279,6 +279,21 @@
                         <input type="hidden" id="isUserModel" name="isUserModel" value="false">
                     </div>
                     
+                    <!-- Custom Prompt Section -->
+                    <div class="custom-prompt-section">
+                        <h3 class="section-label">{{translations.newCharacter.custom_prompt_title}}</h3>
+                        <textarea 
+                            class="custom-prompt-input" 
+                            id="customPrompt" 
+                            placeholder="{{translations.newCharacter.custom_prompt_placeholder}}"
+                            rows="3"
+                            maxlength="500"
+                        ></textarea>
+                        <div class="char-counter">
+                            <span id="customPromptCounter">0</span>/500
+                        </div>
+                    </div>
+                    
                     <!-- Image Generation Area -->
                     <div class="image-generation-section">
                         <!-- Generated Images Grid (2x2 for 4 images) -->

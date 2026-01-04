@@ -1667,7 +1667,7 @@
     "occupation_title": "職業",
     "kinks_title": "好み",
     "custom_prompt_title": "カスタム詳細",
-    "custom_prompt_placeholder": "キャラクターについての追加詳細を入力...",
+    "custom_prompt_placeholder": "例: 赤いドレスを着て、カフェに座っている、晴れた日、笑顔...",
     
     "voice_title": "声",
     "play_sample": "サンプル再生",

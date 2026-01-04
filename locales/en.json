@@ -1730,7 +1730,7 @@
     "occupation_title": "Occupation",
     "kinks_title": "Preferences",
     "custom_prompt_title": "Custom Details",
-    "custom_prompt_placeholder": "Add any custom details about your character...",
+    "custom_prompt_placeholder": "E.g., wearing a red dress, sitting in a cafe, sunny day, smiling...",
     
     "voice_title": "Voice",
     "play_sample": "Play Sample",

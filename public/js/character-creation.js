@@ -395,13 +395,25 @@
                 });
             }
             
-            // Custom prompt
+            // Custom prompt with character counter
             const customPrompt = document.getElementById('customPrompt');
+            const customPromptCounter = document.getElementById('customPromptCounter');
             if (customPrompt) {
                 customPrompt.addEventListener('input', (e) => {
                     this.characterData.customPrompt = e.target.value;
                     this.saveData();
+                    // Update character counter
+                    if (customPromptCounter) {
+                        customPromptCounter.textContent = e.target.value.length;
+                    }
                 });
+                // Initialize counter if there's saved data
+                if (this.characterData.customPrompt) {
+                    customPrompt.value = this.characterData.customPrompt;
+                    if (customPromptCounter) {
+                        customPromptCounter.textContent = this.characterData.customPrompt.length;
+                    }
+                }
             }
             
             // Step 7: Model tabs

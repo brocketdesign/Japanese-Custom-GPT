@@ -1239,6 +1239,49 @@
     color: white;
 }
 
+/* Custom Prompt Section */
+.custom-prompt-section {
+    margin-bottom: 25px;
+}
+
+.custom-prompt-section .section-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--cc-text);
+    margin-bottom: 10px;
+    text-align: left;
+}
+
+.custom-prompt-input {
+    width: 100%;
+    padding: 12px 15px;
+    background: var(--cc-glass-bg);
+    border: 1px solid var(--cc-glass-border);
+    border-radius: var(--cc-radius-md);
+    color: var(--cc-text);
+    font-size: 0.9rem;
+    font-family: inherit;
+    resize: none;
+    transition: all 0.2s ease;
+}
+
+.custom-prompt-input::placeholder {
+    color: var(--cc-text-muted);
+}
+
+.custom-prompt-input:focus {
+    outline: none;
+    border-color: var(--cc-primary);
+    box-shadow: 0 0 0 2px rgba(130, 64, 255, 0.2);
+}
+
+.custom-prompt-section .char-counter {
+    text-align: right;
+    font-size: 0.75rem;
+    color: var(--cc-text-muted);
+    margin-top: 5px;
+}
+
 /* Image Generation Section */
 .image-generation-section {
     text-align: center;

@@ -364,6 +364,9 @@ async function generateImg({
         return;
     }
 
+    console.log('\x1b[36m🔧 [generateImg] ===== STARTING IMAGE GENERATION =====\x1b[0m');
+    console.log(`\x1b[33m[generateImg] Input modelId: ${modelId || 'NOT PROVIDED'}\x1b[0m`);
+
     // Fetch the user
     let user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
     if (!user) {
@@ -376,23 +379,44 @@ async function generateImg({
   
     // Fetch imageVersion from chat or use default
     const chat = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
-    const imageVersion = chat.imageVersion || 'sdxl';
+    console.log(`\x1b[33m[generateImg] Chat model data: modelId=${chat?.modelId}, imageModel=${chat?.imageModel}, imageVersion=${chat?.imageVersion}\x1b[0m`);
+    
+    const imageVersion = chat?.imageVersion || 'sdxl';
     const selectedStyle = !flux ? default_prompt[imageVersion] || default_prompt['sdxl'] : default_prompt.flux;
     
-    let imageModel = chat.imageModel || 'novaAnimeXL_ponyV20_461138';
+    // Priority: 1) modelId param, 2) chat.modelId, 3) default
+    let effectiveModelId = modelId || chat?.modelId || null;
+    let imageModel = chat?.imageModel || 'novaAnimeXL_ponyV20_461138';
     let modelData = null;
+    
+    console.log(`\x1b[33m[generateImg] Effective modelId: ${effectiveModelId || 'NONE - using default'}\x1b[0m`);
+    console.log(`\x1b[33m[generateImg] Initial imageModel: ${imageModel}\x1b[0m`);
     
     // For FLUX, use default flux settings instead of fetching model data
     if (!flux) {
         try {
-          modelData = await db.collection('myModels').findOne({ model: imageModel });
-          if (!modelData) {
-            modelData = await db.collection('myModels').findOne({ modelId: modelId?.toString() });
+          // First try to find by modelId
+          if (effectiveModelId) {
+            modelData = await db.collection('myModels').findOne({ modelId: effectiveModelId.toString() });
+            console.log(`\x1b[33m[generateImg] Found model by modelId: ${modelData ? modelData.model : 'NOT FOUND'}\x1b[0m`);
+          }
+          // If not found by modelId, try by model name
+          if (!modelData && imageModel) {
+            modelData = await db.collection('myModels').findOne({ model: imageModel });
+            console.log(`\x1b[33m[generateImg] Found model by name: ${modelData ? modelData.model : 'NOT FOUND'}\x1b[0m`);
           }
         } catch (error) {
           console.error('[generateImg] Error fetching modelData:', error);
           modelData = null;
         }
+    }
+
+    // Update imageModel if we found model data
+    if (modelData) {
+        imageModel = modelData.model;
+        console.log(`\x1b[32m[generateImg] ✓ Using model: ${imageModel}\x1b[0m`);
+    } else {
+        console.log(`\x1b[33m[generateImg] ⚠️ No model data found, using default: ${imageModel}\x1b[0m`);
     }
 
     // Set default model if not found (non-FLUX only)
@@ -404,7 +428,8 @@ async function generateImg({
       }
     }
 
-    const gender = chat.gender
+    const gender = chat?.gender
+    console.log(`\x1b[33m[generateImg] Gender: ${gender || 'not set'}\x1b[0m`);
 
     // Custom negative prompt by gender (not used for FLUX)
     let genderNegativePrompt = '';

@@ -223,6 +223,62 @@
                     <h1 class="step-title">{{translations.newCharacter.step7_title}}</h1>
                     <p class="step-subtitle">{{translations.newCharacter.step7_subtitle}}</p>
                     
+                    <!-- Model Selection Section -->
+                    <div class="model-selection-section">
+                        <h3 class="section-label">{{translations.newCharacter.image_model}}</h3>
+                        
+                        <!-- Model Filter Tabs -->
+                        <div class="model-tabs">
+                            <button class="model-tab active" id="systemModelsTab" data-target="systemModelsPane">
+                                {{translations.newCharacter.systemModels}}
+                            </button>
+                            <button class="model-tab" id="customModelsTab" data-target="customModelsPane">
+                                {{translations.newCharacter.myCustomModels}}
+                                <span class="model-count-badge" id="customModelsCount">0</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Model Tab Content -->
+                        <div class="model-tab-content">
+                            <!-- System Models Pane -->
+                            <div class="model-pane active" id="systemModelsPane">
+                                <div class="models-scroll-container" id="imageStyleSelectionCharacterCreation">
+                                    <!-- Models will be populated by fetchAndAppendModels() -->
+                                </div>
+                            </div>
+                            
+                            <!-- Custom Models Pane -->
+                            <div class="model-pane" id="customModelsPane">
+                                <!-- Premium feature notice for non-subscribers -->
+                                <div id="customModelsPremiumNotice" class="premium-notice" style="display: none;">
+                                    <i class="bi bi-gem"></i>
+                                    <div class="premium-notice-content">
+                                        <strong>{{translations.newCharacter.premiumFeature}}</strong>
+                                        <p>{{translations.newCharacter.customModelsPremiumDescription}}</p>
+                                        <a href="#" onclick="loadPlanPage()" class="btn-upgrade">
+                                            <i class="bi bi-star me-1"></i>{{translations.upgrade_now}}
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="models-scroll-container" id="userCustomModels">
+                                    <!-- Add model button -->
+                                    <div class="add-model-card" id="addCustomModelBtn">
+                                        <i class="bi bi-plus-lg"></i>
+                                        <span>{{translations.newCharacter.addCustomModel}}</span>
+                                    </div>
+                                    <!-- User models will be dynamically inserted here -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Hidden inputs for model data -->
+                        <input type="hidden" id="modelId" name="modelId">
+                        <input type="hidden" id="imageStyle" name="imageStyle">
+                        <input type="hidden" id="imageModel" name="imageModel">
+                        <input type="hidden" id="imageVersion" name="imageVersion">
+                        <input type="hidden" id="isUserModel" name="isUserModel" value="false">
+                    </div>
+                    
                     <!-- Image Generation Area -->
                     <div class="image-generation-section">
                         <!-- Generated Images Grid (2x2 for 4 images) -->

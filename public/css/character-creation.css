@@ -964,12 +964,18 @@
     font-size: 0.875rem;
     cursor: pointer;
     transition: all 0.3s ease;
+    position: relative;
+    z-index: 10;
 }
 
 .play-sample-btn:hover {
     background: var(--cc-gradient);
     border-color: transparent;
     box-shadow: var(--cc-shadow-sm);
+}
+
+.play-sample-btn:active {
+    transform: scale(0.98);
 }
 
 .play-sample-btn.playing {
@@ -986,6 +992,251 @@
 .voice-card .check-badge {
     top: 18px;
     right: 18px;
+}
+
+/* ===================================
+   MODEL SELECTION SECTION
+   =================================== */
+.model-selection-section {
+    margin-bottom: 30px;
+}
+
+.model-selection-section .section-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--cc-text);
+    margin-bottom: 15px;
+}
+
+/* Model Tabs */
+.model-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.model-tab {
+    flex: 1;
+    padding: 10px 16px;
+    background: var(--cc-glass-bg);
+    border: 1px solid var(--cc-glass-border);
+    border-radius: var(--cc-radius-md);
+    color: var(--cc-text-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.model-tab:hover {
+    background: var(--cc-surface-hover);
+    border-color: var(--cc-primary);
+    color: var(--cc-text);
+}
+
+.model-tab.active {
+    background: linear-gradient(135deg, rgba(130, 64, 255, 0.2), rgba(130, 64, 255, 0.1));
+    border-color: var(--cc-primary);
+    color: var(--cc-text);
+}
+
+.model-count-badge {
+    background: var(--cc-primary);
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+}
+
+/* Model Tab Content */
+.model-tab-content {
+    position: relative;
+}
+
+.model-pane {
+    display: none;
+}
+
+.model-pane.active {
+    display: block;
+}
+
+/* Models Scroll Container */
+.models-scroll-container {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 10px 5px;
+    margin: -10px -5px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--cc-primary) transparent;
+}
+
+.models-scroll-container::-webkit-scrollbar {
+    height: 6px;
+}
+
+.models-scroll-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.models-scroll-container::-webkit-scrollbar-thumb {
+    background: var(--cc-primary);
+    border-radius: 3px;
+}
+
+/* Model Style Item (system models) */
+.model-style-item {
+    flex-shrink: 0;
+}
+
+.model-style-item .style-option {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: var(--cc-radius-sm);
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.model-style-item .style-option:hover {
+    border-color: var(--cc-primary-light);
+    transform: scale(1.05);
+}
+
+.model-style-item .style-option.selected {
+    border-color: var(--cc-primary);
+    box-shadow: 0 0 15px rgba(130, 64, 255, 0.4);
+}
+
+.model-style-item .style-option.is-premium {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.model-style-item .badge {
+    font-size: 0.65rem;
+    padding: 3px 5px;
+}
+
+/* Add Custom Model Card */
+.add-model-card {
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    border: 2px dashed var(--cc-glass-border);
+    border-radius: var(--cc-radius-sm);
+    background: var(--cc-glass-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.add-model-card:hover {
+    border-color: var(--cc-primary);
+    background: var(--cc-surface-hover);
+}
+
+.add-model-card i {
+    font-size: 1.5rem;
+    color: var(--cc-text-muted);
+}
+
+.add-model-card span {
+    font-size: 0.6rem;
+    color: var(--cc-text-muted);
+    text-align: center;
+    line-height: 1.2;
+}
+
+/* Premium Notice */
+.premium-notice {
+    display: flex;
+    gap: 15px;
+    padding: 15px;
+    background: var(--cc-glass-bg);
+    border: 1px solid var(--cc-glass-border);
+    border-radius: var(--cc-radius-md);
+    margin-bottom: 15px;
+}
+
+.premium-notice > i {
+    font-size: 1.5rem;
+    color: var(--cc-primary);
+}
+
+.premium-notice-content {
+    flex: 1;
+}
+
+.premium-notice-content strong {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--cc-text);
+}
+
+.premium-notice-content p {
+    font-size: 0.85rem;
+    color: var(--cc-text-secondary);
+    margin-bottom: 10px;
+}
+
+.premium-notice .btn-upgrade {
+    display: inline-block;
+    padding: 6px 16px;
+    background: var(--cc-gradient);
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: var(--cc-radius-sm);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.premium-notice .btn-upgrade:hover {
+    background: var(--cc-gradient-hover);
+    box-shadow: var(--cc-shadow-sm);
+}
+
+/* Style Filter Buttons (dynamically inserted) */
+#styleFilterContainer {
+    margin-bottom: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+#styleFilterContainer .style-filter-btn {
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    background: var(--cc-glass-bg);
+    border: 1px solid var(--cc-glass-border);
+    border-radius: var(--cc-radius-sm);
+    color: var(--cc-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#styleFilterContainer .style-filter-btn:hover {
+    border-color: var(--cc-primary);
+    color: var(--cc-text);
+}
+
+#styleFilterContainer .style-filter-btn.active {
+    background: var(--cc-gradient);
+    border-color: transparent;
+    color: white;
 }
 
 /* Image Generation Section */
@@ -1607,4 +1858,26 @@
 
 .generated-image-item.error img {
     display: none;
+}
+
+/* Loading state for regeneration */
+.generated-image-item.loading {
+    background: var(--cc-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.generated-image-item.loading .loading-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.generated-image-item.loading .spinner-border {
+    color: var(--cc-primary);
+    width: 2rem;
+    height: 2rem;
 }

@@ -54,6 +54,13 @@
                 // Step 6: Voice
                 voice: 'Wise_Woman',
                 
+                // Step 7: Model selection
+                modelId: null,
+                imageStyle: null,
+                imageModel: null,
+                imageVersion: null,
+                isUserModel: false,
+                
                 // Step 7: Generated Images
                 generatedImages: [],
                 selectedImageUrl: null
@@ -132,7 +139,64 @@
             // Update UI state
             this.updateUI();
             
+            // Fetch and populate models (uses global function from dashboard-footer.hbs)
+            if (typeof window.fetchAndAppendModels === 'function') {
+                window.fetchAndAppendModels();
+            }
+            
+            // Initialize model selection from localStorage
+            this.initializeModelSelection();
+            
+            // Check premium status for custom models
+            this.checkCustomModelAccess();
+            
             console.log('[CharacterCreation] Initialized successfully');
+        }
+        
+        /**
+         * Initialize model selection from localStorage or defaults
+         */
+        initializeModelSelection() {
+            const savedModelId = localStorage.getItem('imageModelId');
+            const savedIsUserModel = localStorage.getItem('isUserModel') === 'true';
+            
+            if (savedModelId) {
+                // Wait for models to be populated then select
+                setTimeout(() => {
+                    const selector = savedIsUserModel 
+                        ? `#userCustomModels .style-option[data-id="${savedModelId}"]`
+                        : `#imageStyleSelectionCharacterCreation .style-option[data-id="${savedModelId}"]`;
+                    
+                    const modelOption = document.querySelector(selector);
+                    if (modelOption) {
+                        this.selectModel(modelOption);
+                    } else {
+                        // Fallback to first available model
+                        const firstModel = document.querySelector('#imageStyleSelectionCharacterCreation .style-option');
+                        if (firstModel) this.selectModel(firstModel);
+                    }
+                }, 500);
+            } else {
+                // Select first model after they're loaded
+                setTimeout(() => {
+                    const firstModel = document.querySelector('#imageStyleSelectionCharacterCreation .style-option');
+                    if (firstModel) this.selectModel(firstModel);
+                }, 500);
+            }
+        }
+        
+        /**
+         * Check and show/hide premium notice for custom models
+         */
+        checkCustomModelAccess() {
+            const user = window.user || {};
+            const isAdmin = user.isAdmin === true;
+            const hasPremium = user.subscriptionStatus === 'active' || isAdmin;
+            
+            const notice = document.getElementById('customModelsPremiumNotice');
+            if (notice) {
+                notice.style.display = hasPremium ? 'none' : 'flex';
+            }
         }
         
         /**
@@ -340,6 +404,42 @@
                 });
             }
             
+            // Step 7: Model tabs
+            document.querySelectorAll('.model-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.switchModelTab(e.currentTarget);
+                });
+            });
+            
+            // Model selection (system models) - use event delegation
+            document.getElementById('imageStyleSelectionCharacterCreation')?.addEventListener('click', (e) => {
+                const styleOption = e.target.closest('.style-option');
+                if (styleOption) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.selectModel(styleOption);
+                }
+            });
+            
+            // Custom models container - use event delegation
+            document.getElementById('userCustomModels')?.addEventListener('click', (e) => {
+                const styleOption = e.target.closest('.style-option');
+                if (styleOption) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.selectModel(styleOption);
+                }
+                
+                // Handle add custom model button
+                if (e.target.closest('#addCustomModelBtn')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.openCustomModelSearch();
+                }
+            });
+            
             // Step 7: Image generation
             const generateImageBtn = document.getElementById('generateImageBtn');
             if (generateImageBtn) {
@@ -355,7 +455,7 @@
                 regenerateImageBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    this.generateImage();
+                    this.regenerateImages(); // Use dedicated regenerate method
                 });
             }
             
@@ -624,23 +724,27 @@
                 `;
             }).join('');
             
-            // Bind events for voice cards
+            // Bind events for voice card selection (excluding play button area)
             voiceGrid.querySelectorAll('.voice-card').forEach(card => {
                 card.addEventListener('click', (e) => {
-                    if (!e.target.closest('.play-sample-btn')) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        this.selectVoice(card);
+                    // Don't select voice if clicking on play button
+                    if (e.target.closest('.play-sample-btn')) {
+                        return; // Let the button handler deal with it
                     }
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.selectVoice(card);
                 });
             });
             
-            // Bind events for play buttons
+            // Bind events for play buttons directly
             voiceGrid.querySelectorAll('.play-sample-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    this.playVoiceSample(btn.dataset.voice);
+                    const voiceKey = btn.dataset.voice;
+                    console.log('[CharacterCreation] Play button clicked for voice:', voiceKey);
+                    this.playVoiceSample(voiceKey);
                 });
             });
         }
@@ -767,6 +871,173 @@
             if (summaryImage) {
                 summaryImage.src = imageUrl;
             }
+            
+            // Save selected image to database
+            this.saveSelectedImage(imageUrl);
+            
+            // Also save the model (user might have generated images with different models)
+            this.saveSelectedImageModel();
+        }
+        
+        /**
+         * Save selected image to database
+         */
+        saveSelectedImage(imageUrl) {
+            const chatId = this.chatId || window.chatCreationId;
+            
+            if (!chatId || !imageUrl) {
+                console.log('[CharacterCreation] Cannot save image - missing chatId or imageUrl');
+                return;
+            }
+            
+            console.log('[CharacterCreation] Saving selected image:', { chatId, imageUrl });
+            
+            fetch('/novita/save-image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    chatId: chatId,
+                    imageUrl: imageUrl
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('[CharacterCreation] Image saved successfully:', data);
+            })
+            .catch(error => {
+                console.error('[CharacterCreation] Failed to save image:', error);
+            });
+        }
+        
+        // ===================
+        // MODEL SELECTION
+        // ===================
+        
+        switchModelTab(tab) {
+            const targetId = tab.dataset.target;
+            
+            // Update tab states
+            document.querySelectorAll('.model-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            // Update pane visibility
+            document.querySelectorAll('.model-pane').forEach(p => p.classList.remove('active'));
+            const targetPane = document.getElementById(targetId);
+            if (targetPane) targetPane.classList.add('active');
+        }
+        
+        selectModel(styleOption) {
+            // Remove previous selection from all model containers
+            document.querySelectorAll('#imageStyleSelectionCharacterCreation .style-option, #userCustomModels .style-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // Mark as selected
+            styleOption.classList.add('selected');
+            
+            // Get model data from attributes
+            const modelId = styleOption.dataset.id;
+            const imageStyle = styleOption.dataset.style;
+            const imageModel = styleOption.dataset.model;
+            const imageVersion = styleOption.dataset.version;
+            const isUserModel = styleOption.dataset.isUserModel === 'true';
+            
+            // Update character data
+            this.characterData.modelId = modelId;
+            this.characterData.imageStyle = imageStyle;
+            this.characterData.imageModel = imageModel;
+            this.characterData.imageVersion = imageVersion;
+            this.characterData.isUserModel = isUserModel;
+            
+            // Update hidden inputs
+            document.getElementById('modelId').value = modelId || '';
+            document.getElementById('imageStyle').value = imageStyle || '';
+            document.getElementById('imageModel').value = imageModel || '';
+            document.getElementById('imageVersion').value = imageVersion || '';
+            document.getElementById('isUserModel').value = isUserModel;
+            
+            // Save to localStorage for persistence
+            localStorage.setItem('imageModelId', modelId);
+            localStorage.setItem('isUserModel', isUserModel.toString());
+            
+            this.saveData();
+            
+            console.log('[CharacterCreation] Model selected:', { modelId, imageStyle, imageModel, imageVersion, isUserModel });
+            
+            // Save model to database if we have a chatId
+            this.saveSelectedImageModel();
+        }
+        
+        /**
+         * Save selected image model to database
+         */
+        saveSelectedImageModel() {
+            const chatId = this.chatId || window.chatCreationId;
+            
+            // If no chat ID yet, skip - will be saved when chat is created
+            if (!chatId) {
+                console.log('[CharacterCreation] No chatId yet, skipping model save');
+                return;
+            }
+            
+            const { modelId, imageStyle, imageModel, imageVersion } = this.characterData;
+            
+            // Validate required fields
+            if (!modelId || !imageModel || !imageVersion) {
+                console.warn('[CharacterCreation] Missing required model fields:', { modelId, imageModel, imageVersion });
+                return;
+            }
+            
+            console.log('[CharacterCreation] Saving model to DB:', { chatId, modelId, imageStyle, imageModel, imageVersion });
+            
+            fetch('/novita/save-image-model', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    chatId: chatId,
+                    modelId: modelId,
+                    imageStyle: imageStyle || 'general',
+                    imageModel: imageModel,
+                    imageVersion: imageVersion
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('[CharacterCreation] Model saved successfully:', data);
+            })
+            .catch(error => {
+                console.error('[CharacterCreation] Failed to save model:', error);
+            });
+        }
+        
+        openCustomModelSearch() {
+            // Check if user has premium access
+            const user = window.user || {};
+            const isAdmin = user.isAdmin === true;
+            const hasPremium = user.subscriptionStatus === 'active' || isAdmin;
+            
+            if (!hasPremium) {
+                // Show premium notice
+                const notice = document.getElementById('customModelsPremiumNotice');
+                if (notice) notice.style.display = 'flex';
+                return;
+            }
+            
+            // Open the civitai model search modal if available
+            if (typeof window.openCivitaiModelSearch === 'function') {
+                window.openCivitaiModelSearch();
+            } else if (typeof openCivitaiModelSearch === 'function') {
+                openCivitaiModelSearch();
+            } else {
+                console.warn('[CharacterCreation] Civitai model search not available');
+                this.showError(this.t('custom_model_search_unavailable', 'Custom model search is not available'));
+            }
         }
         
         // ===================
@@ -774,7 +1045,14 @@
         // ===================
         
         playVoiceSample(voiceKey) {
-            if (!this.audioPlayer) return;
+            console.log('[CharacterCreation] playVoiceSample called with:', voiceKey);
+            console.log('[CharacterCreation] audioPlayer:', this.audioPlayer);
+            console.log('[CharacterCreation] voiceSamples:', this.voiceSamples);
+            
+            if (!this.audioPlayer) {
+                console.error('[CharacterCreation] No audio player element found');
+                return;
+            }
             
             // If already playing this voice, stop it
             if (this.currentPlayingVoice === voiceKey) {
@@ -788,13 +1066,18 @@
             // Find the sample file
             const langMap = { 'en': 'en', 'ja': 'ja', 'fr': 'fr' };
             const sampleLang = langMap[this.lang] || 'en';
+            console.log('[CharacterCreation] Looking for sample with lang:', sampleLang, 'voice:', voiceKey);
+            
             const sampleFile = this.voiceSamples?.files?.find(f => 
-                f.voice === voiceKey && f.language === sampleLang
+                f.voice === voiceKey && f.lang === sampleLang
             );
+            
+            console.log('[CharacterCreation] Found sample file:', sampleFile);
             
             if (sampleFile) {
                 this.currentPlayingVoice = voiceKey;
-                this.audioPlayer.src = sampleFile.path;
+                this.audioPlayer.src = sampleFile.url;
+                console.log('[CharacterCreation] Playing audio from:', sampleFile.url);
                 this.audioPlayer.play().catch(err => {
                     console.error('[CharacterCreation] Failed to play voice sample:', err);
                     this.stopAudio();
@@ -1031,6 +1314,37 @@
                 // Build the character prompt
                 const prompt = this.buildCharacterPrompt();
                 
+                // Build request body with model data if selected
+                const requestBody = {
+                    prompt: prompt,
+                    name: this.characterData.name,
+                    gender: 'female',
+                    chatPurpose: this.characterData.customPrompt || '',
+                    language: this.lang,
+                    imageType: 'sfw',
+                    chatId: this.chatId,
+                    enableEnhancedPrompt: true
+                };
+                
+                // Add model data if selected
+                if (this.characterData.modelId) {
+                    requestBody.modelId = this.characterData.modelId;
+                    requestBody.imageStyle = this.characterData.imageStyle;
+                    requestBody.imageModel = this.characterData.imageModel;
+                    requestBody.imageVersion = this.characterData.imageVersion;
+                    requestBody.isUserModel = this.characterData.isUserModel;
+                    console.log('[CharacterCreation] Including model data in request:', {
+                        modelId: this.characterData.modelId,
+                        imageStyle: this.characterData.imageStyle,
+                        imageModel: this.characterData.imageModel,
+                        imageVersion: this.characterData.imageVersion
+                    });
+                } else {
+                    console.warn('[CharacterCreation] No model selected - will use default');
+                }
+                
+                console.log('[CharacterCreation] Full request body:', JSON.stringify(requestBody, null, 2));
+                
                 // Call API
                 const response = await fetch('/api/generate-character-comprehensive', {
                     method: 'POST',
@@ -1038,22 +1352,19 @@
                         'Content-Type': 'application/json'
                     },
                     credentials: 'include',
-                    body: JSON.stringify({
-                        prompt: prompt,
-                        name: this.characterData.name,
-                        gender: 'female',
-                        chatPurpose: this.characterData.customPrompt || '',
-                        language: this.lang,
-                        imageType: 'sfw',
-                        chatId: this.chatId,
-                        enableEnhancedPrompt: true
-                    })
+                    body: JSON.stringify(requestBody)
                 });
                 
                 const result = await response.json();
                 
                 if (result.success && result.chatId) {
                     this.chatId = result.chatId;
+                    window.chatCreationId = result.chatId; // Sync with global
+                    
+                    // Save model to the new chat immediately
+                    if (this.characterData.modelId) {
+                        this.saveSelectedImageModel();
+                    }
                     
                     // Poll for images
                     this.pollForImage(result.chatId);
@@ -1084,19 +1395,41 @@
         }
         
         /**
-         * Poll for image generation completion
+         * Poll for image generation completion (fallback if WebSocket doesn't deliver)
          */
         async pollForImage(chatId) {
             const maxAttempts = 60; // Increased for 4 images
             let attempts = 0;
             
+            // Store chatId for WebSocket handling
+            window.chatCreationId = chatId;
+            this.chatId = chatId;
+            this.saveData();
+            
+            console.log('[CharacterCreation] Starting poll for chatId:', chatId);
+            
             const checkImage = async () => {
+                // Stop polling if images already arrived via WebSocket
+                if (this.characterData.generatedImages.length > 0) {
+                    console.log('[CharacterCreation] Images already received via WebSocket, stopping poll');
+                    return;
+                }
+                
                 attempts++;
                 
                 try {
                     const response = await fetch(`/api/chat/${chatId}`, {
                         credentials: 'include'
                     });
+                    
+                    if (!response.ok) {
+                        console.log(`[CharacterCreation] Poll attempt ${attempts}: Chat not ready yet (${response.status})`);
+                        if (attempts < maxAttempts) {
+                            setTimeout(checkImage, 2000);
+                        }
+                        return;
+                    }
+                    
                     const chat = await response.json();
                     
                     // Check for multiple images (chatImageUrl array or image_url)
@@ -1109,6 +1442,7 @@
                     }
                     
                     if (images.length > 0) {
+                        console.log('[CharacterCreation] Images found via polling:', images.length);
                         this.onImagesGenerated(images);
                         return;
                     }
@@ -1120,14 +1454,15 @@
                         this.resetImagePlaceholder();
                     }
                 } catch (error) {
-                    console.error('[CharacterCreation] Poll error:', error);
+                    console.log(`[CharacterCreation] Poll attempt ${attempts}: Error (will retry)`, error.message);
                     if (attempts < maxAttempts) {
                         setTimeout(checkImage, 2000);
                     }
                 }
             };
             
-            setTimeout(checkImage, 3000);
+            // Start polling after a delay to give WebSocket a chance
+            setTimeout(checkImage, 5000);
         }
         
         /**
@@ -1141,6 +1476,12 @@
             const infoText = document.getElementById('imageSelectionInfo');
             
             console.log('[CharacterCreation] Images generated:', imageUrls);
+            console.log('[CharacterCreation] Unique URLs:', [...new Set(imageUrls)].length, 'of', imageUrls.length);
+            
+            // Log each URL for debugging
+            imageUrls.forEach((url, idx) => {
+                console.log(`[CharacterCreation] Image ${idx + 1}: ${url.substring(url.lastIndexOf('/') + 1)}`);
+            });
             
             // Store all images
             this.characterData.generatedImages = imageUrls;
@@ -1183,6 +1524,7 @@
             if (regenerateBtn) {
                 regenerateBtn.style.display = 'flex';
                 regenerateBtn.disabled = false;
+                regenerateBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i><span>' + this.t('regenerate', 'Regenerate') + '</span>';
             }
             if (infoText) infoText.style.display = 'block';
             
@@ -1264,6 +1606,107 @@
             }
             
             return parts.join(', ');
+        }
+        
+        /**
+         * Regenerate images only (without recreating character)
+         * Uses novitaImageGeneration directly
+         */
+        async regenerateImages() {
+            if (this.isGeneratingImage) return;
+            
+            // Need a chatId to regenerate for
+            if (!this.chatId) {
+                console.error('[CharacterCreation] No chatId available for regeneration');
+                this.showError(this.t('no_chat_error', 'Please generate images first'));
+                return;
+            }
+            
+            const generateBtn = document.getElementById('generateImageBtn');
+            const regenerateBtn = document.getElementById('regenerateImageBtn');
+            const grid = document.getElementById('generatedImagesGrid');
+            
+            this.isGeneratingImage = true;
+            
+            // Update buttons
+            if (regenerateBtn) {
+                regenerateBtn.disabled = true;
+                regenerateBtn.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div><span>' + this.t('regenerating', 'Regenerating...') + '</span>';
+            }
+            if (generateBtn) {
+                generateBtn.disabled = true;
+            }
+            
+            // Show loading state on grid - replace images with loading spinners
+            if (grid) {
+                grid.querySelectorAll('.generated-image-item').forEach(item => {
+                    item.classList.add('loading');
+                    item.innerHTML = `
+                        <div class="loading-spinner">
+                            <div class="spinner-border spinner-border-sm"></div>
+                        </div>
+                    `;
+                });
+            }
+            
+            try {
+                // Clear previous images
+                this.characterData.generatedImages = [];
+                this.characterData.selectedImageUrl = '';
+                window.pendingCharacterCreationImages = [];
+                
+                // Build the prompt
+                const prompt = this.buildCharacterPrompt();
+                console.log('[CharacterCreation] Regenerating images with prompt:', prompt);
+                
+                // Prepare model data
+                const modelId = this.characterData.modelId || null;
+                
+                // Call novitaImageGeneration directly (it's a global function from stability.js)
+                if (typeof novitaImageGeneration !== 'function') {
+                    throw new Error('novitaImageGeneration function not available');
+                }
+                
+                // Get user ID from global context
+                const userId = window.clerkUserId || window.userId || null;
+                
+                console.log('[CharacterCreation] Calling novitaImageGeneration for regeneration:', {
+                    userId,
+                    chatCreationId: this.chatId,
+                    modelId,
+                    prompt: prompt.substring(0, 100) + '...'
+                });
+                
+                // Save the selected model before regenerating (like old version)
+                await this.saveSelectedImageModel();
+                
+                // Call the regeneration function
+                await novitaImageGeneration(userId, this.chatId, null, {
+                    prompt: prompt,
+                    imageType: 'sfw',
+                    chatCreation: true,
+                    enableMergeFace: false,
+                    regenerate: true,
+                    modelId: modelId
+                });
+                
+                // The images will arrive via WebSocket
+                // Set up polling as fallback
+                this.pollForImage(this.chatId);
+                
+            } catch (error) {
+                console.error('[CharacterCreation] Regeneration error:', error);
+                this.showError(this.t('regeneration_failed', 'Failed to regenerate images. Please try again.'));
+                
+                // Reset state
+                this.isGeneratingImage = false;
+                
+                // Reset button
+                if (regenerateBtn) {
+                    regenerateBtn.disabled = false;
+                    regenerateBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i><span>' + this.t('regenerate', 'Regenerate') + '</span>';
+                }
+            }
         }
         
         // ===================

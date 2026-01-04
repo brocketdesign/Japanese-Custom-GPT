@@ -193,11 +193,62 @@ function initializeWebSocket(onConnectionResult = null) {
           }
           case 'characterImageGenerated':
             const { imageUrl, nsfw, chatId} = data.notification;
-            console.log(`[WebSocket] characterImageGenerated received - chatId: ${chatId}, current window.chatCreationId: ${window.chatCreationId}`);
-            console.log(`[WebSocket] #imageContainer exists: ${$('#imageContainer').length > 0}`);
+            const hasOldContainer = $('#imageContainer').length > 0;
+            const hasNewContainer = $('#generatedImagesGrid').length > 0;
             
-            if ($('#imageContainer').length > 0) {
-              console.log(`[WebSocket] Container found, processing image generation`);
+            console.log(`[WebSocket] characterImageGenerated received - chatId: ${chatId}, current window.chatCreationId: ${window.chatCreationId}`);
+            console.log(`[WebSocket] #imageContainer exists: ${hasOldContainer}, #generatedImagesGrid exists: ${hasNewContainer}`);
+            
+            // Check for new character creation container first
+            if (hasNewContainer && window.characterCreation) {
+              console.log(`[WebSocket] New character creation container found, using characterCreation.onImagesGenerated`);
+              console.log(`[WebSocket] Received imageUrl: ${imageUrl}`);
+              
+              // Queue images for the new character creation system
+              if (!window.pendingCharacterCreationImages) {
+                window.pendingCharacterCreationImages = [];
+              }
+              
+              // Check if this image URL is already in the queue (avoid duplicates)
+              if (!window.pendingCharacterCreationImages.includes(imageUrl)) {
+                window.pendingCharacterCreationImages.push(imageUrl);
+                console.log(`[WebSocket] Added image to queue. Queue length: ${window.pendingCharacterCreationImages.length}`);
+                console.log(`[WebSocket] Current queue:`, window.pendingCharacterCreationImages);
+              } else {
+                console.log(`[WebSocket] Duplicate imageUrl detected, skipping: ${imageUrl}`);
+              }
+              
+              const expectedImageCount = 4;
+              const collectionTimeout = 15000; // 15 seconds max wait
+              
+              // If we have all expected images, display immediately
+              if (window.pendingCharacterCreationImages.length >= expectedImageCount) {
+                console.log(`[WebSocket] All ${expectedImageCount} images received, displaying immediately`);
+                console.log(`[WebSocket] Final images:`, window.pendingCharacterCreationImages);
+                if (window.characterCreationImageTimeout) {
+                  clearTimeout(window.characterCreationImageTimeout);
+                }
+                window.characterCreation.onImagesGenerated([...window.pendingCharacterCreationImages]);
+                window.pendingCharacterCreationImages = [];
+              } else {
+                // Debounce to collect all images before displaying
+                if (window.characterCreationImageTimeout) {
+                  clearTimeout(window.characterCreationImageTimeout);
+                }
+                
+                // Reset the main timeout on each image received
+                window.characterCreationImageTimeout = setTimeout(() => {
+                  if (window.characterCreation && window.pendingCharacterCreationImages.length > 0) {
+                    console.log(`[WebSocket] Timeout reached, displaying ${window.pendingCharacterCreationImages.length} images`);
+                    console.log(`[WebSocket] Final images:`, window.pendingCharacterCreationImages);
+                    window.characterCreation.onImagesGenerated([...window.pendingCharacterCreationImages]);
+                    window.pendingCharacterCreationImages = [];
+                  }
+                }, collectionTimeout);
+              }
+              
+            } else if (hasOldContainer) {
+              console.log(`[WebSocket] Old container found, processing image generation`);
               
               if (window.hideImageSpinner) {
                 window.hideImageSpinner();
@@ -228,11 +279,21 @@ function initializeWebSocket(onConnectionResult = null) {
               const maxRetries = 20;
               const retryInterval = setInterval(() => {
                 retryCount++;
-                console.log(`[WebSocket] Retry ${retryCount}/${maxRetries} - checking for #imageContainer`);
+                console.log(`[WebSocket] Retry ${retryCount}/${maxRetries} - checking for containers`);
                 
-                if ($('#imageContainer').length > 0) {
+                const hasOld = $('#imageContainer').length > 0;
+                const hasNew = $('#generatedImagesGrid').length > 0;
+                
+                if (hasNew && window.characterCreation) {
                   clearInterval(retryInterval);
-                  console.log(`[WebSocket] Container now available! Processing queued images...`);
+                  console.log(`[WebSocket] New container now available! Processing queued images...`);
+                  
+                  const allImages = window.pendingCharacterImages.map(p => p.imageUrl);
+                  window.characterCreation.onImagesGenerated(allImages);
+                  window.pendingCharacterImages = [];
+                } else if (hasOld) {
+                  clearInterval(retryInterval);
+                  console.log(`[WebSocket] Old container now available! Processing queued images...`);
                   
                   // Process all queued images
                   while (window.pendingCharacterImages && window.pendingCharacterImages.length > 0) {

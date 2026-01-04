@@ -269,13 +269,44 @@ async function routes(fastify, options) {
                 image_base64, 
                 enableMergeFace, 
                 enableEnhancedPrompt = true,
-                nsfw = false // Add this parameter
+                nsfw = false, // Add this parameter
+                // Model selection data
+                modelId = null,
+                imageStyle = null,
+                imageModel = null,
+                imageVersion = null,
+                isUserModel = false
             } = request.body;
             let gender = request.body.gender || null;
             let chatId = request.body.chatId || request.query.chatId || request.params.chatId || null;
             
             const userId = request.body.userId || request.user._id;
             const language = requestLanguage || request.lang;
+            
+            // ==========================================
+            // DETAILED INPUT LOGGING
+            // ==========================================
+            console.log('\x1b[36m📦 ===== REQUEST BODY RECEIVED =====\x1b[0m');
+            console.log('\x1b[33m📝 Character Data:\x1b[0m');
+            console.log(`   - prompt: ${prompt ? prompt.substring(0, 100) + '...' : 'MISSING'}`);
+            console.log(`   - name: ${name || 'not provided'}`);
+            console.log(`   - gender: ${gender || 'not provided'}`);
+            console.log(`   - chatPurpose: ${chatPurpose ? chatPurpose.substring(0, 50) + '...' : 'not provided'}`);
+            console.log(`   - language: ${requestLanguage || 'default'}`);
+            console.log('\x1b[33m🖼️ Model Data:\x1b[0m');
+            console.log(`   - modelId: ${modelId || 'NOT PROVIDED - will use default'}`);
+            console.log(`   - imageStyle: ${imageStyle || 'NOT PROVIDED'}`);
+            console.log(`   - imageModel: ${imageModel || 'NOT PROVIDED'}`);
+            console.log(`   - imageVersion: ${imageVersion || 'NOT PROVIDED'}`);
+            console.log(`   - isUserModel: ${isUserModel}`);
+            console.log('\x1b[33m⚙️ Options:\x1b[0m');
+            console.log(`   - imageType: ${imageType || 'sfw'}`);
+            console.log(`   - nsfw: ${nsfw}`);
+            console.log(`   - enableEnhancedPrompt: ${enableEnhancedPrompt}`);
+            console.log(`   - enableMergeFace: ${enableMergeFace || false}`);
+            console.log(`   - chatId: ${chatId || 'new chat'}`);
+            console.log('\x1b[36m====================================\x1b[0m');
+            
             // Check user subscription for NSFW content
             const user = await fastify.mongo.db.collection('users').findOne({ 
                 _id: new ObjectId(userId) 
@@ -396,28 +427,50 @@ async function routes(fastify, options) {
             console.log('\x1b[34m🖼️ Step 2.5: Triggering Image Gen\x1b[0m');
 
             try {
-                // First, save gender to chat BEFORE generating images
+                // First, save gender AND model info to chat BEFORE generating images
+                const chatUpdateData = { gender: gender };
+                
+                // Add model data if provided
+                if (modelId) {
+                    chatUpdateData.modelId = modelId;
+                    chatUpdateData.imageStyle = imageStyle || 'general';
+                    chatUpdateData.imageModel = imageModel;
+                    chatUpdateData.imageVersion = imageVersion || 'sdxl';
+                    console.log(`\x1b[32m✓ Model data to save: modelId=${modelId}, style=${imageStyle}, model=${imageModel}, version=${imageVersion}\x1b[0m`);
+                } else {
+                    console.log(`\x1b[33m⚠️ No modelId provided - using default model\x1b[0m`);
+                }
+                
                 await fastify.mongo.db.collection('chats').updateOne(
                     { _id: new ObjectId(chatId) },
-                    { $set: { gender: gender } }
+                    { $set: chatUpdateData }
                 );
-                console.log(`\x1b[32m✓ Gender saved: ${gender}\x1b[0m`);
+                console.log(`\x1b[32m✓ Chat updated with gender and model info\x1b[0m`);
 
                 const { generateImg } = require('../models/imagen');
                 
                 // Generate placeholder ID for tracking
                 const placeholderId = new fastify.mongo.ObjectId().toString();
 
-                console.log(`\x1b[32m🔄 Image gen queued\x1b[0m`);
-                    
+                console.log('\x1b[36m🖼️ ===== IMAGE GENERATION PARAMS =====\x1b[0m');
+                console.log(`   - prompt: ${enhancedPrompt ? enhancedPrompt.substring(0, 80) + '...' : 'MISSING'}`);
+                console.log(`   - modelId: ${modelId || 'DEFAULT (not provided)'}`);
+                console.log(`   - chatId: ${chatId}`);
+                console.log(`   - userId: ${userId}`);
+                console.log(`   - imageType: sfw`);
+                console.log(`   - image_num: 4`);
+                console.log(`   - chatCreation: true`);
+                console.log('\x1b[36m=====================================\x1b[0m');
+                
                     generateImg({
                         prompt: enhancedPrompt,
                         negativePrompt: negativePrompt || null,
+                        modelId: modelId || null, // Pass modelId to generateImg
                         userId: userId,
                         chatId: chatId,
                         userChatId: null,
-                        image_num: 1,
-                        imageType: 'sfw', // All character profile images are SFW
+                        image_num: 4,
+                        imageType: 'sfw',
                         image_base64: image_base64 || null,
                         chatCreation: true,
                         placeholderId: placeholderId,

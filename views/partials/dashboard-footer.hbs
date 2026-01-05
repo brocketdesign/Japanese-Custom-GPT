@@ -1013,9 +1013,12 @@ $(document).ready(function(){
             window.MODE === 'production'
             ? 'pk_live_Y2xlcmsuY2hhdGxhbWl4LmNvbSQ'
             : 'pk_test_Z29vZC10ZXJtaXRlLTU2LmNsZXJrLmFjY291bnRzLmRldiQ';
-
+        const clerkSrc = 
+            window.MODE === 'production'
+            ? 'https://accounts.chatlamix.com/npm/@clerk/clerk-js@5.117.0/dist/clerk.browser.js'
+            : 'https://good-termite-56.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js';
         const script = document.createElement('script');
-        script.src = 'https://good-termite-56.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js';
+        script.src = clerkSrc;
         script.async = true;
         script.crossOrigin = 'anonymous';
         script.setAttribute('data-clerk-publishable-key', clerkKey);

@@ -570,11 +570,16 @@
             ? 'pk_live_Y2xlcmsuY2hhdGxhbWl4LmNvbSQ'
             : 'pk_test_Z29vZC10ZXJtaXRlLTU2LmNsZXJrLmFjY291bnRzLmRldiQ';
         
+        // Determine Clerk script URL based on environment
+        const clerkSrc = window.MODE === 'production'
+            ? 'https://accounts.chatlamix.com/npm/@clerk/clerk-js@5.117.0/dist/clerk.browser.js'
+            : 'https://good-termite-56.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js';
+        
         window.clerkPublishableKey = clerkKey;
         
         // Dynamically load Clerk script
         const clerkScript = document.createElement('script');
-        clerkScript.src = 'https://good-termite-56.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js';
+        clerkScript.src = clerkSrc;
         clerkScript.async = true;
         clerkScript.crossOrigin = 'anonymous';
         clerkScript.setAttribute('data-clerk-publishable-key', clerkKey);

@@ -82,22 +82,20 @@
     
     <!-- Main Container -->
     <div class="cold-onboarding-container">
-        <!-- Header -->
+        <!-- Header with Progress Bar -->
         <header class="cold-onboarding-header">
             <a href="/" class="brand-logo">
                 <img src="/img/logo.png" alt="ChatLamix" height="36">
             </a>
+            <div class="progress-container">
+                <div class="progress-bar-wrapper">
+                    <div class="progress-bar" id="progressBar" style="width: 14.28%"></div>
+                </div>
+                <div class="step-indicator" id="stepIndicator">
+                    <span class="current-step">1</span>/<span class="total-steps">7</span>
+                </div>
+            </div>
         </header>
-        
-        <!-- Progress Bar -->
-        <div class="progress-container">
-            <div class="progress-bar-wrapper">
-                <div class="progress-bar" id="progressBar" style="width: 14.28%"></div>
-            </div>
-            <div class="step-indicator" id="stepIndicator">
-                <span class="current-step">1</span>/<span class="total-steps">7</span>
-            </div>
-        </div>
         
         <!-- Steps Container -->
         <div class="steps-wrapper" id="stepsWrapper">
@@ -514,11 +512,11 @@
         
         <!-- Footer Navigation -->
         <footer class="cold-onboarding-footer">
-            <button type="button" class="btn btn-back" id="backBtn" style="visibility: hidden;">
+            <button type="button" class="btn btn-back btn-sm" id="backBtn" style="visibility: hidden;">
                 <i class="bi bi-chevron-left"></i>
                 {{coldOnboardingTranslations.buttons.back}}
             </button>
-            <button type="button" class="btn btn-next" id="nextBtn">
+            <button type="button" class="btn btn-next btn-sm" id="nextBtn">
                 {{coldOnboardingTranslations.buttons.next}}
                 <i class="bi bi-chevron-right"></i>
             </button>
@@ -696,9 +694,13 @@
             .then(response => response.json())
             .then(data => {
                 console.log('[ColdOnboarding] User data updated:', data);
+                // Redirect to chat after successful sign-in
+                window.location.href = '/chat';
             })
             .catch(error => {
                 console.error('[ColdOnboarding] Failed to update user data:', error);
+                // Redirect to chat anyway after sign-in
+                window.location.href = '/chat';
             });
         }
         

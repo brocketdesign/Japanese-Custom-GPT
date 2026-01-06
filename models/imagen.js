@@ -1243,12 +1243,25 @@ function getTitleString(title) {
 async function addImageMessageToChatHelper(userDataCollection, userId, userChatId, imageUrl, imageId, prompt, title, nsfw, isMerged, mergeId, originalImageUrl) {
   try {
     const titleString = getTitleString(title);
+    const imageIdStr = imageId.toString();
+    
+    // CRITICAL FIX: Check if message with this imageId already exists to prevent duplicates
+    const existingMessage = await userDataCollection.findOne({
+      userId: new ObjectId(userId),
+      _id: new ObjectId(userChatId),
+      'messages.imageId': imageIdStr
+    });
+    
+    if (existingMessage) {
+      console.log(`💾 [addImageMessageToChatHelper] Message with imageId ${imageIdStr} already exists, skipping duplicate`);
+      return true;
+    }
     
     const imageMessage = {
       role: "assistant",
       content: titleString || prompt,
       imageUrl,
-      imageId: imageId.toString(),
+      imageId: imageIdStr,
       type: isMerged ? "mergeFace" : "image",
       hidden: true,
       prompt,
@@ -1268,9 +1281,11 @@ async function addImageMessageToChatHelper(userDataCollection, userId, userChatI
       { $push: { messages: imageMessage } }
     );
 
-
+    console.log(`💾 [addImageMessageToChatHelper] Successfully added message for imageId: ${imageIdStr}`);
+    return true;
   } catch (error) {
     console.error('Error adding image message to chat:', error.message);
+    return false;
   }
 }
 
@@ -2050,6 +2065,24 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       if (existingImage) {
         const image = existingImage.images.find(img => img.mergeId === mergeId);
         if (image) {
+          // CRITICAL FIX: Even if image exists in gallery, ensure chat message exists
+          if (userChatId && ObjectId.isValid(userChatId)) {
+            const userDataCollection = db.collection('userChat');
+            const existingMessage = await userDataCollection.findOne({
+              userId: new ObjectId(userId),
+              _id: new ObjectId(userChatId),
+              'messages.mergeId': mergeId
+            });
+            if (!existingMessage) {
+              console.log(`💾 [saveImageToDB] Image exists in gallery but message missing - adding message for mergeId: ${mergeId}`);
+              const mergeMessage = {
+                imageUrl: image.imageUrl,
+                mergeId: mergeId,
+                originalImageUrl: originalImageUrl
+              };
+              await updateOriginalMessageWithMerge(userDataCollection, taskId, userId, userChatId, mergeMessage);
+            }
+          }
           return { 
             imageId: image._id, 
             imageUrl: image.imageUrl,
@@ -2073,6 +2106,31 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
           img.imageUrl === imageUrl && img.taskId === taskId
         );
         if (image) {
+          // CRITICAL FIX: Even if image exists in gallery, ensure chat message exists
+          if (userChatId && ObjectId.isValid(userChatId)) {
+            const userDataCollection = db.collection('userChat');
+            const existingMessage = await userDataCollection.findOne({
+              userId: new ObjectId(userId),
+              _id: new ObjectId(userChatId),
+              'messages.imageId': image._id.toString()
+            });
+            if (!existingMessage) {
+              console.log(`💾 [saveImageToDB] Image exists in gallery but message missing - adding message for imageId: ${image._id}`);
+              await addImageMessageToChatHelper(
+                userDataCollection,
+                userId, 
+                userChatId, 
+                image.imageUrl, 
+                image._id, 
+                image.prompt, 
+                image.title,
+                image.nsfw,
+                false,
+                null,
+                null
+              );
+            }
+          }
           return { 
             imageId: image._id, 
             imageUrl: image.imageUrl,

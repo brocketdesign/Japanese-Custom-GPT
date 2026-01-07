@@ -42,7 +42,7 @@
   border: var(--form-border-width) solid var(--primary-color) !important;
   color: var(--primary-color) !important;
   text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.2) !important;
-  background: rgba(255, 255, 255, 0.33) !important;
+  background: var(--glass-bg) !important;
   backdrop-filter: blur(10px);
   /* glowing effect */
   box-shadow: 0 0 8px rgba(130, 64, 255, 0.6);
@@ -410,7 +410,7 @@ background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/s
 }
 
 .nav-tabs .nav-link.active {
-  background: linear-gradient(135deg, #ffffff, #f5f5ff) !important;
+  background: var(--bg-secondary) !important;
   color: var(--primary-color) !important;
   border-bottom: 3px solid var(--primary-color) !important;
 }

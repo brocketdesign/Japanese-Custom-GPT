@@ -1,12 +1,12 @@
 /* Global Styles */
 .analytics-wrapper {
     min-height: 100vh;
-    background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+    background: var(--bg-primary);
 }
 
 /* Header Section */
 .dashboard-header-section {
-    background: white;
+    background: var(--bg-secondary);
     padding: 2rem;
     border-radius: 20px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);

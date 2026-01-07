@@ -1,7 +1,7 @@
 /* Enhanced Chat List Styling - Ultra Compact Design for 260px sidebar */
 .chat-item-enhanced {
-    background: linear-gradient(145deg, #ffffff, #f8f9fa);
-    border: 1px solid #e9ecef;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
     transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     cursor: pointer;
     padding: 6px 8px !important; /* More compact padding */
@@ -12,13 +12,13 @@
 .chat-item-enhanced:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 15px rgba(110, 32, 244, 0.15);
-    border-color: #6E20F4;
-    background: linear-gradient(145deg, #f0e6ff, #e6d3ff);
+    border-color: var(--primary-color);
+    background: var(--bg-surface-hover);
 }
 
 .chat-item-enhanced.active {
-    background: linear-gradient(145deg, #f0e6ff, #e6d3ff);
-    border-color: #6E20F4;
+    background: rgba(130, 64, 255, 0.15);
+    border-color: var(--primary-color);
     box-shadow: 0 2px 10px rgba(110, 32, 244, 0.2);
 }
 
@@ -33,7 +33,7 @@
 }
 
 .chat-name {
-    color: #2c3e50;
+    color: var(--text-primary);
     font-weight: 600;
     font-size: 0.8rem !important; /* Smaller font */
     line-height: 1.1;

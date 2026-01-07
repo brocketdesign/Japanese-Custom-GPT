@@ -4,18 +4,11 @@
    COLOR VARIABLES & BASE STYLING
    ==================================== */
 :root {
-    --bg-primary: #ffffff;
-    --bg-secondary: #f9fafb;
-    --text-primary: #1f2937;
-    --text-secondary: #6b7280;
-    --border-color: #e5e7eb;
-    --primary-color: #6366f1;
+    /* Using global variables from style.css for dark theme consistency */
+    /* --bg-primary, --bg-secondary etc. are inherited */
+    
     --secondary-color: #8b5cf6;
     --accent-color: #a855f7;
-    --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
 /* ====================================

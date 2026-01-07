@@ -295,6 +295,12 @@ $(document).ready(function() {
 
     // Start chatting function
     window.startChatting = function(event) {
+        
+        if(!user || isTemporary) {
+            console.log('User is not logged in or is temporary, aborting startChatting.');
+            openLoginForm();
+            return;
+        }
         const chatId = $.cookie('character-intro-id');
         const imageUrl = $.cookie('character-intro-image');
         const isNsfw = $.cookie('character-intro-nsfw') === 'true';

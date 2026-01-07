@@ -352,6 +352,7 @@ fastify.get('/chat/:chatId', async (request, reply) => {
     userData,
     promptData,
     giftData,
+    isTemporaryOrGuest: !user || user.isTemporary,
     seo: [
       { name: 'description', content: translations.seo.description },
       { name: 'keywords', content: translations.seo.keywords },
@@ -984,6 +985,7 @@ fastify.get('/search', async (request, reply) => {
 });
 fastify.get('/about', async (request, reply) => {
   const db = fastify.mongo.db;
+  let { user } = request;
   
   const collectionChats = db.collection('chats');
   const chats = await collectionChats
@@ -998,6 +1000,7 @@ fastify.get('/about', async (request, reply) => {
     
     
     chats,
+    isTemporaryOrGuest: !user || user.isTemporary,
     seo: [
       { name: 'description', content: translations.seo.description },
       { name: 'keywords', content: translations.seo.keywords },

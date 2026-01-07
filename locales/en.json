@@ -1152,6 +1152,30 @@
   "ok": "OK",
   "welcome": "Welcome",
   "welcomeMessage": "Explore AI chat, generate images, and enjoy unique conversations with custom AI characters.",
+  "welcomeSection": {
+    "title": "Welcome to Your AI Chat Experience",
+    "subtitle": "Discover amazing AI characters to chat with. Sign in to save conversations, customize your experience, and unlock exclusive features.",
+    "signIn": "Sign In",
+    "steps": {
+      "title": "Getting Started",
+      "step1": {
+        "title": "Choose a Character",
+        "description": "Browse and select from our diverse collection of AI characters"
+      },
+      "step2": {
+        "title": "Chat",
+        "description": "Engage in meaningful conversations with your chosen character"
+      },
+      "step3": {
+        "title": "Generate Image",
+        "description": "Create stunning images through AI-powered image generation"
+      },
+      "step4": {
+        "title": "Generate Video",
+        "description": "Produce dynamic videos with advanced video generation"
+      }
+    }
+  },
   "info": "Info",
   "edit": "Edit",
   "share": "Share",

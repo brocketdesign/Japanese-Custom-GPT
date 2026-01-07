@@ -7,7 +7,7 @@
                 <i class="bi bi-chat-left-text fs-5"></i>
                 <div class="toolbar-label">{{translations.chatList}}</div>
             </a>
-            <button type="button" class="toolbar-item border-0 bg-transparent" style="width: calc(80vw/5);max-width: 100px;" data-bs-toggle="modal" data-bs-target="#userPointsModal" title="{{userPointsTranslations.points.title}}">
+            <button type="button" class="toolbar-item border-0 bg-transparent" style="width: calc(80vw/5);max-width: 100px;" {{#if user.isTemporary}}onclick="openLoginForm()"{{else}} data-bs-toggle="modal" data-bs-target="#userPointsModal"{{/if}} title="{{userPointsTranslations.points.title}}">
                 <i class="bi bi-coin fs-5"></i>
                 <div class="toolbar-label">{{userPointsTranslations.points.title}}</div>
             </button>
@@ -19,12 +19,12 @@
         </a>
 
         <!-- Right Items -->
-        <div class="toolbar-side-items">
-            <a href="/search" class="toolbar-item border-0 bg-transparent" style="width: calc(80vw/5);max-width: 100px;" title="{{#if translations.exploreTitle}}{{translations.exploreTitle}}{{else}}Explore{{/if}}">
-                <i class="bi bi-compass fs-5"></i>
-                <div class="toolbar-label">{{#if translations.explore}}{{translations.explore}}{{else}}Explore{{/if}}</div>
+        <div class="toolbar-side-items"> 
+            <a {{#if user.isTemporary}} href="#" onclick="openLoginForm()"{{else}} href="/user/{{user._id}}"{{/if}} class="toolbar-item border-0 bg-transparent" style="width: calc(80vw/5);max-width: 100px;">
+                 <i class="bi bi-person-circle fs-5"></i>
+                 <div class="toolbar-label">{{translations.avatar.profile}}</div>
             </a>
-            <a class="toolbar-item" href="#" style="width: calc(80vw/5);max-width: 100px;" onclick="loadSettingsPage()">
+            <a class="toolbar-item" {{#if user.isTemporary}} href="#" onclick="openLoginForm()"{{else}} onclick="loadSettingsPage()"{{/if}} style="width: calc(80vw/5);max-width: 100px;">
                 <i class="bi bi-gear fs-5"></i>
                 <div class="toolbar-label">{{translations.avatar.settings}}</div>
             </a>

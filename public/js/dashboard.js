@@ -3316,6 +3316,7 @@ $(document).ready(function () {
         });
         
         // Add other query tags
+        availableQueryTags = [] // Disable tags
         availableQueryTags.forEach(tag => {
             const isActive = currentActiveQuery === tag;
             tagsHtml += `
@@ -3789,6 +3790,7 @@ function loadCharacterCreationPage(chatId) {
 function loadPlanPage() {
     if(!user || isTemporary) {
       console.log('User is not logged in or is temporary, aborting loadPlanPage.');
+      openLoginForm();
       return;
     }
     if (modalStatus.isPlanLoading) {

@@ -670,6 +670,12 @@
                         <div class="mb-3">
                             <p id="charIntroShortIntro" class="mb-2" style="font-size: 13px;">-</p>
                             <div id="charIntroTags" class="tags-container"></div>
+                            
+                            <!-- Unlock All & Start Chat Buttons -->
+                            <div class="d-flex justify-content-center gap-2 mt-3">
+                                <button type="button" class="btn btn-dark is-free-user btn-sm w-100" onclick="loadPlanPage()">{{translations.unlockAll}}</button>
+                                <button type="button" class="btn btn-primary btn-sm w-100" onclick="startChatting(event)">{{translations.startChatting}}</button>
+                            </div>
                         </div>
                         
                         <!-- Gallery -->

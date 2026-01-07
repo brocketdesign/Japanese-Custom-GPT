@@ -1085,6 +1085,30 @@
   "ok": "OK",
   "welcome": "Bienvenue",
   "welcomeMessage": "Découvrez le chat IA, générez des images et profitez de conversations uniques avec des personnages IA personnalisés.",
+  "welcomeSection": {
+    "title": "Bienvenue dans votre expérience de chat IA",
+    "subtitle": "Découvrez des personnages IA incroyables à qui parler. Connectez-vous pour enregistrer vos conversations, personnaliser votre expérience et débloquer des fonctionnalités exclusives.",
+    "signIn": "Se connecter",
+    "steps": {
+      "title": "Premiers pas",
+      "step1": {
+        "title": "Choisir un personnage",
+        "description": "Parcourez et sélectionnez parmi notre collection diversifiée de personnages IA"
+      },
+      "step2": {
+        "title": "Discuter",
+        "description": "Engagez-vous dans des conversations significatives avec le personnage choisi"
+      },
+      "step3": {
+        "title": "Générer une image",
+        "description": "Créez des images époustouflantes grâce à la génération d'images IA"
+      },
+      "step4": {
+        "title": "Générer une vidéo",
+        "description": "Produisez des vidéos dynamiques avec la génération vidéo avancée"
+      }
+    }
+  },
   "info": "Infos",
   "edit": "Modifier",
   "share": "Partager",

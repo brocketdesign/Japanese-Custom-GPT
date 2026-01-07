@@ -3773,6 +3773,16 @@ function loadCharacterCreationPage(chatId) {
                             console.error('Failed to load image-uploader.js script.');
                             modalStatus.isCharacterCreationLoading = false;
                         };
+
+                        const civitaiModelSearchScript = document.createElement('script');
+                        civitaiModelSearchScript.src = '/js/civitai-model-search.js';
+                        civitaiModelSearchScript.onload = function() {
+                            // Additional logic if needed after civitai-model-search.js loads
+                        };
+                        civitaiModelSearchScript.onerror = function() {
+                            console.error('Failed to load civitai-model-search.js script.');
+                        };
+                        document.body.appendChild(civitaiModelSearchScript);
                         
                         document.body.appendChild(imageUploaderScript);
                     }, 300); // Additional delay for DOM rendering

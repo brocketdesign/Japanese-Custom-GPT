@@ -9,6 +9,7 @@
 
 <!-- Character Creation CSS -->
 <link rel="stylesheet" href="/css/character-creation.css">
+<link rel="stylesheet" href="/css/civitai-model-search.css">
 
 <!-- Character Creation Full Page -->
 <div class="character-creation-wrapper">
@@ -396,6 +397,55 @@
             <div class="spinner-border text-light" role="status"></div>
             <p id="loadingMessage">{{translations.newCharacter.generating_character}}</p>
             <small>{{translations.newCharacter.please_wait}}</small>
+        </div>
+    </div>
+    
+    <!-- Civitai Model Search Modal -->
+    <div class="modal fade civitai-search-modal" id="civitaiSearchModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header flex-row-reverse">
+                    <h5 class="modal-title ms-auto">
+                        <i class="bi bi-search me-2"></i>{{translations.newCharacter.searchImageModels}}
+                    </h5>
+                    <button type="button" class="btn-close me-0" id="closeImageModelSearchModal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <input type="text" 
+                                class="form-control" 
+                                id="civitaiModalSearch" 
+                                placeholder="{{translations.newCharacter.searchImageModelsPlaceholder}}"
+                                autocomplete="off">
+                            <button class="btn btn-primary" type="button" id="civitaiModalSearchBtn">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">{{translations.newCharacter.searchImageModelsDescription}}</small>
+                    </div>
+                    
+                    <!-- Search Results -->
+                    <div id="civitaiSearchResults">
+                        <div class="text-center text-muted py-4" id="civitaiSearchPlaceholder">
+                            <i class="bi bi-box-seam fs-1 d-block mb-2"></i>
+                            <p>{{translations.newCharacter.searchImageModelsDescription}}</p>
+                        </div>
+                        <div class="text-center py-4 d-none" id="civitaiSearchLoading">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">{{translations.newCharacter.searchingImageModels}}</p>
+                        </div>
+                        <div id="civitaiSearchResultsList"></div>
+                        <div class="text-center py-4 d-none" id="civitaiNoResults">
+                            <i class="bi bi-emoji-frown fs-1 d-block mb-2 text-muted"></i>
+                            <p class="text-muted">{{translations.newCharacter.noModelsFound}}</p>
+                            <small class="text-muted">{{translations.newCharacter.tryDifferentSearch}}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     

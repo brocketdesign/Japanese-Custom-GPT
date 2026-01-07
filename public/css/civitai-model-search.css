@@ -1,0 +1,476 @@
+/**
+ * Civitai Model Search Modal Styles
+ * Styling for the custom model search and selection interface
+ */
+
+/* Modal Base Styles */
+.civitai-search-modal .modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    height: 90vh;
+}
+
+.civitai-search-modal .modal-dialog {
+    max-height: 90vh;
+}
+
+.civitai-search-modal .modal-header {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 1.5rem;
+    background: #fafafa;
+    border-radius: 12px 12px 0 0;
+    flex-shrink: 0;
+}
+
+.civitai-search-modal .modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+}
+
+.civitai-search-modal .modal-title i {
+    color: #6e20f4;
+    margin-right: 0.5rem;
+}
+
+.civitai-search-modal .btn-close {
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+.civitai-search-modal .btn-close:hover,
+.civitai-search-modal .btn-close:focus {
+    opacity: 1;
+}
+
+.civitai-search-modal .modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Search Input Styles */
+.civitai-search-modal .input-group {
+    margin-bottom: 0.75rem;
+}
+
+.civitai-search-modal .input-group .form-control {
+    border-radius: 8px 0 0 8px;
+    border: 1px solid #d1d5db;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.civitai-search-modal .input-group .form-control:focus {
+    border-color: #6e20f4;
+    box-shadow: 0 0 0 3px rgba(110, 32, 244, 0.1);
+}
+
+.civitai-search-modal .input-group .btn-primary {
+    border-radius: 0 8px 8px 0;
+    background: #6e20f4;
+    border: 1px solid #6e20f4;
+    padding: 0.75rem 1.25rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.civitai-search-modal .input-group .btn-primary:hover {
+    background: #5e15d9;
+    border-color: #5e15d9;
+}
+
+.civitai-search-modal .input-group + small {
+    display: block;
+    margin-top: 0.5rem;
+    color: #6b7280;
+    font-size: 0.85rem;
+}
+
+/* Search Results Container */
+#civitaiSearchResults {
+    margin-top: 1.5rem;
+}
+
+/* Placeholder State */
+#civitaiSearchPlaceholder {
+    color: #9ca3af;
+    padding: 2rem 1rem !important;
+}
+
+#civitaiSearchPlaceholder i {
+    font-size: 2.5rem;
+    color: #d1d5db;
+    margin-bottom: 1rem;
+}
+
+#civitaiSearchPlaceholder p {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+/* Loading State */
+#civitaiSearchLoading {
+    padding: 2rem 1rem !important;
+}
+
+#civitaiSearchLoading .spinner-border {
+    color: #6e20f4;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-width: 3px;
+}
+
+#civitaiSearchLoading p {
+    margin-top: 1rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* No Results State */
+#civitaiNoResults {
+    border-radius: 8px;
+    background: #dbeafe;
+    border: 1px solid #93c5fd;
+    color: #1e40af;
+    padding: 1.5rem !important;
+}
+
+#civitaiNoResults i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.7;
+}
+
+#civitaiNoResults p {
+    margin: 0.5rem 0 0 0;
+    font-weight: 500;
+}
+
+#civitaiNoResults small {
+    display: block;
+    margin-top: 0.5rem;
+    opacity: 0.8;
+}
+
+/* Model Card Styles */
+.civitai-model-card {
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    background: #fafafa;
+    transition: all 0.3s ease;
+    align-items: flex-start;
+}
+
+.civitai-model-card:hover {
+    border-color: #6e20f4;
+    background: #f9f7ff;
+    box-shadow: 0 4px 12px rgba(110, 32, 244, 0.08);
+}
+
+.civitai-model-card.opacity-50 {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Model Image */
+.civitai-model-image {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
+    background: #e5e7eb;
+}
+
+/* Model Info */
+.civitai-model-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.civitai-model-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 0.25rem 0;
+    word-break: break-word;
+}
+
+.civitai-model-info > small {
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+/* Model Stats */
+.civitai-model-stats {
+    display: flex;
+    gap: 1rem;
+    margin: 0.75rem 0;
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+.civitai-model-stats span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.civitai-model-stats i {
+    color: #9ca3af;
+}
+
+/* Model Tags */
+.civitai-model-tags {
+    display: flex;
+    gap: 0.5rem;
+    margin: 0.75rem 0;
+    flex-wrap: wrap;
+}
+
+.civitai-model-tags .badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    background: #f3f4f6;
+    color: #374151;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+/* Version Dropdown */
+.version-select-dropdown {
+    font-size: 0.85rem;
+    padding: 0.5rem !important;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background-color: white;
+    color: #1f2937;
+}
+
+.version-select-dropdown:focus {
+    border-color: #6e20f4;
+    box-shadow: 0 0 0 3px rgba(110, 32, 244, 0.1);
+}
+
+/* Add Model Button */
+.add-civitai-model-btn {
+    background: #6e20f4;
+    border: 1px solid #6e20f4;
+    color: white;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.add-civitai-model-btn:hover {
+    background: #5e15d9;
+    border-color: #5e15d9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(110, 32, 244, 0.25);
+}
+
+.add-civitai-model-btn:active {
+    transform: translateY(0);
+}
+
+.add-civitai-model-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Already Added Text */
+.civitai-model-card .text-success {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #10b981 !important;
+}
+
+/* User Model Card */
+.user-model-card {
+    position: relative;
+    display: inline-block;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Remove Button */
+.remove-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border: 2px solid white;
+    border-radius: 50%;
+    color: white;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    z-index: 10;
+    line-height: 1;
+}
+
+.remove-btn:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    transform: scale(1.1) rotate(-5deg);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5);
+}
+
+.remove-btn:active {
+    transform: scale(0.95);
+}
+
+.remove-btn i {
+    line-height: 1;
+    font-size: 14px;
+}
+
+/* Modal Footer - Hidden */
+.civitai-search-modal .modal-footer {
+    display: none;
+}
+
+/* Scrollbar Styling */
+.civitai-search-modal .modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.civitai-search-modal .modal-body::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 4px;
+}
+
+.civitai-search-modal .modal-body::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+}
+
+.civitai-search-modal .modal-body::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .civitai-search-modal .modal-dialog {
+        max-width: 95vw;
+    }
+
+    .civitai-model-card {
+        flex-direction: column;
+    }
+
+    .civitai-model-image {
+        width: 100%;
+        height: 200px;
+    }
+
+    .civitai-model-stats {
+        flex-wrap: wrap;
+    }
+
+    .civitai-search-modal .modal-body {
+        max-height: calc(100vh - 250px);
+    }
+}
+
+@media (max-width: 480px) {
+    .civitai-search-modal .modal-header {
+        padding: 1rem;
+    }
+
+    .civitai-search-modal .modal-body {
+        padding: 1rem;
+    }
+
+    .civitai-search-modal .modal-title {
+        font-size: 1.1rem;
+    }
+
+    .civitai-model-image {
+        height: 150px;
+    }
+
+    .civitai-model-stats {
+        font-size: 0.85rem;
+    }
+}
+
+/* Dark Mode Support (if your site has dark mode) */
+@media (prefers-color-scheme: dark) {
+    .civitai-search-modal .modal-content {
+        background: #1f2937;
+        color: #f3f4f6;
+    }
+
+    .civitai-search-modal .modal-header {
+        background: #111827;
+        border-bottom-color: #374151;
+    }
+
+    .civitai-search-modal .modal-title {
+        color: #f9fafb;
+    }
+
+    .civitai-search-modal .input-group .form-control {
+        background: #374151;
+        border-color: #4b5563;
+        color: #f3f4f6;
+    }
+
+    .civitai-search-modal .input-group .form-control:focus {
+        border-color: #8b5cf6;
+        background: #374151;
+        color: #f3f4f6;
+    }
+
+    .civitai-model-card {
+        background: #111827;
+        border-color: #374151;
+    }
+
+    .civitai-model-card:hover {
+        background: #1f2937;
+        border-color: #8b5cf6;
+    }
+
+    .civitai-model-name {
+        color: #f9fafb;
+    }
+
+    .civitai-model-stats {
+        color: #9ca3af;
+    }
+
+    .civitai-model-tags .badge {
+        background: #374151;
+        color: #e5e7eb;
+    }
+
+    .version-select-dropdown {
+        background: #374151;
+        border-color: #4b5563;
+        color: #f3f4f6;
+    }
+}

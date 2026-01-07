@@ -443,13 +443,6 @@
                     e.stopPropagation();
                     this.selectModel(styleOption);
                 }
-                
-                // Handle add custom model button
-                if (e.target.closest('#addCustomModelBtn')) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.openCustomModelSearch();
-                }
             });
             
             // Step 7: Image generation
@@ -1026,30 +1019,6 @@
             .catch(error => {
                 console.error('[CharacterCreation] Failed to save model:', error);
             });
-        }
-        
-        openCustomModelSearch() {
-            // Check if user has premium access
-            const user = window.user || {};
-            const isAdmin = user.isAdmin === true;
-            const hasPremium = user.subscriptionStatus === 'active' || isAdmin;
-            
-            if (!hasPremium) {
-                // Show premium notice
-                const notice = document.getElementById('customModelsPremiumNotice');
-                if (notice) notice.style.display = 'flex';
-                return;
-            }
-            
-            // Open the civitai model search modal if available
-            if (typeof window.openCivitaiModelSearch === 'function') {
-                window.openCivitaiModelSearch();
-            } else if (typeof openCivitaiModelSearch === 'function') {
-                openCivitaiModelSearch();
-            } else {
-                console.warn('[CharacterCreation] Civitai model search not available');
-                this.showError(this.t('custom_model_search_unavailable', 'Custom model search is not available'));
-            }
         }
         
         // ===================

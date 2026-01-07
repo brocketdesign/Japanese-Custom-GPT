@@ -48,8 +48,8 @@
         if (modalElement) {
             civitaiSearchModal = new bootstrap.Modal(modalElement);
             
-            // Handle custom close buttons to return to character creation modal
-            $('#closeImageModelSearchModal, #closeImageModelSearchModalFooter').on('click', function() {
+            // Handle close button
+            $('#closeImageModelSearchModal').on('click', function() {
                 if (civitaiSearchModal) {
                     civitaiSearchModal.hide();
                 }
@@ -520,11 +520,30 @@
         }
     }
 
+    /**
+     * Open search modal with empty query (exposed globally for character-creation.js)
+     */
+    window.openCivitaiModelSearch = function() {
+        if (!isPremiumUser) {
+            loadPlanPage();
+            return;
+        }
+        
+        $('#civitaiModalSearch').val('');
+        $('#civitaiSearchResultsList').empty();
+        $('#civitaiSearchPlaceholder').removeClass('d-none');
+        $('#civitaiNoResults').addClass('d-none');
+        if (civitaiSearchModal) {
+            civitaiSearchModal.show();
+        }
+    };
+
     // Expose functions globally if needed
     window.civitaiModelSearch = {
         loadUserModels,
         renderUserModels,
-        setPreferredModel
+        setPreferredModel,
+        openSearchModalWithQuery
     };
 
 })();

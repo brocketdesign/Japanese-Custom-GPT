@@ -946,10 +946,12 @@ class ColdOnboarding {
         
         if (clerk) {
             try {
-                await clerk.authenticateWithRedirect({
-                    strategy: 'oauth_google',
-                    redirectUrl: '/chat/?source=cold-onboarding&status=success',
-                    redirectUrlComplete: '/chat/?source=cold-onboarding&status=success'
+                // Use Clerk.openSignIn with Google strategy instead of authenticateWithRedirect
+                // This ensures proper OAuth flow through Clerk's managed UI
+                const langUrl = window.location.hostname.split('.')[0];
+                clerk.openSignIn({
+                    redirectUrl: window.location.origin + '/chat/?source=cold-onboarding&status=success',
+                    language: window.lang || langUrl || 'ja',
                 });
             } catch (error) {
                 console.error('[ColdOnboarding] Google sign-in error:', error);

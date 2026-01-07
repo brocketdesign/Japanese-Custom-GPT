@@ -330,7 +330,7 @@ fastify.get('/chat/:chatId', async (request, reply) => {
   const signOut = request.query.signOut == 'true' || false;
 
   if (!signIn && (signOut || user.isTemporary || !userData)) {
-    return reply.redirect('/');
+    //return reply.redirect('/');
   }
 
   const isAdmin = await checkUserAdmin(fastify, userId);

@@ -1317,11 +1317,6 @@ function displayChatThumbs(chats, userId) {
     const sortedChats = sortChatsByUpdatedAt(normalizedChats);
 
     if (!sortedChats || sortedChats.length === 0) {
-        horizontalChatList.html(`
-            <div class="text-center py-2 px-3">
-                <small class="text-muted">${translations.noChats || 'No chats available'}</small>
-            </div>
-        `);
         return;
     }
     

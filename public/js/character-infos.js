@@ -295,16 +295,24 @@ $(document).ready(function() {
 
     // Start chatting function
     window.startChatting = function(event) {
-        
+        const chatId = $.cookie('character-intro-id');
+        const imageUrl = $.cookie('character-intro-image');
+        const isNsfw = $.cookie('character-intro-nsfw') === 'true';
+        const subscriptionStatus = window.user?.subscriptionStatus === 'active';
+
+        // Save the chatId and imageUrl to a cookie for post-login restoration
+        if (chatId) {
+            $.cookie('pending-chat-id', chatId, { path: '/' });
+            if (imageUrl) {
+                $.cookie('pending-chat-image', imageUrl, { path: '/' });
+            }
+        }
+
         if(!user || isTemporary) {
             console.log('User is not logged in or is temporary, aborting startChatting.');
             openLoginForm();
             return;
         }
-        const chatId = $.cookie('character-intro-id');
-        const imageUrl = $.cookie('character-intro-image');
-        const isNsfw = $.cookie('character-intro-nsfw') === 'true';
-        const subscriptionStatus = window.user?.subscriptionStatus === 'active';
 
         $('#characterIntroModal').modal('hide');
         redirectToChat(chatId, imageUrl);

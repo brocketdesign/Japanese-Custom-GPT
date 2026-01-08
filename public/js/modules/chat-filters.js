@@ -34,7 +34,6 @@ const updateChatFilters = () => {
         if (currentGenderFilter && gender !== currentGenderFilter) show = false;
         if (nsfwChatsHidden && isNSFW) show = false;
         if (currentStyleFilter && style !== currentStyleFilter) show = false;
-        console.log(`show: ${show}, isPremium: ${isPremium}, gender: ${gender}, isNSFW: ${isNSFW}, style: ${style}`);
         $card.toggle(show);
     });
 };

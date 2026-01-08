@@ -202,6 +202,51 @@
 
 <script>
 
+    // Auto-launch pending chat after login
+    document.addEventListener("DOMContentLoaded", function() {
+        // Check if user is logged in (window.user is set and not temporary)
+        if (window.user && !window.isTemporary) {
+            var pendingChatId = null;
+            var pendingChatImage = null;
+            // Try both jQuery cookie and native cookie
+            if (typeof $ !== 'undefined' && $.cookie) {
+                pendingChatId = $.cookie('pending-chat-id');
+                pendingChatImage = $.cookie('pending-chat-image');
+            } else {
+                // Fallback to native cookie parsing
+                function getCookie(name) {
+                    const nameEQ = name + "=";
+                    const ca = document.cookie.split(';');
+                    for(let i=0;i < ca.length;i++) {
+                        let c = ca[i];
+                        while (c.charAt(0)==' ') c = c.substring(1,c.length);
+                        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+                    }
+                    return null;
+                }
+                pendingChatId = getCookie('pending-chat-id');
+                pendingChatImage = getCookie('pending-chat-image');
+            }
+            if (pendingChatId) {
+                // Remove the cookies so it doesn't repeat
+                if (typeof $ !== 'undefined' && $.removeCookie) {
+                    $.removeCookie('pending-chat-id', { path: '/' });
+                    $.removeCookie('pending-chat-image', { path: '/' });
+                } else {
+                    document.cookie = 'pending-chat-id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                    document.cookie = 'pending-chat-image=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                }
+                // Launch the chat (assume redirectToChat is globally available)
+                if (typeof redirectToChat === 'function') {
+                    redirectToChat(pendingChatId, pendingChatImage);
+                } else {
+                    // Fallback: redirect to chat page
+                    window.location.href = '/chat/' + encodeURIComponent(pendingChatId);
+                }
+            }
+        }
+    });
+</script>
 document.addEventListener('DOMContentLoaded', function() {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {

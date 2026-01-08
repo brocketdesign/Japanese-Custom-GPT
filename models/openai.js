@@ -254,7 +254,7 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
     // Log model and provider being used
     console.log(`[generateCompletion] Using model: ${dbModel.displayName} from provider: ${dbModel.provider}`);
     // Make API call with retry logic
-    for (let attempt = 1; attempt <= 2; attempt++) {
+    for (let attempt = 1; attempt <= 5; attempt++) {
       try {
         const response = await fetch(dbModel.apiUrl, {
           headers: {
@@ -276,12 +276,20 @@ async function generateCompletion(messages, maxToken = 1000, model = null, lang 
           const errorData = await response.json().catch(() => ({}));
           const errorMsg = errorData.error?.message || `HTTP ${response.status}`;
           
-          if (attempt === 2) {
+          if (attempt === 5) {
             console.error(`[generateCompletion] API call failed after ${attempt} attempts: ${errorMsg}`);
             return null; // Return null instead of throwing
           }
           
           console.log(`[generateCompletion] Attempt ${attempt} failed: ${errorMsg}, retrying...`);
+          
+          // Add delay for rate limiting (HTTP 429)
+          if (response.status === 429) {
+            const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s, 8s, 16s
+            console.log(`Rate limited, waiting ${delay}ms before retry...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
+          
           continue;
         }
 

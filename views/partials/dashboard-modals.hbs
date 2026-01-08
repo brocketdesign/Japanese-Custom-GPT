@@ -474,27 +474,47 @@
 <div class="modal fade" id="chatHistoryModal" tabindex="-1" aria-labelledby="chatHistoryModalLabel" aria-hidden="true" 
      style="z-index: 1062 !important; height: auto; min-height: 400px;" data-bs-backdrop="true" data-bs-keyboard="true">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable" style="z-index: 1061 !important;">
-        <div class="modal-content chat-history-modal mx-auto" style="z-index: 1062 !important;">
-            <div class="modal-header border-bottom-0 pb-2 mx-0">
-                <div class="d-flex align-items-center">
-                    <div class="chat-history-modal-icon me-3">
-                        <i class="bi bi-clock-history fs-3"></i>
+        <div class="modal-content chat-history-modal border-0 shadow-lg mx-auto pt-5" style="z-index: 1062 !important; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 20px; overflow: hidden;">
+            <div class="modal-header border-0 pb-2 pt-4 px-4">
+                <div class="d-flex align-items-center w-100">
+                    <button type="button" class="btn-close btn-close-white me-3" data-bs-dismiss="modal" aria-label="Close" style="z-index: 10;"></button>
+                    <div class="chat-history-modal-icon me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: rgba(181, 138, 254, 0.25);">
+                        <i class="bi bi-clock-history fs-4" style="color: #b58afe;"></i>
                     </div>
-                    <div>
-                        <h4 class="modal-title mb-0" id="chatHistoryModalLabel">{{translations.chatHistoryTitle}}</h4>
-                        <small class="opacity-75">{{translations.chatHistoryDescription}}</small>
+                    <div class="flex-grow-1 text-end">
+                        <h5 class="modal-title mb-0 fw-semibold" id="chatHistoryModalLabel" style="color: #b58afe; letter-spacing: 0.01em;">{{translations.chatHistoryTitle}}</h5>
+                        <small style="color: rgba(255, 255, 255, 0.7);">{{translations.chatHistoryDescription}}</small>
                     </div>
                 </div>
-                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close" style="z-index: 10;"></button>
             </div>
-            <div class="modal-body pt-2">
-                <div id="chat-history-list" class="chat-history-container pt-5">
+            <div class="modal-body pt-5 px-3">
+                <div id="chat-history-list" class="chat-history-container">
                     <!-- Chat history items will be populated here -->
+                    {{#if chatHistory}}
+                        {{#each chatHistory}}
+                        <div class="chat-history-item d-flex flex-column p-3 mb-3 shadow-sm" style="background: rgba(255,255,255,0.08); border-radius: 12px; border: 1px solid rgba(255,255,255,0.12);">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="me-2" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:rgba(181,138,254,0.18);">
+                                    <i class="bi bi-chat-dots" style="color:#b58afe;font-size:1.3rem;"></i>
+                                </div>
+                                <span class="fw-semibold" style="color:#fff;">{{this.title}}</span>
+                            </div>
+                            <div class="mb-1" style="color:#fff;">{{this.date}}</div>
+                            <div class="text-muted" style="color:rgba(255,255,255,0.6);font-size:0.95rem;">{{this.time}}</div>
+                        </div>
+                        {{/each}}
+                    {{else}}
+                        <div class="chat-history-empty text-center py-4" style="color:rgba(255,255,255,0.6);">
+                            <i class="bi bi-inbox me-2" style="font-size:1.5rem;color:#b58afe;"></i>
+                            {{translations.chatHistoryEmpty}}
+                        </div>
+                    {{/if}}
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 
 <!-- Character Info Modal (Read-only) -->
 <div class="modal fade character-info-modal" id="characterInfoModal" tabindex="-1" aria-labelledby="characterInfoModalLabel" aria-hidden="true">

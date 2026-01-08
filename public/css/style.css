@@ -1,3 +1,57 @@
+/* Chat History Modal Dark Theme Styles */
+#chatHistoryModal .modal-content {
+  backdrop-filter: blur(10px);
+}
+
+#chatHistoryModal .chat-history-item {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+}
+
+#chatHistoryModal .chat-history-item:hover {
+  background: rgba(181, 138, 254, 0.25) !important;
+  border-color: rgba(181, 138, 254, 0.4) !important;
+  transform: translateX(4px);
+}
+
+#chatHistoryModal .chat-history-item,
+#chatHistoryModal .chat-history-item * {
+  color: #ffffff !important;
+}
+
+#chatHistoryModal .chat-history-item .text-muted {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+#chatHistoryModal .chat-history-empty {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+#chatHistoryModal .btn-outline-secondary {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+#chatHistoryModal .btn-outline-secondary:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+#chatHistoryModal .dropdown-menu {
+  background: #1a1a2e !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+#chatHistoryModal .dropdown-item {
+  color: #ffffff !important;
+}
+
+#chatHistoryModal .dropdown-item:hover {
+  background: rgba(181, 138, 254, 0.25) !important;
+}
 /* ====== ROOT CSS VARIABLES ====== */
 :root {
   /* Primary Colors */

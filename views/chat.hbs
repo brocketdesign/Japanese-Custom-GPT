@@ -35,17 +35,12 @@
                             style="background-color: color(display-p3 0.731 0.632 0.98 / 0.17);"
                             onclick="showDiscovery()"><i class="bi bi-chevron-left"></i></button>
 
-                            <div id="chat-actions-dropdown" class="dropdown d-inline-block onchat-on" style="display: none;">
-                                <button 
-                                class="btn badge-sm text-white shadow-0 dropdown-toggle" 
-                                style="background-color: color(display-p3 0.731 0.632 0.98 / 0.17);"
-                                type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="bi bi-three-dots"></i>
-                                </button>
-                                <ul class="dropdown-menu shadow border-0">
-                                    <!-- Dropdown items will be populated by JavaScript -->
-                                </ul>
-                            </div>
+                            <button id="chat-actions-btn" 
+                                class="btn badge-sm text-white shadow-0 onchat-on" 
+                                style="background-color: color(display-p3 0.731 0.632 0.98 / 0.17); display: none;"
+                                onclick="openChatActionsModal()">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
                         </div>
                         <div class="d-flex flex-row " style="cursor: pointer; min-height: 40px;" onclick="showDiscovery()">
                             <div class="brand-logo me-3 onchat-off" style="display: flex; position: absolute; left: 10px;">
@@ -182,6 +177,142 @@
         </div>
     </div>
  {{> dashboard-footer}}
+
+    <!-- Chat Actions Modal -->
+    <div class="modal fade" id="chatActionsModal" tabindex="-1" aria-labelledby="chatActionsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow-lg" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 20px; overflow: hidden;">
+                <!-- Modal Header with Chat Avatar -->
+                <div class="modal-header border-0 pb-0 pt-4 px-4">
+                    <div class="d-flex align-items-center w-100">
+                        <button type="button" class="btn-close btn-close-white me-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <div class="position-relative me-3">
+                            <img id="chatActionsAvatar" src="/img/logo.webp" alt="Chat Avatar" 
+                                 class="rounded-circle shadow" 
+                                 style="width: 50px; height: 50px; object-fit: cover; border: 2px solid rgba(181, 138, 254, 0.5);">
+                        </div>
+                        <div class="flex-grow-1 text-end">
+                            <h6 id="chatActionsName" class="mb-0 text-white fw-semibold">Chat Name</h6>
+                            <small class="text-muted">{{translations.chatActions}}</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modal Body with Action Items -->
+                <div class="modal-body px-3 py-4 mt-3">
+                    <div id="chatActionsContent" class="d-flex flex-column gap-2">
+                        <!-- Actions will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    /* Chat Actions Modal Styles */
+    #chatActionsModal .modal-content {
+        backdrop-filter: blur(10px);
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important;
+    }
+    
+    #chatActionsModal .chat-action-item {
+        display: flex;
+        align-items: center;
+        padding: 14px 16px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    #chatActionsModal .chat-action-item:hover {
+        background: rgba(181, 138, 254, 0.25);
+        border-color: rgba(181, 138, 254, 0.4);
+        transform: translateX(4px);
+    }
+    
+    #chatActionsModal .chat-action-item .action-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        margin-right: 14px;
+        font-size: 1.2rem;
+    }
+    
+    #chatActionsModal .chat-action-item .action-icon.primary {
+        background: rgba(59, 130, 246, 0.3);
+        color: #93c5fd;
+    }
+    
+    #chatActionsModal .chat-action-item .action-icon.info {
+        background: rgba(34, 211, 238, 0.3);
+        color: #67e8f9;
+    }
+    
+    #chatActionsModal .chat-action-item .action-icon.warning {
+        background: rgba(251, 191, 36, 0.3);
+        color: #fcd34d;
+    }
+    
+    #chatActionsModal .chat-action-item .action-icon.success {
+        background: rgba(34, 197, 94, 0.3);
+        color: #86efac;
+    }
+    
+    #chatActionsModal .chat-action-item .action-icon.purple {
+        background: rgba(181, 138, 254, 0.3);
+        color: #c4b5fd;
+    }
+    
+    #chatActionsModal .chat-action-item .action-icon.danger {
+        background: rgba(239, 68, 68, 0.3);
+        color: #fca5a5;
+    }
+    
+    #chatActionsModal .chat-action-item .action-text {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #ffffff;
+        letter-spacing: 0.01em;
+    }
+    
+    #chatActionsModal .chat-action-item .action-arrow {
+        margin-left: auto;
+        opacity: 0.4;
+        transition: opacity 0.2s ease;
+        color: #ffffff;
+    }
+    
+    #chatActionsModal .chat-action-item:hover .action-arrow {
+        opacity: 1;
+        color: #b58afe;
+    }
+    
+    #chatActionsModal .action-divider {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.15);
+        margin: 8px 0;
+    }
+    
+    #chatActionsModal .modal-header {
+        background: rgba(0, 0, 0, 0.2);
+    }
+    
+    #chatActionsModal #chatActionsName {
+        color: #ffffff !important;
+        font-size: 1.1rem;
+    }
+    
+    #chatActionsModal .text-muted {
+        color: rgba(255, 255, 255, 0.6) !important;
+    }
+    </style>
 
     <script src="https://cdn.jsdelivr.net/npm/blueimp-md5@2.19.0/js/md5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>

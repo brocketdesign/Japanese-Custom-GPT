@@ -612,81 +612,110 @@ function displayChatList(reset, userId) {
     }
 }
 
-// Function to update navbar chat actions dropdown
+// Store current chat data for modal
+let currentChatActionsData = null;
+
+// Function to update navbar chat actions button
 function updateNavbarChatActions(chat) {
-    const dropdown = $('#chat-actions-dropdown');
-    const dropdownMenu = dropdown.find('.dropdown-menu');
+    const actionBtn = $('#chat-actions-btn');
 
     if (!chat) {
-        dropdown.hide();
+        actionBtn.hide();
+        currentChatActionsData = null;
         return;
     }
     
+    // Store chat data for modal
+    currentChatActionsData = chat;
+    actionBtn.show();
+}
+
+// Function to open chat actions modal
+function openChatActionsModal() {
+    const chat = currentChatActionsData;
+    if (!chat) return;
+    
+    const modal = $('#chatActionsModal');
+    const content = $('#chatActionsContent');
+    
+    // Update modal header with chat info
+    $('#chatActionsAvatar').attr('src', chat.chatImageUrl || '/img/logo.webp');
+    $('#chatActionsName').text(chat.name || 'Chat');
+    
     const isOwner = chat.userId === userId;
     
-    // Check if chat is favorited
+    // Check if chat is favorited and build modal content
     Favorites.checkFavorite(chat._id, function(isFavorited) {
-        const favoriteIcon = isFavorited ? 'bi-star-fill text-warning' : 'bi-star';
+        const favoriteIcon = isFavorited ? 'bi-star-fill' : 'bi-star';
         const favoriteText = isFavorited 
             ? window.translations.favorite.removeFavorite 
             : window.translations.favorite.addFavorite;
         
-        const dropdownItems = `
-            <li>
-                <a href="#" class="dropdown-item d-flex align-items-center py-2" 
-                   onclick="${!isOwner ? `loadCharacterCreationPage('${chat._id}')` : `loadCharacterUpdatePage('${chat._id}')`}">
-                    <i class="bi bi-pencil me-2 text-primary"></i>
-                    <span>${!isOwner ? window.translations.edit : window.translations.update}</span>
-                </a>
-            </li>
-            <li>
-                <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start" onclick="showChatHistory('${chat._id}')">
-                    <i class="bi bi-clock-history me-2 text-info"></i>
-                    <span>${window.translations.chatHistory}</span>
-                </button>
-            </li>
-            <li>
-                <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start" 
-                        onclick="Favorites.toggleFavorite('${chat._id}')">
-                    <i class="bi ${favoriteIcon} me-2"></i>
-                    <span>${favoriteText}</span>
-                </button>
-            </li>
-            <li>
-                <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start" 
-                        onclick="handleChatReset(this)"
-                        data-id="${chat._id}">
-                    <i class="bi bi-plus-square me-2 text-success"></i>
-                    <span>${window.translations.newChat}</span>
-                </button>
-            </li>
+        const actionItems = `
+            <div class="chat-action-item" onclick="closeChatActionsModal(); ${!isOwner ? `loadCharacterCreationPage('${chat._id}')` : `loadCharacterUpdatePage('${chat._id}')`}">
+                <div class="action-icon primary">
+                    <i class="bi bi-pencil"></i>
+                </div>
+                <span class="action-text">${!isOwner ? window.translations.edit : window.translations.update}</span>
+                <i class="bi bi-chevron-right action-arrow"></i>
+            </div>
+            
+            <div class="chat-action-item" onclick="closeChatActionsModal(); showChatHistory('${chat._id}')">
+                <div class="action-icon info">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <span class="action-text">${window.translations.chatHistory}</span>
+                <i class="bi bi-chevron-right action-arrow"></i>
+            </div>
+            
+            <div class="chat-action-item" onclick="closeChatActionsModal(); Favorites.toggleFavorite('${chat._id}')">
+                <div class="action-icon warning">
+                    <i class="bi ${favoriteIcon}"></i>
+                </div>
+                <span class="action-text">${favoriteText}</span>
+                <i class="bi bi-chevron-right action-arrow"></i>
+            </div>
+            
+            <div class="chat-action-item" onclick="closeChatActionsModal(); handleChatReset(this)" data-id="${chat._id}">
+                <div class="action-icon success">
+                    <i class="bi bi-plus-square"></i>
+                </div>
+                <span class="action-text">${window.translations.newChat}</span>
+                <i class="bi bi-chevron-right action-arrow"></i>
+            </div>
+            
             ${window.isAdmin ? `
-            <li><hr class="dropdown-divider"></li>
-            <li>
-                <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start text-warning" 
-                        onclick="logFullConversation('${chat._id}')">
-                    <i class="bi bi-terminal me-2"></i>
-                    <span>Log Full Conversation</span>
-                </button>
-            </li>
+            <div class="action-divider"></div>
+            <div class="chat-action-item" onclick="closeChatActionsModal(); logFullConversation('${chat._id}')">
+                <div class="action-icon purple">
+                    <i class="bi bi-terminal"></i>
+                </div>
+                <span class="action-text">Log Full Conversation</span>
+                <i class="bi bi-chevron-right action-arrow"></i>
+            </div>
             ` : ''}
-            <li><hr class="dropdown-divider"></li>
-            <li class="d-none">
-                <button class="dropdown-item d-flex align-items-center py-2 border-0 bg-transparent w-100 text-start text-danger" onclick="deleteChatHandler('${chat._id}')">
-                    <i class="bi bi-trash me-2"></i>
-                    <span>${window.translations.delete}</span>
-                </button>
-            </li>
         `;
         
-        dropdownMenu.html(dropdownItems);
-        dropdown.show();
+        content.html(actionItems);
+        
+        // Show modal using Bootstrap
+        const bsModal = new bootstrap.Modal(modal[0]);
+        bsModal.show();
     });
+}
+
+// Function to close chat actions modal
+function closeChatActionsModal() {
+    const modal = bootstrap.Modal.getInstance($('#chatActionsModal')[0]);
+    if (modal) {
+        modal.hide();
+    }
 }
 
 // Function to hide navbar chat actions
 function hideNavbarChatActions() {
-    $('#chat-actions-dropdown').hide();
+    $('#chat-actions-btn').hide();
+    currentChatActionsData = null;
 }
 
 // Function to update current chat in the list
@@ -1688,3 +1717,5 @@ window.handleChatThumbClick = handleChatThumbClick;
 window.updateHorizontalChatMenu = updateHorizontalChatMenu;
 window.initializeHorizontalChatMenu = initializeHorizontalChatMenu;
 window.updateCurrentChatLevel = updateCurrentChatLevel;
+window.openChatActionsModal = openChatActionsModal;
+window.closeChatActionsModal = closeChatActionsModal;

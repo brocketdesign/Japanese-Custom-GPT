@@ -200,834 +200,833 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.3.2/mdb.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 
-<script>
+    <script>
 
-    // Auto-launch pending chat after login
-    document.addEventListener("DOMContentLoaded", function() {
-        // Check if user is logged in (window.user is set and not temporary)
-        if (window.user && !window.isTemporary) {
-            var pendingChatId = null;
-            var pendingChatImage = null;
-            // Try both jQuery cookie and native cookie
-            if (typeof $ !== 'undefined' && $.cookie) {
-                pendingChatId = $.cookie('pending-chat-id');
-                pendingChatImage = $.cookie('pending-chat-image');
-            } else {
-                // Fallback to native cookie parsing
-                function getCookie(name) {
-                    const nameEQ = name + "=";
-                    const ca = document.cookie.split(';');
-                    for(let i=0;i < ca.length;i++) {
-                        let c = ca[i];
-                        while (c.charAt(0)==' ') c = c.substring(1,c.length);
-                        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+        // Auto-launch pending chat after login
+        document.addEventListener("DOMContentLoaded", function() {
+            // Check if user is logged in (window.user is set and not temporary)
+            if (window.user && !window.isTemporary) {
+                var pendingChatId = null;
+                var pendingChatImage = null;
+                // Try both jQuery cookie and native cookie
+                if (typeof $ !== 'undefined' && $.cookie) {
+                    pendingChatId = $.cookie('pending-chat-id');
+                    pendingChatImage = $.cookie('pending-chat-image');
+                } else {
+                    // Fallback to native cookie parsing
+                    function getCookie(name) {
+                        const nameEQ = name + "=";
+                        const ca = document.cookie.split(';');
+                        for(let i=0;i < ca.length;i++) {
+                            let c = ca[i];
+                            while (c.charAt(0)==' ') c = c.substring(1,c.length);
+                            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+                        }
+                        return null;
                     }
-                    return null;
+                    pendingChatId = getCookie('pending-chat-id');
+                    pendingChatImage = getCookie('pending-chat-image');
                 }
-                pendingChatId = getCookie('pending-chat-id');
-                pendingChatImage = getCookie('pending-chat-image');
-            }
-            if (pendingChatId) {
-                // Remove the cookies so it doesn't repeat
-                if (typeof $ !== 'undefined' && $.removeCookie) {
-                    $.removeCookie('pending-chat-id', { path: '/' });
-                    $.removeCookie('pending-chat-image', { path: '/' });
-                } else {
-                    document.cookie = 'pending-chat-id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-                    document.cookie = 'pending-chat-image=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                if (pendingChatId) {
+                    // Remove the cookies so it doesn't repeat
+                    if (typeof $ !== 'undefined' && $.removeCookie) {
+                        $.removeCookie('pending-chat-id', { path: '/' });
+                        $.removeCookie('pending-chat-image', { path: '/' });
+                    } else {
+                        document.cookie = 'pending-chat-id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                        document.cookie = 'pending-chat-image=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                    }
+                    // Launch the chat (assume redirectToChat is globally available)
+                    if (typeof redirectToChat === 'function') {
+                        redirectToChat(pendingChatId, pendingChatImage);
+                    } else {
+                        // Fallback: redirect to chat page
+                        window.location.href = '/chat/' + encodeURIComponent(pendingChatId);
+                    }
                 }
-                // Launch the chat (assume redirectToChat is globally available)
-                if (typeof redirectToChat === 'function') {
-                    redirectToChat(pendingChatId, pendingChatImage);
-                } else {
-                    // Fallback: redirect to chat page
-                    window.location.href = '/chat/' + encodeURIComponent(pendingChatId);
-                }
-            }
-        }
-    });
-</script>
-document.addEventListener('DOMContentLoaded', function() {
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.remove('hidden'); // Remove the hidden class
-                entry.target.classList.add('animate__animated');
-
-                const sanitizedAnimate = entry.target.dataset.animate.replace(/[^a-zA-Z0-9-_]/g, '');
-                entry.target.classList.add(sanitizedAnimate); // Apply sanitized animation class
-
-                if (entry.target.dataset.delay && entry.target.dataset.delay !== '') {
-                    const sanitizedDelay = entry.target.dataset.delay.replace(/[^a-zA-Z0-9-_]/g, '');
-                    entry.target.classList.add(sanitizedDelay); // Apply sanitized delay
-                }
-
-                observer.unobserve(entry.target); // Stop observing after animation
             }
         });
-    }, {
-        threshold: 0.1 // Adjust the threshold as needed
-    });
+        document.addEventListener('DOMContentLoaded', function() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.remove('hidden'); // Remove the hidden class
+                        entry.target.classList.add('animate__animated');
 
-    document.querySelectorAll('[data-animate]').forEach(element => {
-        element.classList.add('hidden'); // Add the hidden class initially
-        observer.observe(element);
-    });
-});
+                        const sanitizedAnimate = entry.target.dataset.animate.replace(/[^a-zA-Z0-9-_]/g, '');
+                        entry.target.classList.add(sanitizedAnimate); // Apply sanitized animation class
 
-window.loadTranslations = async function (lang) {
-    const localTranslations = localStorage.getItem('translations');
+                        if (entry.target.dataset.delay && entry.target.dataset.delay !== '') {
+                            const sanitizedDelay = entry.target.dataset.delay.replace(/[^a-zA-Z0-9-_]/g, '');
+                            entry.target.classList.add(sanitizedDelay); // Apply sanitized delay
+                        }
 
-    const response = await $.ajax({
-        url: '/api/user/translations',
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({ lang })
-    });
-
-    if (response.success) {
-        window.translations = response.translations;
-        window.lang = lang;
-    }
-
-}
-window.fetchAndAppendModels = function() {
-    const chatDiscovery = document.getElementById('chat-discovery');
-    const subscriptionStatus = user.subscriptionStatus == 'active' || isAdmin;
-    let apiUrl = '/api/models';
-
-    // Fetch models first
-    $.get(apiUrl, function(response) {
-        if (response.success) {
-            // 1. Collect unique styles
-            const stylesSet = new Set();
-            response.models.forEach(model => {
-                stylesSet.add(model.style);
+                        observer.unobserve(entry.target); // Stop observing after animation
+                    }
+                });
+            }, {
+                threshold: 0.1 // Adjust the threshold as needed
             });
 
-            // 2. Build style filter buttons
-            const styleButtons = [];
-            // "All" button
-            styleButtons.push(`
-                <button class="btn btn-outline-secondary btn-sm me-2 style-filter-btn active" data-style="all">
-                    ${translations.all || 'All'}
-                </button>
-            `);
-            // Only include "photorealistic" and "anime" styles
-            ['photorealistic', 'anime'].forEach(style => {
-                if (stylesSet.has(style)) {
-                    let styleLabel = (translations[style] || style);
+            document.querySelectorAll('[data-animate]').forEach(element => {
+                element.classList.add('hidden'); // Add the hidden class initially
+                observer.observe(element);
+            });
+        });
+
+        window.loadTranslations = async function (lang) {
+            const localTranslations = localStorage.getItem('translations');
+
+            const response = await $.ajax({
+                url: '/api/user/translations',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ lang })
+            });
+
+            if (response.success) {
+                window.translations = response.translations;
+                window.lang = lang;
+            }
+
+        }
+        window.fetchAndAppendModels = function() {
+            const chatDiscovery = document.getElementById('chat-discovery');
+            const subscriptionStatus = user.subscriptionStatus == 'active' || isAdmin;
+            let apiUrl = '/api/models';
+
+            // Fetch models first
+            $.get(apiUrl, function(response) {
+                if (response.success) {
+                    // 1. Collect unique styles
+                    const stylesSet = new Set();
+                    response.models.forEach(model => {
+                        stylesSet.add(model.style);
+                    });
+
+                    // 2. Build style filter buttons
+                    const styleButtons = [];
+                    // "All" button
                     styleButtons.push(`
-                        <button class="btn btn-outline-secondary btn-sm me-2 style-filter-btn" data-style="${style}">
-                            ${styleLabel}
+                        <button class="btn btn-outline-secondary btn-sm me-2 style-filter-btn active" data-style="all">
+                            ${translations.all || 'All'}
                         </button>
                     `);
-                }
-            });
-
-            // 3. Insert style filter buttons above the containers
-            if ($('#styleFilterContainer').length === 0) {
-                const filterHtml = `<div id="styleFilterContainer" class="mb-2 d-flex flex-wrap">${styleButtons.join('')}</div>`;
-                if ($('#imageStyleSelectionCharacterCreation').length) {
-                    $('#imageStyleSelectionCharacterCreation').before(filterHtml);
-                } else if ($('#imageStyleSelection').length) {
-                    $('#imageStyleSelection').before(filterHtml);
-                }
-            }
-
-            // 4. Render model images
-            response.models.forEach(model => {
-                const premiumIndicator = model.premium 
-                    ? `<div class="position-absolute top-0 start-0">
-                        <span class="badge custom-gradient-bg">
-                            <i class="bi bi-gem"></i>
-                        </span>
-                    </div>`
-                    : '';
-                const modelElement = `
-                <div class="position-relative model-style-item system-model-card" data-style="${model.style}">
-                    ${premiumIndicator}
-                    <img src="${model.image}" alt="${model.style}" 
-                        class="${subscriptionStatus || !model.premium ? '' : 'is-premium'} style-option rounded me-2" 
-                        data-id="${model.modelId}" 
-                        data-style="${model.style}" 
-                        data-model="${model.model}" 
-                        data-version="${model.version}"
-                        data-count="${model.chatCount}"
-                        data-premium="${model.premium}"
-                        data-name="${model.name || model.model}"
-                        data-is-user-model="false"
-                        style="width: 80px; height: 80px; object-fit: cover;"
-                    >
-                </div>
-                `;
-                if(!subscriptionStatus){
-                    if(subscriptionStatus || !model.premium){
-                        $(document).find('#imageStyleSelection').prepend(modelElement);
-                        $(document).find('#imageStyleSelectionCharacterCreation').prepend(modelElement);
-                    }else{
-                        $(document).find('#imageStyleSelection').append(modelElement);
-                        $(document).find('#imageStyleSelectionCharacterCreation').append(modelElement);
-                    }
-                }else{
-                    $(document).find('#imageStyleSelection').append(modelElement);
-                    $(document).find('#imageStyleSelectionCharacterCreation').append(modelElement);
-                }
-            });
-
-            // 5. Style filter logic
-            $(document).off('click', '.style-filter-btn').on('click', '.style-filter-btn', function() {
-                $('.style-filter-btn').removeClass('active');
-                $(this).addClass('active');
-                const selectedStyle = $(this).data('style');
-                if (selectedStyle === 'all') {
-                    $('.model-style-item').show();
-                } else {
-                    $('.model-style-item').each(function() {
-                        if ($(this).data('style') === selectedStyle) {
-                            $(this).show();
-                        } else {
-                            $(this).hide();
+                    // Only include "photorealistic" and "anime" styles
+                    ['photorealistic', 'anime'].forEach(style => {
+                        if (stylesSet.has(style)) {
+                            let styleLabel = (translations[style] || style);
+                            styleButtons.push(`
+                                <button class="btn btn-outline-secondary btn-sm me-2 style-filter-btn" data-style="${style}">
+                                    ${styleLabel}
+                                </button>
+                            `);
                         }
                     });
+
+                    // 3. Insert style filter buttons above the containers
+                    if ($('#styleFilterContainer').length === 0) {
+                        const filterHtml = `<div id="styleFilterContainer" class="mb-2 d-flex flex-wrap">${styleButtons.join('')}</div>`;
+                        if ($('#imageStyleSelectionCharacterCreation').length) {
+                            $('#imageStyleSelectionCharacterCreation').before(filterHtml);
+                        } else if ($('#imageStyleSelection').length) {
+                            $('#imageStyleSelection').before(filterHtml);
+                        }
+                    }
+
+                    // 4. Render model images
+                    response.models.forEach(model => {
+                        const premiumIndicator = model.premium 
+                            ? `<div class="position-absolute top-0 start-0">
+                                <span class="badge custom-gradient-bg">
+                                    <i class="bi bi-gem"></i>
+                                </span>
+                            </div>`
+                            : '';
+                        const modelElement = `
+                        <div class="position-relative model-style-item system-model-card" data-style="${model.style}">
+                            ${premiumIndicator}
+                            <img src="${model.image}" alt="${model.style}" 
+                                class="${subscriptionStatus || !model.premium ? '' : 'is-premium'} style-option rounded me-2" 
+                                data-id="${model.modelId}" 
+                                data-style="${model.style}" 
+                                data-model="${model.model}" 
+                                data-version="${model.version}"
+                                data-count="${model.chatCount}"
+                                data-premium="${model.premium}"
+                                data-name="${model.name || model.model}"
+                                data-is-user-model="false"
+                                style="width: 80px; height: 80px; object-fit: cover;"
+                            >
+                        </div>
+                        `;
+                        if(!subscriptionStatus){
+                            if(subscriptionStatus || !model.premium){
+                                $(document).find('#imageStyleSelection').prepend(modelElement);
+                                $(document).find('#imageStyleSelectionCharacterCreation').prepend(modelElement);
+                            }else{
+                                $(document).find('#imageStyleSelection').append(modelElement);
+                                $(document).find('#imageStyleSelectionCharacterCreation').append(modelElement);
+                            }
+                        }else{
+                            $(document).find('#imageStyleSelection').append(modelElement);
+                            $(document).find('#imageStyleSelectionCharacterCreation').append(modelElement);
+                        }
+                    });
+
+                    // 5. Style filter logic
+                    $(document).off('click', '.style-filter-btn').on('click', '.style-filter-btn', function() {
+                        $('.style-filter-btn').removeClass('active');
+                        $(this).addClass('active');
+                        const selectedStyle = $(this).data('style');
+                        if (selectedStyle === 'all') {
+                            $('.model-style-item').show();
+                        } else {
+                            $('.model-style-item').each(function() {
+                                if ($(this).data('style') === selectedStyle) {
+                                    $(this).show();
+                                } else {
+                                    $(this).hide();
+                                }
+                            });
+                        }
+                    });
+
+                    // 6. Continue with tab logic
+                    if($(document).find('#imageStyleTabs').length > 0 && !$('#characterCreationModal').hasClass('show')){
+                        showNavTabs();
+                    }else{
+                        // Click on the preferred model if set, otherwise use localStorage or first model
+                        const imageModelId = localStorage.getItem('imageModelId');
+                        const isUserModel = localStorage.getItem('isUserModel') === 'true';
+                        
+                        if(imageModelId){
+                            // Try to find in system models first
+                            let $model = $(document).find(`#imageStyleSelectionCharacterCreation .style-option[data-id="${imageModelId}"]`);
+                            if ($model.length) {
+                                $model.click();
+                            } else if (isUserModel) {
+                                // User model - will be selected by civitai-model-search.js after loading
+                                console.log('[fetchAndAppendModels] User model preference will be loaded by civitai-model-search.js');
+                            } else {
+                                // Fallback to first system model
+                                $(document).find('#imageStyleSelectionCharacterCreation .style-option').first().click();
+                            }
+                        }else{
+                            $(document).find('#imageStyleSelectionCharacterCreation .style-option').first().click();
+                        }
+                    }
+                } else {
+                    window.showNotification('Failed to fetch models', 'error');
+                }
+            });
+        };
+        let navInit = false;
+        function showNavTabs(){
+            const styleSelection = document.getElementById('imageStyleSelection');
+            const tabNav = document.getElementById('imageStyleTabs');
+            const chatDiscovery = document.getElementById('chat-discovery');
+            const subscriptionStatus = user.subscriptionStatus == 'active'
+
+            if (styleSelection && tabNav) {
+                const styleOptions = styleSelection.querySelectorAll('.style-option');
+
+                styleOptions.forEach((option, index) => {
+                    const style = option.getAttribute('data-style');
+                    const modelId = option.getAttribute('data-id');
+                    const model = option.getAttribute('data-model');
+                    const version = option.getAttribute('data-version');
+                    const premium = option.getAttribute('data-premium');
+                    const imgSrc = option.getAttribute('src');
+                    const altText = option.getAttribute('alt');
+                    const chatCount = parseInt(option.getAttribute('data-count'), 10) || 0;
+
+                    // Skip rendering if `#chat-discovery` exists and count is 0
+                    if ( !modelId || (chatDiscovery && (chatCount == 0) ) ) return;
+
+                    const isActive = index === 0 ? 'active' : '';
+
+                    // Add count tag if `#chat-discovery` exists
+                    const countTag = chatDiscovery
+                        ? `<span 
+                        class="badge btn-light text-dark position-absolute top-0 end-0" 
+                        style="opacity:0.8;">
+                        ${chatCount}</span>`
+                        : '';
+                    // Add premium indicator (gem icon with custom gradient background)
+                    const premiumIndicator = premium === 'true'
+                        ? `<div class="position-absolute top-0 start-0">
+                            <span class="badge custom-gradient-bg">
+                                <i class="bi bi-gem"></i>
+                            </span>
+                        </div>`
+                        : '';
+
+                    const tabItem = `
+                    <li class="nav-item position-relative" role="presentation" 
+                        ${chatCount == 0 ? `onclick="window.location='/chat/edit/?modelId=${modelId}'"` : ''}>
+                        <button class="nav-link ${isActive} rounded" 
+                                id="${modelId}-tab" 
+                                data-style="${style}" 
+                                data-id="${modelId}" 
+                                data-model="${model}" 
+                                data-version="${version}" 
+                                data-premium="${premium}"
+                                type="button" role="tab"
+                                style="background: url('${imgSrc}') no-repeat center center; background-size: cover;height: 70px;width: 70px;">
+                            <span class="d-none">${altText}</span>
+                            ${premiumIndicator}
+                        </button>
+                        ${countTag}
+                    </li>
+                    `;
+                    tabNav.innerHTML += tabItem;
+                });
+
+                if(chatDiscovery){
+                    tabNav.innerHTML += `
+                    <li class="nav-item position-relative bg-light rounded" role="presentation" onclick="loadCharacterCreationPage()">
+                        <button class="nav-link add-more" type="button" role="tab">
+                            <i class="bi bi-plus-lg thumb-option d-flex justify-content-center align-items-center" style="font-size: 31px;"></i>
+                        </button>
+                    </li>
+                    `
+                }
+
+
+                $('#imageStyleSelection').remove();
+            }
+
+            // Handle tab clicks
+            $(document).on('click','#imageStyleTabs button', function () {
+                if($(this).hasClass('add-more')){
+                    return
+                }
+                $('#chat-gallery .chat-card-container').fadeOut()
+                $('#imageStyleTabs button').removeClass('active');
+                $(this).addClass('active');
+
+                const modelId = $(this).data('id');
+                const premium = $(this).data('premium');
+                const model =  $(this).data('model');
+                const style =  $(this).data('style');
+
+                if(modelId){
+                    localStorage.setItem('chat-nav',`${modelId}`)
+                    let option = {imageStyle:style, imageModel:model, modelId, premium, userId: user._id, modal: true}
+                    if(chatDiscovery ){ option.userId = false }
+                    displayPeopleChat(1, option, 
+                    (ids) => {
+                    }, true);
                 }
             });
 
-            // 6. Continue with tab logic
-            if($(document).find('#imageStyleTabs').length > 0 && !$('#characterCreationModal').hasClass('show')){
-                showNavTabs();
-            }else{
-                // Click on the preferred model if set, otherwise use localStorage or first model
-                const imageModelId = localStorage.getItem('imageModelId');
-                const isUserModel = localStorage.getItem('isUserModel') === 'true';
-                
-                if(imageModelId){
-                    // Try to find in system models first
-                    let $model = $(document).find(`#imageStyleSelectionCharacterCreation .style-option[data-id="${imageModelId}"]`);
-                    if ($model.length) {
-                        $model.click();
-                    } else if (isUserModel) {
-                        // User model - will be selected by civitai-model-search.js after loading
-                        console.log('[fetchAndAppendModels] User model preference will be loaded by civitai-model-search.js');
-                    } else {
-                        // Fallback to first system model
-                        $(document).find('#imageStyleSelectionCharacterCreation .style-option').first().click();
-                    }
+            const chatNav_modelId = localStorage.getItem('chat-nav');
+            if(navInit){
+                return
+            }
+            if (chatNav_modelId && $(document).find(`#imageStyleTabs`).find(`#${chatNav_modelId}-tab`).length) {
+                $(document).find(`#imageStyleTabs`).find(`#${chatNav_modelId}-tab`).click();
+                navInit = true;
+            } else {
+                // Find the first tab with a modelId and click it
+                $(document).find(`#imageStyleTabs button[data-id]`).first().click();
+                navInit = true;
+            }
+        }
+        window.updatePlanStatus = function(user){
+        $.get('/user/plan/'+user._id,function(data){
+            let message = `<span class="ms-1">&#x1F381;</span>`;
+            if(!data.plan){
+                $('.user-current-plan').each(function(){
+                $(this).html(message).show()
+                })
+                return
+            }
+            const billingCycle = data.plan.billingCycle
+            const currentPlanId = data.plan.currentPlanId
+
+            $.get('/plan/list',function(data){
+                const plans = data.plans
+                const plan = plans.find((plan) => plan[`${billingCycle}_id`] === currentPlanId);
+                if(!plan){
+                    message = `<span class="ms-1">&#x1F381;</span>`;
                 }else{
-                    $(document).find('#imageStyleSelectionCharacterCreation .style-option').first().click();
+                    switch (plan.id) {
+                    case 'free':
+                        message = `<span class="ms-1">&#x1F381;</span>`;
+                        break;
+                    case 'premium':
+                        message = `<span class="ms-1"> &#x1F48E;</span>`;
+                        break;
+                    case 'special':
+                        message = ` <span class="ms-1">&#x1F525;</span>`;
+                        break;
+                    default:
+                        message = `<span class="ms-1">&#x1F381;</span>`;
+                    }
+                }
+                $('.user-current-plan').each(function(){
+                    $(this).html(message).show()
+                })
+            })
+        })
+        }
+
+
+        window.redirectToChat = function(chatId,chatImage) {
+            if($(`#spinner-${chatId}`).hasClass('on')){
+                return
+            }
+            if(chatImage){
+                $('#chat-container').css('background-image', chatImage);
+            }
+            $(`#spinner-${chatId}`).addClass('on').show()
+            const user = {{{json user}}}
+            const userId = user._id
+            // If user is not logged in yet show login form
+            if(user.isTemporary){
+                openLoginForm();
+                return
+            }
+            // if on chat page fetchChatData else redirect to chat/${chatID}
+            if (window.location.pathname.includes('/chat/')) {
+                //send message to parent window fetchChatData
+                window.parent.postMessage({
+                    event: 'fetchChatData',
+                    chatId: chatId,
+                    userId: userId,
+                    reset:null
+                }, '*');
+
+            } else {
+                window.location.href = `/chat/${chatId}`;
+            }
+        }
+        window.redirectToCharacter = function(characterId, characterSlug) {
+            if($(`#spinner-${characterId}`).hasClass('on')){
+                return
+            }
+            $(`#spinner-${characterId}`).addClass('on').show()
+            if(characterSlug){
+                window.location.href = `/character/slug/${characterSlug}`;
+                return
+            }
+            window.location.href = `/character/${characterId}`;
+        }
+
+        window.toggleChatList = function() {
+            if(!window.location.pathname.includes('/chat/')) {
+                window.location.href = '/chat/?list=true';
+            }
+        }
+        window.hideDiscovery = function() {
+            
+            $('.onchat-off').hide()
+            $('.onchat-off').addClass('d-none').css({
+                'opacity': 0,
+                'pointer-events': 'none',
+                'visibility': 'hidden'
+            });    
+            $('.onchat-on').show()
+            $('.onchat-on').removeClass('d-none').css({
+                'opacity': '',
+                'pointer-events': '',
+                'visibility': ''
+            }); 
+        }
+            $('.onchat-on').each(function() {
+                if ($(this).css('display') === 'flex') {
+                    $(this).attr('data-display-flex', 'true');
+                }
+            });
+            $('.onchat-off').each(function() {
+                if ($(this).css('display') === 'flex') {
+                    $(this).attr('data-display-flex', 'true');
+                }
+            });
+        window.showDashboardFooter = function() {
+            $('.site-footer').show();
+            $('.site-footer').removeClass('d-none onchat-off').css({
+                'opacity': '',
+                'pointer-events': '',
+                'visibility': ''
+            });
+        }
+        // == FIXED & FINAL VERSION – declare on window ==
+
+        window.showChat = function () {
+            const $on  = $('.onchat-on');
+            const $off = $('.onchat-off');
+
+            // Check if already visible
+            if (!!$('#chatContainer').is(':visible')) {
+                return;
+            }
+
+            // Instantly hide the previous screen
+            $off.addClass('d-none');
+
+            // Reset any old transitionend listeners (prevents double-trigger bug)
+            $on.off('transitionend webkitTransitionEnd oTransitionEnd');
+
+            // 1. Prepare: off-screen right + no transition yet
+            $on.css({
+                'transition': 'none',
+                'transform': 'translateX(100%)',
+                'opacity': '0',
+                'pointer-events': 'none',
+                'visibility': 'hidden'
+            }).removeClass('d-none').show();  // force visible
+
+            // 2. Force reflow – THIS IS THE KEY to prevent flicker when re-opening
+            void $on[0].offsetHeight;
+
+            // 3. Now enable transition + slide in
+            $on.css({
+                'transition': 'transform 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.38s ease',
+                'transform': 'translateX(0)',
+                'opacity': '1',
+                'pointer-events': 'auto',
+                'visibility': 'visible'
+            });
+        };
+
+        window.hideChat = function () {
+            const $on  = $('.onchat-on');
+            const $off = $('.onchat-off');
+
+            // Animate out to the right
+            $on.css({
+                'transition': 'transform 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.38s ease',
+                'transform': 'translateX(100%)',
+                'opacity': '0',
+                'pointer-events': 'none'
+            });
+
+            // When animation finishes → hide and restore previous screen
+            $on.one('transitionend webkitTransitionEnd oTransitionEnd', function () {
+                $on.addClass('d-none').css({
+                    'transition': 'none',           // reset for next open
+                    'transform': 'translateX(100%)'
+                });
+
+                $off.removeClass('d-none');
+
+                // Restore flex if needed
+                $off.each(function () {
+                    if ($(this).attr('data-display-flex')) {
+                        $(this).css('display', 'flex');
+                    }
+                });
+            });
+
+            // Make sure off is visible during the animation
+            $off.each(function () {
+                if ($(this).attr('data-display-flex')) {
+                    $(this).css('display', 'flex');
+                } else {
+                    $(this).show();
+                }
+            });
+        };
+
+        // === INITIAL STATE (run once on page load) ===
+        $(function () {
+            $('.onchat-on').addClass('d-none').css({
+                'transition': 'none',
+                'transform': 'translateX(100%)'
+            });
+            $('.onchat-off').removeClass('d-none');
+        });
+
+        window.showDiscovery = function() {
+            if (!window.location.pathname.includes('/chat/')) {
+                window.location.href = '/chat/';
+            }
+            $('.fullscreen-overlay').fadeOut(); 
+            $('body').css('overflow', 'visible');
+            
+            window.hideChat();
+
+            $('#chat-list').hide();
+            $('#promptContainer').slideUp('fast');
+            $('.new-chat').each(function(){
+                $(this).hide()
+            })
+            if (typeof resetChatUrl === 'function') {
+                resetChatUrl();
+            }
+
+            // Hide navbar chat actions when in discovery mode
+            if (typeof hideNavbarChatActions === 'function') {
+                hideNavbarChatActions();
+            }
+            
+            $('#footer-toolbar').fadeIn();
+            window.postMessage('resizeIframe', '*');
+        }
+        window.fetchUser = async function() {
+            try {
+                const url = `${API_URL}/api/user`;
+        
+                const response = await fetch(url, { 
+                    method: 'GET',
+                    credentials: 'include' 
+                });
+
+                if (!response.ok) {
+                    console.error(`[fetchUser] Network response was not ok. Status: ${response.status} ${response.statusText}`);
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+
+                if (data && data.user) {
+                } else {
+                    console.warn('[fetchUser] No user object found in response:', data);
+                }
+                return data.user;
+            } catch (error) {
+                console.error('[fetchUser] Error fetching user:', error);
+                return null;
+            }
+        };
+
+        window.fetchMode = async function() {
+            try {
+                const response = await fetch('/api/mode', { 
+                    method: 'GET',
+                    credentials: 'include' ,
+                });
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+                return data.mode;
+            } catch (error) {
+                console.error('Error fetching mode:', error);
+                return null
+            }
+        };
+        window.logoutUser = async function(Clerk) {
+            try {
+                // First, sign out with Clerk - this is important to do BEFORE clearing cookies
+                // Use the redirectUrl: false option to prevent automatic redirects
+                await Clerk.signOut({ redirectUrl: window.location.origin + '/signout-redirection?signOut=true' });
+                console.log('Clerk sign out completed');
+                
+            } catch (error) {
+                console.error('Error during logout:', error);
+                return Promise.resolve(false);
+            }
+        };
+        window.handleSignOut = function() {
+
+            // Then clear cookies and localStorage after Clerk signOut completes
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    url: '/user/logout',
+                    method: 'POST',
+                    success: function(response) {
+                        console.log('Server cookies cleared successfully');
+                        
+                        // Clear all cookies manually after server-side logout
+                        Object.keys($.cookie()).forEach(function(cookie) {
+                            $.removeCookie(cookie, { path: '/' });
+                        });
+                        
+                        // Clear localStorage and sessionStorage
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        console.log('Local storage cleared');
+                        
+                        resolve(true);
+                    },
+                    error: function(error) {
+                        console.error('Failed to clear server cookies:', error);
+                        // Still resolve to continue logout process
+                        resolve(false);
+                    }
+                });
+            });
+        }
+        window.handleClerkSignIn = function(Clerk) {
+            if(!Clerk.session){
+                return
+            }
+            // Get session token from Clerk
+            const sessionToken = Clerk.session.lastActiveSessionId;
+            
+            // Send request to backend with Clerk session token
+            fetch('/user/clerk-auth', {
+                method: 'GET',
+                credentials: 'include' ,
+                headers: {
+                    'x-clerk-user-id': Clerk.user.id
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.redirectUrl) {
+                    window.location.href = data.redirectUrl;
+                }
+            })
+            .catch(error => {
+                console.error('Authentication error:', error);
+            });
+            return false; // Prevent Clerk's default redirect
+        }
+        window.handleClerkUserUpdate = function() {
+            
+            if (!window.Clerk?.user) {
+                console.warn('[handleClerkUserUpdate] No Clerk user data available');
+                return;
+            }
+            
+            fetch('/user/clerk-update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Clerk-Session-Id': window.Clerk?.session?.id || '',
+                },
+                credentials: 'include',
+                body: JSON.stringify(window.Clerk.user)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status) {
+                    
+                    // Refresh user data if needed
+                    if (window.fetchUser) {
+                        window.fetchUser().then(userData => {
+                            if (userData && !userData.isTemporary) {
+                                window.user = userData;
+                            } else {
+                                console.warn('[handleClerkUserUpdate] User data not available or still temporary');
+                            }
+                        }).catch(error => {
+                            console.error('[handleClerkUserUpdate] Error fetching updated user data:', error);
+                        });
+                    } else {
+                        console.error('[handleClerkUserUpdate] User fetch function not available');
+                    }
+                } else if (data.error) {
+                    console.error('[handleClerkUserUpdate] Server error:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('[handleClerkUserUpdate] Failed to update user data:', error);
+            });
+        }
+
+        $(document).ready(function(){
+            fetchAndAppendModels();
+            
+            // Points modal event handlers
+            $('#userPointsModal').on('shown.bs.modal', function() {
+                if (window.userPointsManager) {
+                    // Load history by default (active tab)
+                    window.userPointsManager.loadPointsHistory();
+                }
+            });
+            
+            // Tab switching events
+            $('#history-tab').on('shown.bs.tab', function() {
+                if (window.userPointsManager) {
+                    window.userPointsManager.loadPointsHistory();
+                }
+            });
+            
+            $('#leaderboard-tab').on('shown.bs.tab', function() {
+                if (window.userPointsManager) {
+                    window.userPointsManager.loadLeaderboard();
+                }
+            });
+        });
+    </script>
+    <script>
+        // Parse the URL and get query parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Check if 'payment_status' parameter is true
+        if (urlParams.get('payment_status') === 'cancelled') {
+            // Display notification in Japanese
+            window.showNotification(
+                `${translations.payment_cancelled}<br>${translations.payment_not_completed}`,
+                'info'
+            );
+            var currentUrl = window.location.href;
+            var urlParts = currentUrl.split('?');
+            urlParts[urlParts.length - 1] = '';
+            var newUrl = urlParts.join('');
+            if($('#chat-widget-container').length == 0){
+                window.history.replaceState({ path: newUrl }, '', newUrl);
+            }
+        }
+
+        // Handle points purchase success
+        if (urlParams.get('points_purchase') === 'success') {
+            const points = urlParams.get('points');
+            const packageId = urlParams.get('packageId');
+            
+            if (points && packageId) {
+                const message = window.buyPointsTranslations?.buy_points?.points_added_message
+                    .replace('{points}', points);
+                window.showNotification(message, 'success');
+                if (typeof refreshUserPoints === 'function') {
+                    setTimeout(() => refreshUserPoints(), 500);
                 }
             }
-        } else {
-            window.showNotification('Failed to fetch models', 'error');
-        }
-    });
-};
-let navInit = false;
-function showNavTabs(){
-    const styleSelection = document.getElementById('imageStyleSelection');
-    const tabNav = document.getElementById('imageStyleTabs');
-    const chatDiscovery = document.getElementById('chat-discovery');
-    const subscriptionStatus = user.subscriptionStatus == 'active'
-
-    if (styleSelection && tabNav) {
-        const styleOptions = styleSelection.querySelectorAll('.style-option');
-
-        styleOptions.forEach((option, index) => {
-            const style = option.getAttribute('data-style');
-            const modelId = option.getAttribute('data-id');
-            const model = option.getAttribute('data-model');
-            const version = option.getAttribute('data-version');
-            const premium = option.getAttribute('data-premium');
-            const imgSrc = option.getAttribute('src');
-            const altText = option.getAttribute('alt');
-            const chatCount = parseInt(option.getAttribute('data-count'), 10) || 0;
-
-            // Skip rendering if `#chat-discovery` exists and count is 0
-            if ( !modelId || (chatDiscovery && (chatCount == 0) ) ) return;
-
-            const isActive = index === 0 ? 'active' : '';
-
-            // Add count tag if `#chat-discovery` exists
-            const countTag = chatDiscovery
-                ? `<span 
-                class="badge btn-light text-dark position-absolute top-0 end-0" 
-                style="opacity:0.8;">
-                ${chatCount}</span>`
-                : '';
-            // Add premium indicator (gem icon with custom gradient background)
-            const premiumIndicator = premium === 'true'
-                ? `<div class="position-absolute top-0 start-0">
-                    <span class="badge custom-gradient-bg">
-                        <i class="bi bi-gem"></i>
-                    </span>
-                </div>`
-                : '';
-
-            const tabItem = `
-            <li class="nav-item position-relative" role="presentation" 
-                ${chatCount == 0 ? `onclick="window.location='/chat/edit/?modelId=${modelId}'"` : ''}>
-                <button class="nav-link ${isActive} rounded" 
-                        id="${modelId}-tab" 
-                        data-style="${style}" 
-                        data-id="${modelId}" 
-                        data-model="${model}" 
-                        data-version="${version}" 
-                        data-premium="${premium}"
-                        type="button" role="tab"
-                        style="background: url('${imgSrc}') no-repeat center center; background-size: cover;height: 70px;width: 70px;">
-                    <span class="d-none">${altText}</span>
-                    ${premiumIndicator}
-                </button>
-                ${countTag}
-            </li>
-            `;
-            tabNav.innerHTML += tabItem;
-        });
-
-        if(chatDiscovery){
-            tabNav.innerHTML += `
-            <li class="nav-item position-relative bg-light rounded" role="presentation" onclick="loadCharacterCreationPage()">
-                <button class="nav-link add-more" type="button" role="tab">
-                    <i class="bi bi-plus-lg thumb-option d-flex justify-content-center align-items-center" style="font-size: 31px;"></i>
-                </button>
-            </li>
-            `
-        }
-
-
-        $('#imageStyleSelection').remove();
-    }
-
-    // Handle tab clicks
-    $(document).on('click','#imageStyleTabs button', function () {
-        if($(this).hasClass('add-more')){
-            return
-        }
-        $('#chat-gallery .chat-card-container').fadeOut()
-        $('#imageStyleTabs button').removeClass('active');
-        $(this).addClass('active');
-
-        const modelId = $(this).data('id');
-        const premium = $(this).data('premium');
-        const model =  $(this).data('model');
-        const style =  $(this).data('style');
-
-        if(modelId){
-            localStorage.setItem('chat-nav',`${modelId}`)
-            let option = {imageStyle:style, imageModel:model, modelId, premium, userId: user._id, modal: true}
-            if(chatDiscovery ){ option.userId = false }
-            displayPeopleChat(1, option, 
-            (ids) => {
-            }, true);
-        }
-    });
-
-    const chatNav_modelId = localStorage.getItem('chat-nav');
-    if(navInit){
-        return
-    }
-    if (chatNav_modelId && $(document).find(`#imageStyleTabs`).find(`#${chatNav_modelId}-tab`).length) {
-        $(document).find(`#imageStyleTabs`).find(`#${chatNav_modelId}-tab`).click();
-        navInit = true;
-    } else {
-        // Find the first tab with a modelId and click it
-        $(document).find(`#imageStyleTabs button[data-id]`).first().click();
-        navInit = true;
-    }
-}
-window.updatePlanStatus = function(user){
-  $.get('/user/plan/'+user._id,function(data){
-      let message = `<span class="ms-1">&#x1F381;</span>`;
-      if(!data.plan){
-        $('.user-current-plan').each(function(){
-          $(this).html(message).show()
-        })
-        return
-      }
-      const billingCycle = data.plan.billingCycle
-      const currentPlanId = data.plan.currentPlanId
-
-      $.get('/plan/list',function(data){
-          const plans = data.plans
-          const plan = plans.find((plan) => plan[`${billingCycle}_id`] === currentPlanId);
-          if(!plan){
-            message = `<span class="ms-1">&#x1F381;</span>`;
-          }else{
-            switch (plan.id) {
-              case 'free':
-                message = `<span class="ms-1">&#x1F381;</span>`;
-                break;
-              case 'premium':
-                message = `<span class="ms-1"> &#x1F48E;</span>`;
-                break;
-              case 'special':
-                message = ` <span class="ms-1">&#x1F525;</span>`;
-                break;
-              default:
-                message = `<span class="ms-1">&#x1F381;</span>`;
-            }
-          }
-          $('.user-current-plan').each(function(){
-            $(this).html(message).show()
-          })
-      })
-  })
-}
-
-
-window.redirectToChat = function(chatId,chatImage) {
-    if($(`#spinner-${chatId}`).hasClass('on')){
-        return
-    }
-    if(chatImage){
-        $('#chat-container').css('background-image', chatImage);
-    }
-    $(`#spinner-${chatId}`).addClass('on').show()
-    const user = {{{json user}}}
-    const userId = user._id
-    // If user is not logged in yet show login form
-    if(user.isTemporary){
-        openLoginForm();
-        return
-    }
-    // if on chat page fetchChatData else redirect to chat/${chatID}
-    if (window.location.pathname.includes('/chat/')) {
-        //send message to parent window fetchChatData
-        window.parent.postMessage({
-            event: 'fetchChatData',
-            chatId: chatId,
-            userId: userId,
-            reset:null
-        }, '*');
-
-    } else {
-        window.location.href = `/chat/${chatId}`;
-    }
-}
-window.redirectToCharacter = function(characterId, characterSlug) {
-    if($(`#spinner-${characterId}`).hasClass('on')){
-        return
-    }
-    $(`#spinner-${characterId}`).addClass('on').show()
-    if(characterSlug){
-        window.location.href = `/character/slug/${characterSlug}`;
-        return
-    }
-    window.location.href = `/character/${characterId}`;
-}
-
-window.toggleChatList = function() {
-    if(!window.location.pathname.includes('/chat/')) {
-        window.location.href = '/chat/?list=true';
-    }
-}
-window.hideDiscovery = function() {
-    
-    $('.onchat-off').hide()
-    $('.onchat-off').addClass('d-none').css({
-        'opacity': 0,
-        'pointer-events': 'none',
-        'visibility': 'hidden'
-    });    
-    $('.onchat-on').show()
-    $('.onchat-on').removeClass('d-none').css({
-        'opacity': '',
-        'pointer-events': '',
-        'visibility': ''
-    }); 
-}
-    $('.onchat-on').each(function() {
-        if ($(this).css('display') === 'flex') {
-            $(this).attr('data-display-flex', 'true');
-        }
-    });
-    $('.onchat-off').each(function() {
-        if ($(this).css('display') === 'flex') {
-            $(this).attr('data-display-flex', 'true');
-        }
-    });
-window.showDashboardFooter = function() {
-    $('.site-footer').show();
-    $('.site-footer').removeClass('d-none onchat-off').css({
-        'opacity': '',
-        'pointer-events': '',
-        'visibility': ''
-    });
-}
-// == FIXED & FINAL VERSION – declare on window ==
-
-window.showChat = function () {
-    const $on  = $('.onchat-on');
-    const $off = $('.onchat-off');
-
-    // Check if already visible
-    if (!!$('#chatContainer').is(':visible')) {
-        return;
-    }
-
-    // Instantly hide the previous screen
-    $off.addClass('d-none');
-
-    // Reset any old transitionend listeners (prevents double-trigger bug)
-    $on.off('transitionend webkitTransitionEnd oTransitionEnd');
-
-    // 1. Prepare: off-screen right + no transition yet
-    $on.css({
-        'transition': 'none',
-        'transform': 'translateX(100%)',
-        'opacity': '0',
-        'pointer-events': 'none',
-        'visibility': 'hidden'
-    }).removeClass('d-none').show();  // force visible
-
-    // 2. Force reflow – THIS IS THE KEY to prevent flicker when re-opening
-    void $on[0].offsetHeight;
-
-    // 3. Now enable transition + slide in
-    $on.css({
-        'transition': 'transform 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.38s ease',
-        'transform': 'translateX(0)',
-        'opacity': '1',
-        'pointer-events': 'auto',
-        'visibility': 'visible'
-    });
-};
-
-window.hideChat = function () {
-    const $on  = $('.onchat-on');
-    const $off = $('.onchat-off');
-
-    // Animate out to the right
-    $on.css({
-        'transition': 'transform 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.38s ease',
-        'transform': 'translateX(100%)',
-        'opacity': '0',
-        'pointer-events': 'none'
-    });
-
-    // When animation finishes → hide and restore previous screen
-    $on.one('transitionend webkitTransitionEnd oTransitionEnd', function () {
-        $on.addClass('d-none').css({
-            'transition': 'none',           // reset for next open
-            'transform': 'translateX(100%)'
-        });
-
-        $off.removeClass('d-none');
-
-        // Restore flex if needed
-        $off.each(function () {
-            if ($(this).attr('data-display-flex')) {
-                $(this).css('display', 'flex');
-            }
-        });
-    });
-
-    // Make sure off is visible during the animation
-    $off.each(function () {
-        if ($(this).attr('data-display-flex')) {
-            $(this).css('display', 'flex');
-        } else {
-            $(this).show();
-        }
-    });
-};
-
-// === INITIAL STATE (run once on page load) ===
-$(function () {
-    $('.onchat-on').addClass('d-none').css({
-        'transition': 'none',
-        'transform': 'translateX(100%)'
-    });
-    $('.onchat-off').removeClass('d-none');
-});
-
-window.showDiscovery = function() {
-    if (!window.location.pathname.includes('/chat/')) {
-        window.location.href = '/chat/';
-    }
-    $('.fullscreen-overlay').fadeOut(); 
-    $('body').css('overflow', 'visible');
-    
-    window.hideChat();
-
-    $('#chat-list').hide();
-    $('#promptContainer').slideUp('fast');
-    $('.new-chat').each(function(){
-        $(this).hide()
-    })
-    if (typeof resetChatUrl === 'function') {
-        resetChatUrl();
-    }
-
-    // Hide navbar chat actions when in discovery mode
-    if (typeof hideNavbarChatActions === 'function') {
-        hideNavbarChatActions();
-    }
-    
-    $('#footer-toolbar').fadeIn();
-    window.postMessage('resizeIframe', '*');
-}
-window.fetchUser = async function() {
-    try {
-        const url = `${API_URL}/api/user`;
-   
-        const response = await fetch(url, { 
-            method: 'GET',
-            credentials: 'include' 
-        });
-
-        if (!response.ok) {
-            console.error(`[fetchUser] Network response was not ok. Status: ${response.status} ${response.statusText}`);
-            throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-
-        if (data && data.user) {
-        } else {
-            console.warn('[fetchUser] No user object found in response:', data);
-        }
-        return data.user;
-    } catch (error) {
-        console.error('[fetchUser] Error fetching user:', error);
-        return null;
-    }
-};
-
-window.fetchMode = async function() {
-    try {
-        const response = await fetch('/api/mode', { 
-            method: 'GET',
-            credentials: 'include' ,
-        });
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
-        return data.mode;
-    } catch (error) {
-        console.error('Error fetching mode:', error);
-        return null
-    }
-};
-window.logoutUser = async function(Clerk) {
-    try {
-        // First, sign out with Clerk - this is important to do BEFORE clearing cookies
-        // Use the redirectUrl: false option to prevent automatic redirects
-        await Clerk.signOut({ redirectUrl: window.location.origin + '/signout-redirection?signOut=true' });
-        console.log('Clerk sign out completed');
-        
-    } catch (error) {
-        console.error('Error during logout:', error);
-        return Promise.resolve(false);
-    }
-};
-window.handleSignOut = function() {
-
-    // Then clear cookies and localStorage after Clerk signOut completes
-    return new Promise((resolve, reject) => {
-        $.ajax({
-            url: '/user/logout',
-            method: 'POST',
-            success: function(response) {
-                console.log('Server cookies cleared successfully');
-                
-                // Clear all cookies manually after server-side logout
-                Object.keys($.cookie()).forEach(function(cookie) {
-                    $.removeCookie(cookie, { path: '/' });
-                });
-                
-                // Clear localStorage and sessionStorage
-                localStorage.clear();
-                sessionStorage.clear();
-                console.log('Local storage cleared');
-                
-                resolve(true);
-            },
-            error: function(error) {
-                console.error('Failed to clear server cookies:', error);
-                // Still resolve to continue logout process
-                resolve(false);
-            }
-        });
-    });
-}
-window.handleClerkSignIn = function(Clerk) {
-    if(!Clerk.session){
-        return
-    }
-    // Get session token from Clerk
-    const sessionToken = Clerk.session.lastActiveSessionId;
-    
-    // Send request to backend with Clerk session token
-    fetch('/user/clerk-auth', {
-        method: 'GET',
-        credentials: 'include' ,
-        headers: {
-            'x-clerk-user-id': Clerk.user.id
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.redirectUrl) {
-            window.location.href = data.redirectUrl;
-        }
-    })
-    .catch(error => {
-        console.error('Authentication error:', error);
-    });
-    return false; // Prevent Clerk's default redirect
-}
-window.handleClerkUserUpdate = function() {
-    
-    if (!window.Clerk?.user) {
-        console.warn('[handleClerkUserUpdate] No Clerk user data available');
-        return;
-    }
-    
-    fetch('/user/clerk-update', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Clerk-Session-Id': window.Clerk?.session?.id || '',
-        },
-        credentials: 'include',
-        body: JSON.stringify(window.Clerk.user)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status) {
             
-            // Refresh user data if needed
-            if (window.fetchUser) {
-                window.fetchUser().then(userData => {
-                    if (userData && !userData.isTemporary) {
-                        window.user = userData;
-                    } else {
-                        console.warn('[handleClerkUserUpdate] User data not available or still temporary');
-                    }
-                }).catch(error => {
-                    console.error('[handleClerkUserUpdate] Error fetching updated user data:', error);
-                });
-            } else {
-                console.error('[handleClerkUserUpdate] User fetch function not available');
+            // Clean up URL
+            const cleanUrl = window.location.href.split('?')[0];
+            window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+        }
+
+        // Handle points purchase cancellation
+        if (urlParams.get('points_purchase') === 'cancelled') {
+            const reason = urlParams.get('reason') || 'unknown';
+            
+            // Show cancellation notification
+            const message = window.buyPointsTranslations?.buy_points?.purchase_cancelled_message || 'Points purchase was cancelled. Please try again.';
+            window.showNotification(message, 'warning');
+            
+            console.log(`[Points Purchase] Cancelled: ${reason}`);
+            
+            // Clean up URL
+            const cleanUrl = window.location.href.split('?')[0];
+            window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+        }
+
+        // Handle points purchase failure
+        if (urlParams.get('points_purchase') === 'failed') {
+            const reason = urlParams.get('reason') || 'unknown';
+            
+            // Show error notification with reason
+            let errorMessage = window.buyPointsTranslations?.buy_points?.purchase_failed_message || 'Points purchase failed.';
+            
+            // Add specific error message based on reason
+            const reasonMessages = {
+                'no_session': 'Session information missing',
+                'not_authenticated': 'Not authenticated',
+                'session_not_found': 'Session not found',
+                'payment_not_completed': 'Payment was not completed',
+                'invalid_metadata': 'Invalid purchase data',
+                'add_points_failed': 'Failed to add points to account',
+                'server_error': 'Server error occurred'
+            };
+            
+            if (reasonMessages[reason]) {
+                errorMessage = errorMessage + ' (' + reasonMessages[reason] + ')';
             }
-        } else if (data.error) {
-            console.error('[handleClerkUserUpdate] Server error:', data.error);
+            
+            window.showNotification(errorMessage, 'error');
+            
+            console.error(`[Points Purchase] Failed: ${reason}`);
+            
+            // Clean up URL
+            const cleanUrl = window.location.href.split('?')[0];
+            window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
         }
-    })
-    .catch(error => {
-        console.error('[handleClerkUserUpdate] Failed to update user data:', error);
-    });
-}
-
-$(document).ready(function(){
-    fetchAndAppendModels();
-    
-    // Points modal event handlers
-    $('#userPointsModal').on('shown.bs.modal', function() {
-        if (window.userPointsManager) {
-            // Load history by default (active tab)
-            window.userPointsManager.loadPointsHistory();
-        }
-    });
-    
-    // Tab switching events
-    $('#history-tab').on('shown.bs.tab', function() {
-        if (window.userPointsManager) {
-            window.userPointsManager.loadPointsHistory();
-        }
-    });
-    
-    $('#leaderboard-tab').on('shown.bs.tab', function() {
-        if (window.userPointsManager) {
-            window.userPointsManager.loadLeaderboard();
-        }
-    });
-});
-</script>
-<script>
-     // Parse the URL and get query parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    
-    // Check if 'payment_status' parameter is true
-    if (urlParams.get('payment_status') === 'cancelled') {
-        // Display notification in Japanese
-        window.showNotification(
-            `${translations.payment_cancelled}<br>${translations.payment_not_completed}`,
-            'info'
-        );
-        var currentUrl = window.location.href;
-        var urlParts = currentUrl.split('?');
-        urlParts[urlParts.length - 1] = '';
-        var newUrl = urlParts.join('');
-        if($('#chat-widget-container').length == 0){
-            window.history.replaceState({ path: newUrl }, '', newUrl);
-        }
-    }
-
-    // Handle points purchase success
-    if (urlParams.get('points_purchase') === 'success') {
-        const points = urlParams.get('points');
-        const packageId = urlParams.get('packageId');
-        
-        if (points && packageId) {
-            const message = window.buyPointsTranslations?.buy_points?.points_added_message
-                .replace('{points}', points);
-            window.showNotification(message, 'success');
-            if (typeof refreshUserPoints === 'function') {
-                setTimeout(() => refreshUserPoints(), 500);
-            }
-        }
-        
-        // Clean up URL
-        const cleanUrl = window.location.href.split('?')[0];
-        window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
-    }
-
-    // Handle points purchase cancellation
-    if (urlParams.get('points_purchase') === 'cancelled') {
-        const reason = urlParams.get('reason') || 'unknown';
-        
-        // Show cancellation notification
-        const message = window.buyPointsTranslations?.buy_points?.purchase_cancelled_message || 'Points purchase was cancelled. Please try again.';
-        window.showNotification(message, 'warning');
-        
-        console.log(`[Points Purchase] Cancelled: ${reason}`);
-        
-        // Clean up URL
-        const cleanUrl = window.location.href.split('?')[0];
-        window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
-    }
-
-    // Handle points purchase failure
-    if (urlParams.get('points_purchase') === 'failed') {
-        const reason = urlParams.get('reason') || 'unknown';
-        
-        // Show error notification with reason
-        let errorMessage = window.buyPointsTranslations?.buy_points?.purchase_failed_message || 'Points purchase failed.';
-        
-        // Add specific error message based on reason
-        const reasonMessages = {
-            'no_session': 'Session information missing',
-            'not_authenticated': 'Not authenticated',
-            'session_not_found': 'Session not found',
-            'payment_not_completed': 'Payment was not completed',
-            'invalid_metadata': 'Invalid purchase data',
-            'add_points_failed': 'Failed to add points to account',
-            'server_error': 'Server error occurred'
-        };
-        
-        if (reasonMessages[reason]) {
-            errorMessage = errorMessage + ' (' + reasonMessages[reason] + ')';
-        }
-        
-        window.showNotification(errorMessage, 'error');
-        
-        console.error(`[Points Purchase] Failed: ${reason}`);
-        
-        // Clean up URL
-        const cleanUrl = window.location.href.split('?')[0];
-        window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
-    }
-</script>
+    </script>
     <script>
         // Open authenticate page in a modal
         window.openLoginForm = function() {
@@ -1065,7 +1064,6 @@ $(document).ready(function(){
             }
         };
     </script>
-
     <script>
         const clerkKey =
             window.MODE === 'production'
@@ -1083,7 +1081,6 @@ $(document).ready(function(){
 
         document.head.appendChild(script);
     </script>
-
     <script>
         window.addEventListener('load', async function () {
             const clerkLang = Object.keys(clerkTranslations)[0];
@@ -1138,7 +1135,7 @@ $(document).ready(function(){
             // Assign Clerk to window
             window.Clerk = Clerk;
         })
-</script>
+    </script>
 
 <script>
 window.loadCharacterUpdateModal = function(chatId) {

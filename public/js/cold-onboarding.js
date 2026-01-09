@@ -946,24 +946,11 @@ class ColdOnboarding {
         
         if (clerk) {
             try {
-                // Log the redirect URI to backend
-                const redirectUrl = window.location.origin + '/chat/?source=cold-onboarding&status=success';
-                fetch('/log-redirect-uri', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        redirectUrl: redirectUrl,
-                        location: window.location.href,
-                        timestamp: new Date().toISOString(),
-                        source: 'cold-onboarding-google-signin'
-                    })
-                }).catch(err => console.error('Failed to log redirect URI:', err));
-
                 // Use Clerk.openSignIn with Google strategy instead of authenticateWithRedirect
                 // This ensures proper OAuth flow through Clerk's managed UI
                 const langUrl = window.location.hostname.split('.')[0];
                 clerk.openSignIn({
-                    redirectUrl: redirectUrl,
+                    redirectUrl: window.location.origin + '/chat/?source=cold-onboarding&status=success',
                     language: window.lang || langUrl || 'ja',
                 });
             } catch (error) {

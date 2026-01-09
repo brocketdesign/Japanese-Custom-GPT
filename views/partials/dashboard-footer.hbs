@@ -247,6 +247,7 @@
         }
     });
 </script>
+<script>
 document.addEventListener('DOMContentLoaded', function() {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -850,7 +851,7 @@ window.handleSignOut = function() {
     });
 }
 window.handleClerkSignIn = function(Clerk) {
-    if(!Clerk.session){
+    if(!Clerk.session || !Clerk.user){
         return
     }
     // Get session token from Clerk
@@ -942,6 +943,7 @@ $(document).ready(function(){
         }
     });
 });
+</script>
 </script>
 <script>
      // Parse the URL and get query parameters

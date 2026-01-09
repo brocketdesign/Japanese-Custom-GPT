@@ -1399,7 +1399,7 @@
                 attempts++;
                 
                 try {
-                    const response = await fetch(`/api/chat/${chatId}`, {
+                    const response = await fetch(`/api/chat-data/${chatId}`, {
                         credentials: 'include'
                     });
                     

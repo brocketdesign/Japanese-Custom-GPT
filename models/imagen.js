@@ -2296,6 +2296,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
 async function handleTaskCompletion(taskStatus, fastify, options = {}) {
   const { chatCreation, translations, userId, chatId, placeholderId } = options;
   let images = [];
+  let characterImageUrls = [];
   
   // Try multiple ways to get the correct images with merge data
   if (taskStatus.result && Array.isArray(taskStatus.result.images)) {
@@ -2328,6 +2329,8 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
       console.error('[handleTaskCompletion] Error incrementing image generation count:', error);
     }
 
+    let characterImageUrls = [];
+
     for (let index = 0; index < images.length; index++) {
       const image = images[index];
       const { imageId, imageUrl, prompt, title, nsfw, isMerged } = image;
@@ -2335,9 +2338,7 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
             
       if (chatCreation) {
         fastify.sendNotificationToUser(userId, 'characterImageGenerated', { imageUrl, nsfw, chatId });
-        if (index === 0) {
-          await saveChatImageToDB(fastify.mongo.db, chatId, imageUrl);
-        }
+        characterImageUrls.push(imageUrl);
       } else {
         const notificationData = {
           id: imageId?.toString(),
@@ -2401,6 +2402,19 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
         // ===========================
       }
     }
+  }
+
+  // For character creation, update the chat with all image URLs
+  if (chatCreation && characterImageUrls.length > 0) {
+    const collectionChats = fastify.mongo.db.collection('chats');
+    await collectionChats.updateOne(
+      { _id: new ObjectId(chatId) },
+      { 
+        $set: { 
+          chatImageUrl: characterImageUrls
+        } 
+      }
+    );
   }
 
   if (chatCreation) {

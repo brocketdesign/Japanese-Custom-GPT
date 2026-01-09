@@ -1041,8 +1041,21 @@ $(document).ready(function(){
             const langUrl = window.location.hostname.split('.')[0];
             // Use Clerk's provided method instead of direct URL navigation
             if (window.Clerk) {
+                // Log the redirect URI to backend
+                const redirectUrl = window.location.origin + '/signin-redirection?signIn=true';
+                fetch('/log-redirect-uri', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        redirectUrl: redirectUrl,
+                        location: window.location.href,
+                        timestamp: new Date().toISOString(),
+                        source: 'dashboard-signin'
+                    })
+                }).catch(err => console.error('Failed to log redirect URI:', err));
+
                 Clerk.openSignIn({
-                    redirectUrl: window.location.origin + '/signin-redirection?signIn=true',
+                    redirectUrl: redirectUrl,
                     language: window.lang || langUrl || 'ja',
                 });
             } else {

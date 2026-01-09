@@ -13,6 +13,11 @@ async function routes(fastify, options) {
 
   fastify.get('/user/clerk-auth', async (request, reply) => {
     try {
+      console.log('[CLERK AUTH] Request received');
+      console.log('Headers:', JSON.stringify(request.headers, null, 2));
+      console.log('Query:', request.query);
+      console.log('Body:', request.body);
+
       const clerkId = request.headers['x-clerk-user-id'];
   
       if (!clerkId) {
@@ -158,6 +163,12 @@ async function routes(fastify, options) {
       console.log(`Error in /user/clerk-auth: ${err.message}`, err);
       return reply.status(500).send({ error: 'Server error' });
     }
+  });
+
+  // Logging route for redirect URI
+  fastify.post('/log-redirect-uri', async (request, reply) => {
+    console.log('[REDIRECT URI LOG]', request.body);
+    reply.send({ ok: true });
   });
 
   fastify.post('/user/clerk-update', async (request, reply) => {

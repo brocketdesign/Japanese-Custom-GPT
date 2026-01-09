@@ -651,9 +651,22 @@
         // Open Clerk sign-in modal
         function openClerkSignIn() {
             if (window.Clerk) {
+                // Log the redirect URI to backend
+                const redirectUrl = window.location.origin + '/chat/?source=cold-onboarding&status=success';
+                fetch('/log-redirect-uri', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        redirectUrl: redirectUrl,
+                        location: window.location.href,
+                        timestamp: new Date().toISOString(),
+                        source: 'cold-onboarding-signin'
+                    })
+                }).catch(err => console.error('Failed to log redirect URI:', err));
+
                 const langUrl = window.location.hostname.split('.')[0];
                 Clerk.openSignIn({
-                    redirectUrl: window.location.origin + '/chat/?source=cold-onboarding&status=success',
+                    redirectUrl: redirectUrl,
                     language: window.lang || langUrl || 'ja',
                 });
             } else {

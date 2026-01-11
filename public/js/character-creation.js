@@ -1527,23 +1527,23 @@
             
             if (grid) {
                 grid.innerHTML = `
-                    <div class="image-placeholder-grid" id="imagePlaceholder">
-                        <div class="placeholder-item">
+                    <div class="image-placeholder-grid row" id="imagePlaceholder">
+                        <div class="placeholder-item col-6 ms-auto">
                             <div class="placeholder-content">
                                 <i class="bi bi-image"></i>
                             </div>
                         </div>
-                        <div class="placeholder-item">
+                        <div class="placeholder-item col-6 me-auto">
                             <div class="placeholder-content">
                                 <i class="bi bi-image"></i>
                             </div>
                         </div>
-                        <div class="placeholder-item">
+                        <div class="placeholder-item col-6 ms-auto">
                             <div class="placeholder-content">
                                 <i class="bi bi-image"></i>
                             </div>
                         </div>
-                        <div class="placeholder-item">
+                        <div class="placeholder-item col-6 me-auto">
                             <div class="placeholder-content">
                                 <i class="bi bi-image"></i>
                             </div>

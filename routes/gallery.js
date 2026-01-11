@@ -10,6 +10,7 @@ const {
   getUserChatForUser,
   toObjectId
 } = require('../models/gallery-utils');
+const { generatePromptTitle } = require('../models/openai');
 
 
 async function routes(fastify, options) {
@@ -251,6 +252,8 @@ async function routes(fastify, options) {
       const { imageId } = request.params;
       const { chatId, userChatId } = request.body || {};
       const user = request.user;
+      const lang = request.translations.lang // en, fr, ja
+      console.log(`Language for this request: ${lang}`);
 
       if (!user) {
         return reply.code(401).send({ error: 'Unauthorized' });
@@ -292,6 +295,17 @@ async function routes(fastify, options) {
 
       const { image, chatId: sourceChatId, chatSlug } = galleryImage;
 
+      const existingTitle = image.title || {};
+      if (!existingTitle[lang]) {
+        const fullLang = { en: 'english', fr: 'french', ja: 'japanese' }[lang] || 'english';
+        existingTitle[lang] = await generatePromptTitle(image.prompt, fullLang);
+        // Update the database asynchronously
+        db.collection('gallery').updateOne(
+          { 'images._id': new ObjectId(imageId) },
+          { $set: { 'images.$.title': existingTitle } }
+        ).catch(err => console.error('Failed to update title:', err));
+      }
+
       const chatMessage = buildChatImageMessage(image, { fromGallery: true });
       chatMessage.targetChatId = targetChatId.toString();
 
@@ -309,7 +323,7 @@ async function routes(fastify, options) {
         _id: image._id.toString(),
         imageUrl: image.imageUrl || image.url,
         prompt: image.prompt || '',
-        title: image.title || null,
+        title: existingTitle,
         nsfw: !!image.nsfw,
         slug: image.slug || null,
         aspectRatio: image.aspectRatio || null,

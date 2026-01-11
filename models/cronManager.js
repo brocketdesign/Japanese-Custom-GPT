@@ -4,7 +4,6 @@
 const cron = require('node-cron');
 const { fetchRandomCivitaiPrompt, createModelChat } = require('./civitai-utils');
 const parser = require('cron-parser');
-const { pollTaskStatus } = require('./imagen');
 const { handleTaskCompletion, checkTaskStatus } = require('./imagen'); // <-- import the handler
 const { ObjectId } = require('mongodb');
 const fs = require('fs');

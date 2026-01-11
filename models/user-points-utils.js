@@ -942,14 +942,14 @@ async function awardMessageMilestoneReward(db, userId, chatId = null, fastify = 
   
   // Define milestone rewards (messages -> points)
   const milestones = {
-    10: { points: 20, message: userPointsTranslations.points?.message_count?.milestone_rewards?.ten_messages || '10 messages milestone!' },
-    25: { points: 35, message: userPointsTranslations.points?.message_count?.milestone_rewards?.twenty_five_messages || '25 messages milestone!' },
-    50: { points: 50, message: userPointsTranslations.points?.message_count?.milestone_rewards?.fifty_messages || '50 messages milestone!' },
-    100: { points: 75, message: userPointsTranslations.points?.message_count?.milestone_rewards?.hundred_messages || '100 messages milestone!' },
-    250: { points: 125, message: userPointsTranslations.points?.message_count?.milestone_rewards?.two_fifty_messages || '250 messages milestone!' },
-    500: { points: 200, message: userPointsTranslations.points?.message_count?.milestone_rewards?.five_hundred_messages || '500 messages milestone!' },
-    1000: { points: 350, message: userPointsTranslations.points?.message_count?.milestone_rewards?.thousand_messages || '1000 messages milestone!' },
-    2500: { points: 600, message: userPointsTranslations.points?.message_count?.milestone_rewards?.twenty_five_hundred_messages || '2500 messages milestone!' }
+    10: { points: 200, message: userPointsTranslations.points?.message_count?.milestone_rewards?.ten_messages || '10 messages milestone!' },
+    25: { points: 350, message: userPointsTranslations.points?.message_count?.milestone_rewards?.twenty_five_messages || '25 messages milestone!' },
+    50: { points: 500, message: userPointsTranslations.points?.message_count?.milestone_rewards?.fifty_messages || '50 messages milestone!' },
+    100: { points: 750, message: userPointsTranslations.points?.message_count?.milestone_rewards?.hundred_messages || '100 messages milestone!' },
+    250: { points: 1250, message: userPointsTranslations.points?.message_count?.milestone_rewards?.two_fifty_messages || '250 messages milestone!' },
+    500: { points: 2000, message: userPointsTranslations.points?.message_count?.milestone_rewards?.five_hundred_messages || '500 messages milestone!' },
+    1000: { points: 3500, message: userPointsTranslations.points?.message_count?.milestone_rewards?.thousand_messages || '1000 messages milestone!' },
+    2500: { points: 6000, message: userPointsTranslations.points?.message_count?.milestone_rewards?.twenty_five_hundred_messages || '2500 messages milestone!' }
   };
   
   // Check if current message count hits a milestone
@@ -1061,11 +1061,11 @@ async function awardCharacterImageMilestoneReward(db, userId, chatId, fastify = 
   
   // Define character-specific milestone rewards (lower thresholds than global)
   const milestones = {
-    5: { points: 25, message: userPointsTranslations.points?.character_image?.milestone_rewards?.five_images || '5 images with this character!' },
-    10: { points: 35, message: userPointsTranslations.points?.character_image?.milestone_rewards?.ten_images || '10 images with this character!' },
-    25: { points: 60, message: userPointsTranslations.points?.character_image?.milestone_rewards?.twenty_five_images || '25 images with this character!' },
-    50: { points: 100, message: userPointsTranslations.points?.character_image?.milestone_rewards?.fifty_images || '50 images with this character!' },
-    100: { points: 200, message: userPointsTranslations.points?.character_image?.milestone_rewards?.hundred_images || '100 images with this character!' }
+    5: { points: 250, message: userPointsTranslations.points?.character_image?.milestone_rewards?.five_images || '5 images with this character!' },
+    10: { points: 350, message: userPointsTranslations.points?.character_image?.milestone_rewards?.ten_images || '10 images with this character!' },
+    25: { points: 600, message: userPointsTranslations.points?.character_image?.milestone_rewards?.twenty_five_images || '25 images with this character!' },
+    50: { points: 1000, message: userPointsTranslations.points?.character_image?.milestone_rewards?.fifty_images || '50 images with this character!' },
+    100: { points: 2000, message: userPointsTranslations.points?.character_image?.milestone_rewards?.hundred_images || '100 images with this character!' }
   };
   
   // Check if current image count hits a milestone
@@ -1205,11 +1205,11 @@ async function awardCharacterVideoMilestoneReward(db, userId, chatId, fastify = 
   
   // Define character-specific milestone rewards (lower thresholds than global)
   const milestones = {
-    3: { points: 50, message: userPointsTranslations.points?.character_video?.milestone_rewards?.three_videos || '3 videos with this character!' },
-    5: { points: 75, message: userPointsTranslations.points?.character_video?.milestone_rewards?.five_videos || '5 videos with this character!' },
-    10: { points: 100, message: userPointsTranslations.points?.character_video?.milestone_rewards?.ten_videos || '10 videos with this character!' },
-    20: { points: 200, message: userPointsTranslations.points?.character_video?.milestone_rewards?.twenty_videos || '20 videos with this character!' },
-    50: { points: 400, message: userPointsTranslations.points?.character_video?.milestone_rewards?.fifty_videos || '50 videos with this character!' }
+    3: { points: 500, message: userPointsTranslations.points?.character_video?.milestone_rewards?.three_videos || '3 videos with this character!' },
+    5: { points: 750, message: userPointsTranslations.points?.character_video?.milestone_rewards?.five_videos || '5 videos with this character!' },
+    10: { points: 1000, message: userPointsTranslations.points?.character_video?.milestone_rewards?.ten_videos || '10 videos with this character!' },
+    20: { points: 2000, message: userPointsTranslations.points?.character_video?.milestone_rewards?.twenty_videos || '20 videos with this character!' },
+    50: { points: 4000, message: userPointsTranslations.points?.character_video?.milestone_rewards?.fifty_videos || '50 videos with this character!' }
   };
   
   // Check if current video count hits a milestone

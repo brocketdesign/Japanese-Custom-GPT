@@ -53,11 +53,15 @@ window.novitaImageGeneration = async function(userId, chatId, userChatId, option
             image_base64 = await uploadAndConvertToBase64(file);
         }
 
-        let newEditPrompt = null;
+        let newEditPrompt = editPrompt;
 
-        // [TEMPORARY DISABLE]
+        
         // If both editPrompt and imagePrompt are provided, generate a new prompt
-        if(false && editPrompt && imagePrompt){
+        if(editPrompt && imagePrompt){
+            newEditPrompt = editPrompt + ', ' + imagePrompt;
+
+            // [TEMPORARY DISABLE]
+            if(false){
             // Fetch the new prompt from the editPrompt API
             const editResponse = await fetch('/api/edit-prompt', {
                 method: 'POST',
@@ -73,10 +77,9 @@ window.novitaImageGeneration = async function(userId, chatId, userChatId, option
             if(editData.newPrompt){
                 console.log('Edited prompt received:', editData.newPrompt);
                 newEditPrompt = editData.newPrompt;
-            }
+            }}
         }
 
-        newEditPrompt = editPrompt ;
  
         const API_ENDPOINT = `${API_URL}/novita/generate-img`;
         const response = await fetch(API_ENDPOINT, {

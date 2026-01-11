@@ -690,21 +690,6 @@ async function generateImg({
       fastify.sendNotificationToUser(userId, 'showNotification', { message:translations.character_image_generation_started , icon:'success' });
     }
 
-    // Poll the task status for non-FLUX models
-    pollTaskStatus(novitaTaskId, fastify) 
-    .then(taskStatus => {
-      if (taskStatus.status === 'background') {
-        return;
-      }
-    })
-    .catch(error => {
-      // error handling here
-      console.error('Error initiating image generation:', error);
-      fastify.sendNotificationToUser(userId, 'handleLoader', { imageId:placeholderId, action:'remove' })
-      fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId:placeholderId, spin: false })
-      fastify.sendNotificationToUser(userId, 'resetCharacterForm');
-    });
-
     return { taskId: novitaTaskId };
 }
 
@@ -750,90 +735,6 @@ async function centerCropImage(base64Image, targetWidth, targetHeight) {
     return base64Image; // Return original if error occurs
   }
 }
-  // Module to check the status of a task at regular intervals
-  const completedTasks = new Set();
-
-async function pollTaskStatus(taskId, fastify) {
-  let startTime = Date.now();
-  const interval = 3000;
-  const timeout = 2 * 60 * 1000; // 2 minutes
-  let taskStarted = false;
-  const db = fastify.mongo.db;
-  let zeroProgressAttempts = 0;
-  const maxZeroProgressAttempts = 0;
-
-  return new Promise((resolve, reject) => {
-    const intervalId = setInterval(async () => {
-      try {
-        const taskStatus = await checkTaskStatus(taskId, fastify);
-        
-        if(!taskStatus){
-          clearInterval(intervalId);
-          reject('Task not found');
-          return;
-        }
-        
-        if(taskStatus.status === 'failed') {
-          clearInterval(intervalId);
-          const taskRec = await db.collection('tasks').findOne({ taskId });
-          const userDoc = await db.collection('users').findOne({ _id: taskRec.userId });
-          await db.collection('tasks').updateOne({ taskId }, { $set: { status: 'failed', updatedAt: new Date() } });
-          reject({ status: 'failed', taskId });
-          return;
-        }
-        
-        if (taskStatus.status === 'processing' && !taskStarted) {
-          startTime = Date.now();
-          taskStarted = true;
-        }
-
-        // Check for zero progress attempts
-        if (taskStatus.status === 'processing' && (taskStatus.progress === 0 || taskStatus.progress === undefined)) {
-          zeroProgressAttempts++;
-          
-          if (zeroProgressAttempts >= maxZeroProgressAttempts) {
-            clearInterval(intervalId);
-            
-            const updateResult = await db.collection('tasks').updateOne(
-              { taskId }, 
-              { $set: { status: 'background', updatedAt: new Date() } }
-            );
-            
-            resolve({ status: 'background', taskId });
-            return;
-          }
-        } else if (taskStatus.status === 'processing') {
-          zeroProgressAttempts = 0; // Reset if progress moves
-        }
-
-        if (taskStatus.status === 'completed') {
-          clearInterval(intervalId);
-          if (!completedTasks.has(taskId)) {
-            completedTasks.add(taskId);
-            const task = await db.collection('tasks').findOne({ taskId });
-            if (task) {
-              saveAverageTaskTime(db, Date.now() - startTime, task.model_name);
-            }
-            resolve(taskStatus);
-          } 
-        } else if (Date.now() - startTime > timeout && taskStarted) {
-          clearInterval(intervalId);
-          
-          const updateResult = await db.collection('tasks').updateOne(
-            { taskId }, 
-            { $set: { status: 'background', updatedAt: new Date() } }
-          );
-          
-          resolve({ status: 'background', taskId });
-        }
-      } catch (error) {
-        clearInterval(intervalId);
-        reject(error);
-      }
-    }, interval);
-  });
-}
-
 
 /**
  * Fetch original task data including uploaded image base64
@@ -1452,8 +1353,8 @@ async function checkTaskStatus(taskId, fastify) {
 
 
   // CRITICAL: Check if already completed FIRST, before any processing
-  if (task?.status === 'completed' || task?.completionNotificationSent === true) {
-
+  if (task?.status === 'completed' || task?.completionNotificationSent === true && task?.result?.images?.length > 0) {
+    console.log(`[checkTaskStatus] Task ${taskId} is already completed or notification sent.`);
     return {
       taskId: task.taskId,
       userId: task.userId,
@@ -1464,8 +1365,8 @@ async function checkTaskStatus(taskId, fastify) {
     };
   }
 
-  if (task?.completionNotificationSent === true) {
-
+  if (task?.completionNotificationSent === true && task?.result?.images?.length > 0) {
+    console.log(`[checkTaskStatus] Task ${taskId} has completion notification sent and images available.`);
     return {
       taskId: task.taskId,
       userId: task.userId,
@@ -1479,7 +1380,6 @@ async function checkTaskStatus(taskId, fastify) {
   let processingPercent = 0;
 
   if (!task) {
-
     return false;
   }
 
@@ -1490,6 +1390,7 @@ async function checkTaskStatus(taskId, fastify) {
 
 
   const result = await fetchNovitaResult(task.taskId);
+  console.log(`[checkTaskStatus fetchNovitaResult] Result for task ${task.taskId}:`, result);
 
   if (result && result.status === 'processing') {
     processingPercent = result.progress;
@@ -2226,6 +2127,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
     }
     
     if (!userChatId || !ObjectId.isValid(userChatId)) {
+      console.log(`[saveImageToDB] Invalid or missing userChatId: ${userChatId}`);
       return { 
         imageId, 
         imageUrl,
@@ -2297,7 +2199,6 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
   const { chatCreation, translations, userId, chatId, placeholderId } = options;
   let images = [];
   let characterImageUrls = [];
-  
   // Try multiple ways to get the correct images with merge data
   if (taskStatus.result && Array.isArray(taskStatus.result.images)) {
     images = taskStatus.result.images;
@@ -2306,7 +2207,6 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
   } else if (taskStatus.result && taskStatus.result.images && !Array.isArray(taskStatus.result.images)) {
     images = [taskStatus.result.images];
   }
-
   if (typeof fastify.sendNotificationToUser !== 'function') {
     console.error('fastify.sendNotificationToUser is not a function');
     return;
@@ -2316,7 +2216,7 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
   fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId: placeholderId, spin: false });
   fastify.sendNotificationToUser(userId, 'updateImageCount', { chatId, count: images.length });
 
-  if (Array.isArray(images)) {
+  if (images || Array.isArray(images)) {
 
     try {
       // Increment image generation count once per task, not per image
@@ -2352,7 +2252,9 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
           isAutoMerge: isMerged || false,
           url: imageUrl
         };
+
         fastify.sendNotificationToUser(userId, 'imageGenerated', notificationData);
+      
         // ===========================
         // == User Chat Message Image Debug ==
         // ===========================
@@ -2445,7 +2347,6 @@ module.exports = {
   getTasks,
   deleteOldTasks,
   deleteAllTasks,
-  pollTaskStatus,
   handleTaskCompletion,
   checkTaskStatus,
   performAutoMergeFace,

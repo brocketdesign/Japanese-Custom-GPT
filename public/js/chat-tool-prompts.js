@@ -410,7 +410,7 @@ class PromptManager {
                             
                             // Generate the image using the existing generateImage function
                             await generateImage({
-                                imageId: image._id,
+                                imageId: image.imageId,
                                 imageUrl: image.imageUrl,
                                 userChatId: metadata.userChatId,
                                 prompt: image.prompt,

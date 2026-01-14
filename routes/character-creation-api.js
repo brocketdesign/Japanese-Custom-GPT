@@ -436,15 +436,17 @@ async function routes(fastify, options) {
                 // First, save gender AND model info to chat BEFORE generating images
                 const chatUpdateData = { gender: gender };
                 
-                // Add model data if provided
-                if (modelId) {
-                    chatUpdateData.modelId = modelId;
+                // Add model data if provided (either modelId for custom models, or imageModel for default models)
+                if (modelId || imageModel) {
+                    if (modelId) {
+                        chatUpdateData.modelId = modelId;
+                    }
                     chatUpdateData.imageStyle = imageStyle || 'general';
                     chatUpdateData.imageModel = imageModel;
                     chatUpdateData.imageVersion = imageVersion || 'sdxl';
-                    console.log(`\x1b[32m✓ Model data to save: modelId=${modelId}, style=${imageStyle}, model=${imageModel}, version=${imageVersion}\x1b[0m`);
+                    console.log(`\x1b[32m✓ Model data to save: modelId=${modelId || 'default'}, style=${imageStyle}, model=${imageModel}, version=${imageVersion}\x1b[0m`);
                 } else {
-                    console.log(`\x1b[33m⚠️ No modelId provided - using default model\x1b[0m`);
+                    console.log(`\x1b[33m⚠️ No model data provided - using default model\x1b[0m`);
                 }
                 
                 await fastify.mongo.db.collection('chats').updateOne(

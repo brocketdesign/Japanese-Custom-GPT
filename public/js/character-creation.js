@@ -184,6 +184,8 @@
             const style = this.characterData.style; // 'anime' or 'realistic'
             const isAnime = style === 'anime';
             
+            console.log('[CharacterCreation] Setting default model. Current style:', style, 'isAnime:', isAnime);
+            
             // Set default model names based on style
             const defaultModelName = isAnime 
                 ? 'novaAnimeXL_ponyV20_461138.safetensors'
@@ -198,14 +200,24 @@
             this.characterData.imageVersion = defaultImageVersion;
             this.characterData.isUserModel = false;
             
-            // Update hidden inputs
-            document.getElementById('imageModel').value = defaultModelName;
-            document.getElementById('imageStyle').value = defaultImageStyle;
-            document.getElementById('imageVersion').value = defaultImageVersion;
-            document.getElementById('isUserModel').value = 'false';
+            // Update hidden inputs if they exist
+            const imageModelInput = document.getElementById('imageModel');
+            const imageStyleInput = document.getElementById('imageStyle');
+            const imageVersionInput = document.getElementById('imageVersion');
+            const isUserModelInput = document.getElementById('isUserModel');
+            
+            if (imageModelInput) imageModelInput.value = defaultModelName;
+            if (imageStyleInput) imageStyleInput.value = defaultImageStyle;
+            if (imageVersionInput) imageVersionInput.value = defaultImageVersion;
+            if (isUserModelInput) isUserModelInput.value = 'false';
             
             this.saveData();
-            console.log('[CharacterCreation] Default model set based on style:', { style, imageModel: defaultModelName });
+            console.log('[CharacterCreation] Default model set:', { 
+                style, 
+                imageModel: defaultModelName, 
+                imageStyle: defaultImageStyle,
+                imageVersion: defaultImageVersion
+            });
         }
         
         /**
@@ -1358,18 +1370,21 @@
                     kinks: this.characterData.kinks || 'vanilla'
                 };
                 
-                // Add model data if selected
-                if (this.characterData.modelId) {
-                    requestBody.modelId = this.characterData.modelId;
+                // Add model data if selected or if default model is set
+                if (this.characterData.modelId || this.characterData.imageModel) {
+                    if (this.characterData.modelId) {
+                        requestBody.modelId = this.characterData.modelId;
+                        requestBody.isUserModel = this.characterData.isUserModel;
+                    }
                     requestBody.imageStyle = this.characterData.imageStyle;
                     requestBody.imageModel = this.characterData.imageModel;
                     requestBody.imageVersion = this.characterData.imageVersion;
-                    requestBody.isUserModel = this.characterData.isUserModel;
                     console.log('[CharacterCreation] Including model data in request:', {
-                        modelId: this.characterData.modelId,
+                        modelId: this.characterData.modelId || 'default',
                         imageStyle: this.characterData.imageStyle,
                         imageModel: this.characterData.imageModel,
-                        imageVersion: this.characterData.imageVersion
+                        imageVersion: this.characterData.imageVersion,
+                        isUserModel: this.characterData.isUserModel
                     });
                 } else {
                     console.warn('[CharacterCreation] No model selected - will use default');

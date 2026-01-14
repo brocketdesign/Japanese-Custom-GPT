@@ -303,60 +303,77 @@
 </div>
 
 <style>
+/* Compact Native App Style Settings */
 .settings-form {
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  background: transparent;
 }
 
 .settings-section {
-  margin-bottom: 2.5rem;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.settings-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 .settings-section-header {
-  padding-bottom: 1rem;
+  padding-bottom: 0;
+  margin-bottom: 12px;
 }
 
 .settings-section-title {
   font-weight: 600;
-  color: #2d3748;
-  font-size: 1.1rem;
-  margin-bottom: 0.25rem;
+  color: #1a1a1a;
+  font-size: 15px;
+  margin-bottom: 4px;
+  letter-spacing: -0.1px;
+}
+
+.settings-section-title i {
+  margin-right: 8px;
+  font-size: 16px;
 }
 
 .settings-section-subtitle {
-  font-size: 0.9rem;
+  font-size: 13px;
   line-height: 1.4;
+  color: #6c757d;
+  margin-top: 4px;
 }
 
 .settings-divider {
-  border: none;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
-  margin: 2.5rem 0;
+  display: none;
 }
 
 .profile-picture-container {
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin-bottom: 16px;
 }
 
 .profile-picture-wrapper {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.3s ease;
-  border: 4px solid #f8f9fa;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+  border: 3px solid #f0f0f0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 .profile-picture-wrapper:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
 }
 
 .profile-image {
@@ -372,15 +389,15 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.6);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   color: white;
   opacity: 0;
-  transition: opacity 0.3s ease;
-  font-size: 0.85rem;
+  transition: opacity 0.2s ease;
+  font-size: 12px;
 }
 
 .profile-picture-wrapper:hover .profile-picture-overlay {
@@ -388,34 +405,40 @@
 }
 
 .profile-picture-overlay i {
-  font-size: 1.5rem;
-  margin-bottom: 0.25rem;
+  font-size: 20px;
+  margin-bottom: 4px;
 }
 
 .settings-preference-item {
   background: #f8f9fa;
-  border-radius: 8px;
-  padding: 1.5rem;
-  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  padding: 12px 16px;
+  border: none;
 }
 
 .preference-title {
-  font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 0.5rem;
-  font-size: 1rem;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .preference-description {
-  font-size: 0.9rem;
+  font-size: 12px;
   line-height: 1.4;
+  color: #6c757d;
+  margin-top: 2px;
 }
 
 .settings-switch {
   position: relative;
   display: inline-block;
-  width: 50px;
-  height: 28px;
+  width: 44px;
+  height: 26px;
+  flex-shrink: 0;
 }
 
 .settings-switch input {
@@ -431,9 +454,9 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #cbd5e0;
-  transition: .3s;
-  border-radius: 28px;
+  background-color: #d1d5db;
+  transition: .2s;
+  border-radius: 26px;
 }
 
 .settings-switch-slider:before {
@@ -441,77 +464,118 @@
   content: "";
   height: 20px;
   width: 20px;
-  left: 4px;
-  bottom: 4px;
+  left: 3px;
+  bottom: 3px;
   background-color: white;
-  transition: .3s;
+  transition: .2s;
   border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
 .settings-switch input:checked + .settings-switch-slider {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background-color: #6E20F4;
 }
 
 .settings-switch input:checked + .settings-switch-slider:before {
-  transform: translateX(22px);
+  transform: translateX(18px);
 }
 
 .settings-switch.disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   pointer-events: none;
 }
 
 .bio-textarea {
   resize: vertical;
-  min-height: 120px;
+  min-height: 100px;
+  font-size: 14px;
+  border-radius: 10px;
 }
 
 .character-count {
-  font-size: 0.8rem;
+  font-size: 12px;
 }
 
 .advanced-setting-card {
   background: #f8f9fa;
-  border-radius: 8px;
-  padding: 1.5rem;
-  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  padding: 12px 16px;
+  border: none;
 }
 
 .advanced-setting-title {
-  font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+  font-size: 14px;
 }
 
 .advanced-setting-description {
-  font-size: 0.9rem;
+  font-size: 12px;
+  color: #6c757d;
 }
 
 .settings-form-actions {
-  padding-top: 2rem;
-  border-top: 1px solid #e9ecef;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  margin-top: 20px;
 }
 
 .premium-feature-indicator {
   background: #fff3cd;
   border: 1px solid #ffeaa7;
-  border-radius: 6px;
-  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+/* Form Elements - Compact */
+.form-floating {
+  margin-bottom: 16px;
+}
+
+.form-floating > label {
+  font-size: 14px;
+  padding: 0.75rem 0.75rem;
+}
+
+.form-floating > .form-control,
+.form-floating > .form-select {
+  font-size: 14px;
+  padding: 0.75rem 0.75rem;
+  height: calc(3rem + 2px);
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+}
+
+.form-floating > .form-control:focus,
+.form-floating > .form-select:focus {
+  border-color: #6E20F4;
+  box-shadow: 0 0 0 3px rgba(110, 32, 244, 0.1);
+}
+
+.row.g-3 {
+  --bs-gutter-y: 0.75rem;
+  --bs-gutter-x: 0.75rem;
 }
 
 @media (max-width: 768px) {
   .settings-form {
-    padding: 1.5rem;
+    padding: 0;
   }
   
   .profile-picture-wrapper {
-    width: 100px;
-    height: 100px;
+    width: 90px;
+    height: 90px;
   }
   
   .settings-section-title {
-    font-size: 1rem;
+    font-size: 14px;
+  }
+  
+  .settings-section {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
   }
 }
 </style>

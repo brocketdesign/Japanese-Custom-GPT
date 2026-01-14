@@ -2744,6 +2744,51 @@ backdrop-filter: blur(3px);
     background: rgba(0, 0, 0, 0.3);
 }
 
+#settingsModal .modal-footer {
+    padding: 12px 20px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    background: #ffffff;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+#settingsModal .modal-footer .btn {
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+#settingsModal .modal-footer .btn-lg {
+    padding: 8px 20px;
+    font-size: 14px;
+}
+
+#settingsModal .modal-footer .btn-primary {
+    background: #6E20F4;
+    border-color: #6E20F4;
+}
+
+#settingsModal .modal-footer .btn-primary:hover {
+    background: #5a1ad0;
+    border-color: #5a1ad0;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(110, 32, 244, 0.3);
+}
+
+#settingsModal .modal-footer .btn-outline-secondary {
+    border-color: #e5e7eb;
+    color: #6c757d;
+}
+
+#settingsModal .modal-footer .btn-outline-secondary:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+    color: #374151;
+}
+
 .settings-modal-overlay {
     position: fixed;
     top: 0;
@@ -2893,22 +2938,23 @@ backdrop-filter: blur(3px);
 }
 
 .settings-subsection {
-    margin-bottom: 24px;
-    padding: 16px;
-    background: rgba(255, 255, 255, 0.7);
-    border-radius: 12px;
-    border: 1px solid #f1f3f4;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: none;
 }
 
 .settings-subsection-title {
-    font-size: 1.1rem;
-    color: #495057;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
     margin-bottom: 8px;
 }
 
-/* Field Styles */
+/* Field Styles - Compact Native App Style */
 .settings-field {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .settings-field-header {
@@ -2917,19 +2963,22 @@ backdrop-filter: blur(3px);
     align-items: center;
     flex-wrap: wrap;
     gap: 12px;
+    margin-bottom: 8px;
 }
 
 .settings-label {
-    font-size: 1rem;
-    color: #495057;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1a1a1a;
     margin-bottom: 6px;
     display: block;
 }
 
 .settings-description {
-    font-size: 0.9rem;
-    line-height: 1.5;
+    font-size: 12px;
+    line-height: 1.4;
     color: #6c757d !important;
+    margin-top: 4px;
 }
 
 /* Form Controls */
@@ -3164,21 +3213,45 @@ backdrop-filter: blur(3px);
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
-    .settings-modal {
-        margin: 10px;
-        max-height: 95vh;
-        border-radius: 16px;
+    #settingsModal .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
     }
     
-    .settings-modal-header,
-    .settings-modal-body,
-    .settings-footer {
-        padding: 20px;
+    #settingsModal .modal-header {
+        padding: 14px 16px;
+    }
+    
+    #settingsModal #settings-container {
+        padding: 16px;
+    }
+    
+    #settingsModal .nav-tabs {
+        padding: 0 12px;
+    }
+    
+    #settingsModal .nav-tabs .nav-link {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+    
+    .settings-modal {
+        margin: 0.5rem;
+        max-height: 95vh;
+        border-radius: 14px;
+    }
+    
+    .settings-modal-header {
+        padding: 14px 16px;
+    }
+    
+    .settings-modal-body {
+        padding: 16px;
     }
     
     .settings-section {
-        padding: 18px;
-        margin-bottom: 24px;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
     }
     
     .settings-tone-grid {
@@ -3201,22 +3274,31 @@ backdrop-filter: blur(3px);
 }
 
 @media (max-width: 480px) {
+    #settingsModal .modal-title {
+        font-size: 16px;
+    }
+    
+    #settingsModal .nav-tabs .nav-link {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+    
     .settings-modal-title {
-        font-size: 1.3rem;
+        font-size: 16px;
     }
     
     .settings-section-title {
-        font-size: 1.1rem;
+        font-size: 14px;
     }
     
     .settings-modal-header {
-        padding: 16px 20px;
+        padding: 12px 14px;
     }
     
     .settings-close-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 1.1rem;
+        width: 28px;
+        height: 28px;
+        font-size: 16px;
     }
 }
 

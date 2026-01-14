@@ -338,7 +338,6 @@ video {
 }
 
 .style-card:hover {
-    transform: translateY(-8px) scale(1.02);
     box-shadow: var(--cold-shadow-premium);
     border-color: var(--cold-primary-light);
 }
@@ -361,8 +360,44 @@ video {
     transition: transform 0.4s ease;
 }
 
-.style-card:hover .style-card-image img {
-    transform: scale(1.05);
+
+/* Video hover container */
+.video-hover-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.video-thumbnail {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+    z-index: 1;
+}
+
+.video-hover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 2;
+}
+
+.video-hover-container:hover .video-thumbnail {
+    opacity: 0;
+}
+
+.video-hover-container:hover .video-hover {
+    opacity: 1;
 }
 
 .style-card-overlay {
@@ -429,7 +464,6 @@ video {
 
 .ethnicity-card:hover {
     border-color: var(--cold-primary-light);
-    transform: translateY(-4px) scale(1.02);
     box-shadow: var(--cold-shadow-md);
 }
 
@@ -447,6 +481,12 @@ video {
 
 .ethnicity-card:hover img {
     transform: scale(1.05);
+}
+
+.ethnicity-card .video-hover-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
 }
 
 .ethnicity-card span {
@@ -614,6 +654,12 @@ video {
 
 .hair-style-card:hover img {
     transform: scale(1.05);
+}
+
+.hair-style-card .video-hover-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
 }
 
 .hair-style-card span {

@@ -154,35 +154,58 @@
         }
         
         /**
-         * Initialize model selection from localStorage or defaults
+         * Initialize model selection from localStorage or set defaults based on style
          */
         initializeModelSelection() {
             const savedModelId = localStorage.getItem('imageModelId');
             const savedIsUserModel = localStorage.getItem('isUserModel') === 'true';
             
-            if (savedModelId) {
+            if (savedModelId && savedIsUserModel) {
                 // Wait for models to be populated then select
                 setTimeout(() => {
-                    const selector = savedIsUserModel 
-                        ? `#userCustomModels .style-option[data-id="${savedModelId}"]`
-                        : `#imageStyleSelectionCharacterCreation .style-option[data-id="${savedModelId}"]`;
-                    
-                    const modelOption = document.querySelector(selector);
+                    const modelOption = document.querySelector(`#userCustomModels .style-option[data-id="${savedModelId}"]`);
                     if (modelOption) {
                         this.selectModel(modelOption);
                     } else {
-                        // Fallback to first available model
-                        const firstModel = document.querySelector('#imageStyleSelectionCharacterCreation .style-option');
-                        if (firstModel) this.selectModel(firstModel);
+                        // Set default model based on style
+                        this.setDefaultModelByStyle();
                     }
                 }, 500);
             } else {
-                // Select first model after they're loaded
-                setTimeout(() => {
-                    const firstModel = document.querySelector('#imageStyleSelectionCharacterCreation .style-option');
-                    if (firstModel) this.selectModel(firstModel);
-                }, 500);
+                // Set default model based on style
+                this.setDefaultModelByStyle();
             }
+        }
+        
+        /**
+         * Set default model based on selected style (anime or photorealistic)
+         */
+        setDefaultModelByStyle() {
+            const style = this.characterData.style; // 'anime' or 'realistic'
+            const isAnime = style === 'anime';
+            
+            // Set default model names based on style
+            const defaultModelName = isAnime 
+                ? 'novaAnimeXL_ponyV20_461138.safetensors'
+                : 'juggernautXL_v9Rdphoto2Lightning_285361.safetensors';
+            
+            const defaultImageStyle = isAnime ? 'anime' : 'photorealistic';
+            const defaultImageVersion = 'sdxl';
+            
+            // Set default model data (will be used if no custom model is selected)
+            this.characterData.imageModel = defaultModelName;
+            this.characterData.imageStyle = defaultImageStyle;
+            this.characterData.imageVersion = defaultImageVersion;
+            this.characterData.isUserModel = false;
+            
+            // Update hidden inputs
+            document.getElementById('imageModel').value = defaultModelName;
+            document.getElementById('imageStyle').value = defaultImageStyle;
+            document.getElementById('imageVersion').value = defaultImageVersion;
+            document.getElementById('isUserModel').value = 'false';
+            
+            this.saveData();
+            console.log('[CharacterCreation] Default model set based on style:', { style, imageModel: defaultModelName });
         }
         
         /**
@@ -416,24 +439,6 @@
                 }
             }
             
-            // Step 7: Model tabs
-            document.querySelectorAll('.model-tab').forEach(tab => {
-                tab.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.switchModelTab(e.currentTarget);
-                });
-            });
-            
-            // Model selection (system models) - use event delegation
-            document.getElementById('imageStyleSelectionCharacterCreation')?.addEventListener('click', (e) => {
-                const styleOption = e.target.closest('.style-option');
-                if (styleOption) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.selectModel(styleOption);
-                }
-            });
             
             // Custom models container - use event delegation
             document.getElementById('userCustomModels')?.addEventListener('click', (e) => {
@@ -480,7 +485,45 @@
                 this.audioPlayer.addEventListener('error', (e) => this.onAudioError(e));
             }
             
+            // Initialize video hover handlers
+            this.initVideoHoverHandlers();
+            
             console.log('[CharacterCreation] Events bound');
+        }
+        
+        /**
+         * Initialize video hover handlers for thumbnail/video switching
+         */
+        initVideoHoverHandlers() {
+            // Use event delegation for dynamically created elements
+            document.addEventListener('mouseenter', (e) => {
+                const container = e.target.closest('.video-hover-container');
+                if (container) {
+                    const thumbnail = container.querySelector('.video-thumbnail');
+                    const video = container.querySelector('.video-hover');
+                    if (thumbnail && video) {
+                        thumbnail.style.opacity = '0';
+                        video.style.opacity = '1';
+                        video.play().catch(() => {
+                            // Ignore play errors (e.g., if video not loaded)
+                        });
+                    }
+                }
+            }, true);
+            
+            document.addEventListener('mouseleave', (e) => {
+                const container = e.target.closest('.video-hover-container');
+                if (container) {
+                    const thumbnail = container.querySelector('.video-thumbnail');
+                    const video = container.querySelector('.video-hover');
+                    if (thumbnail && video) {
+                        thumbnail.style.opacity = '1';
+                        video.style.opacity = '0';
+                        video.pause();
+                        video.currentTime = 0;
+                    }
+                }
+            }, true);
         }
         
         // ===================
@@ -508,7 +551,10 @@
             
             grid.innerHTML = ethnicities.map(eth => `
                 <div class="ethnicity-card${this.characterData.ethnicity === eth.key ? ' selected' : ''}" data-ethnicity="${eth.key}">
-                    <video src="${basePath}/ethnicity-${eth.key}.mp4" alt="${eth.label}" autoplay loop muted playsinline></video>
+                    <div class="video-hover-container">
+                        <img src="${basePath}/ethnicity-${eth.key}.jpg" alt="${eth.label}" class="video-thumbnail">
+                        <video src="${basePath}/ethnicity-${eth.key}.mp4" alt="${eth.label}" loop muted playsinline class="video-hover"></video>
+                    </div>
                     <span>${eth.label}</span>
                     <div class="check-badge"><i class="bi bi-check"></i></div>
                 </div>
@@ -543,7 +589,10 @@
             
             grid.innerHTML = hairStyles.map(style => `
                 <div class="hair-style-card${this.characterData.hairStyle === style.key ? ' selected' : ''}" data-hairstyle="${style.key}">
-                    <video src="${basePath}/hair-${style.key}.mp4" alt="${style.label}" autoplay loop muted playsinline></video>
+                    <div class="video-hover-container">
+                        <img src="${basePath}/hair-${style.key}.jpg" alt="${style.label}" class="video-thumbnail">
+                        <video src="${basePath}/hair-${style.key}.mp4" alt="${style.label}" loop muted playsinline class="video-hover"></video>
+                    </div>
                     <span>${style.label}</span>
                     <div class="check-badge"><i class="bi bi-check"></i></div>
                 </div>
@@ -768,6 +817,16 @@
             this.characterData.style = style;
             this.saveData();
             
+            // Update style card thumbnails and videos
+            const basePath = `/img/cold-onboarding`;
+            document.querySelectorAll('.style-card').forEach(styleCard => {
+                const styleType = styleCard.dataset.style;
+                const thumbnail = styleCard.querySelector('.video-thumbnail');
+                const video = styleCard.querySelector('.video-hover');
+                if (thumbnail) thumbnail.src = `${basePath}/style-${styleType}.jpg`;
+                if (video) video.src = `${basePath}/style-${styleType}.mp4`;
+            });
+            
             // Re-render grids with new style assets
             this.renderEthnicityGrid();
             this.renderHairStyleGrid();
@@ -921,22 +980,9 @@
         // MODEL SELECTION
         // ===================
         
-        switchModelTab(tab) {
-            const targetId = tab.dataset.target;
-            
-            // Update tab states
-            document.querySelectorAll('.model-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            
-            // Update pane visibility
-            document.querySelectorAll('.model-pane').forEach(p => p.classList.remove('active'));
-            const targetPane = document.getElementById(targetId);
-            if (targetPane) targetPane.classList.add('active');
-        }
-        
         selectModel(styleOption) {
             // Remove previous selection from all model containers
-            document.querySelectorAll('#imageStyleSelectionCharacterCreation .style-option, #userCustomModels .style-option').forEach(opt => {
+            document.querySelectorAll('#userCustomModels .style-option').forEach(opt => {
                 opt.classList.remove('selected');
             });
             
@@ -1304,7 +1350,12 @@
                     language: this.lang,
                     imageType: 'sfw',
                     chatId: this.chatId,
-                    enableEnhancedPrompt: true
+                    enableEnhancedPrompt: true,
+                    // Send personality data for system prompt
+                    relationship: this.characterData.relationship || 'stranger',
+                    personality: this.characterData.personality || 'submissive',
+                    occupation: this.characterData.occupation || 'student',
+                    kinks: this.characterData.kinks || 'vanilla'
                 };
                 
                 // Add model data if selected
@@ -1709,6 +1760,14 @@
             if (prevStep) prevStep.classList.add('prev');
             if (nextStepEl) nextStepEl.classList.add('active');
             
+            // Set default model when entering step 7 (image generation)
+            if (this.currentStep === 7) {
+                // Only set default if no custom model is selected
+                if (!this.characterData.modelId) {
+                    this.setDefaultModelByStyle();
+                }
+            }
+            
             // Update UI
             this.updateUI();
             this.saveData();
@@ -1743,8 +1802,12 @@
                     return !!this.characterData.hairStyle && !!this.characterData.hairColor;
                 case 4:
                     return !!this.characterData.bodyType;
-                case 5:
-                    return true; // Name is optional
+            case 5:
+                if (!this.characterData.name || !this.characterData.name.trim()) {
+                    this.showError(this.t('errors.enter_name', 'Please enter a name for your character'));
+                    return false;
+                }
+                return true;
                 case 6:
                     return !!this.characterData.voice;
                 case 7:

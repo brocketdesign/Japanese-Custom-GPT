@@ -338,6 +338,9 @@ class ColdOnboarding {
         this.audioPlayer?.addEventListener('ended', () => this.onAudioEnded());
         this.audioPlayer?.addEventListener('error', (e) => this.onAudioError(e));
         
+        // Initialize video hover handlers
+        this.initVideoHoverHandlers();
+        
         // Keyboard navigation
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && this.currentStep < 7) {
@@ -346,6 +349,41 @@ class ColdOnboarding {
                 this.prevStep();
             }
         });
+    }
+    
+    /**
+     * Initialize video hover handlers for thumbnail/video switching
+     */
+    initVideoHoverHandlers() {
+        // Use event delegation for dynamically created elements
+        document.addEventListener('mouseenter', (e) => {
+            const container = e.target.closest('.video-hover-container');
+            if (container) {
+                const thumbnail = container.querySelector('.video-thumbnail');
+                const video = container.querySelector('.video-hover');
+                if (thumbnail && video) {
+                    thumbnail.style.opacity = '0';
+                    video.style.opacity = '1';
+                    video.play().catch(() => {
+                        // Ignore play errors (e.g., if video not loaded)
+                    });
+                }
+            }
+        }, true);
+        
+        document.addEventListener('mouseleave', (e) => {
+            const container = e.target.closest('.video-hover-container');
+            if (container) {
+                const thumbnail = container.querySelector('.video-thumbnail');
+                const video = container.querySelector('.video-hover');
+                if (thumbnail && video) {
+                    thumbnail.style.opacity = '1';
+                    video.style.opacity = '0';
+                    video.pause();
+                    video.currentTime = 0;
+                }
+            }
+        }, true);
     }
     
     /**
@@ -472,6 +510,17 @@ class ColdOnboarding {
         document.querySelectorAll('.style-card').forEach(c => c.classList.remove('selected'));
         card.classList.add('selected');
         this.characterData.style = card.dataset.style;
+        
+        // Update style card thumbnails and videos
+        const basePath = `/img/cold-onboarding`;
+        document.querySelectorAll('.style-card').forEach(styleCard => {
+            const styleType = styleCard.dataset.style;
+            const thumbnail = styleCard.querySelector('.video-thumbnail');
+            const video = styleCard.querySelector('.video-hover');
+            if (thumbnail) thumbnail.src = `${basePath}/style-${styleType}.jpg`;
+            if (video) video.src = `${basePath}/style-${styleType}.mp4`;
+        });
+        
         this.updateStyleDependentVideos();
         this.saveData();
     }
@@ -483,37 +532,43 @@ class ColdOnboarding {
         const style = this.characterData.style;
         const basePath = `/img/cold-onboarding/${style}`;
         
-        // Update ethnicity videos
-        document.querySelectorAll('.ethnicity-card video').forEach(video => {
-            const ethnicity = video.closest('.ethnicity-card').dataset.ethnicity;
-            video.src = `${basePath}/ethnicity-${ethnicity}.mp4`;
+        // Update ethnicity videos and thumbnails
+        document.querySelectorAll('.ethnicity-card').forEach(card => {
+            const ethnicity = card.dataset.ethnicity;
+            const thumbnail = card.querySelector('.video-thumbnail');
+            const video = card.querySelector('.video-hover');
+            if (thumbnail) thumbnail.src = `${basePath}/ethnicity-${ethnicity}.jpg`;
+            if (video) video.src = `${basePath}/ethnicity-${ethnicity}.mp4`;
         });
         
-        // Update hair style videos
-        document.querySelectorAll('.hair-style-card video').forEach(video => {
-            const hairstyle = video.closest('.hair-style-card').dataset.hairstyle;
-            video.src = `${basePath}/hair-${hairstyle}.mp4`;
+        // Update hair style videos and thumbnails
+        document.querySelectorAll('.hair-style-card').forEach(card => {
+            const hairstyle = card.dataset.hairstyle;
+            const thumbnail = card.querySelector('.video-thumbnail');
+            const video = card.querySelector('.video-hover');
+            if (thumbnail) thumbnail.src = `${basePath}/hair-${hairstyle}.jpg`;
+            if (video) video.src = `${basePath}/hair-${hairstyle}.mp4`;
         });
         
-        // Update hair color videos
+        // Update hair color videos (if any)
         document.querySelectorAll('.hair-color-card video').forEach(video => {
             const haircolor = video.closest('.hair-color-card').dataset.haircolor;
             video.src = `${basePath}/haircolor-${haircolor}.mp4`;
         });
         
-        // Update body type videos
+        // Update body type videos (if any)
         document.querySelectorAll('.body-type-card video').forEach(video => {
             const bodytype = video.closest('.body-type-card').dataset.bodytype;
             video.src = `${basePath}/body-${bodytype}.mp4`;
         });
         
-        // Update breast size videos
+        // Update breast size videos (if any)
         document.querySelectorAll('.breast-size-card video').forEach(video => {
             const breastsize = video.closest('.breast-size-card').dataset.breastsize;
             video.src = `${basePath}/breast-${breastsize}.mp4`;
         });
         
-        // Update butt size videos
+        // Update butt size videos (if any)
         document.querySelectorAll('.butt-size-card video').forEach(video => {
             const buttsize = video.closest('.butt-size-card').dataset.buttsize;
             video.src = `${basePath}/butt-${buttsize}.mp4`;
@@ -948,10 +1003,13 @@ class ColdOnboarding {
             try {
                 // Use Clerk.openSignIn with Google strategy instead of authenticateWithRedirect
                 // This ensures proper OAuth flow through Clerk's managed UI
-                const langUrl = window.location.hostname.split('.')[0];
+                const urlParams = new URLSearchParams(window.location.search);
+                const langFromUrl = urlParams.get('lang');
+                const langFromCookie = document.cookie.split('; ').find(row => row.startsWith('lang='))?.split('=')[1];
+                const langUrl = langFromUrl || langFromCookie || window.lang || 'ja';
                 clerk.openSignIn({
                     redirectUrl: window.location.origin + '/chat/?source=cold-onboarding&status=success',
-                    language: window.lang || langUrl || 'ja',
+                    language: langUrl,
                 });
             } catch (error) {
                 console.error('[ColdOnboarding] Google sign-in error:', error);

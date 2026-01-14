@@ -42,8 +42,9 @@
                     <div class="selection-section">
                         <div class="style-cards">
                             <div class="style-card selected" data-style="realistic">
-                                <div class="style-card-image">
-                                    <video src="/img/cold-onboarding/style-realistic.mp4" alt="Realistic" autoplay loop muted playsinline></video>
+                                <div class="style-card-image video-hover-container">
+                                    <img src="/img/cold-onboarding/style-realistic.jpg" alt="Realistic" class="video-thumbnail">
+                                    <video src="/img/cold-onboarding/style-realistic.mp4" alt="Realistic" loop muted playsinline class="video-hover"></video>
                                     <div class="style-card-overlay">
                                         <i class="bi bi-check-circle-fill"></i>
                                     </div>
@@ -51,8 +52,9 @@
                                 <span class="style-card-label">{{translations.newCharacter.style_realistic}}</span>
                             </div>
                             <div class="style-card" data-style="anime">
-                                <div class="style-card-image">
-                                    <video src="/img/cold-onboarding/style-anime.mp4" alt="Anime" autoplay loop muted playsinline></video>
+                                <div class="style-card-image video-hover-container">
+                                    <img src="/img/cold-onboarding/style-anime.jpg" alt="Anime" class="video-thumbnail">
+                                    <video src="/img/cold-onboarding/style-anime.mp4" alt="Anime" loop muted playsinline class="video-hover"></video>
                                     <div class="style-card-overlay">
                                         <i class="bi bi-check-circle-fill"></i>
                                     </div>
@@ -228,28 +230,10 @@
                     <div class="model-selection-section">
                         <h3 class="section-label">{{translations.newCharacter.image_model}}</h3>
                         
-                        <!-- Model Filter Tabs -->
-                        <div class="model-tabs">
-                            <button class="model-tab active" id="systemModelsTab" data-target="systemModelsPane">
-                                {{translations.newCharacter.systemModels}}
-                            </button>
-                            <button class="model-tab" id="customModelsTab" data-target="customModelsPane">
-                                {{translations.newCharacter.myCustomModels}}
-                                <span class="model-count-badge" id="customModelsCount">0</span>
-                            </button>
-                        </div>
-                        
-                        <!-- Model Tab Content -->
+                        <!-- Custom Models Container -->
                         <div class="model-tab-content">
-                            <!-- System Models Pane -->
-                            <div class="model-pane active" id="systemModelsPane">
-                                <div class="models-scroll-container" id="imageStyleSelectionCharacterCreation">
-                                    <!-- Models will be populated by fetchAndAppendModels() -->
-                                </div>
-                            </div>
-                            
                             <!-- Custom Models Pane -->
-                            <div class="model-pane" id="customModelsPane">
+                            <div class="model-pane active" id="customModelsPane">
                                 <!-- Premium feature notice for non-subscribers -->
                                 <div id="customModelsPremiumNotice" class="premium-notice" style="display: none;">
                                     <i class="bi bi-gem"></i>

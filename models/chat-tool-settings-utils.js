@@ -50,34 +50,64 @@ async function getUserChatToolSettings(db, userId, chatId = null) {
 }
 
 /**
- * Apply user settings to system prompt generation
+ * Apply user settings and character data to system prompt generation
  * @param {Object} db - MongoDB database instance
  * @param {string} userId - User ID
  * @param {string} chatId - Optional chat ID
  * @param {string} basePrompt - Base system prompt
- * @returns {string} Enhanced system prompt with user preferences
+ * @param {Object} chatDocument - Chat document containing character data
+ * @returns {string} Enhanced system prompt with user preferences and character context
  */
-async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt, characterGender = 'female') {
+async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt, chatDocument = null) {
     try {
-        const settings = await getUserChatToolSettings(db, userId, chatId);
-        
         let enhancedPrompt = basePrompt;
         
-        // Apply relationship type - handle both new gender-based and legacy formats
+        // Get character gender and relationship from chat document
+        const characterGender = chatDocument?.gender || 'female';
+        const relationshipType = chatDocument?.relationship || 'companion';
+        
+        // Apply relationship type from character creation - handle both new gender-based and legacy formats
         const { relationshipInstructions } = require('./relashionshipInstructions');
         const genderKey = characterGender?.toLowerCase() === 'male' ? 'male' : 'female';
         
-        if (relationshipInstructions[genderKey] && relationshipInstructions[genderKey][settings.relationshipType]) {
-            enhancedPrompt += `\n# Relationship Context :\n ${relationshipInstructions[genderKey][settings.relationshipType]}`;
+        if (relationshipInstructions[genderKey] && relationshipInstructions[genderKey][relationshipType]) {
+            enhancedPrompt += `\n# Relationship Context:\n${relationshipInstructions[genderKey][relationshipType]}`;
         } else if (relationshipInstructions[genderKey] && relationshipInstructions[genderKey].companion) {
-            enhancedPrompt += `\n# Relationship Context :\n ${relationshipInstructions[genderKey].companion}`;
+            enhancedPrompt += `\n# Relationship Context:\n${relationshipInstructions[genderKey].companion}`;
         }
         
         // Add instructions for NSFW relationships if applicable
         const nsfw_relationships = ['lover', 'submissive', 'dominant', 'playmate', 'intimate'];
-        if (nsfw_relationships.includes(settings.relationshipType)) {
-            enhancedPrompt += `\n# NSFW Relationship Context :\n You are in a ${settings.relationshipType} relationship. Use explicit, sensual language and describe intimate acts in detail. `;
+        if (nsfw_relationships.includes(relationshipType)) {
+            enhancedPrompt += `\n# NSFW Relationship Context:\nYou are in a ${relationshipType} relationship. Use explicit, sensual language and describe intimate acts in detail.`;
         }
+        
+        // Add character personality context from character creation
+        if (chatDocument) {
+            let characterContext = '\n# Character Context:';
+            
+            if (chatDocument.characterPersonality) {
+                characterContext += `\nPersonality: You have a ${chatDocument.characterPersonality} personality. Embody this trait in your responses.`;
+            }
+            
+            if (chatDocument.characterOccupation) {
+                characterContext += `\nOccupation: You work as a ${chatDocument.characterOccupation}. Reference this naturally in conversations when relevant.`;
+            }
+            
+            if (chatDocument.characterPreferences) {
+                characterContext += `\nPreferences: You are into ${chatDocument.characterPreferences}. Express this naturally when the conversation leads there.`;
+            }
+            
+            if (chatDocument.chatPurpose) {
+                characterContext += `\nSpecial Instructions: ${chatDocument.chatPurpose}`;
+            }
+            
+            // Only add character context section if we have any character data
+            if (characterContext !== '\n# Character Context:') {
+                enhancedPrompt += characterContext;
+            }
+        }
+        
         return enhancedPrompt;
         
     } catch (error) {

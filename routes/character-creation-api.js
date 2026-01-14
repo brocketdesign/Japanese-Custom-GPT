@@ -1,5 +1,6 @@
 const { ObjectId } = require('mongodb');
  const slugify = require('slugify');
+ const { generateUniqueSlug } = require('../models/slug-utils');
  const {
      generateCompletion,
  } = require('../models/openai')
@@ -275,7 +276,12 @@ async function routes(fastify, options) {
                 imageStyle = null,
                 imageModel = null,
                 imageVersion = null,
-                isUserModel = false
+                isUserModel = false,
+                // Character creation personality data
+                relationship = null,
+                personality = null,
+                occupation = null,
+                kinks = null
             } = request.body;
             let gender = request.body.gender || null;
             let chatId = request.body.chatId || request.query.chatId || request.params.chatId || null;
@@ -530,6 +536,13 @@ async function routes(fastify, options) {
             chatData.imageType = finalImageType;
             chatData.thumbIsPortrait = true;
             
+            // Save character creation personality data for system prompt
+            if (relationship) chatData.relationship = relationship;
+            if (personality) chatData.characterPersonality = personality;
+            if (occupation) chatData.characterOccupation = occupation;
+            if (kinks) chatData.characterPreferences = kinks;
+            if (chatPurpose) chatData.chatPurpose = chatPurpose;
+            
             const collectionChats = fastify.mongo.db.collection('chats');
             
             // Convert chatId to ObjectId once and reuse
@@ -548,22 +561,34 @@ async function routes(fastify, options) {
 
             console.log('\x1b[32m✅ DB saved\x1b[0m');
 
-            // Step 5: Generate unique slug if name is provided
+            // Step 5: Generate enhanced unique slug if name is provided
             if (chatData.name) {
-                const baseSlug = slugify(chatData.name, { lower: true, strict: true });
-                let slug = baseSlug;
-                
-                const slugExists = await collectionChats.findOne({ 
-                    slug: baseSlug, 
-                    _id: { $ne: chatObjectId } 
-                });
-                
-                if (slugExists) {
-                    const randomStr = Math.random().toString(36).substring(2, 6);
-                    slug = `${baseSlug}-${randomStr}`;
+                try {
+                    const slug = await generateUniqueSlug(
+                        chatData.name, 
+                        chatObjectId, 
+                        fastify.mongo.db, 
+                        'chats'
+                    );
+                    chatData.slug = slug;
+                } catch (err) {
+                    console.error('[character-creation-api] Error generating enhanced slug, using fallback:', err);
+                    // Fallback to basic slug generation
+                    const baseSlug = slugify(chatData.name, { lower: true, strict: true });
+                    let slug = baseSlug;
+                    
+                    const slugExists = await collectionChats.findOne({ 
+                        slug: baseSlug, 
+                        _id: { $ne: chatObjectId } 
+                    });
+                    
+                    if (slugExists) {
+                        const randomStr = Math.random().toString(36).substring(2, 8);
+                        slug = `${baseSlug}-${randomStr}`;
+                    }
+                    
+                    chatData.slug = slug;
                 }
-                
-                chatData.slug = slug;
             }
 
             // Step 6: Update tags in the database

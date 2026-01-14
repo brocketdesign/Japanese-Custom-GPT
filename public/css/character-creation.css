@@ -366,7 +366,6 @@
 
 .ethnicity-card:hover {
     border-color: var(--cc-primary-light);
-    transform: translateY(-4px) scale(1.02);
     box-shadow: var(--cc-shadow-md);
 }
 

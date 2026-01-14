@@ -354,13 +354,15 @@ const relationshipTiers = {
     free: [
         'companion',
         'friend',
-    ],
-    premium: [
         'wife',
+        'husband',
+        'stepmom',
         'stepson',
+        'step_sister',
         'step_brother',
         'roommate',
         'girlfriend',
+        'boyfriend',
         'first_date',
         'neighbor',
         'teacher',
@@ -373,6 +375,7 @@ const relationshipTiers = {
         'dominant',
         'playmate',
         'intimate'
-    ]
+    ],
+    premium: []
 };
 module.exports = {relationshipInstructions, relationshipTiers};

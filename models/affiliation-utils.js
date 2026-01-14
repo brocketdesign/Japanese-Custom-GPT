@@ -40,7 +40,7 @@ async function createAffiliateLink(db, userId, customSlug = null, lang = 'en') {
     const linkData = {
         userId: new ObjectId(userId),
         slug: slug,
-        link: `${`https://${lang}.chatlamix.com`}?referrer=${slug}`,
+        link: `https://app.chatlamix.com?lang=${lang}&referrer=${slug}`,
         clicks: 0,
         conversions: 0,
         createdAt: new Date(),

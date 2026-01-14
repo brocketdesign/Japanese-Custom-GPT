@@ -203,6 +203,13 @@ async function routes(fastify) {
                 };
             }
             
+            // Set default model based on style
+            const isAnime = characterData.style === 'anime';
+            const defaultImageModel = isAnime 
+                ? 'novaAnimeXL_ponyV20_461138.safetensors'
+                : 'juggernautXL_v9Rdphoto2Lightning_285361.safetensors';
+            const imageStyle = isAnime ? 'anime' : 'photorealistic';
+            
             // Create the chat document
             const chatDoc = {
                 userId: userId,
@@ -215,7 +222,9 @@ async function routes(fastify) {
                 details: details,
                 gender: characterData.gender,
                 purpose: `${characterData.relationship} - ${characterData.personality}`,
-                imageStyle: characterData.style === 'anime' ? 'anime' : 'photorealistic',
+                imageStyle: imageStyle,
+                imageModel: defaultImageModel,
+                imageVersion: 'sdxl',
                 nsfw: false,
                 isPublic: false,
                 isTemporary: false,

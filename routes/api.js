@@ -1612,6 +1612,15 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             const user = request.user;
             const userLang = lang || 'en';
             
+            // Set language cookie for SEO-friendly language switching
+            reply.setCookie('lang', userLang, {
+                path: '/',
+                httpOnly: false, // Allow client-side access for language switching
+                sameSite: mode === 'heroku' ? 'None' : 'Lax',
+                secure: mode === 'heroku',
+                maxAge: 60 * 60 * 24 * 365 // 1 year
+            });
+            
             if (user.isTemporary) {
                 // Update tempUser lang
                 user.lang = userLang;
@@ -1990,6 +1999,7 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             const similarChatsCache = db.collection('similarChatsCache');
             const similarityMatrixCollection = db.collection('similarityMatrix');
             const chatIdParam = request.params.chatId;
+            const language = request.lang || 'en'; // Get language from request
             let chatIdObjectId;
 
             try {
@@ -1999,8 +2009,8 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             return reply.code(400).send({ error: 'Invalid Chat ID format' });
             }
 
-            // Check result cache first (24-hour expiry) - fastest path
-            const cacheKey = chatIdParam;
+            // Check result cache first (24-hour expiry) - include language in cache key
+            const cacheKey = `${chatIdParam}_${language}`;
             const cacheExpiry = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
                         
             const cachedResult = await similarChatsCache.findOne({
@@ -2009,8 +2019,12 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             });
 
             if (cachedResult && cachedResult.similarChats && cachedResult.similarChats.length > 0) {
-                console.log(`[API/SimilarChats] Using cached results for ${chatIdParam}`);
-                return reply.send(cachedResult.similarChats);
+                console.log(`[API/SimilarChats] Using cached results for ${chatIdParam} (language: ${language})`);
+                // Filter cached results by language to ensure consistency
+                const filteredResults = cachedResult.similarChats.filter(chat => chat.language === language);
+                if (filteredResults.length > 0) {
+                    return reply.send(filteredResults);
+                }
             }
 
                 
@@ -2027,10 +2041,11 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             if (characterPrompt) {
             const mainPromptTokens = tokenizePrompt(characterPrompt);
             
-            // Check similarity matrix for cached comparisons (7-day expiry)
+            // Check similarity matrix for cached comparisons (7-day expiry) - include language
             const matrixExpiry = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
             const existingMatrix = await similarityMatrixCollection.findOne({
                 sourceChatId: chatIdObjectId,
+                language: language,
                 updatedAt: { $gte: matrixExpiry }
             });
 
@@ -2046,13 +2061,18 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
                 const matrixEntries = existingMatrix.similarities.filter(s => s.score >= minScore);
                 
                 if (matrixEntries.length > 0) {
-                    const matrixChatIds = matrixEntries.map(s => s.targetChatId);
+                    const matrixChatIds = matrixEntries
+                        .map(s => s.targetChatId)
+                        .filter(id => id.toString() !== chatIdParam); // Exclude current character
                     const matrixChats = await chatsCollection.find(
-                        { _id: { $in: matrixChatIds } },
+                        { 
+                            _id: { $in: matrixChatIds },
+                            language: language // Filter by language
+                        },
                         {
                             projection: {
                                 _id: 1, slug: 1, name: 1, modelId: 1, chatImageUrl: 1,
-                                nsfw: 1, userId: 1, gender: 1, imageStyle: 1
+                                nsfw: 1, userId: 1, gender: 1, imageStyle: 1, language: 1
                             }
                         }
                     ).toArray();
@@ -2063,7 +2083,7 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
                             ...entry,
                             chatDoc
                         };
-                    }).filter(s => s.chatDoc);
+                    }).filter(s => s.chatDoc && s.chatDoc.language === language);
 
                     fromMatrix = true;
                 }
@@ -2076,11 +2096,27 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
                 const galleryCollection = db.collection('gallery');
                 
                 // Find gallery documents with at least 4 images and valid image prompts
+                // First, get chat IDs that match the language
+                const languageChatIds = await chatsCollection.find(
+                    { 
+                        language: language,
+                        _id: { $ne: chatIdObjectId },
+                        chatImageUrl: { $exists: true, $ne: '' }
+                    },
+                    { projection: { _id: 1 } }
+                ).toArray();
+                
+                const languageChatIdsArray = languageChatIds.map(c => c._id);
+                
+                // Find gallery documents with at least 4 images and valid image prompts, filtered by language
                 const galleryDocs = await galleryCollection.aggregate([
                     {
                         $match: {
                             'images.0': { $exists: true },
-                            'chatId': { $ne: chatIdObjectId }
+                            'chatId': { 
+                                $ne: chatIdObjectId,
+                                $in: languageChatIdsArray // Filter by language
+                            }
                         }
                     },
                     {
@@ -2159,13 +2195,14 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
                     return scoreB - scoreA;
                 });
 
-                // Store in similarity matrix for future use
+                // Store in similarity matrix for future use (include language in key)
                 if (freshScoredChats.length > 0) {
                     await similarityMatrixCollection.updateOne(
-                        { sourceChatId: chatIdObjectId },
+                        { sourceChatId: chatIdObjectId, language: language },
                         {
                             $set: {
                                 sourceChatId: chatIdObjectId,
+                                language: language,
                                 similarities: freshScoredChats.slice(0, 20), // Store top 20
                                 updatedAt: new Date(),
                                 expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
@@ -2175,36 +2212,79 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
                     );
                 }
 
-                // Get chat details
-                const topChatIds = freshScoredChats.slice(0, 6).map(c => c.targetChatId);
+                // Improve diversity: select characters with varying similarity scores
+                // Instead of just top 6, we'll pick from different score ranges for more variety
+                const diverseChatIds = [];
+                if (freshScoredChats.length > 0) {
+                    // Group by score ranges for diversity
+                    const highScore = freshScoredChats.filter(c => c.score >= 0.15).slice(0, 2);
+                    const midScore = freshScoredChats.filter(c => c.score >= 0.10 && c.score < 0.15).slice(0, 2);
+                    const lowScore = freshScoredChats.filter(c => c.score >= 0.08 && c.score < 0.10).slice(0, 2);
+                    
+                    // Combine and deduplicate
+                    const allSelected = [...highScore, ...midScore, ...lowScore];
+                    const uniqueChatIds = [...new Set(allSelected.map(c => c.targetChatId.toString()))];
+                    diverseChatIds.push(...uniqueChatIds.slice(0, 6).map(id => new fastify.mongo.ObjectId(id)));
+                }
                 
-                if (topChatIds.length > 0) {
+                if (diverseChatIds.length > 0) {
                     const topChats = await chatsCollection.find(
-                        { _id: { $in: topChatIds } },
+                        { 
+                            _id: { $in: diverseChatIds },
+                            language: language // Ensure language filter
+                        },
                         {
                             projection: {
                                 _id: 1, slug: 1, name: 1, modelId: 1, chatImageUrl: 1,
-                                nsfw: 1, userId: 1, gender: 1, imageStyle: 1
+                                nsfw: 1, userId: 1, gender: 1, imageStyle: 1, language: 1
                             }
                         }
                     ).toArray();
 
-                    similarChats = topChatIds.map(chatId => 
+                    // Preserve order from diverseChatIds
+                    similarChats = diverseChatIds.map(chatId => 
                         topChats.find(c => c._id.toString() === chatId.toString())
                     ).filter(Boolean);
                 }
             } else {
-                // Use matrix results
-                similarChats = scoredChats.slice(0, 6).map(s => s.chatDoc);
+                // Use matrix results with diversity improvement
+                // Select from different score ranges for more variety
+                const diverseResults = [];
+                if (scoredChats.length > 0) {
+                    const highScore = scoredChats.filter(s => s.score >= 0.15).slice(0, 2);
+                    const midScore = scoredChats.filter(s => s.score >= 0.10 && s.score < 0.15).slice(0, 2);
+                    const lowScore = scoredChats.filter(s => s.score >= 0.08 && s.score < 0.10).slice(0, 2);
+                    
+                    const allSelected = [...highScore, ...midScore, ...lowScore];
+                    // Deduplicate and limit to 6
+                    const seen = new Set();
+                    for (const item of allSelected) {
+                        if (seen.size >= 6) break;
+                        const chatId = item.chatDoc._id.toString();
+                        if (!seen.has(chatId) && item.chatDoc.language === language) {
+                            seen.add(chatId);
+                            diverseResults.push(item.chatDoc);
+                        }
+                    }
+                }
+                similarChats = diverseResults.length > 0 ? diverseResults : scoredChats.slice(0, 6).map(s => s.chatDoc).filter(c => c.language === language);
             }
 
             } else {
                 console.log(`[API/SimilarChats] No prompt found for current character ${chatIdParam}. Skipping similar chat search.`);
             }
 
-            // Cache the final result (upsert to handle updates)
+            // Filter final results to ensure language consistency and exclude current character
+            similarChats = similarChats.filter(chat => 
+                chat && 
+                chat.language === language && 
+                chat._id.toString() !== chatIdParam
+            );
+
+            // Cache the final result (upsert to handle updates) - include language in cache key
             const cacheDocument = {
             chatId: cacheKey,
+            language: language,
             similarChats: similarChats,
             createdAt: new Date(),
             expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)

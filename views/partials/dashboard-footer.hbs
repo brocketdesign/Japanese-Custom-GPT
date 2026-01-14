@@ -1039,13 +1039,16 @@ $(document).ready(function(){
                 window.location.href = '/chat';
                 return;
             }
-            // Check if url as a language subdomain https://ja.chatlamix.com/
-            const langUrl = window.location.hostname.split('.')[0];
+            // Get language from URL parameter, cookie, or default to 'ja'
+            const urlParams = new URLSearchParams(window.location.search);
+            const langFromUrl = urlParams.get('lang');
+            const langFromCookie = document.cookie.split('; ').find(row => row.startsWith('lang='))?.split('=')[1];
+            const langUrl = langFromUrl || langFromCookie || window.lang || 'ja';
             // Use Clerk's provided method instead of direct URL navigation
             if (window.Clerk) {
                 Clerk.openSignIn({
                     redirectUrl: window.location.origin + '/signin-redirection?signIn=true',
-                    language: window.lang || langUrl || 'ja',
+                    language: langUrl,
                 });
             } else {
                 console.error('Clerk is not initialized yet');

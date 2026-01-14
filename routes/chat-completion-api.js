@@ -427,8 +427,8 @@ async function routes(fastify, options) {
                 subscriptionStatus
             );
 
-            // Apply user settings and goals to system prompt
-            enhancedSystemContent = await applyUserSettingsToPrompt(fastify.mongo.db, userId, chatId, enhancedSystemContent);
+            // Apply user settings and character data to system prompt
+            enhancedSystemContent = await applyUserSettingsToPrompt(fastify.mongo.db, userId, chatId, enhancedSystemContent, chatDocument);
       
             if (goalsEnabled && chatGoal) {
                 const goalContext = `\n\n# Current Conversation Goal:\n` +

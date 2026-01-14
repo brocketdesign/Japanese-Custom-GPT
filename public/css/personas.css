@@ -226,7 +226,6 @@
 }
 
 .persona-card:hover .modern-persona-container {
-    transform: translateY(-8px) scale(1.02);
     box-shadow: 
         0 20px 40px rgba(110, 32, 244, 0.15),
         0 8px 16px rgba(0, 0, 0, 0.1);

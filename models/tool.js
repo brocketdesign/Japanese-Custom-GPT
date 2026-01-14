@@ -625,6 +625,52 @@ async function saveUserChatBackgroundImageToDB(db, userChatId, imageId, imageUrl
             }
         }
     };
+/**
+ * Generate SEO metadata with hreflang tags for multi-language support
+ * @param {Object} request - Fastify request object
+ * @param {string} path - URL path (e.g., '/character/slug/example')
+ * @param {string} currentLang - Current language code (en, fr, ja)
+ * @returns {Object} SEO metadata object with canonicalUrl, alternates, and lang attribute
+ */
+function generateSeoMetadata(request, path = '', currentLang = 'en') {
+    const forwardedProto = request.headers['x-forwarded-proto'];
+    const protocol = (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) || request.protocol || 'https';
+    const host = request.hostname;
+    const isLocalHost = host.includes('localhost') || host.includes('127.0.0.1') || host.includes('0.0.0.0');
+    const baseDomain = process.env.PUBLIC_BASE_DOMAIN || (isLocalHost ? host : host.split('.').slice(-2).join('.')) || 'chatlamix.com';
+    
+    // Always use app.chatlamix.com for canonical URL (single domain for SEO)
+    const canonicalHost = isLocalHost ? host : 'app.chatlamix.com';
+    const canonicalUrl = `${isLocalHost ? `${protocol}://${canonicalHost}` : `https://${canonicalHost}`}${path}`;
+    
+    // Generate alternate language URLs with ?lang= parameter
+    const alternates = [];
+    const supportedLangs = ['en', 'fr', 'ja'];
+    
+    supportedLangs.forEach(lang => {
+        const langUrl = new URL(canonicalUrl);
+        langUrl.searchParams.set('lang', lang);
+        alternates.push({
+            hreflang: lang,
+            href: langUrl.toString()
+        });
+    });
+    
+    // Add x-default pointing to current language
+    const defaultUrl = new URL(canonicalUrl);
+    defaultUrl.searchParams.set('lang', currentLang);
+    alternates.push({
+        hreflang: 'x-default',
+        href: defaultUrl.toString()
+    });
+    
+    return {
+        canonicalUrl,
+        alternates,
+        lang: currentLang
+    };
+}
+
 module.exports = {
     getCounter,
     updateCounter,
@@ -649,5 +695,6 @@ module.exports = {
     saveChatImageToDB,
     saveUserChatBackgroundImageToDB,
     addAdminEmails,
-    getApiUrl
+    getApiUrl,
+    generateSeoMetadata
 };

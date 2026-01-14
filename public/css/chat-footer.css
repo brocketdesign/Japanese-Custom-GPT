@@ -992,7 +992,6 @@
 }
 
 .gift-card:hover .modern-gift-container {
-    transform: translateY(-8px) scale(1.02);
     box-shadow: 
         0 20px 40px rgba(110, 32, 244, 0.15),
         0 8px 16px rgba(0, 0, 0, 0.1);
@@ -1020,9 +1019,6 @@
     border-radius: 16px 16px 0 0;
 }
 
-.gift-card:hover .gift-image {
-    transform: scale(1.1);
-}
 
 .gift-overlay {
     position: absolute;
@@ -1298,7 +1294,6 @@
 }
 
 .prompt-card:hover .modern-prompt-container {
-    transform: translateY(-8px) scale(1.02);
     box-shadow: 
         0 20px 40px rgba(110, 32, 244, 0.15),
         0 8px 16px rgba(0, 0, 0, 0.1);

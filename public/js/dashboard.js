@@ -297,11 +297,16 @@ async function onLanguageChange(lang) {
         await loadTranslations(lang);
         $('#languageDropdown').text(getLanguageDisplayName(lang));
         resetPeopleChatCache();
-        if(MODE !== 'local'){
-            window.location.href = `https://${lang}.chatlamix.com/`
-        }else{
-            location.reload();
+        
+        // Use URL parameter instead of subdomain for SEO
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('lang', lang);
+        // Remove 'app.' prefix if present to ensure we're on app.chatlamix.com
+        const hostname = window.location.hostname.replace(/^(en|fr|ja)\./, 'app.');
+        if (hostname !== window.location.hostname) {
+            currentUrl.hostname = hostname;
         }
+        window.location.href = currentUrl.toString();
     }
 }
 

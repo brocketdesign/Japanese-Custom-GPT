@@ -891,7 +891,6 @@ opacity: 0.8;
 }
 
 #chat-images-gallery .card:hover {
-  transform: translateY(-6px) scale(1.03);
   box-shadow: 0 8px 32px rgba(110, 32, 244, 0.15), 0 1.5px 8px rgba(0, 0, 0, 0.08);
   z-index: 10; /* To bring the hovered card above others if they overlap */
 }
@@ -902,7 +901,6 @@ opacity: 0.8;
 }
 
 #chat-images-gallery .card:hover .card-img-top {
-  transform: scale(1.08);
   filter: brightness(1.05) saturate(1.05);
 }
 
@@ -3741,7 +3739,6 @@ border: 1px solid white;
 }
 
 .benefit-card .card:hover {
-    transform: translateY(-5px);
     box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
 }
 

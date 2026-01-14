@@ -128,24 +128,14 @@ async function routes(fastify, options) {
   // Static pages sitemap
   fastify.get('/sitemap-static.xml', async (request, reply) => {
     try {
-      const baseUrl = getBaseUrl(request);
-      
-      // Determine the hostname and extract base domain for hreflang URLs
+      const forwardedProto = request.headers['x-forwarded-proto'];
+      const protocol = (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) || request.protocol || 'https';
       const host = request.hostname;
       const isLocalHost = host.includes('localhost') || host.includes('127.0.0.1') || host.includes('0.0.0.0');
       const baseDomain = process.env.PUBLIC_BASE_DOMAIN || (isLocalHost ? host : host.split('.').slice(-2).join('.')) || 'chatlamix.com';
-      const supportsLocaleSubdomains = !isLocalHost && baseDomain === 'chatlamix.com';
-
-      const forwardedProto = request.headers['x-forwarded-proto'];
-      const protocol = (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) || request.protocol || 'https';
-
-      const localeDomainMap = supportsLocaleSubdomains
-        ? {
-            en: `${protocol}://en.${baseDomain}`,
-            fr: `${protocol}://fr.${baseDomain}`,
-            ja: `${protocol}://ja.${baseDomain}`,
-          }
-        : {};
+      
+      // Always use app.chatlamix.com for SEO (single domain)
+      const baseUrl = isLocalHost ? `${protocol}://${host}` : `https://app.${baseDomain}`;
 
       const staticPages = [
         { url: '', priority: '1.0', changefreq: 'daily' },
@@ -163,9 +153,7 @@ async function routes(fastify, options) {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">`;
 
       staticPages.forEach(page => {
-        const primaryUrl = supportsLocaleSubdomains 
-          ? `${protocol}://app.${baseDomain}${page.url}`
-          : `${baseUrl}${page.url}`;
+        const primaryUrl = `${baseUrl}${page.url}`;
 
         sitemap += `
   <url>
@@ -174,13 +162,20 @@ async function routes(fastify, options) {
     <changefreq>${page.changefreq}</changefreq>
     <priority>${page.priority}</priority>`;
 
-        // Add hreflang tags for static pages
-        if (supportsLocaleSubdomains) {
+        // Add hreflang tags with ?lang= parameter for language variants
+        if (!isLocalHost && baseDomain === 'chatlamix.com') {
+          const supportedLangs = ['en', 'fr', 'ja'];
+          supportedLangs.forEach(lang => {
+            const langUrl = new URL(primaryUrl);
+            langUrl.searchParams.set('lang', lang);
+            sitemap += `
+    <xhtml:link rel="alternate" hreflang="${lang}" href="${langUrl.toString()}"/>`;
+          });
+          // x-default points to English version
+          const defaultUrl = new URL(primaryUrl);
+          defaultUrl.searchParams.set('lang', 'en');
           sitemap += `
-    <xhtml:link rel="alternate" hreflang="en" href="${localeDomainMap.en}${page.url}"/>
-    <xhtml:link rel="alternate" hreflang="fr" href="${localeDomainMap.fr}${page.url}"/>
-    <xhtml:link rel="alternate" hreflang="ja" href="${localeDomainMap.ja}${page.url}"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="${primaryUrl}"/>`;
+    <xhtml:link rel="alternate" hreflang="x-default" href="${defaultUrl.toString()}"/>`;
         }
 
         sitemap += `
@@ -214,24 +209,14 @@ async function routes(fastify, options) {
         return reply.status(404).send('Sitemap data not found');
       }
 
-      const baseUrl = getBaseUrl(request);
-      
-      // Determine the hostname and extract base domain for hreflang URLs
+      const forwardedProto = request.headers['x-forwarded-proto'];
+      const protocol = (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) || request.protocol || 'https';
       const host = request.hostname;
       const isLocalHost = host.includes('localhost') || host.includes('127.0.0.1') || host.includes('0.0.0.0');
       const baseDomain = process.env.PUBLIC_BASE_DOMAIN || (isLocalHost ? host : host.split('.').slice(-2).join('.')) || 'chatlamix.com';
-      const supportsLocaleSubdomains = !isLocalHost && baseDomain === 'chatlamix.com';
-
-      const forwardedProto = request.headers['x-forwarded-proto'];
-      const protocol = (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) || request.protocol || 'https';
-
-      const localeDomainMap = supportsLocaleSubdomains
-        ? {
-            en: `${protocol}://en.${baseDomain}`,
-            fr: `${protocol}://fr.${baseDomain}`,
-            ja: `${protocol}://ja.${baseDomain}`,
-          }
-        : {};
+      
+      // Always use app.chatlamix.com for SEO (single domain)
+      const baseUrl = isLocalHost ? `${protocol}://${host}` : `https://app.${baseDomain}`;
 
       const urlsPerSitemap = 10000;
       const startIndex = (page - 1) * urlsPerSitemap;
@@ -272,9 +257,7 @@ async function routes(fastify, options) {
           item.lastmod.toISOString() : 
           new Date(item.lastmod).toISOString();
 
-        const primaryUrl = supportsLocaleSubdomains 
-          ? `${protocol}://app.${baseDomain}${item.url}`
-          : `${baseUrl}${item.url}`;
+        const primaryUrl = `${baseUrl}${item.url}`;
 
         sitemap += `
   <url>
@@ -283,13 +266,20 @@ async function routes(fastify, options) {
     <changefreq>${item.changefreq}</changefreq>
     <priority>${item.priority}</priority>`;
 
-        // Add hreflang tags for language variants
-        if (supportsLocaleSubdomains) {
+        // Add hreflang tags with ?lang= parameter for language variants
+        if (!isLocalHost && baseDomain === 'chatlamix.com') {
+          const supportedLangs = ['en', 'fr', 'ja'];
+          supportedLangs.forEach(lang => {
+            const langUrl = new URL(primaryUrl);
+            langUrl.searchParams.set('lang', lang);
+            sitemap += `
+    <xhtml:link rel="alternate" hreflang="${lang}" href="${langUrl.toString()}"/>`;
+          });
+          // x-default points to English version
+          const defaultUrl = new URL(primaryUrl);
+          defaultUrl.searchParams.set('lang', 'en');
           sitemap += `
-    <xhtml:link rel="alternate" hreflang="en" href="${localeDomainMap.en}${item.url}"/>
-    <xhtml:link rel="alternate" hreflang="fr" href="${localeDomainMap.fr}${item.url}"/>
-    <xhtml:link rel="alternate" hreflang="ja" href="${localeDomainMap.ja}${item.url}"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="${primaryUrl}"/>`;
+    <xhtml:link rel="alternate" hreflang="x-default" href="${defaultUrl.toString()}"/>`;
         }
 
         sitemap += `

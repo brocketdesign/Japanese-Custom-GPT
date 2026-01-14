@@ -7,6 +7,7 @@ const { addNotification, saveChatImageToDB, getLanguageName, uploadToS3 } = requ
 const { getAutoMergeFaceSetting } = require('../models/chat-tool-settings-utils')
 const { awardImageGenerationReward, awardCharacterImageMilestoneReward } = require('./user-points-utils');
 const slugify = require('slugify');
+const { generateImageSlug } = require('./slug-utils');
 const sharp = require('sharp');
 const { time } = require('console');
 
@@ -2044,26 +2045,54 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       } 
     }
 
-    // Generate slug if not provided
+    // Generate imageId first (needed for slug generation)
+    const imageId = new ObjectId();
+    
+    // Generate enhanced slug if not provided
     if (!slug) {
-      if (title && typeof title === 'object') {
-        const firstAvailableTitle = title.en || title.ja || title.fr || '';
-        slug = slugify(firstAvailableTitle.substring(0, 50), { lower: true, strict: true });
-      } else {
-        slug = slugify(prompt.substring(0, 50), { lower: true, strict: true });
-      }
-      
-      const existingImage_check = await chatsGalleryCollection.findOne({
-        "images.slug": slug
-      });
-      
-      if (existingImage_check) {
-        const randomStr = Math.random().toString(36).substring(2, 6);
-        slug = `${slug}-${randomStr}`;
+      try {
+        // Get chat to access its slug for enhanced image slug generation
+        const chat = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
+        const chatSlug = chat?.slug || '';
+        
+        // Get title for slug
+        const imageTitle = title && typeof title === 'object' 
+          ? (title.en || title.ja || title.fr || '')
+          : (title || '');
+        
+        // Generate enhanced image slug using the actual imageId
+        slug = generateImageSlug(imageTitle || prompt.substring(0, 50), chatSlug, imageId);
+        
+        // Double-check for duplicates (shouldn't happen with ObjectId, but be safe)
+        const existingImage_check = await chatsGalleryCollection.findOne({
+          "images.slug": slug
+        });
+        
+        if (existingImage_check) {
+          // Edge case: append timestamp if somehow duplicate
+          const timestamp = Date.now().toString(36).substring(7);
+          slug = `${slug}-${timestamp}`;
+        }
+      } catch (err) {
+        console.error('[saveImageToDB] Error generating enhanced image slug, using fallback:', err);
+        // Fallback to basic slug generation
+        if (title && typeof title === 'object') {
+          const firstAvailableTitle = title.en || title.ja || title.fr || '';
+          slug = slugify(firstAvailableTitle.substring(0, 50), { lower: true, strict: true });
+        } else {
+          slug = slugify(prompt.substring(0, 50), { lower: true, strict: true });
+        }
+        
+        const existingImage_check = await chatsGalleryCollection.findOne({
+          "images.slug": slug
+        });
+        
+        if (existingImage_check) {
+          const randomStr = Math.random().toString(36).substring(2, 8);
+          slug = `${slug}-${randomStr}`;
+        }
       }
     }
-
-    const imageId = new ObjectId();
     const imageDocument = { 
       _id: imageId, 
       taskId,

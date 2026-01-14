@@ -57,7 +57,6 @@ class ChatToolSettings {
     init() {
     this.bindEvents();
     this.setupRangeSliders();
-    this.renderRelationshipOptions();
     }
 
     bindEvents() {
@@ -104,11 +103,6 @@ class ChatToolSettings {
                 return;
             }
 
-            // If switching to relationship settings, re-render based on current gender
-            if (targetSelector === '#relationship-settings') {
-                this.renderRelationshipOptions();
-            }
-
             const targetSection = modalBody.querySelector(targetSelector);
             if (!targetSection) {
                 return;
@@ -142,12 +136,6 @@ class ChatToolSettings {
             }
         });
 
-        // Relationship tone selection - Use event delegation
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.settings-tone-option')) {
-                this.selectRelationshipTone(e.target.closest('.settings-tone-option'));
-            }
-        });
 
         // Voice provider switch - Allow switching for all users
         const voiceProviderSwitch = document.getElementById('voice-provider-switch');
@@ -633,14 +621,6 @@ class ChatToolSettings {
             }
         }
 
-        // Premium relationships indicator
-        const premiumRelIndicator = document.getElementById('premium-relationships-indicator');
-        if (!subscriptionStatus) {
-            if (premiumRelIndicator) premiumRelIndicator.style.display = 'block';
-        } else {
-            if (premiumRelIndicator) premiumRelIndicator.style.display = 'none';
-        }
-
         // Premium voices indicator
         const premiumVoicesIndicator = document.getElementById('premium-voices-indicator');
         if (!subscriptionStatus) {
@@ -764,53 +744,6 @@ class ChatToolSettings {
         return !localStorage.getItem(storageKey);
     }
 
-    async renderRelationshipOptions() {
-        const container = document.getElementById('dynamic-relationship-container');
-        if (!container) return;
-
-        // Get gender from modal body
-        const modalBody = document.querySelector('.settings-modal-body');
-        const gender = modalBody ? modalBody.getAttribute('data-genre') : 'female';
-
-        // Fetch relationships from API
-        try {
-            const res = await fetch(`/api/chat-tool-settings/relationships/${gender}`);
-            const data = await res.json();
-            if (!data.success) throw new Error('Failed to fetch relationships');
-            const { free, premium } = data.relationships;
-
-            // Render free relationships
-            let html = '<div class="settings-subsection">';
-            html += `<h6 class="settings-subsection-title fw-semibold mb-2">${this.t('freeRelationships')}</h6>`;
-            html += `<div class="settings-description text-muted mb-3">${this.t('freeRelationshipsDescription')}</div>`;
-            html += '<div class="settings-tone-grid">';
-            free.forEach(rel => {
-                html += `<div class="settings-tone-option" data-relationship="${rel}">${this.t(`relationships.${rel}`)}</div>`;
-            });
-            html += '</div></div>';
-
-            // Render premium relationships
-            html += '<div class="settings-subsection">';
-            html += `<h6 class="settings-subsection-title fw-semibold mb-2">${this.t('premiumRelationships')} <i class="bi bi-crown-fill premium-icon ms-1 text-warning"></i></h6>`;
-            html += `<div class="settings-description text-muted mb-3">${this.t('premiumRelationshipsDescription')}</div>`;
-            html += '<div class="settings-tone-grid">';
-            premium.forEach(rel => {
-                html += `<div class="settings-tone-option premium-relationship" data-relationship="${rel}" data-nsfw="true">${this.t(`relationships.${rel}`)} <i class="bi bi-crown-fill premium-icon text-warning"></i></div>`;
-            });
-            html += '</div>';
-            
-            if(!this.isPremium) {
-                html += '<div id="premium-relationships-indicator" class="premium-feature-indicator">';
-                html += `<small class="text-warning d-block mt-2"><i class="bi bi-star-fill me-1"></i> ${this.t('premiumRelationshipsPremiumFeature')}</small>`;
-                html += '</div></div>';
-            }
-
-            container.innerHTML = html;
-        } catch (err) {
-            container.innerHTML = '<div class="text-danger">Failed to load relationships.</div>';
-        }
-    }
-
     // Selection methods
     selectVoice(selectedOption) {
         // Remove selected class from all voice options
@@ -850,40 +783,6 @@ class ChatToolSettings {
         // Update settings
         this.settings.minimaxVoice = selectedOption.dataset.voice;
         this.settings.premiumVoice = selectedOption.dataset.voice;
-    }
-
-    selectRelationshipTone(selectedOption) {
-        // Check if this is a premium relationship and user is not premium
-        const isPremiumRelationship = selectedOption.classList.contains('premium-relationship');
-        const isNSFW = selectedOption.dataset.nsfw === 'true';
-        
-        if (isPremiumRelationship || isNSFW) {
-            // Check user subscription status
-            const user = window.user || {};
-            const subscriptionStatus = user.subscriptionStatus === 'active';
-            
-            if (!subscriptionStatus) {
-                // Launch plan page for non-premium users
-                if (typeof loadPlanPage === 'function') {
-                    loadPlanPage();
-                } else {
-                    // Fallback redirect
-                    window.location.href = '/plan';
-                }
-                return;
-            }
-        }
-        
-        // Remove selected class from all relationship tone options
-        document.querySelectorAll('.settings-tone-option').forEach(option => {
-            option.classList.remove('selected');
-        });
-        
-        // Add selected class to clicked option
-        selectedOption.classList.add('selected');
-        
-        // Update settings
-        this.settings.relationshipType = selectedOption.dataset.relationship;
     }
 
     async loadPremiumVoices() {
@@ -1254,26 +1153,6 @@ class ChatToolSettings {
             }
         });
 
-        // Update relationship tone selection with premium check
-        document.querySelectorAll('.settings-tone-option').forEach(option => {
-            const isSelected = option.dataset.relationship === this.settings.relationshipType;
-            const isPremiumRelationship = option.classList.contains('premium-relationship');
-            
-            // Apply selection state
-            option.classList.toggle('selected', isSelected);
-            
-            // Disable premium relationships for non-premium users
-            if (isPremiumRelationship && !subscriptionStatus) {
-                option.classList.add('disabled');
-                option.style.opacity = '0.5';
-                option.style.cursor = 'pointer'; // Keep cursor pointer to trigger upgrade
-            } else {
-                option.classList.remove('disabled');
-                option.style.opacity = '1';
-                option.style.cursor = 'pointer';
-            }
-        });
-
         // Update model selection with premium check
         document.querySelectorAll('.settings-model-option').forEach(option => {
             const isSelected = option.dataset.model === this.settings.selectedModel;
@@ -1465,10 +1344,6 @@ class ChatToolSettings {
 
     getVideoPrompt() {
         return this.settings.videoPrompt;
-    }
-
-    getRelationshipType() {
-        return this.settings.relationshipType;
     }
 
     getSelectedVoice() {

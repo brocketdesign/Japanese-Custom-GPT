@@ -12,7 +12,7 @@ const {
   cleanupNonRegisteredUsers,
   deleteTemporaryChats,
 } = require('./models/databasemanagement');
-const { checkUserAdmin, getUserData, updateCounter, fetchTags } = require('./models/tool');
+const { checkUserAdmin, getUserData, updateCounter, fetchTags, generateSeoMetadata } = require('./models/tool');
 const { deleteOldTasks } = require('./models/imagen');
 const { 
   cronJobs, 
@@ -49,6 +49,34 @@ fastify.ready(async () => {
       console.log(obj.result.n + " document(s) deleted");
     }
   });
+  
+  // Create indexes for better performance on slug queries
+  try {
+    const chatsCollection = fastify.mongo.db.collection('chats');
+    const galleryCollection = fastify.mongo.db.collection('gallery');
+    
+    // Index on slug field for fast character lookups
+    await chatsCollection.createIndex({ slug: 1 }, { unique: true, sparse: true }).catch(() => {
+      // Index might already exist, ignore error
+      console.log('[Database] Slug index may already exist on chats collection');
+    });
+    
+    // Index on images.slug for fast image lookups
+    await galleryCollection.createIndex({ 'images.slug': 1 }, { sparse: true }).catch(() => {
+      // Index might already exist, ignore error
+      console.log('[Database] Slug index may already exist on gallery.images collection');
+    });
+    
+    // Compound index for chat lookup with slug
+    await chatsCollection.createIndex({ slug: 1, chatImageUrl: 1 }, { sparse: true }).catch(() => {
+      console.log('[Database] Compound slug index may already exist on chats collection');
+    });
+    
+    console.log('[Database] Slug indexes initialized');
+  } catch (err) {
+    console.error('[Database] Error creating slug indexes:', err);
+  }
+  
   // Initialize configured cron jobs
   initializeCronJobs(fastify);
 
@@ -150,6 +178,7 @@ fastify.register(fastifyMultipart, {
 });
 
 const slugify = require('slugify');
+const { generateUniqueSlug, generateImageSlug } = require('./models/slug-utils');
 fastify.register(require('fastify-sse'));
 fastify.register(require('@fastify/formbody'));
 
@@ -166,14 +195,38 @@ fastify.register(fastifyPluginGlobals);
 // Register all routes from the routes plugin
 fastify.register(require('./plugins/routes'));
 
-// SEO: Redirect www to app for domain consolidation
+// SEO: Redirect www and language subdomains to app.chatlamix.com for domain consolidation
 fastify.addHook('onRequest', (request, reply, done) => {
   const host = request.hostname;
+  const isLocalHost = host.includes('localhost') || host.includes('127.0.0.1') || host.includes('0.0.0.0');
+  
+  // Skip redirects for localhost
+  if (isLocalHost) {
+    return done();
+  }
+  
+  // Redirect www to app
   if (host === 'www.chatlamix.com') {
     const newUrl = `https://app.chatlamix.com${request.raw.url}`;
     console.log(`[SEO] Redirecting www to app: ${host} → app.chatlamix.com`);
     return reply.redirect(301, newUrl);
   }
+  
+  // Redirect language subdomains (fr, en, ja) to app.chatlamix.com with ?lang= parameter
+  const subdomain = host.split('.')[0];
+  if (['en', 'fr', 'ja'].includes(subdomain)) {
+    const baseDomain = host.split('.').slice(-2).join('.'); // Get chatlamix.com
+    if (baseDomain === 'chatlamix.com') {
+      const currentUrl = request.raw.url;
+      const urlObj = new URL(currentUrl, `https://${host}`);
+      // Preserve existing query parameters and add lang parameter
+      urlObj.searchParams.set('lang', subdomain);
+      const newUrl = `https://app.chatlamix.com${urlObj.pathname}${urlObj.search}`;
+      console.log(`[SEO] Redirecting language subdomain to app: ${host} → app.chatlamix.com?lang=${subdomain}`);
+      return reply.redirect(301, newUrl);
+    }
+  }
+  
   done();
 });
 
@@ -193,15 +246,22 @@ fastify.get('/', async (request, reply) => {
   if (signOut || user.isTemporary) {
     let bannerNumber = parseInt(request.query.banner) || 0;
     bannerNumber = Math.min(bannerNumber, 3);
+    const seoMetadata = generateSeoMetadata(request, '/', lang);
     return reply.renderWithGtm(`index.hbs`, {
       title: translations.seo.title,
+      canonicalUrl: seoMetadata.canonicalUrl,
+      alternates: seoMetadata.alternates,
       seo: [
         { name: 'description', content: translations.seo.description },
         { name: 'keywords', content: translations.seo.keywords },
         { property: 'og:title', content: translations.seo.title },
         { property: 'og:description', content: translations.seo.description },
         { property: 'og:image', content: '/img/share.png' },
-        { property: 'og:url', content: 'https://chatlamix/' },
+        { property: 'og:url', content: seoMetadata.canonicalUrl },
+        { property: 'og:locale', content: lang },
+        { property: 'og:locale:alternate', content: 'en' },
+        { property: 'og:locale:alternate', content: 'fr' },
+        { property: 'og:locale:alternate', content: 'ja' },
       ],
       bannerNumber
     });
@@ -276,16 +336,22 @@ fastify.get('/my-plan', async (request, reply) => {
   const userId = user._id;
   user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
+  const seoMetadata = generateSeoMetadata(request, '/my-plan', lang);
   return reply.renderWithGtm(`plan.hbs`, {
     title: 'Premium Plan - AI Image Generation | ChatLamix',
-    
+    canonicalUrl: seoMetadata.canonicalUrl,
+    alternates: seoMetadata.alternates,
     seo: [
       { name: 'description', content: translations.seo.description_plan },
       { name: 'keywords', content: translations.seo.keywords },
       { property: 'og:title', content: translations.seo.title_plan },
       { property: 'og:description', content: translations.seo.description_plan },
       { property: 'og:image', content: '/img/share.png' },
-      { property: 'og:url', content: 'https://chatlamix/' },
+      { property: 'og:url', content: seoMetadata.canonicalUrl },
+      { property: 'og:locale', content: lang },
+      { property: 'og:locale:alternate', content: 'en' },
+      { property: 'og:locale:alternate', content: 'fr' },
+      { property: 'og:locale:alternate', content: 'ja' },
     ],
   });
 });
@@ -296,15 +362,22 @@ fastify.get('/affiliation-plan', async (request, reply) => {
   const userId = user._id;
   user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
+  const seoMetadata = generateSeoMetadata(request, '/affiliation-plan', lang);
   return reply.renderWithGtm(`plan-affiliation.hbs`, {
     title: translations.plan_page.affiliation_title || 'Affiliate Program - Premium Plan AI Image Generation',
+    canonicalUrl: seoMetadata.canonicalUrl,
+    alternates: seoMetadata.alternates,
     seo: [
       { name: 'description', content: translations.seo.description_plan },
       { name: 'keywords', content: translations.seo.keywords },
       { property: 'og:title', content: translations.seo.title_plan },
       { property: 'og:description', content: translations.seo.description_plan },
       { property: 'og:image', content: '/img/share.png' },
-      { property: 'og:url', content: 'https://chatlamix/' },
+      { property: 'og:url', content: seoMetadata.canonicalUrl },
+      { property: 'og:locale', content: lang },
+      { property: 'og:locale:alternate', content: 'en' },
+      { property: 'og:locale:alternate', content: 'fr' },
+      { property: 'og:locale:alternate', content: 'ja' },
     ],
   });
 });
@@ -341,8 +414,11 @@ fastify.get('/chat/:chatId', async (request, reply) => {
   const promptData = await db.collection('prompts').find({}).sort({order: 1}).toArray();
   const giftData = await db.collection('gifts').find({}).sort({order: 1}).toArray();
 
+  const seoMetadata = generateSeoMetadata(request, `/chat/${chatId}`, lang);
   return reply.view('chat.hbs', {
     title: translations.seo.title,
+    canonicalUrl: seoMetadata.canonicalUrl,
+    alternates: seoMetadata.alternates,
     isAdmin,
     imageType,
     user,
@@ -359,7 +435,11 @@ fastify.get('/chat/:chatId', async (request, reply) => {
       { property: 'og:title', content: translations.seo.title },
       { property: 'og:description', content: translations.seo.description },
       { property: 'og:image', content: '/img/share.png' },
-      { property: 'og:url', content: 'https://chatlamix/' },
+      { property: 'og:url', content: seoMetadata.canonicalUrl },
+      { property: 'og:locale', content: lang },
+      { property: 'og:locale:alternate', content: 'en' },
+      { property: 'og:locale:alternate', content: 'fr' },
+      { property: 'og:locale:alternate', content: 'ja' },
     ],
   });
 });
@@ -482,11 +562,11 @@ fastify.get('/post/:postId', async (request, reply) => {
     const postUserId = post.userId;
     const postUser = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(postUserId) });
 
+    const seoMetadata = generateSeoMetadata(request, `/post/${postId}`, lang);
     return reply.renderWithGtm('post.hbs', {
       title: translations.seo.title_post,
-      
-      
-      
+      canonicalUrl: seoMetadata.canonicalUrl,
+      alternates: seoMetadata.alternates,
       postUser,
       userId,
       post,
@@ -496,7 +576,11 @@ fastify.get('/post/:postId', async (request, reply) => {
         { property: 'og:title', content: translations.seo.title_post },
         { property: 'og:description', content: translations.seo.description_post },
         { property: 'og:image', content: '/img/share.png' },
-        { property: 'og:url', content: 'https://chatlamix/' },
+        { property: 'og:url', content: seoMetadata.canonicalUrl },
+        { property: 'og:locale', content: lang },
+        { property: 'og:locale:alternate', content: 'en' },
+        { property: 'og:locale:alternate', content: 'fr' },
+        { property: 'og:locale:alternate', content: 'ja' },
       ],
     });
   } catch (err) {
@@ -513,15 +597,22 @@ fastify.get('/character', async (request, reply) => {
     const userId = user._id;
     user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
 
+    const seoMetadata = generateSeoMetadata(request, '/character', lang);
     return reply.renderWithGtm('character.hbs', {
       title: translations.seo.title_character || 'Ai images generator & Ai chat',
+      canonicalUrl: seoMetadata.canonicalUrl,
+      alternates: seoMetadata.alternates,
       seo: [
         { name: 'description', content: translations.seo.description_character },
         { name: 'keywords', content: translations.seo.keywords },
         { property: 'og:title', content: translations.seo.title_character },
         { property: 'og:description', content: translations.seo.description_character },
         { property: 'og:image', content: '/img/share.png' },
-        { property: 'og:url', content: 'https://chatlamix/' },
+        { property: 'og:url', content: seoMetadata.canonicalUrl },
+        { property: 'og:locale', content: lang },
+        { property: 'og:locale:alternate', content: 'en' },
+        { property: 'og:locale:alternate', content: 'fr' },
+        { property: 'og:locale:alternate', content: 'ja' },
       ],
     });
   } catch (error) {
@@ -651,13 +742,14 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
             
             if (originalGallery?.images?.[0]?.slug) {
               // Redirect to the original image with the same query parameters
+              // Use 301 (permanent) redirect for SEO
               const { modal } = request.query;
-              let queryString = `?imageSlug=${originalGallery.images[0].slug}`;
+              let queryString = `?imageSlug=${encodeURIComponent(originalGallery.images[0].slug)}`;
               if (modal) {
                 queryString += `&modal=${modal}`;
               }
               
-              return reply.redirect(`/character/slug/${chat.slug}${queryString}`);
+              return reply.redirect(301, `/character/slug/${encodeURIComponent(chat.slug)}${queryString}`);
             }
           } catch (err) {
             console.error(`[/character/:slug] Error processing originalImageId: ${image.originalImageId}`, err);
@@ -701,45 +793,23 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
       }
     }
 
-    // Build canonical and alternate URLs for SEO
+    // Build canonical and alternate URLs for SEO using helper function
+    const encodedSlug = encodeURIComponent(chat.slug);
+    const characterPath = `/character/slug/${encodedSlug}`;
+    const seoMetadata = generateSeoMetadata(request, characterPath, lang);
+    const { canonicalUrl, alternates } = seoMetadata;
+
+    // Get protocol and host from request for ogImage
     const forwardedProto = request.headers['x-forwarded-proto'];
     const protocol = (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) || request.protocol || 'https';
     const host = request.hostname;
     const isLocalHost = host.includes('localhost') || host.includes('127.0.0.1') || host.includes('0.0.0.0');
-    const baseDomain = process.env.PUBLIC_BASE_DOMAIN || (isLocalHost ? host : host.split('.').slice(-2).join('.')) || 'chatlamix.com';
-    const supportsLocaleSubdomains = !isLocalHost && baseDomain === 'chatlamix.com';
-    const localeDomainMap = supportsLocaleSubdomains
-      ? {
-          en: `en.${baseDomain}`,
-          fr: `fr.${baseDomain}`,
-          ja: `ja.${baseDomain}`,
-        }
-      : {};
-
-  const fallbackHost = supportsLocaleSubdomains ? baseDomain : (host.replace(/^app\./, '') || baseDomain);
-    const activeDomain = isLocalHost
-      ? host
-      : (supportsLocaleSubdomains && localeDomainMap[lang]) || host || fallbackHost;
-    const canonicalUrl = `${isLocalHost ? `${protocol}://${activeDomain}` : `https://${activeDomain}`}/character/slug/${chat.slug}`;
-
-  const alternates = supportsLocaleSubdomains ? [] : null;
-  if (supportsLocaleSubdomains) {
-      ['en', 'fr', 'ja'].forEach(locale => {
-        alternates.push({
-          hreflang: locale,
-          href: `https://${localeDomainMap[locale]}/character/slug/${chat.slug}`
-        });
-      });
-      alternates.push({
-        hreflang: 'x-default',
-        href: `https://${fallbackHost}/character/slug/${chat.slug}`
-      });
-    }
+    const baseUrl = isLocalHost ? `${protocol}://${host}` : `https://app.chatlamix.com`;
 
     const imageSource = image?.imageUrl || chat.chatImageUrl || '/img/share.png';
     const ogImage = /^https?:\/\//i.test(imageSource)
       ? imageSource
-      : `${protocol}://${host}${imageSource.startsWith('/') ? imageSource : `/${imageSource}`}`;
+      : `${baseUrl}${imageSource.startsWith('/') ? imageSource : `/${imageSource}`}`;
 
     const structuredData = {
       '@context': 'https://schema.org',
@@ -776,6 +846,10 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
         { property: 'og:description', content: `${image?.title?.[request.lang] ?? chat.description ?? ''} | ${translations.seo.description_character}` },
         { property: 'og:image', content: ogImage },
         { property: 'og:url', content: canonicalUrl },
+        { property: 'og:locale', content: lang },
+        { property: 'og:locale:alternate', content: 'en' },
+        { property: 'og:locale:alternate', content: 'fr' },
+        { property: 'og:locale:alternate', content: 'ja' },
       ],
     });
     
@@ -792,80 +866,110 @@ fastify.get('/character/:chatId', async (request, reply) => {
   const db = fastify.mongo.db;
   let chatId = request.params.chatId;
   let chat;
+  let chatIdObjectId;
+  
   try {
-    chat = await db.collection('chats').findOne({ _id: new fastify.mongo.ObjectId(chatId) });
+    chatIdObjectId = new fastify.mongo.ObjectId(chatId);
+    chat = await db.collection('chats').findOne({ _id: chatIdObjectId });
   } catch (e) {
-    // If not a valid ObjectId, treat as slug
+    // If not a valid ObjectId, check if it might be a slug (to avoid unnecessary redirects)
+    const slugChat = await db.collection('chats').findOne({ slug: chatId });
+    if (slugChat) {
+      // It's actually a slug, redirect properly
+      const queryString = request.url.split('?')[1] || '';
+      const redirectUrl = `/character/slug/${chatId}${queryString ? `?${queryString}` : ''}`;
+      return reply.redirect(301, redirectUrl);
+    }
     console.error(`[character/:chatId] Invalid Chat ID format: ${chatId}. Error:`, e);
-    return reply.redirect(`/character/`);
-  }
-  if (!chat) {
-    console.warn(`[character/:chatId] No chat found for chatId: ${chatId}. Redirecting to /character/`);
-    return reply.redirect(`/character/`);
+    return reply.redirect(301, `/character/`);
   }
   
-  // Check if a slug is present; if not use slugify to create one and save it
-  if (!chat.slug) {
-    let slug = slugify(chat.name, { lower: true, strict: true });
-    // Check for duplicate slug
-    const slugExists = await db.collection('chats').findOne({ slug, _id: { $ne: chat._id } });
-    if (slugExists) {
-      // Append short random string for uniqueness
-      const randomStr = Math.random().toString(36).substring(2, 6);
-      slug = `${slug}-${randomStr}`;
+  if (!chat) {
+    console.warn(`[character/:chatId] No chat found for chatId: ${chatId}. Redirecting to /character/`);
+    return reply.redirect(301, `/character/`);
+  }
+  
+  // Ensure chat has a slug; generate enhanced slug if missing
+  if (!chat.slug || chat.slug.length < 15) {
+    try {
+      const slug = await generateUniqueSlug(chat.name || 'character', chatIdObjectId, db, 'chats');
+      await db.collection('chats').updateOne(
+        { _id: chatIdObjectId }, 
+        { $set: { slug } }
+      );
+      chat.slug = slug;
+    } catch (err) {
+      console.error(`[character/:chatId] Error generating slug for chat ${chatId}:`, err);
+      // Fallback to basic slug if enhanced generation fails
+      if (!chat.slug) {
+        const fallbackSlug = slugify(chat.name || `character-${chatId}`, { lower: true, strict: true });
+        const randomStr = Math.random().toString(36).substring(2, 8);
+        chat.slug = `${fallbackSlug}-${randomStr}`;
+        await db.collection('chats').updateOne(
+          { _id: chatIdObjectId }, 
+          { $set: { slug: chat.slug } }
+        );
+      }
     }
-
-    await db.collection('chats').updateOne({ _id: new fastify.mongo.ObjectId(chatId) }, { $set: { slug } });
-    chat.slug = slug;
-
   }
 
   let imageId = request.query.imageId ? request.query.imageId : null;
   let imageSlug;
+  
   if (imageId) {
     try {
-      imageId = new fastify.mongo.ObjectId(imageId);
+      const imageIdObjectId = new fastify.mongo.ObjectId(imageId);
       const galleryCollection = db.collection('gallery');
       
       // Find the image in the gallery
       const imageDoc = await galleryCollection.aggregate([
-        { $match: { chatId: chat._id } },
+        { $match: { chatId: chatIdObjectId } },
         { $unwind: '$images' },
-        { $match: { 'images._id': imageId } },
+        { $match: { 'images._id': imageIdObjectId } },
         { $project: { image: '$images', _id: 0 } }
       ]).toArray();
 
       if (imageDoc.length > 0 && imageDoc[0].image) {
         // Check if image already has a slug
-        if (!imageDoc[0].image.slug) {
+        if (!imageDoc[0].image.slug || imageDoc[0].image.slug.length < 10) {
           // Get a title to use for the slug
           const imageTitle = typeof imageDoc[0].image.title === 'string'
             ? imageDoc[0].image.title
             : (imageDoc[0].image.title?.en || imageDoc[0].image.title?.ja || imageDoc[0].image.title?.fr || '');
 
-          if (imageTitle) {
-            // Create slug with chat slug prefix and limit length
-            const titleSlug = slugify(imageTitle, { lower: true, strict: true });
-            // Limit the title part to 30 chars max
-            const shortTitleSlug = titleSlug.substring(0, 30);
-            imageSlug = `${chat.slug}-${shortTitleSlug}`;
+          try {
+            // Use enhanced image slug generation
+            imageSlug = generateImageSlug(imageTitle, chat.slug, imageIdObjectId);
             
             // Check if this image slug already exists
             const slugExists = await galleryCollection.findOne({
               'images.slug': imageSlug,
-              'images._id': { $ne: imageId }
+              'images._id': { $ne: imageIdObjectId }
             });
             
             if (slugExists) {
-              // Add unique suffix
-              const randomStr = Math.random().toString(36).substring(2, 6);
-              imageSlug = `${imageSlug}-${randomStr}`;
+              // Shouldn't happen with ObjectId, but handle edge case
+              const timestamp = Date.now().toString(36).substring(7);
+              imageSlug = `${imageSlug}-${timestamp}`;
             }
             
             await galleryCollection.updateOne(
-              { 'images._id': imageId },
+              { 'images._id': imageIdObjectId },
               { $set: { 'images.$.slug': imageSlug } }
             );
+          } catch (err) {
+            console.error(`[character/:chatId] Error generating image slug:`, err);
+            // Fallback slug
+            if (!imageSlug) {
+              const titleSlug = imageTitle 
+                ? slugify(imageTitle, { lower: true, strict: true }).substring(0, 30)
+                : imageIdObjectId.toString().substring(18);
+              imageSlug = `${chat.slug}-${titleSlug}-${imageIdObjectId.toString()}`;
+              await galleryCollection.updateOne(
+                { 'images._id': imageIdObjectId },
+                { $set: { 'images.$.slug': imageSlug } }
+              );
+            }
           }
         } else {
           imageSlug = imageDoc[0].image.slug;
@@ -873,15 +977,15 @@ fastify.get('/character/:chatId', async (request, reply) => {
       }
     } catch (err) {
       console.error(`[character/:chatId] Error processing imageId: ${imageId}`, err);
+      // Continue without imageSlug if there's an error
     }
   }
-  // Check all query parameters
-  const { modal } = request.query;
-
+  
   // Preserve original query parameters
+  const { modal } = request.query;
   let queryString = '';
   if (imageSlug) {
-    queryString = `?imageSlug=${imageSlug}`;
+    queryString = `?imageSlug=${encodeURIComponent(imageSlug)}`;
     if (modal) {
       queryString += `&modal=${modal}`;
     }
@@ -889,8 +993,15 @@ fastify.get('/character/:chatId', async (request, reply) => {
     queryString = `?modal=${modal}`;
   }
 
-  // Redirect to slug route for SEO, keeping query params
-  return reply.redirect(`/character/slug/${chat.slug}${queryString}`);
+  // Ensure chat.slug exists before redirecting
+  if (!chat.slug) {
+    console.error(`[character/:chatId] Chat ${chatId} has no slug, cannot redirect`);
+    return reply.code(500).send({ error: 'Character slug missing' });
+  }
+
+  // Use 301 (permanent) redirect for SEO - indicates this is the canonical URL
+  const redirectUrl = `/character/slug/${encodeURIComponent(chat.slug)}${queryString}`;
+  return reply.code(301).redirect(redirectUrl);
 });
 // feature
 fastify.get('/features', async (request, reply) => {
@@ -1132,8 +1243,11 @@ fastify.get('/sitemap', async (request, reply) => {
       };
     }
     
+    const seoMetadata = generateSeoMetadata(request, '/sitemap', lang);
     return reply.renderWithGtm('sitemap.hbs', {
       title: `${translations.sitemap?.title || 'Sitemap'} | ${translations.seo.title}`,
+      canonicalUrl: seoMetadata.canonicalUrl,
+      alternates: seoMetadata.alternates,
       characters: sitemapData.characters,
       tags: sitemapData.tags,
       totalCharacters: sitemapData.totalCharacters,
@@ -1145,7 +1259,11 @@ fastify.get('/sitemap', async (request, reply) => {
         { property: 'og:title', content: `${translations.sitemap?.title || 'Sitemap'} | ${translations.seo.title}` },
         { property: 'og:description', content: translations.sitemap?.description || 'Complete sitemap of all characters and tags' },
         { property: 'og:image', content: '/img/share.png' },
-        { property: 'og:url', content: 'https://chatlamix/sitemap' },
+        { property: 'og:url', content: seoMetadata.canonicalUrl },
+        { property: 'og:locale', content: lang },
+        { property: 'og:locale:alternate', content: 'en' },
+        { property: 'og:locale:alternate', content: 'fr' },
+        { property: 'og:locale:alternate', content: 'ja' },
       ],
     });
   } catch (error) {

@@ -1498,6 +1498,8 @@
     "removeModel": "モデルを削除",
     "modelRemoved": "モデルが削除されました",
     "myCustomModels": "マイカスタムモデル",
+    "customModelTitle": "マイカスタムモデル",
+    "modelSelectionDescription": "カスタムモデルを選択できます。選択しない場合はデフォルトモデルが使用されます",
     "systemModels": "システムモデル",
     "selectVersion": "バージョンを選択",
     "downloads": "ダウンロード数",

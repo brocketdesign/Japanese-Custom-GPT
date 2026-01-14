@@ -1562,6 +1562,8 @@
     "removeModel": "Remove Model",
     "modelRemoved": "Model removed successfully",
     "myCustomModels": "My Custom Models",
+    "customModelTitle": "My Custom Model",
+    "modelSelectionDescription": "You can choose a custom model or else the default model will be used",
     "systemModels": "System Models",
     "selectVersion": "Select Version",
     "downloads": "Downloads",

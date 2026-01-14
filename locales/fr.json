@@ -1445,6 +1445,8 @@
     "removeModel": "Supprimer le modèle",
     "modelRemoved": "Modèle supprimé avec succès",
     "myCustomModels": "Mes modèles personnalisés",
+    "customModelTitle": "Mon modèle personnalisé",
+    "modelSelectionDescription": "Vous pouvez choisir un modèle personnalisé, sinon le modèle par défaut sera utilisé",
     "systemModels": "Modèles système",
     "selectVersion": "Sélectionner la version",
     "downloads": "Téléchargements",

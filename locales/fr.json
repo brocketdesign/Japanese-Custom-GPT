@@ -590,7 +590,7 @@
     "secure_signout": "Vous avez été déconnecté en toute sécurité"
   },
   "admin_model_test": {
-    "title": "Test de Modèle",
+    "title": "Modèle de Texte",
     "select_model": "Sélectionner le Modèle",
     "input_prompt": "Invite d'Entrée",
     "generate_response": "Générer la Réponse",
@@ -824,7 +824,7 @@
     "user_analytics": "Analytique utilisateur",
     "prompts": "Invites",
     "notifications": "Notifications",
-    "models": "Models",
+    "models": "Modèles d'Image SD",
     "mails": "Mails",
     "gifts": "Cadeaux"
   },
@@ -1288,7 +1288,15 @@
     "toggleNSFW": "Basculer vers NSFW",
     "toggleSFW": "Basculer vers SFW",
     "logout": "Se déconnecter",
-    "logout_processing": "Déconnexion en cours..."
+    "logout_processing": "Déconnexion en cours...",
+    "notifications": "Notifications"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "Aucune notification pour le moment",
+    "markAllRead": "Tout marquer comme lu",
+    "new": "Nouveau",
+    "viewAll": "Voir toutes les notifications"
   },
   "tabs": {
     "posts": "Publications",

@@ -608,7 +608,7 @@
     "secure_signout": "安全にサインアウトしました"
   },
   "admin_model_test": {
-    "title": "モデルテスト",
+    "title": "テキストモデル",
     "select_model": "モデルを選択",
     "input_prompt": "プロンプトを入力",
     "generate_response": "応答を生成",
@@ -878,7 +878,7 @@
     "user_analytics": "ユーザー分析",
     "prompts": "プロンプト",
     "notifications": "通知",
-    "models": "モデル",
+    "models": "SD画像モデル",
     "mails": "メール",
     "gifts": "ギフト"
   },
@@ -1341,7 +1341,15 @@
     "toggleNSFW": "NSFWを切り替える",
     "toggleSFW": "SFWを切り替える",
     "logout": "ログアウト",
-    "logout_processing": "ログアウト処理中..."
+    "logout_processing": "ログアウト処理中...",
+    "notifications": "通知"
+  },
+  "notifications": {
+    "title": "通知",
+    "empty": "まだ通知はありません",
+    "markAllRead": "すべて既読にする",
+    "new": "新着",
+    "viewAll": "すべての通知を見る"
   },
   "tabs": {
     "posts": "投稿一覧",

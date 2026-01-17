@@ -607,7 +607,7 @@
     "secure_signout": "You have been securely signed out"
   },
   "admin_model_test": {
-    "title": "Model Test",
+    "title": "Text Model",
     "select_model": "Select Model",
     "input_prompt": "Input Prompt",
     "generate_response": "Generate Response",
@@ -879,7 +879,7 @@
     "user_analytics": "User Analytics",
     "prompts": "Prompts",
     "notifications": "Notifications",
-    "models": "Models",
+    "models": "SD Image Models",
     "mails": "Mails",
     "gifts": "Gifts"
   },
@@ -1356,7 +1356,15 @@
     "toggleNSFW": "Toggle NSFW",
     "toggleSFW": "Toggle SFW",
     "logout": "Logout",
-    "logout_processing": "Processing logout..."
+    "logout_processing": "Processing logout...",
+    "notifications": "Notifications"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications yet",
+    "markAllRead": "Mark all as read",
+    "new": "New",
+    "viewAll": "View all notifications"
   },
   "tabs": {
     "posts": "Posts",

@@ -314,7 +314,7 @@
 .settings-section {
   margin-bottom: 24px;
   padding-bottom: 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .settings-section:last-child {
@@ -330,7 +330,7 @@
 
 .settings-section-title {
   font-weight: 600;
-  color: #1a1a1a;
+  color: rgba(255, 255, 255, 0.95);
   font-size: 15px;
   margin-bottom: 4px;
   letter-spacing: -0.1px;
@@ -344,7 +344,7 @@
 .settings-section-subtitle {
   font-size: 13px;
   line-height: 1.4;
-  color: #6c757d;
+  color: rgba(255, 255, 255, 0.75);
   margin-top: 4px;
 }
 
@@ -410,15 +410,15 @@
 }
 
 .settings-preference-item {
-  background: #f8f9fa;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 10px;
   padding: 12px 16px;
-  border: none;
+  border: 1px solid rgba(130, 64, 255, 0.2);
 }
 
 .preference-title {
   font-weight: 500;
-  color: #1a1a1a;
+  color: rgba(255, 255, 255, 0.9);
   margin-bottom: 4px;
   font-size: 14px;
   display: flex;
@@ -429,7 +429,7 @@
 .preference-description {
   font-size: 12px;
   line-height: 1.4;
-  color: #6c757d;
+  color: rgba(255, 255, 255, 0.75);
   margin-top: 2px;
 }
 
@@ -497,22 +497,22 @@
 }
 
 .advanced-setting-card {
-  background: #f8f9fa;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 10px;
   padding: 12px 16px;
-  border: none;
+  border: 1px solid rgba(130, 64, 255, 0.2);
 }
 
 .advanced-setting-title {
   font-weight: 500;
-  color: #1a1a1a;
+  color: rgba(255, 255, 255, 0.9);
   margin-bottom: 4px;
   font-size: 14px;
 }
 
 .advanced-setting-description {
   font-size: 12px;
-  color: #6c757d;
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .settings-form-actions {
@@ -537,6 +537,7 @@
 .form-floating > label {
   font-size: 14px;
   padding: 0.75rem 0.75rem;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .form-floating > .form-control,
@@ -545,18 +546,58 @@
   padding: 0.75rem 0.75rem;
   height: calc(3rem + 2px);
   border-radius: 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(130, 64, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Form-select specific styling for dropdown arrow and appearance */
+.form-floating > .form-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px 12px;
+  padding-right: 2.5rem;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.form-floating > .form-select:focus {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23D2B8FF' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+}
+
+/* Ensure options have proper styling */
+.form-floating > .form-select option {
+  background: #2d2d2d;
+  color: rgba(255, 255, 255, 0.9);
+  padding: 0.5rem;
 }
 
 .form-floating > .form-control:focus,
 .form-floating > .form-select:focus {
   border-color: #6E20F4;
-  box-shadow: 0 0 0 3px rgba(110, 32, 244, 0.1);
+  box-shadow: 0 0 0 3px rgba(110, 32, 244, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .row.g-3 {
   --bs-gutter-y: 0.75rem;
   --bs-gutter-x: 0.75rem;
+}
+
+/* Ensure text-muted elements have better contrast in settings modal */
+#settingsModal .text-muted,
+.settings-modal .text-muted,
+.settings-form .text-muted {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Form labels in settings */
+.settings-form .form-label,
+.settings-form label {
+  color: rgba(255, 255, 255, 0.85) !important;
 }
 
 @media (max-width: 768px) {

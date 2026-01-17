@@ -81,6 +81,16 @@
   --transition-smooth: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
   --transition-ease: all 0.3s ease;
   --transition-bounce: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --transition-ripple: width 0.6s ease, height 0.6s ease;
+  
+  /* === Button Styles === */
+  --btn-padding: 0.625rem 1.25rem;
+  --btn-weight: 500;
+  --btn-hover-transform: translateY(-2px);
+  
+  /* === Form Styles === */
+  --form-padding: 0.75rem 1rem;
+  --form-border-width: 1px;
   
   /* === Spacing === */
   --spacing-xs: 0.25rem;
@@ -3170,24 +3180,19 @@ opacity: 0.8;
     margin: 1rem auto;
 }
 
-#settingsModal .modal-content {
-    border-radius: 16px;
-    border: none;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-    overflow: hidden;
-}
 
 #settingsModal .modal-header {
     padding: 16px 20px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-    background: #ffffff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--bg-primary, #1a1a1a) !important;
     position: relative;
+    border-radius: 16px 16px 0 0;
 }
 
 #settingsModal .modal-title {
     font-size: 18px;
     font-weight: 600;
-    color: #1a1a1a;
+    color: rgba(255, 255, 255, 0.95);
     letter-spacing: -0.2px;
 }
 
@@ -3197,19 +3202,21 @@ opacity: 0.8;
 
 #settingsModal .btn-close {
     padding: 8px;
-    opacity: 0.5;
+    opacity: 0.7;
     transition: opacity 0.2s ease;
+    filter: invert(1) brightness(1);
 }
 
 #settingsModal .btn-close:hover {
     opacity: 1;
+    filter: invert(1) brightness(1.2);
 }
 
 /* Native App Style Tabs */
 #settingsModal .nav-tabs {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding: 0 16px;
-    background: #ffffff;
+    background: var(--bg-secondary, #2d2d2d);
     display: flex;
     gap: 4px;
 }
@@ -3225,21 +3232,27 @@ opacity: 0.8;
     margin: 8px 0;
     font-size: 14px;
     font-weight: 500;
-    color: #6c757d;
+    color: rgba(255, 255, 255, 0.7);
     background: transparent;
     transition: all 0.2s ease;
     text-align: center;
 }
 
 #settingsModal .nav-tabs .nav-link:hover {
-    background: rgba(110, 32, 244, 0.06);
-    color: #6E20F4;
+    background: rgba(110, 32, 244, 0.15);
+    color: rgba(255, 255, 255, 0.9);
 }
 
 #settingsModal .nav-tabs .nav-link.active {
-    background: rgba(110, 32, 244, 0.1);
-    color: #6E20F4;
+    background: rgba(110, 32, 244, 0.2);
+    color: rgba(255, 255, 255, 0.95);
     font-weight: 600;
+    border-bottom: 2px solid #6E20F4;
+}
+
+#settingsModal .modal-content {
+    background: var(--bg-secondary, #2d2d2d);
+    border: 1px solid rgba(130, 64, 255, 0.2);
 }
 
 #settingsModal #settings-container {
@@ -3248,7 +3261,7 @@ opacity: 0.8;
     max-height: calc(90dvh - 140px);
     overflow-y: auto;
     scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    scrollbar-color: rgba(110, 32, 244, 0.3) transparent;
 }
 
 #settingsModal #settings-container::-webkit-scrollbar {
@@ -3260,21 +3273,22 @@ opacity: 0.8;
 }
 
 #settingsModal #settings-container::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(110, 32, 244, 0.2);
     border-radius: 3px;
 }
 
 #settingsModal #settings-container::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(110, 32, 244, 0.35);
 }
 
 #settingsModal .modal-footer {
     padding: 12px 20px;
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
-    background: #ffffff;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--bg-primary, #1a1a1a) !important;
     display: flex;
     justify-content: flex-end;
     gap: 12px;
+    border-radius: 0 0 16px 16px;
 }
 
 #settingsModal .modal-footer .btn {
@@ -3303,14 +3317,14 @@ opacity: 0.8;
 }
 
 #settingsModal .modal-footer .btn-outline-secondary {
-    border-color: #e5e7eb;
-    color: #6c757d;
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.8);
 }
 
 #settingsModal .modal-footer .btn-outline-secondary:hover {
-    background: #f3f4f6;
-    border-color: #d1d5db;
-    color: #374151;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.95);
 }
 
 .settings-modal-overlay {

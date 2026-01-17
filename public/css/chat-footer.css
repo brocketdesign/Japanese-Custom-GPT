@@ -480,9 +480,125 @@
 .settings-description {
     font-size: 12px;
     line-height: 1.5;
-    color: #6c757d;
+    color: rgba(255, 255, 255, 0.75);
     margin-top: 8px;
     text-align: left;
+}
+
+/* Settings section subtitle for better contrast in dark theme */
+.settings-section-subtitle {
+    font-size: 13px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.75) !important;
+    margin-top: 4px;
+}
+
+/* Preference and advanced setting descriptions */
+.preference-description,
+.advanced-setting-description {
+    font-size: 12px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.75) !important;
+    margin-top: 4px;
+}
+
+/* Ensure text-muted elements in settings modal have better contrast */
+#settingsModal .text-muted,
+#settingsModal .settings-section .text-muted,
+.settings-modal .text-muted {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Form labels in settings modal */
+#settingsModal .form-label,
+#settingsModal label,
+.settings-modal .form-label {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Additional overrides for better contrast in settings modal */
+#settingsModal .form-floating > label,
+.settings-modal .form-floating > label {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Form control placeholders */
+#settingsModal .form-control::placeholder,
+#settingsModal .form-select::placeholder,
+.settings-modal .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Border adjustments for better visibility */
+#settingsModal .settings-section-header,
+.settings-modal .settings-section-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Ensure all section titles have good contrast */
+#settingsModal .settings-section-title,
+.settings-modal .settings-section-title {
+    color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Update tab navigation for better contrast */
+#settingsModal .nav-tabs .nav-link,
+.settings-modal .nav-tabs .nav-link {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+#settingsModal .nav-tabs .nav-link.active,
+.settings-modal .nav-tabs .nav-link.active {
+    color: rgba(255, 255, 255, 0.95) !important;
+    border-bottom-color: #6E20F4 !important;
+}
+
+/* Character count and helper text */
+#settingsModal .character-count,
+#settingsModal .form-text,
+.settings-modal .character-count,
+.settings-modal .form-text {
+    color: rgba(255, 255, 255, 0.65) !important;
+}
+
+/* Form-select dropdown styling for settings modal */
+#settingsModal .form-select,
+.settings-modal .form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.75rem center !important;
+    background-size: 16px 12px !important;
+    padding-right: 2.5rem !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(130, 64, 255, 0.2) !important;
+}
+
+#settingsModal .form-select:focus,
+.settings-modal .form-select:focus {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23D2B8FF' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    border-color: #6E20F4 !important;
+    box-shadow: 0 0 0 3px rgba(110, 32, 244, 0.2) !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Style dropdown options */
+#settingsModal .form-select option,
+.settings-modal .form-select option {
+    background: #2d2d2d !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    padding: 0.5rem !important;
+}
+
+/* Ensure form-select works with form-floating */
+#settingsModal .form-floating > .form-select,
+.settings-modal .form-floating > .form-select {
+    padding-right: 2.5rem !important;
+    background-position: right 0.75rem center !important;
 }
 
 .settings-field {

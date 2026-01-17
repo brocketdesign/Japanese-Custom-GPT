@@ -316,6 +316,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/blueimp-md5@2.19.0/js/md5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="/js/viewport-height-fix.js"></script>
     <script src="/js/merge-face.js"></script>
     <script src="/js/txt2speech.js"></script>
     <script src="/js/dashboard-category.js"></script>
@@ -363,6 +364,16 @@
     })();
     </script>
     {{/if}}
+
+    <script>
+    // Update URL from / to /chat/ without page reload
+    (function() {
+        if (window.location.pathname === '/' || window.location.pathname === '') {
+            const newUrl = '/chat/' + window.location.search + window.location.hash;
+            window.history.replaceState({ path: newUrl }, '', newUrl);
+        }
+    })();
+    </script>
 
 </body>
 </html>

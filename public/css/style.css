@@ -2863,6 +2863,19 @@ backdrop-filter: blur(3px);
   z-index: 1;
   pointer-events: none;
 }
+
+/* Reduce spacing between gallery icon and profile pictures */
+#chat-thumbnail-gallery {
+  gap: 4px;
+}
+
+#chat-thumbnail-gallery .characters {
+  margin-left: 0;
+}
+
+#chat-thumbnail-gallery .album-link-styled {
+  margin-right: 0;
+}
 .assistant-image-box{
   transition: all 0.3s ease;
   max-width: 100% !important;
@@ -3221,7 +3234,8 @@ backdrop-filter: blur(3px);
 
 #settingsModal #settings-container {
     padding: 20px;
-    max-height: calc(90vh - 140px);
+    max-height: calc(calc(var(--vh, 1vh) * 90) - 140px);
+    max-height: calc(90dvh - 140px);
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
@@ -3717,20 +3731,23 @@ backdrop-filter: blur(3px);
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
-    /* Character Modal - Constrain to 80vh max on mobile */
+    /* Character Modal - Constrain to 80vh max on mobile with dynamic viewport height */
     #characterModal .modal-dialog {
-        max-height: 80vh;
+        max-height: calc(var(--vh, 1vh) * 80);
+        max-height: 80dvh; /* Modern browsers support dvh */
         margin: 1rem auto;
     }
     
     #characterModal .modal-content {
-        max-height: 80vh;
+        max-height: calc(var(--vh, 1vh) * 80);
+        max-height: 80dvh;
         display: flex;
         flex-direction: column;
     }
     
     #characterModal .modal-body {
-        max-height: calc(80vh - 120px); /* Account for header */
+        max-height: calc(calc(var(--vh, 1vh) * 80) - 120px);
+        max-height: calc(80dvh - 120px); /* Account for header */
         overflow-y: auto;
         overflow-x: hidden;
     }
@@ -3738,6 +3755,27 @@ backdrop-filter: blur(3px);
     #settingsModal .modal-dialog {
         margin: 0.5rem;
         max-width: calc(100% - 1rem);
+        max-height: calc(var(--vh, 1vh) * 95);
+        max-height: 95dvh;
+    }
+    
+    #settingsModal .modal-content {
+        max-height: calc(var(--vh, 1vh) * 95);
+        max-height: 95dvh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    #settingsModal .modal-body {
+        max-height: calc(calc(var(--vh, 1vh) * 95) - 140px);
+        max-height: calc(95dvh - 140px);
+        overflow-y: auto;
+        overflow-x: hidden;
+        flex: 1 1 auto;
+    }
+    
+    #settingsModal .modal-footer {
+        flex-shrink: 0;
     }
     
     #settingsModal .modal-header {
@@ -3759,7 +3797,8 @@ backdrop-filter: blur(3px);
     
     .settings-modal {
         margin: 0.5rem;
-        max-height: 95vh;
+        max-height: calc(var(--vh, 1vh) * 95);
+        max-height: 95dvh;
         border-radius: 14px;
     }
     
@@ -4351,18 +4390,37 @@ backdrop-filter: blur(3px);
 }
 
 @media (max-width: 576px) {
-  /* Character Modal - Ensure 80vh max on very small screens */
+  /* Character Modal - Ensure 80vh max on very small screens with dynamic viewport height */
   #characterModal .modal-dialog {
-    max-height: 80vh;
+    max-height: calc(var(--vh, 1vh) * 80);
+    max-height: 80dvh;
     margin: 0.5rem auto;
   }
   
   #characterModal .modal-content {
-    max-height: 80vh;
+    max-height: calc(var(--vh, 1vh) * 80);
+    max-height: 80dvh;
   }
   
   #characterModal .modal-body {
-    max-height: calc(80vh - 100px); /* Account for smaller header on small screens */
+    max-height: calc(calc(var(--vh, 1vh) * 80) - 100px);
+    max-height: calc(80dvh - 100px); /* Account for smaller header on small screens */
+  }
+  
+  /* Ensure all modals are properly constrained */
+  .modal-dialog {
+    max-height: calc(var(--vh, 1vh) * 90) !important;
+    max-height: 90dvh !important;
+  }
+  
+  .modal-content {
+    max-height: calc(var(--vh, 1vh) * 90) !important;
+    max-height: 90dvh !important;
+  }
+  
+  .modal-body {
+    max-height: calc(calc(var(--vh, 1vh) * 90) - 120px) !important;
+    max-height: calc(90dvh - 120px) !important;
   }
   
   .social-link {

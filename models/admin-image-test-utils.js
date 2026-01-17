@@ -12,6 +12,24 @@ const { ObjectId } = require('mongodb');
 const { createHash } = require('crypto');
 const { uploadToS3 } = require('./tool');
 
+/**
+ * Get webhook URL for Novita tasks
+ */
+function getWebhookUrl() {
+  if (process.env.NOVITA_WEBHOOK_URL) {
+    return process.env.NOVITA_WEBHOOK_URL;
+  }
+  if (process.env.MODE === 'local') {
+    if (process.env.LOCAL_WEBHOOK_URL) {
+      return process.env.LOCAL_WEBHOOK_URL;
+    }
+    return 'http://localhost:3000/novita/webhook';
+  } else {
+    const baseDomain = process.env.PUBLIC_BASE_DOMAIN || 'chatlamix.com';
+    return `https://app.${baseDomain}/novita/webhook`;
+  }
+}
+
 // Model configurations with their API endpoints and parameters
 const MODEL_CONFIGS = {
   'z-image-turbo': {

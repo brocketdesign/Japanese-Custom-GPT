@@ -11,11 +11,13 @@
     background: #ffffff;
     display: flex;
     flex-direction: column;
-    height: 90vh;
+    height: calc(var(--vh, 1vh) * 90);
+    height: 90dvh;
 }
 
 .civitai-search-modal .modal-dialog {
-    max-height: 90vh;
+    max-height: calc(var(--vh, 1vh) * 90);
+    max-height: 90dvh;
 }
 
 .civitai-search-modal .modal-header {
@@ -391,7 +393,8 @@
     }
 
     .civitai-search-modal .modal-body {
-        max-height: calc(100vh - 250px);
+        max-height: calc(calc(var(--vh, 1vh) * 100) - 250px);
+        max-height: calc(100dvh - 250px);
     }
 }
 

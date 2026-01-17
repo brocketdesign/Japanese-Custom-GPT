@@ -78,8 +78,8 @@ window.ChatScenarioModule = (function() {
             chatInput.style.display = 'none';
         }
         
-        // Hide chat-recommend during loading
-        const chatRecommend = document.getElementById('chat-recommend');
+        // Hide chat-thumbnail-gallery during loading
+        const chatRecommend = document.getElementById('chat-thumbnail-gallery');
         if (chatRecommend) {
             chatRecommend.classList.add('d-none');
             chatRecommend.classList.remove('d-flex');
@@ -386,8 +386,8 @@ window.ChatScenarioModule = (function() {
                         chatInput.style.display = 'block';
                     }
                     
-                    // Show chat-recommend
-                    const chatRecommend = document.getElementById('chat-recommend');
+                    // Show chat-thumbnail-gallery
+                    const chatRecommend = document.getElementById('chat-thumbnail-gallery');
                     if (chatRecommend) {
                         chatRecommend.classList.remove('d-none');
                         chatRecommend.classList.add('d-flex');
@@ -445,8 +445,8 @@ window.ChatScenarioModule = (function() {
             chatInput.style.display = show ? 'none' : 'block';
         }
 
-        // Hide chat-recommend when showing scenarios, restore when hiding
-        const chatRecommend = document.getElementById('chat-recommend');
+        // Hide chat-thumbnail-gallery when showing scenarios, restore when hiding
+        const chatRecommend = document.getElementById('chat-thumbnail-gallery');
         if (chatRecommend) {
             if (show) {
                 chatRecommend.classList.add('d-none');

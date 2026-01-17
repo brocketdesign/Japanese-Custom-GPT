@@ -3,8 +3,8 @@ const displayedImageIds = new Set();
 const displayedImageUrls = new Set();
 const displayedVideoIds = new Set();
 
-// Track thumb nav gallery loading state
-let thumbNavGalleryLoadedChatId = null;
+// Track thumb nav gallery loading state by userChatId
+let thumbNavGalleryLoadedUserChatId = null;
 let thumbNavGalleryLoading = false;
 const thumbNavGalleryImageIds = new Set();
 
@@ -176,10 +176,10 @@ $(document).ready(async function() {
         $('#chatContainer').empty();
         $('#suggestions').empty();
         $('#startButtonContained').remove();
-        $('#chat-recommend').empty();
+        $('#chat-thumbnail-gallery').empty();
 
         // Reset thumb nav gallery loading state for new chat
-        thumbNavGalleryLoadedChatId = null;
+        thumbNavGalleryLoadedUserChatId = null;
         thumbNavGalleryLoading = false;
         thumbNavGalleryImageIds.clear();
 
@@ -190,10 +190,10 @@ $(document).ready(async function() {
         
         $('#chatContainer').empty();
         $('#startButtonContained').remove();
-        $('#chat-recommend').empty();
+        $('#chat-thumbnail-gallery').empty();
 
         // Reset thumb nav gallery loading state for new chat
-        thumbNavGalleryLoadedChatId = null;
+        thumbNavGalleryLoadedUserChatId = null;
         thumbNavGalleryLoading = false;
         thumbNavGalleryImageIds.clear();
         $.ajax({
@@ -510,7 +510,7 @@ function setupChatInterface(chat, character, userChat, isNew) {
     albumLink.empty().append(`<i class="bi bi-images"></i><span class="image-count image-count-badge" data-chat-id="${chat._id}">${imageCount}</span>`);
 
     new bootstrap.Tooltip(albumLink[0]);
-    $('#chat-recommend').prepend(albumLink);
+    $('#chat-thumbnail-gallery').prepend(albumLink);
 
     if (window.chatToolSettings) {
         window.chatToolSettings.loadSettings();
@@ -540,8 +540,8 @@ function setupChatInterface(chat, character, userChat, isNew) {
             });
         }
 
-        // Load thumb nav gallery for current chat (only once)
-        loadThumbNavGallery(chatId);
+        // Load thumb nav gallery for current userChatId (refreshes when userChatId changes)
+        loadThumbNavGallery(chatId, userChatId);
 
         // Display chat immediately - don't block on scenario initialization
         displayChat(userChat, persona, function(){
@@ -592,17 +592,23 @@ function setupChatInterface(chat, character, userChat, isNew) {
     
     function displayInitialChatInterface(chat) {
         displayStarter(chat);
-        // Load thumb nav gallery for new chat (only once)
-        loadThumbNavGallery(chat._id);
+        // Load thumb nav gallery for new chat (refreshes when userChatId changes)
+        const currentUserChatId = sessionStorage.getItem('userChatId') || window.userChatId;
+        loadThumbNavGallery(chat._id, currentUserChatId);
     }
 
     /**
-     * Load thumb nav gallery for the current chat
-     * Safeguard: Only loads once per chat session
+     * Load thumb nav gallery for the current userChatId
+     * Safeguard: Refreshes when userChatId changes (new chat session)
      */
-    async function loadThumbNavGallery(currentChatId) {
-        // Safeguard: Don't load if already loaded for this chat
-        if (thumbNavGalleryLoadedChatId === currentChatId) {
+    async function loadThumbNavGallery(currentChatId, currentUserChatId) {
+        // Get current userChatId from session if not provided
+        if (!currentUserChatId) {
+            currentUserChatId = sessionStorage.getItem('userChatId') || window.userChatId;
+        }
+
+        // Safeguard: Don't load if already loaded for this userChatId
+        if (thumbNavGalleryLoadedUserChatId === currentUserChatId && currentUserChatId) {
             return;
         }
 
@@ -629,9 +635,9 @@ function setupChatInterface(chat, character, userChat, isNew) {
             const data = await response.json();
             const images = data.images || [];
 
-            // Only proceed if this is still the current chat
-            const currentChatIdInSession = sessionStorage.getItem('chatId');
-            if (currentChatIdInSession !== currentChatId) {
+            // Only proceed if this is still the current userChatId
+            const currentUserChatIdInSession = sessionStorage.getItem('userChatId') || window.userChatId;
+            if (currentUserChatIdInSession !== currentUserChatId) {
                 thumbNavGalleryLoading = false;
                 return;
             }
@@ -640,10 +646,10 @@ function setupChatInterface(chat, character, userChat, isNew) {
             const subscriptionStatus = user?.subscriptionStatus === 'active';
 
             // Clear existing thumbnails (except album link)
-            const albumLink = $('#chat-recommend').find('a[data-bs-toggle="tooltip"]').first();
-            $('#chat-recommend').empty();
+            const albumLink = $('#chat-thumbnail-gallery').find('a[data-bs-toggle="tooltip"]').first();
+            $('#chat-thumbnail-gallery').empty();
             if (albumLink.length) {
-                $('#chat-recommend').prepend(albumLink);
+                $('#chat-thumbnail-gallery').prepend(albumLink);
             }
 
             // Reset tracking set
@@ -661,8 +667,8 @@ function setupChatInterface(chat, character, userChat, isNew) {
                 }
             });
 
-            // Mark as loaded for this chat
-            thumbNavGalleryLoadedChatId = currentChatId;
+            // Mark as loaded for this userChatId
+            thumbNavGalleryLoadedUserChatId = currentUserChatId;
 
         } catch (error) {
             console.error('[loadThumbNavGallery] Error loading thumb nav gallery:', error);
@@ -683,7 +689,7 @@ function setupChatInterface(chat, character, userChat, isNew) {
         }
 
         // Check if element already exists in DOM (additional safeguard)
-        if ($(`#chat-recommend [data-id="${imageId}"]`).length > 0) {
+        if ($(`#chat-thumbnail-gallery [data-id="${imageId}"]`).length > 0) {
             thumbNavGalleryImageIds.add(imageId);
             return;
         }
@@ -696,7 +702,7 @@ function setupChatInterface(chat, character, userChat, isNew) {
                 ${shouldBlur ? `<div class="blur-overlay rounded-avatar rounded-circle-button-size position-absolute m-auto"></div>` : ''}
             </div>
         `);
-        $('#chat-recommend').append(card);
+        $('#chat-thumbnail-gallery').append(card);
         thumbNavGalleryImageIds.add(imageId);
     }
     function displayVideoThumb(originalImageUrl, videoUrl, origineUserChatId = null, shouldBlur = false){
@@ -717,7 +723,7 @@ function setupChatInterface(chat, character, userChat, isNew) {
         }
 
         // Check if element already exists in DOM (additional safeguard)
-        if ($(`#chat-recommend [data-video-src="${videoUrl}"]`).length > 0) {
+        if ($(`#chat-thumbnail-gallery [data-video-src="${videoUrl}"]`).length > 0) {
             thumbNavGalleryImageIds.add(videoId);
             return;
         }
@@ -731,7 +737,7 @@ function setupChatInterface(chat, character, userChat, isNew) {
                 </div>
             </div>
         `);
-        $('#chat-recommend').append(card);
+        $('#chat-thumbnail-gallery').append(card);
         thumbNavGalleryImageIds.add(videoId);
     }
 

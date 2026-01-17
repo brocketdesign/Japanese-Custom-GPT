@@ -238,6 +238,11 @@
 }
 
 /* ====== MODAL OVERRIDES ====== */
+/* Mobile viewport height fix - use dynamic viewport height for better mobile support */
+:root {
+  --vh: 1vh; /* Fallback, will be set by JavaScript */
+}
+
 .modal-content {
   border-radius: 0px !important;
   border: none !important;
@@ -287,6 +292,58 @@ padding-top: 60px !important;
   border-top: 1px solid var(--border-light) !important;
   padding: 5px !important;
   border-radius: 0px !important;
+}
+
+/* Mobile viewport height fixes for modals */
+@media (max-width: 768px) {
+  /* Use dynamic viewport height (dvh) with fallback to CSS variable */
+  .modal-dialog {
+    max-height: calc(var(--vh, 1vh) * 95) !important;
+    max-height: 95dvh !important; /* Modern browsers support dvh */
+    margin: 0.5rem auto !important;
+  }
+  
+  .modal-content {
+    max-height: calc(var(--vh, 1vh) * 95) !important;
+    max-height: 95dvh !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  .modal-body {
+    max-height: calc(calc(var(--vh, 1vh) * 95) - 150px) !important;
+    max-height: calc(95dvh - 150px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    flex: 1 1 auto !important;
+  }
+  
+  .modal-footer {
+    flex-shrink: 0 !important;
+  }
+  
+  /* Ensure modal header doesn't cause overflow */
+  .modal-header {
+    flex-shrink: 0 !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .modal-dialog {
+    max-height: calc(var(--vh, 1vh) * 90) !important;
+    max-height: 90dvh !important;
+    margin: 0.25rem auto !important;
+  }
+  
+  .modal-content {
+    max-height: calc(var(--vh, 1vh) * 90) !important;
+    max-height: 90dvh !important;
+  }
+  
+  .modal-body {
+    max-height: calc(calc(var(--vh, 1vh) * 90) - 120px) !important;
+    max-height: calc(90dvh - 120px) !important;
+  }
 }
 
 .modal-title {
@@ -678,7 +735,8 @@ padding-top: 60px !important;
   margin: 0 !important;
   max-width: 420px;           /* change as needed */
   width: 100%;
-  height: 100vh !important;  /* full viewport height */
+  height: calc(var(--vh, 1vh) * 100) !important;  /* full viewport height with mobile fix */
+  height: 100dvh !important;  /* Modern browsers support dvh */
 
   /* Remove Bootstrap's default centering */
   transform: translateX(100%) !important;
@@ -705,6 +763,8 @@ padding-top: 60px !important;
 @media (max-width: 576px) {
   .modal.fade .modal-dialog {
     max-width: 100% !important;
+    height: calc(var(--vh, 1vh) * 100) !important;
+    height: 100dvh !important;
   }
 }
 

@@ -222,12 +222,12 @@ function showVideoPromptModal() {
 window.displayOrRemoveVideoLoader = function (placeholderId, action) {
     console.log(`[displayOrRemoveVideoLoader] Action: ${action} for placeholderId: ${placeholderId}`);
     if (action === 'remove') {
-        const existingElement = $(`#chat-recommend [data-id=${placeholderId}]`);
+        const existingElement = $(`#chat-thumbnail-gallery [data-id=${placeholderId}]`);
         existingElement.remove();
         removeVideoLoader(placeholderId);
     } else {
         // Check if placeholder already exists
-        const existingPlaceholder = $(`#chat-recommend [data-id=${placeholderId}]`);
+        const existingPlaceholder = $(`#chat-thumbnail-gallery [data-id=${placeholderId}]`);
         if (existingPlaceholder.length > 0) {
             return;
         }
@@ -243,8 +243,8 @@ window.displayOrRemoveVideoLoader = function (placeholderId, action) {
             </div>
         `);
         
-        $('#chat-recommend').append(card);
-        $('#chat-recommend').scrollLeft($('#chat-recommend')[0].scrollWidth);
+        $('#chat-thumbnail-gallery').append(card);
+        $('#chat-thumbnail-gallery').scrollLeft($('#chat-thumbnail-gallery')[0].scrollWidth);
     }
 };
 /**

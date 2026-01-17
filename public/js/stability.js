@@ -196,11 +196,11 @@ window.handleRegenSpin = function (imageId, spin) {
 window.displayOrRemoveImageLoader = function (imageId, action, imagePreview) {
     
     if (action === 'remove') {
-        const existingElement = $(`#chat-recommend [data-id=${imageId}]`);
+        const existingElement = $(`#chat-thumbnail-gallery [data-id=${imageId}]`);
         existingElement.remove();
     } else {
         // Check if placeholder already exists
-        const existingPlaceholder = $(`#chat-recommend [data-id=${imageId}]`);
+        const existingPlaceholder = $(`#chat-thumbnail-gallery [data-id=${imageId}]`);
         if (existingPlaceholder.length > 0) {
             return;
         }
@@ -219,8 +219,8 @@ window.displayOrRemoveImageLoader = function (imageId, action, imagePreview) {
             </div>
         `);
         
-        $('#chat-recommend').append(card);
-        $('#chat-recommend').scrollLeft($('#chat-recommend')[0].scrollWidth);
+        $('#chat-thumbnail-gallery').append(card);
+        $('#chat-thumbnail-gallery').scrollLeft($('#chat-thumbnail-gallery')[0].scrollWidth);
     }
 };
 

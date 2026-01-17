@@ -1664,6 +1664,31 @@ async function checkTaskStatus(taskId, fastify) {
 
   return finalResult;
 }
+/**
+ * Get webhook URL for Novita tasks
+ * Uses environment variable or constructs from base domain
+ */
+function getWebhookUrl() {
+  // Check for explicit webhook URL in environment
+  if (process.env.NOVITA_WEBHOOK_URL) {
+    return process.env.NOVITA_WEBHOOK_URL;
+  }
+  
+  // Construct from base URL
+  if (process.env.MODE === 'local') {
+    // For local development, use ngrok or local tunnel URL if provided
+    if (process.env.LOCAL_WEBHOOK_URL) {
+      return process.env.LOCAL_WEBHOOK_URL;
+    }
+    // Fallback: localhost (may not work - webhook should be publicly accessible)
+    return 'http://localhost:3000/novita/webhook';
+  } else {
+    // Production: use the main domain
+    const baseDomain = process.env.PUBLIC_BASE_DOMAIN || 'chatlamix.com';
+    return `https://app.${baseDomain}/novita/webhook`;
+  }
+}
+
 // Function to trigger the Novita API for text-to-image generation
 async function fetchNovitaMagic(data, flux = false) {
   try {
@@ -1691,6 +1716,9 @@ async function fetchNovitaMagic(data, flux = false) {
       data.response_image_type = 'jpeg';
     }
     
+    // Get webhook URL
+    const webhookUrl = getWebhookUrl();
+    
     let requestBody = {
       headers: {
         Authorization: `Bearer ${process.env.NOVITA_API_KEY}`,
@@ -1705,6 +1733,9 @@ async function fetchNovitaMagic(data, flux = false) {
           response_image_type: 'jpeg',
           enable_nsfw_detection: true,
           nsfw_detection_level: 0,
+          webhook: {
+            url: webhookUrl
+          }
         },
         request: data,
       }

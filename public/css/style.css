@@ -3717,6 +3717,24 @@ backdrop-filter: blur(3px);
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
+    /* Character Modal - Constrain to 80vh max on mobile */
+    #characterModal .modal-dialog {
+        max-height: 80vh;
+        margin: 1rem auto;
+    }
+    
+    #characterModal .modal-content {
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    #characterModal .modal-body {
+        max-height: calc(80vh - 120px); /* Account for header */
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    
     #settingsModal .modal-dialog {
         margin: 0.5rem;
         max-width: calc(100% - 1rem);
@@ -4333,6 +4351,20 @@ backdrop-filter: blur(3px);
 }
 
 @media (max-width: 576px) {
+  /* Character Modal - Ensure 80vh max on very small screens */
+  #characterModal .modal-dialog {
+    max-height: 80vh;
+    margin: 0.5rem auto;
+  }
+  
+  #characterModal .modal-content {
+    max-height: 80vh;
+  }
+  
+  #characterModal .modal-body {
+    max-height: calc(80vh - 100px); /* Account for smaller header on small screens */
+  }
+  
   .social-link {
     width: 40px;
     height: 40px;

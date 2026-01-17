@@ -24,17 +24,57 @@
 #stylePromptDisplay {
     background: rgba(255, 255, 255, 0.1) !important;
     font-family: 'Courier New', monospace;
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 #finalPromptInput {
     background: rgba(255, 193, 7, 0.1) !important;
 }
 
+/* Text Area Text Overflow Handling */
+textarea.form-control {
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+#promptInput,
+#finalPromptInput,
+#sdNegativePrompt {
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    overflow-x: hidden;
+    overflow-y: auto;
+    resize: vertical;
+}
+
 /* Model Selection */
 .model-selection {
     max-height: 300px;
     overflow-y: auto;
+    overflow-x: visible;
     padding-right: 10px;
+    padding-left: 0;
+}
+
+/* Model Thumbnail */
+.model-thumbnail {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
 }
 
 .model-checkbox {
@@ -42,19 +82,40 @@
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.05);
     transition: all 0.2s ease;
+    position: relative;
+    cursor: pointer;
+    border: 2px solid transparent;
+    user-select: none;
+}
+
+.model-checkbox .form-check-input {
+    display: none !important;
+}
+
+.model-checkbox .form-check-label {
+    cursor: pointer;
+    pointer-events: none;
+    margin: 0;
 }
 
 .model-checkbox:hover {
     background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(130, 64, 255, 0.3);
 }
 
-.model-checkbox input:checked + label {
-    color: #8240FF;
-}
-
-.model-checkbox input:checked {
-    background-color: #8240FF;
+.model-checkbox.selected {
+    background: rgba(130, 64, 255, 0.2);
     border-color: #8240FF;
+    box-shadow: 0 0 0 2px rgba(130, 64, 255, 0.3);
+}
+
+.model-checkbox.selected .form-check-label {
+    color: #D2B8FF;
+}
+
+.model-checkbox.selected .form-check-label .fw-semibold {
+    color: #fff;
+    font-weight: 700;
 }
 
 /* Result Cards */
@@ -289,6 +350,32 @@
     object-fit: contain;
 }
 
+/* Rating Stars */
+.rating-stars {
+    font-size: 2rem;
+    cursor: pointer;
+}
+
+.rating-star {
+    color: #6c757d;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.rating-star:hover {
+    color: #ffc107;
+    transform: scale(1.1);
+}
+
+.rating-star.active,
+.rating-star.filled {
+    color: #ffc107;
+}
+
+.rating-star.bi-star-fill {
+    color: #ffc107;
+}
+
 /* Loading States */
 .spinner-border-sm {
     width: 1rem;
@@ -307,6 +394,17 @@
     }
 }
 
+@media (max-width: 768px) {
+    /* Ensure buttons are full width on small screens */
+    .d-flex.gap-2.w-100.w-md-auto {
+        width: 100% !important;
+    }
+    
+    .d-flex.gap-2.w-100.w-md-auto .btn {
+        flex: 1;
+    }
+}
+
 @media (max-width: 576px) {
     .stat-card .row {
         font-size: 0.85rem;
@@ -314,6 +412,17 @@
     
     .result-card h6 {
         font-size: 0.9rem;
+    }
+    
+    /* Make header title smaller on very small screens */
+    h1.text-white {
+        font-size: 1.5rem;
+    }
+    
+    /* Ensure buttons stack properly */
+    .d-flex.gap-2.w-100.w-md-auto {
+        flex-direction: row;
+        gap: 0.5rem;
     }
 }
 

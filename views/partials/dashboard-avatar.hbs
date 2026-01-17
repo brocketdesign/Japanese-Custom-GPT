@@ -81,15 +81,23 @@
                     <span class="user-points-balance">0</span>
                 </span>
             </div>
-            <!-- Avatar Button -->
-            <button id="avatarMenuBtn" 
-                class="p-0 border-0 shadow-0 bg-transparent avatar-bg {{#if (eq user.subscriptionStatus 'active')}} bg-purple {{/if}}" 
-                type="button" 
-                data-bs-toggle="offcanvas" 
-                data-bs-target="#userMenuOffcanvas" 
-                aria-controls="userMenuOffcanvas"
-                style="border-radius: 50%; background-size: cover; background-position: top; background-image: url('{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}');">
-            </button>
+            <!-- Avatar Button with Notification Badge -->
+            <div class="position-relative">
+                <button id="avatarMenuBtn" 
+                    class="p-0 border-0 shadow-0 bg-transparent avatar-bg {{#if (eq user.subscriptionStatus 'active')}} bg-purple {{/if}}" 
+                    type="button" 
+                    data-bs-toggle="offcanvas" 
+                    data-bs-target="#userMenuOffcanvas" 
+                    aria-controls="userMenuOffcanvas"
+                    style="border-radius: 50%; background-size: cover; background-position: top; background-image: url('{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}');">
+                </button>
+                <!-- Notification Badge on Avatar -->
+                <span id="avatarNotificationBadge" 
+                      class="position-absolute badge rounded-pill bg-danger d-none"
+                      style="top: -2px; right: -2px; font-size: 0.65rem; min-width: 18px; padding: 3px 5px;">
+                    0
+                </span>
+            </div>
         </div>
     {{/unless}}
 {{/if}}
@@ -132,6 +140,12 @@
                 <a class="list-group-item list-group-item-action border-0 menu-item" href="#" data-bs-toggle="modal" data-bs-target="#userPointsModal">
                     <i class="bi bi-coin me-3"></i>
                     {{userPointsTranslations.points.title}}: <span class="user-points-balance ms-1">0</span>
+                </a>
+                
+                <!-- Notifications Menu Item -->
+                <a class="list-group-item list-group-item-action border-0 menu-item position-relative" href="#" data-bs-toggle="modal" data-bs-target="#userNotificationsModal" id="notificationsMenuItem">
+                    <i class="bi bi-bell me-3"></i>{{translations.avatar.notifications}}
+                    <span id="menuNotificationBadge" class="badge rounded-pill bg-danger ms-auto d-none">0</span>
                 </a>
                 
                 <div class="d-none">
@@ -186,8 +200,17 @@
                         <i class="bi bi-clock me-3"></i>{{translations.admin_model_chats.title}}
                     </a>
                     
+                    <hr class="my-2">
+                    <div class="px-3 py-2">
+                        <small class="text-muted fw-bold">TEST</small>
+                    </div>
+                    
                     <a class="list-group-item list-group-item-action border-0 menu-item" href="/admin/chat-model-test">
                         <i class="bi bi-flask me-3"></i>{{translations.admin_model_test.title}}
+                    </a>
+                    
+                    <a class="list-group-item list-group-item-action border-0 menu-item" href="/admin/image-test">
+                        <i class="bi bi-images me-3"></i>Image Model
                     </a>
                     
                     <a class="list-group-item list-group-item-action border-0 menu-item" href="/admin/notifications">
@@ -213,6 +236,37 @@
     </div>
     {{/unless}}
 {{/if}}
+
+<!-- User Notifications Modal -->
+<div class="modal fade" id="userNotificationsModal" tabindex="-1" aria-labelledby="userNotificationsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="background: var(--bg-secondary, #2d2d2d); border: 1px solid var(--glass-border, rgba(130, 64, 255, 0.3)); border-radius: 16px;">
+            <div class="modal-header border-0" style="background: var(--bg-primary, #1a1a1a); border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title" id="userNotificationsModalLabel" style="color: var(--text-primary, #fff);">
+                    <i class="bi bi-bell-fill me-2 text-primary"></i>{{translations.avatar.notifications}}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0" style="max-height: 60vh; overflow-y: auto;">
+                <div id="notificationsLoading" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div id="notificationsList" class="d-none"></div>
+                <div id="noNotifications" class="text-center py-5 d-none">
+                    <i class="bi bi-bell-slash text-muted" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-3 mb-0">{{translations.notifications.empty}}</p>
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="markAllReadBtn" style="border-radius: 20px;">
+                    <i class="bi bi-check-all me-1"></i>{{translations.notifications.markAllRead}}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <link rel="stylesheet" href="/css/dashboard-avatar.css">
 
@@ -329,5 +383,203 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Notification System
+    initNotificationSystem();
 });
+
+// Initialize notification system
+function initNotificationSystem() {
+    // Load notification count on page load
+    loadNotificationCount();
+    
+    // Refresh count periodically (every 60 seconds)
+    setInterval(loadNotificationCount, 60000);
+    
+    // Load notifications when modal opens
+    const notificationsModal = document.getElementById('userNotificationsModal');
+    if (notificationsModal) {
+        notificationsModal.addEventListener('show.bs.modal', loadUserNotifications);
+    }
+    
+    // Mark all as read button
+    const markAllReadBtn = document.getElementById('markAllReadBtn');
+    if (markAllReadBtn) {
+        markAllReadBtn.addEventListener('click', markAllNotificationsRead);
+    }
+}
+
+// Load notification count and update badges
+async function loadNotificationCount() {
+    try {
+        const res = await fetch('/notifications/count');
+        if (!res.ok) return;
+        
+        const data = await res.json();
+        const count = data.count || 0;
+        
+        // Update avatar badge
+        const avatarBadge = document.getElementById('avatarNotificationBadge');
+        if (avatarBadge) {
+            if (count > 0) {
+                avatarBadge.textContent = count > 99 ? '99+' : count;
+                avatarBadge.classList.remove('d-none');
+            } else {
+                avatarBadge.classList.add('d-none');
+            }
+        }
+        
+        // Update menu badge
+        const menuBadge = document.getElementById('menuNotificationBadge');
+        if (menuBadge) {
+            if (count > 0) {
+                menuBadge.textContent = count > 99 ? '99+' : count;
+                menuBadge.classList.remove('d-none');
+            } else {
+                menuBadge.classList.add('d-none');
+            }
+        }
+    } catch (err) {
+        console.error('Error loading notification count:', err);
+    }
+}
+
+// Load user notifications for modal
+async function loadUserNotifications() {
+    const loadingEl = document.getElementById('notificationsLoading');
+    const listEl = document.getElementById('notificationsList');
+    const emptyEl = document.getElementById('noNotifications');
+    
+    loadingEl.classList.remove('d-none');
+    listEl.classList.add('d-none');
+    emptyEl.classList.add('d-none');
+    
+    try {
+        const res = await fetch('/notifications');
+        if (!res.ok) throw new Error('Failed to load notifications');
+        
+        const notifications = await res.json();
+        
+        loadingEl.classList.add('d-none');
+        
+        if (!notifications || notifications.length === 0) {
+            emptyEl.classList.remove('d-none');
+            return;
+        }
+        
+        listEl.innerHTML = notifications.map(notif => `
+            <div class="notification-item p-3 border-bottom ${!notif.viewed ? 'bg-opacity-10 bg-primary' : ''}" 
+                 data-id="${notif._id}" 
+                 style="border-color: var(--glass-border, rgba(130, 64, 255, 0.2)) !important; cursor: pointer;"
+                 onclick="handleNotificationClick('${notif._id}', '${notif.data?.link || ''}')">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="notification-icon flex-shrink-0">
+                        ${getNotificationIcon(notif.type)}
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h6 class="mb-1" style="color: var(--text-primary, #fff);">${escapeHtml(notif.title)}</h6>
+                            ${!notif.viewed ? '<span class="badge bg-primary" style="font-size: 0.65rem;">New</span>' : ''}
+                        </div>
+                        <p class="mb-1 text-muted small">${escapeHtml(notif.message)}</p>
+                        <small class="text-muted">${formatNotificationTime(notif.createdAt)}</small>
+                        ${notif.data?.link ? `<div class="mt-2"><span class="badge bg-primary bg-opacity-20 text-primary">${notif.data?.actionText || 'View'} →</span></div>` : ''}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        listEl.classList.remove('d-none');
+    } catch (err) {
+        console.error('Error loading notifications:', err);
+        loadingEl.classList.add('d-none');
+        emptyEl.innerHTML = '<i class="bi bi-exclamation-circle text-danger" style="font-size: 3rem;"></i><p class="text-muted mt-3 mb-0">Failed to load notifications</p>';
+        emptyEl.classList.remove('d-none');
+    }
+}
+
+// Handle notification click
+async function handleNotificationClick(notificationId, link) {
+    try {
+        await fetch(`/notifications/viewed/${notificationId}`, { method: 'PUT' });
+        loadNotificationCount();
+        
+        if (link && link !== '' && link !== 'undefined') {
+            window.location.href = link;
+        } else {
+            // Update the visual state
+            const item = document.querySelector(`[data-id="${notificationId}"]`);
+            if (item) {
+                item.classList.remove('bg-primary', 'bg-opacity-10');
+                const badge = item.querySelector('.badge.bg-primary');
+                if (badge && badge.textContent === 'New') badge.remove();
+            }
+        }
+    } catch (err) {
+        console.error('Error marking notification as viewed:', err);
+    }
+}
+
+// Mark all notifications as read
+async function markAllNotificationsRead() {
+    const items = document.querySelectorAll('.notification-item[data-id]');
+    const promises = [];
+    
+    items.forEach(item => {
+        const id = item.getAttribute('data-id');
+        if (id) {
+            promises.push(fetch(`/notifications/viewed/${id}`, { method: 'PUT' }));
+        }
+    });
+    
+    try {
+        await Promise.all(promises);
+        loadNotificationCount();
+        loadUserNotifications();
+        if (window.showNotification) {
+            window.showNotification('All notifications marked as read', 'success');
+        }
+    } catch (err) {
+        console.error('Error marking all as read:', err);
+    }
+}
+
+// Get notification icon based on type
+function getNotificationIcon(type) {
+    const icons = {
+        info: '<div class="rounded-circle bg-info bg-opacity-20 p-2"><i class="bi bi-info-circle text-info"></i></div>',
+        success: '<div class="rounded-circle bg-success bg-opacity-20 p-2"><i class="bi bi-check-circle text-success"></i></div>',
+        warning: '<div class="rounded-circle bg-warning bg-opacity-20 p-2"><i class="bi bi-exclamation-triangle text-warning"></i></div>',
+        error: '<div class="rounded-circle bg-danger bg-opacity-20 p-2"><i class="bi bi-x-circle text-danger"></i></div>',
+        video: '<div class="rounded-circle bg-primary bg-opacity-20 p-2"><i class="bi bi-camera-video text-primary"></i></div>',
+        image: '<div class="rounded-circle bg-primary bg-opacity-20 p-2"><i class="bi bi-image text-primary"></i></div>'
+    };
+    return icons[type] || icons.info;
+}
+
+// Format notification time
+function formatNotificationTime(dateStr) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now - date;
+    
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    return date.toLocaleDateString();
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 </script>

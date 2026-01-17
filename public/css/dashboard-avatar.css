@@ -379,3 +379,112 @@
         padding: 0.75rem;
     }
 }
+
+/* ============================================================================
+   NOTIFICATION BADGE & MODAL STYLES
+   ============================================================================ */
+
+/* Avatar Notification Badge */
+#avatarNotificationBadge {
+    animation: pulse-badge 2s infinite;
+    box-shadow: 0 0 0 2px var(--bg-primary, #1a1a1a);
+    z-index: 10;
+    pointer-events: none;
+}
+
+@keyframes pulse-badge {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* Menu Notification Badge */
+#menuNotificationBadge {
+    font-size: 0.7rem;
+    min-width: 20px;
+    padding: 2px 6px;
+}
+
+/* Notifications Menu Item */
+#notificationsMenuItem {
+    display: flex;
+    align-items: center;
+}
+
+/* Notification Modal */
+#userNotificationsModal .modal-content {
+    max-height: 80vh;
+}
+
+#userNotificationsModal .modal-body {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color, #8240FF) transparent;
+}
+
+#userNotificationsModal .modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+#userNotificationsModal .modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#userNotificationsModal .modal-body::-webkit-scrollbar-thumb {
+    background-color: var(--primary-color, #8240FF);
+    border-radius: 3px;
+}
+
+/* Notification Item Styles */
+.notification-item {
+    transition: background-color 0.2s ease;
+}
+
+.notification-item:hover {
+    background-color: rgba(130, 64, 255, 0.1) !important;
+}
+
+.notification-item:first-child {
+    border-top: none !important;
+}
+
+.notification-item .notification-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notification-item .notification-icon .rounded-circle {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Unread notification highlight */
+.notification-item.bg-opacity-10 {
+    border-left: 3px solid var(--primary-color, #8240FF) !important;
+}
+
+/* Mobile adjustments for notification modal */
+@media (max-width: 576px) {
+    #userNotificationsModal .modal-dialog {
+        margin: 0.5rem;
+    }
+    
+    #userNotificationsModal .modal-body {
+        max-height: 70vh;
+    }
+    
+    .notification-item {
+        padding: 0.75rem !important;
+    }
+    
+    .notification-item .notification-icon .rounded-circle {
+        width: 32px;
+        height: 32px;
+    }
+}

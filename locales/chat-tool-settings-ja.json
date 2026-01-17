@@ -81,6 +81,8 @@
     "premium": "プレミアム",
     "selectStandardVoice": "スタンダード音声を選択",
     "selectPremiumVoice": "プレミアム音声を選択",
+    "playSample": "サンプルを再生",
+    "playing": "再生中...",
     "premiumVoicesPremiumFeature": "高品質プレミアム音声オプションにアクセスするにはプレミアムサブスクリプションが必要です",
     "getPremiumVoice": "プレミアム音声を取得",
     "premiumVoicesFeature": "強化されたオーディオ体験のためのプレミアム音声オプション",

@@ -81,6 +81,8 @@
     "premium": "Premium",
     "selectStandardVoice": "Sélectionner une voix standard",
     "selectPremiumVoice": "Sélectionner une voix premium",
+    "playSample": "Lire un échantillon",
+    "playing": "Lecture...",
     "premiumVoicesPremiumFeature": "Abonnement premium requis pour accéder aux options vocales premium de haute qualité",
     "getPremiumVoice": "Obtenir une voix Premium",
     "premiumVoicesFeature": "Options de voix premium pour une expérience audio améliorée",

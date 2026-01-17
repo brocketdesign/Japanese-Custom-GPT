@@ -81,6 +81,8 @@
     "premium": "Premium",
     "selectStandardVoice": "Select Standard Voice",
     "selectPremiumVoice": "Select Premium Voice",
+    "playSample": "Play Sample",
+    "playing": "Playing...",
     "premiumVoicesPremiumFeature": "Premium subscription required to access high-quality premium voice options",
     "getPremiumVoice": "Get Premium Voice",
     "premiumVoicesFeature": "Premium voice options for enhanced audio experience",

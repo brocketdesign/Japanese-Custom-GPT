@@ -327,7 +327,9 @@ $(document).ready(async function() {
                         // Display placeholder for background task
                         displayBackgroundTaskPlaceholder(task);
                         
-                        // Start polling for this specific task
+                        // Start fallback polling for this task
+                        // Note: Webhooks trigger WebSocket notifications for completion,
+                        // so polling is only a fallback if WebSocket fails or is delayed
                         pollBackgroundTask(task.taskId, task.placeholderId);
                     }
                 });
@@ -371,18 +373,63 @@ $(document).ready(async function() {
         }
     }
 
+    // Store active polling intervals to allow cleanup if WebSocket completes first
+    const activePollIntervals = new Map();
+    
     async function pollBackgroundTask(taskId, placeholderId) {
-        const pollInterval = setInterval(async () => {
+        // Check if WebSocket already completed this task (check for loader removal)
+        const loaderElement = $(`.image-loader[data-placeholder-id="${placeholderId}"]`);
+        if (loaderElement.length === 0) {
+            // Loader already removed by WebSocket, no need to poll
+            console.log(`[pollBackgroundTask] Task ${taskId} already completed via WebSocket, skipping poll`);
+            return;
+        }
+        
+        let pollCount = 0;
+        const maxPolls = 24; // Max 24 polls = 2 minutes (5s * 24)
+        const pollInterval = 5000; // 5 seconds
+        
+        const intervalId = setInterval(async () => {
+            pollCount++;
+            
+            // Check if WebSocket already handled this (loader removed)
+            const currentLoader = $(`.image-loader[data-placeholder-id="${placeholderId}"]`);
+            if (currentLoader.length === 0) {
+                console.log(`[pollBackgroundTask] Task ${taskId} completed via WebSocket during poll, stopping poll`);
+                clearInterval(intervalId);
+                activePollIntervals.delete(taskId);
+                return;
+            }
+            
+            // Timeout after max polls (fallback safety net)
+            if (pollCount >= maxPolls) {
+                console.warn(`[pollBackgroundTask] Task ${taskId} polling timeout after ${maxPolls} attempts`);
+                clearInterval(intervalId);
+                activePollIntervals.delete(taskId);
+                // Don't remove loader - let WebSocket handle it when it arrives
+                return;
+            }
+            
             try {
                 const response = await fetch(`/api/task-status/${taskId}`);
                 const taskStatus = await response.json();
                 
                 if (taskStatus.status === 'completed') {
-                    clearInterval(pollInterval);
+                    clearInterval(intervalId);
+                    activePollIntervals.delete(taskId);
+                    
+                    // Double-check WebSocket didn't already handle this
+                    const finalLoader = $(`.image-loader[data-placeholder-id="${placeholderId}"]`);
+                    if (finalLoader.length === 0) {
+                        console.log(`[pollBackgroundTask] Task ${taskId} already handled by WebSocket, skipping display`);
+                        return;
+                    }
+                    
                     displayOrRemoveImageLoader(placeholderId, 'remove');
                     
-                    // Display the completed images
+                    // Display the completed images (fallback if WebSocket missed it)
                     if (taskStatus.images && taskStatus.images.length > 0) {
+                        console.log(`[pollBackgroundTask] Fallback: Displaying ${taskStatus.images.length} images for task ${taskId}`);
                         taskStatus.images.forEach(image => {
                             window.parent.postMessage({
                                 event: 'imageGenerated',
@@ -396,16 +443,32 @@ $(document).ready(async function() {
                         });
                     }
                 } else if (taskStatus.status === 'failed') {
-                    clearInterval(pollInterval);
+                    clearInterval(intervalId);
+                    activePollIntervals.delete(taskId);
                     displayOrRemoveImageLoader(placeholderId, 'remove');
                     showNotification(window.translations.image_generation_failed || 'Image generation failed', 'error');
                 }
             } catch (error) {
-                console.error('Error polling background task:', error);
-                clearInterval(pollInterval);
-                displayOrRemoveImageLoader(placeholderId, 'remove');
+                console.error(`[pollBackgroundTask] Error polling task ${taskId}:`, error);
+                // Don't clear on single error - continue polling as fallback
+                if (pollCount >= maxPolls) {
+                    clearInterval(intervalId);
+                    activePollIntervals.delete(taskId);
+                }
             }
-        }, 5000); // Poll every 5 seconds for background tasks
+        }, pollInterval);
+        
+        activePollIntervals.set(taskId, intervalId);
+        console.log(`[pollBackgroundTask] Started fallback polling for task ${taskId} (max ${maxPolls} attempts, ${pollInterval/1000}s interval)`);
+    }
+    
+    // Helper to stop polling if WebSocket completes the task
+    function stopPollingForTask(taskId) {
+        if (activePollIntervals.has(taskId)) {
+            clearInterval(activePollIntervals.get(taskId));
+            activePollIntervals.delete(taskId);
+            console.log(`[stopPollingForTask] Stopped polling for task ${taskId} (completed via WebSocket)`);
+        }
     }
 
     async function handleChatSuccess(data, fetch_reset, fetch_userId, userChatId) {
@@ -607,18 +670,24 @@ function setupChatInterface(chat, character, userChat, isNew) {
             currentUserChatId = sessionStorage.getItem('userChatId') || window.userChatId;
         }
 
+        // Debug log
+        console.log(`[DEBUG loadThumbNavGallery] Loading images for userChatId: ${currentUserChatId}, chatId: ${currentChatId}`);
+
         // Safeguard: Don't load if already loaded for this userChatId
         if (thumbNavGalleryLoadedUserChatId === currentUserChatId && currentUserChatId) {
+            console.log(`[DEBUG loadThumbNavGallery] Already loaded for userChatId: ${currentUserChatId}, skipping`);
             return;
         }
 
         // Safeguard: Don't load if currently loading
         if (thumbNavGalleryLoading) {
+            console.log(`[DEBUG loadThumbNavGallery] Already loading, skipping`);
             return;
         }
 
         // Safeguard: Ensure we have a valid chat ID
         if (!currentChatId) {
+            console.log(`[DEBUG loadThumbNavGallery] No chatId provided, skipping`);
             return;
         }
 
@@ -626,8 +695,16 @@ function setupChatInterface(chat, character, userChat, isNew) {
         thumbNavGalleryLoading = true;
 
         try {
-            // Fetch images from the current chat
-            const response = await fetch(`/chat/${currentChatId}/images?page=1`);
+            // Build URL with userChatId if available
+            let url = `/chat/${currentChatId}/images?page=1`;
+            if (currentUserChatId) {
+                url += `&userChatId=${currentUserChatId}`;
+            }
+
+            console.log(`[DEBUG loadThumbNavGallery] Fetching from: ${url}`);
+
+            // Fetch images from the current chat (filtered by userChatId if provided)
+            const response = await fetch(url);
             if (!response.ok) {
                 throw new Error(`Failed to load images: ${response.status}`);
             }
@@ -635,15 +712,23 @@ function setupChatInterface(chat, character, userChat, isNew) {
             const data = await response.json();
             const images = data.images || [];
 
+            console.log(`[DEBUG loadThumbNavGallery] Loaded ${images.length} images for userChatId: ${currentUserChatId}`);
+            console.log(`[DEBUG loadThumbNavGallery] Image details:`, images.map(img => ({
+                imageId: img._id || img.imageId,
+                imageUrl: img.imageUrl,
+                nsfw: img.nsfw
+            })));
+
             // Only proceed if this is still the current userChatId
             const currentUserChatIdInSession = sessionStorage.getItem('userChatId') || window.userChatId;
             if (currentUserChatIdInSession !== currentUserChatId) {
+                console.log(`[DEBUG loadThumbNavGallery] userChatId changed during load (was: ${currentUserChatId}, now: ${currentUserChatIdInSession}), aborting`);
                 thumbNavGalleryLoading = false;
                 return;
             }
 
             // Get user subscription status for blur logic
-            const subscriptionStatus = user?.subscriptionStatus === 'active';
+            const subscriptionStatus = (window.user || user)?.subscriptionStatus === 'active';
 
             // Clear existing thumbnails (except album link)
             const albumLink = $('#chat-thumbnail-gallery').find('a[data-bs-toggle="tooltip"]').first();
@@ -659,13 +744,21 @@ function setupChatInterface(chat, character, userChat, isNew) {
             images.forEach(image => {
                 const imageId = image._id || image.imageId;
                 const imageUrl = image.imageUrl || image.url;
-                const isNsfw = image.nsfw || false;
-                const shouldBlur = isNsfw && !subscriptionStatus;
+                
+                // Use shouldBlurNSFW function to properly determine if image should be blurred
+                // This handles NSFW + subscription + showNSFW preference logic
+                const shouldBlur = typeof window.shouldBlurNSFW === 'function' 
+                    ? window.shouldBlurNSFW(image, subscriptionStatus)
+                    : (image.nsfw && !subscriptionStatus); // Fallback if function not available
+
+                console.log(`[DEBUG loadThumbNavGallery] Image ${imageId}: nsfw=${image.nsfw}, subscriptionStatus=${subscriptionStatus}, shouldBlur=${shouldBlur}`);
 
                 if (imageId && imageUrl && !thumbNavGalleryImageIds.has(imageId)) {
                     displayImageThumb(imageId, imageUrl, null, shouldBlur);
                 }
             });
+
+            console.log(`[DEBUG loadThumbNavGallery] Displayed ${thumbNavGalleryImageIds.size} images in gallery for userChatId: ${currentUserChatId}`);
 
             // Mark as loaded for this userChatId
             thumbNavGalleryLoadedUserChatId = currentUserChatId;
@@ -694,14 +787,43 @@ function setupChatInterface(chat, character, userChat, isNew) {
             return;
         }
 
+        // Create the card element
         var card = $(`
             <div 
             onclick="showImagePreview(this)"
             class="assistant-image-box card custom-card bg-transparent shadow-0 border-0 px-1 col-auto" style="cursor:pointer;" data-src="${imageUrl}" data-id="${imageId}">
-                <div style="background-image:url(${imageUrl});" class="card-img-top rounded-avatar rounded-circle-button-size position-relative m-auto"></div>
+                <div class="card-img-top rounded-avatar rounded-circle-button-size position-relative m-auto" data-image-id="${imageId}" data-original-url="${imageUrl}"></div>
                 ${shouldBlur ? `<div class="blur-overlay rounded-avatar rounded-circle-button-size position-absolute m-auto"></div>` : ''}
             </div>
         `);
+        
+        const imageDiv = card.find('.card-img-top');
+        
+        if (shouldBlur) {
+            // Fetch blurred image for NSFW content
+            $.ajax({
+                url: '/blur-image?url=' + encodeURIComponent(imageUrl),
+                method: 'GET',
+                xhrFields: {
+                    withCredentials: true,
+                    responseType: 'blob'
+                },
+                success: function(blob) {
+                    // Convert blob to object URL and set as background-image
+                    const blurredUrl = URL.createObjectURL(blob);
+                    imageDiv.css('background-image', `url(${blurredUrl})`);
+                },
+                error: function() {
+                    console.error(`[displayImageThumb] Failed to load blurred image for ${imageId}`);
+                    // Fallback to original image if blur fails
+                    imageDiv.css('background-image', `url(${imageUrl})`);
+                }
+            });
+        } else {
+            // Use original image
+            imageDiv.css('background-image', `url(${imageUrl})`);
+        }
+        
         $('#chat-thumbnail-gallery').append(card);
         thumbNavGalleryImageIds.add(imageId);
     }

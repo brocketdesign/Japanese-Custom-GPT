@@ -8,12 +8,12 @@
 
 /* Toggle Button */
 #live-goals-widget{
-    top: 180px;
+    top: 105px;
     margin-top: 10px;
 }
 @media screen and (max-width: 768px) {
     #live-goals-widget{
-    top: 170px;
+    top: 105px;
     margin-top: 10px;
     }
 }

@@ -286,6 +286,7 @@ async function startGeneration() {
 
     const size = document.getElementById('sizeSelect').value;
     const style = document.querySelector('input[name="stylePreset"]:checked')?.value || '';
+    const imagesPerModel = parseInt(document.getElementById('imagesPerModel').value) || 1;
     
     // Get the final prompt (with style applied and any user edits)
     const finalPrompt = getFinalPrompt();
@@ -321,24 +322,14 @@ async function startGeneration() {
     document.getElementById('totalTimeDisplay').classList.remove('d-none');
     startTotalTimer();
 
-    // Create result cards for each standard model
-    selectedModels.forEach(model => {
-        createResultCard(model.id, model.name);
-    });
-    
-    // Create result cards for each SD model
-    selectedSDModels.forEach(sdModel => {
-        const cardId = `sd-${sdModel.modelId}`;
-        createResultCard(cardId, `SD - ${sdModel.name}`);
-    });
-
     try {
         const requestBody = {
             prompt: finalPrompt, // Send the final edited prompt
             basePrompt: basePrompt, // Also send base prompt for reference
             size,
             style,
-            skipStyleApplication: !!style // Tell server not to apply style again
+            skipStyleApplication: !!style, // Tell server not to apply style again
+            imagesPerModel: imagesPerModel // Number of images to generate per model
         };
         
         // Add standard models if any selected
@@ -371,16 +362,25 @@ async function startGeneration() {
 
         console.log('[AdminImageTest] Generation started:', data);
 
-        // Process each task
+        // Process each task - create cards dynamically based on tasks returned
         data.tasks.forEach(task => {
+            // Use cardId from task if provided (for multiple images per model), otherwise derive it
+            let cardId = task.cardId || task.modelId;
+            
             // For SD models, use the custom card ID
-            let cardId = task.modelId;
             if (task.modelId === 'sd-txt2img' && task.sdModelName) {
                 // Find the matching SD model to get the card ID
                 const matchingSD = selectedSDModels.find(sd => sd.model === task.sdModelName || sd.name === task.sdModelName);
-                if (matchingSD) {
+                if (matchingSD && !task.cardId) {
                     cardId = `sd-${matchingSD.modelId}`;
                 }
+            }
+            
+            // Create card if it doesn't exist (for dynamically created tasks)
+            const cardElement = document.getElementById(`result-${cardId}`);
+            if (!cardElement) {
+                const displayName = task.modelName || task.modelId;
+                createResultCard(cardId, displayName);
             }
             
             state.activeTasks.set(cardId, task);
@@ -892,7 +892,13 @@ async function refreshStats() {
  */
 async function loadHistory() {
     try {
-        const response = await fetch('/admin/image-test/history?limit=50');
+        // Get selected model filter
+        const modelFilter = document.getElementById('modelFilter')?.value || '';
+        const url = modelFilter 
+            ? `/admin/image-test/history?limit=50&modelId=${encodeURIComponent(modelFilter)}`
+            : '/admin/image-test/history?limit=50';
+        
+        const response = await fetch(url);
         const data = await response.json();
 
         const tbody = document.getElementById('historyTableBody');

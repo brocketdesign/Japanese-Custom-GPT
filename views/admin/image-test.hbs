@@ -9,18 +9,18 @@
         <!-- Header -->
         <div class="row mb-4">
             <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                    <div class="flex-grow-1">
                         <h1 class="text-white mb-1">
                             <i class="bi bi-images me-2"></i>Image Model Test Dashboard
                         </h1>
                         <p class="text-muted mb-0">Test and compare multiple Novita AI image generation models</p>
                     </div>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-outline-info" onclick="refreshStats()">
+                    <div class="d-flex gap-2 w-100 w-md-auto">
+                        <button class="btn btn-outline-info flex-fill flex-md-grow-0" onclick="refreshStats()">
                             <i class="bi bi-arrow-clockwise me-1"></i>Refresh Stats
                         </button>
-                        <button class="btn btn-outline-danger" onclick="resetAllStats()">
+                        <button class="btn btn-outline-danger flex-fill flex-md-grow-0" onclick="resetAllStats()">
                             <i class="bi bi-trash me-1"></i>Reset Stats
                         </button>
                     </div>
@@ -75,27 +75,111 @@
                         {{#if activeSDModels.length}}
                         <div class="mb-4">
                             <label class="form-label text-white fw-bold">Select SD Models to Test</label>
-                            <div class="model-selection" style="max-height: 200px;">
-                                {{#each activeSDModels}}
-                                <div class="form-check model-checkbox mb-2">
-                                    <input class="form-check-input sd-model-checkbox" type="checkbox" 
-                                           value="{{this.modelId}}" 
-                                           id="sd-model-{{this.modelId}}" 
-                                           data-model="{{this.model}}"
-                                           data-model-name="{{this.name}}"
-                                           data-model-id="{{this.modelId}}">
-                                    <label class="form-check-label text-white" for="sd-model-{{this.modelId}}">
-                                        <span class="fw-semibold">{{this.name}}</span>
-                                        <span class="badge bg-warning ms-1">SD</span>
-                                        <br>
-                                        <small class="text-muted">{{this.model}}</small>
-                                        {{#if this.style}}
-                                        <br>
-                                        <small class="text-info">Style: {{this.style}}</small>
-                                        {{/if}}
-                                    </label>
+                            <div class="model-selection" style="max-height: 400px;">
+                                <!-- Anime Style Models -->
+                                {{#if sdModelsByStyle.anime.length}}
+                                <div class="mb-3">
+                                    <h6 class="text-info mb-2">
+                                        <i class="bi bi-palette me-1"></i>Anime Style
+                                    </h6>
+                                    {{#each sdModelsByStyle.anime}}
+                                    <div class="form-check model-checkbox mb-2">
+                                        <input class="form-check-input sd-model-checkbox" type="checkbox" 
+                                               value="{{this.modelId}}" 
+                                               id="sd-model-{{this.modelId}}" 
+                                               data-model="{{this.model}}"
+                                               data-model-name="{{this.name}}"
+                                               data-model-id="{{this.modelId}}">
+                                        <label class="form-check-label text-white" for="sd-model-{{this.modelId}}">
+                                            <div class="d-flex align-items-start gap-2">
+                                                {{#if this.image}}
+                                                <img src="{{this.image}}" 
+                                                     alt="{{this.name}}" 
+                                                     class="model-thumbnail"
+                                                     onerror="this.style.display='none'">
+                                                {{/if}}
+                                                <div class="flex-grow-1">
+                                                    <span class="fw-semibold">{{this.name}}</span>
+                                                    <span class="badge bg-warning ms-1">SD</span>
+                                                    <br>
+                                                    <small class="text-muted">{{this.model}}</small>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    {{/each}}
                                 </div>
-                                {{/each}}
+                                {{/if}}
+
+                                <!-- Photorealistic Style Models -->
+                                {{#if sdModelsByStyle.photorealistic.length}}
+                                <div class="mb-3">
+                                    <h6 class="text-success mb-2">
+                                        <i class="bi bi-camera me-1"></i>Photorealistic Style
+                                    </h6>
+                                    {{#each sdModelsByStyle.photorealistic}}
+                                    <div class="form-check model-checkbox mb-2">
+                                        <input class="form-check-input sd-model-checkbox" type="checkbox" 
+                                               value="{{this.modelId}}" 
+                                               id="sd-model-{{this.modelId}}" 
+                                               data-model="{{this.model}}"
+                                               data-model-name="{{this.name}}"
+                                               data-model-id="{{this.modelId}}">
+                                        <label class="form-check-label text-white" for="sd-model-{{this.modelId}}">
+                                            <div class="d-flex align-items-start gap-2">
+                                                {{#if this.image}}
+                                                <img src="{{this.image}}" 
+                                                     alt="{{this.name}}" 
+                                                     class="model-thumbnail"
+                                                     onerror="this.style.display='none'">
+                                                {{/if}}
+                                                <div class="flex-grow-1">
+                                                    <span class="fw-semibold">{{this.name}}</span>
+                                                    <span class="badge bg-warning ms-1">SD</span>
+                                                    <br>
+                                                    <small class="text-muted">{{this.model}}</small>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    {{/each}}
+                                </div>
+                                {{/if}}
+
+                                <!-- Other/Uncategorized Models -->
+                                {{#if sdModelsByStyle.other.length}}
+                                <div class="mb-3">
+                                    <h6 class="text-secondary mb-2">
+                                        <i class="bi bi-question-circle me-1"></i>Other
+                                    </h6>
+                                    {{#each sdModelsByStyle.other}}
+                                    <div class="form-check model-checkbox mb-2">
+                                        <input class="form-check-input sd-model-checkbox" type="checkbox" 
+                                               value="{{this.modelId}}" 
+                                               id="sd-model-{{this.modelId}}" 
+                                               data-model="{{this.model}}"
+                                               data-model-name="{{this.name}}"
+                                               data-model-id="{{this.modelId}}">
+                                        <label class="form-check-label text-white" for="sd-model-{{this.modelId}}">
+                                            <div class="d-flex align-items-start gap-2">
+                                                {{#if this.image}}
+                                                <img src="{{this.image}}" 
+                                                     alt="{{this.name}}" 
+                                                     class="model-thumbnail"
+                                                     onerror="this.style.display='none'">
+                                                {{/if}}
+                                                <div class="flex-grow-1">
+                                                    <span class="fw-semibold">{{this.name}}</span>
+                                                    <span class="badge bg-warning ms-1">SD</span>
+                                                    <br>
+                                                    <small class="text-muted">{{this.model}}</small>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    {{/each}}
+                                </div>
+                                {{/if}}
                             </div>
                             <button class="btn btn-sm btn-outline-warning mt-2" onclick="selectAllSDModels()">
                                 <i class="bi bi-check-all me-1"></i>Select All SD
@@ -136,6 +220,20 @@
                             </select>
                             <div class="form-text text-warning mt-1">
                                 <small><i class="bi bi-info-circle me-1"></i>Seedream 4.5 requires min 1920x1920 (auto-scales smaller sizes)</small>
+                            </div>
+                        </div>
+
+                        <!-- Number of Images per Model -->
+                        <div class="mb-4">
+                            <label class="form-label text-white fw-bold">Images per Model</label>
+                            <select class="form-select bg-secondary text-white border-secondary" id="imagesPerModel">
+                                <option value="1" selected>1 image</option>
+                                <option value="2">2 images</option>
+                                <option value="3">3 images</option>
+                                <option value="4">4 images</option>
+                            </select>
+                            <div class="form-text text-muted mt-1">
+                                <small><i class="bi bi-info-circle me-1"></i>Number of images to generate for each selected model</small>
                             </div>
                         </div>
 
@@ -272,7 +370,7 @@
                                 <h6 class="text-white mb-0">{{this.name}}</h6>
                                 <span class="badge bg-secondary">{{this.totalTests}} tests</span>
                             </div>
-                            <div class="row text-center">
+                            <div class="row text-center mb-2">
                                 <div class="col-4">
                                     <small class="text-muted d-block">Avg</small>
                                     <span class="text-info fw-bold stat-avg">
@@ -304,6 +402,16 @@
                                     </span>
                                 </div>
                             </div>
+                            {{#if this.averageRating}}
+                            <div class="text-center mt-2 pt-2 border-top border-secondary">
+                                <small class="text-muted d-block mb-1">Average Rating</small>
+                                <div class="d-flex justify-content-center align-items-center gap-1">
+                                    <span class="text-warning fw-bold stat-rating">{{this.averageRating}}</span>
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                    <small class="text-muted">({{this.totalRatings}} ratings)</small>
+                                </div>
+                            </div>
+                            {{/if}}
                         </div>
                         {{/each}}
                     </div>
@@ -348,11 +456,28 @@
         <div class="row mt-4">
             <div class="col-12">
                 <div class="card bg-dark border-secondary">
-                    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Test History</h5>
-                        <button class="btn btn-sm btn-outline-light" onclick="loadHistory()">
-                            <i class="bi bi-arrow-clockwise me-1"></i>Refresh
-                        </button>
+                    <div class="card-header bg-secondary text-white">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Test History</h5>
+                            <button class="btn btn-sm btn-outline-light" onclick="loadHistory()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                            </button>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="text-white small mb-0" for="modelFilter">Filter by Model:</label>
+                            <select class="form-select form-select-sm bg-dark text-white border-secondary" 
+                                    id="modelFilter" 
+                                    style="max-width: 250px;"
+                                    onchange="loadHistory()">
+                                <option value="">All Models</option>
+                                {{#each models}}
+                                <option value="{{this.id}}">{{this.name}}</option>
+                                {{/each}}
+                                {{#if activeSDModels.length}}
+                                <option value="sd-txt2img">SD Text to Image</option>
+                                {{/if}}
+                            </select>
+                        </div>
                     </div>
                     <div class="card-body" style="max-height: 300px; overflow-y: auto;">
                         <table class="table table-dark table-hover" id="historyTable">
@@ -382,7 +507,16 @@
                                         {{/if}}
                                     </td>
                                     <td>{{this.modelName}}</td>
-                                    <td class="text-truncate" style="max-width: 200px;" title="{{this.prompt}}">{{this.prompt}}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="text-truncate" style="max-width: 200px; flex: 1;" title="{{this.prompt}}">{{this.prompt}}</span>
+                                            <button class="btn btn-sm btn-outline-info copy-prompt-btn" 
+                                                    data-prompt="{{json this.prompt}}"
+                                                    title="Copy prompt">
+                                                <i class="bi bi-clipboard"></i>
+                                            </button>
+                                        </div>
+                                    </td>
                                     <td>{{this.params.size}}</td>
                                     <td>{{#if this.generationTime}}{{divide this.generationTime 1000}}s{{else}}--{{/if}}</td>
                                     <td>
@@ -418,6 +552,17 @@
                     <div class="mt-3">
                         <p id="previewModelName" class="mb-1"></p>
                         <p id="previewTime" class="text-muted mb-0"></p>
+                        <div class="mt-3">
+                            <label class="form-label text-white mb-2">Rate this image:</label>
+                            <div class="rating-stars d-flex justify-content-center gap-1" id="ratingStars">
+                                <i class="bi bi-star rating-star" data-rating="1" data-bs-toggle="tooltip" title="1 star"></i>
+                                <i class="bi bi-star rating-star" data-rating="2" data-bs-toggle="tooltip" title="2 stars"></i>
+                                <i class="bi bi-star rating-star" data-rating="3" data-bs-toggle="tooltip" title="3 stars"></i>
+                                <i class="bi bi-star rating-star" data-rating="4" data-bs-toggle="tooltip" title="4 stars"></i>
+                                <i class="bi bi-star rating-star" data-rating="5" data-bs-toggle="tooltip" title="5 stars"></i>
+                            </div>
+                            <small class="text-muted d-block mt-2" id="ratingStatus">Click a star to rate</small>
+                        </div>
                     </div>
                 </div>
             </div>

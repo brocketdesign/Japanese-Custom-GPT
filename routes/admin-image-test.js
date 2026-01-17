@@ -16,7 +16,9 @@ const {
   getRecentTests,
   getDefaultCharacterModels,
   setDefaultCharacterModel,
-  uploadTestImageToS3
+  uploadTestImageToS3,
+  saveImageRating,
+  getImageRating
 } = require('../models/admin-image-test-utils');
 
 async function routes(fastify, options) {
@@ -40,14 +42,32 @@ async function routes(fastify, options) {
       // Get model statistics
       const modelStats = await getModelStats(db);
       
-      // Get recent tests
-      const recentTests = await getRecentTests(db, 20);
+      // Get recent tests (no filter on initial page load)
+      const recentTests = await getRecentTests(db, 20, null);
       
       // Get default character creation models
       const defaultModels = await getDefaultCharacterModels(db);
       
       // Get active SD models from database
       const activeSDModels = await db.collection('myModels').find({}).toArray();
+
+      // Group SD models by style
+      const sdModelsByStyle = {
+        anime: [],
+        photorealistic: [],
+        other: []
+      };
+
+      activeSDModels.forEach(model => {
+        const style = model.style || '';
+        if (style === 'anime') {
+          sdModelsByStyle.anime.push(model);
+        } else if (style === 'photorealistic') {
+          sdModelsByStyle.photorealistic.push(model);
+        } else {
+          sdModelsByStyle.other.push(model);
+        }
+      });
 
       // Prepare model list for view
       const models = Object.entries(MODEL_CONFIGS).map(([id, config]) => {
@@ -63,7 +83,9 @@ async function routes(fastify, options) {
           recentAverageTime: stats.recentAverageTime || 0,
           lastTested: stats.lastTested,
           minTime: stats.minTime || 0,
-          maxTime: stats.maxTime || 0
+          maxTime: stats.maxTime || 0,
+          averageRating: stats.averageRating || null,
+          totalRatings: stats.totalRatings || 0
         };
       });
 
@@ -73,6 +95,7 @@ async function routes(fastify, options) {
         translations,
         models,
         activeSDModels,
+        sdModelsByStyle,
         sizeOptions: SIZE_OPTIONS,
         stylePresets: STYLE_PRESETS,
         recentTests,
@@ -98,7 +121,7 @@ async function routes(fastify, options) {
         return reply.status(403).send({ error: 'Access denied' });
       }
 
-      const { models, selectedSDModels, prompt, basePrompt, size, style, skipStyleApplication, negativePrompt, steps, guidanceScale, samplerName } = request.body;
+      const { models, selectedSDModels, prompt, basePrompt, size, style, skipStyleApplication, negativePrompt, steps, guidanceScale, samplerName, imagesPerModel } = request.body;
 
       if ((!models || !Array.isArray(models) || models.length === 0) && 
           (!selectedSDModels || !Array.isArray(selectedSDModels) || selectedSDModels.length === 0)) {
@@ -131,18 +154,63 @@ async function routes(fastify, options) {
       if (models && Array.isArray(models)) {
         for (const modelId of models) {
           try {
-            const params = {
-              prompt: finalPrompt,
-              size: size || '1024*1024'
-            };
+            const numImages = Math.max(1, Math.min(4, parseInt(imagesPerModel) || 1));
+            const config = MODEL_CONFIGS[modelId];
+            
+            // For models that support multiple images natively, pass the parameter
+            if (numImages > 1 && config) {
+              if (modelId === 'flux-2-flex' && config.supportedParams.includes('images')) {
+                // Flux 2 Flex supports 'images' parameter
+                const params = {
+                  prompt: finalPrompt,
+                  size: size || '1024*1024',
+                  images: numImages
+                };
 
-            const task = await initializeModelTest(modelId, params);
-            task.originalPrompt = basePrompt || prompt;
-            task.finalPrompt = finalPrompt;
-            task.size = size;
-            task.style = style;
-            task.userId = user._id.toString();
-            tasks.push(task);
+                const task = await initializeModelTest(modelId, params);
+                task.originalPrompt = basePrompt || prompt;
+                task.finalPrompt = finalPrompt;
+                task.size = size;
+                task.style = style;
+                task.userId = user._id.toString();
+                tasks.push(task);
+              } else {
+                // For other models, create multiple tasks (generate multiple times)
+                for (let i = 0; i < numImages; i++) {
+                  const params = {
+                    prompt: finalPrompt,
+                    size: size || '1024*1024'
+                  };
+
+                  const task = await initializeModelTest(modelId, params);
+                  task.originalPrompt = basePrompt || prompt;
+                  task.finalPrompt = finalPrompt;
+                  task.size = size;
+                  task.style = style;
+                  task.userId = user._id.toString();
+                  // Add index suffix to model name for multiple generations
+                  if (numImages > 1) {
+                    task.modelName = `${config?.name || modelId} (#${i + 1})`;
+                    task.cardId = `${modelId}-${i}`;
+                  }
+                  tasks.push(task);
+                }
+              }
+            } else {
+              // Single image generation
+              const params = {
+                prompt: finalPrompt,
+                size: size || '1024*1024'
+              };
+
+              const task = await initializeModelTest(modelId, params);
+              task.originalPrompt = basePrompt || prompt;
+              task.finalPrompt = finalPrompt;
+              task.size = size;
+              task.style = style;
+              task.userId = user._id.toString();
+              tasks.push(task);
+            }
           } catch (error) {
             console.error(`[AdminImageTest] Error starting ${modelId}:`, error.message);
             tasks.push({
@@ -160,6 +228,7 @@ async function routes(fastify, options) {
       if (selectedSDModels && Array.isArray(selectedSDModels)) {
         for (const sdModel of selectedSDModels) {
           try {
+            const numImages = Math.max(1, Math.min(4, parseInt(imagesPerModel) || 1));
             const params = {
               prompt: finalPrompt,
               model_name: sdModel.model || sdModel.model_name,
@@ -167,7 +236,8 @@ async function routes(fastify, options) {
               negative_prompt: negativePrompt || '',
               steps: steps ? parseInt(steps) : undefined,
               guidance_scale: guidanceScale ? parseFloat(guidanceScale) : undefined,
-              sampler_name: samplerName || undefined
+              sampler_name: samplerName || undefined,
+              image_num: numImages // SD models support image_num parameter
             };
 
             const task = await initializeModelTest('sd-txt2img', params);
@@ -265,9 +335,9 @@ async function routes(fastify, options) {
       }
 
       result.userId = user._id.toString();
-      await saveTestResult(db, result);
+      const testId = await saveTestResult(db, result);
 
-      return reply.send({ success: true });
+      return reply.send({ success: true, testId });
     } catch (error) {
       console.error('[AdminImageTest] Error saving result:', error);
       return reply.status(500).send({ error: error.message });
@@ -312,7 +382,8 @@ async function routes(fastify, options) {
 
       const db = fastify.mongo.db;
       const limit = parseInt(request.query.limit) || 50;
-      const history = await getRecentTests(db, limit);
+      const modelId = request.query.modelId || null;
+      const history = await getRecentTests(db, limit, modelId);
 
       return reply.send({ history });
     } catch (error) {
@@ -410,6 +481,68 @@ async function routes(fastify, options) {
       });
     } catch (error) {
       console.error('[AdminImageTest] Error resetting stats:', error);
+      return reply.status(500).send({ error: error.message });
+    }
+  });
+
+  /**
+   * POST /admin/image-test/rate-image
+   * Save an image rating
+   */
+  fastify.post('/admin/image-test/rate-image', async (request, reply) => {
+    try {
+      const user = request.user;
+      const isAdmin = await checkUserAdmin(fastify, user._id);
+      
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+
+      const db = fastify.mongo.db;
+      const { modelId, modelName, imageUrl, rating, testId } = request.body;
+
+      if (!modelId || !imageUrl || !rating) {
+        return reply.status(400).send({ error: 'Missing required fields' });
+      }
+
+      if (rating < 1 || rating > 5) {
+        return reply.status(400).send({ error: 'Rating must be between 1 and 5' });
+      }
+
+      await saveImageRating(db, modelId, imageUrl, rating, testId, user._id.toString());
+
+      return reply.send({ success: true });
+    } catch (error) {
+      console.error('[AdminImageTest] Error saving rating:', error);
+      return reply.status(500).send({ error: error.message });
+    }
+  });
+
+  /**
+   * GET /admin/image-test/rating/:testId
+   * Get rating for a test
+   */
+  fastify.get('/admin/image-test/rating/:testId', async (request, reply) => {
+    try {
+      const user = request.user;
+      const isAdmin = await checkUserAdmin(fastify, user._id);
+      
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+
+      const db = fastify.mongo.db;
+      const { testId } = request.params;
+
+      const rating = await getImageRating(db, testId);
+
+      if (rating) {
+        return reply.send({ success: true, rating: rating.rating });
+      } else {
+        return reply.send({ success: false, rating: null });
+      }
+    } catch (error) {
+      console.error('[AdminImageTest] Error getting rating:', error);
       return reply.status(500).send({ error: error.message });
     }
   });

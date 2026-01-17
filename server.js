@@ -230,44 +230,87 @@ fastify.addHook('onRequest', (request, reply, done) => {
   done();
 });
 
-fastify.get('/', async (request, reply) => {
+// Landing page route (previously the index page)
+fastify.get('/landing', async (request, reply) => {
   const db = fastify.mongo.db;
   let { translations, lang, user } = request;
   const userId = user._id;
-  const collectionChat = db.collection('chats');
   if (userId && !user.isTemporary) {
     user = await db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(userId) });
   }
-  let chatCount = await collectionChat.distinct('chatImageUrl', { userId: new fastify.mongo.ObjectId(userId) });
-  chatCount = chatCount.length;
 
+  let bannerNumber = parseInt(request.query.banner) || 0;
+  bannerNumber = Math.min(bannerNumber, 3);
+  const seoMetadata = generateSeoMetadata(request, '/landing', lang);
+  return reply.renderWithGtm(`index.hbs`, {
+    title: translations.seo.title,
+    canonicalUrl: seoMetadata.canonicalUrl,
+    alternates: seoMetadata.alternates,
+    seo: [
+      { name: 'description', content: translations.seo.description },
+      { name: 'keywords', content: translations.seo.keywords },
+      { property: 'og:title', content: translations.seo.title },
+      { property: 'og:description', content: translations.seo.description },
+      { property: 'og:image', content: '/img/share.png' },
+      { property: 'og:url', content: seoMetadata.canonicalUrl },
+      { property: 'og:locale', content: lang },
+      { property: 'og:locale:alternate', content: 'en' },
+      { property: 'og:locale:alternate', content: 'fr' },
+      { property: 'og:locale:alternate', content: 'ja' },
+    ],
+    bannerNumber
+  });
+});
+
+// Top page now renders the chat template (same as /chat page)
+fastify.get('/', async (request, reply) => {
+  const db = fastify.mongo.db;
+  
+  let { translations, lang, user } = request;
+  const userId = user._id;
+
+  const collectionChat = db.collection('chats');
+  const collectionUser = db.collection('users');
+  const userData = await getUserData(userId, collectionUser, collectionChat, user);
+
+  const signIn = request.query.signIn == 'true' || false;
   const signOut = request.query.signOut == 'true' || false;
 
-  if (signOut || user.isTemporary) {
-    let bannerNumber = parseInt(request.query.banner) || 0;
-    bannerNumber = Math.min(bannerNumber, 3);
-    const seoMetadata = generateSeoMetadata(request, '/', lang);
-    return reply.renderWithGtm(`index.hbs`, {
-      title: translations.seo.title,
-      canonicalUrl: seoMetadata.canonicalUrl,
-      alternates: seoMetadata.alternates,
-      seo: [
-        { name: 'description', content: translations.seo.description },
-        { name: 'keywords', content: translations.seo.keywords },
-        { property: 'og:title', content: translations.seo.title },
-        { property: 'og:description', content: translations.seo.description },
-        { property: 'og:image', content: '/img/share.png' },
-        { property: 'og:url', content: seoMetadata.canonicalUrl },
-        { property: 'og:locale', content: lang },
-        { property: 'og:locale:alternate', content: 'en' },
-        { property: 'og:locale:alternate', content: 'fr' },
-        { property: 'og:locale:alternate', content: 'ja' },
-      ],
-      bannerNumber
-    });
-  } else {
-    return reply.redirect('/chat');
-  }
+  const isAdmin = await checkUserAdmin(fastify, userId);
+  const imageType = request.query.type || false;
+  const newSubscription = request.query.newSubscription || false;
+
+  const promptData = await db.collection('prompts').find({}).sort({order: 1}).toArray();
+  const giftData = await db.collection('gifts').find({}).sort({order: 1}).toArray();
+
+  const seoMetadata = generateSeoMetadata(request, '/', lang);
+  return reply.view('chat.hbs', {
+    title: translations.seo.title,
+    canonicalUrl: seoMetadata.canonicalUrl,
+    alternates: seoMetadata.alternates,
+    isAdmin,
+    imageType,
+    user,
+    newSubscription,
+    userId,
+    chatId: null,
+    userData,
+    promptData,
+    giftData,
+    isTemporaryOrGuest: !user || user.isTemporary,
+    seo: [
+      { name: 'description', content: translations.seo.description },
+      { name: 'keywords', content: translations.seo.keywords },
+      { property: 'og:title', content: translations.seo.title },
+      { property: 'og:description', content: translations.seo.description },
+      { property: 'og:image', content: '/img/share.png' },
+      { property: 'og:url', content: seoMetadata.canonicalUrl },
+      { property: 'og:locale', content: lang },
+      { property: 'og:locale:alternate', content: 'en' },
+      { property: 'og:locale:alternate', content: 'fr' },
+      { property: 'og:locale:alternate', content: 'ja' },
+    ],
+  });
 });
 
 fastify.get('/signin-redirection', async (request, reply) => {
@@ -1017,6 +1060,8 @@ fastify.get('/features', async (request, reply) => {
     { title: translations.features_page.ai_influencer_title, description: translations.features_page.ai_influencer_description, icon: 'fas fa-user-astronaut', link: '/landingpage/influencer-en'  },
     // NSFW video generator
     { title: translations.features_page.nsfw_video_generator_title, description: translations.features_page.nsfw_video_generator_description, icon: 'fas fa-video', link: '/landingpage/nsfw-video-generator-en'  },
+    // Landing page
+    { title: translations.features_page.landing_page_title || 'Welcome', description: translations.features_page.landing_page_description || 'Learn more about our platform', icon: 'fas fa-home', link: '/landing'  },
   ]
   return reply.renderWithGtm('features.hbs', {
     title: translations.seo.title_features || 'Ai images generator & Ai chat',

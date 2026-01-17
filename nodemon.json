@@ -1,0 +1,14 @@
+{
+  "watch": [
+    "server.js",
+    "views/**/*",
+    "routes/**/*",
+    "plugins/**/*"
+  ],
+  "ext": "js,json,hbs",
+  "ignore": [
+    "node_modules/**",
+    "*.log"
+  ],
+  "exec": "node server.js"
+}

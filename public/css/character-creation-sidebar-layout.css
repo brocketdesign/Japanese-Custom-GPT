@@ -360,7 +360,6 @@
   }
   
   #characterCreationModal .modal-body {
-    max-height: calc(80vh - 120px); /* Account for header */
     overflow: hidden;
     display: flex;
     flex-direction: column;

@@ -311,8 +311,6 @@ padding-top: 60px !important;
   }
   
   .modal-body {
-    max-height: calc(calc(var(--vh, 1vh) * 95) - 150px) !important;
-    max-height: calc(95dvh - 150px) !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     flex: 1 1 auto !important;
@@ -341,8 +339,6 @@ padding-top: 60px !important;
   }
   
   .modal-body {
-    max-height: calc(calc(var(--vh, 1vh) * 90) - 120px) !important;
-    max-height: calc(90dvh - 120px) !important;
   }
 }
 

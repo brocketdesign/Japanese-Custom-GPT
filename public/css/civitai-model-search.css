@@ -393,8 +393,6 @@
     }
 
     .civitai-search-modal .modal-body {
-        max-height: calc(calc(var(--vh, 1vh) * 100) - 250px);
-        max-height: calc(100dvh - 250px);
     }
 }
 

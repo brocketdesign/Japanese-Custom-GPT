@@ -3770,8 +3770,6 @@ opacity: 0.8;
     }
     
     #characterModal .modal-body {
-        max-height: calc(calc(var(--vh, 1vh) * 80) - 120px);
-        max-height: calc(80dvh - 120px); /* Account for header */
         overflow-y: auto;
         overflow-x: hidden;
     }
@@ -3791,8 +3789,6 @@ opacity: 0.8;
     }
     
     #settingsModal .modal-body {
-        max-height: calc(calc(var(--vh, 1vh) * 95) - 140px);
-        max-height: calc(95dvh - 140px);
         overflow-y: auto;
         overflow-x: hidden;
         flex: 1 1 auto;
@@ -4427,8 +4423,6 @@ opacity: 0.8;
   }
   
   #characterModal .modal-body {
-    max-height: calc(calc(var(--vh, 1vh) * 80) - 100px);
-    max-height: calc(80dvh - 100px); /* Account for smaller header on small screens */
   }
   
   /* Ensure all modals are properly constrained */
@@ -4443,8 +4437,6 @@ opacity: 0.8;
   }
   
   .modal-body {
-    max-height: calc(calc(var(--vh, 1vh) * 90) - 120px) !important;
-    max-height: calc(90dvh - 120px) !important;
   }
   
   .social-link {

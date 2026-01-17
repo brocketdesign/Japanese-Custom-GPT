@@ -1682,7 +1682,8 @@
 }
 
 .option-picker-modal .btn-close {
-    filter: invert(1);
+    filter: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%238240FF'%3E%3Cpath fill-rule='evenodd' d='M10.854 4.146a.5.5 0 0 1 0 .708L6.707 8l4.147 4.146a.5.5 0 0 1-.708.708l-4.5-4.5a.5.5 0 0 1 0-.708l4.5-4.5a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
 }
 
 .option-picker-modal .modal-body {

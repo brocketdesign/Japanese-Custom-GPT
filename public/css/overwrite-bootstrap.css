@@ -157,7 +157,7 @@
 .form-select {
   border-radius: var(--radius-sm) !important;
   border: var(--form-border-width) solid var(--border-color) !important;
-  padding: var(--form-padding) !important;
+  padding: 0.75rem 1rem !important;
   transition: var(--transition-ease) !important;
 }
 
@@ -266,6 +266,21 @@ padding-top: 60px !important;
   left: 0;
   right: 0;
   z-index: 100;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.modal-header .btn-close {
+  order: 1 !important;
+  margin-right: 0 !important;
+}
+
+.modal-header .modal-title {
+  order: 2 !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+  text-align: right !important;
 }
 
 .modal-footer {
@@ -287,15 +302,15 @@ padding-top: 60px !important;
   padding: 0.5rem !important;
   transition: var(--transition-ease) !important;
   background: var(--glass-bg-strong) !important;
-  /* Ensure the < icon appears - white for dark mode */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3E%3Cpath fill-rule='evenodd' d='M10.854 4.146a.5.5 0 0 1 0 .708L6.707 8l4.147 4.146a.5.5 0 0 1-.708.708l-4.5-4.5a.5.5 0 0 1 0-.708l4.5-4.5a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
+  /* Purple arrow for dark mode */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%238240FF'%3E%3Cpath fill-rule='evenodd' d='M10.854 4.146a.5.5 0 0 1 0 .708L6.707 8l4.147 4.146a.5.5 0 0 1-.708.708l-4.5-4.5a.5.5 0 0 1 0-.708l4.5-4.5a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
   background-repeat: no-repeat !important;
   background-position: center !important;
   background-size: 1em !important;
   margin: unset !important;
 }
 .btn-close.btn-close-right{
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3E%3Cpath fill-rule='evenodd' d='M5.146 4.146a.5.5 0 0 0 0 .708L9.293 8l-4.147 4.146a.5.5 0 0 0 .708.708l4.5-4.5a.5.5 0 0 0 0-.708l-4.5-4.5a.5.5 0 0 0-.708 0z'/%3E%3C/svg%3E") !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%238240FF'%3E%3Cpath fill-rule='evenodd' d='M5.146 4.146a.5.5 0 0 0 0 .708L9.293 8l-4.147 4.146a.5.5 0 0 0 .708.708l4.5-4.5a.5.5 0 0 0 0-.708l-4.5-4.5a.5.5 0 0 0-.708 0z'/%3E%3C/svg%3E") !important;
 }
 
 @keyframes modalSlideIn {

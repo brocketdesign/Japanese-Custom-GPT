@@ -66,7 +66,7 @@ const default_prompt = {
   };    
   
 const params = {
-  model_name: "novaAnimeXL_ponyV20_461138.safetensors",
+  model_name: "prefectPonyXL_v50_1128833.safetensors",
   prompt: '',
   negative_prompt: '',
   width: 1024,
@@ -387,7 +387,7 @@ async function generateImg({
     
     // Priority: 1) modelId param, 2) chat.modelId, 3) default
     let effectiveModelId = modelId || chat?.modelId || null;
-    let imageModel = chat?.imageModel || 'novaAnimeXL_ponyV20_461138';
+    let imageModel = chat?.imageModel || 'prefectPonyXL_v50_1128833';
     let modelData = null;
     
     console.log(`\x1b[33m[generateImg] Effective modelId: ${effectiveModelId || 'NONE - using default'}\x1b[0m`);

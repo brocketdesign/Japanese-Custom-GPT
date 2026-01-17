@@ -188,7 +188,7 @@
             
             // Set default model names based on style
             const defaultModelName = isAnime 
-                ? 'novaAnimeXL_ponyV20_461138.safetensors'
+                ? 'prefectPonyXL_v50_1128833.safetensors'
                 : 'juggernautXL_v9Rdphoto2Lightning_285361.safetensors';
             
             const defaultImageStyle = isAnime ? 'anime' : 'photorealistic';

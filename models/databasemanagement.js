@@ -354,7 +354,7 @@ function updateChats(db) {
         ]
     }).forEach(chat => {
         const updates = chat.imageStyle === 'anime' ? {
-            imageModel: 'novaAnimeXL_ponyV20_461138',
+            imageModel: 'prefectPonyXL_v50_1128833',
             imageVersion: 'sdxl'
         } : chat.imageStyle === 'realistic' ? {
             imageModel: 'kanpiromix_v20',

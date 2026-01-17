@@ -1,0 +1,104 @@
+{
+  "generated": "2026-01-17T13:50:50.139Z",
+  "provider": "openai",
+  "voices": [
+    {
+      "key": "nova",
+      "gender": "female",
+      "languages": [
+        "en",
+        "fr",
+        "ja"
+      ]
+    },
+    {
+      "key": "alloy",
+      "gender": "neutral",
+      "languages": [
+        "en",
+        "fr",
+        "ja"
+      ]
+    },
+    {
+      "key": "shimmer",
+      "gender": "female",
+      "languages": [
+        "en",
+        "fr",
+        "ja"
+      ]
+    },
+    {
+      "key": "fable",
+      "gender": "neutral",
+      "languages": [
+        "en",
+        "fr",
+        "ja"
+      ]
+    }
+  ],
+  "files": [
+    {
+      "voice": "nova",
+      "lang": "en",
+      "url": "/audio/voice-samples/openai/en/nova_en.mp3"
+    },
+    {
+      "voice": "nova",
+      "lang": "fr",
+      "url": "/audio/voice-samples/openai/fr/nova_fr.mp3"
+    },
+    {
+      "voice": "nova",
+      "lang": "ja",
+      "url": "/audio/voice-samples/openai/ja/nova_ja.mp3"
+    },
+    {
+      "voice": "alloy",
+      "lang": "en",
+      "url": "/audio/voice-samples/openai/en/alloy_en.mp3"
+    },
+    {
+      "voice": "alloy",
+      "lang": "fr",
+      "url": "/audio/voice-samples/openai/fr/alloy_fr.mp3"
+    },
+    {
+      "voice": "alloy",
+      "lang": "ja",
+      "url": "/audio/voice-samples/openai/ja/alloy_ja.mp3"
+    },
+    {
+      "voice": "shimmer",
+      "lang": "en",
+      "url": "/audio/voice-samples/openai/en/shimmer_en.mp3"
+    },
+    {
+      "voice": "shimmer",
+      "lang": "fr",
+      "url": "/audio/voice-samples/openai/fr/shimmer_fr.mp3"
+    },
+    {
+      "voice": "shimmer",
+      "lang": "ja",
+      "url": "/audio/voice-samples/openai/ja/shimmer_ja.mp3"
+    },
+    {
+      "voice": "fable",
+      "lang": "en",
+      "url": "/audio/voice-samples/openai/en/fable_en.mp3"
+    },
+    {
+      "voice": "fable",
+      "lang": "fr",
+      "url": "/audio/voice-samples/openai/fr/fable_fr.mp3"
+    },
+    {
+      "voice": "fable",
+      "lang": "ja",
+      "url": "/audio/voice-samples/openai/ja/fable_ja.mp3"
+    }
+  ]
+}

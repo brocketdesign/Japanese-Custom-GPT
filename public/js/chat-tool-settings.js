@@ -168,7 +168,24 @@ class ChatToolSettings {
         const voiceProviderSwitch = document.getElementById('voice-provider-switch');
         if (voiceProviderSwitch) {
             voiceProviderSwitch.addEventListener('change', (e) => {
-                this.settings.voiceProvider = e.target.checked ? 'premium' : 'standard';
+                const user = window.user || {};
+                const subscriptionStatus = user.subscriptionStatus === 'active';
+                const isSwitchingToPremium = e.target.checked;
+                
+                this.settings.voiceProvider = isSwitchingToPremium ? 'premium' : 'standard';
+                
+                // If free user is switching to premium, clear any premium voice selection
+                // This prevents auto-selection of the first voice
+                if (isSwitchingToPremium && !subscriptionStatus) {
+                    // Clear premium voice selection for free users
+                    if (this.settings.minimaxVoice) {
+                        this.settings.minimaxVoice = null;
+                    }
+                    if (this.settings.premiumVoice) {
+                        this.settings.premiumVoice = null;
+                    }
+                }
+                
                 this.toggleVoiceProviderUI();
                 this.updateSwitchLabels();
             });
@@ -853,7 +870,9 @@ class ChatToolSettings {
 
         const filteredVoices = this.premiumVoices.filter(voice => voice.gender === characterGender);
         filteredVoices.forEach(voice => {
-            const isSelected = voice.key === this.settings.minimaxVoice;
+            // Only mark as selected if user is premium AND has this voice selected
+            // Free users should never have a premium voice selected
+            const isSelected = subscriptionStatus && voice.key === this.settings.minimaxVoice;
             const voiceTranslation = this.translations.voices?.[voice.key] || {};
             
             const voiceCard = document.createElement('div');
@@ -908,17 +927,34 @@ class ChatToolSettings {
      */
     async loadVoiceSamples() {
         try {
+            // Load premium voice samples (minimax)
             const response = await fetch('/audio/voice-samples/manifest.json');
             if (response.ok) {
                 this.voiceSamples = await response.json();
-                console.log('[ChatToolSettings] Voice samples loaded:', this.voiceSamples.voices?.length || 0);
+                console.log('[ChatToolSettings] Premium voice samples loaded:', this.voiceSamples.voices?.length || 0);
             } else {
-                console.warn('[ChatToolSettings] Failed to load voice samples manifest');
+                console.warn('[ChatToolSettings] Failed to load premium voice samples manifest');
                 this.voiceSamples = null;
+            }
+            
+            // Load OpenAI voice samples
+            try {
+                const openaiResponse = await fetch('/audio/voice-samples/openai/manifest.json');
+                if (openaiResponse.ok) {
+                    this.openaiVoiceSamples = await openaiResponse.json();
+                    console.log('[ChatToolSettings] OpenAI voice samples loaded:', this.openaiVoiceSamples.voices?.length || 0);
+                } else {
+                    console.warn('[ChatToolSettings] Failed to load OpenAI voice samples manifest');
+                    this.openaiVoiceSamples = null;
+                }
+            } catch (error) {
+                console.warn('[ChatToolSettings] Error loading OpenAI voice samples:', error);
+                this.openaiVoiceSamples = null;
             }
         } catch (error) {
             console.error('[ChatToolSettings] Failed to load voice samples:', error);
             this.voiceSamples = null;
+            this.openaiVoiceSamples = null;
         }
     }
 
@@ -927,12 +963,6 @@ class ChatToolSettings {
      */
     async playVoiceSample(voiceKey, provider = 'minimax') {
         if (!this.audioPlayer) return;
-        
-        // For OpenAI voices (standard), we don't have samples
-        if (provider === 'openai') {
-            console.log('[ChatToolSettings] OpenAI voices do not have samples');
-            return;
-        }
         
         // If clicking the same voice that's currently playing, pause it
         if (this.currentPlayingVoice === voiceKey && !this.audioPlayer.paused) {
@@ -951,11 +981,18 @@ class ChatToolSettings {
             this.stopVoiceSample();
         }
         
-        // Find the sample URL for premium voices
-        const sampleUrl = `/audio/voice-samples/${this.lang}/${voiceKey}_${this.lang}.mp3`;
+        // Find the sample URL based on provider
+        let sampleUrl;
+        if (provider === 'openai') {
+            // OpenAI voice samples are in openai subdirectory
+            sampleUrl = `/audio/voice-samples/openai/${this.lang}/${voiceKey}_${this.lang}.mp3`;
+        } else {
+            // Premium voice samples (minimax)
+            sampleUrl = `/audio/voice-samples/${this.lang}/${voiceKey}_${this.lang}.mp3`;
+        }
         
         // Update UI to show playing state
-        const btn = document.querySelector(`.play-sample-btn[data-voice="${voiceKey}"]`);
+        const btn = document.querySelector(`.play-sample-btn[data-voice="${voiceKey}"][data-provider="${provider}"]`);
         if (btn) {
             btn.innerHTML = `<i class="bi bi-pause-fill"></i><span>${this.t('playing', 'Playing...')}</span>`;
             btn.classList.add('playing');
@@ -1021,7 +1058,8 @@ class ChatToolSettings {
      */
     onAudioEnded() {
         if (this.currentPlayingVoice) {
-            const btn = document.querySelector(`.play-sample-btn[data-voice="${this.currentPlayingVoice}"]`);
+            // Try to find button with any provider (openai or minimax)
+            let btn = document.querySelector(`.play-sample-btn[data-voice="${this.currentPlayingVoice}"]`);
             if (btn) {
                 btn.innerHTML = `<i class="bi bi-play-fill"></i><span>${this.t('playSample', 'Play Sample')}</span>`;
                 btn.classList.remove('playing');
@@ -1033,6 +1071,8 @@ class ChatToolSettings {
     toggleVoiceProviderUI() {
         const standardVoices = document.getElementById('standard-voices');
         const premiumVoices = document.getElementById('premium-voices');
+        const user = window.user || {};
+        const subscriptionStatus = user.subscriptionStatus === 'active';
         
         if (this.settings.voiceProvider === 'premium') {
             if (standardVoices) standardVoices.style.display = 'none';
@@ -1040,6 +1080,17 @@ class ChatToolSettings {
             
             // Always load Premium voices when switching to Premium provider
             this.loadPremiumVoices();
+            
+            // If free user switched to premium, ensure no voice is selected
+            if (!subscriptionStatus) {
+                // Clear any premium voice selection for free users
+                if (this.settings.minimaxVoice) {
+                    this.settings.minimaxVoice = null;
+                }
+                if (this.settings.premiumVoice) {
+                    this.settings.premiumVoice = null;
+                }
+            }
             
         } else {
             if (standardVoices) standardVoices.style.display = 'block';
@@ -1301,15 +1352,19 @@ class ChatToolSettings {
         });
 
         // Update premium voice selection
-        const activePremiumVoice = this.settings.minimaxVoice || this.settings.premiumVoice;
+        // Only allow selection if user is premium
+        const activePremiumVoice = subscriptionStatus ? (this.settings.minimaxVoice || this.settings.premiumVoice) : null;
         document.querySelectorAll('.settings-premium-voice-option').forEach(option => {
-            option.classList.toggle('selected', option.dataset.voice === activePremiumVoice);
+            // Only mark as selected if user is premium
+            option.classList.toggle('selected', subscriptionStatus && option.dataset.voice === activePremiumVoice);
             
             // Disable for non-premium users
             if (!subscriptionStatus) {
                 option.classList.add('disabled');
                 option.style.opacity = '0.5';
                 option.style.cursor = 'pointer';
+                // Clear selection for free users
+                option.classList.remove('selected');
             } else {
                 option.classList.remove('disabled');
                 option.style.opacity = '1';

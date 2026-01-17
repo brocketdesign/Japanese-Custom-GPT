@@ -27,10 +27,10 @@ const VOICE_SAMPLES = {
     },
     Friendly_Person: {
         key: 'Friendly_Person',
-        gender: 'female',
+        gender: 'male',
         samples: {
             en: "Hey there! I'm so excited to meet you! Let's have some fun conversations together!",
-            fr: "Salut! Je suis tellement contente de te rencontrer! Amusons-nous ensemble!",
+            fr: "Salut! Je suis tellement content de te rencontrer! Amusons-nous ensemble!",
             ja: "やあ！会えて嬉しいです！一緒に楽しくおしゃべりしましょう！"
         }
     },

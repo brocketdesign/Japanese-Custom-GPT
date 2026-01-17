@@ -22,7 +22,7 @@ const MINIMAX_VOICES = {
     Friendly_Person: {
         key: 'Friendly_Person',
         voice_id: 'Friendly_Person',
-        gender: 'female',
+        gender: 'male',
         language: 'en',
         name: 'Friendly Person',
         description: 'Upbeat and approachable tone with clear articulation.'

@@ -510,7 +510,7 @@ async function generateImg({
             model_name: imageModel.replace('.safetensors', '') + '.safetensors',
             sampler_name: modelSampler || selectedStyle.nsfw.sampler_name || '',
             loras: selectedLoras,
-            prompt: (selectedStyle.nsfw.prompt ? selectedStyle.nsfw.prompt + prompt : prompt),
+            prompt: (selectedStyle.nsfw.prompt ? selectedStyle.nsfw.prompt + prompt : prompt).replace(/^\s+/gm, '').trim(),
             negative_prompt: finalNegativePrompt,
             width: selectedStyle.nsfw.width || params.width,
             height: selectedStyle.nsfw.height || params.height,
@@ -540,9 +540,28 @@ async function generateImg({
       // End [TEST]
     }
     // Prepare params
-    // Make sure prompt length is within limits 900 characters
-    if (image_request.prompt.length > 900) {
-      image_request.prompt = image_request.prompt.substring(0, 900);
+    // Validate and ensure prompt length is within API limits (1-1024 characters)
+    if (!image_request.prompt || image_request.prompt.trim() === '') {
+        fastify.sendNotificationToUser(userId, 'showNotification', {
+            message: translations.newCharacter.prompt_missing || 'Prompt cannot be empty',
+            icon: 'error'
+        });
+        return;
+    }
+    
+    // Trim the prompt and ensure it's within the 1024 character limit
+    image_request.prompt = image_request.prompt.trim();
+    if (image_request.prompt.length > 1024) {
+      image_request.prompt = image_request.prompt.substring(0, 1024).trim();
+    }
+    
+    // Final validation: ensure prompt is not empty after trimming
+    if (image_request.prompt.length === 0) {
+        fastify.sendNotificationToUser(userId, 'showNotification', {
+            message: translations.newCharacter.prompt_missing || 'Prompt cannot be empty',
+            icon: 'error'
+        });
+        return;
     }
     let requestData = flux ? { ...image_request, image_num } : { ...params, ...image_request, image_num };
     
@@ -1648,6 +1667,21 @@ async function checkTaskStatus(taskId, fastify) {
 // Function to trigger the Novita API for text-to-image generation
 async function fetchNovitaMagic(data, flux = false) {
   try {
+    // Validate prompt before sending to API (must be 1-1024 characters)
+    if (!data.prompt || typeof data.prompt !== 'string') {
+      console.error('[fetchNovitaMagic] Invalid prompt: prompt is missing or not a string');
+      return false;
+    }
+    
+    const trimmedPrompt = data.prompt.trim();
+    if (trimmedPrompt.length === 0 || trimmedPrompt.length > 1024) {
+      console.error(`[fetchNovitaMagic] Invalid prompt length: ${trimmedPrompt.length} (must be 1-1024 characters)`);
+      return false;
+    }
+    
+    // Ensure prompt is trimmed and within limits
+    data.prompt = trimmedPrompt.length > 1024 ? trimmedPrompt.substring(0, 1024).trim() : trimmedPrompt;
+    
     let apiUrl = 'https://api.novita.ai/v3/async/txt2img';
     if (data.image_base64) {
       apiUrl = 'https://api.novita.ai/v3/async/img2img';

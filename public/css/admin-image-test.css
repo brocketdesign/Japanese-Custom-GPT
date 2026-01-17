@@ -1,0 +1,356 @@
+/**
+ * Admin Image Model Test Dashboard Styles
+ */
+
+/* Style Preset Editor */
+.style-preset-editor {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid rgba(130, 64, 255, 0.3);
+}
+
+.style-preset-editor input,
+.style-preset-editor textarea {
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+}
+
+.style-preset-editor .form-control:focus {
+    border-color: #8240FF;
+    box-shadow: 0 0 0 0.2rem rgba(130, 64, 255, 0.25);
+}
+
+#stylePromptDisplay {
+    background: rgba(255, 255, 255, 0.1) !important;
+    font-family: 'Courier New', monospace;
+}
+
+#finalPromptInput {
+    background: rgba(255, 193, 7, 0.1) !important;
+}
+
+/* Model Selection */
+.model-selection {
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.model-checkbox {
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.2s ease;
+}
+
+.model-checkbox:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.model-checkbox input:checked + label {
+    color: #8240FF;
+}
+
+.model-checkbox input:checked {
+    background-color: #8240FF;
+    border-color: #8240FF;
+}
+
+/* Result Cards */
+.result-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.result-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.result-card.completed {
+    border-color: #28a745;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.2);
+}
+
+.result-card.failed {
+    border-color: #dc3545;
+    box-shadow: 0 0 10px rgba(220, 53, 69, 0.2);
+}
+
+/* Result Images */
+.result-image-container {
+    min-height: 100px;
+}
+
+.result-image-wrapper {
+    margin: 4px;
+}
+
+.result-image {
+    max-height: 200px;
+    object-fit: cover;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.result-image:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 15px rgba(130, 64, 255, 0.3);
+}
+
+/* Statistics Cards */
+.stat-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Timer Badge Animation */
+.timer {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    min-width: 60px;
+    text-align: center;
+}
+
+.timer.bg-secondary {
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+/* Progress Bar Animation */
+.progress-bar {
+    transition: width 0.3s ease;
+}
+
+.progress-bar.bg-info {
+    background: linear-gradient(90deg, #17a2b8, #8240FF) !important;
+    animation: progressShimmer 2s infinite;
+}
+
+@keyframes progressShimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Status Badge */
+.status {
+    min-width: 100px;
+    text-align: center;
+}
+
+/* Card Headers */
+.card-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card-header.bg-primary {
+    background: linear-gradient(90deg, #8240FF, #a855f7) !important;
+}
+
+.card-header.bg-success {
+    background: linear-gradient(90deg, #28a745, #20c997) !important;
+}
+
+.card-header.bg-warning {
+    background: linear-gradient(90deg, #ffc107, #fd7e14) !important;
+}
+
+.card-header.bg-info {
+    background: linear-gradient(90deg, #17a2b8, #6610f2) !important;
+}
+
+/* Form Controls */
+.form-control:focus,
+.form-select:focus {
+    border-color: #8240FF;
+    box-shadow: 0 0 0 0.25rem rgba(130, 64, 255, 0.25);
+}
+
+.form-check-input:checked {
+    background-color: #8240FF;
+    border-color: #8240FF;
+}
+
+/* Button Styles */
+.btn-primary {
+    background: linear-gradient(90deg, #8240FF, #a855f7);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(90deg, #6b30e0, #8b45d8);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(130, 64, 255, 0.4);
+}
+
+.btn-primary:disabled {
+    background: linear-gradient(90deg, #6b6b6b, #7b7b7b);
+    cursor: not-allowed;
+}
+
+/* Style Preset Buttons */
+.btn-check:checked + .btn-outline-primary {
+    background: linear-gradient(90deg, #8240FF, #a855f7);
+    border-color: #8240FF;
+}
+
+.btn-check:checked + .btn-outline-success {
+    background: linear-gradient(90deg, #28a745, #20c997);
+    border-color: #28a745;
+}
+
+/* Table Styles */
+.table-dark {
+    --bs-table-bg: transparent;
+}
+
+.table-dark thead th {
+    background: rgba(255, 255, 255, 0.1);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.table-dark tbody tr:hover {
+    background: rgba(130, 64, 255, 0.1);
+}
+
+/* History Thumbnails */
+.history-thumbnail {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+}
+
+.history-thumbnail:hover {
+    transform: scale(1.1);
+    border-color: #8240FF;
+    box-shadow: 0 4px 12px rgba(130, 64, 255, 0.4);
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(130, 64, 255, 0.5);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(130, 64, 255, 0.7);
+}
+
+/* Cursor Pointer */
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* Toast Container */
+.toast-container {
+    z-index: 1100;
+}
+
+/* Modal Styles */
+#imagePreviewModal .modal-content {
+    background: rgba(30, 30, 40, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#previewImage {
+    max-height: 70vh;
+    object-fit: contain;
+}
+
+/* Loading States */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+    .result-image {
+        max-height: 150px;
+    }
+    
+    .model-selection {
+        max-height: 200px;
+    }
+}
+
+@media (max-width: 576px) {
+    .stat-card .row {
+        font-size: 0.85rem;
+    }
+    
+    .result-card h6 {
+        font-size: 0.9rem;
+    }
+}
+
+/* Hide Footer */
+.sticky-bottom {
+    display: none !important;
+}
+
+/* Badge Animations */
+.badge.bg-success {
+    animation: successPulse 0.5s ease;
+}
+
+@keyframes successPulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.badge.bg-danger {
+    animation: dangerShake 0.5s ease;
+}
+
+@keyframes dangerShake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-2px);
+    }
+    75% {
+        transform: translateX(2px);
+    }
+}

@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html>
+{{> dashboard-header}}
+<body class="bg-dark">
+    {{> dashboard-nav}}
+    <link rel="stylesheet" href="/css/admin-image-test.css">
+    
+    <section class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="text-white mb-1">
+                            <i class="bi bi-images me-2"></i>Image Model Test Dashboard
+                        </h1>
+                        <p class="text-muted mb-0">Test and compare multiple Novita AI image generation models</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-info" onclick="refreshStats()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Refresh Stats
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="resetAllStats()">
+                            <i class="bi bi-trash me-1"></i>Reset Stats
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Left Panel: Generation Controls -->
+            <div class="col-lg-4 mb-4">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-sliders me-2"></i>Generation Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Model Selection -->
+                        <div class="mb-4">
+                            <label class="form-label text-white fw-bold d-flex justify-content-between align-items-center">
+                                <span>Select Models to Test</span>
+                                <a href="/admin/models" class="btn btn-sm btn-outline-info" target="_blank" title="Manage SD Models">
+                                    <i class="bi bi-gear me-1"></i>Manage SD Models
+                                </a>
+                            </label>
+                            <div class="model-selection">
+                                {{#each models}}
+                                {{#unless this.requiresModel}}
+                                <div class="form-check model-checkbox mb-2">
+                                    <input class="form-check-input" type="checkbox" 
+                                           value="{{this.id}}" 
+                                           id="model-{{this.id}}" 
+                                           data-model-name="{{this.name}}">
+                                    <label class="form-check-label text-white" for="model-{{this.id}}">
+                                        <span class="fw-semibold">{{this.name}}</span>
+                                        {{#if this.async}}
+                                        <span class="badge bg-info ms-1">Async</span>
+                                        {{else}}
+                                        <span class="badge bg-success ms-1">Sync</span>
+                                        {{/if}}
+                                        <br>
+                                        <small class="text-muted">{{this.description}}</small>
+                                    </label>
+                                </div>
+                                {{/unless}}
+                                {{/each}}
+                            </div>
+                            <button class="btn btn-sm btn-outline-light mt-2" onclick="selectAllModels()">
+                                <i class="bi bi-check-all me-1"></i>Select All Standard
+                            </button>
+                        </div>
+
+                        <!-- SD Model Selection -->
+                        {{#if activeSDModels.length}}
+                        <div class="mb-4">
+                            <label class="form-label text-white fw-bold">Select SD Models to Test</label>
+                            <div class="model-selection" style="max-height: 200px;">
+                                {{#each activeSDModels}}
+                                <div class="form-check model-checkbox mb-2">
+                                    <input class="form-check-input sd-model-checkbox" type="checkbox" 
+                                           value="{{this.modelId}}" 
+                                           id="sd-model-{{this.modelId}}" 
+                                           data-model="{{this.model}}"
+                                           data-model-name="{{this.name}}"
+                                           data-model-id="{{this.modelId}}">
+                                    <label class="form-check-label text-white" for="sd-model-{{this.modelId}}">
+                                        <span class="fw-semibold">{{this.name}}</span>
+                                        <span class="badge bg-warning ms-1">SD</span>
+                                        <br>
+                                        <small class="text-muted">{{this.model}}</small>
+                                        {{#if this.style}}
+                                        <br>
+                                        <small class="text-info">Style: {{this.style}}</small>
+                                        {{/if}}
+                                    </label>
+                                </div>
+                                {{/each}}
+                            </div>
+                            <button class="btn btn-sm btn-outline-warning mt-2" onclick="selectAllSDModels()">
+                                <i class="bi bi-check-all me-1"></i>Select All SD
+                            </button>
+                        </div>
+                        {{else}}
+                        <div class="mb-4">
+                            <div class="alert alert-warning">
+                                <small><i class="bi bi-info-circle me-1"></i>No active SD models found. <a href="/admin/models" class="alert-link">Add models</a> to test SD txt2img.</small>
+                            </div>
+                        </div>
+                        {{/if}}
+
+                        <!-- Style Preset -->
+                        <div class="mb-4">
+                            <label class="form-label text-white fw-bold">Style Preset</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="stylePreset" id="style-none" value="" checked>
+                                <label class="btn btn-outline-secondary" for="style-none">None</label>
+                                
+                                <input type="radio" class="btn-check" name="stylePreset" id="style-anime" value="anime">
+                                <label class="btn btn-outline-primary" for="style-anime">Anime</label>
+                                
+                                <input type="radio" class="btn-check" name="stylePreset" id="style-photo" value="photorealistic">
+                                <label class="btn btn-outline-success" for="style-photo">Photorealistic</label>
+                            </div>
+                        </div>
+
+                        <!-- Size Selection -->
+                        <div class="mb-4">
+                            <label class="form-label text-white fw-bold">Image Size</label>
+                            <select class="form-select bg-secondary text-white border-secondary" id="sizeSelect">
+                                {{#each sizeOptions}}
+                                <option value="{{this.value}}" {{#if (eq this.value "1024*1024")}}selected{{/if}}>
+                                    {{this.label}}
+                                </option>
+                                {{/each}}
+                            </select>
+                            <div class="form-text text-warning mt-1">
+                                <small><i class="bi bi-info-circle me-1"></i>Seedream 4.5 requires min 1920x1920 (auto-scales smaller sizes)</small>
+                            </div>
+                        </div>
+
+                        <!-- SD Model Parameters (shown when SD models are selected) -->
+                        <div class="mb-4" id="sdParamsSection" style="display: none;">
+                            <label class="form-label text-white fw-bold">
+                                <i class="bi bi-sliders me-1"></i>SD Model Parameters
+                            </label>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label class="form-label text-white small">Steps</label>
+                                    <input type="number" class="form-control form-control-sm bg-secondary text-white border-secondary" 
+                                           id="sdSteps" 
+                                           value="30" 
+                                           min="1" 
+                                           max="100">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label text-white small">Guidance Scale</label>
+                                    <input type="number" class="form-control form-control-sm bg-secondary text-white border-secondary" 
+                                           id="sdGuidanceScale" 
+                                           value="7.5" 
+                                           min="1" 
+                                           max="30" 
+                                           step="0.1">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label text-white small">Sampler</label>
+                                    <select class="form-select form-select-sm bg-secondary text-white border-secondary" id="sdSampler">
+                                        <option value="Euler a" selected>Euler a</option>
+                                        <option value="Euler">Euler</option>
+                                        <option value="DPM++ 2M Karras">DPM++ 2M Karras</option>
+                                        <option value="DPM++ SDE Karras">DPM++ SDE Karras</option>
+                                        <option value="DDIM">DDIM</option>
+                                        <option value="LMS Karras">LMS Karras</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label text-white small">Negative Prompt</label>
+                                    <textarea class="form-control form-control-sm bg-secondary text-white border-secondary" 
+                                              id="sdNegativePrompt" 
+                                              rows="2" 
+                                              placeholder="Optional negative prompt..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prompt Input -->
+                        <div class="mb-4">
+                            <label class="form-label text-white fw-bold">Base Prompt</label>
+                            <textarea class="form-control bg-secondary text-white border-secondary" 
+                                      id="promptInput" 
+                                      rows="10" 
+                                      placeholder="Enter your prompt here..."
+                                      style="min-height: 200px;"
+                                      oninput="updateFinalPromptPreview()">A beautiful Japanese woman with long black hair, elegant kimono, cherry blossoms in background, soft lighting</textarea>
+                        </div>
+
+                        <!-- Style Preset Preview (shown when a style is selected) -->
+                        <div class="mb-4" id="stylePresetPreview" style="display: none;">
+                            <label class="form-label text-white fw-bold d-flex justify-content-between align-items-center">
+                                <span><i class="bi bi-magic me-1"></i>Final Prompt (Editable)</span>
+                                <button type="button" class="btn btn-sm btn-outline-warning" onclick="resetToPreset()">
+                                    <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+                                </button>
+                            </label>
+                            <div class="style-preset-editor">
+                                <div class="mb-2">
+                                    <small class="text-info">Prefix:</small>
+                                    <input type="text" class="form-control form-control-sm bg-dark text-info border-secondary" 
+                                           id="stylePrefixInput" 
+                                           oninput="updateFinalPromptFromParts()">
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-white">Your Prompt:</small>
+                                    <div class="form-control form-control-sm bg-secondary text-white border-secondary" 
+                                         id="stylePromptDisplay" 
+                                         style="min-height: 60px; white-space: pre-wrap;"></div>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-success">Suffix:</small>
+                                    <input type="text" class="form-control form-control-sm bg-dark text-success border-secondary" 
+                                           id="styleSuffixInput" 
+                                           oninput="updateFinalPromptFromParts()">
+                                </div>
+                                <hr class="my-2 border-secondary">
+                                <div>
+                                    <small class="text-warning">Combined Final Prompt:</small>
+                                    <textarea class="form-control bg-dark text-warning border-warning" 
+                                              id="finalPromptInput" 
+                                              rows="4" 
+                                              style="font-size: 0.85rem;"></textarea>
+                                    <div class="form-text text-muted">
+                                        <small>This is what will be sent to the API. Edit freely!</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Generate Button -->
+                        <button class="btn btn-primary btn-lg w-100" id="generateBtn" onclick="startGeneration()">
+                            <i class="bi bi-play-fill me-2"></i>Start Generation
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel: Results -->
+            <div class="col-lg-5 mb-4">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-image me-2"></i>Generation Results</h5>
+                        <span id="totalTimeDisplay" class="badge bg-light text-dark d-none">Total: 0s</span>
+                    </div>
+                    <div class="card-body" id="resultsContainer" style="min-height: 400px; max-height: 600px; overflow-y: auto;">
+                        <div class="text-center text-muted py-5" id="noResultsPlaceholder">
+                            <i class="bi bi-image display-1"></i>
+                            <p class="mt-3">Select models and click "Start Generation" to begin testing</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Statistics -->
+            <div class="col-lg-3 mb-4">
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Model Statistics</h5>
+                    </div>
+                    <div class="card-body" id="statsContainer">
+                        {{#each models}}
+                        <div class="stat-card mb-3 p-3 rounded" data-model-id="{{this.id}}">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="text-white mb-0">{{this.name}}</h6>
+                                <span class="badge bg-secondary">{{this.totalTests}} tests</span>
+                            </div>
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <small class="text-muted d-block">Avg</small>
+                                    <span class="text-info fw-bold stat-avg">
+                                        {{#if this.averageTime}}
+                                        {{divide this.averageTime 1000}}s
+                                        {{else}}
+                                        --
+                                        {{/if}}
+                                    </span>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted d-block">Min</small>
+                                    <span class="text-success fw-bold stat-min">
+                                        {{#if this.minTime}}
+                                        {{divide this.minTime 1000}}s
+                                        {{else}}
+                                        --
+                                        {{/if}}
+                                    </span>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted d-block">Max</small>
+                                    <span class="text-danger fw-bold stat-max">
+                                        {{#if this.maxTime}}
+                                        {{divide this.maxTime 1000}}s
+                                        {{else}}
+                                        --
+                                        {{/if}}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+
+                <!-- Default Model Settings -->
+                <div class="card bg-dark border-secondary">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Default Character Models</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label text-white">Anime Style</label>
+                            <select class="form-select bg-secondary text-white border-secondary" 
+                                    id="defaultAnimeModel" 
+                                    onchange="setDefaultModel('anime', this.value)">
+                                {{#each models}}
+                                <option value="{{this.id}}" {{#if (eq this.id ../defaultModels.anime)}}selected{{/if}}>
+                                    {{this.name}}
+                                </option>
+                                {{/each}}
+                            </select>
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label text-white">Photorealistic Style</label>
+                            <select class="form-select bg-secondary text-white border-secondary" 
+                                    id="defaultPhotoModel" 
+                                    onchange="setDefaultModel('photorealistic', this.value)">
+                                {{#each models}}
+                                <option value="{{this.id}}" {{#if (eq this.id ../defaultModels.photorealistic)}}selected{{/if}}>
+                                    {{this.name}}
+                                </option>
+                                {{/each}}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test History -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card bg-dark border-secondary">
+                    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Test History</h5>
+                        <button class="btn btn-sm btn-outline-light" onclick="loadHistory()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                        </button>
+                    </div>
+                    <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                        <table class="table table-dark table-hover" id="historyTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 80px;">Image</th>
+                                    <th>Model</th>
+                                    <th>Prompt</th>
+                                    <th>Size</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody">
+                                {{#each recentTests}}
+                                <tr>
+                                    <td>
+                                        {{#if this.images.length}}
+                                        <img src="{{this.images.[0].imageUrl}}" 
+                                             alt="Generated" 
+                                             class="history-thumbnail cursor-pointer"
+                                             onclick="previewHistoryImage('{{this.images.[0].imageUrl}}', '{{this.modelName}}', {{this.generationTime}})"
+                                             onerror="this.src='/img/placeholder.png'">
+                                        {{else}}
+                                        <span class="text-muted">--</span>
+                                        {{/if}}
+                                    </td>
+                                    <td>{{this.modelName}}</td>
+                                    <td class="text-truncate" style="max-width: 200px;" title="{{this.prompt}}">{{this.prompt}}</td>
+                                    <td>{{this.params.size}}</td>
+                                    <td>{{#if this.generationTime}}{{divide this.generationTime 1000}}s{{else}}--{{/if}}</td>
+                                    <td>
+                                        {{#if (eq this.status "completed")}}
+                                        <span class="badge bg-success">Completed</span>
+                                        {{else if (eq this.status "failed")}}
+                                        <span class="badge bg-danger">Failed</span>
+                                        {{else}}
+                                        <span class="badge bg-warning">{{this.status}}</span>
+                                        {{/if}}
+                                    </td>
+                                    <td>{{formatDate this.testedAt}}</td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Image Preview Modal -->
+    <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="imagePreviewModalLabel">Image Preview</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="previewImage" src="" alt="Preview" class="img-fluid rounded">
+                    <div class="mt-3">
+                        <p id="previewModelName" class="mb-1"></p>
+                        <p id="previewTime" class="text-muted mb-0"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{> dashboard-footer}}
+    <script src="/js/admin-image-test.js"></script>
+</body>
+</html>

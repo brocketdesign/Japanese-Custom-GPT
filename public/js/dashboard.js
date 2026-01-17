@@ -135,6 +135,7 @@ window.displayLatestVideoChats = function(videoChatsData, targetGalleryId) {
     const currentUserId = currentUser._id;
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
     const isTemporaryUser = !!currentUser?.isTemporary;
+    const showNSFW = sessionStorage.getItem('showNSFW') === 'true';
 
     videoChatsData.forEach(videoChat => {
         const isOwner = videoChat.chat.userId === currentUserId;
@@ -142,33 +143,57 @@ window.displayLatestVideoChats = function(videoChatsData, targetGalleryId) {
         const isNSFW = videoChat.nsfw || false;
         const genderClass = videoChat.chat.gender ? `chat-gender-${videoChat.chat.gender.toLowerCase()}` : '';
         const styleClass = videoChat.chat.imageStyle ? `chat-style-${videoChat.chat.imageStyle.toLowerCase()}` : '';
+        
+        // Determine if we should blur the video (same logic as character page)
+        let shouldBlur = false;
+        if (isNSFW) {
+            if (subscriptionStatus && !isTemporaryUser) {
+                shouldBlur = !showNSFW; // Blur if showNSFW is false
+            } else {
+                shouldBlur = true; // Always blur if not subscribed or temporary
+            }
+        }
+        
+        // For NSFW content with non-subscribers: show blurred image placeholder, don't expose video URL
+        const shouldHideVideoUrl = shouldBlur && (!subscriptionStatus || isTemporaryUser);
+        const videoId = videoChat.videoId || videoChat._id;
 
         // Video card with thumbnail and play button
         htmlContent += `
-            <div class="video-chat-card col-6 col-sm-4 col-lg-2 flex-shrink-0 px-1 ${isNSFW ? 'nsfw-content' : ''}" data-chat-id="${videoChat.chatId}" data-nsfw="${isNSFW}" style="cursor: pointer;" onclick="redirectToChat('${videoChat.chatId}')">
+            <div class="video-chat-card col-6 col-sm-4 col-lg-2 flex-shrink-0 px-1 ${isNSFW ? 'nsfw-content' : ''}" data-chat-id="${videoChat.chatId}" data-nsfw="${isNSFW}" data-video-id="${videoId}" style="cursor: pointer;" onclick="redirectToChat('${videoChat.chatId}')">
                 <div class="card shadow-sm border-0 h-100 position-relative overflow-hidden">
                     <!-- Video thumbnail with play button -->
-                    <div class="video-thumbnail-wrapper position-relative" style="aspect-ratio: 9/16; background: #f8f9fa;">
-                        <video 
-                            class="card-img-top video-thumbnail" 
-                            style="height: 100%; width: 100%; object-fit: cover;" 
-                            muted 
-                            loop
-                            onmouseenter="this.play()" 
-                            onmouseleave="this.pause(); this.currentTime = 0;"
-                            onclick="event.stopPropagation(); playVideoModal('${videoChat.videoUrl}', '${videoChat.chat.name}')">
-                            <source src="${videoChat.videoUrl}" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                        
-                        <!-- Play button overlay -->
-                        <div class="play-button-overlay position-absolute top-50 start-50 translate-middle" 
-                             onclick="event.stopPropagation(); playVideoModal('${videoChat.videoUrl}', '${videoChat.chat.name}')"
-                             style="z-index: 2;">
-                            <div class="btn btn-light rounded-circle p-3 shadow" style="opacity: 0.9; height: 50px; width: 50px; padding: 8px 15px !important;">
-                                <i class="bi bi-play-fill fs-4"></i>
+                    <div class="video-thumbnail-wrapper position-relative" style="aspect-ratio: 9/16; background: #1a1a1a;">
+                        ${shouldHideVideoUrl ? `
+                            <!-- NSFW: Show blurred image placeholder, don't expose video URL -->
+                            <img 
+                                class="card-img-top video-thumbnail-blur blur-video-preview-gallery" 
+                                data-video-id="${videoId}"
+                                style="height: 100%; width: 100%; object-fit: cover; filter: blur(15px); transform: scale(1.1);"
+                                alt="Video preview"
+                                src="/img/nsfw-blurred-2.png">
+                        ` : `
+                            <video 
+                                class="card-img-top video-thumbnail" 
+                                style="height: 100%; width: 100%; object-fit: cover;" 
+                                muted 
+                                loop
+                                onmouseenter="this.play()" 
+                                onmouseleave="this.pause(); this.currentTime = 0;"
+                                onclick="event.stopPropagation(); playVideoModal('${videoChat.videoUrl}', '${videoChat.chat.name}')">
+                                <source src="${videoChat.videoUrl}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                            
+                            <!-- Play button overlay -->
+                            <div class="play-button-overlay position-absolute top-50 start-50 translate-middle" 
+                                 onclick="event.stopPropagation(); playVideoModal('${videoChat.videoUrl}', '${videoChat.chat.name}')"
+                                 style="z-index: 2;">
+                                <div class="btn btn-light rounded-circle p-3 shadow" style="opacity: 0.9; height: 50px; width: 50px; padding: 8px 15px !important;">
+                                    <i class="bi bi-play-fill fs-4"></i>
+                                </div>
                             </div>
-                        </div>
+                        `}
                         
                         <!-- Duration badge -->
                         ${videoChat.duration ? `
@@ -177,10 +202,27 @@ window.displayLatestVideoChats = function(videoChatsData, targetGalleryId) {
                             </div>
                         ` : ''}
                         
-                        <!-- NSFW overlay if needed -->
-                        ${isNSFW && (!subscriptionStatus || isTemporaryUser) ? `
-                            <div class="gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background: rgba(0,0,0,0.55); z-index:2;">
-                                <span class="badge bg-danger mb-2" style="font-size: 1rem;"><i class="bi bi-exclamation-triangle"></i> NSFW</span>
+                        <!-- NSFW overlay for non-subscribers -->
+                        ${shouldHideVideoUrl ? `
+                            <div class="gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background: rgba(0,0,0,0.25); z-index:2;">
+                                <i class="bi bi-lock-fill" style="font-size: 1.5rem; color: #fff; opacity: 0.9; margin-bottom: 0.5rem;"></i>
+                                <button class="btn btn-sm gallery-video-unlock-btn" 
+                                    onclick="event.stopPropagation(); ${isTemporaryUser ? 'openLoginForm()' : 'loadPlanPage()'};"
+                                    style="background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%); color: white; border: none; border-radius: 8px; font-weight: 600; padding: 0.4rem 0.8rem; font-size: 0.75rem;">
+                                    <i class="bi bi-unlock-fill me-1"></i>${isTemporaryUser ? 'Login' : 'Unlock'}
+                                </button>
+                            </div>
+                        ` : ''}
+                        
+                        <!-- Subscriber blur overlay (can be toggled) -->
+                        ${shouldBlur && subscriptionStatus && !isTemporaryUser ? `
+                            <div class="gallery-nsfw-overlay subscriber-blur-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" 
+                                 style="background: rgba(0,0,0,0.25); z-index:2; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); cursor: pointer;"
+                                 onclick="event.stopPropagation(); $(this).fadeOut(300, function(){ $(this).remove(); });">
+                                <button class="btn btn-sm"
+                                    style="background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%); color: white; border: none; border-radius: 8px; font-weight: 600; padding: 0.4rem 0.8rem; font-size: 0.75rem;">
+                                    ${window.translations?.showContent || 'Show Content'}
+                                </button>
                             </div>
                         ` : ''}
                     </div>
@@ -211,7 +253,7 @@ window.displayLatestVideoChats = function(videoChatsData, targetGalleryId) {
                         ${window.isAdmin ? `
                             <button 
                                 class="btn btn-dark ms-1 mt-2 video-nsfw-toggle ${isNSFW ? 'nsfw' : 'sfw'}" 
-                                data-id="${videoChat.videoId || videoChat._id}" 
+                                data-id="${videoId}" 
                                 data-nsfw="${isNSFW}" 
                                 onclick="toggleVideoNSFW(this); event.stopPropagation();" 
                                 title="${isNSFW ? 'Marked NSFW' : 'Mark NSFW'}"
@@ -228,9 +270,46 @@ window.displayLatestVideoChats = function(videoChatsData, targetGalleryId) {
     const galleryElement = $(document).find(`#${targetGalleryId}`);
     if (galleryElement.length) {
         galleryElement.append(htmlContent);
+        
+        // Fetch blurred video previews for NSFW videos (non-subscribers only)
+        galleryElement.find('.blur-video-preview-gallery').each(function() {
+            const imgElement = this;
+            const videoId = $(imgElement).data('video-id');
+            if (videoId) {
+                fetchBlurredVideoPreviewForGallery(imgElement, videoId);
+            }
+        });
     } else {
         console.warn(`Target gallery with ID #${targetGalleryId} not found.`);
     }
+};
+
+/**
+ * Fetch blurred video preview from API for gallery cards
+ * Uses videoId to retrieve the associated image and blur it
+ * Does NOT expose the video URL - only uses videoId
+ */
+window.fetchBlurredVideoPreviewForGallery = function(imgElement, videoId) {
+    $.ajax({
+        url: '/blur-video-preview?videoId=' + encodeURIComponent(videoId),
+        method: 'GET',
+        xhrFields: {
+            withCredentials: true,
+            responseType: 'blob'
+        },
+        success: function(blob) {
+            // Create object URL from blob for security (doesn't expose original URL)
+            let objectUrl = URL.createObjectURL(blob);
+            $(imgElement)
+                .attr('src', objectUrl)
+                .css({ 'filter': 'blur(15px)', 'transform': 'scale(1.1)' })
+                .data('processed', 'true');
+        },
+        error: function() {
+            // Keep placeholder image on error
+            console.error("Failed to load blurred video preview for gallery.");
+        }
+    });
 };
 
 // Function to play video in modal

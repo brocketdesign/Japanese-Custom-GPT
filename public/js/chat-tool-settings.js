@@ -12,6 +12,12 @@ class ChatToolSettings {
         this.normalCloseCallback = null;
         this.speechToTextTranslations = window.speechToTextTranslations || {};
         
+        // Voice samples
+        this.voiceSamples = null;
+        this.audioPlayer = null;
+        this.currentPlayingVoice = null;
+        this.lang = window.lang || 'en';
+        
         this.init();
     }
 
@@ -54,9 +60,19 @@ class ChatToolSettings {
         return this.translations[key] || fallback;
     }
 
-    init() {
-    this.bindEvents();
-    this.setupRangeSliders();
+    async init() {
+        this.bindEvents();
+        this.setupRangeSliders();
+        
+        // Initialize audio player
+        this.audioPlayer = document.getElementById('voiceSamplePlayer');
+        if (this.audioPlayer) {
+            this.audioPlayer.addEventListener('ended', () => this.onAudioEnded());
+            this.audioPlayer.addEventListener('error', () => this.onAudioEnded());
+        }
+        
+        // Load voice samples manifest
+        await this.loadVoiceSamples();
     }
 
     bindEvents() {
@@ -117,22 +133,33 @@ class ChatToolSettings {
             });
         });
 
-        // Voice selection
-        document.querySelectorAll('.settings-voice-option').forEach(option => {
-            option.addEventListener('click', () => this.selectVoice(option));
+        // Voice selection - Use event delegation for voice cards
+        document.addEventListener('click', (e) => {
+            const voiceCard = e.target.closest('.voice-card');
+            if (voiceCard && !e.target.closest('.play-sample-btn')) {
+                if (voiceCard.classList.contains('settings-premium-voice-option')) {
+                    this.selectPremiumVoice(voiceCard);
+                } else {
+                    this.selectVoice(voiceCard);
+                }
+            }
+        });
+
+        // Play sample button - Use event delegation
+        document.addEventListener('click', (e) => {
+            const playBtn = e.target.closest('.play-sample-btn');
+            if (playBtn) {
+                e.stopPropagation();
+                const voiceKey = playBtn.dataset.voice;
+                const provider = playBtn.dataset.provider || 'minimax';
+                this.playVoiceSample(voiceKey, provider);
+            }
         });
 
         // Dynamic model selection - Use event delegation
         document.addEventListener('click', (e) => {
             if (e.target.closest('.settings-model-option')) {
                 this.selectModel(e.target.closest('.settings-model-option'));
-            }
-        });
-
-        // Premium voice selection - Use event delegation
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.settings-premium-voice-option')) {
-                this.selectPremiumVoice(e.target.closest('.settings-premium-voice-option'));
             }
         });
 
@@ -746,8 +773,8 @@ class ChatToolSettings {
 
     // Selection methods
     selectVoice(selectedOption) {
-        // Remove selected class from all voice options
-        document.querySelectorAll('.settings-voice-option').forEach(option => {
+        // Remove selected class from all standard voice options
+        document.querySelectorAll('#standard-voices .voice-card').forEach(option => {
             option.classList.remove('selected');
         });
         
@@ -773,7 +800,7 @@ class ChatToolSettings {
         }
         
         // Remove selected class from all premium voice options
-        document.querySelectorAll('.settings-premium-voice-option').forEach(option => {
+        document.querySelectorAll('#premium-voices-grid .voice-card').forEach(option => {
             option.classList.remove('selected');
         });
         
@@ -826,28 +853,38 @@ class ChatToolSettings {
 
         const filteredVoices = this.premiumVoices.filter(voice => voice.gender === characterGender);
         filteredVoices.forEach(voice => {
-            const voiceOption = document.createElement('div');
-            voiceOption.className = 'settings-premium-voice-option settings-voice-option';
-            voiceOption.setAttribute('data-voice', voice.key);
+            const isSelected = voice.key === this.settings.minimaxVoice;
+            const voiceTranslation = this.translations.voices?.[voice.key] || {};
             
-            if (voice.key === this.settings.minimaxVoice) {
-                voiceOption.classList.add('selected');
-            }
+            const voiceCard = document.createElement('div');
+            voiceCard.className = `voice-card settings-premium-voice-option settings-voice-option ${isSelected ? 'selected' : ''}`;
+            voiceCard.setAttribute('data-voice', voice.key);
 
             // Disable for non-premium users
             if (!subscriptionStatus) {
-                voiceOption.classList.add('disabled');
-                voiceOption.style.opacity = '0.5';
-                voiceOption.style.cursor = 'pointer';
+                voiceCard.classList.add('disabled');
+                voiceCard.style.opacity = '0.5';
+                voiceCard.style.cursor = 'pointer';
             }
 
-            voiceOption.innerHTML = `
-                <div class="settings-voice-name">${this.t(`voices.${voice.key}.name`, voice.name)}</div>
-                <div class="settings-voice-description">${this.t(`voices.${voice.key}.description`, voice.description)}</div>
-                ${!subscriptionStatus ? '<i class="bi bi-crown-fill premium-icon"></i>' : ''}
+            voiceCard.innerHTML = `
+                <div class="voice-card-content">
+                    <div class="voice-icon">
+                        <i class="bi bi-soundwave"></i>
+                    </div>
+                    <div class="voice-info">
+                        <span class="voice-name">${voiceTranslation.name || voice.name || voice.key.replace(/_/g, ' ')}</span>
+                        <span class="voice-description">${voiceTranslation.description || ''}</span>
+                    </div>
+                </div>
+                <button type="button" class="play-sample-btn" data-voice="${voice.key}" data-provider="minimax">
+                    <i class="bi bi-play-fill"></i>
+                    <span>${this.t('playSample', 'Play Sample')}</span>
+                </button>
+                <div class="check-badge"><i class="bi bi-check"></i></div>
             `;
             
-            grid.appendChild(voiceOption);
+            grid.appendChild(voiceCard);
         });
     }
 
@@ -864,6 +901,133 @@ class ChatToolSettings {
                 </button>
             </div>
         `;
+    }
+
+    /**
+     * Load voice samples manifest
+     */
+    async loadVoiceSamples() {
+        try {
+            const response = await fetch('/audio/voice-samples/manifest.json');
+            if (response.ok) {
+                this.voiceSamples = await response.json();
+                console.log('[ChatToolSettings] Voice samples loaded:', this.voiceSamples.voices?.length || 0);
+            } else {
+                console.warn('[ChatToolSettings] Failed to load voice samples manifest');
+                this.voiceSamples = null;
+            }
+        } catch (error) {
+            console.error('[ChatToolSettings] Failed to load voice samples:', error);
+            this.voiceSamples = null;
+        }
+    }
+
+    /**
+     * Play a voice sample
+     */
+    async playVoiceSample(voiceKey, provider = 'minimax') {
+        if (!this.audioPlayer) return;
+        
+        // For OpenAI voices (standard), we don't have samples
+        if (provider === 'openai') {
+            console.log('[ChatToolSettings] OpenAI voices do not have samples');
+            return;
+        }
+        
+        // If clicking the same voice that's currently playing, pause it
+        if (this.currentPlayingVoice === voiceKey && !this.audioPlayer.paused) {
+            this.pauseVoiceSample();
+            return;
+        }
+        
+        // If clicking the same voice that's currently paused, resume it
+        if (this.currentPlayingVoice === voiceKey && this.audioPlayer.paused) {
+            this.resumeVoiceSample();
+            return;
+        }
+        
+        // Stop current playback if different voice
+        if (this.currentPlayingVoice && this.currentPlayingVoice !== voiceKey) {
+            this.stopVoiceSample();
+        }
+        
+        // Find the sample URL for premium voices
+        const sampleUrl = `/audio/voice-samples/${this.lang}/${voiceKey}_${this.lang}.mp3`;
+        
+        // Update UI to show playing state
+        const btn = document.querySelector(`.play-sample-btn[data-voice="${voiceKey}"]`);
+        if (btn) {
+            btn.innerHTML = `<i class="bi bi-pause-fill"></i><span>${this.t('playing', 'Playing...')}</span>`;
+            btn.classList.add('playing');
+        }
+        
+        this.currentPlayingVoice = voiceKey;
+        
+        try {
+            this.audioPlayer.src = sampleUrl;
+            await this.audioPlayer.play();
+        } catch (error) {
+            console.error('[ChatToolSettings] Failed to play voice sample:', error);
+            this.onAudioEnded();
+        }
+    }
+    
+    /**
+     * Pause voice sample playback
+     */
+    pauseVoiceSample() {
+        if (this.audioPlayer && !this.audioPlayer.paused) {
+            this.audioPlayer.pause();
+            
+            const btn = document.querySelector(`.play-sample-btn[data-voice="${this.currentPlayingVoice}"]`);
+            if (btn) {
+                btn.innerHTML = `<i class="bi bi-play-fill"></i><span>${this.t('playSample', 'Play Sample')}</span>`;
+                btn.classList.remove('playing');
+            }
+        }
+    }
+    
+    /**
+     * Resume voice sample playback
+     */
+    resumeVoiceSample() {
+        if (this.audioPlayer && this.audioPlayer.paused) {
+            this.audioPlayer.play().catch(error => {
+                console.error('[ChatToolSettings] Failed to resume voice sample:', error);
+                this.onAudioEnded();
+            });
+            
+            const btn = document.querySelector(`.play-sample-btn[data-voice="${this.currentPlayingVoice}"]`);
+            if (btn) {
+                btn.innerHTML = `<i class="bi bi-pause-fill"></i><span>${this.t('playing', 'Playing...')}</span>`;
+                btn.classList.add('playing');
+            }
+        }
+    }
+
+    /**
+     * Stop voice sample playback
+     */
+    stopVoiceSample() {
+        if (this.audioPlayer) {
+            this.audioPlayer.pause();
+            this.audioPlayer.currentTime = 0;
+        }
+        this.onAudioEnded();
+    }
+
+    /**
+     * Handle audio ended event
+     */
+    onAudioEnded() {
+        if (this.currentPlayingVoice) {
+            const btn = document.querySelector(`.play-sample-btn[data-voice="${this.currentPlayingVoice}"]`);
+            if (btn) {
+                btn.innerHTML = `<i class="bi bi-play-fill"></i><span>${this.t('playSample', 'Play Sample')}</span>`;
+                btn.classList.remove('playing');
+            }
+        }
+        this.currentPlayingVoice = null;
     }
 
     toggleVoiceProviderUI() {

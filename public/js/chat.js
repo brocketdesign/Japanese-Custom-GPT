@@ -3,6 +3,11 @@ const displayedImageIds = new Set();
 const displayedImageUrls = new Set();
 const displayedVideoIds = new Set();
 
+// Track thumb nav gallery loading state
+let thumbNavGalleryLoadedChatId = null;
+let thumbNavGalleryLoading = false;
+const thumbNavGalleryImageIds = new Set();
+
 let language
 
 function getIdFromUrl(url) {
@@ -173,6 +178,11 @@ $(document).ready(async function() {
         $('#startButtonContained').remove();
         $('#chat-recommend').empty();
 
+        // Reset thumb nav gallery loading state for new chat
+        thumbNavGalleryLoadedChatId = null;
+        thumbNavGalleryLoading = false;
+        thumbNavGalleryImageIds.clear();
+
         postChatData(fetch_chatId, fetch_userId, userChatId, fetch_reset, callback);
     }
     
@@ -181,6 +191,11 @@ $(document).ready(async function() {
         $('#chatContainer').empty();
         $('#startButtonContained').remove();
         $('#chat-recommend').empty();
+
+        // Reset thumb nav gallery loading state for new chat
+        thumbNavGalleryLoadedChatId = null;
+        thumbNavGalleryLoading = false;
+        thumbNavGalleryImageIds.clear();
         $.ajax({
             url: `${API_URL}/api/chat/`,
             type: 'POST',
@@ -525,6 +540,9 @@ function setupChatInterface(chat, character, userChat, isNew) {
             });
         }
 
+        // Load thumb nav gallery for current chat (only once)
+        loadThumbNavGallery(chatId);
+
         // Display chat immediately - don't block on scenario initialization
         displayChat(userChat, persona, function(){
             setTimeout(() => {
@@ -574,14 +592,102 @@ function setupChatInterface(chat, character, userChat, isNew) {
     
     function displayInitialChatInterface(chat) {
         displayStarter(chat);
+        // Load thumb nav gallery for new chat (only once)
+        loadThumbNavGallery(chat._id);
     }
-    
+
+    /**
+     * Load thumb nav gallery for the current chat
+     * Safeguard: Only loads once per chat session
+     */
+    async function loadThumbNavGallery(currentChatId) {
+        // Safeguard: Don't load if already loaded for this chat
+        if (thumbNavGalleryLoadedChatId === currentChatId) {
+            return;
+        }
+
+        // Safeguard: Don't load if currently loading
+        if (thumbNavGalleryLoading) {
+            return;
+        }
+
+        // Safeguard: Ensure we have a valid chat ID
+        if (!currentChatId) {
+            return;
+        }
+
+        // Set loading flag
+        thumbNavGalleryLoading = true;
+
+        try {
+            // Fetch images from the current chat
+            const response = await fetch(`/chat/${currentChatId}/images?page=1`);
+            if (!response.ok) {
+                throw new Error(`Failed to load images: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const images = data.images || [];
+
+            // Only proceed if this is still the current chat
+            const currentChatIdInSession = sessionStorage.getItem('chatId');
+            if (currentChatIdInSession !== currentChatId) {
+                thumbNavGalleryLoading = false;
+                return;
+            }
+
+            // Get user subscription status for blur logic
+            const subscriptionStatus = user?.subscriptionStatus === 'active';
+
+            // Clear existing thumbnails (except album link)
+            const albumLink = $('#chat-recommend').find('a[data-bs-toggle="tooltip"]').first();
+            $('#chat-recommend').empty();
+            if (albumLink.length) {
+                $('#chat-recommend').prepend(albumLink);
+            }
+
+            // Reset tracking set
+            thumbNavGalleryImageIds.clear();
+
+            // Add images to thumb nav gallery
+            images.forEach(image => {
+                const imageId = image._id || image.imageId;
+                const imageUrl = image.imageUrl || image.url;
+                const isNsfw = image.nsfw || false;
+                const shouldBlur = isNsfw && !subscriptionStatus;
+
+                if (imageId && imageUrl && !thumbNavGalleryImageIds.has(imageId)) {
+                    displayImageThumb(imageId, imageUrl, null, shouldBlur);
+                }
+            });
+
+            // Mark as loaded for this chat
+            thumbNavGalleryLoadedChatId = currentChatId;
+
+        } catch (error) {
+            console.error('[loadThumbNavGallery] Error loading thumb nav gallery:', error);
+        } finally {
+            thumbNavGalleryLoading = false;
+        }
+    }
 
     function displayImageThumb(imageId, imageUrl, origineUserChatId = null, shouldBlur = false){
+        // Safeguard: Check if this image is already in the thumb nav gallery
+        if (thumbNavGalleryImageIds.has(imageId)) {
+            return;
+        }
+
         const messageContainer = $(`#chatContainer[data-id=${origineUserChatId}]`)
         if(origineUserChatId && messageContainer.length == 0){
             return
         }
+
+        // Check if element already exists in DOM (additional safeguard)
+        if ($(`#chat-recommend [data-id="${imageId}"]`).length > 0) {
+            thumbNavGalleryImageIds.add(imageId);
+            return;
+        }
+
         var card = $(`
             <div 
             onclick="showImagePreview(this)"
@@ -591,6 +697,7 @@ function setupChatInterface(chat, character, userChat, isNew) {
             </div>
         `);
         $('#chat-recommend').append(card);
+        thumbNavGalleryImageIds.add(imageId);
     }
     function displayVideoThumb(originalImageUrl, videoUrl, origineUserChatId = null, shouldBlur = false){
         if(shouldBlur){
@@ -600,6 +707,21 @@ function setupChatInterface(chat, character, userChat, isNew) {
         if(origineUserChatId && messageContainer.length == 0){
             return
         }
+
+        // Use video URL as unique identifier for tracking
+        const videoId = videoUrl;
+        
+        // Safeguard: Check if this video is already in the thumb nav gallery
+        if (thumbNavGalleryImageIds.has(videoId)) {
+            return;
+        }
+
+        // Check if element already exists in DOM (additional safeguard)
+        if ($(`#chat-recommend [data-video-src="${videoUrl}"]`).length > 0) {
+            thumbNavGalleryImageIds.add(videoId);
+            return;
+        }
+
         var card = $(`
             <div 
             onclick="showVideoPreview(this)"
@@ -610,6 +732,7 @@ function setupChatInterface(chat, character, userChat, isNew) {
             </div>
         `);
         $('#chat-recommend').append(card);
+        thumbNavGalleryImageIds.add(videoId);
     }
 
 

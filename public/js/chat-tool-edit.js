@@ -157,8 +157,6 @@
                     name: 'image_edit',
                     hidden: true
                 });
-
-                generateChatCompletion(null, false, true);
                 
                 // Call image generation
                 await novitaImageGeneration(window.user._id, chatId, userChatId, {

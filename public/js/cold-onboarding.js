@@ -444,8 +444,20 @@ class ColdOnboarding {
     async playVoiceSample(voiceKey) {
         if (!this.audioPlayer) return;
         
-        // Stop current playback
-        if (this.currentPlayingVoice) {
+        // If clicking the same voice that's currently playing, pause it
+        if (this.currentPlayingVoice === voiceKey && !this.audioPlayer.paused) {
+            this.pauseVoiceSample();
+            return;
+        }
+        
+        // If clicking the same voice that's currently paused, resume it
+        if (this.currentPlayingVoice === voiceKey && this.audioPlayer.paused) {
+            this.resumeVoiceSample();
+            return;
+        }
+        
+        // Stop current playback if different voice
+        if (this.currentPlayingVoice && this.currentPlayingVoice !== voiceKey) {
             this.stopVoiceSample();
         }
         
@@ -467,6 +479,39 @@ class ColdOnboarding {
         } catch (error) {
             console.error('[ColdOnboarding] Failed to play voice sample:', error);
             this.onAudioEnded();
+        }
+    }
+    
+    /**
+     * Pause voice sample playback
+     */
+    pauseVoiceSample() {
+        if (this.audioPlayer && !this.audioPlayer.paused) {
+            this.audioPlayer.pause();
+            
+            const btn = document.querySelector(`.play-sample-btn[data-voice="${this.currentPlayingVoice}"]`);
+            if (btn) {
+                btn.innerHTML = `<i class="bi bi-play-fill"></i><span>${this.t('step6.play_sample')}</span>`;
+                btn.classList.remove('playing');
+            }
+        }
+    }
+    
+    /**
+     * Resume voice sample playback
+     */
+    resumeVoiceSample() {
+        if (this.audioPlayer && this.audioPlayer.paused) {
+            this.audioPlayer.play().catch(error => {
+                console.error('[ColdOnboarding] Failed to resume voice sample:', error);
+                this.onAudioEnded();
+            });
+            
+            const btn = document.querySelector(`.play-sample-btn[data-voice="${this.currentPlayingVoice}"]`);
+            if (btn) {
+                btn.innerHTML = `<i class="bi bi-pause-fill"></i><span>${this.t('step6.playing')}</span>`;
+                btn.classList.add('playing');
+            }
         }
     }
     

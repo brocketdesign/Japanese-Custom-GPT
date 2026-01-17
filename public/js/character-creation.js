@@ -1093,14 +1093,22 @@
                 return;
             }
             
-            // If already playing this voice, stop it
-            if (this.currentPlayingVoice === voiceKey) {
-                this.stopAudio();
+            // If clicking the same voice that's currently playing, pause it
+            if (this.currentPlayingVoice === voiceKey && !this.audioPlayer.paused) {
+                this.pauseAudio();
                 return;
             }
             
-            // Stop any currently playing audio
-            this.stopAudio();
+            // If clicking the same voice that's currently paused, resume it
+            if (this.currentPlayingVoice === voiceKey && this.audioPlayer.paused) {
+                this.resumeAudio();
+                return;
+            }
+            
+            // Stop any currently playing audio if different voice
+            if (this.currentPlayingVoice && this.currentPlayingVoice !== voiceKey) {
+                this.stopAudio();
+            }
             
             // Find the sample file
             const langMap = { 'en': 'en', 'ja': 'ja', 'fr': 'fr' };
@@ -1124,6 +1132,23 @@
                 
                 // Update button state
                 this.updatePlayButton(voiceKey, true);
+            }
+        }
+        
+        pauseAudio() {
+            if (this.audioPlayer && !this.audioPlayer.paused) {
+                this.audioPlayer.pause();
+                this.updatePlayButton(this.currentPlayingVoice, false);
+            }
+        }
+        
+        resumeAudio() {
+            if (this.audioPlayer && this.audioPlayer.paused && this.currentPlayingVoice) {
+                this.audioPlayer.play().catch(err => {
+                    console.error('[CharacterCreation] Failed to resume voice sample:', err);
+                    this.stopAudio();
+                });
+                this.updatePlayButton(this.currentPlayingVoice, true);
             }
         }
         

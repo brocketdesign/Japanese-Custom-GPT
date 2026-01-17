@@ -223,10 +223,14 @@ function initializeWebSocket(onConnectionResult = null) {
               
               // If we have all expected images, display immediately
               if (window.pendingCharacterCreationImages.length >= expectedImageCount) {
-                console.log(`[WebSocket] All ${expectedImageCount} images received, displaying immediately`);
+                console.log(`[WebSocket] All ${expectedImageCount} images received via webhook, displaying immediately`);
                 console.log(`[WebSocket] Final images:`, window.pendingCharacterCreationImages);
                 if (window.characterCreationImageTimeout) {
                   clearTimeout(window.characterCreationImageTimeout);
+                }
+                // Stop polling since webhook delivered the images
+                if (window.characterCreation.stopPolling) {
+                  window.characterCreation.stopPolling();
                 }
                 window.characterCreation.onImagesGenerated([...window.pendingCharacterCreationImages]);
                 window.pendingCharacterCreationImages = [];
@@ -239,8 +243,12 @@ function initializeWebSocket(onConnectionResult = null) {
                 // Reset the main timeout on each image received
                 window.characterCreationImageTimeout = setTimeout(() => {
                   if (window.characterCreation && window.pendingCharacterCreationImages.length > 0) {
-                    console.log(`[WebSocket] Timeout reached, displaying ${window.pendingCharacterCreationImages.length} images`);
+                    console.log(`[WebSocket] Timeout reached, displaying ${window.pendingCharacterCreationImages.length} images (via webhook)`);
                     console.log(`[WebSocket] Final images:`, window.pendingCharacterCreationImages);
+                    // Stop polling since webhook delivered the images
+                    if (window.characterCreation.stopPolling) {
+                      window.characterCreation.stopPolling();
+                    }
                     window.characterCreation.onImagesGenerated([...window.pendingCharacterCreationImages]);
                     window.pendingCharacterCreationImages = [];
                   }

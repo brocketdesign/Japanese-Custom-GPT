@@ -105,6 +105,7 @@
             console.log('[CharacterCreation] Destroying instance');
             this.stopAudio();
             this.closeOptionPopup();
+            this.stopPolling(); // Clean up any active polling
             window.characterCreationInitialized = false;
             window.characterCreation = null;
         }
@@ -1438,7 +1439,8 @@
                         this.saveSelectedImageModel();
                     }
                     
-                    // Poll for images
+                    // Images will arrive via WebSocket (triggered by Novita webhook)
+                    // Set up polling as fallback only if WebSocket fails
                     this.pollForImage(result.chatId);
                 } else {
                     throw new Error(result.error || 'Failed to generate');
@@ -1468,26 +1470,44 @@
         
         /**
          * Poll for image generation completion (fallback if WebSocket doesn't deliver)
+         * Note: With webhook implementation, WebSocket should receive images much faster.
+         * Polling is now a fallback safety net with reduced frequency.
          */
         async pollForImage(chatId) {
-            const maxAttempts = 60; // Increased for 4 images
+            const maxAttempts = 30; // Reduced since webhooks should deliver faster
+            const pollInterval = 3000; // 3 seconds between polls
+            const initialDelay = 8000; // Wait 8 seconds before first poll (give webhook time)
             let attempts = 0;
+            let pollTimerId = null;
             
             // Store chatId for WebSocket handling
             window.chatCreationId = chatId;
             this.chatId = chatId;
             this.saveData();
             
-            console.log('[CharacterCreation] Starting poll for chatId:', chatId);
+            // Store poll timer ID for cleanup
+            this._currentPollTimerId = null;
+            
+            console.log('[CharacterCreation] Starting fallback poll for chatId:', chatId);
+            console.log('[CharacterCreation] Webhook should deliver images via WebSocket. Polling is fallback only.');
             
             const checkImage = async () => {
                 // Stop polling if images already arrived via WebSocket
                 if (this.characterData.generatedImages.length > 0) {
                     console.log('[CharacterCreation] Images already received via WebSocket, stopping poll');
+                    this._currentPollTimerId = null;
+                    return;
+                }
+                
+                // Also check if pendingCharacterCreationImages has items (WebSocket queuing)
+                if (window.pendingCharacterCreationImages && window.pendingCharacterCreationImages.length > 0) {
+                    console.log('[CharacterCreation] Images queued via WebSocket, stopping poll');
+                    this._currentPollTimerId = null;
                     return;
                 }
                 
                 attempts++;
+                console.log(`[CharacterCreation] Fallback poll attempt ${attempts}/${maxAttempts}`);
                 
                 try {
                     const response = await fetch(`/api/chat-data/${chatId}`, {
@@ -1497,7 +1517,7 @@
                     if (!response.ok) {
                         console.log(`[CharacterCreation] Poll attempt ${attempts}: Chat not ready yet (${response.status})`);
                         if (attempts < maxAttempts) {
-                            setTimeout(checkImage, 2000);
+                            this._currentPollTimerId = setTimeout(checkImage, pollInterval);
                         }
                         return;
                     }
@@ -1514,40 +1534,68 @@
                     }
                     
                     if (images.length > 0) {
-                        console.log('[CharacterCreation] Images found via polling:', images.length);
+                        // Double-check WebSocket didn't already deliver these
+                        if (this.characterData.generatedImages.length > 0) {
+                            console.log('[CharacterCreation] Images already displayed via WebSocket during poll');
+                            this._currentPollTimerId = null;
+                            return;
+                        }
+                        
+                        console.log('[CharacterCreation] Images found via fallback polling:', images.length);
                         this.onImagesGenerated(images);
+                        this._currentPollTimerId = null;
                         return;
                     }
                     
                     if (attempts < maxAttempts) {
-                        setTimeout(checkImage, 2000);
+                        this._currentPollTimerId = setTimeout(checkImage, pollInterval);
                     } else {
-                        this.showError(this.t('generation_timeout', 'Image generation timed out'));
+                        console.warn('[CharacterCreation] Polling timeout - webhook may have failed');
+                        this.showError(this.t('generation_timeout', 'Image generation timed out. Please try again.'));
                         this.resetImagePlaceholder();
+                        this._currentPollTimerId = null;
                     }
                 } catch (error) {
                     console.log(`[CharacterCreation] Poll attempt ${attempts}: Error (will retry)`, error.message);
                     if (attempts < maxAttempts) {
-                        setTimeout(checkImage, 2000);
+                        this._currentPollTimerId = setTimeout(checkImage, pollInterval);
+                    } else {
+                        this._currentPollTimerId = null;
                     }
                 }
             };
             
-            // Start polling after a delay to give WebSocket a chance
-            setTimeout(checkImage, 5000);
+            // Start polling after initial delay to give webhook/WebSocket a chance
+            console.log(`[CharacterCreation] Waiting ${initialDelay/1000}s before starting fallback poll...`);
+            this._currentPollTimerId = setTimeout(checkImage, initialDelay);
+        }
+        
+        /**
+         * Stop any active polling (called when images arrive via WebSocket)
+         */
+        stopPolling() {
+            if (this._currentPollTimerId) {
+                clearTimeout(this._currentPollTimerId);
+                this._currentPollTimerId = null;
+                console.log('[CharacterCreation] Polling stopped (images received via WebSocket)');
+            }
         }
         
         /**
          * Called when images are generated (handles multiple images)
+         * This is triggered by WebSocket (via webhook) or fallback polling
          */
         onImagesGenerated(imageUrls) {
+            // Stop any active polling since images have arrived
+            this.stopPolling();
+            
             const placeholder = document.getElementById('imagePlaceholder');
             const grid = document.getElementById('generatedImagesGrid');
             const generateBtn = document.getElementById('generateImageBtn');
             const regenerateBtn = document.getElementById('regenerateImageBtn');
             const infoText = document.getElementById('imageSelectionInfo');
             
-            console.log('[CharacterCreation] Images generated:', imageUrls);
+            console.log('[CharacterCreation] Images generated (via webhook/WebSocket):', imageUrls);
             console.log('[CharacterCreation] Unique URLs:', [...new Set(imageUrls)].length, 'of', imageUrls.length);
             
             // Log each URL for debugging
@@ -1762,8 +1810,8 @@
                     modelId: modelId
                 });
                 
-                // The images will arrive via WebSocket
-                // Set up polling as fallback
+                // Images will arrive via WebSocket (triggered by Novita webhook)
+                // Set up polling as fallback only if WebSocket fails
                 this.pollForImage(this.chatId);
                 
             } catch (error) {

@@ -209,7 +209,7 @@ fastify.addHook('onRequest', (request, reply, done) => {
   if (host === 'www.chatlamix.com') {
     const newUrl = `https://app.chatlamix.com${request.raw.url}`;
     console.log(`[SEO] Redirecting www to app: ${host} → app.chatlamix.com`);
-    return reply.redirect(301, newUrl);
+    return reply.code(301).redirect(newUrl);
   }
   
   // Redirect language subdomains (fr, en, ja) to app.chatlamix.com with ?lang= parameter
@@ -223,7 +223,7 @@ fastify.addHook('onRequest', (request, reply, done) => {
       urlObj.searchParams.set('lang', subdomain);
       const newUrl = `https://app.chatlamix.com${urlObj.pathname}${urlObj.search}`;
       console.log(`[SEO] Redirecting language subdomain to app: ${host} → app.chatlamix.com?lang=${subdomain}`);
-      return reply.redirect(301, newUrl);
+      return reply.code(301).redirect(newUrl);
     }
   }
   
@@ -749,7 +749,7 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
                 queryString += `&modal=${modal}`;
               }
               
-              return reply.redirect(301, `/character/slug/${encodeURIComponent(chat.slug)}${queryString}`);
+              return reply.code(301).redirect(`/character/slug/${encodeURIComponent(chat.slug)}${queryString}`);
             }
           } catch (err) {
             console.error(`[/character/:slug] Error processing originalImageId: ${image.originalImageId}`, err);
@@ -878,15 +878,15 @@ fastify.get('/character/:chatId', async (request, reply) => {
       // It's actually a slug, redirect properly
       const queryString = request.url.split('?')[1] || '';
       const redirectUrl = `/character/slug/${chatId}${queryString ? `?${queryString}` : ''}`;
-      return reply.redirect(301, redirectUrl);
+      return reply.code(301).redirect(redirectUrl);
     }
     console.error(`[character/:chatId] Invalid Chat ID format: ${chatId}. Error:`, e);
-    return reply.redirect(301, `/character/`);
+    return reply.code(301).redirect(`/character/`);
   }
   
   if (!chat) {
     console.warn(`[character/:chatId] No chat found for chatId: ${chatId}. Redirecting to /character/`);
-    return reply.redirect(301, `/character/`);
+    return reply.code(301).redirect(`/character/`);
   }
   
   // Ensure chat has a slug; generate enhanced slug if missing

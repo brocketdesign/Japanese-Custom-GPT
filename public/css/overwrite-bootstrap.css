@@ -40,17 +40,17 @@
 }
 .btn-outline-primary {
   border: var(--form-border-width) solid var(--primary-color) !important;
-  color: var(--primary-color) !important;
-  text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.2) !important;
-  background: rgba(255, 255, 255, 0.33) !important;
+  color: var(--primary-light) !important;
+  text-shadow: none !important;
+  background: transparent !important;
   backdrop-filter: blur(10px);
   /* glowing effect */
-  box-shadow: 0 0 8px rgba(130, 64, 255, 0.6);
+  box-shadow: 0 0 8px rgba(130, 64, 255, 0.4);
 }
 
 .btn-outline-primary:hover {
   background: var(--primary-gradient) !important;
-  color: white !important;
+  color: var(--text-primary) !important;
   border-color: var(--primary-color) !important;
 }
 
@@ -80,9 +80,14 @@
 }
 
 .btn-light {
-  background: linear-gradient(135deg, var(--light-color), var(--light-alt)) !important;
-  color: #495057 !important;
-  border: 1px solid #dee2e6 !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.btn-light:hover {
+  background: var(--bg-surface-hover) !important;
+  color: var(--text-primary) !important;
 }
 
 .btn-dark {
@@ -114,8 +119,14 @@
   border-radius: var(--radius-sm) !important;
   padding: var(--form-padding) !important;
   transition: var(--transition-ease) !important;
-  background-color: #fff !important;
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
   font-size: 0.95rem !important;
+}
+
+.form-control::placeholder {
+  color: var(--text-muted) !important;
 }
 #userMessage.form-control {
   border: unset!important;
@@ -177,9 +188,11 @@
     backdrop-filter: blur(5px);
  }
   .modal-content { 
-    background: rgba(255, 255, 255, 0.8) !important;
-    border: none;
-    backdrop-filter: blur(10px);
+    background: rgba(45, 45, 45, 0.95) !important;
+    border: 1px solid var(--glass-border) !important;
+    backdrop-filter: blur(var(--glass-blur-strong));
+    -webkit-backdrop-filter: blur(var(--glass-blur-strong));
+    color: var(--text-primary) !important;
  }
   .modal-dialog { max-width:500px; margin:0 auto; }
   @media (min-width:576px) { .modal-dialog { margin:1rem auto; } }
@@ -241,12 +254,13 @@ padding-top: 60px !important;
   display: none !important;
 }
 .modal-header {
-  border-bottom: 1px solid var(--border-light) !important;
+  border-bottom: 1px solid var(--glass-border) !important;
   padding: var(--spacing-xl) !important;
   border-radius: 0 !important;
   padding: 10px 10px !important;
-  background: rgba(255, 255, 255, 0.26);
-  backdrop-filter: blur(10px);
+  background: rgba(26, 26, 26, 0.9);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   position: fixed;
   top: 0;
   left: 0;
@@ -272,16 +286,17 @@ padding-top: 60px !important;
   border-radius: 50% !important;
   padding: 0.5rem !important;
   transition: var(--transition-ease) !important;
-  background:rgba(255, 255, 255, 0.68) !important;
-  /* Ensure the < icon appears */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23333'%3E%3Cpath fill-rule='evenodd' d='M10.854 4.146a.5.5 0 0 1 0 .708L6.707 8l4.147 4.146a.5.5 0 0 1-.708.708l-4.5-4.5a.5.5 0 0 1 0-.708l4.5-4.5a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
+  background: var(--glass-bg-strong) !important;
+  /* Ensure the < icon appears - white for dark mode */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3E%3Cpath fill-rule='evenodd' d='M10.854 4.146a.5.5 0 0 1 0 .708L6.707 8l4.147 4.146a.5.5 0 0 1-.708.708l-4.5-4.5a.5.5 0 0 1 0-.708l4.5-4.5a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
   background-repeat: no-repeat !important;
   background-position: center !important;
   background-size: 1em !important;
   margin: unset !important;
 }
 .btn-close.btn-close-right{
-background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23333'%3E%3Cpath fill-rule='evenodd' d='M5.146 4.146a.5.5 0 0 0 0 .708L9.293 8l-4.147 4.146a.5.5 0 0 0 .708.708l4.5-4.5a.5.5 0 0 0 0-.708l-4.5-4.5a.5.5 0 0 0-.708 0z'/%3E%3C/svg%3E") !important;}
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3E%3Cpath fill-rule='evenodd' d='M5.146 4.146a.5.5 0 0 0 0 .708L9.293 8l-4.147 4.146a.5.5 0 0 0 .708.708l4.5-4.5a.5.5 0 0 0 0-.708l-4.5-4.5a.5.5 0 0 0-.708 0z'/%3E%3C/svg%3E") !important;
+}
 
 @keyframes modalSlideIn {
   from {
@@ -402,16 +417,17 @@ background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/s
   padding: 0.75rem 1.5rem !important;
   border: none !important;
   margin-right: var(--spacing-xs) !important;
+  color: var(--text-secondary) !important;
 }
 
 .nav-tabs .nav-link:hover {
-  background: rgba(130, 64, 255, 0.05) !important;
-  color: var(--primary-color) !important;
+  background: var(--glass-bg) !important;
+  color: var(--text-primary) !important;
 }
 
 .nav-tabs .nav-link.active {
-  background: linear-gradient(135deg, #ffffff, #f5f5ff) !important;
-  color: var(--primary-color) !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--primary-light) !important;
   border-bottom: 3px solid var(--primary-color) !important;
 }
 
@@ -431,22 +447,24 @@ background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/s
 /* ====== LIST GROUP OVERRIDES ====== */
 .list-group-item {
   border-radius: var(--radius-xs) !important;
-  border: 1px solid var(--border-light) !important;
+  border: 1px solid var(--glass-border) !important;
   margin-bottom: var(--spacing-sm) !important;
   transition: var(--transition-ease) !important;
   padding: var(--spacing-md) !important;
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
 }
 
 .list-group-item:hover {
-  background: rgba(130, 64, 255, 0.05) !important;
+  background: var(--bg-surface-hover) !important;
   transform: translateX(5px) !important;
-  border-color: var(--primary-color) !important;
+  border-color: var(--border-primary) !important;
 }
 
 .list-group-item.active {
   background: var(--primary-gradient) !important;
   border-color: var(--primary-color) !important;
-  color: white !important;
+  color: var(--text-primary) !important;
 }
 
 /* ====== TOOLTIP OVERRIDES ====== */
@@ -468,10 +486,13 @@ background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/s
 /* ====== DROPDOWN OVERRIDES ====== */
 .dropdown-menu {
   border-radius: var(--radius-sm) !important;
-  border: none !important;
+  border: 1px solid var(--glass-border) !important;
+  background: var(--bg-secondary) !important;
   box-shadow: var(--shadow-dropdown) !important;
   padding: var(--spacing-sm) !important;
   animation: dropdownSlideIn 0.3s ease !important;
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
 .dropdown-item {
@@ -479,11 +500,12 @@ background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/s
   padding: 0.75rem 1rem !important;
   margin: var(--spacing-xs) 0 !important;
   transition: var(--transition-ease) !important;
+  color: var(--text-primary) !important;
 }
 
 .dropdown-item:hover {
-  background: linear-gradient(135deg, rgba(130, 64, 255, 0.1), rgba(210, 184, 255, 0.1)) !important;
-  color: var(--primary-color) !important;
+  background: rgba(130, 64, 255, 0.2) !important;
+  color: var(--primary-light) !important;
   transform: translateX(5px) !important;
 }
 
@@ -502,55 +524,69 @@ background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/s
 .accordion-button {
   border-radius: var(--radius-sm) !important;
   border: none !important;
-  background: linear-gradient(135deg, var(--light-color), var(--light-alt)) !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
   transition: var(--transition-ease) !important;
   padding: var(--spacing-lg) !important;
 }
 
 .accordion-button:not(.collapsed) {
-  background: linear-gradient(135deg, rgba(130, 64, 255, 0.1), rgba(210, 184, 255, 0.1)) !important;
-  color: var(--primary-color) !important;
+  background: rgba(130, 64, 255, 0.15) !important;
+  color: var(--primary-light) !important;
   box-shadow: none !important;
 }
 
 .accordion-button:focus {
-  box-shadow: 0 0 0 0.25rem rgba(130, 64, 255, 0.15) !important;
+  box-shadow: 0 0 0 0.25rem rgba(130, 64, 255, 0.25) !important;
+}
+
+.accordion-button::after {
+  filter: invert(1) brightness(2);
 }
 
 .accordion-item {
-  border: 1px solid var(--border-light) !important;
+  border: 1px solid var(--glass-border) !important;
   border-radius: var(--radius-sm) !important;
   margin-bottom: var(--spacing-sm) !important;
+  background: var(--bg-secondary) !important;
+}
+
+.accordion-body {
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
 }
 
 /* ====== TABLE OVERRIDES ====== */
 .table {
   border-radius: var(--radius-sm) !important;
   overflow: hidden !important;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+  box-shadow: var(--shadow-md) !important;
+  color: var(--text-primary) !important;
 }
 
 .table thead th {
-  background: linear-gradient(135deg, var(--light-color), var(--light-alt)) !important;
+  background: var(--bg-tertiary) !important;
   border: none !important;
   padding: var(--spacing-md) !important;
   font-weight: 600 !important;
-  color: var(--primary-color) !important;
+  color: var(--primary-light) !important;
+  border-bottom: 1px solid var(--glass-border) !important;
 }
 
 .table tbody tr {
   transition: var(--transition-ease) !important;
+  background: var(--bg-secondary) !important;
 }
 
 .table tbody tr:hover {
-  background: rgba(130, 64, 255, 0.05) !important;
-  transform: scale(1.01) !important;
+  background: var(--bg-surface-hover) !important;
 }
 
 .table td {
   border: none !important;
   padding: var(--spacing-md) !important;
-  border-bottom: 1px solid var(--border-light) !important;
+  border-bottom: 1px solid var(--glass-border) !important;
+  color: var(--text-primary) !important;
 }
 
 .bi.bi-coin::before {
@@ -655,4 +691,189 @@ background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/s
   .modal.fade .modal-dialog {
     max-width: 100% !important;
   }
+}
+
+/* ====== DARK MODE BOOTSTRAP UTILITY OVERRIDES ====== */
+
+/* Background utility overrides */
+.bg-light {
+  background-color: var(--bg-tertiary) !important;
+}
+
+.bg-white {
+  background-color: var(--bg-secondary) !important;
+}
+
+.bg-dark {
+  background-color: var(--bg-primary) !important;
+}
+
+.bg-body {
+  background-color: var(--bg-primary) !important;
+}
+
+/* Text utility overrides */
+.text-dark {
+  color: var(--text-primary) !important;
+}
+
+.text-body {
+  color: var(--text-primary) !important;
+}
+
+.text-muted {
+  color: var(--text-secondary) !important;
+}
+
+.text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+/* Border utility overrides */
+.border {
+  border-color: var(--glass-border) !important;
+}
+
+.border-top,
+.border-bottom,
+.border-start,
+.border-end {
+  border-color: var(--glass-border) !important;
+}
+
+.border-light {
+  border-color: var(--glass-border) !important;
+}
+
+.border-secondary {
+  border-color: var(--glass-border) !important;
+}
+
+/* Offcanvas dark mode */
+.offcanvas {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--glass-border) !important;
+}
+
+.offcanvas-header {
+  background-color: var(--bg-primary) !important;
+  border-bottom: 1px solid var(--glass-border) !important;
+}
+
+.offcanvas-body {
+  background-color: var(--bg-secondary) !important;
+}
+
+/* Accordion dark mode */
+.accordion {
+  --bs-accordion-bg: var(--bg-secondary);
+  --bs-accordion-border-color: var(--glass-border);
+}
+
+.accordion-item {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--glass-border) !important;
+}
+
+.accordion-button {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: rgba(130, 64, 255, 0.15) !important;
+  color: var(--primary-light) !important;
+}
+
+.accordion-button::after {
+  filter: invert(1) brightness(2);
+}
+
+.accordion-body {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Breadcrumb dark mode */
+.breadcrumb {
+  background-color: var(--bg-tertiary) !important;
+}
+
+.breadcrumb-item a {
+  color: var(--primary-light) !important;
+}
+
+.breadcrumb-item.active {
+  color: var(--text-secondary) !important;
+}
+
+/* Pagination dark mode */
+.page-link {
+  background-color: var(--bg-tertiary) !important;
+  border-color: var(--glass-border) !important;
+  color: var(--text-primary) !important;
+}
+
+.page-link:hover {
+  background-color: rgba(130, 64, 255, 0.2) !important;
+  color: var(--primary-light) !important;
+}
+
+.page-item.active .page-link {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+/* Toast dark mode */
+.toast {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--glass-border) !important;
+  color: var(--text-primary) !important;
+}
+
+.toast-header {
+  background-color: var(--bg-tertiary) !important;
+  border-bottom-color: var(--glass-border) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Popover dark mode */
+.popover {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--glass-border) !important;
+}
+
+.popover-header {
+  background-color: var(--bg-tertiary) !important;
+  border-bottom-color: var(--glass-border) !important;
+  color: var(--text-primary) !important;
+}
+
+.popover-body {
+  color: var(--text-primary) !important;
+}
+
+/* Carousel dark mode */
+.carousel-caption {
+  background: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+/* Input group dark mode */
+.input-group-text {
+  background-color: var(--bg-tertiary) !important;
+  border-color: var(--glass-border) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Spinner dark mode */
+.spinner-border,
+.spinner-grow {
+  color: var(--primary-light) !important;
+}
+
+.spinner-border.text-primary,
+.spinner-grow.text-primary {
+  color: var(--primary-color) !important;
 }

@@ -27,17 +27,17 @@
 
 .onboarding-modal .modal-header {
     padding: 1rem 2rem 0 2rem !important;
-    background: #ffffff !important;
+    background: var(--bg-secondary, #2d2d2d) !important;
 }
 
 .onboarding-modal .modal-body {
     padding: 2rem !important;
-    background: #ffffff !important;
+    background: var(--bg-secondary, #2d2d2d) !important;
 }
 
 .onboarding-modal .modal-footer {
     padding: 1rem 2rem 2rem 2rem !important;
-    background: #ffffff !important;
+    background: var(--bg-secondary, #2d2d2d) !important;
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
@@ -47,7 +47,7 @@
 /* Progress Indicator */
 .onboarding-progress {
     height: 4px !important;
-    background: #f1f5f9 !important;
+    background: var(--glass-bg, rgba(255, 255, 255, 0.1)) !important;
     border-radius: 4px !important;
     position: relative !important;
     overflow: hidden !important;
@@ -63,19 +63,19 @@
 /* Welcome Step Styling */
 .onboarding-welcome {
     text-align: center !important;
-    color: #1a1a1a !important;
+    color: var(--text-primary, #ffffff) !important;
 }
 
 .welcome-title {
     font-size: 2rem !important;
     font-weight: 700 !important;
     margin-bottom: 0.75rem !important;
-    color: #1a1a1a !important;
+    color: var(--text-primary, #ffffff) !important;
     line-height: 1.2 !important;
 }
 
 .welcome-subtitle {
-    color: #6b7280 !important;
+    color: var(--text-secondary, #aeb0b4) !important;
     font-size: 1.1rem !important;
     font-weight: 400 !important;
     margin-bottom: 3rem !important;
@@ -89,7 +89,7 @@
 
 .form-label {
     font-weight: 600 !important;
-    color: #374151 !important;
+    color: var(--text-primary, #ffffff) !important;
     font-size: 1.05rem !important;
     margin-bottom: 1.25rem !important;
     text-align: center !important;
@@ -128,10 +128,10 @@
     justify-content: center !important;
     width: 100px !important;
     height: 100px !important;
-    background: #f8fafc !important;
-    border: 2px solid #e5e7eb !important;
+    background: var(--glass-bg, rgba(255, 255, 255, 0.05)) !important;
+    border: 2px solid var(--glass-border, rgba(130, 64, 255, 0.2)) !important;
     border-radius: 20px !important;
-    color: #6b7280 !important;
+    color: var(--text-secondary, #aeb0b4) !important;
     cursor: pointer !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     font-size: 0.9rem !important;
@@ -148,10 +148,10 @@
 
 .option-btn:hover,
 .relationship-btn:hover {
-    border-color: #6E20F4 !important;
-    background: #faf5ff !important;
+    border-color: var(--primary-color, #8240FF) !important;
+    background: rgba(130, 64, 255, 0.15) !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 8px 25px rgba(110, 32, 244, 0.15) !important;
+    box-shadow: 0 8px 25px rgba(130, 64, 255, 0.25) !important;
 }
 
 .option-btn.active,
@@ -184,10 +184,10 @@
 
 .age-btn {
     padding: 1rem !important;
-    background: #f8fafc !important;
-    border: 2px solid #e5e7eb !important;
+    background: var(--glass-bg, rgba(255, 255, 255, 0.05)) !important;
+    border: 2px solid var(--glass-border, rgba(130, 64, 255, 0.2)) !important;
     border-radius: 16px !important;
-    color: #374151 !important;
+    color: var(--text-primary, #ffffff) !important;
     cursor: pointer !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     font-size: 0.95rem !important;
@@ -196,10 +196,10 @@
 }
 
 .age-btn:hover {
-    border-color: #6E20F4 !important;
-    background: #faf5ff !important;
+    border-color: var(--primary-color, #8240FF) !important;
+    background: rgba(130, 64, 255, 0.15) !important;
     transform: translateY(-1px) !important;
-    box-shadow: 0 4px 16px rgba(110, 32, 244, 0.1) !important;
+    box-shadow: 0 4px 16px rgba(130, 64, 255, 0.2) !important;
 }
 
 .age-btn.active {
@@ -231,8 +231,8 @@
 }
 
 .btn-continue:disabled {
-    background: #e5e7eb !important;
-    color: #9ca3af !important;
+    background: var(--bg-tertiary, rgba(255, 255, 255, 0.1)) !important;
+    color: var(--text-secondary, #aeb0b4) !important;
     cursor: not-allowed !important;
     box-shadow: none !important;
     transform: none !important;

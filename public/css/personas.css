@@ -16,17 +16,18 @@
 
 /* Floating Container */
 .floating-personas-container {
-    background: white;
+    background: var(--bg-secondary, #2d2d2d);
     border-radius: 15px;
     width: 90%;
     max-width: 600px;
     max-height: 80vh;
     overflow-y: auto;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
     transform: translateY(50px);
     opacity: 0;
     transition: transform 0.4s ease, opacity 0.3s ease;
     padding: 20px;
+    border: 1px solid var(--glass-border, rgba(130, 64, 255, 0.2));
 }
 
 .floating-personas-container.show {
@@ -39,7 +40,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--glass-border, rgba(130, 64, 255, 0.2));
     padding-bottom: 15px;
     margin-bottom: 20px;
 }
@@ -47,6 +48,7 @@
 .personas-header h5 {
     margin: 0;
     font-weight: 600;
+    color: var(--text-primary, #ffffff);
 }
 
 /* Personas Grid */
@@ -69,7 +71,7 @@
 }
 
 .floating-persona:hover {
-    background-color: #f8f9fa;
+    background-color: rgba(130, 64, 255, 0.15);
     transform: scale(1.05);
 }
 
@@ -79,12 +81,12 @@
     border-radius: 50%;
     overflow: hidden;
     margin-bottom: 8px;
-    border: 2px solid #e9ecef;
+    border: 2px solid var(--glass-border, rgba(130, 64, 255, 0.2));
     transition: border-color 0.2s ease;
 }
 
 .floating-persona:hover .persona-avatar {
-    border-color: #6c757d;
+    border-color: var(--primary-color, #8240FF);
 }
 
 .persona-avatar img {
@@ -96,7 +98,7 @@
 .persona-name {
     font-size: 0.85rem;
     text-align: center;
-    color: #212529;
+    color: var(--text-primary, #ffffff);
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -533,6 +535,7 @@
     padding: 20px 20px 0;
     border-bottom: 1px solid #eee;
     position: relative;
+    border-radius: 15px 15px 0 0;
 }
 
 .settings-modal-title {

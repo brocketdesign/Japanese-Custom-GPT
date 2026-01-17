@@ -28,9 +28,9 @@
     z-index: 1100;
     display: flex;
     flex-direction: column;
-    background: white;
-    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15);
-    border-left: 1px solid rgba(0, 0, 0, 0.1);
+    background: var(--bg-secondary, #2d2d2d);
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.4);
+    border-left: 1px solid var(--glass-border, rgba(130, 64, 255, 0.3));
     border-radius: 20px 0 0 20px;
     transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     overflow: hidden;
@@ -60,7 +60,7 @@
     max-height: 100vh;
     overflow-y: auto;
     overflow-x: hidden;
-    background: white;
+    background: var(--bg-secondary, #2d2d2d);
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* Internet Explorer 10+ */
     padding: 0.5rem;
@@ -68,31 +68,31 @@
 
 #userMenuOffcanvas .list-group {
     max-height: 100%;
-    background: white;
+    background: transparent;
 }
 
 #userMenuOffcanvas .list-group-item {
     padding: 12px 20px;
     transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    border: 1px solid #e9ecef !important;
+    border: 1px solid var(--glass-border, rgba(130, 64, 255, 0.2)) !important;
     border-radius: 10px !important;
     margin-bottom: 0.5rem;
     white-space: nowrap;
-    background: linear-gradient(145deg, #ffffff, #f8f9fa);
+    background: var(--glass-bg, rgba(255, 255, 255, 0.05));
     display: flex;
     align-items: center;
     justify-content: flex-start;
     text-decoration: none;
-    color: inherit;
+    color: var(--text-primary, #ffffff);
     cursor: pointer;
 }
 
 #userMenuOffcanvas .list-group-item:hover {
-    background: linear-gradient(145deg, #f0e6ff, #e6d3ff);
-    border-color: #6E20F4 !important;
+    background: rgba(130, 64, 255, 0.2);
+    border-color: var(--primary-color, #8240FF) !important;
     transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(110, 32, 244, 0.15);
-    color: #3b3a3a !important;
+    box-shadow: 0 4px 15px rgba(130, 64, 255, 0.25);
+    color: var(--primary-light, #D2B8FF) !important;
 }
 
 #userMenuOffcanvas .list-group-item i {
@@ -116,15 +116,15 @@
 #userMenuOffcanvas .offcanvas-header {
     padding: 1rem 1.25rem;
     flex-shrink: 0;
-    background: white;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    background: var(--bg-primary, #1a1a1a);
+    border-bottom: 1px solid var(--glass-border, rgba(130, 64, 255, 0.2));
     display: block;
     border-radius: 20px 0 0 0;
 }
 
 #userMenuOffcanvas .offcanvas-header h6 {
     font-weight: 600;
-    color: #333;
+    color: var(--text-primary, #ffffff);
 }
 
 /* Avatar container for proper sizing and centering */
@@ -136,7 +136,7 @@
     justify-content: center;
     border-radius: 50%;
     overflow: hidden;
-    background: #f8f9fa;
+    background: var(--bg-tertiary, rgba(255, 255, 255, 0.1));
     flex-shrink: 0;
 }
 
@@ -202,12 +202,12 @@
 /* Divider styling */
 #userMenuOffcanvas hr {
     margin: 8px 0;
-    border-color: rgba(110, 32, 244, 0.1);
+    border-color: var(--glass-border, rgba(130, 64, 255, 0.2));
 }
 
 /* Admin section styling */
 #userMenuOffcanvas .px-3.py-2 {
-    background: rgba(110, 32, 244, 0.02);
+    background: rgba(130, 64, 255, 0.1);
     border-radius: 8px;
     margin: 0.5rem;
 }

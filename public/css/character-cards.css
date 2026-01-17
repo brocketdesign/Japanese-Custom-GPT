@@ -23,8 +23,9 @@
 
 .card.gallery-hover {
   transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-  background: rgba(255, 255, 255, 0.98);
+  background: var(--glass-bg, rgba(45, 45, 45, 0.95));
   backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border, rgba(130, 64, 255, 0.2));
 }
 
 .card.gallery-hover:hover {
@@ -36,7 +37,7 @@
 .gallery-image-wrapper {
   position: relative;
   aspect-ratio: 4/5;
-  background: linear-gradient(135deg, #f0f0f0 0%, #e9ecef 100%);
+  background: linear-gradient(135deg, var(--bg-secondary, #2d2d2d) 0%, var(--bg-tertiary, #3d3d3d) 100%);
   overflow: hidden;
   transition: background-size 0.3s ease, background-position 0.3s ease;
 }

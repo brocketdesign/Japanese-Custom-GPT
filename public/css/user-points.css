@@ -80,23 +80,24 @@
 
 /* Points History */
 .points-history {
-  background: white;
+  background: var(--bg-secondary, #2d2d2d);
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  border: 1px solid var(--glass-border, rgba(130, 64, 255, 0.2));
 }
 
 .points-history-header {
-  background: #f8f9fa;
+  background: var(--bg-primary, #1a1a1a);
   padding: 15px 20px;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--glass-border, rgba(130, 64, 255, 0.2));
   font-weight: bold;
-  color: #495057;
+  color: var(--text-primary, #ffffff);
 }
 
 .points-history-item {
   padding: 15px 20px;
-  border-bottom: 1px solid #f1f3f4;
+  border-bottom: 1px solid var(--glass-border, rgba(130, 64, 255, 0.1));
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -104,7 +105,7 @@
 }
 
 .points-history-item:hover {
-  background-color: #f8f9fa;
+  background-color: rgba(130, 64, 255, 0.1);
 }
 
 .points-history-item:last-child {
@@ -117,13 +118,13 @@
 
 .transaction-reason {
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary, #ffffff);
   margin-bottom: 2px;
 }
 
 .transaction-meta {
   font-size: 0.85rem;
-  color: #6c757d;
+  color: var(--text-secondary, #aeb0b4);
 }
 
 .transaction-amount {
@@ -147,22 +148,23 @@
 
 /* Leaderboard */
 .leaderboard {
-  background: white;
+  background: var(--bg-secondary, #2d2d2d);
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  border: 1px solid var(--glass-border, rgba(130, 64, 255, 0.2));
 }
 
 .leaderboard-item {
   padding: 15px 20px;
-  border-bottom: 1px solid #f1f3f4;
+  border-bottom: 1px solid var(--glass-border, rgba(130, 64, 255, 0.1));
   display: flex;
   align-items: center;
   transition: background-color 0.2s ease;
 }
 
 .leaderboard-item:hover {
-  background-color: #f8f9fa;
+  background-color: rgba(130, 64, 255, 0.1);
 }
 
 .leaderboard-item:last-child {
@@ -172,7 +174,7 @@
 .leaderboard-rank {
   font-size: 1.2rem;
   font-weight: bold;
-  color: #495057;
+  color: var(--text-secondary, #aeb0b4);
   margin-right: 15px;
   min-width: 30px;
 }
@@ -205,12 +207,12 @@
 
 .leaderboard-name {
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary, #ffffff);
 }
 
 .leaderboard-points {
   font-weight: bold;
-  color: #667eea;
+  color: var(--primary-light, #D2B8FF);
   font-size: 1.1rem;
 }
 
@@ -252,8 +254,8 @@
 }
 
 .current-streak-banner {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-bottom: 1px solid #dee2e6;
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.05));
+  border-bottom: 1px solid var(--glass-border, rgba(130, 64, 255, 0.2));
 }
 
 .streak-info {
@@ -315,8 +317,8 @@
 
 /* Streak Day Cards */
 .streak-day {
-  background: #f8f9fa;
-  border: 2px solid #e9ecef;
+  background: var(--glass-bg, rgba(255, 255, 255, 0.05));
+  border: 2px solid var(--glass-border, rgba(130, 64, 255, 0.2));
   border-radius: 12px;
   padding: 12px 8px;
   text-align: center;
@@ -328,11 +330,12 @@
   align-items: center;
   justify-content: center;
   position: relative;
+  color: var(--text-primary, #ffffff);
 }
 
 .streak-day:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(130, 64, 255, 0.2);
 }
 
 /* Streak Day States */
@@ -352,9 +355,9 @@
 }
 
 .streak-day.future {
-  background: #f8f9fa;
-  border-color: #dee2e6;
-  color: #6c757d;
+  background: var(--glass-bg, rgba(255, 255, 255, 0.03));
+  border-color: var(--glass-border, rgba(130, 64, 255, 0.1));
+  color: var(--text-secondary, #aeb0b4);
   opacity: 0.7;
 }
 
@@ -434,7 +437,7 @@
 
 /* Today's Reward Section */
 .todays-reward-section {
-  background: linear-gradient(135deg, #f8f9fa 0%, rgba(40, 167, 69, 0.05) 100%);
+  background: linear-gradient(135deg, var(--bg-tertiary, rgba(255, 255, 255, 0.05)) 0%, rgba(40, 167, 69, 0.1) 100%);
   border-top: 3px solid #28a745;
 }
 

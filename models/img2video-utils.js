@@ -4,6 +4,70 @@ const { createHash } = require('crypto');
 const { uploadToS3 } = require('../models/tool');
 const { awardVideoGenerationReward, awardCharacterVideoMilestoneReward } = require('./user-points-utils');
 const { Translations } = require('openai/resources/audio/translations.mjs');
+
+/**
+ * Get webhook URL for Novita tasks
+ */
+function getWebhookUrl() {
+  if (process.env.NOVITA_WEBHOOK_URL) {
+    return process.env.NOVITA_WEBHOOK_URL;
+  }
+  if (process.env.MODE === 'local') {
+    if (process.env.LOCAL_WEBHOOK_URL) {
+      return process.env.LOCAL_WEBHOOK_URL;
+    }
+    return 'http://localhost:3000/novita/webhook';
+  } else {
+    const baseDomain = process.env.PUBLIC_BASE_DOMAIN || 'chatlamix.com';
+    return `https://app.${baseDomain}/novita/webhook`;
+  }
+}
+
+/**
+ * Count runes (Unicode code points) in a string
+ * @param {string} str - String to count runes in
+ * @returns {number} Number of runes
+ */
+function countRunes(str) {
+  if (!str || typeof str !== 'string') return 0;
+  // Use Array.from to properly count Unicode code points (runes)
+  return Array.from(str).length;
+}
+
+/**
+ * Validate and truncate prompt to meet Novita API requirements
+ * Prompt must be between 1 and 2000 runes (Unicode code points)
+ * @param {string} prompt - Original prompt
+ * @param {string} defaultPrompt - Default prompt to use if original is invalid
+ * @returns {string} Validated and truncated prompt
+ */
+function validateAndTruncatePrompt(prompt, defaultPrompt = 'Generate a dynamic video from this image') {
+  // Use default if prompt is empty or invalid
+  if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
+    prompt = defaultPrompt;
+  }
+  
+  // Trim whitespace
+  prompt = prompt.trim();
+  
+  // Count runes
+  const runeCount = countRunes(prompt);
+  
+  // If prompt is too long, truncate it to 2000 runes
+  if (runeCount > 2000) {
+    // Convert to array of runes, take first 2000, then join back
+    const runes = Array.from(prompt);
+    prompt = runes.slice(0, 2000).join('').trim();
+    console.warn(`[validateAndTruncatePrompt] Prompt truncated from ${runeCount} to ${countRunes(prompt)} runes`);
+  }
+  
+  // Ensure prompt is at least 1 rune (should always be true after trimming, but double-check)
+  if (countRunes(prompt) < 1) {
+    prompt = defaultPrompt;
+  }
+  
+  return prompt;
+}
 /**
  * Generate video from image using Novita AI
  * @param {Object} params - Parameters for video generation
@@ -17,20 +81,35 @@ const { Translations } = require('openai/resources/audio/translations.mjs');
 async function generateVideoFromImage({ imageUrl, nsfw, prompt, userId, chatId, placeholderId }) {
   const novitaApiKey = process.env.NOVITA_API_KEY;
   const apiUrl = 'https://api.novita.ai/v3/async/kling-v2.1-i2v';
+  const webhookUrl = getWebhookUrl();
 
+  // Validate and truncate prompt to meet Novita API requirements (1-2000 runes)
+  const validatedPrompt = validateAndTruncatePrompt(prompt, 'Generate a dynamic video from this image');
+  
+  // Log the prompt for debugging
+  console.log('[generateVideoFromImage] Original prompt:', prompt);
+  console.log('[generateVideoFromImage] Validated prompt:', validatedPrompt);
+  console.log('[generateVideoFromImage] Prompt rune count:', countRunes(validatedPrompt));
+  console.log('[generateVideoFromImage] Prompt char length:', validatedPrompt?.length);
+
+  // Kling V2.1 API expects parameters directly in the body (not nested under "request")
+  // Supported parameters: image, prompt, mode, duration, guidance_scale, negative_prompt
+  // Webhook goes in "extra" at root level
   const requestData = {
-    image_url: imageUrl,
     image: imageUrl,
-    images: [imageUrl],
-    prompt: prompt || 'Generate a dynamic video from this image',
-    negative_prompt: 'blurry, low quality, distorted',
+    prompt: validatedPrompt,
+    mode: "Standard",
     duration: "5",
     guidance_scale: 0.5,
-    aspect_ratio: "9:16",
-    resolution: "720p",
-    movement_amplitude: "auto", //auto, small, medium, large
-    bgm: false // Background music option
+    negative_prompt: 'blurry, low quality, distorted',
+    extra: {
+      webhook: {
+        url: webhookUrl
+      }
+    }
   };
+  
+  console.log('[generateVideoFromImage] Request data:', JSON.stringify(requestData, null, 2));
   
   try {
     const response = await axios.post(apiUrl, requestData, {
@@ -51,6 +130,20 @@ async function generateVideoFromImage({ imageUrl, nsfw, prompt, userId, chatId, 
     }
   } catch (error) {
     console.error('Error calling Novita img2video API:', error);
+    
+    // Log more detailed error information if available
+    if (error.response && error.response.data) {
+      console.error('Novita API error response:', JSON.stringify(error.response.data, null, 2));
+    }
+    
+    // Provide more specific error message if it's a validation error
+    if (error.response && error.response.data && error.response.data.message) {
+      const errorMessage = error.response.data.message;
+      if (errorMessage.includes('Prompt') || errorMessage.includes('runes')) {
+        throw new Error(`Invalid prompt: ${errorMessage}`);
+      }
+    }
+    
     throw new Error('Failed to start video generation');
   }
 }

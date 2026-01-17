@@ -162,7 +162,15 @@ async function img2videoRoutes(fastify) {
                         content:`Here is the desired video: ${prompt}`
                     });
                 }
-                const instructionPrompt = prompt && prompt.trim() !== '' ? prompt : await generateCompletion(systemPrompt, 600, 'llama-3-70b');
+                let instructionPrompt = prompt && prompt.trim() !== '' ? prompt : await generateCompletion(systemPrompt, 600, 'llama-3-70b');
+                
+                // Ensure the generated prompt is valid (not empty, properly trimmed)
+                if (!instructionPrompt || typeof instructionPrompt !== 'string' || instructionPrompt.trim() === '') {
+                    console.warn('[img2video] Generated prompt is empty, using fallback');
+                    instructionPrompt = image.prompt || 'Generate a dynamic video from this image';
+                } else {
+                    instructionPrompt = instructionPrompt.trim();
+                }
 
                 // Start video generation
                 const videoTask = await generateVideoFromImage({

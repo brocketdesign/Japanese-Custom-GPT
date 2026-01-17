@@ -114,7 +114,7 @@
                     <div class="tab-content mt-3" id="pointsTabContent">
                         <!-- Points History Tab -->
                         <div class="tab-pane fade " id="history-pane" role="tabpanel">
-                            <div class="points-history bg-white rounded shadow-sm">
+                            <div class="points-history rounded shadow-sm" style="background: var(--bg-tertiary);">
                                 <div class="points-history-header d-flex justify-content-between align-items-center">
                                     <span>{{userPointsTranslations.points.history}}</span>
                                     <button class="btn btn-sm btn-outline-primary refresh-points">
@@ -221,7 +221,7 @@
 
                         <!-- Leaderboard Tab -->
                         <div class="tab-pane fade" id="leaderboard-pane" role="tabpanel">
-                            <div class="leaderboard bg-white rounded shadow-sm">
+                            <div class="leaderboard rounded shadow-sm" style="background: var(--bg-tertiary);">
                                 <div class="points-history-header">
                                     <i class="bi bi-trophy-fill me-2 text-warning"></i>{{userPointsTranslations.points.leaderboard}}
                                 </div>
@@ -238,7 +238,7 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer bg-light">
+            <div class="modal-footer" style="background: var(--bg-tertiary);">
                 <div class="d-flex justify-content-between align-items-center w-100">
                     <small class="text-muted">
                         <i class="bi bi-info-circle me-1"></i>
@@ -307,7 +307,7 @@
             <div class="modal-header">
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body bg-white p-0 m-0" id="login-container" style="border-radius: 9%;"></div>
+            <div class="modal-body p-0 m-0" id="login-container" style="border-radius: 9%; background: var(--bg-secondary);"></div>
         </div>
     </div>
 </div>
@@ -323,7 +323,7 @@
             <div class="modal-body position-relative p-0">
             <!-- Tab Navigation -->
             <div class="overflow-auto sticky-top">
-                <ul class="nav nav-tabs flex-nowrap  bg-white" id="myTab" role="tablist" style="white-space: nowrap; top: 0; z-index: 1060;">
+                <ul class="nav nav-tabs flex-nowrap" id="myTab" role="tablist" style="white-space: nowrap; top: 0; z-index: 1060; background: var(--bg-secondary);">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="true">
                             {{translations.setting.profile}}
@@ -874,7 +874,7 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer bg-light">
+            <div class="modal-footer" style="background: var(--bg-tertiary);">
                 <div class="d-flex justify-content-between align-items-center w-100">
                     <small class="text-muted">
                         <i class="bi bi-info-circle me-1"></i>
@@ -1014,7 +1014,7 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer bg-light">
+            <div class="modal-footer" style="background: var(--bg-tertiary);">
                 <div class="d-flex justify-content-between align-items-center w-100">
                     <small class="text-muted">
                         <i class="bi bi-info-circle me-1"></i>
@@ -1101,7 +1101,7 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer bg-light">
+            <div class="modal-footer" style="background: var(--bg-tertiary);">
                 <small class="text-muted fst-italic">
                     <i class="bi bi-info-circle me-1"></i>
                     {{#if translations.leaderboard_footer_info}}{{translations.leaderboard_footer_info}}{{else}}Rankings are updated periodically.{{/if}}

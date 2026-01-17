@@ -130,9 +130,14 @@
                 <p class="lead mb-4">
                     {{translations.features_page.cta_description}}
                 </p>
-                <a href="#" onclick="openLoginForm()" class="btn custom-gradient-bg text-white btn-lg px-5 py-3 fw-bold" role="button" style="border-radius: 50px;">
-                    {{translations.lp.cta_button}}
-                </a>
+                <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center align-items-center">
+                    <a href="#" onclick="openLoginForm()" class="btn custom-gradient-bg text-white btn-lg px-5 py-3 fw-bold" role="button" style="border-radius: 50px;">
+                        {{translations.lp.cta_button}}
+                    </a>
+                    <a href="/landingpage/home-en" class="btn btn-outline-primary btn-lg px-5 py-3 fw-bold" role="button" style="border-radius: 50px;">
+                        <i class="fas fa-info-circle me-2"></i>{{#if translations.features_page.learn_more}}{{translations.features_page.learn_more}}{{else}}Learn More{{/if}}
+                    </a>
+                </div>
             </div>
         </div>
     </div>

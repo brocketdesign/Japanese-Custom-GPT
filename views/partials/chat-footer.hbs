@@ -149,10 +149,17 @@
         </div>
     </div>
 
-        <div id="suggestionsContainer" class="shadow" style="padding-bottom: 10vh;position: absolute; bottom: -10px; width: 95%; margin: auto; max-height: 55vh; background: rgb(255, 255, 255); overflow-y: auto; left: 0; right: 0; z-index: 10; border-radius: 15px 15px 0 0; display: none;">
-            <button id="close-suggestionsContainer" class="btn shadow-0 position-absolute top-0 end-0"><i class="bi bi-x"></i></button>
-            <div id="suggestionsList" class="row mx-2 my-5">
-                <h4 class="text-center w-100 mt-2">{{translations.toolbar.ideas}}</h4>
+        <div id="suggestionsContainer" class="shadow" style="padding-bottom: 10vh;position: absolute; bottom: -10px; width: 95%; margin: auto; max-height: 55vh; background: var(--bg-secondary); border: 1px solid var(--glass-border); overflow-y: auto; left: 0; right: 0; z-index: 10; border-radius: 15px 15px 0 0; display: none;">
+            <div class="settings-modal-header">
+                <h3 class="settings-modal-title">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    {{translations.toolbar.ideas}}
+                </h3>
+                <button type="button" class="settings-close-btn" id="close-suggestionsContainer">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            <div id="suggestionsList" class="row mx-2 my-5" style="padding: 20px 24px;">
                 <p class="text-center text-muted w-100">{{translations.loading_suggestions}}</p>
                 <div class="loading-spinner text-center mt-4">
                     <div class="spinner-border" role="status">
@@ -163,10 +170,17 @@
         </div>
         
         <div id="personas-overlay">
-            <div id="personas-container" class="shadow" style="position: absolute; bottom: -10px; width: 95%; margin: auto; max-height: 55vh; background: rgb(255, 255, 255); overflow-y: auto; left: 0; right: 0; z-index: 10; border-radius: 15px 15px 0 0; display: none;">
-                <button id="close-personas-container" class="btn shadow-0 position-absolute top-0 end-0"><i class="bi bi-x"></i></button>
-                <div id="personas-list" class="row mx-0 mb-5">
-                    <h4 class="text-center w-100 mt-2">{{translations.personas.selectPersona}}</h4>
+            <div id="personas-container" class="shadow" style="position: absolute; bottom: -10px; width: 95%; margin: auto; max-height: 55vh; background: var(--bg-secondary); border: 1px solid var(--glass-border); overflow-y: auto; left: 0; right: 0; z-index: 10; border-radius: 15px 15px 0 0; display: none;">
+                <div class="settings-modal-header">
+                    <h3 class="settings-modal-title">
+                        <i class="bi bi-person-lines-fill me-2"></i>
+                        {{translations.personas.selectPersona}}
+                    </h3>
+                    <button type="button" class="settings-close-btn" id="close-personas-container">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+                <div id="personas-list" class="row mx-0 mb-5" style="padding: 20px 24px;">
                     <p class="text-center text-muted w-100">{{translations.personas.selectPersona_description}}</p>
                     
                     <!-- Add Custom Persona Button -->
@@ -187,10 +201,17 @@
             </div>
         </div>
 
-        <div id="promptContainer" class="shadow" style="padding-bottom: 10vh;position: absolute; bottom: -10px; width: 95%; margin: auto; max-height: 55vh; background: rgb(255, 255, 255); overflow-y: auto;left: 0;right: 0;z-index: 10;border-radius: 15px 15px 0 0;display:none;">
-            <button id="close-promptContainer" class="btn shadow-0 position-absolute top-0 end-0"><i class="bi bi-x"></i></button>
-            <div id="promptList" class="row mx-0 mb-5">
-                <h4 class="text-center w-100 mt-2">{{translations.selectPose}}</h4>
+        <div id="promptContainer" class="shadow" style="padding-bottom: 10vh;position: absolute; bottom: -10px; width: 95%; margin: auto; max-height: 55vh; background: var(--bg-secondary); border: 1px solid var(--glass-border); overflow-y: auto;left: 0;right: 0;z-index: 10;border-radius: 15px 15px 0 0;display:none;">
+            <div class="settings-modal-header">
+                <h3 class="settings-modal-title">
+                    <i class="bi bi-image me-2"></i>
+                    {{translations.selectPose}}
+                </h3>
+                <button type="button" class="settings-close-btn" id="close-promptContainer">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            <div id="promptList" class="row mx-0 mb-5" style="padding: 20px 24px;">
                 <p class="text-center text-muted w-100">{{translations.selectPose_description}}</p>
                 <!-- Prompts will be dynamically generated here -->
                 {{#each promptData}}
@@ -234,10 +255,17 @@
 
             </div>
         </div>
-        <div id="giftsOverlay" class="shadow" style="padding-bottom: 10vh;position: absolute; bottom: -10px; width: 95%; margin: auto; max-height: 55vh; background: rgb(255, 255, 255); overflow-y: auto; left: 0; right: 0; z-index: 10; border-radius: 15px 15px 0 0; display: none;">
-            <button id="close-giftsOverlay" class="btn shadow-0 position-absolute top-0 end-0"><i class="bi bi-x"></i></button>
-            <div id="giftsList" class="row mx-0 mb-5">
-                <h4 class="text-center w-100 mt-2">{{translations.gifts.selectGift}}</h4>
+        <div id="giftsOverlay" class="shadow" style="padding-bottom: 10vh;position: absolute; bottom: -10px; width: 95%; margin: auto; max-height: 55vh; background: var(--bg-secondary); border: 1px solid var(--glass-border); overflow-y: auto; left: 0; right: 0; z-index: 10; border-radius: 15px 15px 0 0; display: none;">
+            <div class="settings-modal-header">
+                <h3 class="settings-modal-title">
+                    <i class="bi bi-gift me-2"></i>
+                    {{translations.gifts.selectGift}}
+                </h3>
+                <button type="button" class="settings-close-btn" id="close-giftsOverlay">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            <div id="giftsList" class="row mx-0 mb-5" style="padding: 20px 24px;">
                 <p class="text-center text-muted w-100">{{translations.gifts.selectGift_description}}</p>
                 <!-- Gifts will be dynamically generated here -->
                 {{#each giftData}}
@@ -281,13 +309,17 @@
             </div>
         </div>
 
-        <div id="goalsOverlay" class="shadow" style="padding-bottom: 10vh;position: absolute; bottom: -10px; width: 95%; margin: auto; max-height: 55vh; background: rgb(255, 255, 255); overflow-y: auto; left: 0; right: 0; z-index: 10; border-radius: 15px 15px 0 0; display: none;">
-            <button id="close-goalsOverlay" class="btn shadow-0 position-absolute top-0 end-0"><i class="bi bi-x"></i></button>
-            <div id="goalsList" class="row mx-0 mb-5">
-                <h4 class="text-center w-100 mt-2">
-                    <i class="bi bi-trophy text-warning me-2"></i>
+        <div id="goalsOverlay" class="shadow" style="padding-bottom: 10vh;position: absolute; bottom: -10px; width: 95%; margin: auto; max-height: 55vh; background: var(--bg-secondary); border: 1px solid var(--glass-border); overflow-y: auto; left: 0; right: 0; z-index: 10; border-radius: 15px 15px 0 0; display: none;">
+            <div class="settings-modal-header">
+                <h3 class="settings-modal-title">
+                    <i class="bi bi-trophy me-2"></i>
                     {{translations.goals.completedGoals}}
-                </h4>
+                </h3>
+                <button type="button" class="settings-close-btn" id="close-goalsOverlay">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            <div id="goalsList" class="row mx-0 mb-5" style="padding: 20px 24px;">
                 <p class="text-center text-muted w-100">{{translations.goals.completedGoals_description}}</p>
                 <div class="mb-2 text-center">
                     <button id="goals-enable-toggle" class="btn btn-sm btn-outline-primary d-none" data-enabled="true">
@@ -620,21 +652,69 @@
                 <div class="settings-field" id="standard-voices">
                     <label class="settings-label fw-semibold">{{chatToolSettingsTranslations.selectStandardVoice}}</label>
                     <div class="settings-voice-grid mt-3">
-                        <div class="settings-voice-option selected" data-voice="nova">
-                            <div class="settings-voice-name fw-semibold">{{chatToolSettingsTranslations.voices.nova.name}}</div>
-                            <div class="settings-voice-description text-muted small">{{chatToolSettingsTranslations.voices.nova.description}}</div>
+                        <div class="voice-card settings-voice-option selected" data-voice="nova">
+                            <div class="voice-card-content">
+                                <div class="voice-icon">
+                                    <i class="bi bi-soundwave"></i>
+                                </div>
+                                <div class="voice-info">
+                                    <span class="voice-name">{{chatToolSettingsTranslations.voices.nova.name}}</span>
+                                    <span class="voice-description">{{chatToolSettingsTranslations.voices.nova.description}}</span>
+                                </div>
+                            </div>
+                            <button type="button" class="play-sample-btn" data-voice="nova" data-provider="openai">
+                                <i class="bi bi-play-fill"></i>
+                                <span>{{chatToolSettingsTranslations.playSample}}</span>
+                            </button>
+                            <div class="check-badge"><i class="bi bi-check"></i></div>
                         </div>
-                        <div class="settings-voice-option" data-voice="alloy">
-                            <div class="settings-voice-name fw-semibold">{{chatToolSettingsTranslations.voices.alloy.name}}</div>
-                            <div class="settings-voice-description text-muted small">{{chatToolSettingsTranslations.voices.alloy.description}}</div>
+                        <div class="voice-card settings-voice-option" data-voice="alloy">
+                            <div class="voice-card-content">
+                                <div class="voice-icon">
+                                    <i class="bi bi-soundwave"></i>
+                                </div>
+                                <div class="voice-info">
+                                    <span class="voice-name">{{chatToolSettingsTranslations.voices.alloy.name}}</span>
+                                    <span class="voice-description">{{chatToolSettingsTranslations.voices.alloy.description}}</span>
+                                </div>
+                            </div>
+                            <button type="button" class="play-sample-btn" data-voice="alloy" data-provider="openai">
+                                <i class="bi bi-play-fill"></i>
+                                <span>{{chatToolSettingsTranslations.playSample}}</span>
+                            </button>
+                            <div class="check-badge"><i class="bi bi-check"></i></div>
                         </div>
-                        <div class="settings-voice-option" data-voice="shimmer">
-                            <div class="settings-voice-name fw-semibold">{{chatToolSettingsTranslations.voices.shimmer.name}}</div>
-                            <div class="settings-voice-description text-muted small">{{chatToolSettingsTranslations.voices.shimmer.description}}</div>
+                        <div class="voice-card settings-voice-option" data-voice="shimmer">
+                            <div class="voice-card-content">
+                                <div class="voice-icon">
+                                    <i class="bi bi-soundwave"></i>
+                                </div>
+                                <div class="voice-info">
+                                    <span class="voice-name">{{chatToolSettingsTranslations.voices.shimmer.name}}</span>
+                                    <span class="voice-description">{{chatToolSettingsTranslations.voices.shimmer.description}}</span>
+                                </div>
+                            </div>
+                            <button type="button" class="play-sample-btn" data-voice="shimmer" data-provider="openai">
+                                <i class="bi bi-play-fill"></i>
+                                <span>{{chatToolSettingsTranslations.playSample}}</span>
+                            </button>
+                            <div class="check-badge"><i class="bi bi-check"></i></div>
                         </div>
-                        <div class="settings-voice-option" data-voice="fable">
-                            <div class="settings-voice-name fw-semibold">{{chatToolSettingsTranslations.voices.fable.name}}</div>
-                            <div class="settings-voice-description text-muted small">{{chatToolSettingsTranslations.voices.fable.description}}</div>
+                        <div class="voice-card settings-voice-option" data-voice="fable">
+                            <div class="voice-card-content">
+                                <div class="voice-icon">
+                                    <i class="bi bi-soundwave"></i>
+                                </div>
+                                <div class="voice-info">
+                                    <span class="voice-name">{{chatToolSettingsTranslations.voices.fable.name}}</span>
+                                    <span class="voice-description">{{chatToolSettingsTranslations.voices.fable.description}}</span>
+                                </div>
+                            </div>
+                            <button type="button" class="play-sample-btn" data-voice="fable" data-provider="openai">
+                                <i class="bi bi-play-fill"></i>
+                                <span>{{chatToolSettingsTranslations.playSample}}</span>
+                            </button>
+                            <div class="check-badge"><i class="bi bi-check"></i></div>
                         </div>
                     </div>
                 </div>
@@ -933,5 +1013,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear any loading states
         $('#chat-history-list').empty();
     });
-});
+    });
 </script>
+
+<!-- Hidden audio element for voice samples -->
+<audio id="voiceSamplePlayer" preload="none"></audio>

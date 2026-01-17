@@ -97,15 +97,15 @@
 <!-- User Menu Offcanvas -->
 {{#if user}}
     {{#unless user.isTemporary}}
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="userMenuOffcanvas" aria-labelledby="userMenuOffcanvasLabel" style="visibility: hidden;">
-        <div class="offcanvas-header border-bottom">
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="userMenuOffcanvas" aria-labelledby="userMenuOffcanvasLabel" style="visibility: hidden; background: var(--bg-secondary); color: var(--text-primary); border-left: 1px solid var(--glass-border);">
+        <div class="offcanvas-header" style="border-bottom: 1px solid var(--glass-border); background: var(--bg-primary);">
             <div class="d-flex align-items-center w-100">
                 <div class="avatar-container me-3">
                     <img src="{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}" 
                          class="rounded-circle" alt="Avatar" loading="lazy" />
                 </div>
                 <div class="user-info flex-grow-1">
-                    <h6 class="mb-0">{{user.username}}</h6>
+                    <h6 class="mb-0" style="color: var(--text-primary);">{{user.username}}</h6>
                     {{#if (eq user.subscriptionStatus 'active')}}
                         <small class="text-muted">
                             <i class="bi bi-gem text-warning"></i> {{translations.avatar.premium}}

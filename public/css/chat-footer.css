@@ -3483,14 +3483,35 @@ body.keyboard-open #chatInput {
 
 
 /* Enhanced user message styling to match loaded chat messages */
+/* Ensure user message containers align to the right */
+.d-flex.flex-row.justify-content-end.message-container,
+.message-container.user-message,
+.d-flex.message-container.user-message,
+.message-container:has(.user-message) {
+    justify-content: flex-end !important;
+    align-items: flex-end !important;
+    display: flex !important;
+    flex-direction: row !important;
+    width: 100% !important;
+}
+
+/* Target message containers that contain user-message */
+.message-container:has(.user-message) {
+    justify-content: flex-end !important;
+    width: 100% !important;
+}
+
 .user-message {
-    background-color: #151213b0 !important;
     color: #fff !important;
     border-radius: 15px 0 15px 15px !important;
     font-size: 14px !important;
-    max-width: 81% !important;
     box-shadow: none !important;
     border: none !important;
+    display: inline-block !important;
+    width: fit-content !important;
+    min-width: fit-content !important;
+    word-wrap: break-word !important;
+    white-space: normal !important;
 }
 
 .user-message span {

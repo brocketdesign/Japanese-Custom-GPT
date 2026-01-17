@@ -94,21 +94,21 @@ class PromptManager {
                 <div class="modal fade" id="customPromptModal" tabindex="-1" aria-labelledby="customPromptModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content mx-auto" style="height: auto;">
-                            <div class="modal-header">
-                                <div class="d-flex align-items-center flex-column w-100">
-                                    <h5 class="modal-title" id="customPromptModalLabel">
-                                        <i class="bi bi-image me-2"></i>
-                                        ${modalTitle}
-                                    </h5>
-                                    <span>${modalSubtitle}</span>
-                                </div>
+                            <div class="modal-header d-flex justify-content-between align-items-center">
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                <h5 class="modal-title mb-0" id="customPromptModalLabel">
+                                    <i class="bi bi-image me-2"></i>
+                                    ${modalTitle}
+                                </h5>
                             </div>
                             <div class="modal-body">
                                 <div class="mb-3">
                                     <label for="customPromptTextarea" class="form-label">
                                         ${labelText}
                                     </label>
+                                    <div class="form-text text-muted mb-2">
+                                        ${modalSubtitle}
+                                    </div>
                                     <textarea 
                                         class="form-control" 
                                         style="min-height: 90px;"

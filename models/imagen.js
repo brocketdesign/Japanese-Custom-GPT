@@ -1740,6 +1740,10 @@ async function fetchNovitaMagic(data, flux = false) {
     
     // Get webhook URL
     const webhookUrl = getWebhookUrl();
+    console.log(`[fetchNovitaMagic] 🔗 Webhook URL: ${webhookUrl}`);
+    if (webhookUrl.includes('localhost')) {
+      console.warn(`[fetchNovitaMagic] ⚠️ WARNING: Using localhost webhook URL - Novita cannot reach this! Set LOCAL_WEBHOOK_URL env variable with ngrok URL.`);
+    }
     
     let requestBody = {
       headers: {

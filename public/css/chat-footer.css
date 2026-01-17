@@ -3366,14 +3366,17 @@ body.keyboard-open #chatInput {
 }
 
 
-/* Enhanced user message styling for better contrast */
+/* Enhanced user message styling to match loaded chat messages */
 .user-message {
-    background: linear-gradient(135deg, #8240FF 0%, #6E20F4 100%) !important;
-    color: #ffffff !important;
-    box-shadow: 0 4px 12px rgba(130, 64, 255, 0.3) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background-color: #151213b0 !important;
+    color: #fff !important;
+    border-radius: 15px 0 15px 15px !important;
+    font-size: 14px !important;
+    max-width: 81% !important;
+    box-shadow: none !important;
+    border: none !important;
 }
 
 .user-message span {
-    color: #ffffff !important;
+    color: #fff !important;
 }

@@ -381,31 +381,53 @@
 }
 
 /* ============================================================================
-   NOTIFICATION BADGE & MODAL STYLES
+   NOTIFICATION BADGE & MODAL STYLES - Professional Native App Design
    ============================================================================ */
 
-/* Avatar Notification Badge */
-#avatarNotificationBadge {
-    animation: pulse-badge 2s infinite;
-    box-shadow: 0 0 0 2px var(--bg-primary, #1a1a1a);
+/* Avatar Notification Badge - Red Dot Design */
+.avatar-notification-badge {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    width: 12px;
+    height: 12px;
+    padding: 0;
+    background: linear-gradient(135deg, #ff4757 0%, #ff3344 100%);
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(255, 71, 87, 0.4), 0 0 0 2px var(--bg-primary, #1a1a1a);
     z-index: 10;
     pointer-events: none;
+    animation: badge-pop 0.3s ease-out;
 }
 
-@keyframes pulse-badge {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.1);
-    }
+@keyframes badge-pop {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
 }
 
-/* Menu Notification Badge */
-#menuNotificationBadge {
-    font-size: 0.7rem;
-    min-width: 20px;
-    padding: 2px 6px;
+/* Menu Notification Badge - Fixed Circular Size */
+.menu-notification-badge {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    max-width: 22px;
+    padding: 0;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 22px;
+    text-align: center;
+    color: #fff;
+    background: linear-gradient(135deg, #ff4757 0%, #ff3344 100%);
+    border-radius: 50%;
+    margin-left: auto;
+    box-shadow: 0 2px 6px rgba(255, 71, 87, 0.3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Notifications Menu Item */
@@ -414,77 +436,258 @@
     align-items: center;
 }
 
-/* Notification Modal */
-#userNotificationsModal .modal-content {
-    max-height: 80vh;
+/* ============================================================================
+   NOTIFICATION MODAL - Native App Design
+   ============================================================================ */
+
+/* Ensure notification modal appears above offcanvas */
+#userNotificationsModal {
+    z-index: 1200 !important;
 }
 
-#userNotificationsModal .modal-body {
-    scrollbar-width: thin;
-    scrollbar-color: var(--primary-color, #8240FF) transparent;
+.notifications-modal-content {
+    background: var(--bg-secondary, #1e1e1e);
+    border: none;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    max-height: 70vh;
 }
 
-#userNotificationsModal .modal-body::-webkit-scrollbar {
-    width: 6px;
+.notifications-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: var(--bg-primary, #151515);
+    color: var(--text-primary, #fff);
+    font-size: 15px;
+    font-weight: 600;
 }
 
-#userNotificationsModal .modal-body::-webkit-scrollbar-track {
-    background: transparent;
+.notifications-modal-header i {
+    color: var(--primary-color, #8240FF);
 }
 
-#userNotificationsModal .modal-body::-webkit-scrollbar-thumb {
-    background-color: var(--primary-color, #8240FF);
-    border-radius: 3px;
-}
-
-/* Notification Item Styles */
-.notification-item {
-    transition: background-color 0.2s ease;
-}
-
-.notification-item:hover {
-    background-color: rgba(130, 64, 255, 0.1) !important;
-}
-
-.notification-item:first-child {
-    border-top: none !important;
-}
-
-.notification-item .notification-icon {
+.notifications-close-btn {
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 8px;
+    color: var(--text-secondary, #888);
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.notification-item .notification-icon .rounded-circle {
+.notifications-close-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--text-primary, #fff);
+}
+
+.notifications-modal-body {
+    max-height: calc(70vh - 60px);
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.notifications-modal-body::-webkit-scrollbar {
+    display: none;
+}
+
+.notifications-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.notifications-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 50px 20px;
+    color: var(--text-secondary, #666);
+}
+
+.notifications-empty i {
+    font-size: 40px;
+    opacity: 0.4;
+    margin-bottom: 12px;
+}
+
+.notifications-empty p {
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Notification List */
+.notifications-list {
+    padding: 8px;
+}
+
+/* Individual Notification Item */
+.notif-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+}
+
+.notif-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.notif-item:active {
+    background: rgba(255, 255, 255, 0.08);
+    transform: scale(0.99);
+}
+
+/* Unread Notification */
+.notif-unread {
+    background: rgba(130, 64, 255, 0.08);
+}
+
+.notif-unread:hover {
+    background: rgba(130, 64, 255, 0.12);
+}
+
+/* Notification Icon */
+.notif-icon {
     width: 36px;
     height: 36px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+    font-size: 16px;
 }
 
-/* Unread notification highlight */
-.notification-item.bg-opacity-10 {
-    border-left: 3px solid var(--primary-color, #8240FF) !important;
+.notif-icon-info {
+    background: rgba(23, 162, 184, 0.15);
+    color: #17a2b8;
 }
 
-/* Mobile adjustments for notification modal */
+.notif-icon-success {
+    background: rgba(40, 167, 69, 0.15);
+    color: #28a745;
+}
+
+.notif-icon-warning {
+    background: rgba(255, 193, 7, 0.15);
+    color: #ffc107;
+}
+
+.notif-icon-error {
+    background: rgba(220, 53, 69, 0.15);
+    color: #dc3545;
+}
+
+.notif-icon-video {
+    background: rgba(130, 64, 255, 0.15);
+    color: #8240FF;
+}
+
+.notif-icon-image {
+    background: rgba(130, 64, 255, 0.15);
+    color: #8240FF;
+}
+
+/* Notification Content */
+.notif-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.notif-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.notif-message {
+    font-size: 13px;
+    color: var(--text-secondary, #888);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.notif-time {
+    font-size: 11px;
+    color: var(--text-tertiary, #666);
+}
+
+/* Unread Indicator Dot */
+.notif-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--primary-color, #8240FF);
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 6px;
+}
+
+/* Arrow for clickable notifications */
+.notif-arrow {
+    color: var(--text-tertiary, #555);
+    font-size: 12px;
+    align-self: center;
+    margin-left: auto;
+}
+
+/* Mobile adjustments */
 @media (max-width: 576px) {
     #userNotificationsModal .modal-dialog {
-        margin: 0.5rem;
+        margin: 8px;
     }
     
-    #userNotificationsModal .modal-body {
-        max-height: 70vh;
+    .notifications-modal-content {
+        max-height: 80vh;
+        border-radius: 16px;
     }
     
-    .notification-item {
-        padding: 0.75rem !important;
+    .notifications-modal-header {
+        padding: 14px 16px;
     }
     
-    .notification-item .notification-icon .rounded-circle {
+    .notifications-list {
+        padding: 6px;
+    }
+    
+    .notif-item {
+        padding: 10px;
+        gap: 10px;
+    }
+    
+    .notif-icon {
         width: 32px;
         height: 32px;
+        font-size: 14px;
+    }
+    
+    .notif-title {
+        font-size: 13px;
+    }
+    
+    .notif-message {
+        font-size: 12px;
     }
 }

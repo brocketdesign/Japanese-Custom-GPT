@@ -91,12 +91,8 @@
                     aria-controls="userMenuOffcanvas"
                     style="border-radius: 50%; background-size: cover; background-position: top; background-image: url('{{#if user.profileUrl}}{{user.profileUrl}}{{else}}/img/avatar.png{{/if}}');">
                 </button>
-                <!-- Notification Badge on Avatar -->
-                <span id="avatarNotificationBadge" 
-                      class="position-absolute badge rounded-pill bg-danger d-none"
-                      style="top: -2px; right: -2px; font-size: 0.65rem; min-width: 18px; padding: 3px 5px;">
-                    0
-                </span>
+                <!-- Notification Badge on Avatar - Red Dot Only -->
+                <span id="avatarNotificationBadge" class="avatar-notification-badge d-none"></span>
             </div>
         </div>
     {{/unless}}
@@ -143,9 +139,9 @@
                 </a>
                 
                 <!-- Notifications Menu Item -->
-                <a class="list-group-item list-group-item-action border-0 menu-item position-relative" href="#" data-bs-toggle="modal" data-bs-target="#userNotificationsModal" id="notificationsMenuItem">
+                <a class="list-group-item list-group-item-action border-0 menu-item position-relative" href="#" id="notificationsMenuItem">
                     <i class="bi bi-bell me-3"></i>{{translations.avatar.notifications}}
-                    <span id="menuNotificationBadge" class="badge rounded-pill bg-danger ms-auto d-none">0</span>
+                    <span id="menuNotificationBadge" class="menu-notification-badge d-none">0</span>
                 </a>
                 
                 <div class="d-none">
@@ -238,31 +234,27 @@
 {{/if}}
 
 <!-- User Notifications Modal -->
-<div class="modal fade" id="userNotificationsModal" tabindex="-1" aria-labelledby="userNotificationsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content" style="background: var(--bg-secondary, #2d2d2d); border: 1px solid var(--glass-border, rgba(130, 64, 255, 0.3)); border-radius: 16px;">
-            <div class="modal-header border-0" style="background: var(--bg-primary, #1a1a1a); border-radius: 16px 16px 0 0;">
-                <h5 class="modal-title" id="userNotificationsModalLabel" style="color: var(--text-primary, #fff);">
-                    <i class="bi bi-bell-fill me-2 text-primary"></i>{{translations.avatar.notifications}}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-0" style="max-height: 60vh; overflow-y: auto;">
-                <div id="notificationsLoading" class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
+<div class="modal fade" id="userNotificationsModal" tabindex="-1" aria-labelledby="userNotificationsModalLabel" aria-hidden="true" data-bs-backdrop="false" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content notifications-modal-content">
+            <div class="notifications-modal-header">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-bell-fill"></i>
+                    <span>{{translations.avatar.notifications}}</span>
                 </div>
-                <div id="notificationsList" class="d-none"></div>
-                <div id="noNotifications" class="text-center py-5 d-none">
-                    <i class="bi bi-bell-slash text-muted" style="font-size: 3rem;"></i>
-                    <p class="text-muted mt-3 mb-0">{{translations.notifications.empty}}</p>
-                </div>
-            </div>
-            <div class="modal-footer border-0 justify-content-center">
-                <button type="button" class="btn btn-outline-secondary btn-sm" id="markAllReadBtn" style="border-radius: 20px;">
-                    <i class="bi bi-check-all me-1"></i>{{translations.notifications.markAllRead}}
+                <button type="button" class="notifications-close-btn" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
                 </button>
+            </div>
+            <div class="notifications-modal-body">
+                <div id="notificationsLoading" class="notifications-loading">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                </div>
+                <div id="notificationsList" class="notifications-list d-none"></div>
+                <div id="noNotifications" class="notifications-empty d-none">
+                    <i class="bi bi-bell-slash"></i>
+                    <p>{{translations.notifications.empty}}</p>
+                </div>
             </div>
         </div>
     </div>
@@ -374,6 +366,37 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
+        // Handle notification menu item click - close offcanvas first, then open modal
+        const notificationsMenuItem = document.getElementById('notificationsMenuItem');
+        const notificationsModal = document.getElementById('userNotificationsModal');
+        
+        if (notificationsMenuItem && notificationsModal) {
+            notificationsMenuItem.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Close offcanvas if open, then open modal
+                if (offcanvasElement.classList.contains('show')) {
+                    bsOffcanvas.hide();
+                    
+                    // Wait for offcanvas to fully close, then open modal
+                    offcanvasElement.addEventListener('hidden.bs.offcanvas', function openModal() {
+                        const modal = new bootstrap.Modal(notificationsModal, {
+                            backdrop: false,
+                            keyboard: true
+                        });
+                        modal.show();
+                    }, { once: true });
+                } else {
+                    // Offcanvas already closed, open modal directly
+                    const modal = new bootstrap.Modal(notificationsModal, {
+                        backdrop: false,
+                        keyboard: true
+                    });
+                    modal.show();
+                }
+            });
+        }
+        
         // Close offcanvas when clicking outside
         document.addEventListener('click', function(e) {
             if (offcanvasElement.classList.contains('show') && 
@@ -399,13 +422,18 @@ function initNotificationSystem() {
     // Load notifications when modal opens
     const notificationsModal = document.getElementById('userNotificationsModal');
     if (notificationsModal) {
-        notificationsModal.addEventListener('show.bs.modal', loadUserNotifications);
-    }
-    
-    // Mark all as read button
-    const markAllReadBtn = document.getElementById('markAllReadBtn');
-    if (markAllReadBtn) {
-        markAllReadBtn.addEventListener('click', markAllNotificationsRead);
+        notificationsModal.addEventListener('show.bs.modal', function() {
+            // Ensure offcanvas is closed
+            const offcanvasEl = document.getElementById('userMenuOffcanvas');
+            if (offcanvasEl?.classList.contains('show')) {
+                const bsOffcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl);
+                if (bsOffcanvas) {
+                    bsOffcanvas.hide();
+                }
+            }
+            
+            loadUserNotifications();
+        });
     }
 }
 
@@ -418,22 +446,25 @@ async function loadNotificationCount() {
         const data = await res.json();
         const count = data.count || 0;
         
-        // Update avatar badge
+        // Update avatar badge - just show red dot, no text
         const avatarBadge = document.getElementById('avatarNotificationBadge');
         if (avatarBadge) {
             if (count > 0) {
-                avatarBadge.textContent = count > 99 ? '99+' : count;
+                // Remove any text content for dot-only design
+                avatarBadge.textContent = '';
                 avatarBadge.classList.remove('d-none');
             } else {
                 avatarBadge.classList.add('d-none');
             }
         }
         
-        // Update menu badge
+        // Update menu badge - show count in fixed circular badge
         const menuBadge = document.getElementById('menuNotificationBadge');
         if (menuBadge) {
             if (count > 0) {
-                menuBadge.textContent = count > 99 ? '99+' : count;
+                // Show count, but keep it within fixed circular size
+                const displayCount = count > 99 ? '99+' : count.toString();
+                menuBadge.textContent = displayCount;
                 menuBadge.classList.remove('d-none');
             } else {
                 menuBadge.classList.add('d-none');
@@ -468,24 +499,19 @@ async function loadUserNotifications() {
         }
         
         listEl.innerHTML = notifications.map(notif => `
-            <div class="notification-item p-3 border-bottom ${!notif.viewed ? 'bg-opacity-10 bg-primary' : ''}" 
-                 data-id="${notif._id}" 
-                 style="border-color: var(--glass-border, rgba(130, 64, 255, 0.2)) !important; cursor: pointer;"
+            <div class="notif-item ${!notif.viewed ? 'notif-unread' : ''}" 
+                 data-id="${notif._id}"
                  onclick="handleNotificationClick('${notif._id}', '${notif.data?.link || ''}')">
-                <div class="d-flex align-items-start gap-3">
-                    <div class="notification-icon flex-shrink-0">
-                        ${getNotificationIcon(notif.type)}
-                    </div>
-                    <div class="flex-grow-1">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <h6 class="mb-1" style="color: var(--text-primary, #fff);">${escapeHtml(notif.title)}</h6>
-                            ${!notif.viewed ? '<span class="badge bg-primary" style="font-size: 0.65rem;">New</span>' : ''}
-                        </div>
-                        <p class="mb-1 text-muted small">${escapeHtml(notif.message)}</p>
-                        <small class="text-muted">${formatNotificationTime(notif.createdAt)}</small>
-                        ${notif.data?.link ? `<div class="mt-2"><span class="badge bg-primary bg-opacity-20 text-primary">${notif.data?.actionText || 'View'} →</span></div>` : ''}
-                    </div>
+                <div class="notif-icon notif-icon-${notif.type || 'info'}">
+                    <i class="bi ${getNotificationIconClass(notif.type)}"></i>
                 </div>
+                <div class="notif-content">
+                    <div class="notif-title">${escapeHtml(notif.title)}</div>
+                    <div class="notif-message">${escapeHtml(notif.message)}</div>
+                    <div class="notif-time">${formatNotificationTime(notif.createdAt)}</div>
+                </div>
+                ${!notif.viewed ? '<div class="notif-dot"></div>' : ''}
+                ${notif.data?.link ? '<i class="bi bi-chevron-right notif-arrow"></i>' : ''}
             </div>
         `).join('');
         
@@ -493,7 +519,6 @@ async function loadUserNotifications() {
     } catch (err) {
         console.error('Error loading notifications:', err);
         loadingEl.classList.add('d-none');
-        emptyEl.innerHTML = '<i class="bi bi-exclamation-circle text-danger" style="font-size: 3rem;"></i><p class="text-muted mt-3 mb-0">Failed to load notifications</p>';
         emptyEl.classList.remove('d-none');
     }
 }
@@ -508,11 +533,11 @@ async function handleNotificationClick(notificationId, link) {
             window.location.href = link;
         } else {
             // Update the visual state
-            const item = document.querySelector(`[data-id="${notificationId}"]`);
+            const item = document.querySelector(`.notif-item[data-id="${notificationId}"]`);
             if (item) {
-                item.classList.remove('bg-primary', 'bg-opacity-10');
-                const badge = item.querySelector('.badge.bg-primary');
-                if (badge && badge.textContent === 'New') badge.remove();
+                item.classList.remove('notif-unread');
+                const dot = item.querySelector('.notif-dot');
+                if (dot) dot.remove();
             }
         }
     } catch (err) {
@@ -520,39 +545,15 @@ async function handleNotificationClick(notificationId, link) {
     }
 }
 
-// Mark all notifications as read
-async function markAllNotificationsRead() {
-    const items = document.querySelectorAll('.notification-item[data-id]');
-    const promises = [];
-    
-    items.forEach(item => {
-        const id = item.getAttribute('data-id');
-        if (id) {
-            promises.push(fetch(`/notifications/viewed/${id}`, { method: 'PUT' }));
-        }
-    });
-    
-    try {
-        await Promise.all(promises);
-        loadNotificationCount();
-        loadUserNotifications();
-        if (window.showNotification) {
-            window.showNotification('All notifications marked as read', 'success');
-        }
-    } catch (err) {
-        console.error('Error marking all as read:', err);
-    }
-}
-
-// Get notification icon based on type
-function getNotificationIcon(type) {
+// Get notification icon class based on type
+function getNotificationIconClass(type) {
     const icons = {
-        info: '<div class="rounded-circle bg-info bg-opacity-20 p-2"><i class="bi bi-info-circle text-info"></i></div>',
-        success: '<div class="rounded-circle bg-success bg-opacity-20 p-2"><i class="bi bi-check-circle text-success"></i></div>',
-        warning: '<div class="rounded-circle bg-warning bg-opacity-20 p-2"><i class="bi bi-exclamation-triangle text-warning"></i></div>',
-        error: '<div class="rounded-circle bg-danger bg-opacity-20 p-2"><i class="bi bi-x-circle text-danger"></i></div>',
-        video: '<div class="rounded-circle bg-primary bg-opacity-20 p-2"><i class="bi bi-camera-video text-primary"></i></div>',
-        image: '<div class="rounded-circle bg-primary bg-opacity-20 p-2"><i class="bi bi-image text-primary"></i></div>'
+        info: 'bi-info-circle-fill',
+        success: 'bi-check-circle-fill',
+        warning: 'bi-exclamation-triangle-fill',
+        error: 'bi-x-circle-fill',
+        video: 'bi-play-circle-fill',
+        image: 'bi-image-fill'
     };
     return icons[type] || icons.info;
 }

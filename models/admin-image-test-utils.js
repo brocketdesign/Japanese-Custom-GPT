@@ -381,6 +381,30 @@ async function saveTestResult(db, result) {
   try {
     const collection = db.collection('imageModelTests');
     
+    // Check for duplicate saves within the last 30 seconds
+    // This prevents duplicate saves from race conditions or multiple calls
+    // Increased window to handle network delays and async operations
+    const now = new Date();
+    const thirtySecondsAgo = new Date(now.getTime() - 30000);
+    
+    // Normalize prompt for comparison (trim whitespace)
+    const normalizedPrompt = (result.prompt || '').trim();
+    
+    // Check for duplicates with multiple criteria to catch race conditions
+    const duplicateCheck = await collection.findOne({
+      userId: result.userId,
+      modelId: result.modelId,
+      prompt: normalizedPrompt,
+      testedAt: { $gte: thirtySecondsAgo }
+    }, {
+      sort: { testedAt: -1 } // Get the most recent one
+    });
+    
+    if (duplicateCheck) {
+      console.log(`[AdminImageTest] ⚠️ Duplicate save prevented for ${result.modelName} (found existing test ${duplicateCheck._id} from ${duplicateCheck.testedAt})`);
+      return duplicateCheck._id.toString();
+    }
+    
     // Normalize images array to ensure consistent structure
     let normalizedImages = [];
     if (result.images && Array.isArray(result.images)) {
@@ -399,24 +423,27 @@ async function saveTestResult(db, result) {
     const testRecord = {
       modelId: result.modelId,
       modelName: result.modelName,
-      prompt: result.prompt,
+      prompt: normalizedPrompt,
       params: result.params,
       generationTime: result.generationTime,
       status: result.status,
       images: normalizedImages,
       error: result.error,
-      testedAt: new Date(),
+      testedAt: now,
       userId: result.userId
     };
 
-    await collection.insertOne(testRecord);
+    const insertResult = await collection.insertOne(testRecord);
 
     // Update model average time
     await updateModelAverage(db, result.modelId, result.generationTime);
 
     console.log(`[AdminImageTest] 💾 Saved test result for ${result.modelName} with ${normalizedImages.length} images`);
+    
+    return insertResult.insertedId.toString();
   } catch (error) {
     console.error(`[AdminImageTest] Error saving test result:`, error.message);
+    throw error;
   }
 }
 
@@ -470,11 +497,86 @@ async function getModelStats(db, modelId = null) {
     
     const stats = await collection.find(query).toArray();
     
-    return stats.map(stat => {
+    // Separate SD models from other models
+    // SD models can have modelId 'sd-txt2img' or prefixed IDs like 'sd-someModelId'
+    const sdStats = stats.filter(stat => stat.modelId === 'sd-txt2img' || stat.modelId.startsWith('sd-'));
+    const otherStats = stats.filter(stat => stat.modelId !== 'sd-txt2img' && !stat.modelId.startsWith('sd-'));
+    
+    // Combine all SD model statistics
+    let combinedSDStat = null;
+    if (sdStats.length > 0) {
+      const combinedTotalTests = sdStats.reduce((sum, stat) => sum + (stat.totalTests || 0), 0);
+      const combinedTotalTime = sdStats.reduce((sum, stat) => sum + (stat.totalTime || 0), 0);
+      const allRecentTimes = sdStats.reduce((arr, stat) => {
+        if (stat.recentTimes && Array.isArray(stat.recentTimes)) {
+          return arr.concat(stat.recentTimes);
+        }
+        return arr;
+      }, []);
+      
+      const avgTime = combinedTotalTests > 0 ? Math.round(combinedTotalTime / combinedTotalTests) : 0;
+      const recentAvg = allRecentTimes.length > 0 
+        ? Math.round(allRecentTimes.reduce((a, b) => a + b, 0) / allRecentTimes.length)
+        : avgTime;
+      
+      // Get the most recent lastTested date
+      const lastTested = sdStats.reduce((latest, stat) => {
+        if (!latest) return stat.lastTested;
+        if (!stat.lastTested) return latest;
+        return stat.lastTested > latest ? stat.lastTested : latest;
+      }, null);
+      
+      // Get combined rating stats for SD models (match both exact and prefixed IDs)
+      const ratingsCollection = db.collection('imageRatings');
+      const sdRatings = await ratingsCollection.find({ 
+        $or: [
+          { modelId: 'sd-txt2img' },
+          { modelId: { $regex: /^sd-/ } }
+        ]
+      }).toArray();
+      const sdTotalRatings = sdRatings.length;
+      const sdAverageRating = sdTotalRatings > 0 
+        ? Math.round((sdRatings.reduce((sum, r) => sum + r.rating, 0) / sdTotalRatings) * 10) / 10
+        : null;
+
+      combinedSDStat = {
+        modelId: 'sd-txt2img',
+        modelName: 'SD Text to Image',
+        totalTests: combinedTotalTests,
+        averageTime: avgTime,
+        recentAverageTime: recentAvg,
+        lastTested: lastTested,
+        minTime: allRecentTimes.length > 0 ? Math.min(...allRecentTimes) : 0,
+        maxTime: allRecentTimes.length > 0 ? Math.max(...allRecentTimes) : 0,
+        averageRating: sdAverageRating,
+        totalRatings: sdTotalRatings
+      };
+    }
+    
+    // Get all ratings to calculate averages
+    const ratingsCollection = db.collection('imageRatings');
+    const allRatings = await ratingsCollection.find({}).toArray();
+    const ratingsByModel = {};
+    allRatings.forEach(rating => {
+      if (!ratingsByModel[rating.modelId]) {
+        ratingsByModel[rating.modelId] = [];
+      }
+      ratingsByModel[rating.modelId].push(rating.rating);
+    });
+
+    // Process other stats normally
+    const processedOtherStats = otherStats.map(stat => {
       const avgTime = stat.totalTests > 0 ? Math.round(stat.totalTime / stat.totalTests) : 0;
       const recentAvg = stat.recentTimes?.length > 0 
         ? Math.round(stat.recentTimes.reduce((a, b) => a + b, 0) / stat.recentTimes.length)
         : avgTime;
+      
+      // Calculate rating stats from ratings collection
+      const modelRatings = ratingsByModel[stat.modelId] || [];
+      const totalRatings = modelRatings.length;
+      const averageRating = totalRatings > 0 
+        ? Math.round((modelRatings.reduce((sum, r) => sum + r, 0) / totalRatings) * 10) / 10
+        : null;
       
       return {
         modelId: stat.modelId,
@@ -484,9 +586,19 @@ async function getModelStats(db, modelId = null) {
         recentAverageTime: recentAvg,
         lastTested: stat.lastTested,
         minTime: stat.recentTimes?.length > 0 ? Math.min(...stat.recentTimes) : 0,
-        maxTime: stat.recentTimes?.length > 0 ? Math.max(...stat.recentTimes) : 0
+        maxTime: stat.recentTimes?.length > 0 ? Math.max(...stat.recentTimes) : 0,
+        averageRating: averageRating,
+        totalRatings: totalRatings
       };
     });
+    
+    // Combine results: other stats first, then combined SD stat if it exists
+    const result = [...processedOtherStats];
+    if (combinedSDStat) {
+      result.push(combinedSDStat);
+    }
+    
+    return result;
   } catch (error) {
     console.error(`[AdminImageTest] Error getting model stats:`, error.message);
     return [];
@@ -594,6 +706,121 @@ async function uploadTestImageToS3(imageUrl, prefix = 'test') {
   }
 }
 
+/**
+ * Save image rating
+ * @param {Object} db - Database instance
+ * @param {string} modelId - Model identifier
+ * @param {string} imageUrl - Image URL
+ * @param {number} rating - Rating from 1 to 5
+ * @param {string} testId - Optional test ID
+ * @param {string} userId - User ID
+ */
+async function saveImageRating(db, modelId, imageUrl, rating, testId = null, userId = null) {
+  try {
+    if (rating < 1 || rating > 5) {
+      throw new Error('Rating must be between 1 and 5');
+    }
+
+    const collection = db.collection('imageRatings');
+    
+    // Check if rating already exists for this image
+    const existingRating = await collection.findOne({
+      imageUrl: imageUrl,
+      modelId: modelId
+    });
+
+    if (existingRating) {
+      // Update existing rating
+      await collection.updateOne(
+        { _id: existingRating._id },
+        {
+          $set: {
+            rating: rating,
+            testId: testId,
+            userId: userId,
+            updatedAt: new Date()
+          }
+        }
+      );
+    } else {
+      // Create new rating
+      await collection.insertOne({
+        modelId: modelId,
+        imageUrl: imageUrl,
+        rating: rating,
+        testId: testId,
+        userId: userId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    }
+
+    // Update model rating statistics
+    await updateModelRatingStats(db, modelId);
+
+    console.log(`[AdminImageTest] 💾 Saved rating ${rating} for ${modelId}`);
+  } catch (error) {
+    console.error(`[AdminImageTest] Error saving image rating:`, error.message);
+    throw error;
+  }
+}
+
+/**
+ * Get image rating
+ * @param {Object} db - Database instance
+ * @param {string} testId - Test ID
+ * @returns {Object|null} - Rating object or null
+ */
+async function getImageRating(db, testId) {
+  try {
+    const collection = db.collection('imageRatings');
+    const rating = await collection.findOne({ testId: testId });
+    return rating;
+  } catch (error) {
+    console.error(`[AdminImageTest] Error getting image rating:`, error.message);
+    return null;
+  }
+}
+
+/**
+ * Update model rating statistics
+ * @param {Object} db - Database instance
+ * @param {string} modelId - Model identifier
+ */
+async function updateModelRatingStats(db, modelId) {
+  try {
+    const ratingsCollection = db.collection('imageRatings');
+    const statsCollection = db.collection('imageModelStats');
+    
+    // Get all ratings for this model
+    const ratings = await ratingsCollection.find({ modelId: modelId }).toArray();
+    
+    if (ratings.length === 0) {
+      return;
+    }
+
+    const totalRatings = ratings.length;
+    const sumRatings = ratings.reduce((sum, r) => sum + r.rating, 0);
+    const averageRating = sumRatings / totalRatings;
+
+    // Update statistics
+    await statsCollection.updateOne(
+      { modelId: modelId },
+      {
+        $set: {
+          averageRating: Math.round(averageRating * 10) / 10, // Round to 1 decimal
+          totalRatings: totalRatings
+        }
+      },
+      { upsert: true }
+    );
+
+    console.log(`[AdminImageTest] 📊 Updated rating stats for ${modelId}: ${averageRating.toFixed(1)} (${totalRatings} ratings)`);
+  } catch (error) {
+    console.error(`[AdminImageTest] Error updating model rating stats:`, error.message);
+  }
+}
+
 module.exports = {
   MODEL_CONFIGS,
   SIZE_OPTIONS,
@@ -606,5 +833,8 @@ module.exports = {
   getRecentTests,
   getDefaultCharacterModels,
   setDefaultCharacterModel,
-  uploadTestImageToS3
+  uploadTestImageToS3,
+  saveImageRating,
+  getImageRating,
+  updateModelRatingStats
 };

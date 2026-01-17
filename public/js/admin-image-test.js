@@ -28,6 +28,12 @@ const state = {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('[AdminImageTest] Dashboard initialized');
     
+    // Initialize model checkbox click handlers
+    initializeModelCheckboxes();
+    
+    // Initialize rating stars
+    initializeRatingStars();
+    
     // Load initial stats
     refreshStats();
     
@@ -38,6 +44,24 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize the preview
     updateFinalPromptPreview();
+    
+    // Add event delegation for copy prompt buttons (for dynamically loaded content)
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.copy-prompt-btn')) {
+            const button = e.target.closest('.copy-prompt-btn');
+            const prompt = button.getAttribute('data-prompt');
+            if (prompt) {
+                // Parse JSON if it's JSON string, otherwise use as-is
+                let promptText;
+                try {
+                    promptText = JSON.parse(prompt);
+                } catch (err) {
+                    promptText = prompt;
+                }
+                copyPrompt(promptText, button);
+            }
+        }
+    });
 });
 
 /**
@@ -135,14 +159,43 @@ function getFinalPrompt() {
 }
 
 /**
+ * Initialize model checkbox click handlers
+ */
+function initializeModelCheckboxes() {
+    // Handle all model checkboxes
+    document.querySelectorAll('.model-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('click', function(e) {
+            // Don't trigger if clicking on a link or button inside
+            if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON' || e.target.closest('a') || e.target.closest('button')) {
+                return;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            this.classList.toggle('selected');
+            
+            // Check if this is an SD model
+            const sdInput = this.querySelector('.sd-model-checkbox');
+            if (sdInput) {
+                updateSDParamsVisibility();
+            }
+        });
+    });
+}
+
+/**
  * Select all standard model checkboxes
  */
 function selectAllModels() {
-    const checkboxes = document.querySelectorAll('.model-checkbox input[type="checkbox"]:not(.sd-model-checkbox)');
-    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    const checkboxes = document.querySelectorAll('.model-checkbox');
+    const standardCheckboxes = Array.from(checkboxes).filter(cb => !cb.querySelector('.sd-model-checkbox'));
+    const allSelected = standardCheckboxes.every(cb => cb.classList.contains('selected'));
     
-    checkboxes.forEach(cb => {
-        cb.checked = !allChecked;
+    standardCheckboxes.forEach(cb => {
+        if (allSelected) {
+            cb.classList.remove('selected');
+        } else {
+            cb.classList.add('selected');
+        }
     });
 }
 
@@ -150,11 +203,16 @@ function selectAllModels() {
  * Select all SD model checkboxes
  */
 function selectAllSDModels() {
-    const checkboxes = document.querySelectorAll('.sd-model-checkbox');
-    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    const checkboxes = document.querySelectorAll('.model-checkbox');
+    const sdCheckboxes = Array.from(checkboxes).filter(cb => cb.querySelector('.sd-model-checkbox'));
+    const allSelected = sdCheckboxes.every(cb => cb.classList.contains('selected'));
     
-    checkboxes.forEach(cb => {
-        cb.checked = !allChecked;
+    sdCheckboxes.forEach(cb => {
+        if (allSelected) {
+            cb.classList.remove('selected');
+        } else {
+            cb.classList.add('selected');
+        }
     });
     
     updateSDParamsVisibility();
@@ -164,24 +222,34 @@ function selectAllSDModels() {
  * Get selected standard models
  */
 function getSelectedModels() {
-    const checkboxes = document.querySelectorAll('.model-checkbox input[type="checkbox"]:not(.sd-model-checkbox):checked');
-    return Array.from(checkboxes).map(cb => ({
-        id: cb.value,
-        name: cb.dataset.modelName
-    }));
+    const checkboxes = document.querySelectorAll('.model-checkbox.selected');
+    const standardSelected = Array.from(checkboxes).filter(cb => !cb.querySelector('.sd-model-checkbox'));
+    
+    return standardSelected.map(cb => {
+        const input = cb.querySelector('input[type="checkbox"]');
+        return {
+            id: input.value,
+            name: input.dataset.modelName
+        };
+    });
 }
 
 /**
  * Get selected SD models
  */
 function getSelectedSDModels() {
-    const checkboxes = document.querySelectorAll('.sd-model-checkbox:checked');
-    return Array.from(checkboxes).map(cb => ({
-        modelId: cb.value,
-        model: cb.dataset.model,
-        model_name: cb.dataset.model,
-        name: cb.dataset.modelName
-    }));
+    const checkboxes = document.querySelectorAll('.model-checkbox.selected');
+    const sdSelected = Array.from(checkboxes).filter(cb => cb.querySelector('.sd-model-checkbox'));
+    
+    return sdSelected.map(cb => {
+        const input = cb.querySelector('.sd-model-checkbox');
+        return {
+            modelId: input.value,
+            model: input.dataset.model,
+            model_name: input.dataset.model,
+            name: input.dataset.modelName
+        };
+    });
 }
 
 /**
@@ -196,15 +264,7 @@ function updateSDParamsVisibility() {
     }
 }
 
-// Add event listeners for SD model checkboxes
-document.addEventListener('DOMContentLoaded', function() {
-    // Delegate event listener for SD model checkboxes
-    document.addEventListener('change', function(e) {
-        if (e.target.classList.contains('sd-model-checkbox')) {
-            updateSDParamsVisibility();
-        }
-    });
-});
+// SD params visibility is now handled in initializeModelCheckboxes()
 
 /**
  * Start generation for selected models
@@ -426,13 +486,30 @@ function updateResultCard(modelId, task) {
             timerEl.className = 'timer badge bg-success';
         }
 
-        // Display images
+        // Display images first (they're already available)
         if (task.images && task.images.length > 0) {
             displayImages(modelId, task.images, time);
         }
-
-        // Save result
-        saveTestResult(modelId, task);
+        
+        // Save result to get testId - use task.modelId, not the card modelId
+        // This updates task.testId which will be used if user clicks on image again
+        // Only save if not already saved and not currently saving (prevent duplicate saves)
+        const currentTask = state.activeTasks.get(modelId);
+        if (!currentTask?.testId && !currentTask?.saving) {
+            // Mark as saving immediately to prevent duplicate saves
+            task.saving = true;
+            state.activeTasks.set(modelId, task);
+            
+            saveTestResult(task.modelId || modelId, task).catch(err => {
+                console.error(`[AdminImageTest] Error saving result for ${modelId}:`, err);
+                // Clear saving flag on error so it can be retried
+                const errorTask = state.activeTasks.get(modelId);
+                if (errorTask) {
+                    errorTask.saving = false;
+                    state.activeTasks.set(modelId, errorTask);
+                }
+            });
+        }
         
         card.classList.add('completed');
     } else if (task.status === 'failed') {
@@ -468,15 +545,30 @@ function displayImages(modelId, images, time) {
 
     images.forEach((img, index) => {
         const imgUrl = img.imageUrl || img.image_url || img;
+        const task = state.activeTasks.get(modelId);
+        // Get testId from task (will be set when saveTestResult completes)
+        // For now, use empty string and it will be updated when save completes
+        const testId = task?.testId || '';
+        const escapedUrl = imgUrl.replace(/'/g, "\\'");
+        // Use task.modelId for modal, not the card modelId (which might be like 'sd-xxx')
+        const actualModelId = task?.modelId || modelId;
+        const actualModelName = task?.modelName || modelId;
+        
+        // Create image element with onclick that will get updated testId from task
         const wrapper = document.createElement('div');
         wrapper.className = 'result-image-wrapper d-inline-block position-relative';
-        wrapper.innerHTML = `
-            <img src="${imgUrl}" 
-                 alt="Generated Image ${index + 1}" 
-                 class="result-image img-fluid rounded cursor-pointer"
-                 onclick="previewImage('${imgUrl}', '${modelId}', ${time})"
-                 onerror="this.src='/img/placeholder.png'">
-        `;
+        const imgElement = document.createElement('img');
+        imgElement.src = imgUrl;
+        imgElement.alt = `Generated Image ${index + 1}`;
+        imgElement.className = 'result-image img-fluid rounded cursor-pointer';
+        imgElement.onerror = function() { this.src = '/img/placeholder.png'; };
+        imgElement.onclick = function() {
+            // Get latest testId from task (may have been updated by saveTestResult)
+            const currentTask = state.activeTasks.get(modelId);
+            const currentTestId = currentTask?.testId || testId;
+            previewImage(escapedUrl, actualModelId, time, currentTestId);
+        };
+        wrapper.appendChild(imgElement);
         container.appendChild(wrapper);
     });
 }
@@ -484,13 +576,30 @@ function displayImages(modelId, images, time) {
 /**
  * Preview image in modal
  */
-function previewImage(imageUrl, modelId, time) {
+function previewImage(imageUrl, modelId, time, testId = null) {
     const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+    const modalElement = document.getElementById('imagePreviewModal');
+    
     document.getElementById('previewImage').src = imageUrl;
     
     const task = state.activeTasks.get(modelId);
-    document.getElementById('previewModelName').textContent = task?.modelName || modelId;
+    const modelName = task?.modelName || modelId;
+    document.getElementById('previewModelName').textContent = modelName;
     document.getElementById('previewTime').textContent = `Generated in ${(time / 1000).toFixed(1)} seconds`;
+    
+    // Store current image info for rating
+    modalElement.dataset.modelId = modelId;
+    modalElement.dataset.modelName = modelName;
+    modalElement.dataset.imageUrl = imageUrl;
+    modalElement.dataset.testId = testId || '';
+    
+    // Reset rating stars
+    resetRatingStars();
+    
+    // Load existing rating if testId is provided
+    if (testId) {
+        loadImageRating(testId);
+    }
     
     modal.show();
 }
@@ -507,9 +616,11 @@ function startTaskPolling(task, cardId) {
 
             console.log(`[AdminImageTest] Poll ${actualCardId}:`, data.status, data.progress || 0);
 
-            // Update task with new data
+            // Get current task from state to preserve testId and saving flag
+            const currentTask = state.activeTasks.get(actualCardId) || task;
+            // Update task with new data, preserving existing testId and saving flag
             const updatedTask = {
-                ...task,
+                ...currentTask,
                 ...data,
                 generationTime: Date.now() - task.startTime
             };
@@ -559,31 +670,45 @@ function handleTaskFailure(task) {
  * Save test result to database
  */
 async function saveTestResult(modelId, task) {
-    try {
-        await fetch('/admin/image-test/save-result', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
+    return fetch('/admin/image-test/save-result', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            modelId,
+            modelName: task.modelName,
+            prompt: task.finalPrompt || task.originalPrompt,
+            params: {
+                size: task.size,
+                style: task.style
             },
-            body: JSON.stringify({
-                modelId,
-                modelName: task.modelName,
-                prompt: task.finalPrompt || task.originalPrompt,
-                params: {
-                    size: task.size,
-                    style: task.style
-                },
-                generationTime: task.generationTime,
-                status: task.status,
-                images: task.images,
-                error: task.error
-            })
-        });
-
-        console.log(`[AdminImageTest] Result saved for ${modelId}`);
-    } catch (error) {
+            generationTime: task.generationTime,
+            status: task.status,
+            images: task.images,
+            error: task.error
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(`[AdminImageTest] Result saved for ${modelId}`, data);
+        // Store testId in task and clear saving flag
+        if (data.testId) {
+            task.testId = data.testId;
+        }
+        task.saving = false;
+        // Update the task in activeTasks to reflect the testId
+        const currentTask = state.activeTasks.get(modelId);
+        if (currentTask) {
+            currentTask.testId = data.testId;
+            currentTask.saving = false;
+            state.activeTasks.set(modelId, currentTask);
+        }
+        return data;
+    })
+    .catch(error => {
         console.error(`[AdminImageTest] Error saving result:`, error);
-    }
+    });
 }
 
 /**
@@ -725,6 +850,33 @@ async function refreshStats() {
                     card.querySelector('.stat-avg').textContent = stat.averageTime ? `${(stat.averageTime / 1000).toFixed(1)}s` : '--';
                     card.querySelector('.stat-min').textContent = stat.minTime ? `${(stat.minTime / 1000).toFixed(1)}s` : '--';
                     card.querySelector('.stat-max').textContent = stat.maxTime ? `${(stat.maxTime / 1000).toFixed(1)}s` : '--';
+                    
+                    // Update rating display
+                    const ratingSection = card.querySelector('.border-top');
+                    if (stat.averageRating && stat.totalRatings) {
+                        if (!ratingSection) {
+                            // Create rating section if it doesn't exist
+                            const ratingHtml = `
+                                <div class="text-center mt-2 pt-2 border-top border-secondary">
+                                    <small class="text-muted d-block mb-1">Average Rating</small>
+                                    <div class="d-flex justify-content-center align-items-center gap-1">
+                                        <span class="text-warning fw-bold stat-rating">${stat.averageRating.toFixed(1)}</span>
+                                        <i class="bi bi-star-fill text-warning"></i>
+                                        <small class="text-muted">(${stat.totalRatings} ratings)</small>
+                                    </div>
+                                </div>
+                            `;
+                            card.insertAdjacentHTML('beforeend', ratingHtml);
+                        } else {
+                            ratingSection.querySelector('.stat-rating').textContent = stat.averageRating.toFixed(1);
+                            const ratingsText = ratingSection.querySelector('.text-muted');
+                            if (ratingsText) {
+                                ratingsText.textContent = `(${stat.totalRatings} ratings)`;
+                            }
+                        }
+                    } else if (ratingSection) {
+                        ratingSection.remove();
+                    }
                 }
             });
         }
@@ -757,20 +909,34 @@ async function loadHistory() {
                     if (imgUrl) {
                         const escapedUrl = imgUrl.replace(/'/g, "\\'");
                         const escapedModelName = (test.modelName || '').replace(/'/g, "\\'");
+                        const testId = test._id || '';
                         imageCell = `
                             <img src="${imgUrl}" 
                                  alt="Generated" 
                                  class="history-thumbnail cursor-pointer"
-                                 onclick="previewHistoryImage('${escapedUrl}', '${escapedModelName}', ${test.generationTime || 0})"
+                                 onclick="previewHistoryImage('${escapedUrl}', '${escapedModelName}', ${test.generationTime || 0}, '${testId}')"
                                  onerror="this.src='/img/placeholder.png'">
                         `;
                     }
                 }
                 
+                // Escape prompt for HTML and JavaScript
+                const escapedPrompt = (test.prompt || '--').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n');
+                const displayPrompt = (test.prompt || '--').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                
                 row.innerHTML = `
                     <td>${imageCell}</td>
                     <td>${test.modelName || '--'}</td>
-                    <td class="text-truncate" style="max-width: 200px;" title="${test.prompt || ''}">${test.prompt || '--'}</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="text-truncate" style="max-width: 200px; flex: 1;" title="${test.prompt || ''}">${displayPrompt}</span>
+                            <button class="btn btn-sm btn-outline-info copy-prompt-btn" 
+                                    onclick="copyPrompt('${escapedPrompt}')"
+                                    title="Copy prompt">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                    </td>
                     <td>${test.params?.size || '--'}</td>
                     <td>${test.generationTime ? (test.generationTime / 1000).toFixed(1) + 's' : '--'}</td>
                     <td>
@@ -799,16 +965,230 @@ async function loadHistory() {
 }
 
 /**
+ * Copy prompt to clipboard
+ */
+async function copyPrompt(prompt, button = null) {
+    try {
+        // Ensure prompt is a string
+        const promptText = typeof prompt === 'string' ? prompt : String(prompt);
+        
+        await navigator.clipboard.writeText(promptText);
+        
+        // Show success feedback on button
+        if (button) {
+            showCopyFeedback(button);
+        }
+        
+        showNotification('Prompt copied to clipboard!', 'success');
+    } catch (error) {
+        console.error('[AdminImageTest] Error copying prompt:', error);
+        
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        const promptText = typeof prompt === 'string' ? prompt : String(prompt);
+        textarea.value = promptText;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            if (button) {
+                showCopyFeedback(button);
+            }
+            showNotification('Prompt copied to clipboard!', 'success');
+        } catch (err) {
+            showNotification('Failed to copy prompt', 'error');
+        }
+        document.body.removeChild(textarea);
+    }
+}
+
+/**
+ * Show copy feedback on button
+ */
+function showCopyFeedback(button) {
+    if (!button) return;
+    
+    const icon = button.querySelector('i');
+    if (!icon) return;
+    
+    const originalClass = icon.className;
+    
+    // Change icon to checkmark
+    icon.className = 'bi bi-check';
+    button.classList.add('btn-success');
+    button.classList.remove('btn-outline-info');
+    
+    // Reset after 2 seconds
+    setTimeout(() => {
+        icon.className = originalClass;
+        button.classList.remove('btn-success');
+        button.classList.add('btn-outline-info');
+    }, 2000);
+}
+
+/**
  * Preview image from history
  */
-function previewHistoryImage(imageUrl, modelName, generationTime) {
+function previewHistoryImage(imageUrl, modelName, generationTime, testId = null) {
     const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+    const modalElement = document.getElementById('imagePreviewModal');
+    
     document.getElementById('previewImage').src = imageUrl;
     document.getElementById('previewModelName').textContent = modelName || 'Unknown Model';
     document.getElementById('previewTime').textContent = generationTime 
         ? `Generated in ${(generationTime / 1000).toFixed(1)} seconds`
         : '';
+    
+    // Store current image info for rating
+    modalElement.dataset.modelId = 'sd-txt2img'; // Default for history, could be improved
+    modalElement.dataset.modelName = modelName || 'Unknown Model';
+    modalElement.dataset.imageUrl = imageUrl;
+    modalElement.dataset.testId = testId || '';
+    
+    // Reset rating stars
+    resetRatingStars();
+    
+    // Load existing rating if testId is provided
+    if (testId) {
+        loadImageRating(testId);
+    }
+    
     modal.show();
+}
+
+/**
+ * Reset rating stars to default state
+ */
+function resetRatingStars() {
+    const stars = document.querySelectorAll('.rating-star');
+    stars.forEach(star => {
+        star.classList.remove('bi-star-fill', 'active', 'filled');
+        star.classList.add('bi-star');
+    });
+    document.getElementById('ratingStatus').textContent = 'Click a star to rate';
+}
+
+/**
+ * Initialize rating stars click handlers
+ */
+function initializeRatingStars() {
+    const stars = document.querySelectorAll('.rating-star');
+    stars.forEach(star => {
+        star.addEventListener('click', function() {
+            const rating = parseInt(this.dataset.rating);
+            setRating(rating);
+            saveImageRating(rating);
+        });
+        
+        star.addEventListener('mouseenter', function() {
+            const rating = parseInt(this.dataset.rating);
+            highlightStars(rating);
+        });
+    });
+    
+    const ratingContainer = document.getElementById('ratingStars');
+    if (ratingContainer) {
+        ratingContainer.addEventListener('mouseleave', function() {
+            const currentRating = parseInt(ratingContainer.dataset.currentRating || '0');
+            if (currentRating > 0) {
+                highlightStars(currentRating);
+            } else {
+                resetRatingStars();
+            }
+        });
+    }
+}
+
+/**
+ * Set rating and highlight stars
+ */
+function setRating(rating) {
+    const ratingContainer = document.getElementById('ratingStars');
+    ratingContainer.dataset.currentRating = rating;
+    highlightStars(rating);
+    document.getElementById('ratingStatus').textContent = `Rated ${rating} out of 5 stars`;
+}
+
+/**
+ * Highlight stars up to the given rating
+ */
+function highlightStars(rating) {
+    const stars = document.querySelectorAll('.rating-star');
+    stars.forEach((star, index) => {
+        const starRating = parseInt(star.dataset.rating);
+        if (starRating <= rating) {
+            star.classList.remove('bi-star');
+            star.classList.add('bi-star-fill', 'active', 'filled');
+        } else {
+            star.classList.remove('bi-star-fill', 'active', 'filled');
+            star.classList.add('bi-star');
+        }
+    });
+}
+
+/**
+ * Save image rating
+ */
+async function saveImageRating(rating) {
+    const modal = document.getElementById('imagePreviewModal');
+    const modelId = modal.dataset.modelId;
+    const modelName = modal.dataset.modelName;
+    const imageUrl = modal.dataset.imageUrl;
+    const testId = modal.dataset.testId;
+    
+    if (!modelId || !imageUrl) {
+        console.error('[AdminImageTest] Missing modelId or imageUrl for rating');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/admin/image-test/rate-image', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                modelId,
+                modelName,
+                imageUrl,
+                rating,
+                testId: testId || null
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification(`Rating saved: ${rating} stars`, 'success');
+            // Refresh statistics to show updated average rating
+            refreshStats();
+        } else {
+            showNotification(data.error || 'Failed to save rating', 'error');
+        }
+    } catch (error) {
+        console.error('[AdminImageTest] Error saving rating:', error);
+        showNotification('Failed to save rating', 'error');
+    }
+}
+
+/**
+ * Load existing rating for an image
+ */
+async function loadImageRating(testId) {
+    if (!testId) return;
+    
+    try {
+        const response = await fetch(`/admin/image-test/rating/${testId}`);
+        const data = await response.json();
+        
+        if (data.success && data.rating) {
+            setRating(data.rating);
+        }
+    } catch (error) {
+        console.error('[AdminImageTest] Error loading rating:', error);
+    }
 }
 
 /**

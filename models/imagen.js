@@ -1436,20 +1436,6 @@ async function checkTaskStatus(taskId, fastify) {
     images = Array.isArray(result) ? result : [result];
   }
 
-  if (result && result.status === 'processing') {
-    processingPercent = result.progress;
-    return { taskId: task.taskId, status: 'processing', progress: processingPercent};
-  }
-  
-  if(result.error){
-    console.log(`[checkTaskStatus] Task ${taskId} returned error: ${result.error}`);
-    await tasksCollection.updateOne(
-      { taskId: task.taskId },
-      { $set: { status: 'failed', result: { error: result.error }, updatedAt: new Date() } }
-    );
-    return false
-  }
-
   // CRITICAL: Lock the task BEFORE processing to prevent parallel execution
   const lockResult = await tasksCollection.findOneAndUpdate(
     { 

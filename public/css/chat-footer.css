@@ -278,7 +278,9 @@
     align-items: center;
     justify-content: space-between;
     background: var(--bg-primary, #1a1a1a);
-    position: relative;
+    position: sticky;
+    top: 0;
+    z-index: 10;
     border-radius: 15px 15px 0 0;
 }
 
@@ -484,6 +486,7 @@
 }
 
 .settings-field {
+    position: relative;
     margin-bottom: 16px;
 }
 
@@ -494,7 +497,7 @@
 .settings-field-header {
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 0;
     gap: 12px;
 }
 
@@ -502,6 +505,7 @@
     flex: 1;
     margin-bottom: 0;
     text-align: left;
+    padding-right: 60px; /* Space for absolutely positioned checkbox */
 }
 
 .settings-label {
@@ -650,19 +654,20 @@
 
 /* Voice Card Styles - Matching cold-onboarding design */
 .voice-card {
-    background: var(--glass-bg, rgba(255, 255, 255, 0.05));
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
-    border-radius: 16px;
-    padding: 20px;
-    cursor: pointer;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow: hidden;
+    background: var(--glass-bg, rgba(255, 255, 255, 0.05)) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1)) !important;
+    border-radius: 16px !important;
+    padding: 20px !important;
+    cursor: pointer !important;
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow: hidden !important;
+    box-shadow: none !important;
 }
 
 .voice-card::before {
@@ -689,9 +694,9 @@
 }
 
 .voice-card.selected {
-    border-color: var(--primary-color, #8240FF);
-    background: linear-gradient(135deg, rgba(130, 64, 255, 0.15) 0%, rgba(210, 184, 255, 0.08) 100%);
-    box-shadow: 0 4px 20px rgba(130, 64, 255, 0.25), inset 0 0 20px rgba(130, 64, 255, 0.05);
+    border-color: var(--primary-color, #8240FF) !important;
+    background: linear-gradient(135deg, rgba(130, 64, 255, 0.15) 0%, rgba(210, 184, 255, 0.08) 100%) !important;
+    box-shadow: 0 4px 20px rgba(130, 64, 255, 0.25), inset 0 0 20px rgba(130, 64, 255, 0.05) !important;
 }
 
 .voice-card.selected::before {
@@ -701,8 +706,15 @@
 
 .voice-card-content {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 14px;
+    width: 100%;
+}
+
+/* Ensure voice-info takes remaining space */
+.voice-info {
+    flex: 1;
+    min-width: 0;
 }
 
 .voice-icon {
@@ -717,6 +729,8 @@
     flex-shrink: 0;
     position: relative;
     overflow: hidden;
+    order: -1; /* Ensure icon is always on the left */
+    margin-right: 0; /* Remove any margin that might push it right */
 }
 
 .voice-icon::before {
@@ -907,8 +921,28 @@
     font-weight: bold;
 }
 
-/* Legacy support for settings-voice-option class */
-.settings-voice-option {
+/* Legacy support for settings-voice-option class - but voice-card overrides all styles */
+.voice-card.settings-voice-option,
+.voice-card.settings-premium-voice-option {
+    /* Reset any legacy styles */
+    padding: 20px !important;
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1)) !important;
+    border-radius: 16px !important;
+    background: var(--glass-bg, rgba(255, 255, 255, 0.05)) !important;
+    cursor: pointer !important;
+    text-align: left !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    position: relative !important;
+    overflow: hidden !important;
+    gap: 16px !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+}
+
+/* Ensure old legacy styles don't apply to voice cards */
+.settings-voice-option:not(.voice-card) {
     padding: 0;
     border: none;
     border-radius: 0;
@@ -923,7 +957,9 @@
 
 /* Ensure no duplicate checkmarks from pseudo-elements on voice cards */
 .voice-card.settings-voice-option::before,
-.voice-card.settings-voice-option::after {
+.voice-card.settings-voice-option::after,
+.voice-card.settings-premium-voice-option::before,
+.voice-card.settings-premium-voice-option::after {
     display: none !important;
     content: none !important;
 }
@@ -1003,12 +1039,16 @@
 
 /* Voice Provider Switch Styles - Enhanced */
 .settings-switch-container {
+    position: absolute;
+    top: 0;
+    right: 0;
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: 12px;
     margin: 0;
     flex-shrink: 0;
+    z-index: 1;
 }
 
 .settings-switch-label {
@@ -1190,17 +1230,24 @@
     font-weight: bold;
 }
 
-.settings-voice-name {
+/* Legacy voice name/description - only apply to non-voice-card elements */
+.settings-voice-option:not(.voice-card) .settings-voice-name {
     font-weight: 600;
     font-size: 14px;
     margin-bottom: 4px;
 }
 
-.settings-voice-description {
+.settings-voice-option:not(.voice-card) .settings-voice-description {
     font-size: 12px;
     color: #666;
     text-align: center;
     line-height: 1.3;
+}
+
+/* Override for voice-card elements */
+.voice-card .settings-voice-name,
+.voice-card .settings-voice-description {
+    display: none !important;
 }
 
 /* Provider-specific voice containers */
@@ -1209,7 +1256,15 @@
     transition: all 0.3s ease;
 }
 
-#evenlab-voices .settings-evenlab-voice-option.selected {
+/* Override evenlab styles for voice-card elements */
+.voice-card.settings-evenlab-voice-option.selected {
+    border-color: var(--primary-color, #8240FF) !important;
+    background: linear-gradient(135deg, rgba(130, 64, 255, 0.15) 0%, rgba(210, 184, 255, 0.08) 100%) !important;
+    box-shadow: 0 4px 20px rgba(130, 64, 255, 0.25), inset 0 0 20px rgba(130, 64, 255, 0.05) !important;
+}
+
+/* Keep old style for non-voice-card evenlab options */
+#evenlab-voices .settings-evenlab-voice-option:not(.voice-card).selected {
     border-color: #28a745;
     background: rgba(40, 167, 69, 0.1);
     color: #28a745;

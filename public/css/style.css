@@ -3336,6 +3336,9 @@ backdrop-filter: blur(3px);
     align-items: center;
     justify-content: space-between;
     background: #ffffff;
+    position: sticky;
+    top: 0;
+    z-index: 10;
     border-radius: 15px 15px 0 0;
 }
 

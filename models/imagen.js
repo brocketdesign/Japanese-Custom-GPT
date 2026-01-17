@@ -1408,9 +1408,33 @@ async function checkTaskStatus(taskId, fastify) {
     return task;
   }
 
+  // Check if webhook already provided the result (skip polling)
+  let images;
+  if (task.webhookProcessed && task.result?.images) {
+    console.log(`[checkTaskStatus] Using webhook-provided images for task ${task.taskId}`);
+    // Use images from webhook, convert to array format expected below
+    images = Array.isArray(task.result.images) ? task.result.images : [task.result.images];
+  } else {
+    // Poll Novita for status (legacy/fallback path)
+    const result = await fetchNovitaResult(task.taskId);
+    console.log(`[checkTaskStatus fetchNovitaResult] Result for task ${task.taskId}:`, result);
 
-  const result = await fetchNovitaResult(task.taskId);
-  console.log(`[checkTaskStatus fetchNovitaResult] Result for task ${task.taskId}:`, result);
+    if (result && result.status === 'processing') {
+      processingPercent = result.progress;
+      return { taskId: task.taskId, status: 'processing', progress: processingPercent};
+    }
+    
+    if(result.error){
+      console.log(`[checkTaskStatus] Task ${taskId} returned error: ${result.error}`);
+      await tasksCollection.updateOne(
+        { taskId: task.taskId },
+        { $set: { status: 'failed', result: { error: result.error }, updatedAt: new Date() } }
+      );
+      return false
+    }
+
+    images = Array.isArray(result) ? result : [result];
+  }
 
   if (result && result.status === 'processing') {
     processingPercent = result.progress;
@@ -1426,8 +1450,6 @@ async function checkTaskStatus(taskId, fastify) {
     return false
   }
 
-  const images = Array.isArray(result) ? result : [result];
-  
   // CRITICAL: Lock the task BEFORE processing to prevent parallel execution
   const lockResult = await tasksCollection.findOneAndUpdate(
     { 

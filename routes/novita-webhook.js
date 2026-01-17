@@ -57,25 +57,8 @@ async function routes(fastify, options) {
         return reply.send({ received: true });
       }
 
-      // Lock task to prevent duplicate processing
-      const lockResult = await tasksCollection.findOneAndUpdate(
-        { 
-          taskId: taskId,
-          completionNotificationSent: { $ne: true }
-        },
-        { 
-          $set: { 
-            completionNotificationSent: true,
-            updatedAt: new Date() 
-          } 
-        },
-        { returnDocument: 'before' }
-      );
-
-      if (!lockResult.value) {
-        console.log(`[NovitaWebhook] Task ${taskId} already locked by another process`);
-        return reply.send({ received: true });
-      }
+      // Check if already processed - but don't lock yet, let checkTaskStatus handle it
+      // We'll store webhook data and let the existing handler process it
 
       // Process based on task type
       if (taskType === 'TXT_TO_IMG' || taskType === 'IMG_TO_IMG') {
@@ -192,35 +175,28 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
       return;
     }
 
-    // Use existing checkTaskStatus logic but with webhook data
-    const { checkTaskStatus } = require('../models/imagen');
-    
-    // Create a mock task status object for the existing handler
-    // The checkTaskStatus function will handle merge face and saving to DB
-    const taskStatus = {
-      taskId: taskId,
-      userId: taskDoc.userId,
-      userChatId: taskDoc.userChatId,
-      status: 'completed',
-      images: validImages,
-      result: { images: validImages }
-    };
+    // Store processed images with webhookProcessed flag
+    // checkTaskStatus will use these images instead of polling Novita
+    await tasksCollection.updateOne(
+      { taskId },
+      { 
+        $set: { 
+          'result.images': validImages.map(img => ({
+            imageUrl: img.imageUrl,
+            seed: img.seed || 0,
+            nsfw_detection_result: img.nsfw_detection_result,
+            imageId: img.imageId
+          })),
+          'webhookProcessed': true, // Flag to skip polling in checkTaskStatus
+          updatedAt: new Date() 
+        } 
+      }
+    );
 
-    // Use the existing checkTaskStatus handler which already handles
-    // merge face, saving to DB, and notifications
-    const result = await checkTaskStatus(taskId, fastify);
-    
-    // If checkTaskStatus returns false or doesn't have images, process manually
-    if (!result || !result.images || result.images.length === 0) {
-      // Trigger the completion handler manually
-      await handleTaskCompletion(taskStatus, fastify, {
-        chatCreation: taskDoc.chatCreation,
-        translations: fastify.translations?.en || {},
-        userId: taskDoc.userId.toString(),
-        chatId: taskDoc.chatId.toString(),
-        placeholderId: taskDoc.placeholderId
-      });
-    }
+    // Process the task using checkTaskStatus (it will use webhook images, skip polling)
+    // This handles merge face, saving to DB, and notifications
+    const { checkTaskStatus } = require('../models/imagen');
+    await checkTaskStatus(taskId, fastify);
 
     console.log(`[NovitaWebhook] ✅ Successfully processed image task ${taskId}`);
   } catch (error) {

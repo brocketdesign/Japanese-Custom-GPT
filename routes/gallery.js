@@ -757,6 +757,7 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
 });
   fastify.get('/chat/:chatId/images', async (request, reply) => {
     const { chatId } = request.params;
+    const userChatId = request.query.userChatId; // Optional userChatId filter
     const page = parseInt(request.query.page) || 1;
     const limit = 12;
     const skip = (page - 1) * limit;
@@ -765,6 +766,7 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
       const db = fastify.mongo.db;
       const chatsGalleryCollection = db.collection('gallery');
       const chatsCollection = db.collection('chats');
+      const userChatCollection = db.collection('userChat');
 
       // Get user information for filtering
       const user = request.user;
@@ -777,39 +779,107 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
         return reply.code(404).send({ error: 'Chat not found' });
       }
 
-      // Note: Do NOT filter NSFW images here - return them all so frontend can display them blurred for non-subscribed users
-      // The frontend will handle showing blurred overlays for NSFW content based on subscription status
+      // If userChatId is provided, filter images by those referenced in userChat messages
+      let imageIdsFilter = null;
+      if (userChatId && ObjectId.isValid(userChatId)) {
+        const userChatDoc = await userChatCollection.findOne({ 
+          _id: new ObjectId(userChatId),
+          chatId: new ObjectId(chatId)
+        });
+        
+        if (userChatDoc && Array.isArray(userChatDoc.messages)) {
+          // Extract all imageIds from messages
+          const imageIds = [];
+          userChatDoc.messages.forEach(msg => {
+            if (msg.imageId && (msg.type === 'image' || msg.type === 'mergeFace' || msg.imageUrl)) {
+              try {
+                // Handle both string and ObjectId formats
+                const imageId = msg.imageId instanceof ObjectId 
+                  ? msg.imageId 
+                  : new ObjectId(msg.imageId);
+                imageIds.push(imageId);
+              } catch (err) {
+                // Skip invalid imageIds
+                console.warn(`[DEBUG] Invalid imageId in message: ${msg.imageId}`, err);
+              }
+            }
+          });
+          
+          imageIdsFilter = imageIds.length > 0 ? imageIds : [];
+          console.log(`[DEBUG] Filtering images for userChatId: ${userChatId}, found ${imageIds.length} imageIds`);
+        } else {
+          console.log(`[DEBUG] userChatId ${userChatId} not found or has no messages`);
+          imageIdsFilter = []; // No images for this userChat
+        }
+      }
 
-      // Find the chat document and paginate the images (do not filter NSFW - return all)
+      // Build the aggregation pipeline
+      const matchStage = { chatId: new ObjectId(chatId) };
+      
+      // If filtering by userChatId, add imageIds filter
+      const aggregatePipeline = [
+        { $match: matchStage },
+        { $unwind: '$images' },
+        { $match: { 
+            'images.imageUrl': { $exists: true, $ne: null },
+            'images.isUpscaled': { $ne: true }
+          } 
+        }
+      ];
+
+      // Add userChatId filter if provided
+      if (imageIdsFilter !== null) {
+        if (imageIdsFilter.length === 0) {
+          // No images for this userChat, return empty result
+          return reply.send({
+            images: [],
+            page,
+            totalPages: 0,
+            totalImages: 0
+          });
+        }
+        aggregatePipeline.push({
+          $match: {
+            'images._id': { $in: imageIdsFilter }
+          }
+        });
+      }
+
+      // Continue with sorting and pagination
+      aggregatePipeline.push(
+        { $sort: { 'images.createdAt': -1 } },
+        { $skip: skip },
+        { $limit: limit },
+        { $project: { _id: 0, image: '$images', chatId: 1 } }
+      );
+
       const chatImagesDocs = await chatsGalleryCollection
-        .aggregate([
-          { $match: { chatId: new ObjectId(chatId) } },           // Match the document by chatId
-          { $unwind: '$images' },           // Unwind the images array
-          { $match: { 
-              'images.imageUrl': { $exists: true, $ne: null },    // Ensure image has a valid URL
-              'images.isUpscaled': { $ne: true }                  // Filter out upscaled duplicates
-            } 
-          }, 
-          { $sort: { 'images.createdAt': -1 } }, // Sort by createdAt in descending order
-          { $skip: skip },                  // Skip for pagination
-          { $limit: limit },                // Limit the results to the page size
-          { $project: { _id: 0, image: '$images', chatId: 1 } }  // Project image and chatId
-        ])
+        .aggregate(aggregatePipeline)
         .toArray();
 
+      // Get total image count for pagination
+      const countPipeline = [
+        { $match: matchStage },
+        { $unwind: '$images' },
+        { $match: { 
+            'images.imageUrl': { $exists: true, $ne: null },
+            'images.isUpscaled': { $ne: true }
+          } 
+        }
+      ];
 
-      // Get total image count for pagination info (do not filter NSFW - count all)
+      if (imageIdsFilter !== null && imageIdsFilter.length > 0) {
+        countPipeline.push({
+          $match: {
+            'images._id': { $in: imageIdsFilter }
+          }
+        });
+      }
+
+      countPipeline.push({ $count: 'total' });
+
       const totalImagesCount = await chatsGalleryCollection
-        .aggregate([
-          { $match: { chatId: new ObjectId(chatId) } },
-          { $unwind: '$images' },
-          { $match: { 
-              'images.imageUrl': { $exists: true, $ne: null },    // Ensure image has a valid URL
-              'images.isUpscaled': { $ne: true }                  // Filter out upscaled duplicates
-            } 
-          }, 
-          { $count: 'total' }
-        ])
+        .aggregate(countPipeline)
         .toArray();
 
       const totalImages = totalImagesCount.length > 0 ? totalImagesCount[0].total : 0;
@@ -817,7 +887,7 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
 
       // If no images found
       if (chatImagesDocs.length === 0) {
-        return reply.code(404).send({ images: [], page, totalPages: 0 });
+        return reply.send({ images: [], page, totalPages: 0, totalImages: 0 });
       }
 
       // Get user ID for checking if images are liked

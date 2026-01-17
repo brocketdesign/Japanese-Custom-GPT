@@ -146,34 +146,38 @@ async function initializeModelTest(modelId, params) {
   try {
     let requestBody;
     
-    // SD txt2img uses a different API format (extra.request structure)
-    if (modelId === 'sd-txt2img') {
-      if (!params.model_name) {
-        throw new Error('SD txt2img requires a model_name parameter');
-      }
+      // Get webhook URL for async APIs
+      const webhookUrl = config.async ? getWebhookUrl() : null;
       
-      // Parse size from string format (e.g., "1024*1024") to width/height
-      const size = params.size || '1024*1024';
-      const [width, height] = size.split('*').map(Number);
-      
-      requestBody = {
-        extra: {
-          response_image_type: 'jpeg',
-          enable_nsfw_detection: false
-        },
-        request: {
-          model_name: params.model_name,
-          prompt: params.prompt,
-          negative_prompt: params.negative_prompt || '',
-          width: width || config.defaultParams.width,
-          height: height || config.defaultParams.height,
-          image_num: params.image_num || config.defaultParams.image_num,
-          steps: params.steps || config.defaultParams.steps,
-          guidance_scale: params.guidance_scale || config.defaultParams.guidance_scale,
-          sampler_name: params.sampler_name || config.defaultParams.sampler_name,
-          seed: params.seed !== undefined ? params.seed : config.defaultParams.seed
+      // SD txt2img uses a different API format (extra.request structure)
+      if (modelId === 'sd-txt2img') {
+        if (!params.model_name) {
+          throw new Error('SD txt2img requires a model_name parameter');
         }
-      };
+        
+        // Parse size from string format (e.g., "1024*1024") to width/height
+        const size = params.size || '1024*1024';
+        const [width, height] = size.split('*').map(Number);
+        
+        requestBody = {
+          extra: {
+            response_image_type: 'jpeg',
+            enable_nsfw_detection: false,
+            ...(webhookUrl ? { webhook: { url: webhookUrl } } : {})
+          },
+          request: {
+            model_name: params.model_name,
+            prompt: params.prompt,
+            negative_prompt: params.negative_prompt || '',
+            width: width || config.defaultParams.width,
+            height: height || config.defaultParams.height,
+            image_num: params.image_num || config.defaultParams.image_num,
+            steps: params.steps || config.defaultParams.steps,
+            guidance_scale: params.guidance_scale || config.defaultParams.guidance_scale,
+            sampler_name: params.sampler_name || config.defaultParams.sampler_name,
+            seed: params.seed !== undefined ? params.seed : config.defaultParams.seed
+          }
+        };
       
       // Add optional params if provided
       if (params.sd_vae) requestBody.request.sd_vae = params.sd_vae;
@@ -185,6 +189,16 @@ async function initializeModelTest(modelId, params) {
         ...config.defaultParams,
         ...params
       };
+      
+      // Add webhook for async models
+      if (config.async && webhookUrl) {
+        requestBody.extra = {
+          ...(requestBody.extra || {}),
+          webhook: {
+            url: webhookUrl
+          }
+        };
+      }
 
       // Handle size format conversion for Seedream (uses 'x' instead of '*')
       if (config.sizeFormat === 'x' && requestBody.size) {

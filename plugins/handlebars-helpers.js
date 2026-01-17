@@ -142,3 +142,9 @@ handlebars.registerHelper('substring', function(str, start, end) {
   }
   return str.substring(start, end);
 });
+handlebars.registerHelper('divide', function(a, b) {
+  if (typeof a !== 'number' || typeof b !== 'number' || b === 0) {
+    return 0;
+  }
+  return (a / b).toFixed(1);
+});

@@ -352,5 +352,17 @@
     <script src="/js/modules/checkout.js"></script>
     <script src="/js/modules/init.js"></script>
 
+    {{#if shouldUpdateUrl}}
+    <script>
+    // Update URL from /chat to /chat/ without page reload
+    (function() {
+        if (window.location.pathname === '/chat') {
+            const newUrl = '/chat/' + window.location.search + window.location.hash;
+            window.history.replaceState({ path: newUrl }, '', newUrl);
+        }
+    })();
+    </script>
+    {{/if}}
+
 </body>
 </html>

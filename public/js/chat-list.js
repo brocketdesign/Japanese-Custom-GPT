@@ -1159,11 +1159,15 @@ function displayHorizontalChatList(userId, options = {}) {
 
     const forceReload = options.force === true;
 
-    if (!forceReload && chatCache.data.length > 0) {
-        displayChatThumbs(chatCache.data, userId);
+    // Check if already initialized first to prevent duplicate loads
+    if (initHorizontalChatMenu && !forceReload) {
+        return;
     }
 
-    if (initHorizontalChatMenu && !forceReload) {
+    // Only use cache if menu hasn't been initialized yet
+    if (!forceReload && chatCache.data.length > 0 && !initHorizontalChatMenu) {
+        displayChatThumbs(chatCache.data, userId);
+        initHorizontalChatMenu = true;
         return;
     }
 

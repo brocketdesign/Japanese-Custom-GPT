@@ -425,11 +425,63 @@ fastify.get('/affiliation-plan', async (request, reply) => {
   });
 });
 
-fastify.get('/chat', (request, reply) => {
-  const queryString = Object.keys(request.query).length > 0 
-    ? `?${new URLSearchParams(request.query).toString()}` 
-    : '';
-  reply.redirect(`/chat/${queryString}`);
+fastify.get('/chat', async (request, reply) => {
+  const db = fastify.mongo.db;
+  
+  let { translations, lang, user } = request;
+  const userId = user._id;
+
+  const collectionChat = db.collection('chats');
+  const collectionUser = db.collection('users');
+  const userData = await getUserData(userId, collectionUser, collectionChat, user);
+
+  const signIn = request.query.signIn == 'true' || false;
+  const signOut = request.query.signOut == 'true' || false;
+
+  if (!signIn && (signOut || user.isTemporary || !userData)) {
+    //return reply.redirect('/');
+  }
+
+  const isAdmin = await checkUserAdmin(fastify, userId);
+  const imageType = request.query.type || false;
+  const newSubscription = request.query.newSubscription || false;
+
+  const promptData = await db.collection('prompts').find({}).sort({order: 1}).toArray();
+  const giftData = await db.collection('gifts').find({}).sort({order: 1}).toArray();
+
+  const seoMetadata = generateSeoMetadata(request, `/chat/`, lang);
+  
+  // Flag to indicate URL should be updated client-side to /chat/
+  const shouldUpdateUrl = true;
+  
+  return reply.view('chat.hbs', {
+    title: translations.seo.title,
+    canonicalUrl: seoMetadata.canonicalUrl,
+    alternates: seoMetadata.alternates,
+    isAdmin,
+    imageType,
+    user,
+    newSubscription,
+    userId,
+    chatId: undefined,
+    userData,
+    promptData,
+    giftData,
+    isTemporaryOrGuest: !user || user.isTemporary,
+    shouldUpdateUrl,
+    seo: [
+      { name: 'description', content: translations.seo.description },
+      { name: 'keywords', content: translations.seo.keywords },
+      { property: 'og:title', content: translations.seo.title },
+      { property: 'og:description', content: translations.seo.description },
+      { property: 'og:image', content: '/img/share.png' },
+      { property: 'og:url', content: seoMetadata.canonicalUrl },
+      { property: 'og:locale', content: lang },
+      { property: 'og:locale:alternate', content: 'en' },
+      { property: 'og:locale:alternate', content: 'fr' },
+      { property: 'og:locale:alternate', content: 'ja' },
+    ],
+  });
 });
  
 fastify.get('/chat/:chatId', async (request, reply) => {

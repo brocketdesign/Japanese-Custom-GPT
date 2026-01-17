@@ -16,3 +16,4 @@
 
 # Backup files .backup.v(1.0.0)
 *.backup.v*
+public/img/.DS_Store

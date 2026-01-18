@@ -3,7 +3,8 @@
     "server.js",
     "views/**/*",
     "routes/**/*",
-    "plugins/**/*"
+    "plugins/**/*",
+    "locales/**/*"
   ],
   "ext": "js,json,hbs",
   "ignore": [

@@ -1,0 +1,97 @@
+/**
+ * My Posts Dashboard Route
+ * User profile section for viewing and managing posts
+ */
+
+async function routes(fastify, options) {
+  const db = fastify.mongo.db;
+
+  /**
+   * GET /dashboard/posts
+   * Main posts dashboard
+   */
+  fastify.get('/dashboard/posts', async (request, reply) => {
+    try {
+      const user = request.user;
+      
+      if (!user || user.isTemporary) {
+        return reply.redirect('/login');
+      }
+
+      const lang = request.lang || 'en';
+      const translations = request.translations;
+
+      return reply.view('dashboard/posts', {
+        user,
+        translations,
+        lang,
+        title: translations.dashboard?.myPosts || translations.myPosts || 'My Posts',
+        pageType: 'dashboard',
+        canonical: `${request.protocol}://${request.hostname}/dashboard/posts`
+      });
+    } catch (error) {
+      console.error('[Dashboard Posts] Error loading page:', error);
+      return reply.code(500).send('Internal Server Error');
+    }
+  });
+
+  /**
+   * GET /dashboard/schedules
+   * Schedules management dashboard
+   */
+  fastify.get('/dashboard/schedules', async (request, reply) => {
+    try {
+      const user = request.user;
+      
+      if (!user || user.isTemporary) {
+        return reply.redirect('/login');
+      }
+
+      const lang = request.lang || 'en';
+      const translations = request.translations;
+
+      return reply.view('dashboard/schedules', {
+        user,
+        translations,
+        lang,
+        title: translations.dashboard?.mySchedules || translations.mySchedules || 'My Schedules',
+        pageType: 'dashboard',
+        canonical: `${request.protocol}://${request.hostname}/dashboard/schedules`
+      });
+    } catch (error) {
+      console.error('[Dashboard Schedules] Error loading page:', error);
+      return reply.code(500).send('Internal Server Error');
+    }
+  });
+
+  /**
+   * GET /dashboard/templates
+   * Prompt templates dashboard
+   */
+  fastify.get('/dashboard/templates', async (request, reply) => {
+    try {
+      const user = request.user;
+      
+      if (!user || user.isTemporary) {
+        return reply.redirect('/login');
+      }
+
+      const lang = request.lang || 'en';
+      const translations = request.translations;
+
+      return reply.view('dashboard/templates', {
+        user,
+        translations,
+        lang,
+        title: translations.dashboard?.promptTemplates || translations.promptTemplates || 'Prompt Templates',
+        pageType: 'dashboard',
+        canonical: `${request.protocol}://${request.hostname}/dashboard/templates`
+      });
+    } catch (error) {
+      console.error('[Dashboard Templates] Error loading page:', error);
+      return reply.code(500).send('Internal Server Error');
+    }
+  });
+}
+
+module.exports = routes;

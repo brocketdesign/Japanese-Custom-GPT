@@ -1,0 +1,146 @@
+/**
+ * Schedules Dashboard Styles
+ */
+
+.schedule-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.schedule-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(110, 32, 244, 0.2);
+}
+
+.schedule-card .card-header {
+  padding: 0.75rem 1rem;
+}
+
+.schedule-card .card-body {
+  padding: 1rem;
+}
+
+.schedule-card .card-footer {
+  padding: 0.75rem 1rem;
+}
+
+.schedule-card code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+/* Modal styling improvements */
+#scheduleModal .btn-group {
+  border-radius: 8px;
+}
+
+#scheduleModal .btn-group .btn {
+  border-radius: 0;
+}
+
+#scheduleModal .btn-group .btn:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+#scheduleModal .btn-group .btn:last-child {
+  border-radius: 0 8px 8px 0;
+}
+
+/* Cron preset buttons */
+.cron-presets .btn {
+  font-size: 0.85em;
+}
+
+/* Status badges */
+.badge {
+  font-weight: 500;
+  padding: 0.4em 0.8em;
+}
+
+/* Stats cards */
+.stats-card {
+  transition: transform 0.2s ease;
+}
+
+.stats-card:hover {
+  transform: scale(1.02);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .schedule-card .card-footer .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .schedule-card .card-footer .d-flex {
+    justify-content: space-between;
+  }
+}
+
+/* Animation for loading */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.loading-pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Empty state styling */
+#noSchedules i {
+  opacity: 0.3;
+}
+
+/* Form styling in modals */
+#scheduleModal .form-label {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+#scheduleModal .form-control,
+#scheduleModal .form-select {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+#scheduleModal .form-control:focus,
+#scheduleModal .form-select:focus {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: #6E20F4;
+  box-shadow: 0 0 0 0.2rem rgba(110, 32, 244, 0.25);
+}
+
+#scheduleModal .form-control::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Checkbox styling */
+#scheduleModal .form-check-input {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+#scheduleModal .form-check-input:checked {
+  background-color: #6E20F4;
+  border-color: #6E20F4;
+}
+
+#scheduleModal .form-check-label {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* View modal styling */
+#viewScheduleModal .form-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+#viewScheduleModal p {
+  margin-bottom: 0.5rem;
+}

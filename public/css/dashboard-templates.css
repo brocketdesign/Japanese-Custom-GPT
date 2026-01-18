@@ -1,0 +1,156 @@
+/**
+ * Templates Dashboard Styles
+ */
+
+.template-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.template-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(110, 32, 244, 0.2);
+}
+
+.template-card .card-header {
+  padding: 0.75rem 1rem;
+}
+
+.template-card .card-body {
+  padding: 1rem;
+}
+
+.template-card .card-footer {
+  padding: 0.75rem 1rem;
+}
+
+/* Mutation panel styling */
+.card.border-primary {
+  border-width: 2px;
+}
+
+.card.border-primary .card-header {
+  border-bottom: 1px solid rgba(110, 32, 244, 0.3);
+}
+
+#mutatedOutput {
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+/* Form styling */
+.form-control,
+.form-select {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #6E20F4;
+  box-shadow: 0 0 0 0.2rem rgba(110, 32, 244, 0.25);
+}
+
+/* Tag badges */
+.badge.bg-dark {
+  font-weight: normal;
+  font-size: 0.75em;
+}
+
+/* Variations list */
+.list-group-item.bg-dark {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.list-group-item.bg-dark:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.variation-text {
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* Modal styling */
+#templateModal .form-label {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+#templateModal .form-check-label {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .template-card .card-footer .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .template-card .card-footer .d-flex {
+    justify-content: space-between;
+  }
+  
+  .card.border-primary .row {
+    flex-direction: column;
+  }
+}
+
+/* Empty state styling */
+#noTemplates i {
+  opacity: 0.3;
+}
+
+/* Button group for mutation options */
+.mutation-options .form-check {
+  margin-right: 1rem;
+}
+
+/* Code-like display for prompts */
+.prompt-display {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.85em;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Animation for mutation result */
+@keyframes highlight {
+  0% { background-color: rgba(110, 32, 244, 0.3); }
+  100% { background-color: transparent; }
+}
+
+.mutation-highlight {
+  animation: highlight 1s ease-out;
+}
+
+/* Quick action buttons */
+.quick-actions .btn {
+  min-width: 100px;
+}
+
+/* Template card usage count */
+.usage-count {
+  font-size: 0.8em;
+  opacity: 0.7;
+}
+
+/* Style category colors */
+.style-anime {
+  border-left: 3px solid #17a2b8;
+}
+
+.style-photorealistic {
+  border-left: 3px solid #28a745;
+}
+
+.style-artistic {
+  border-left: 3px solid #ffc107;
+}
+
+.style-cinematic {
+  border-left: 3px solid #dc3545;
+}

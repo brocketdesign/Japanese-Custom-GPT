@@ -1,0 +1,408 @@
+/**
+ * Video Dashboard Styles
+ * Based on Image Dashboard with video-specific modifications
+ */
+
+/* Base Image Upload Area */
+.base-image-upload {
+    min-height: 200px;
+    border: 2px dashed rgba(130, 64, 255, 0.5);
+    border-radius: 12px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.02);
+    transition: all 0.3s ease;
+}
+
+.base-image-upload.drag-over {
+    border-color: #8240FF;
+    background: rgba(130, 64, 255, 0.1);
+    transform: scale(1.02);
+}
+
+.upload-placeholder {
+    text-align: center;
+    padding: 30px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.upload-placeholder:hover {
+    transform: translateY(-2px);
+}
+
+.image-preview {
+    text-align: center;
+}
+
+.image-preview img {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Model Selection */
+.model-selection {
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: visible;
+}
+
+.model-checkbox {
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.2s ease;
+    position: relative;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.model-checkbox:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(130, 64, 255, 0.3);
+}
+
+.model-checkbox input[type="radio"]:checked + label {
+    color: #D2B8FF;
+}
+
+.model-checkbox:has(input[type="radio"]:checked) {
+    background: rgba(130, 64, 255, 0.2);
+    border-color: #8240FF;
+    box-shadow: 0 0 0 2px rgba(130, 64, 255, 0.3);
+}
+
+/* Result Cards */
+.result-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.result-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.result-card.completed {
+    border-color: #28a745;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.2);
+}
+
+.result-card.failed {
+    border-color: #dc3545;
+    box-shadow: 0 0 10px rgba(220, 53, 69, 0.2);
+}
+
+/* Result Videos */
+.result-video-container {
+    min-height: 100px;
+}
+
+.result-video {
+    width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 8px;
+}
+
+.result-video:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 15px rgba(130, 64, 255, 0.3);
+}
+
+/* Statistics Cards */
+.stat-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Timer Badge Animation */
+.timer {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    min-width: 60px;
+    text-align: center;
+}
+
+.timer.bg-secondary {
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+/* Progress Bar Animation */
+.progress-bar {
+    transition: width 0.3s ease;
+}
+
+.progress-bar.bg-info {
+    background: linear-gradient(90deg, #17a2b8, #8240FF) !important;
+    animation: progressShimmer 2s infinite;
+}
+
+@keyframes progressShimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Status Badge */
+.status {
+    min-width: 100px;
+    text-align: center;
+}
+
+/* Card Headers */
+.card-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card-header.bg-primary {
+    background: linear-gradient(90deg, #8240FF, #a855f7) !important;
+}
+
+.card-header.bg-success {
+    background: linear-gradient(90deg, #28a745, #20c997) !important;
+}
+
+.card-header.bg-warning {
+    background: linear-gradient(90deg, #ffc107, #fd7e14) !important;
+}
+
+/* Form Controls */
+.form-control:focus,
+.form-select:focus {
+    border-color: #8240FF;
+    box-shadow: 0 0 0 0.25rem rgba(130, 64, 255, 0.25);
+}
+
+.form-check-input:checked {
+    background-color: #8240FF;
+    border-color: #8240FF;
+}
+
+/* Button Styles */
+.btn-primary {
+    background: linear-gradient(90deg, #8240FF, #a855f7);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(90deg, #6b30e0, #8b45d8);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(130, 64, 255, 0.4);
+}
+
+.btn-primary:disabled {
+    background: linear-gradient(90deg, #6b6b6b, #7b7b7b);
+    cursor: not-allowed;
+}
+
+/* Table Styles */
+.table-dark {
+    --bs-table-bg: transparent;
+}
+
+.table-dark thead th {
+    background: rgba(255, 255, 255, 0.1);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.table-dark tbody tr:hover {
+    background: rgba(130, 64, 255, 0.1);
+}
+
+/* History Videos */
+.history-video {
+    width: 100px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.history-video:hover {
+    transform: scale(1.1);
+    border-color: #8240FF;
+    box-shadow: 0 4px 12px rgba(130, 64, 255, 0.4);
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(130, 64, 255, 0.5);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(130, 64, 255, 0.7);
+}
+
+/* Cursor Pointer */
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* Toast Container */
+.toast-container {
+    z-index: 1100;
+}
+
+/* Modal Styles */
+#videoPreviewModal .modal-content {
+    background: rgba(30, 30, 40, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#previewVideo {
+    max-height: 70vh;
+    width: 100%;
+    object-fit: contain;
+}
+
+/* Rating Stars */
+.rating-stars {
+    font-size: 2rem;
+    cursor: pointer;
+}
+
+.rating-star {
+    color: #6c757d;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.rating-star:hover {
+    color: #ffc107;
+    transform: scale(1.1);
+}
+
+.rating-star.active,
+.rating-star.filled {
+    color: #ffc107;
+}
+
+.rating-star.bi-star-fill {
+    color: #ffc107;
+}
+
+/* Loading States */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+    .result-video {
+        max-height: 200px;
+    }
+    
+    .model-selection {
+        max-height: 150px;
+    }
+}
+
+@media (max-width: 768px) {
+    .d-flex.gap-2.w-100.w-md-auto {
+        width: 100% !important;
+    }
+    
+    .d-flex.gap-2.w-100.w-md-auto .btn {
+        flex: 1;
+    }
+}
+
+@media (max-width: 576px) {
+    .stat-card .row {
+        font-size: 0.85rem;
+    }
+    
+    .result-card h6 {
+        font-size: 0.9rem;
+    }
+    
+    h1.text-white {
+        font-size: 1.5rem;
+    }
+    
+    .d-flex.gap-2.w-100.w-md-auto {
+        flex-direction: row;
+        gap: 0.5rem;
+    }
+}
+
+/* Badge Animations */
+.badge.bg-success {
+    animation: successPulse 0.5s ease;
+}
+
+@keyframes successPulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.badge.bg-danger {
+    animation: dangerShake 0.5s ease;
+}
+
+@keyframes dangerShake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-2px);
+    }
+    75% {
+        transform: translateX(2px);
+    }
+}
+
+/* Textarea Text Overflow Handling */
+textarea.form-control {
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    overflow-x: hidden;
+    overflow-y: auto;
+    resize: vertical;
+}

@@ -199,6 +199,12 @@ function initializeWebSocket(onConnectionResult = null) {
             console.log(`[WebSocket] characterImageGenerated received - chatId: ${chatId}, current window.chatCreationId: ${window.chatCreationId}`);
             console.log(`[WebSocket] #imageContainer exists: ${hasOldContainer}, #generatedImagesGrid exists: ${hasNewContainer}`);
             
+            // Verify chatId matches current character creation (if set)
+            if (window.chatCreationId && chatId && chatId !== window.chatCreationId) {
+              console.log(`[WebSocket] ChatId mismatch - ignoring image. Expected: ${window.chatCreationId}, received: ${chatId}`);
+              break;
+            }
+            
             // Check for new character creation container first
             if (hasNewContainer && window.characterCreation) {
               console.log(`[WebSocket] New character creation container found, using characterCreation.onImagesGenerated`);

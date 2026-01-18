@@ -194,9 +194,55 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
     );
 
     // Process the task using checkTaskStatus (it will use webhook images, skip polling)
-    // This handles merge face, saving to DB, and notifications
-    const { checkTaskStatus } = require('../models/imagen');
-    await checkTaskStatus(taskId, fastify);
+    // This handles merge face, saving to DB
+    const { checkTaskStatus, handleTaskCompletion } = require('../models/imagen');
+    const taskStatus = await checkTaskStatus(taskId, fastify);
+    
+    // Handle task completion notifications (sends characterImageGenerated for character creation)
+    if (taskStatus && taskStatus.status === 'completed' && taskStatus.images && taskStatus.images.length > 0) {
+      try {
+        // Get task document to access chatCreation and other metadata
+        const taskDoc = await tasksCollection.findOne({ taskId });
+        
+        if (!taskDoc) {
+          console.warn(`[NovitaWebhook] Task document not found for ${taskId} after checkTaskStatus`);
+          return;
+        }
+        
+        // Get translations if available (from request or default)
+        let translations = null;
+        if (taskDoc.translations) {
+          translations = taskDoc.translations;
+        }
+        
+        // Ensure userId and chatId are strings for handleTaskCompletion
+        const userId = taskStatus.userId?.toString() || taskDoc.userId?.toString();
+        const chatId = taskDoc.chatId?.toString();
+        
+        if (!userId || !chatId) {
+          console.warn(`[NovitaWebhook] Missing userId or chatId for task ${taskId}`);
+          return;
+        }
+        
+        // Update taskStatus to have string userId for handleTaskCompletion
+        const formattedTaskStatus = {
+          ...taskStatus,
+          userId: userId,
+          userChatId: taskStatus.userChatId?.toString() || taskDoc.userChatId?.toString() || null
+        };
+        
+        await handleTaskCompletion(formattedTaskStatus, fastify, {
+          chatCreation: taskDoc.chatCreation || false,
+          translations: translations,
+          userId: userId,
+          chatId: chatId,
+          placeholderId: taskDoc.placeholderId
+        });
+      } catch (error) {
+        console.error(`[NovitaWebhook] Error calling handleTaskCompletion for task ${taskId}:`, error);
+        // Don't fail the webhook - images are already saved
+      }
+    }
 
     console.log(`[NovitaWebhook] ✅ Successfully processed image task ${taskId}`);
   } catch (error) {

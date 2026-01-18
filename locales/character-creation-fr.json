@@ -153,8 +153,10 @@
             "outdoor": "Plein Air",
             "toys": "Jouets"
         },
-        "custom_prompt_title": "Prompt Personnalisé (Optionnel)",
-        "custom_prompt_placeholder": "Ajoutez des détails supplémentaires sur votre personnage..."
+        "custom_prompt_title": "Personnalité et Historique du Personnage",
+        "custom_prompt_label": "Personnalité et Historique du Personnage",
+        "custom_prompt_description": "Décrivez l'historique de votre personnage, les éléments liés à son histoire et son comportement (pas la description physique)",
+        "custom_prompt_placeholder": "Par exemple, elle est une enseignante bienveillante qui aime aider ses élèves, aime lire des livres pendant son temps libre et essaie toujours de voir le bon côté des situations..."
     },
     
     "step6": {
@@ -166,10 +168,6 @@
             "Wise_Woman": {
                 "name": "Femme Sage",
                 "description": "Chaleureuse et expressive, parfaite pour les conversations profondes"
-            },
-            "Friendly_Person": {
-                "name": "Personne Amicale",
-                "description": "Enjouée et accessible avec une articulation claire"
             },
             "Inspirational_girl": {
                 "name": "Fille Inspirante",

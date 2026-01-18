@@ -153,8 +153,10 @@
             "outdoor": "野外",
             "toys": "おもちゃ"
         },
-        "custom_prompt_title": "カスタムプロンプト（任意）",
-        "custom_prompt_placeholder": "キャラクターについて追加の詳細を入力..."
+        "custom_prompt_title": "キャラクターの個性と背景",
+        "custom_prompt_label": "キャラクターの個性と背景",
+        "custom_prompt_description": "キャラクターの背景、ストーリー関連の要素、行動を説明してください（外見の説明ではありません）",
+        "custom_prompt_placeholder": "例：学生を助けることが好きな優しい教師で、自由時間に本を読むのが好きで、常に状況の前向きな側面を見ようとします..."
     },
     
     "step6": {
@@ -166,10 +168,6 @@
             "Wise_Woman": {
                 "name": "賢い女性",
                 "description": "深い会話に最適な、温かく表現豊かな声"
-            },
-            "Friendly_Person": {
-                "name": "フレンドリーな人",
-                "description": "明るくて親しみやすい、はっきりした発音"
             },
             "Inspirational_girl": {
                 "name": "インスピレーショナルガール",

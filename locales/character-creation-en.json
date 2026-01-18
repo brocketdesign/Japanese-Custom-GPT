@@ -153,8 +153,10 @@
             "outdoor": "Outdoor",
             "toys": "Toys"
         },
-        "custom_prompt_title": "Custom Prompt (Optional)",
-        "custom_prompt_placeholder": "Add any additional details about your character..."
+        "custom_prompt_title": "Character Personality & Background",
+        "custom_prompt_label": "Character Personality & Background",
+        "custom_prompt_description": "Describe your character's background, story-related elements, and behavior (not physical description)",
+        "custom_prompt_placeholder": "E.g., she is a kind teacher who loves helping students, enjoys reading books in her free time, and always tries to see the positive side of situations..."
     },
     
     "step6": {
@@ -166,10 +168,6 @@
             "Wise_Woman": {
                 "name": "Wise Woman",
                 "description": "Warm and expressive, perfect for deep conversations"
-            },
-            "Friendly_Person": {
-                "name": "Friendly Person",
-                "description": "Upbeat and approachable with clear articulation"
             },
             "Inspirational_girl": {
                 "name": "Inspirational Girl",

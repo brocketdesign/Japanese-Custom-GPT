@@ -612,6 +612,7 @@ async function routes(fastify, options) {
         // Only add to resolved platforms if we have a valid account ID
         if (accountId && accountId.match(/^[a-f0-9]{24}$/i)) {
           resolvedPlatforms.push({
+            platform: conn.platform,
             accountId: accountId,
             platformSpecificData: {}
           });
@@ -637,7 +638,7 @@ async function routes(fastify, options) {
       }
 
       // Create post via Late.dev
-      // API expects: content, mediaItems[{url, type}], platforms[{accountId, platformSpecificData}]
+      // API expects: content, mediaItems[{url, type}], platforms[{platform, accountId, platformSpecificData}]
       const postData = {
         content: text,
         mediaItems: (mediaUrls || []).map(url => ({

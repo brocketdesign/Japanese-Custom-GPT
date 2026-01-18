@@ -95,6 +95,12 @@
                     <i class="bi bi-chat-dots-fill"></i>
                     {{translations.profile.characters}}
                 </button>
+                {{#if isMyProfile}}
+                <button class="tab-btn" data-tab="posts">
+                    <i class="bi bi-images"></i>
+                    {{translations.profile.posts}}
+                </button>
+                {{/if}}
             </div>
         </div>
 
@@ -115,6 +121,47 @@
                 </div>
                 <div id="user-chat-pagination-controls" class="d-flex justify-content-center my-3"></div>
             </div>
+
+            <!-- Posts Tab (My Social Posts & Schedules) -->
+            {{#if isMyProfile}}
+            <div id="posts-tab" class="tab-pane p-3" style="display: none;">
+                <!-- Recent Social Posts -->
+                <div class="posts-section mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">
+                            <i class="bi bi-send-fill me-2 text-primary"></i>{{translations.profile.recentPosts}}
+                        </h6>
+                        <a href="/dashboard/posts" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-grid me-1"></i>{{translations.profile.viewAll}}
+                        </a>
+                    </div>
+                    <div id="user-social-posts" class="recent-posts-list">
+                        <div class="text-center p-4 text-muted">
+                            <i class="bi bi-hourglass-split fs-4 mb-2"></i>
+                            <p class="mb-0">{{translations.profile.loadingPosts}}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scheduled Posts & Cron Jobs -->
+                <div class="schedules-section">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">
+                            <i class="bi bi-calendar-event me-2 text-warning"></i>{{translations.profile.scheduledPosts}}
+                        </h6>
+                        <a href="/dashboard/schedules" class="btn btn-sm btn-outline-warning">
+                            <i class="bi bi-calendar-plus me-1"></i>{{translations.profile.manageSchedules}}
+                        </a>
+                    </div>
+                    <div id="user-schedules" class="schedules-list">
+                        <div class="text-center p-4 text-muted">
+                            <i class="bi bi-hourglass-split fs-4 mb-2"></i>
+                            <p class="mb-0">{{translations.profile.loadingSchedules}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{/if}}
         </div>
 
         <!-- File Input (Hidden) -->
@@ -230,8 +277,128 @@
                 } else if (tabName === 'characters') {
                     $('#characters-tab').show();
                     displayUserChats(userId, 1, true);
+                } else if (tabName === 'posts') {
+                    $('#posts-tab').show();
+                    loadUserSocialPosts();
+                    loadUserSchedules();
                 }
             });
+            
+            // Load user's social posts
+            async function loadUserSocialPosts() {
+                const container = $('#user-social-posts');
+                try {
+                    const response = await fetch('/api/social/posts?limit=5');
+                    const data = await response.json();
+                    
+                    if (!data.success || !data.posts || data.posts.length === 0) {
+                        container.html(`
+                            <div class="text-center p-4 text-muted">
+                                <i class="bi bi-inbox fs-1 mb-2"></i>
+                                <p class="mb-0">No posts yet</p>
+                            </div>
+                        `);
+                        return;
+                    }
+                    
+                    container.html(data.posts.map(post => `
+                        <div class="recent-post-item">
+                            <div class="post-thumbnail">
+                                ${post.mediaUrls && post.mediaUrls[0] 
+                                    ? `<img src="${post.mediaUrls[0]}" alt="Post" onerror="this.src='/img/placeholder.png'">`
+                                    : '<i class="bi bi-image text-muted fs-4"></i>'
+                                }
+                            </div>
+                            <div class="post-details">
+                                <div class="post-text">${post.text || 'No caption'}</div>
+                                <div class="post-meta">
+                                    <span class="post-platforms">
+                                        ${(post.platforms || []).map(p => `
+                                            <span class="platform-badge">
+                                                <i class="bi bi-${p.platform === 'instagram' ? 'instagram' : 'twitter-x'}"></i>
+                                            </span>
+                                        `).join('')}
+                                    </span>
+                                    <span class="post-time">
+                                        <i class="bi bi-clock me-1"></i>${formatTimeAgo(post.createdAt)}
+                                    </span>
+                                    <span class="badge ${post.status === 'published' ? 'bg-success' : 'bg-warning'}">${post.status || 'pending'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join(''));
+                } catch (error) {
+                    console.error('Error loading social posts:', error);
+                    container.html(`
+                        <div class="text-center p-4 text-muted">
+                            <i class="bi bi-exclamation-triangle fs-4 mb-2"></i>
+                            <p class="mb-0">Failed to load posts</p>
+                        </div>
+                    `);
+                }
+            }
+            
+            // Load user's schedules
+            async function loadUserSchedules() {
+                const container = $('#user-schedules');
+                try {
+                    const response = await fetch('/api/schedules?limit=5');
+                    const data = await response.json();
+                    
+                    if (!data.success || !data.schedules || data.schedules.length === 0) {
+                        container.html(`
+                            <div class="text-center p-4 text-muted">
+                                <i class="bi bi-calendar-x fs-1 mb-2"></i>
+                                <p class="mb-0">No scheduled posts</p>
+                            </div>
+                        `);
+                        return;
+                    }
+                    
+                    container.html(data.schedules.map(schedule => `
+                        <div class="recent-post-item">
+                            <div class="post-thumbnail d-flex align-items-center justify-content-center" style="background: rgba(255, 193, 7, 0.1);">
+                                <i class="bi bi-${schedule.type === 'recurring' ? 'arrow-repeat' : 'calendar-event'} text-warning fs-4"></i>
+                            </div>
+                            <div class="post-details">
+                                <div class="post-text">${schedule.description || schedule.actionData?.prompt || 'Scheduled task'}</div>
+                                <div class="post-meta">
+                                    <span>
+                                        <i class="bi bi-gear me-1"></i>${schedule.actionType || 'generate_image'}
+                                    </span>
+                                    ${schedule.type === 'recurring' 
+                                        ? `<span><i class="bi bi-arrow-repeat me-1"></i>${schedule.cronExpression || 'Recurring'}</span>`
+                                        : `<span><i class="bi bi-calendar me-1"></i>${schedule.scheduledFor ? new Date(schedule.scheduledFor).toLocaleDateString() : 'Pending'}</span>`
+                                    }
+                                    <span class="badge ${schedule.status === 'active' ? 'bg-success' : schedule.status === 'paused' ? 'bg-warning' : 'bg-secondary'}">${schedule.status || 'pending'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join(''));
+                } catch (error) {
+                    console.error('Error loading schedules:', error);
+                    container.html(`
+                        <div class="text-center p-4 text-muted">
+                            <i class="bi bi-exclamation-triangle fs-4 mb-2"></i>
+                            <p class="mb-0">Failed to load schedules</p>
+                        </div>
+                    `);
+                }
+            }
+            
+            // Format time ago helper
+            function formatTimeAgo(dateString) {
+                if (!dateString) return 'Unknown';
+                const date = new Date(dateString);
+                const now = new Date();
+                const seconds = Math.floor((now - date) / 1000);
+                
+                if (seconds < 60) return 'Just now';
+                if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+                if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+                if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+                return date.toLocaleDateString();
+            }
 
             // Load initial data
             loadUserImages(userId, 1, true);
@@ -433,6 +600,102 @@
                 width: 50px;
                 height: 50px;
             }
+        }
+        
+        /* Posts Tab Styles - Recent Posts Design */
+        .recent-posts-list,
+        .schedules-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .recent-post-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            transition: background 0.2s;
+        }
+
+        .recent-post-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .recent-post-item .post-thumbnail {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .recent-post-item .post-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .recent-post-item .post-details {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .recent-post-item .post-text {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.85);
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-height: 1.4;
+        }
+
+        .recent-post-item .post-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            flex-wrap: wrap;
+        }
+
+        .recent-post-item .post-platforms {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .recent-post-item .platform-badge {
+            display: inline-flex;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .recent-post-item .post-time {
+            display: flex;
+            align-items: center;
+        }
+
+        .recent-post-item .badge {
+            font-size: 10px;
+            padding: 2px 6px;
+        }
+        
+        .posts-section,
+        .schedules-section {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid rgba(130, 64, 255, 0.1);
         }
     </style>
 </body>

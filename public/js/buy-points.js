@@ -48,43 +48,54 @@ $(document).ready(function() {
 
       const cardHTML = `
   <div class="col-6 col-md-4 col-lg-3 mb-3">
-    <div class="card h-100 border-0 shadow-sm position-relative buy-points-card p-2 rounded-4" 
+    <div class="card h-100 border-0 position-relative buy-points-card p-3 rounded-4" 
          data-package-id="${pkg.id}"
-         style="background: #ffffff;">
-
-      ${isPopular ? `
-        <span class="badge bg-gradient position-absolute top-0 start-0 m-2 px-3 py-1 rounded-pill" 
-              style="background: linear-gradient(90deg,#ff8a80,#ff5f9e); font-size: 0.7rem;">
-          ${window.buyPointsTranslations.buy_points.most_popular}
-        </span>` : ''}
-
-      <div class="text-center mt-3">
-        <img src="/img/coins/coins-${index + 1}.png" style="width:34px;height:34px;">
-      </div>
-
-      <h6 class="text-center mt-2 mb-0">${pkg.points} ${window.buyPointsTranslations.buy_points.points}</h6>
-
-      <div class="d-none text-center mt-1 mb-2 small text-muted">${pkg.description}</div>
-
-      <div class="justify-content-center d-flex">
-        <div class="fw-bold" style="font-size:1.1rem;">
-          ${pkg.currency === 'JPY' ? '¥' : (pkg.currency === 'EUR' ? '€' : '$')}${pkg.price}
-        </div>
-        <div class="${pkg.discount == '0%' ? 'd-none' : ''} text-decoration-line-through opacity-75" style="font-size:0.75rem;">
-          ${pkg.currency === 'JPY' ? '¥' : (pkg.currency === 'EUR' ? '€' : '$')}${pkg.originalPrice}
-        </div>
-      </div>
+         style="background: linear-gradient(145deg, #1e1e2e 0%, #2a2a3e 100%); border: 1px solid rgba(255,255,255,0.08) !important;">
 
       ${pkg.discount !== '0%' ? `
-        <div class="badge bg-primary bg-gradient mx-auto d-block px-3 py-2 rounded-pill position-absolute"
-             style="background: linear-gradient(90deg,#6a11cb,#2575fc); font-size: 0.5rem; top: 0; left: -5px; padding: 3px 5px 3px 20px !important;">
-          ${pkg.discount}
+        <div class="badge position-absolute rounded-pill"
+             style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); font-size: 0.65rem; top: -8px; left: 50%; transform: translateX(-50%); padding: 4px 10px; box-shadow: 0 2px 8px rgba(249,115,22,0.4);">
+          ${pkg.discount} OFF
         </div>
       ` : ''}
 
-      <button class="btn btn-light border mt-3 w-100 fw-semibold purchase-points-btn rounded-4"
-              data-package-id="${pkg.id}">
-        ${window.buyPointsTranslations.buy_points.purchase_button || 'Purchase'}
+      ${isPopular ? `
+        <div class="badge position-absolute rounded-pill" 
+              style="background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); font-size: 0.6rem; top: -8px; left: 50%; transform: translateX(-50%); padding: 4px 10px; box-shadow: 0 2px 8px rgba(168,85,247,0.4);">
+          ${window.buyPointsTranslations.buy_points.most_popular}
+        </div>` : ''}
+
+      <div class="text-center mt-2 mb-3">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle" 
+             style="width: 56px; height: 56px; background: linear-gradient(135deg, rgba(251,191,36,0.2) 0%, rgba(245,158,11,0.1) 100%); border: 1px solid rgba(251,191,36,0.3);">
+          <img src="/img/coins/coins-${index + 1}.png" style="width:32px;height:32px;">
+        </div>
+      </div>
+
+      <div class="text-center mb-2">
+        <div class="fw-bold mb-1" style="font-size: 1.5rem; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+          ${pkg.points}
+        </div>
+        <div class="text-white-50 small text-uppercase" style="letter-spacing: 1px; font-size: 0.65rem;">
+          ${window.buyPointsTranslations.buy_points.points}
+        </div>
+      </div>
+
+      <div class="text-center mb-3">
+        <span class="fw-bold text-white" style="font-size: 1.25rem;">
+          ${pkg.currency === 'JPY' ? '¥' : (pkg.currency === 'EUR' ? '€' : '$')}${pkg.price}
+        </span>
+        ${pkg.discount !== '0%' ? `
+          <span class="text-decoration-line-through text-white-50 ms-1" style="font-size: 0.8rem;">
+            ${pkg.currency === 'JPY' ? '¥' : (pkg.currency === 'EUR' ? '€' : '$')}${pkg.originalPrice}
+          </span>
+        ` : ''}
+      </div>
+
+      <button class="btn w-100 fw-semibold purchase-points-btn rounded-3 py-2"
+              data-package-id="${pkg.id}"
+              style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; border: none; transition: all 0.2s ease;">
+        ${window.buyPointsTranslations.buy_points.purchase_button || 'Buy Now'}
       </button>
 
     </div>

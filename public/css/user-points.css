@@ -1001,11 +1001,28 @@
 
 .buy-points-card {
   cursor: pointer;
-  transition: transform .2s ease, box-shadow .2s ease;
-  border-radius: 1.4rem !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 1.25rem !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
 
 .buy-points-card:hover {
-  transform: scale(1.03);
-  box-shadow: 0 0.75rem 1.5rem rgba(0,0,0,0.08);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 12px 40px rgba(99, 102, 241, 0.25);
+  border-color: rgba(99, 102, 241, 0.4) !important;
+}
+
+.buy-points-card:active {
+  transform: translateY(-2px) scale(1.01);
+}
+
+.buy-points-card .purchase-points-btn:hover {
+  background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%) !important;
+  transform: scale(1.02);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+}
+
+.buy-points-card.border-primary {
+  border-color: rgba(99, 102, 241, 0.6) !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3), 0 12px 40px rgba(99, 102, 241, 0.2);
 }

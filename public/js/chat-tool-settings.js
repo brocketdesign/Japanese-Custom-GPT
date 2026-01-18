@@ -719,7 +719,6 @@ class ChatToolSettings {
         const overlay = document.getElementById('settings-modal-overlay');
         if (overlay) {
             overlay.classList.add('show');
-            $('.navbar').css('z-index', '100'); // Lower navbar z-index
             document.body.style.overflow = 'hidden';
             
             // Load models when modal opens if not already loaded
@@ -748,7 +747,6 @@ class ChatToolSettings {
         const overlay = document.getElementById('settings-modal-overlay');
         if (overlay) {
             overlay.classList.remove('show');
-            $('.navbar').css('z-index', '1000'); // Restore navbar z-index
             document.body.style.overflow = '';
             
             // Remove welcome message if it exists

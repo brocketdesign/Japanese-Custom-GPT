@@ -73,6 +73,68 @@ function canConnectMoreAccounts(user, currentCount) {
   return currentCount < limit;
 }
 
+/**
+ * Helper: Get or create Late.dev profile for user
+ */
+async function getOrCreateProfile(db, userId, userEmail, userName) {
+  // Check if user already has a Late profile ID stored
+  const user = await db.collection('users').findOne(
+    { _id: new ObjectId(userId) },
+    { projection: { lateProfileId: 1 } }
+  );
+
+  if (user?.lateProfileId) {
+    return user.lateProfileId;
+  }
+
+  // Create a new profile in Late.dev
+  try {
+    console.log(`[Social API] Creating Late.dev profile for user ${userId}`);
+    const profileData = {
+      name: userName || `User ${userId}`,
+      ...(userEmail && { email: userEmail })
+    };
+
+    const response = await lateApiRequest('/profiles', 'POST', profileData);
+    const profileId = response.id || response.profileId || response._id;
+
+    if (!profileId) {
+      throw new Error('Profile ID not returned from Late.dev');
+    }
+
+    // Store profile ID in user document
+    await db.collection('users').updateOne(
+      { _id: new ObjectId(userId) },
+      { $set: { lateProfileId: profileId } }
+    );
+
+    console.log(`[Social API] Created Late.dev profile: ${profileId}`);
+    return profileId;
+  } catch (error) {
+    console.error(`[Social API] Error creating profile:`, error);
+    // Try to list existing profiles as fallback
+    try {
+      const profilesResponse = await lateApiRequest('/profiles');
+      const profiles = Array.isArray(profilesResponse) ? profilesResponse : (profilesResponse.profiles || []);
+      
+      if (profiles.length > 0) {
+        const defaultProfileId = profiles[0].id || profiles[0].profileId || profiles[0]._id;
+        if (defaultProfileId) {
+          await db.collection('users').updateOne(
+            { _id: new ObjectId(userId) },
+            { $set: { lateProfileId: defaultProfileId } }
+          );
+          console.log(`[Social API] Using existing Late.dev profile: ${defaultProfileId}`);
+          return defaultProfileId;
+        }
+      }
+    } catch (fallbackError) {
+      console.error(`[Social API] Fallback profile fetch failed:`, fallbackError);
+    }
+    throw error;
+  }
+}
+
 async function routes(fastify, options) {
   const db = fastify.mongo.db;
 
@@ -146,15 +208,23 @@ async function routes(fastify, options) {
         });
       }
 
-      // Get OAuth URL from Late.dev
+      // Get or create profile for this user
+      const profileId = await getOrCreateProfile(db, user._id, user.email, user.nickname || user.username);
+      
+      // Get OAuth URL from Late.dev (profileId is required)
       const callbackUrl = `${request.protocol}://${request.hostname}/api/social/callback/${platform}`;
-      const response = await lateApiRequest(`/connect/${platform}?callback_url=${encodeURIComponent(callbackUrl)}`);
+      const queryParams = new URLSearchParams({
+        profileId: profileId,
+        redirect_url: callbackUrl
+      });
+      
+      const response = await lateApiRequest(`/connect/${platform}?${queryParams.toString()}`);
 
-      console.log(`[Social API] OAuth URL generated for ${platform}`);
+      console.log(`[Social API] OAuth URL generated for ${platform} with profileId: ${profileId}`);
 
       return reply.send({
         success: true,
-        authUrl: response.url || response.authUrl,
+        authUrl: response.url || response.authUrl || response.auth_url,
         platform
       });
     } catch (error) {
@@ -166,6 +236,7 @@ async function routes(fastify, options) {
   /**
    * GET /api/social/callback/:platform
    * OAuth callback handler
+   * Late.dev redirects with: connected=platform&profileId=PROFILE_ID&username=USERNAME
    */
   fastify.get('/api/social/callback/:platform', async (request, reply) => {
     try {
@@ -175,45 +246,49 @@ async function routes(fastify, options) {
       }
 
       const { platform } = request.params;
-      const { code, state, error: oauthError } = request.query;
+      const { connected, username, profileId, error: oauthError, tempToken, userProfile, connect_token } = request.query;
 
-      if (oauthError) {
-        console.error(`[Social API] OAuth error for ${platform}:`, oauthError);
-        return reply.redirect(`/settings?sns_error=${encodeURIComponent(oauthError)}&platform=${platform}`);
+      // Check for OAuth errors
+      if (oauthError || !connected) {
+        const errorMsg = oauthError || 'connection_failed';
+        console.error(`[Social API] OAuth error for ${platform}:`, errorMsg);
+        return reply.redirect(`/settings?sns_error=${encodeURIComponent(errorMsg)}&platform=${platform}`);
       }
 
-      if (!code) {
-        return reply.redirect(`/settings?sns_error=missing_code&platform=${platform}`);
+      // Verify the connected platform matches
+      if (connected !== platform) {
+        console.error(`[Social API] Platform mismatch: expected ${platform}, got ${connected}`);
+        return reply.redirect(`/settings?sns_error=platform_mismatch&platform=${platform}`);
       }
 
-      // Exchange code for access token via Late.dev
-      const tokenResponse = await lateApiRequest('/oauth/token', 'POST', {
-        platform,
-        code,
-        state
-      });
+      // For headless mode, we might get tempToken and need to finalize connection
+      // For now, we'll use the standard flow where Late.dev returns the connection info directly
+      
+      const profileIdForConnection = profileId || user.lateProfileId;
+      
+      if (!profileIdForConnection) {
+        console.error(`[Social API] No profileId in callback for user ${user._id}`);
+        return reply.redirect(`/settings?sns_error=missing_profile&platform=${platform}`);
+      }
 
-      // Get account info
-      const accountInfo = tokenResponse.account || {};
-
-      // Store connection in user document
+      // Late.dev redirects back with connection info in query params
+      // We can also fetch full connection details if needed later
+      // For now, store what we get from the callback
       const connection = {
-        id: accountInfo.id || `${platform}_${Date.now()}`,
+        id: `${platform}_${username}_${Date.now()}`,
         platform,
-        username: accountInfo.username || accountInfo.name || 'Unknown',
-        profileUrl: accountInfo.profile_url || accountInfo.avatar,
-        accessToken: tokenResponse.access_token,
-        refreshToken: tokenResponse.refresh_token,
-        expiresAt: tokenResponse.expires_at,
+        username: username || 'Unknown',
+        profileUrl: null, // Can be fetched later if needed
         connectedAt: new Date(),
-        lateAccountId: accountInfo.late_account_id || accountInfo.id
+        lateAccountId: username, // Use username as identifier until we get the actual account ID
+        lateProfileId: profileIdForConnection
       };
 
       // Add connection to user (avoid duplicates)
       await db.collection('users').updateOne(
         { _id: new ObjectId(user._id) },
         { 
-          $pull: { snsConnections: { platform, id: connection.id } }
+          $pull: { snsConnections: { platform } }
         }
       );
 
@@ -224,7 +299,7 @@ async function routes(fastify, options) {
         }
       );
 
-      console.log(`[Social API] Successfully connected ${platform} for user ${user._id}`);
+      console.log(`[Social API] Successfully connected ${platform} (@${connection.username}) for user ${user._id}`);
 
       return reply.redirect(`/settings?sns_success=connected&platform=${platform}`);
     } catch (error) {
@@ -291,13 +366,21 @@ async function routes(fastify, options) {
         return reply.code(400).send({ error: 'Text and at least one platform are required' });
       }
 
-      // Get user's connections
+      // Get user's connections and profile
       const userData = await db.collection('users').findOne(
         { _id: new ObjectId(user._id) },
-        { projection: { snsConnections: 1 } }
+        { projection: { snsConnections: 1, lateProfileId: 1 } }
       );
 
       const connections = userData?.snsConnections || [];
+      const profileId = userData?.lateProfileId;
+      
+      if (!profileId) {
+        return reply.code(400).send({ 
+          error: 'No profile found. Please connect an account first.',
+          needsConnection: true
+        });
+      }
       
       // Filter to requested platforms
       const targetConnections = connections.filter(c => platforms.includes(c.platform));
@@ -309,8 +392,9 @@ async function routes(fastify, options) {
         });
       }
 
-      // Create post via Late.dev
+      // Create post via Late.dev (profileId is required)
       const postData = {
+        profileId: profileId,
         text,
         platforms: targetConnections.map(c => c.platform),
         mediaUrls: mediaUrls || []

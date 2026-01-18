@@ -297,7 +297,7 @@ async function routes(fastify, options) {
       // Fetch connected accounts from Late.dev to get the actual account ID
       let lateAccountId = null;
       try {
-        const accountsResponse = await lateApiRequest(`/profiles/${profileIdForConnection}/accounts`);
+        const accountsResponse = await lateApiRequest(`/accounts?profileId=${profileIdForConnection}`);
         const accounts = accountsResponse.accounts || accountsResponse || [];
         
         // Find the account that matches the platform and username
@@ -573,7 +573,7 @@ async function routes(fastify, options) {
         if (needsResolution && profileId) {
           try {
             console.log(`[Social API] Attempting to resolve account ID for ${conn.platform}/@${conn.username}`);
-            const accountsResponse = await lateApiRequest(`/profiles/${profileId}/accounts`);
+            const accountsResponse = await lateApiRequest(`/accounts?profileId=${profileId}`);
             const accounts = accountsResponse.accounts || accountsResponse || [];
             
             console.log(`[Social API] Found ${accounts.length} accounts for profile ${profileId}`);

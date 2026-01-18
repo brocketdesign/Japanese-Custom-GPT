@@ -1293,7 +1293,15 @@
     font-size: 1rem;
     font-weight: 600;
     color: var(--cc-text);
+    margin-bottom: 8px;
+    text-align: left;
+}
+
+.custom-prompt-description {
+    font-size: 0.85rem;
+    color: var(--cc-text-muted);
     margin-bottom: 10px;
+    line-height: 1.4;
     text-align: left;
 }
 

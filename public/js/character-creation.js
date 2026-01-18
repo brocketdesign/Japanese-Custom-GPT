@@ -350,7 +350,6 @@
             return {
                 voices: [
                     { key: 'Wise_Woman', gender: 'female', languages: ['en', 'fr', 'ja'] },
-                    { key: 'Friendly_Person', gender: 'female', languages: ['en', 'fr', 'ja'] },
                     { key: 'Inspirational_girl', gender: 'female', languages: ['en', 'fr', 'ja'] },
                     { key: 'Calm_Woman', gender: 'female', languages: ['en', 'fr', 'ja'] },
                     { key: 'Lively_Girl', gender: 'female', languages: ['en', 'fr', 'ja'] },

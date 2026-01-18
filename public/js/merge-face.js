@@ -384,7 +384,13 @@ function showSelectedFacePreviewFromUrl(imageUrl) {
 
 // Perform face merge
 async function performFaceMerge() {
+    console.log('[merge-face.js] performFaceMerge called');
+    console.log('[merge-face.js] - currentMergeImageId:', currentMergeImageId);
+    console.log('[merge-face.js] - selectedFaceId:', window.selectedFaceId);
+    console.log('[merge-face.js] - currentMergeUserChatId:', currentMergeUserChatId);
+    
     if (!window.selectedFaceId) {
+        console.error('[merge-face.js] No face selected');
         showNotification('Please select a face first', 'error');
         return;
     }
@@ -397,21 +403,27 @@ async function performFaceMerge() {
     mergeBtn.disabled = true;
     
     try {
+        const requestBody = {
+            imageId: currentMergeImageId,
+            faceId: window.selectedFaceId,
+            userChatId: currentMergeUserChatId
+        };
+        console.log('[merge-face.js] Sending merge request:', JSON.stringify(requestBody, null, 2));
+        
         const response = await fetch('/api/merge-face/merge', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                imageId: currentMergeImageId,
-                faceId: window.selectedFaceId,
-                userChatId: currentMergeUserChatId
-            })
+            body: JSON.stringify(requestBody)
         });
         
+        console.log('[merge-face.js] Response status:', response.status);
         const data = await response.json();
+        console.log('[merge-face.js] Response data:', JSON.stringify(data, null, 2));
         
         if (data.success) {
+            console.log('[merge-face.js] Merge successful! mergeId:', data.mergeId, 'mergedImageUrl:', data.mergedImageUrl);
             showNotification(data.message || 'Face merge completed successfully!', 'success');
             
             // Close modal
@@ -422,10 +434,11 @@ async function performFaceMerge() {
             // The mergeFaceCompleted WebSocket event will handle the UI update
             
         } else {
+            console.error('[merge-face.js] Merge failed:', data.error);
             showNotification(data.error || 'Face merge failed', 'error');
         }
     } catch (error) {
-        console.error('Error merging faces:', error);
+        console.error('[merge-face.js] Error merging faces:', error);
         showNotification('Face merge failed', 'error');
     } finally {
         progressContainer.style.display = 'none';
@@ -435,6 +448,7 @@ async function performFaceMerge() {
 
 // Handle WebSocket notification for merge completion
 window.addEventListener('mergeFaceCompleted', function(event) {
+    console.log('[merge-face.js] mergeFaceCompleted event received:', event.detail);
     const data = event.detail;
     
     // Create and display merged image result
@@ -446,13 +460,15 @@ window.addEventListener('mergeFaceCompleted', function(event) {
 // Handle WebSocket notification for image generated (merge face)
 window.addEventListener('imageGenerated', function(event) {
     const data = event.detail;
+    console.log('[merge-face.js] imageGenerated event received, isMergeFace:', data?.isMergeFace);
     
     // Check if this is a merge face result
     if (data.isMergeFace) {
-        console.log('Merge face image generated:', data);
+        console.log('[merge-face.js] Merge face image generated:', data);
         
         // Display in chat if we have the context
         if (data.userChatId && data.imageUrl) {
+            console.log('[merge-face.js] Image should be displayed in chat via existing image display logic');
             // This will be handled by the existing image display logic
             // The imageGenerated event already handles displaying images in chat
         }
@@ -461,6 +477,7 @@ window.addEventListener('imageGenerated', function(event) {
 
 // Display merged result
 function displayMergedResult(data) {
+    console.log('[merge-face.js] displayMergedResult called with:', data);
     // Create merged image element using S3 URL instead of base64
     const mergedImageHTML = `
         <div class="merged-face-result border rounded p-3 mb-3 bg-light">

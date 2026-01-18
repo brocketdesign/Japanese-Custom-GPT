@@ -133,7 +133,15 @@ async function routes(fastify, options) {
       const userId = user._id;
       const { imageId, faceId, userChatId } = request.body;
 
+      console.log(`🧬 [merge-face-api] ════════════════════════════════════════════`);
+      console.log(`🧬 [merge-face-api] Merge request received:`);
+      console.log(`🧬 [merge-face-api]   - userId: ${userId}`);
+      console.log(`🧬 [merge-face-api]   - imageId: ${imageId}`);
+      console.log(`🧬 [merge-face-api]   - faceId: ${faceId}`);
+      console.log(`🧬 [merge-face-api]   - userChatId: ${userChatId}`);
+
       if (!imageId || !faceId) {
+        console.error(`🧬 [merge-face-api] ❌ Missing required fields - imageId: ${imageId}, faceId: ${faceId}`);
         return reply.status(400).send({ 
           success: false, 
           error: 'Image ID and Face ID are required' 
@@ -172,19 +180,25 @@ async function routes(fastify, options) {
       }
 
       if (!galleryDoc) {
+        console.error(`🧬 [merge-face-api] ❌ Gallery document not found for imageId: ${imageId}`);
         return reply.status(404).send({ 
           success: false, 
           error: 'Original image not found' 
         });
       }
 
+      console.log(`🧬 [merge-face-api] ✓ Gallery document found, chatId: ${galleryDoc.chatId}`);
+
       const originalImage = galleryDoc.images.find(img => img._id.toString() === imageId);
       if (!originalImage) {
+        console.error(`🧬 [merge-face-api] ❌ Image not found in gallery images array`);
         return reply.status(404).send({ 
           success: false, 
           error: 'Original image not found in gallery' 
         });
       }
+
+      console.log(`🧬 [merge-face-api] ✓ Original image found, URL: ${originalImage.imageUrl?.substring(0, 50)}...`);
 
       // Get the face image
       const userFacesCollection = db.collection('userFaces');
@@ -194,13 +208,15 @@ async function routes(fastify, options) {
       });
 
       if (!faceDoc) {
+        console.error(`🧬 [merge-face-api] ❌ Face document not found for faceId: ${faceId}, userId: ${userId}`);
         return reply.status(404).send({ 
           success: false, 
           error: 'Face image not found' 
         });
       }
 
-      console.log(`[merge-face] Starting merge process for user ${userId}, imageId: ${imageId}, faceId: ${faceId}`);
+      console.log(`🧬 [merge-face-api] ✓ Face document found, URL: ${faceDoc.faceImageUrl?.substring(0, 50)}...`);
+      console.log(`🧬 [merge-face-api] Starting merge process for user ${userId}, imageId: ${imageId}, faceId: ${faceId}`);
 
       // Convert original image URL to base64 with size optimization
       let originalImageBase64;
@@ -278,15 +294,18 @@ async function routes(fastify, options) {
       }
 
       if (!mergeResult || !mergeResult.success) {
-        console.error('All merge attempts failed:', lastError?.message);
+        console.error(`🧬 [merge-face-api] ❌ All merge attempts failed:`, lastError?.message);
         return reply.status(500).send({ 
           success: false, 
           error: lastError?.message || 'Face merge failed after multiple attempts'
         });
       }
 
+      console.log(`🧬 [merge-face-api] ✓ Merge API call successful, image type: ${mergeResult.imageType}`);
+
       // Generate unique merge ID
       const mergeId = new ObjectId();
+      console.log(`🧬 [merge-face-api] Generated mergeId: ${mergeId}`);
 
       // Save merged image to S3
       let mergedImageUrl;
@@ -352,17 +371,22 @@ async function routes(fastify, options) {
         isMergeFace: true,
         originalImageId: imageId
       };
+      
+      console.log(`🧬 [merge-face-api] Sending imageGenerated WebSocket notification:`, JSON.stringify(notificationData, null, 2));
       fastify.sendNotificationToUser(userId, 'imageGenerated', notificationData);
 
       // Also send merge completion notification
-      fastify.sendNotificationToUser(userId, 'mergeFaceCompleted', {
+      const mergeCompletedData = {
         imageId,
         mergeId: savedMerge._id,
         mergedImageUrl,
         userChatId
-      });
+      };
+      console.log(`🧬 [merge-face-api] Sending mergeFaceCompleted WebSocket notification:`, JSON.stringify(mergeCompletedData, null, 2));
+      fastify.sendNotificationToUser(userId, 'mergeFaceCompleted', mergeCompletedData);
 
-      console.log(`[merge-face] Process completed successfully for merge ID: ${savedMerge._id}`);
+      console.log(`🧬 [merge-face-api] ✓ Process completed successfully for merge ID: ${savedMerge._id}`);
+      console.log(`🧬 [merge-face-api] ════════════════════════════════════════════`);
 
       return reply.send({ 
         success: true, 

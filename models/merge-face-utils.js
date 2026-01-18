@@ -303,9 +303,8 @@ async function saveMergedFaceToDB({
  * @param {Object} fastify - Fastify instance
  */
 async function addMergeFaceMessageToChat(userChatId, mergeId, mergedImageUrl, fastify) {
-  return
   const callId = require('crypto').randomUUID();
-  console.log(`[addMergeFaceMessageToChat] Call ID: ${callId} - Starting add message`);
+  console.log(`🧬 [addMergeFaceMessageToChat] Call ID: ${callId} - Starting add message for mergeId: ${mergeId}, userChatId: ${userChatId}`);
 
   try {
     const db = fastify.mongo.db;

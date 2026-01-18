@@ -449,7 +449,7 @@ function previewVideo(videoUrl, modelId, time, testId = null) {
 /**
  * Preview video from history
  */
-function previewHistoryVideo(videoUrl, modelName, generationTime, testId = null) {
+function previewHistoryVideo(videoUrl, modelName, generationTime, testId = null, prompt = '') {
     const modal = new bootstrap.Modal(document.getElementById('videoPreviewModal'));
     const modalElement = document.getElementById('videoPreviewModal');
     
@@ -460,11 +460,24 @@ function previewHistoryVideo(videoUrl, modelName, generationTime, testId = null)
         ? `Generated in ${(generationTime / 1000).toFixed(1)} seconds`
         : '';
     
-    // Store current video info for rating
-    modalElement.dataset.modelId = 'kling-v2.1-i2v';
+    // Show truncated prompt
+    const promptEl = document.getElementById('previewPrompt');
+    if (promptEl && prompt) {
+        const truncatedPrompt = prompt.length > 100 ? prompt.substring(0, 100) + '...' : prompt;
+        promptEl.textContent = truncatedPrompt;
+        promptEl.title = prompt;
+        promptEl.style.display = 'block';
+    } else if (promptEl) {
+        promptEl.style.display = 'none';
+    }
+    
+    // Store current video info for rating and draft
+    modalElement.dataset.modelId = 'history-video';
     modalElement.dataset.modelName = modelName || 'Unknown Model';
     modalElement.dataset.videoUrl = videoUrl;
     modalElement.dataset.testId = testId || '';
+    modalElement.dataset.prompt = prompt || '';
+    modalElement.dataset.isFromHistory = 'true';
     
     // Reset rating stars
     resetRatingStars();
@@ -956,4 +969,180 @@ function showNotification(message, type = 'info') {
         
         toast.addEventListener('hidden.bs.toast', () => toast.remove());
     }
+}
+
+// Draft post state
+let currentDraftData = null;
+let saveDraftModal = null;
+
+/**
+ * Save current video as draft post
+ */
+function saveAsDraftPost() {
+    const modal = document.getElementById('videoPreviewModal');
+    const videoUrl = modal.dataset.videoUrl;
+    const modelId = modal.dataset.modelId;
+    const modelName = modal.dataset.modelName;
+    const testId = modal.dataset.testId;
+    const isFromHistory = modal.dataset.isFromHistory === 'true';
+    
+    if (!videoUrl) {
+        showNotification('No video to save', 'error');
+        return;
+    }
+    
+    // Get the prompt - from modal dataset for history items, or from task for current generation
+    let prompt = '';
+    if (isFromHistory) {
+        prompt = modal.dataset.prompt || '';
+    } else if (state.activeTask) {
+        prompt = state.activeTask.finalPrompt || state.activeTask.originalPrompt || document.getElementById('promptInput')?.value || '';
+    } else {
+        prompt = document.getElementById('promptInput')?.value || '';
+    }
+    
+    // Store data for the draft
+    currentDraftData = {
+        videoUrl,
+        prompt,
+        model: modelName,
+        testId: testId || null,
+        parameters: {
+            duration: document.getElementById('durationSelect')?.value,
+            aspectRatio: document.getElementById('aspectRatioSelect')?.value
+        }
+    };
+    
+    // Update draft modal preview
+    document.getElementById('draftPreviewVideoSource').src = videoUrl;
+    document.getElementById('draftPreviewVideo').load();
+    document.getElementById('draftCaptionText').value = '';
+    
+    // Close preview modal and open draft modal
+    bootstrap.Modal.getInstance(modal)?.hide();
+    
+    if (!saveDraftModal) {
+        saveDraftModal = new bootstrap.Modal(document.getElementById('saveDraftModal'));
+    }
+    saveDraftModal.show();
+}
+
+/**
+ * Generate caption for draft post using AI
+ */
+async function generateDraftCaption() {
+    const captionInput = document.getElementById('draftCaptionText');
+    const btn = document.getElementById('generateCaptionBtn');
+    
+    if (!currentDraftData?.prompt) {
+        showNotification('No prompt available for caption generation', 'warning');
+        return;
+    }
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Generating...';
+    captionInput.disabled = true;
+    
+    try {
+        const response = await fetch('/api/posts/generate-caption', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                prompt: currentDraftData.prompt,
+                platform: 'general',
+                style: 'engaging',
+                mediaType: 'video'
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.caption) {
+            captionInput.value = data.caption;
+            showNotification('Caption generated!', 'success');
+        } else {
+            throw new Error(data.error || 'Failed to generate caption');
+        }
+    } catch (error) {
+        console.error('[VideoDashboard] Error generating caption:', error);
+        showNotification('Failed to generate caption', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-magic me-1"></i>Generate Caption with AI';
+        captionInput.disabled = false;
+    }
+}
+
+/**
+ * Confirm and save draft post
+ */
+async function confirmSaveDraft() {
+    if (!currentDraftData) {
+        showNotification('No draft data available', 'error');
+        return;
+    }
+    
+    const caption = document.getElementById('draftCaptionText').value;
+    const btn = document.getElementById('confirmSaveDraftBtn');
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+    
+    try {
+        const response = await fetch('/api/posts/draft', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                videoUrl: currentDraftData.videoUrl,
+                prompt: currentDraftData.prompt,
+                model: currentDraftData.model,
+                testId: currentDraftData.testId,
+                parameters: currentDraftData.parameters,
+                generateCaption: !caption, // Generate caption if not provided
+                caption: caption || undefined,
+                mediaType: 'video'
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('Draft post saved! Redirecting to My Posts...', 'success');
+            
+            // Close modal
+            saveDraftModal?.hide();
+            
+            // Redirect to My Posts after short delay
+            setTimeout(() => {
+                window.location.href = '/dashboard/posts';
+            }, 1500);
+        } else {
+            throw new Error(data.error || 'Failed to save draft');
+        }
+    } catch (error) {
+        console.error('[VideoDashboard] Error saving draft:', error);
+        showNotification('Failed to save draft: ' + error.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check me-1"></i>Save Draft';
+    }
+}
+
+/**
+ * Open share to social modal (placeholder for social sharing)
+ */
+function openShareModal() {
+    const modal = document.getElementById('videoPreviewModal');
+    const videoUrl = modal.dataset.videoUrl;
+    
+    if (!videoUrl) {
+        showNotification('No video to share', 'error');
+        return;
+    }
+    
+    // For now, redirect to My Posts where social sharing is available
+    showNotification('Saving video first...', 'info');
+    saveAsDraftPost();
 }

@@ -111,6 +111,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize rating stars
     initializeRatingStars();
     
+    // Initialize history preview buttons (for server-rendered items)
+    initializeHistoryPreviewButtons();
+    
     // Load initial stats
     refreshStats();
     
@@ -161,6 +164,36 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+/**
+ * Initialize history preview buttons for server-rendered items
+ */
+function initializeHistoryPreviewButtons() {
+    // Handle thumbnail clicks
+    document.querySelectorAll('#historyTableBody .history-thumbnail').forEach(thumbnail => {
+        thumbnail.addEventListener('click', function() {
+            const imageUrl = this.dataset.imageUrl;
+            const modelName = this.dataset.modelName || 'Unknown Model';
+            const generationTime = parseInt(this.dataset.generationTime) || 0;
+            const testId = this.dataset.testId || '';
+            const prompt = this.dataset.prompt || '';
+            previewHistoryImage(imageUrl, modelName, generationTime, testId, prompt);
+        });
+    });
+    
+    // Handle preview button clicks
+    document.querySelectorAll('#historyTableBody .preview-history-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const imageUrl = this.dataset.imageUrl;
+            const modelName = this.dataset.modelName || 'Unknown Model';
+            const generationTime = parseInt(this.dataset.generationTime) || 0;
+            const testId = this.dataset.testId || '';
+            const prompt = this.dataset.prompt || '';
+            previewHistoryImage(imageUrl, modelName, generationTime, testId, prompt);
+        });
+    });
+}
 
 /**
  * Handle style preset radio button change
@@ -1049,31 +1082,39 @@ async function loadHistory() {
         const tbody = document.getElementById('historyTableBody');
         tbody.innerHTML = '';
 
-        if (data.history && data.history.length > 0) {
+                if (data.history && data.history.length > 0) {
             data.history.forEach(test => {
                 const row = document.createElement('tr');
                 
                 // Get first image URL if available
                 let imageCell = '<span class="text-muted">--</span>';
-                if (test.images && test.images.length > 0) {
-                    const imgUrl = test.images[0].imageUrl || test.images[0].s3Url || test.images[0];
-                    if (imgUrl) {
-                        const escapedUrl = imgUrl.replace(/'/g, "\\'");
-                        const escapedModelName = (test.modelName || '').replace(/'/g, "\\'");
-                        const testId = test._id || '';
-                        imageCell = `
-                            <img src="${imgUrl}" 
-                                 alt="Generated" 
-                                 class="history-thumbnail cursor-pointer"
-                                 onclick="previewHistoryImage('${escapedUrl}', '${escapedModelName}', ${test.generationTime || 0}, '${testId}')"
-                                 onerror="this.src='/img/placeholder.png'">
-                        `;
-                    }
+                const imgUrl = test.images && test.images.length > 0 
+                    ? (test.images[0].imageUrl || test.images[0].s3Url || test.images[0])
+                    : null;
+                
+                if (imgUrl) {
+                    const escapedUrl = imgUrl.replace(/'/g, "\\'");
+                    imageCell = `
+                        <img src="${imgUrl}" 
+                             alt="Generated" 
+                             class="history-thumbnail cursor-pointer"
+                             data-test-id="${test._id || ''}"
+                             onerror="this.src='/img/placeholder.png'">
+                    `;
                 }
                 
                 // Escape prompt for HTML and JavaScript
                 const escapedPrompt = (test.prompt || '--').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n');
                 const displayPrompt = (test.prompt || '--').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                
+                // Store test data for preview
+                const testData = JSON.stringify({
+                    imageUrl: imgUrl,
+                    modelName: test.modelName || 'Unknown Model',
+                    generationTime: test.generationTime || 0,
+                    testId: test._id || '',
+                    prompt: test.prompt || ''
+                }).replace(/'/g, '&#39;');
                 
                 row.innerHTML = `
                     <td>${imageCell}</td>
@@ -1097,9 +1138,35 @@ async function loadHistory() {
                                 ? '<span class="badge bg-danger">Failed</span>'
                                 : `<span class="badge bg-warning">${test.status}</span>`}
                     </td>
-                    <td>${new Date(test.testedAt).toLocaleString()}</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-1">
+                            <span class="small">${new Date(test.testedAt).toLocaleString()}</span>
+                            ${imgUrl ? `<button class="btn btn-sm btn-outline-primary preview-history-btn" data-test='${testData}' title="Preview & Use as Draft">
+                                <i class="bi bi-eye"></i>
+                            </button>` : ''}
+                        </div>
+                    </td>
                 `;
                 tbody.appendChild(row);
+                
+                // Add click handler for thumbnail
+                const thumbnail = row.querySelector('.history-thumbnail');
+                if (thumbnail) {
+                    thumbnail.addEventListener('click', () => {
+                        const testDataObj = JSON.parse(testData.replace(/&#39;/g, "'"));
+                        previewHistoryImage(testDataObj.imageUrl, testDataObj.modelName, testDataObj.generationTime, testDataObj.testId, testDataObj.prompt);
+                    });
+                }
+                
+                // Add click handler for preview button
+                const previewBtn = row.querySelector('.preview-history-btn');
+                if (previewBtn) {
+                    previewBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const testDataObj = JSON.parse(previewBtn.dataset.test.replace(/&#39;/g, "'"));
+                        previewHistoryImage(testDataObj.imageUrl, testDataObj.modelName, testDataObj.generationTime, testDataObj.testId, testDataObj.prompt);
+                    });
+                }
             });
         } else {
             tbody.innerHTML = `
@@ -1204,11 +1271,12 @@ function previewHistoryImage(imageUrl, modelName, generationTime, testId = null,
     }
     
     // Store current image info for rating and draft
-    modalElement.dataset.modelId = 'sd-txt2img'; // Default for history
+    modalElement.dataset.modelId = 'history-image';
     modalElement.dataset.modelName = modelName || 'Unknown Model';
     modalElement.dataset.imageUrl = imageUrl;
     modalElement.dataset.testId = testId || '';
     modalElement.dataset.prompt = prompt || '';
+    modalElement.dataset.isFromHistory = 'true';
     
     // Reset rating stars
     resetRatingStars();
@@ -1456,15 +1524,21 @@ function saveAsDraftPost() {
     const modelId = modal.dataset.modelId;
     const modelName = modal.dataset.modelName;
     const testId = modal.dataset.testId;
+    const isFromHistory = modal.dataset.isFromHistory === 'true';
     
     if (!imageUrl) {
         showNotification('No image to save', 'error');
         return;
     }
     
-    // Get the prompt from the current task or input
-    const task = state.activeTasks.get(modelId);
-    const prompt = task?.finalPrompt || task?.originalPrompt || document.getElementById('promptInput')?.value || '';
+    // Get the prompt - from modal dataset for history items, or from task for current generation
+    let prompt = '';
+    if (isFromHistory) {
+        prompt = modal.dataset.prompt || '';
+    } else {
+        const task = state.activeTasks.get(modelId);
+        prompt = task?.finalPrompt || task?.originalPrompt || document.getElementById('promptInput')?.value || '';
+    }
     
     // Store data for the draft
     currentDraftData = {

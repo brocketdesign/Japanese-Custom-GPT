@@ -39,15 +39,19 @@ async function routes(fastify, options) {
 
       const db = fastify.mongo.db;
       const translations = request.translations;
+      
+      // Check if user is admin
+      const isAdmin = await checkUserAdmin(fastify, user._id);
 
-      // Get model statistics
-      const modelStats = await getModelStats(db);
+      // Get model statistics (only for admins)
+      const modelStats = isAdmin ? await getModelStats(db) : [];
       
-      // Get recent tests (no filter on initial page load)
-      const recentTests = await getRecentTests(db, 20, null);
+      // Get recent tests - filter by user if not admin
+      const userId = isAdmin ? null : user._id.toString();
+      const recentTests = await getRecentTests(db, 20, null, userId);
       
-      // Get default character creation models
-      const defaultModels = await getDefaultCharacterModels(db);
+      // Get default character creation models (only for admins)
+      const defaultModels = isAdmin ? await getDefaultCharacterModels(db) : {};
       
       // Get active SD models from database
       const activeSDModels = await db.collection('myModels').find({}).toArray();
@@ -106,7 +110,8 @@ async function routes(fastify, options) {
         defaultModels,
         modelConfigs: MODEL_CONFIGS,
         userPoints,
-        imageCostPerUnit: PRICING_CONFIG.IMAGE_GENERATION.BASE_COST_PER_IMAGE
+        imageCostPerUnit: PRICING_CONFIG.IMAGE_GENERATION.BASE_COST_PER_IMAGE,
+        isAdmin
       });
     } catch (error) {
       console.error('[AdminImageTest] Error loading dashboard:', error);
@@ -420,7 +425,12 @@ async function routes(fastify, options) {
       const db = fastify.mongo.db;
       const limit = parseInt(request.query.limit) || 50;
       const modelId = request.query.modelId || null;
-      const history = await getRecentTests(db, limit, modelId);
+      
+      // Check if user is admin - non-admins can only see their own history
+      const isAdmin = await checkUserAdmin(fastify, user._id);
+      const userId = isAdmin ? null : user._id.toString();
+      
+      const history = await getRecentTests(db, limit, modelId, userId);
 
       return reply.send({ history });
     } catch (error) {

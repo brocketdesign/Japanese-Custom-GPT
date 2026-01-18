@@ -642,23 +642,44 @@ async function getModelStats(db, modelId = null) {
  * @param {Object} db - Database instance
  * @param {number} limit - Number of records to return
  * @param {string} modelId - Optional model ID filter
+ * @param {string} userId - Optional user ID filter (for non-admin users to see only their own images)
  * @returns {Array} - Recent test records
  */
-async function getRecentTests(db, limit = 50, modelId = null) {
+async function getRecentTests(db, limit = 50, modelId = null, userId = null) {
   try {
     const collection = db.collection('imageModelTests');
     const query = {};
+    
+    // Add user filter if provided (for non-admin users)
+    if (userId) {
+      query.userId = userId;
+    }
     
     // Add model filter if provided
     if (modelId) {
       // For SD models, filter by modelId that starts with 'sd-' or equals 'sd-txt2img'
       // and also check modelName for SD model patterns
       if (modelId === 'sd-txt2img') {
-        query.$or = [
-          { modelId: 'sd-txt2img' },
-          { modelId: { $regex: /^sd-/ } },
-          { modelName: { $regex: /^SD Text to Image/ } }
-        ];
+        if (userId) {
+          // Combine userId with SD model filter
+          query.$and = [
+            { userId },
+            {
+              $or: [
+                { modelId: 'sd-txt2img' },
+                { modelId: { $regex: /^sd-/ } },
+                { modelName: { $regex: /^SD Text to Image/ } }
+              ]
+            }
+          ];
+          delete query.userId; // Remove top-level userId since it's in $and
+        } else {
+          query.$or = [
+            { modelId: 'sd-txt2img' },
+            { modelId: { $regex: /^sd-/ } },
+            { modelName: { $regex: /^SD Text to Image/ } }
+          ];
+        }
       } else {
         query.modelId = modelId;
       }

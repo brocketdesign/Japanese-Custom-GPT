@@ -410,11 +410,26 @@ async function getVideoModelStats(db) {
 
 /**
  * Get recent video test history
+ * @param {Object} db - Database instance
+ * @param {number} limit - Number of records to return
+ * @param {string} modelId - Optional model ID filter
+ * @param {string} userId - Optional user ID filter (for non-admin users to see only their own videos)
+ * @returns {Array} - Recent test records
  */
-async function getRecentVideoTests(db, limit = 50, modelId = null) {
+async function getRecentVideoTests(db, limit = 50, modelId = null, userId = null) {
   try {
     const collection = db.collection('videoModelTests');
-    const query = modelId ? { modelId } : {};
+    const query = {};
+    
+    // Add user filter if provided (for non-admin users)
+    if (userId) {
+      query.userId = userId;
+    }
+    
+    // Add model filter if provided
+    if (modelId) {
+      query.modelId = modelId;
+    }
     
     return await collection
       .find(query)

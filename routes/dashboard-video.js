@@ -36,12 +36,16 @@ async function routes(fastify, options) {
 
       const db = fastify.mongo.db;
       const translations = request.translations;
-
-      // Get video model statistics
-      const modelStats = await getVideoModelStats(db);
       
-      // Get recent video tests
-      const recentTests = await getRecentVideoTests(db, 20, null);
+      // Check if user is admin
+      const isAdmin = await checkUserAdmin(fastify, user._id);
+
+      // Get video model statistics (only for admins)
+      const modelStats = isAdmin ? await getVideoModelStats(db) : [];
+      
+      // Get recent video tests - filter by user if not admin
+      const userId = isAdmin ? null : user._id.toString();
+      const recentTests = await getRecentVideoTests(db, 20, null, userId);
 
       // Prepare model list for view
       const models = Object.entries(VIDEO_MODEL_CONFIGS).map(([id, config]) => {
@@ -75,7 +79,8 @@ async function routes(fastify, options) {
         recentTests,
         modelConfigs: VIDEO_MODEL_CONFIGS,
         userPoints,
-        videoCostPerUnit: PRICING_CONFIG.VIDEO_GENERATION.COST
+        videoCostPerUnit: PRICING_CONFIG.VIDEO_GENERATION.COST,
+        isAdmin
       });
     } catch (error) {
       console.error('[VideoDashboard] Error loading dashboard:', error);
@@ -253,7 +258,12 @@ async function routes(fastify, options) {
       const db = fastify.mongo.db;
       const limit = parseInt(request.query.limit) || 50;
       const modelId = request.query.modelId || null;
-      const history = await getRecentVideoTests(db, limit, modelId);
+      
+      // Check if user is admin - non-admins can only see their own history
+      const isAdmin = await checkUserAdmin(fastify, user._id);
+      const userId = isAdmin ? null : user._id.toString();
+      
+      const history = await getRecentVideoTests(db, limit, modelId, userId);
 
       return reply.send({ history });
     } catch (error) {

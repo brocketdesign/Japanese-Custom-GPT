@@ -38,6 +38,7 @@ async function registerRoutes(fastify) {
   fastify.register(require('../routes/favorites-api'));
   fastify.register(require('../routes/cold-onboarding-api'));
   fastify.register(require('../routes/novita-webhook'));
+  fastify.register(require('../routes/social-api'));
 }
 
 module.exports = registerRoutes;

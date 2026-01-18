@@ -326,7 +326,12 @@
                 <ul class="nav nav-tabs flex-nowrap" id="myTab" role="tablist" style="white-space: nowrap; top: 0; z-index: 1060; background: var(--bg-secondary);">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="true">
-                            {{translations.setting.profile}}
+                            <i class="bi bi-person me-1"></i>{{translations.setting.profile}}
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="connections-tab" data-bs-toggle="tab" data-bs-target="#connections" type="button" role="tab" aria-controls="connections" aria-selected="false">
+                            <i class="bi bi-share me-1"></i>{{translations.setting.connections}}
                         </button>
                     </li>
                     <li class="d-none nav-item" role="presentation">
@@ -336,7 +341,7 @@
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="subscription-tab" data-bs-toggle="tab" data-bs-target="#subscription" type="button" role="tab" aria-controls="subscription" aria-selected="false">
-                            {{translations.setting.subscription}}
+                            <i class="bi bi-star me-1"></i>{{translations.setting.subscription}}
                         </button>
                     </li>
                 </ul>
@@ -351,6 +356,90 @@
                 <button type="submit" form="user-info-form" class="btn btn-primary btn-lg px-4">
                     <i class="bi bi-check-circle me-2"></i>
                     {{translations.setting.saveUserInfo}}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SNS Post Modal -->
+<div class="modal fade" id="snsPostModal" tabindex="-1" aria-labelledby="snsPostModalLabel" aria-hidden="true" style="z-index: 1065 !important;">
+    <div class="modal-dialog modal-dialog-centered modal-lg mx-0">
+        <div class="modal-content mx-auto">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title text-white" id="snsPostModalLabel">
+                    <i class="bi bi-share-fill me-2"></i>{{translations.sns.share_to_social}}
+                </h5>
+            </div>
+            <div class="modal-body">
+                <!-- Image Preview -->
+                <div class="sns-post-image-preview mb-3 text-center">
+                    <img id="snsPostImage" src="" alt="Image to share" class="img-fluid rounded" style="max-height: 300px; object-fit: contain;">
+                </div>
+
+                <!-- Platform Selection -->
+                <div class="sns-platform-selection mb-3">
+                    <label class="form-label">
+                        <i class="bi bi-broadcast me-1"></i>{{translations.sns.select_platforms}}
+                    </label>
+                    <div class="d-flex flex-wrap gap-2" id="snsPlatformCheckboxes">
+                        <!-- Platforms will be populated by JS -->
+                        <div class="text-muted small">{{translations.sns.loading_connections}}</div>
+                    </div>
+                </div>
+
+                <!-- Caption Input -->
+                <div class="sns-caption-section mb-3">
+                    <label for="snsPostCaption" class="form-label d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-chat-quote me-1"></i>{{translations.sns.caption}}</span>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="generateCaptionBtn">
+                            <i class="bi bi-magic me-1"></i>{{translations.sns.generate_caption}}
+                        </button>
+                    </label>
+                    <textarea class="form-control" id="snsPostCaption" rows="4" placeholder="{{translations.sns.caption_placeholder}}" maxlength="2200"></textarea>
+                    <div class="form-text d-flex justify-content-between">
+                        <span id="captionGeneratingStatus" class="text-primary" style="display: none;">
+                            <span class="spinner-border spinner-border-sm me-1"></span>{{translations.sns.generating}}
+                        </span>
+                        <span class="caption-char-count"><span id="captionCharCount">0</span>/2200</span>
+                    </div>
+                </div>
+
+                <!-- Caption Style Options -->
+                <div class="sns-caption-options mb-3" id="captionStyleOptions" style="display: none;">
+                    <label class="form-label small">{{translations.sns.caption_style}}</label>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary caption-style-btn active" data-style="engaging">
+                            <i class="bi bi-lightning me-1"></i>{{translations.sns.style_engaging}}
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary caption-style-btn" data-style="casual">
+                            <i class="bi bi-emoji-smile me-1"></i>{{translations.sns.style_casual}}
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary caption-style-btn" data-style="professional">
+                            <i class="bi bi-briefcase me-1"></i>{{translations.sns.style_professional}}
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary caption-style-btn" data-style="funny">
+                            <i class="bi bi-emoji-laughing me-1"></i>{{translations.sns.style_funny}}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- No Connections Warning -->
+                <div class="alert alert-warning" id="noConnectionsWarning" style="display: none;">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    {{translations.sns.no_connections_warning}}
+                    <button type="button" class="btn btn-sm btn-warning ms-2" onclick="openSettingsConnectionsTab()">
+                        {{translations.sns.connect_accounts}}
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    {{translations.cancel}}
+                </button>
+                <button type="button" class="btn btn-primary" id="publishSnsPostBtn" disabled>
+                    <i class="bi bi-send me-1"></i>{{translations.sns.publish}}
                 </button>
             </div>
         </div>

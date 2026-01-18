@@ -235,6 +235,107 @@
             </form>
           </div>
 
+          <!-- Connections Tab -->
+          <div class="tab-pane fade" id="connections" role="tabpanel" aria-labelledby="connections-tab">
+            <div class="settings-form shadow-0">
+              <!-- SNS Connections Section -->
+              <div class="settings-section">
+                <div class="settings-section-header mb-4">
+                  <h5 class="settings-section-title mb-1">
+                    <i class="bi bi-share me-2 text-primary"></i>
+                    {{translations.sns.connected_accounts}}
+                  </h5>
+                  <p class="settings-section-subtitle text-muted mb-0">
+                    {{translations.sns.connections_description}}
+                  </p>
+                </div>
+
+                <!-- Account Limit Info -->
+                <div class="account-limit-info mb-3 p-3 rounded" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(130, 64, 255, 0.2);">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                      <i class="bi bi-info-circle me-2"></i>
+                      <span id="connectionLimitText">{{translations.sns.loading}}</span>
+                    </div>
+                    <span class="badge bg-primary" id="connectionCountBadge">0/1</span>
+                  </div>
+                </div>
+
+                <!-- Connected Accounts List -->
+                <div id="connectedAccountsList" class="connected-accounts-list mb-4">
+                  <div class="text-center p-4">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div class="mt-2 text-muted small">{{translations.sns.loading_connections}}</div>
+                  </div>
+                </div>
+
+                <!-- Connect New Account Section -->
+                <div class="connect-new-section">
+                  <h6 class="mb-3">
+                    <i class="bi bi-plus-circle me-2"></i>{{translations.sns.connect_new_account}}
+                  </h6>
+                  
+                  <!-- Platform Options -->
+                  <div class="platform-options d-flex flex-wrap gap-3">
+                    <!-- Instagram -->
+                    <button type="button" class="btn btn-outline-secondary platform-connect-btn d-flex align-items-center gap-2" 
+                            data-platform="instagram" id="connectInstagramBtn">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                      </svg>
+                      <span>Instagram</span>
+                    </button>
+
+                    <!-- X (Twitter) -->
+                    <button type="button" class="btn btn-outline-secondary platform-connect-btn d-flex align-items-center gap-2" 
+                            data-platform="twitter" id="connectTwitterBtn">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                      </svg>
+                      <span>X (Twitter)</span>
+                    </button>
+                  </div>
+
+                  <!-- Premium Upsell -->
+                  <div class="premium-upsell mt-3 p-3 rounded is-free-user" id="connectionPremiumUpsell" style="display: none; background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1)); border: 1px solid rgba(255, 193, 7, 0.3);">
+                    <div class="d-flex align-items-center gap-2">
+                      <i class="bi bi-crown-fill text-warning"></i>
+                      <div>
+                        <strong>{{translations.sns.premium_accounts}}</strong>
+                        <p class="mb-0 small text-muted">{{translations.sns.premium_description}}</p>
+                      </div>
+                      <button type="button" class="btn btn-warning btn-sm ms-auto" onclick="loadPlanPage()">
+                        {{translations.sns.upgrade}}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Recent Posts Section -->
+              <div class="settings-section">
+                <div class="settings-section-header mb-4">
+                  <h5 class="settings-section-title mb-1">
+                    <i class="bi bi-clock-history me-2 text-primary"></i>
+                    {{translations.sns.recent_posts}}
+                  </h5>
+                  <p class="settings-section-subtitle text-muted mb-0">
+                    {{translations.sns.recent_posts_description}}
+                  </p>
+                </div>
+
+                <div id="recentPostsList" class="recent-posts-list">
+                  <div class="text-center p-4 text-muted">
+                    <i class="bi bi-inbox fs-1 mb-2"></i>
+                    <p class="mb-0">{{translations.sns.no_posts_yet}}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Password Tab -->
           <div class="tab-pane fade" id="password" role="tabpanel" aria-labelledby="password-tab">
             <h6>{{translations.setting.password}}</h6>
@@ -618,6 +719,182 @@
     margin-bottom: 20px;
     padding-bottom: 16px;
   }
+}
+
+/* SNS Connections Styles */
+.connected-accounts-list .connected-account-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  border: 1px solid rgba(130, 64, 255, 0.2);
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+}
+
+.connected-accounts-list .connected-account-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.connected-account-item .account-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.connected-account-item .account-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.connected-account-item .account-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.connected-account-item .account-username {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.connected-account-item .account-platform {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.connected-account-item .disconnect-btn {
+  color: #dc3545;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.connected-account-item .disconnect-btn:hover {
+  opacity: 1;
+}
+
+.platform-connect-btn {
+  padding: 12px 20px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(130, 64, 255, 0.3);
+}
+
+.platform-connect-btn:hover {
+  background: rgba(130, 64, 255, 0.1);
+  border-color: rgba(130, 64, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.platform-connect-btn.connected {
+  background: rgba(40, 167, 69, 0.1);
+  border-color: rgba(40, 167, 69, 0.3);
+  color: #28a745;
+}
+
+.platform-connect-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Recent Posts Styles */
+.recent-posts-list .post-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.recent-posts-list .post-item .post-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.recent-posts-list .post-item .post-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.recent-posts-list .post-item .post-caption {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-posts-list .post-item .post-meta {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 4px;
+}
+
+/* SNS Post Modal Styles */
+#snsPostModal .modal-body {
+  background: var(--bg-secondary);
+}
+
+#snsPostModal .sns-platform-checkbox {
+  display: none;
+}
+
+#snsPostModal .sns-platform-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+#snsPostModal .sns-platform-label:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+#snsPostModal .sns-platform-checkbox:checked + .sns-platform-label {
+  background: rgba(110, 32, 244, 0.2);
+  border-color: #6E20F4;
+  color: #fff;
+}
+
+#snsPostModal .caption-style-btn.active {
+  background: rgba(110, 32, 244, 0.2);
+  border-color: #6E20F4;
+  color: #fff;
+}
+
+#snsPostModal textarea {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(130, 64, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+  resize: vertical;
+}
+
+#snsPostModal textarea:focus {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #6E20F4;
+  box-shadow: 0 0 0 3px rgba(110, 32, 244, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+#snsPostModal textarea::placeholder {
+  color: rgba(255, 255, 255, 0.5);
 }
 </style>
 

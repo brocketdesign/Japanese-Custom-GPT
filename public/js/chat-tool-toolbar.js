@@ -136,6 +136,15 @@ function getImageTools({chatId, userChatId, imageId, isLiked = false, title, pro
                           onclick="openShareModal(this)">
                         <i class="bi bi-box-arrow-up"></i>${window.translations?.image_tools?.share || 'Share'}
                     </span>
+
+                    <span class="badge bg-gradient image-tool-badge share-sns-btn" 
+                          style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;"
+                          data-id="${imageId}"
+                          data-url="${imageUrl}"
+                          data-prompt="${prompt}"
+                          onclick="openSnsShareModal(this)">
+                        <i class="bi bi-broadcast"></i>${window.translations?.image_tools?.share_sns || 'Post to SNS'}
+                    </span>
                     
                     <span class="badge bg-white text-secondary image-tool-badge download-image" 
                           data-src="${imageUrl}"
@@ -248,3 +257,32 @@ function getImageTools({chatId, userChatId, imageId, isLiked = false, title, pro
     } 
 
     window.getImageTools = getImageTools;
+
+    /**
+     * Open SNS Share Modal
+     */
+    window.openSnsShareModal = function(element) {
+        const $el = $(element);
+        const imageId = $el.data('id');
+        const imageUrl = $el.data('url');
+        const prompt = $el.data('prompt') || '';
+        
+        console.log('[Social] Opening SNS share modal for image:', imageId);
+        
+        // Check if user is logged in
+        if (window.user?.isTemporary) {
+            showNotification(window.translations?.sns?.login_required || 'Please log in to share to social media', 'warning');
+            if (typeof loadPlanPage === 'function') {
+                loadPlanPage();
+            }
+            return;
+        }
+        
+        // Check if SocialConnections module is loaded
+        if (window.SocialConnections && typeof window.SocialConnections.openSnsPostModal === 'function') {
+            window.SocialConnections.openSnsPostModal(imageUrl, prompt, imageId);
+        } else {
+            console.error('[Social] SocialConnections module not loaded');
+            showNotification(window.translations?.sns?.module_error || 'Social sharing module not available', 'error');
+        }
+    };

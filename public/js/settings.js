@@ -198,6 +198,14 @@ $(document).ready(function() {
     } else {
       $('#settings-modal-footer').addClass('d-none');
     }
+    
+    // Load connections when switching to connections tab
+    if (target === '#connections') {
+      console.log('[Settings] Switched to connections tab');
+      if (window.SocialConnections && typeof window.SocialConnections.loadConnections === 'function') {
+        window.SocialConnections.loadConnections();
+      }
+    }
   });
 
   // Ensure submit button works

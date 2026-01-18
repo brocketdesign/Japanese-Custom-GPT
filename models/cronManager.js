@@ -10,6 +10,7 @@ const fs = require('fs');
 const { cacheSitemapData } = require('./sitemap-utils'); // <-- import sitemap utils
 const { updateAnalyticsCache } = require('./cronUserAnalytics'); // <-- import analytics cache function
 const { persistQueryTags } = require('./query-tags-utils');
+const { createScheduledTasksProcessor } = require('./scheduled-tasks-processor'); // <-- import scheduled tasks processor
 // Store active cron jobs
 const cronJobs = {};
 
@@ -542,6 +543,15 @@ const initializeCronJobs = async (fastify) => {
         '0 */5 * * *', // Runs every 5 hours
         true, // Enable this job
         analyticsCacheTask
+    );
+    
+    // Add scheduled tasks processor (every minute)
+    const scheduledTasksProcessor = createScheduledTasksProcessor(fastify);
+    configureCronJob(
+        'scheduledTasksProcessor',
+        '* * * * *', // Runs every minute
+        true, // Enable this job
+        scheduledTasksProcessor
     );
     
     console.log('\n╔══════════════════════════════════════════════════════════╗');

@@ -164,6 +164,7 @@ function initializeWebSocket(onConnectionResult = null) {
           }
           case 'imageGenerated': {
             const { userChatId, imageId, imageUrl, title, prompt, nsfw, isUpscaled, isMergeFace } = data.notification;
+            console.log(`[WebSocket] imageGenerated received - imageId: ${imageId}, isMergeFace: ${isMergeFace}, userChatId: ${userChatId}`);
             generateImage({
               userChatId,
               url: imageUrl,
@@ -175,6 +176,24 @@ function initializeWebSocket(onConnectionResult = null) {
               isUpscaled,
               isMergeFace
             });
+            break;
+          }
+          case 'mergeFaceCompleted': {
+            const { imageId, mergeId, mergedImageUrl, userChatId } = data.notification;
+            console.log(`[WebSocket] mergeFaceCompleted received - mergeId: ${mergeId}, imageId: ${imageId}, userChatId: ${userChatId}`);
+            
+            // Dispatch custom event for merge-face.js to handle
+            if (window.dispatchEvent) {
+              window.dispatchEvent(new CustomEvent('mergeFaceCompleted', {
+                detail: { imageId, mergeId, mergedImageUrl, userChatId }
+              }));
+            }
+            
+            // Also try to refresh existing merge results if modal is open
+            if (typeof loadExistingMergeResults === 'function' && imageId) {
+              loadExistingMergeResults(imageId);
+            }
+            
             break;
           }
           case 'updateChatData': {

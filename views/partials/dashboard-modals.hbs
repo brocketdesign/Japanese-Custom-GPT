@@ -809,27 +809,15 @@
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content mx-auto">
             <div class="modal-header daily-rewards-header">
-                <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-between w-100">
                     <button type="button" class="btn-close btn-close-rigth btn-close-dark" data-bs-dismiss="modal" aria-label="Close"></button>
-                    <div class="daily-rewards-icon me-3">
-                        <i class="bi bi-fire text-warning fs-2"></i>
-                    </div>
-                    <div>
-                        <h4 class="modal-title mb-0" id="dailyRewardsModalLabel">
-                            {{#if userPointsTranslations.points.daily_rewards_streak}}
-                                {{userPointsTranslations.points.daily_rewards_streak}}
-                            {{else}}
-                                30-Day Streak Challenge
-                            {{/if}}
-                        </h4>
-                        <small class="text-secondary opacity-75">
-                            {{#if userPointsTranslations.points.streak_subtitle}}
-                                {{userPointsTranslations.points.streak_subtitle}}
-                            {{else}}
-                                Login daily to build your streak and unlock bigger rewards!
-                            {{/if}}
-                        </small>
-                    </div>
+                    <h4 class="modal-title mb-0" id="dailyRewardsModalLabel">
+                        {{#if userPointsTranslations.points.daily_rewards_streak}}
+                            {{userPointsTranslations.points.daily_rewards_streak}}
+                        {{else}}
+                            30-Day Streak Challenge
+                        {{/if}}
+                    </h4>
                 </div>
             </div>
             <div class="modal-body">

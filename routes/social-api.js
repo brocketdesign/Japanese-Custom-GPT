@@ -277,16 +277,40 @@ async function routes(fastify, options) {
         return reply.type('text/html').send(getCallbackHtml('error', platform, null, 'missing_profile'));
       }
 
-      // Late.dev redirects back with connection info in query params
-      // We can also fetch full connection details if needed later
-      // For now, store what we get from the callback
+      // Fetch connected accounts from Late.dev to get the actual account ID
+      let lateAccountId = username; // Fallback to username
+      try {
+        const accountsResponse = await lateApiRequest(`/profiles/${profileIdForConnection}/accounts`);
+        const accounts = accountsResponse.accounts || accountsResponse || [];
+        
+        // Find the account that matches the platform and username
+        const matchingAccount = accounts.find(acc => 
+          acc.platform === platform && 
+          (acc.username === username || acc.handle === username || acc.name === username)
+        );
+        
+        if (matchingAccount) {
+          lateAccountId = matchingAccount._id || matchingAccount.id || matchingAccount.accountId;
+          console.log(`[Social API] Found Late.dev account ID: ${lateAccountId} for ${platform}/@${username}`);
+        } else if (accounts.length > 0) {
+          // If no exact match, try to find any account for this platform
+          const platformAccount = accounts.find(acc => acc.platform === platform);
+          if (platformAccount) {
+            lateAccountId = platformAccount._id || platformAccount.id || platformAccount.accountId;
+            console.log(`[Social API] Using platform account ID: ${lateAccountId} for ${platform}`);
+          }
+        }
+      } catch (fetchError) {
+        console.warn(`[Social API] Could not fetch accounts from Late.dev, using username as fallback:`, fetchError.message);
+      }
+
       const connection = {
         id: `${platform}_${username}_${Date.now()}`,
         platform,
         username: username || 'Unknown',
         profileUrl: null, // Can be fetched later if needed
         connectedAt: new Date(),
-        lateAccountId: username, // Use username as identifier until we get the actual account ID
+        lateAccountId: lateAccountId,
         lateProfileId: profileIdForConnection
       };
 
@@ -508,23 +532,68 @@ async function routes(fastify, options) {
         });
       }
 
-      // Create post via Late.dev (profileId is required)
+      // Resolve Late.dev account IDs for each connection
+      // For connections that don't have a proper account ID, try to fetch it
+      const resolvedPlatforms = [];
+      for (const conn of targetConnections) {
+        let accountId = conn.lateAccountId;
+        
+        // If accountId looks like a username (no special chars, not a typical MongoDB ID), try to resolve it
+        if (accountId && !accountId.match(/^[a-f0-9]{24}$/i) && profileId) {
+          try {
+            const accountsResponse = await lateApiRequest(`/profiles/${profileId}/accounts`);
+            const accounts = accountsResponse.accounts || accountsResponse || [];
+            const matchingAccount = accounts.find(acc => 
+              acc.platform === conn.platform && 
+              (acc.username === conn.username || acc.handle === conn.username || acc.name === conn.username)
+            ) || accounts.find(acc => acc.platform === conn.platform);
+            
+            if (matchingAccount) {
+              accountId = matchingAccount._id || matchingAccount.id || matchingAccount.accountId;
+              console.log(`[Social API] Resolved account ID for ${conn.platform}: ${accountId}`);
+              
+              // Update stored connection with proper account ID
+              await db.collection('users').updateOne(
+                { _id: new ObjectId(user._id), 'snsConnections.platform': conn.platform },
+                { $set: { 'snsConnections.$.lateAccountId': accountId } }
+              );
+            }
+          } catch (resolveError) {
+            console.warn(`[Social API] Could not resolve account ID for ${conn.platform}:`, resolveError.message);
+          }
+        }
+        
+        resolvedPlatforms.push({
+          accountId: accountId,
+          platformSpecificData: {}
+        });
+      }
+
+      // Create post via Late.dev
+      // API expects: content, mediaItems[{url, type}], platforms[{accountId, platformSpecificData}]
       const postData = {
-        profileId: profileId,
-        text,
-        platforms: targetConnections.map(c => c.platform),
-        mediaUrls: mediaUrls || []
+        content: text,
+        mediaItems: (mediaUrls || []).map(url => ({
+          url,
+          type: 'image' // Default to image, could detect from URL if needed
+        })),
+        platforms: resolvedPlatforms
       };
 
       if (scheduledFor) {
-        postData.scheduledFor = scheduledFor;
+        postData.scheduledAt = new Date(scheduledFor).toISOString();
       }
 
       console.log(`[Social API] Creating post for user ${user._id}:`, {
+        content: postData.content?.substring(0, 50) + (postData.content?.length > 50 ? '...' : ''),
+        contentLength: postData.content?.length || 0,
         platforms: postData.platforms,
-        hasMedia: mediaUrls?.length > 0,
+        mediaItems: postData.mediaItems?.length || 0,
         scheduled: !!scheduledFor
       });
+      
+      // Debug: log full payload structure
+      console.log(`[Social API] Post payload:`, JSON.stringify(postData, null, 2));
 
       const response = await lateApiRequest('/posts', 'POST', postData);
 

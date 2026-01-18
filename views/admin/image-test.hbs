@@ -16,6 +16,7 @@
                         </h1>
                         <p class="text-muted mb-0">Generate images with AI models and compare results</p>
                     </div>
+                    {{#if isAdmin}}
                     <div class="d-flex gap-2 w-100 w-md-auto">
                         <button class="btn btn-outline-info flex-fill flex-md-grow-0" onclick="refreshStats()">
                             <i class="bi bi-arrow-clockwise me-1"></i>Refresh Stats
@@ -24,6 +25,7 @@
                             <i class="bi bi-trash me-1"></i>Reset Stats
                         </button>
                     </div>
+                    {{/if}}
                 </div>
             </div>
         </div>
@@ -374,7 +376,7 @@
             </div>
 
             <!-- Center Panel: Results -->
-            <div class="col-lg-5 mb-4">
+            <div class="{{#if isAdmin}}col-lg-5{{else}}col-lg-8{{/if}} mb-4">
                 <div class="card bg-dark border-secondary h-100">
                     <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="bi bi-image me-2"></i>Generation Results</h5>
@@ -389,7 +391,8 @@
                 </div>
             </div>
 
-            <!-- Right Panel: Statistics -->
+            {{#if isAdmin}}
+            <!-- Right Panel: Statistics (Admin Only) -->
             <div class="col-lg-3 mb-4">
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header bg-warning text-dark">
@@ -449,7 +452,7 @@
                     </div>
                 </div>
 
-                <!-- Default Model Settings -->
+                <!-- Default Model Settings (Admin Only) -->
                 <div class="card bg-dark border-secondary">
                     <div class="card-header bg-info text-white">
                         <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Default Character Models</h5>
@@ -482,6 +485,7 @@
                     </div>
                 </div>
             </div>
+            {{/if}}
         </div>
 
         <!-- Test History -->
@@ -490,7 +494,7 @@
                 <div class="card bg-dark border-secondary">
                     <div class="card-header bg-secondary text-white">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Test History</h5>
+                            <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>{{#if isAdmin}}Recent Test History{{else}}Your Generation History{{/if}}</h5>
                             <button class="btn btn-sm btn-outline-light" onclick="loadHistory()">
                                 <i class="bi bi-arrow-clockwise me-1"></i>Refresh
                             </button>
@@ -532,7 +536,11 @@
                                         <img src="{{this.images.[0].imageUrl}}" 
                                              alt="Generated" 
                                              class="history-thumbnail cursor-pointer"
-                                             onclick="previewHistoryImage('{{this.images.[0].imageUrl}}', '{{this.modelName}}', {{this.generationTime}})"
+                                             data-image-url="{{this.images.[0].imageUrl}}"
+                                             data-model-name="{{this.modelName}}"
+                                             data-generation-time="{{this.generationTime}}"
+                                             data-test-id="{{this._id}}"
+                                             data-prompt="{{this.prompt}}"
                                              onerror="this.src='/img/placeholder.png'">
                                         {{else}}
                                         <span class="text-muted">--</span>
@@ -560,7 +568,22 @@
                                         <span class="badge bg-warning">{{this.status}}</span>
                                         {{/if}}
                                     </td>
-                                    <td>{{formatDate this.testedAt}}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-1">
+                                            <span class="small">{{formatDate this.testedAt}}</span>
+                                            {{#if this.images.length}}
+                                            <button class="btn btn-sm btn-outline-primary preview-history-btn" 
+                                                    data-image-url="{{this.images.[0].imageUrl}}"
+                                                    data-model-name="{{this.modelName}}"
+                                                    data-generation-time="{{this.generationTime}}"
+                                                    data-test-id="{{this._id}}"
+                                                    data-prompt="{{this.prompt}}"
+                                                    title="Preview & Use as Draft">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            {{/if}}
+                                        </div>
+                                    </td>
                                 </tr>
                                 {{/each}}
                             </tbody>

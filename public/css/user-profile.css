@@ -134,6 +134,11 @@
     background: rgba(0, 0, 0, 0.8);
 }
 
+/* Show overlay on hover of avatar container */
+.profile-avatar-container:hover .profile-avatar-overlay.d-none {
+    display: flex !important;
+}
+
 .profile-info {
     position: absolute;
     bottom: 0;

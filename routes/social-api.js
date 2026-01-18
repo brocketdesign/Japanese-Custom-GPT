@@ -244,26 +244,27 @@ async function routes(fastify, options) {
    * Late.dev redirects with: connected=platform&profileId=PROFILE_ID&username=USERNAME
    */
   fastify.get('/api/social/callback/:platform', async (request, reply) => {
+    const { platform } = request.params;
+    
     try {
       const user = request.user;
       if (!user || user.isTemporary) {
-        return reply.redirect('/settings?sns_error=auth_required');
+        return reply.type('text/html').send(getCallbackHtml('error', platform, null, 'auth_required'));
       }
 
-      const { platform } = request.params;
       const { connected, username, profileId, error: oauthError, tempToken, userProfile, connect_token } = request.query;
 
       // Check for OAuth errors
       if (oauthError || !connected) {
         const errorMsg = oauthError || 'connection_failed';
         console.error(`[Social API] OAuth error for ${platform}:`, errorMsg);
-        return reply.redirect(`/settings?sns_error=${encodeURIComponent(errorMsg)}&platform=${platform}`);
+        return reply.type('text/html').send(getCallbackHtml('error', platform, null, errorMsg));
       }
 
       // Verify the connected platform matches
       if (connected !== platform) {
         console.error(`[Social API] Platform mismatch: expected ${platform}, got ${connected}`);
-        return reply.redirect(`/settings?sns_error=platform_mismatch&platform=${platform}`);
+        return reply.type('text/html').send(getCallbackHtml('error', platform, null, 'platform_mismatch'));
       }
 
       // For headless mode, we might get tempToken and need to finalize connection
@@ -273,7 +274,7 @@ async function routes(fastify, options) {
       
       if (!profileIdForConnection) {
         console.error(`[Social API] No profileId in callback for user ${user._id}`);
-        return reply.redirect(`/settings?sns_error=missing_profile&platform=${platform}`);
+        return reply.type('text/html').send(getCallbackHtml('error', platform, null, 'missing_profile'));
       }
 
       // Late.dev redirects back with connection info in query params
@@ -306,12 +307,122 @@ async function routes(fastify, options) {
 
       console.log(`[Social API] Successfully connected ${platform} (@${connection.username}) for user ${user._id}`);
 
-      return reply.redirect(`/settings?sns_success=connected&platform=${platform}`);
+      // Return HTML that closes the popup and notifies the parent window
+      return reply.type('text/html').send(getCallbackHtml('success', platform, connection.username));
     } catch (error) {
       console.error(`[Social API] Callback error:`, error);
-      return reply.redirect(`/settings?sns_error=connection_failed&platform=${request.params.platform}`);
+      return reply.type('text/html').send(getCallbackHtml('error', request.params.platform, null, 'connection_failed'));
     }
   });
+
+  /**
+   * Generate HTML for OAuth callback popup
+   */
+  function getCallbackHtml(status, platform, username, errorCode) {
+    const isSuccess = status === 'success';
+    const title = isSuccess ? 'Connected!' : 'Connection Failed';
+    const message = isSuccess 
+      ? `Successfully connected @${username} on ${platform}` 
+      : `Failed to connect ${platform}: ${errorCode}`;
+    const icon = isSuccess ? '✓' : '✕';
+    const color = isSuccess ? '#28a745' : '#dc3545';
+
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>${title}</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: white;
+    }
+    .container {
+      text-align: center;
+      padding: 40px;
+    }
+    .icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: ${color};
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 40px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 24px;
+    }
+    p {
+      margin: 0 0 20px;
+      opacity: 0.8;
+    }
+    .closing {
+      font-size: 14px;
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">${icon}</div>
+    <h1>${title}</h1>
+    <p>${message}</p>
+    <p class="closing">This window will close automatically...</p>
+  </div>
+  <script>
+    // Notify parent window and close popup
+    (function() {
+      const result = {
+        status: '${status}',
+        platform: '${platform}',
+        username: '${username || ''}',
+        error: '${errorCode || ''}'
+      };
+      
+      // Try to notify parent window
+      if (window.opener) {
+        try {
+          // Call parent's callback function if exists
+          if (window.opener.SocialConnections) {
+            window.opener.SocialConnections.loadConnections();
+          }
+          
+          // Show notification in parent
+          if (window.opener.showNotification) {
+            const msg = result.status === 'success' 
+              ? 'Successfully connected to ${platform}!' 
+              : 'Failed to connect: ${errorCode}';
+            window.opener.showNotification(msg, result.status === 'success' ? 'success' : 'error');
+          }
+        } catch (e) {
+          console.error('Could not communicate with parent:', e);
+        }
+      }
+      
+      // Close popup after short delay
+      setTimeout(function() {
+        window.close();
+        // If popup doesn't close (e.g., opened directly), redirect to chat
+        setTimeout(function() {
+          window.location.href = '/chat/';
+        }, 500);
+      }, 1500);
+    })();
+  </script>
+</body>
+</html>
+    `;
+  }
 
   /**
    * DELETE /api/social/disconnect/:platform/:accountId

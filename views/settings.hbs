@@ -374,6 +374,121 @@
           <div class="tab-pane fade" id="subscription" role="tabpanel" aria-labelledby="subscription-tab">
             <div class="settings-form shadow-0">
               <p id="user-plan" style="display: none;"></p>
+              
+              <!-- No Subscription - Premium Features Section -->
+              <div id="no-subscription-section" class="subscription-promo-section">
+                <div class="subscription-promo-header text-center">
+                  <div class="promo-icon-wrapper">
+                    <i class="bi bi-stars"></i>
+                  </div>
+                  <h4 class="promo-title">{{translations.subscriptionFeatures.title}}</h4>
+                  <p class="promo-subtitle">{{translations.subscriptionFeatures.subtitle}}</p>
+                </div>
+                
+                <div class="premium-features-list">
+                  <div class="premium-feature-item">
+                    <div class="feature-icon">
+                      <i class="bi bi-infinity"></i>
+                    </div>
+                    <div class="feature-content">
+                      <h6 class="feature-title">{{translations.subscriptionFeatures.feature1_title}}</h6>
+                      <p class="feature-desc">{{translations.subscriptionFeatures.feature1_desc}}</p>
+                    </div>
+                  </div>
+                  
+                  <div class="premium-feature-item">
+                    <div class="feature-icon">
+                      <i class="bi bi-image-fill"></i>
+                    </div>
+                    <div class="feature-content">
+                      <h6 class="feature-title">{{translations.subscriptionFeatures.feature2_title}}</h6>
+                      <p class="feature-desc">{{translations.subscriptionFeatures.feature2_desc}}</p>
+                    </div>
+                  </div>
+                  
+                  <div class="premium-feature-item">
+                    <div class="feature-icon">
+                      <i class="bi bi-camera-video-fill"></i>
+                    </div>
+                    <div class="feature-content">
+                      <h6 class="feature-title">{{translations.subscriptionFeatures.feature3_title}}</h6>
+                      <p class="feature-desc">{{translations.subscriptionFeatures.feature3_desc}}</p>
+                    </div>
+                  </div>
+                  
+                  <div class="premium-feature-item">
+                    <div class="feature-icon">
+                      <i class="bi bi-fire"></i>
+                    </div>
+                    <div class="feature-content">
+                      <h6 class="feature-title">{{translations.subscriptionFeatures.feature4_title}}</h6>
+                      <p class="feature-desc">{{translations.subscriptionFeatures.feature4_desc}}</p>
+                    </div>
+                  </div>
+                  
+                  <div class="premium-feature-item">
+                    <div class="feature-icon">
+                      <i class="bi bi-person-hearts"></i>
+                    </div>
+                    <div class="feature-content">
+                      <h6 class="feature-title">{{translations.subscriptionFeatures.feature5_title}}</h6>
+                      <p class="feature-desc">{{translations.subscriptionFeatures.feature5_desc}}</p>
+                    </div>
+                  </div>
+                  
+                  <div class="premium-feature-item">
+                    <div class="feature-icon">
+                      <i class="bi bi-lightning-charge-fill"></i>
+                    </div>
+                    <div class="feature-content">
+                      <h6 class="feature-title">{{translations.subscriptionFeatures.feature6_title}}</h6>
+                      <p class="feature-desc">{{translations.subscriptionFeatures.feature6_desc}}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="subscription-cta-section">
+                  <button class="btn subscription-cta-btn" onclick="loadPlanPage()">
+                    <i class="bi bi-crown-fill me-2"></i>
+                    {{translations.subscriptionFeatures.cta_button}}
+                  </button>
+                  <p class="cta-note">{{translations.subscriptionFeatures.cta_note}}</p>
+                </div>
+              </div>
+              <!-- End No Subscription Section -->
+              
+              <!-- Active Subscription Section -->
+              <div id="active-subscription-section" style="display: none;">
+                <div class="settings-section">
+                  <div class="settings-section-header mb-4">
+                    <h5 class="settings-section-title mb-1">
+                      <i class="bi bi-crown-fill me-2 text-warning"></i>
+                      {{translations.subscriptionFeatures.active_title}}
+                    </h5>
+                    <p class="settings-section-subtitle text-muted mb-0">
+                      {{translations.subscriptionFeatures.active_subtitle}}
+                    </p>
+                  </div>
+                  
+                  <div class="active-plan-card">
+                    <div class="plan-badge">
+                      <i class="bi bi-patch-check-fill"></i>
+                      <span id="active-plan-name">Premium</span>
+                    </div>
+                    <div class="plan-details">
+                      <div class="plan-detail-item">
+                        <span class="detail-label">{{translations.subscriptionFeatures.started}}</span>
+                        <span class="detail-value" id="subscription-start-date">-</span>
+                      </div>
+                      <div class="plan-detail-item">
+                        <span class="detail-label">{{translations.subscriptionFeatures.renews}}</span>
+                        <span class="detail-value" id="subscription-renewal-date">-</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
               <button id="cancel-plan" class="btn btn-outline-danger btn-sm rounded-pill" style="display: none;position: absolute; bottom: 20px;font-size: 10px;opacity: 0.5;" data-user-id="{{user._id}}">{{translations.setting.cancelSubscription}}</button>
             
               <!-- Day Pass Countdown Section -->
@@ -954,6 +1069,233 @@
 
 #snsPostModal textarea::placeholder {
   color: rgba(255, 255, 255, 0.5);
+}
+
+/* Subscription Promo Section Styles */
+.subscription-promo-section {
+  padding: 0;
+}
+
+.subscription-promo-header {
+  margin-bottom: 24px;
+}
+
+.promo-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8B5CF6 0%, #6E20F4 50%, #A855F7 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  box-shadow: 0 8px 24px rgba(110, 32, 244, 0.35);
+}
+
+.promo-icon-wrapper i {
+  font-size: 28px;
+  color: white;
+}
+
+.promo-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 8px;
+  letter-spacing: -0.3px;
+}
+
+.promo-subtitle {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  max-width: 320px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+.premium-features-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.premium-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  border: 1px solid rgba(130, 64, 255, 0.15);
+  transition: all 0.2s ease;
+}
+
+.premium-feature-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(130, 64, 255, 0.3);
+  transform: translateX(4px);
+}
+
+.feature-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(110, 32, 244, 0.2) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.feature-icon i {
+  font-size: 18px;
+  color: #A78BFA;
+}
+
+.feature-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.feature-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0 0 4px 0;
+}
+
+.feature-desc {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.subscription-cta-section {
+  text-align: center;
+  padding-top: 8px;
+}
+
+.subscription-cta-btn {
+  width: 100%;
+  padding: 14px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #8B5CF6 0%, #6E20F4 50%, #7C3AED 100%);
+  border: none;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(110, 32, 244, 0.35);
+}
+
+.subscription-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(110, 32, 244, 0.45);
+  background: linear-gradient(135deg, #9061F9 0%, #7C3AED 50%, #8B5CF6 100%);
+  color: white;
+}
+
+.subscription-cta-btn:active {
+  transform: translateY(0);
+}
+
+.subscription-cta-btn i {
+  font-size: 18px;
+}
+
+.cta-note {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 12px 0 0 0;
+}
+
+/* Active Subscription Card Styles */
+.active-plan-card {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(110, 32, 244, 0.1) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.plan-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #8B5CF6, #6E20F4);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.plan-badge i {
+  font-size: 16px;
+}
+
+.plan-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.plan-detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.plan-detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.detail-value {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+@media (max-width: 768px) {
+  .promo-icon-wrapper {
+    width: 56px;
+    height: 56px;
+  }
+  
+  .promo-icon-wrapper i {
+    font-size: 24px;
+  }
+  
+  .promo-title {
+    font-size: 18px;
+  }
+  
+  .premium-feature-item {
+    padding: 12px 14px;
+  }
+  
+  .feature-icon {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .feature-icon i {
+    font-size: 16px;
+  }
 }
 </style>
 

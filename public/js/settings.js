@@ -242,9 +242,11 @@ $(document).ready(function() {
       cancelSubscriptionModal.hide();
       showNotification(response.message || translations.subscription_cancelled_successfully || 'Subscription cancelled successfully.', 'success');
       
-      let message = `${translations.no_subscription}<br> <button class="btn custom-gradient-bg" onclick="loadPlanPage()">${translations.select_plan_here}</button>`;
+      // Show the premium features promo section after cancellation
+      $('#no-subscription-section').show();
+      $('#active-subscription-section').hide();
       $('#cancel-plan').hide();
-      $('#user-plan').html(message).show();
+      $('#user-plan').hide();
       updatePlanStatus(user); // Assuming user object is globally available and updated
       if (response.feedbackThanks) {
         showNotification(response.feedbackThanks, 'info');
@@ -272,11 +274,16 @@ $(document).ready(function() {
     }
 
     if(data.plan && data.plan.subscriptionStatus === 'active'){
+      // Hide the no-subscription promo section for active subscribers
+      $('#no-subscription-section').hide();
+      $('#active-subscription-section').show();
+      
       if (data.plan.subscriptionType === 'day-pass') {
         $('#user-plan').hide();
         $('#cancel-plan').hide();
         $('#day-pass-countdown-section').show();
         $('#day-pass-expired-message').hide();
+        $('#active-subscription-section').hide(); // Hide active section for day pass (show countdown instead)
 
         const endDate = new Date(data.plan.subscriptionEndDate).getTime();
 
@@ -292,6 +299,7 @@ $(document).ready(function() {
             $('#seconds').text('00');
             $('#day-pass-expired-message').show();
             $('#countdown-timer').addClass('text-muted').removeClass('text-primary'); // Optional: style expired timer
+            $('#no-subscription-section').show(); // Show promo when day pass expires
             console.log('[Settings] Day pass expired for user:', user._id);
             // Optionally, re-fetch plan status or guide user
             // updatePlanStatus(user); // If you have a function to refresh general plan status
@@ -313,11 +321,18 @@ $(document).ready(function() {
         const subscriptionEndDate = new Date(data.plan.subscriptionEndDate);
         const subscriptionStartDate = new Date(data.plan.subscriptionStartDate);
         
+        // Update active subscription section with dates
+        $('#subscription-start-date').text(moment(subscriptionStartDate).locale(lang).format('LL'));
+        $('#subscription-renewal-date').text(moment(subscriptionEndDate).locale(lang).format('LL'));
+        
         // It's important that '/plan/list/:id' route in plan.js returns the correct plan details by its ID (billingCycle)
         // The original code used data.plan.billingCycle as the ID for /plan/list/
         // Assuming billingCycle (e.g., '12-months') is the ID of the plan details
         $.get('/plan/list/' + billingCycle, function(planData) {
           if (planData && planData.plan) {
+            // Update the plan name in the active subscription section
+            $('#active-plan-name').text(planData.plan.name);
+            
             message = `
               <div class="card mx-auto my-3 shadow-sm" style="max-width: 400px;">
               <div class="card-body text-center">
@@ -335,7 +350,7 @@ $(document).ready(function() {
               </div>
               </div>
             `;
-            $('#user-plan').html(message).show();
+            $('#user-plan').html(message).hide(); // Hide the old message, using new section instead
             $('#cancel-plan').show();
           } else {
             console.error('[Settings] Could not fetch plan details for billing cycle:', billingCycle);
@@ -350,20 +365,25 @@ $(document).ready(function() {
       } else {
         // Handles cases where plan exists but is not 'active' or unknown type
         console.log('[Settings] User has a plan record, but it is not an active day-pass or subscription. Plan:', data.plan);
-        $('#user-plan').html(message).show(); // Show no subscription message
+        $('#no-subscription-section').show();
+        $('#active-subscription-section').hide();
+        $('#user-plan').hide();
         $('#cancel-plan').hide();
         $('#day-pass-countdown-section').hide();
       }
     } else { // No plan record found or plan is not active (e.g. expired, cancelled)
       console.log('[Settings] No active plan found for user:', user._id);
-      $('#user-plan').html(message).show();
+      $('#no-subscription-section').show();
+      $('#active-subscription-section').hide();
+      $('#user-plan').hide();
       $('#cancel-plan').hide();
       $('#day-pass-countdown-section').hide();
     }
   }).fail(function(xhr, status, error) {
     console.error('[Settings] Error fetching user plan data:', error, xhr.responseText);
-    let errorMessage = `${translations.no_subscription}<br> <button class="btn custom-gradient-bg" onclick="loadPlanPage()">${translations.select_plan_here}</button>`;
-    $('#user-plan').html(errorMessage).show();
+    $('#no-subscription-section').show();
+    $('#active-subscription-section').hide();
+    $('#user-plan').hide();
     $('#cancel-plan').hide();
     $('#day-pass-countdown-section').hide();
   });

@@ -144,6 +144,11 @@
                     <span id="menuNotificationBadge" class="menu-notification-badge d-none">0</span>
                 </a>
                 
+                <!-- Connections Menu Item -->
+                <a class="list-group-item list-group-item-action border-0 menu-item" href="#" id="connectionsMenuItem">
+                    <i class="bi bi-share me-3"></i>{{translations.avatar.connections}}
+                </a>
+                
                 <div class="d-none">
                     <a class="list-group-item list-group-item-action border-0 menu-item" href="/chat/list/{{user._id}}">
                         <i class="bi bi-people me-3"></i>{{translations.avatar.characters}}
@@ -277,6 +282,120 @@
                 <div id="noNotifications" class="notifications-empty d-none">
                     <i class="bi bi-bell-slash"></i>
                     <p>{{translations.notifications.empty}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Connections Modal -->
+<div class="modal fade" id="userConnectionsModal" tabindex="-1" aria-labelledby="userConnectionsModalLabel" aria-hidden="true" data-bs-backdrop="false" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content connections-modal-content">
+            <div class="connections-modal-header">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-share-fill"></i>
+                    <span>{{translations.avatar.connections}}</span>
+                </div>
+                <button type="button" class="connections-close-btn" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="connections-modal-body">
+                <!-- SNS Connections Section -->
+                <div class="connections-section">
+                    <div class="connections-section-header mb-3">
+                        <h6 class="connections-section-title mb-1">
+                            <i class="bi bi-link-45deg me-2"></i>
+                            {{translations.sns.connected_accounts}}
+                        </h6>
+                        <p class="connections-section-subtitle text-muted mb-0 small">
+                            {{translations.sns.connections_description}}
+                        </p>
+                    </div>
+
+                    <!-- Account Limit Info -->
+                    <div class="account-limit-info mb-3 p-2 rounded" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(130, 64, 255, 0.2);">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="small">
+                                <i class="bi bi-info-circle me-1"></i>
+                                <span id="modalConnectionLimitText">{{translations.sns.loading}}</span>
+                            </div>
+                            <span class="badge bg-primary" id="modalConnectionCountBadge">0/1</span>
+                        </div>
+                    </div>
+
+                    <!-- Connected Accounts List -->
+                    <div id="modalConnectedAccountsList" class="connected-accounts-list mb-3">
+                        <div class="text-center p-3">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div class="mt-2 text-muted small">{{translations.sns.loading_connections}}</div>
+                        </div>
+                    </div>
+
+                    <!-- Connect New Account Section -->
+                    <div class="connect-new-section">
+                        <h6 class="mb-2 small">
+                            <i class="bi bi-plus-circle me-2"></i>{{translations.sns.connect_new_account}}
+                        </h6>
+                        
+                        <!-- Platform Options -->
+                        <div class="platform-options d-flex flex-wrap gap-2">
+                            <!-- Instagram -->
+                            <button type="button" class="btn btn-outline-secondary btn-sm platform-connect-btn-modal d-flex align-items-center gap-2" 
+                                    data-platform="instagram" id="modalConnectInstagramBtn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                                </svg>
+                                <span>Instagram</span>
+                            </button>
+
+                            <!-- X (Twitter) -->
+                            <button type="button" class="btn btn-outline-secondary btn-sm platform-connect-btn-modal d-flex align-items-center gap-2" 
+                                    data-platform="twitter" id="modalConnectTwitterBtn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                </svg>
+                                <span>X (Twitter)</span>
+                            </button>
+                        </div>
+
+                        <!-- Premium Upsell -->
+                        <div class="premium-upsell mt-2 p-2 rounded is-free-user" id="modalConnectionPremiumUpsell" style="display: none; background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1)); border: 1px solid rgba(255, 193, 7, 0.3);">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-crown-fill text-warning"></i>
+                                <div class="flex-grow-1">
+                                    <strong class="small">{{translations.sns.premium_accounts}}</strong>
+                                    <p class="mb-0 small text-muted">{{translations.sns.premium_description}}</p>
+                                </div>
+                                <button type="button" class="btn btn-warning btn-sm" onclick="loadPlanPage()">
+                                    {{translations.sns.upgrade}}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Posts Section -->
+                <div class="connections-section mt-3">
+                    <div class="connections-section-header mb-3">
+                        <h6 class="connections-section-title mb-1">
+                            <i class="bi bi-clock-history me-2"></i>
+                            {{translations.sns.recent_posts}}
+                        </h6>
+                        <p class="connections-section-subtitle text-muted mb-0 small">
+                            {{translations.sns.recent_posts_description}}
+                        </p>
+                    </div>
+
+                    <div id="modalRecentPostsList" class="recent-posts-list" style="max-height: 200px; overflow-y: auto;">
+                        <div class="text-center p-3 text-muted">
+                            <i class="bi bi-inbox fs-4 mb-2"></i>
+                            <p class="mb-0 small">{{translations.sns.no_posts_yet}}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -420,6 +539,37 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
+        // Handle connections menu item click - close offcanvas first, then open modal
+        const connectionsMenuItem = document.getElementById('connectionsMenuItem');
+        const connectionsModal = document.getElementById('userConnectionsModal');
+        
+        if (connectionsMenuItem && connectionsModal) {
+            connectionsMenuItem.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Close offcanvas if open, then open modal
+                if (offcanvasElement.classList.contains('show')) {
+                    bsOffcanvas.hide();
+                    
+                    // Wait for offcanvas to fully close, then open modal
+                    offcanvasElement.addEventListener('hidden.bs.offcanvas', function openConnectionsModal() {
+                        const modal = new bootstrap.Modal(connectionsModal, {
+                            backdrop: false,
+                            keyboard: true
+                        });
+                        modal.show();
+                    }, { once: true });
+                } else {
+                    // Offcanvas already closed, open modal directly
+                    const modal = new bootstrap.Modal(connectionsModal, {
+                        backdrop: false,
+                        keyboard: true
+                    });
+                    modal.show();
+                }
+            });
+        }
+        
         // Close offcanvas when clicking outside
         document.addEventListener('click', function(e) {
             if (offcanvasElement.classList.contains('show') && 
@@ -432,6 +582,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Notification System
     initNotificationSystem();
+    
+    // Connections System
+    initConnectionsSystem();
 });
 
 // Initialize notification system
@@ -605,5 +758,415 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// =====================================================
+// Connections System
+// =====================================================
+
+// Connections state management
+const connectionsState = {
+    connections: [],
+    limits: { current: 0, max: 1, isPremium: false },
+    isLoading: false
+};
+
+// Initialize connections system
+function initConnectionsSystem() {
+    // Load connections when modal opens
+    const connectionsModal = document.getElementById('userConnectionsModal');
+    if (connectionsModal) {
+        connectionsModal.addEventListener('show.bs.modal', function() {
+            // Ensure offcanvas is closed
+            const offcanvasEl = document.getElementById('userMenuOffcanvas');
+            if (offcanvasEl?.classList.contains('show')) {
+                const bsOffcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl);
+                if (bsOffcanvas) {
+                    bsOffcanvas.hide();
+                }
+            }
+            
+            loadModalConnections();
+            loadModalRecentPosts();
+        });
+    }
+    
+    // Bind platform connect buttons in modal
+    bindModalConnectButtons();
+}
+
+// Load connections for modal
+async function loadModalConnections() {
+    if (connectionsState.isLoading) return;
+    
+    connectionsState.isLoading = true;
+    console.log('[Connections Modal] Loading connections...');
+    
+    try {
+        const response = await fetch('/api/social/status', {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.success) {
+            connectionsState.connections = data.connections || [];
+            connectionsState.limits = data.limits || { current: 0, max: 1, isPremium: false };
+            
+            console.log('[Connections Modal] Loaded connections:', connectionsState.connections.length);
+            
+            renderModalConnections();
+            updateModalLimitInfo();
+            updateModalConnectButtons();
+        } else {
+            throw new Error(data.error || 'Failed to load connections');
+        }
+    } catch (error) {
+        console.error('[Connections Modal] Error loading connections:', error);
+        showModalConnectionsError(error.message);
+    } finally {
+        connectionsState.isLoading = false;
+    }
+}
+
+// Render connected accounts list in modal
+function renderModalConnections() {
+    const container = document.getElementById('modalConnectedAccountsList');
+    if (!container) return;
+    
+    if (connectionsState.connections.length === 0) {
+        container.innerHTML = `
+            <div class="text-center p-3">
+                <i class="bi bi-link-45deg fs-4 mb-2 text-muted"></i>
+                <p class="mb-0 text-muted small">${window.translations?.sns?.no_connections || 'No connected accounts yet'}</p>
+                <p class="small text-muted">${window.translations?.sns?.connect_hint || 'Connect your social media accounts below'}</p>
+            </div>
+        `;
+        return;
+    }
+
+    const html = connectionsState.connections.map(conn => {
+        const platformIcon = getConnectionPlatformIcon(conn.platform);
+        const platformName = getConnectionPlatformName(conn.platform);
+        const avatar = conn.profileUrl || '/img/avatar.png';
+        
+        return `
+            <div class="connected-account-item" data-connection-id="${conn.id}" data-platform="${conn.platform}">
+                <div class="account-info">
+                    <img src="${avatar}" alt="${conn.username}" class="account-avatar" onerror="this.src='/img/avatar.png'">
+                    <div class="account-details">
+                        <span class="account-username">@${conn.username}</span>
+                        <span class="account-platform">
+                            ${platformIcon}
+                            ${platformName}
+                        </span>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-link disconnect-btn" onclick="disconnectModalAccount('${conn.platform}', '${conn.id}')" title="${window.translations?.sns?.disconnect || 'Disconnect'}">
+                    <i class="bi bi-x-circle"></i>
+                </button>
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = html;
+}
+
+// Update account limit info in modal
+function updateModalLimitInfo() {
+    const { current, max, isPremium } = connectionsState.limits;
+    
+    const countBadge = document.getElementById('modalConnectionCountBadge');
+    if (countBadge) {
+        countBadge.textContent = `${current}/${max}`;
+    }
+    
+    const limitText = isPremium 
+        ? (window.translations?.sns?.premium_limit || `Premium: ${max} accounts`)
+        : (window.translations?.sns?.free_limit || `Free: ${max} account`);
+    
+    const limitTextEl = document.getElementById('modalConnectionLimitText');
+    if (limitTextEl) {
+        limitTextEl.textContent = limitText;
+    }
+    
+    // Show/hide premium upsell
+    const upsellEl = document.getElementById('modalConnectionPremiumUpsell');
+    if (upsellEl) {
+        if (!isPremium && current >= max) {
+            upsellEl.style.display = 'block';
+        } else {
+            upsellEl.style.display = 'none';
+        }
+    }
+}
+
+// Update connect buttons state in modal
+function updateModalConnectButtons() {
+    const canConnect = connectionsState.connections.length < connectionsState.limits.max;
+    
+    document.querySelectorAll('.platform-connect-btn-modal').forEach(btn => {
+        const platform = btn.dataset.platform;
+        const isConnected = connectionsState.connections.some(c => c.platform === platform);
+        
+        if (isConnected) {
+            btn.classList.add('connected');
+            btn.disabled = true;
+            btn.innerHTML = `${getConnectionPlatformIcon(platform)} <span>${getConnectionPlatformName(platform)}</span> <i class="bi bi-check-circle ms-1"></i>`;
+        } else if (!canConnect) {
+            btn.classList.remove('connected');
+            btn.disabled = true;
+            btn.title = window.translations?.sns?.limit_reached || 'Account limit reached';
+        } else {
+            btn.classList.remove('connected');
+            btn.disabled = false;
+            btn.innerHTML = `${getConnectionPlatformIcon(platform)} <span>${getConnectionPlatformName(platform)}</span>`;
+        }
+    });
+}
+
+// Bind connect button handlers in modal
+function bindModalConnectButtons() {
+    document.addEventListener('click', async function(e) {
+        const btn = e.target.closest('.platform-connect-btn-modal:not(.connected):not(:disabled)');
+        if (btn) {
+            const platform = btn.dataset.platform;
+            await connectModalPlatform(platform, btn);
+        }
+    });
+}
+
+// Connect to a platform from modal
+async function connectModalPlatform(platform, button) {
+    console.log('[Connections Modal] Connecting to:', platform);
+    
+    const originalHtml = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = `
+        <span class="spinner-border spinner-border-sm me-1"></span>
+        ${window.translations?.sns?.connecting || 'Connecting...'}
+    `;
+    
+    try {
+        const response = await fetch(`/api/social/connect/${platform}`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        const data = await response.json();
+        
+        if (data.success && data.authUrl) {
+            // Open OAuth in new window
+            const authWindow = window.open(data.authUrl, 'sns_auth', 'width=600,height=700');
+            
+            // Check for window close
+            const checkClosed = setInterval(() => {
+                if (authWindow.closed) {
+                    clearInterval(checkClosed);
+                    button.disabled = false;
+                    button.innerHTML = originalHtml;
+                    // Reload connections after OAuth
+                    setTimeout(() => loadModalConnections(), 1000);
+                }
+            }, 500);
+        } else if (data.needsUpgrade) {
+            showNotification(window.translations?.sns?.upgrade_required || 'Upgrade to premium to connect more accounts', 'warning');
+            loadPlanPage();
+            button.disabled = false;
+            button.innerHTML = originalHtml;
+        } else {
+            throw new Error(data.error || 'Failed to get auth URL');
+        }
+    } catch (error) {
+        console.error('[Connections Modal] Connect error:', error);
+        showNotification(error.message || (window.translations?.sns?.connect_error || 'Failed to connect'), 'error');
+        button.disabled = false;
+        button.innerHTML = originalHtml;
+    }
+}
+
+// Disconnect from a platform via modal
+async function disconnectModalAccount(platform, accountId) {
+    const confirmed = await Swal.fire({
+        title: window.translations?.sns?.confirm_disconnect || 'Disconnect account?',
+        text: window.translations?.sns?.disconnect_warning || 'You will need to reconnect to post again.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: window.translations?.sns?.disconnect || 'Disconnect',
+        cancelButtonText: window.translations?.cancel || 'Cancel',
+        confirmButtonColor: '#dc3545'
+    });
+
+    if (!confirmed.isConfirmed) return;
+
+    console.log('[Connections Modal] Disconnecting:', platform, accountId);
+    
+    try {
+        const response = await fetch(`/api/social/disconnect/${platform}/${accountId}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification(window.translations?.sns?.disconnected || 'Account disconnected', 'success');
+            loadModalConnections();
+        } else {
+            throw new Error(data.error || 'Failed to disconnect');
+        }
+    } catch (error) {
+        console.error('[Connections Modal] Disconnect error:', error);
+        showNotification(error.message || (window.translations?.sns?.disconnect_error || 'Failed to disconnect'), 'error');
+    }
+}
+
+// Show error in modal connections list
+function showModalConnectionsError(message) {
+    const container = document.getElementById('modalConnectedAccountsList');
+    if (container) {
+        container.innerHTML = `
+            <div class="alert alert-danger m-0 small">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                ${message}
+                <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="loadModalConnections()">
+                    ${window.translations?.sns?.retry || 'Retry'}
+                </button>
+            </div>
+        `;
+    }
+}
+
+// Load recent posts for modal
+async function loadModalRecentPosts() {
+    console.log('[Connections Modal] Loading recent posts...');
+    
+    try {
+        const response = await fetch('/api/social/posts?limit=5', {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log('[Connections Modal] Loaded recent posts:', data.posts.length);
+            renderModalRecentPosts(data.posts);
+        } else {
+            throw new Error(data.error || 'Failed to load posts');
+        }
+    } catch (error) {
+        console.error('[Connections Modal] Error loading posts:', error);
+    }
+}
+
+// Render recent posts list in modal
+function renderModalRecentPosts(posts) {
+    const container = document.getElementById('modalRecentPostsList');
+    if (!container) return;
+    
+    if (!posts || posts.length === 0) {
+        container.innerHTML = `
+            <div class="text-center p-3 text-muted">
+                <i class="bi bi-inbox fs-4 mb-2"></i>
+                <p class="mb-0 small">${window.translations?.sns?.no_posts_yet || 'No posts yet'}</p>
+            </div>
+        `;
+        return;
+    }
+
+    const html = posts.map(post => {
+        const createdAt = new Date(post.createdAt);
+        const timeAgo = formatConnectionTimeAgo(createdAt);
+        const platformsList = post.platforms.map(p => {
+            const icon = getConnectionPlatformIcon(p.platform);
+            return `<span class="platform-badge">${icon}</span>`;
+        }).join(' ');
+        
+        const statusBadge = getConnectionStatusBadge(post.status);
+        const hasMedia = post.mediaUrls && post.mediaUrls.length > 0;
+        const thumbnail = hasMedia ? post.mediaUrls[0] : null;
+        
+        return `
+            <div class="recent-post-item">
+                ${thumbnail ? `
+                    <div class="post-thumbnail">
+                        <img src="${thumbnail}" alt="Post image" onerror="this.style.display='none'">
+                    </div>
+                ` : ''}
+                <div class="post-details">
+                    <div class="post-text">${escapeHtml(post.text.substring(0, 80))}${post.text.length > 80 ? '...' : ''}</div>
+                    <div class="post-meta">
+                        <span class="post-platforms">${platformsList}</span>
+                        <span class="post-time"><i class="bi bi-clock me-1"></i>${timeAgo}</span>
+                        ${statusBadge}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = html;
+}
+
+// Get platform icon SVG for connections
+function getConnectionPlatformIcon(platform) {
+    const icons = {
+        instagram: `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>`,
+        twitter: `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`
+    };
+    return icons[platform] || '<i class="bi bi-globe"></i>';
+}
+
+// Get platform display name for connections
+function getConnectionPlatformName(platform) {
+    const names = {
+        instagram: 'Instagram',
+        twitter: 'X (Twitter)'
+    };
+    return names[platform] || platform;
+}
+
+// Get status badge HTML for connections
+function getConnectionStatusBadge(status) {
+    const badges = {
+        'published': '<span class="badge bg-success" style="font-size: 10px;">Published</span>',
+        'pending': '<span class="badge bg-warning" style="font-size: 10px;">Pending</span>',
+        'scheduled': '<span class="badge bg-info" style="font-size: 10px;">Scheduled</span>',
+        'failed': '<span class="badge bg-danger" style="font-size: 10px;">Failed</span>'
+    };
+    return badges[status] || '';
+}
+
+// Format time ago for connections
+function formatConnectionTimeAgo(date) {
+    const seconds = Math.floor((new Date() - date) / 1000);
+    
+    const intervals = {
+        year: 31536000,
+        month: 2592000,
+        week: 604800,
+        day: 86400,
+        hour: 3600,
+        minute: 60
+    };
+    
+    for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+        const interval = Math.floor(seconds / secondsInUnit);
+        if (interval >= 1) {
+            return `${interval}${unit.charAt(0)} ago`;
+        }
+    }
+    
+    return 'Just now';
 }
 </script>

@@ -2,12 +2,9 @@
 <div class="modal fade" id="userPointsModal" tabindex="-1" aria-labelledby="userPointsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content mx-auto">
-            <div class="modal-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <button type="button" class="btn-close btn-close-rigth btn-close-dark" data-bs-dismiss="modal" aria-label="Close"></button>
-                <h5 class="modal-title d-flex align-items-center" id="userPointsModalLabel">
-                    <i class="bi bi-coin me-2" style="color: #ffd700;"></i>
-                    {{userPointsTranslations.points.title}}
-                </h5>
+            <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="userPointsModalLabel">{{userPointsTranslations.points.title}}</h5>
             </div>
             <div class="modal-body p-0">
                 <!-- Current Points Balance Section -->
@@ -364,13 +361,11 @@
 
 <!-- SNS Post Modal -->
 <div class="modal fade" id="snsPostModal" tabindex="-1" aria-labelledby="snsPostModalLabel" aria-hidden="true" style="z-index: 1065 !important;">
-    <div class="modal-dialog modal-dialog-centered modal-lg mx-0">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg mx-0">
         <div class="modal-content mx-auto">
-            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                <h5 class="modal-title text-white" id="snsPostModalLabel">
-                    <i class="bi bi-share-fill me-2"></i>{{translations.sns.share_to_social}}
-                </h5>
+            <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="snsPostModalLabel">{{translations.sns.share_to_social}}</h5>
             </div>
             <div class="modal-body">
                 <!-- Image Preview -->

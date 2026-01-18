@@ -665,24 +665,31 @@ async function routes(fastify, options) {
 
       const response = await lateApiRequest('/posts', 'POST', postData);
 
+      // Log the full response to debug structure
+      console.log(`[Social API] Post response:`, JSON.stringify(response, null, 2));
+
+      // Extract post ID from various possible response structures
+      const postId = response.id || response._id || response.postId || response.post?.id || response.post?._id;
+      const postStatus = response.status || response.post?.status || 'pending';
+
       // Log the post
       await db.collection('socialPosts').insertOne({
         userId: new ObjectId(user._id),
         text,
         mediaUrls,
         platforms: postData.platforms,
-        latePostId: response.id,
-        status: response.status || 'pending',
+        latePostId: postId,
+        status: postStatus,
         scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
         createdAt: new Date()
       });
 
-      console.log(`[Social API] Post created successfully: ${response.id}`);
+      console.log(`[Social API] Post created successfully: ${postId || 'ID not found in response'}`);
 
       return reply.send({
         success: true,
-        postId: response.id,
-        status: response.status,
+        postId: postId,
+        status: postStatus,
         message: scheduledFor ? 'Post scheduled successfully' : 'Post published successfully'
       });
     } catch (error) {

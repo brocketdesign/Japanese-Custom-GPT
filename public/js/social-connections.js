@@ -49,6 +49,7 @@
         const activeTab = $('#myTab .nav-link.active').attr('id');
         if (activeTab === 'connections-tab') {
             loadConnections();
+            loadRecentPosts();
         }
     }
 
@@ -59,6 +60,7 @@
         const target = $(e.target).attr('id');
         if (target === 'connections-tab') {
             loadConnections();
+            loadRecentPosts();
         }
     }
 
@@ -566,6 +568,9 @@
                     'success'
                 );
                 
+                // Reload recent posts to show the new post
+                loadRecentPosts();
+                
                 // Close modal
                 bootstrap.Modal.getInstance(document.getElementById('snsPostModal'))?.hide();
             } else if (data.needsConnection) {
@@ -630,6 +635,145 @@
     }
 
     /**
+     * Load recent posts
+     */
+    async function loadRecentPosts() {
+        console.log('[Social] Loading recent posts...');
+        
+        try {
+            const response = await fetch('/api/social/posts?limit=10', {
+                method: 'GET',
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('[Social] Loaded recent posts:', data.posts.length);
+                renderRecentPosts(data.posts);
+            } else {
+                throw new Error(data.error || 'Failed to load posts');
+            }
+        } catch (error) {
+            console.error('[Social] Error loading posts:', error);
+            showRecentPostsError(error.message);
+        }
+    }
+
+    /**
+     * Render recent posts list
+     */
+    function renderRecentPosts(posts) {
+        const container = $('#recentPostsList');
+        
+        if (posts.length === 0) {
+            container.html(`
+                <div class="text-center p-4 text-muted">
+                    <i class="bi bi-inbox fs-1 mb-2"></i>
+                    <p class="mb-0">${getTranslation('no_posts_yet', 'No posts yet')}</p>
+                </div>
+            `);
+            return;
+        }
+
+        const html = posts.map(post => {
+            const createdAt = new Date(post.createdAt);
+            const timeAgo = formatTimeAgo(createdAt);
+            const platformsList = post.platforms.map(p => {
+                const icon = getPlatformIcon(p.platform);
+                return `<span class="platform-badge">${icon}</span>`;
+            }).join(' ');
+            
+            const statusBadge = getStatusBadge(post.status);
+            const hasMedia = post.mediaUrls && post.mediaUrls.length > 0;
+            const thumbnail = hasMedia ? post.mediaUrls[0] : null;
+            
+            return `
+                <div class="recent-post-item">
+                    ${thumbnail ? `
+                        <div class="post-thumbnail">
+                            <img src="${thumbnail}" alt="Post image" onerror="this.style.display='none'">
+                        </div>
+                    ` : ''}
+                    <div class="post-details">
+                        <div class="post-text">${escapeHtml(post.text.substring(0, 100))}${post.text.length > 100 ? '...' : ''}</div>
+                        <div class="post-meta">
+                            <span class="post-platforms">${platformsList}</span>
+                            <span class="post-time"><i class="bi bi-clock me-1"></i>${timeAgo}</span>
+                            ${statusBadge}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.html(html);
+    }
+
+    /**
+     * Get status badge HTML
+     */
+    function getStatusBadge(status) {
+        const badges = {
+            'published': '<span class="badge bg-success">Published</span>',
+            'pending': '<span class="badge bg-warning">Pending</span>',
+            'scheduled': '<span class="badge bg-info">Scheduled</span>',
+            'failed': '<span class="badge bg-danger">Failed</span>'
+        };
+        return badges[status] || '';
+    }
+
+    /**
+     * Format time ago
+     */
+    function formatTimeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+        
+        const intervals = {
+            year: 31536000,
+            month: 2592000,
+            week: 604800,
+            day: 86400,
+            hour: 3600,
+            minute: 60
+        };
+        
+        for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+            const interval = Math.floor(seconds / secondsInUnit);
+            if (interval >= 1) {
+                return `${interval} ${unit}${interval > 1 ? 's' : ''} ago`;
+            }
+        }
+        
+        return 'Just now';
+    }
+
+    /**
+     * Escape HTML to prevent XSS
+     */
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    /**
+     * Show error in recent posts list
+     */
+    function showRecentPostsError(message) {
+        $('#recentPostsList').html(`
+            <div class="alert alert-danger m-0">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                ${message}
+            </div>
+        `);
+    }
+
+    /**
      * Get platform icon SVG
      */
     function getPlatformIcon(platform) {
@@ -657,6 +801,7 @@
     // Expose public API
     window.SocialConnections = {
         loadConnections,
+        loadRecentPosts,
         disconnect,
         openSnsPostModal,
         openSettingsConnectionsTab

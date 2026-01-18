@@ -805,40 +805,87 @@
 }
 
 /* Recent Posts Styles */
-.recent-posts-list .post-item {
+.recent-posts-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.recent-post-item {
   display: flex;
   gap: 12px;
   padding: 12px;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 10px;
   margin-bottom: 10px;
+  transition: background 0.2s;
 }
 
-.recent-posts-list .post-item .post-image {
+.recent-post-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.recent-post-item .post-thumbnail {
   width: 60px;
   height: 60px;
   border-radius: 8px;
-  object-fit: cover;
+  overflow: hidden;
   flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.2);
 }
 
-.recent-posts-list .post-item .post-info {
+.recent-post-item .post-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.recent-post-item .post-details {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.recent-posts-list .post-item .post-caption {
+.recent-post-item .post-text {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.85);
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
 }
 
-.recent-posts-list .post-item .post-meta {
+.recent-post-item .post-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   font-size: 11px;
   color: rgba(255, 255, 255, 0.5);
-  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.recent-post-item .post-platforms {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.recent-post-item .platform-badge {
+  display: inline-flex;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.recent-post-item .post-time {
+  display: flex;
+  align-items: center;
+}
+
+.recent-post-item .badge {
+  font-size: 10px;
+  padding: 2px 6px;
 }
 
 /* SNS Post Modal Styles */

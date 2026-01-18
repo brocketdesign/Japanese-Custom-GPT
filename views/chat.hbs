@@ -26,7 +26,7 @@
     <div id="swup-none">
         <div id="overlay" class="d-sm-none bg-dark" style="position: fixed; inset: 0; z-index: 1033; display: none; opacity: 0.4; overflow: hidden;"></div>
         <div class="content collapsed">
-            <nav class="navbar navbar-expand-lg navbar-white fixed-top shadow-0 flex-column" style="z-index: 1020; background-color: #2a2a2a !important;">
+            <nav class="navbar navbar-expand-lg navbar-white fixed-top shadow-0 flex-column" style="z-index: 1020; background-color: transparent !important;">
                 <div class="container-fluid">
                     <div class="d-flex align-items-center justify-content-center">
                         <div style="position: absolute;left:10px;top:13px;">
@@ -162,10 +162,10 @@
                     <div id="chat-pagination-controls" class="my-3" style="opacity: 0;"></div>
                 </div>
             </section>
-            <div id="chat-wrapper" class="px-0 onchat-on" style="background-color: color(srgb 0.055 0.0501 0.0501 / 0.97);background-position: top center;background-repeat: no-repeat;position: relative;">
+            <div id="chat-wrapper" class="px-0 onchat-on" style="background-position: top center;background-repeat: no-repeat;">
                 <!-- Chat Container Overlay -->
                 <div id="chat-container" class="container mx-auto shadow-0 border-0 rounded-0" style="border-radius:0 !important;position: relative;">
-                    <div class="chat-overlay d-flex justify-content-center align-items-center w-100 h-100vh position-absolute top-0 start-0 bottom-0" id="chatOverlay" style="opacity: 0.85;"></div>
+                    <div class="chat-overlay d-flex justify-content-center align-items-center w-100 h-100vh position-absolute top-0 start-0 bottom-0" id="chatOverlay" style="display: none;"></div>
                     
                     <div class="card-body text-center p-0 container" style="min-height:250px;overflow-y:hidden;display: flex;flex-direction: column;position: relative;z-index: 990;">
                         <!-- Chat Scenarios Container - positioned absolutely but within chat wrapper to avoid toolbar overlap -->

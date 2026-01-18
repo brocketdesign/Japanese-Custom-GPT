@@ -582,7 +582,7 @@ window.redirectToChat = function(chatId,chatImage) {
         return
     }
     if(chatImage){
-        $('#chat-container').css('background-image', chatImage);
+        $('#chat-wrapper').css('background-image', chatImage);
     }
     $(`#spinner-${chatId}`).addClass('on').show()
     const user = {{{json user}}}

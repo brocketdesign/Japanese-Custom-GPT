@@ -410,11 +410,20 @@ body::after {
   object-fit:cover
   }
   #chat-wrapper {
-    background-size: contain;
+    background-color: #0e0d0d;
+    background-size: contain !important;
+    min-height: 100vh;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    overflow-y: auto;
+    z-index: 1010;
   }
   @media (max-width: 768px) {
     #chat-wrapper {
-    background-size: cover;
+      background-size: cover !important;
     }
   }
   .chat-item {
@@ -1449,7 +1458,7 @@ opacity: 0.8;
   }
   
   #chat-container {
-  background-size:contain
+  background: transparent !important;
   }
   
   #chatContainer > div:nth-child(1) {
@@ -2008,7 +2017,7 @@ opacity: 0.8;
   
   @media (max-width: 600px) {
   #chat-container {
-  background-size:cover
+  background: transparent !important;
   }
   
   .noscroll {
@@ -2070,6 +2079,7 @@ opacity: 0.8;
   margin-left:0
   }
   .sticky-bottom{
+    position: absolute;
     z-index: 1020;
   }
   nav.navbar,.sticky-bottom {
@@ -4467,14 +4477,14 @@ opacity: 0.8;
   width: 95%;
   max-width: 500px;
   height: 65px;
-  background: rgba(45, 45, 45, 0.85);
-  backdrop-filter: blur(var(--glass-blur-strong));
-  -webkit-backdrop-filter: blur(var(--glass-blur-strong));
+  background: var(--glass-bg, rgba(30, 30, 40, 0.85)) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: var(--radius-pill);
   z-index: 1010;
   padding: 0 10px;
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--glass-border, rgba(130, 64, 255, 0.3));
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
 }
 
 #footer-toolbar a{

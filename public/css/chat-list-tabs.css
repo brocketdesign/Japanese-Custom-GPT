@@ -1,15 +1,15 @@
 /* Chat List Tabs Navigation */
 #chat-list-tabs {
-    background-color: #f8f9fa;
+    background-color: #2a2a2a;
 }
 
 #chatListTabs {
-    border-bottom: 2px solid #dee2e6;
+    border-bottom: 2px solid #3a3a3a;
     padding: 0;
 }
 
 #chatListTabs .nav-link {
-    color: #6c757d;
+    color: #b0b0b0;
     border: none;
     border-bottom: 3px solid transparent;
     padding: 0.75rem 1rem;
@@ -21,14 +21,14 @@
 }
 
 #chatListTabs .nav-link:hover {
-    color: #495057;
-    background-color: #e9ecef;
-    border-bottom-color: #dee2e6;
+    color: #ffffff;
+    background-color: #3a3a3a;
+    border-bottom-color: #6E20F4;
 }
 
 #chatListTabs .nav-link.active {
-    color: #0d6efd;
-    border-bottom-color: #0d6efd;
+    color: #ffffff;
+    border-bottom-color: #6E20F4;
     background-color: transparent;
 }
 
@@ -44,6 +44,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    background-color: #1a1a1a;
 }
 
 #chatListTabContent {
@@ -71,6 +72,7 @@
     overflow-y: auto;
     padding-top: 0.5rem;
     position: relative; /* Ensures child absolute positioned elements are scoped to this container */
+    background-color: #1a1a1a;
 }
 
 #latest-chat-list,
@@ -102,12 +104,14 @@
 /* Chat List Items - Latest Tab */
 #chat-latest-content .list-group {
     border: none;
+    background-color: transparent;
 }
 
 #chat-latest-content .list-group-item {
     border: none;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 1px solid #3a3a3a;
     padding: 0.75rem 1rem; /* Increased padding for larger items */
+    background-color: transparent;
 }
 
 #chat-latest-content .list-group-item:last-child {
@@ -117,12 +121,14 @@
 /* Chat List Items - Favorites Tab */
 #chat-favorites-content .list-group {
     border: none;
+    background-color: transparent;
 }
 
 #chat-favorites-content .list-group-item {
     border: none;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 1px solid #3a3a3a;
     padding: 0.75rem 1rem; /* Increased padding for larger items */
+    background-color: transparent;
 }
 
 #chat-favorites-content .list-group-item:last-child {
@@ -182,4 +188,13 @@
     to {
         opacity: 1;
     }
+}
+
+/* Dark theme text color overrides for chat list */
+#chat-list .text-muted {
+    color: #b0b0b0 !important;
+}
+
+#chat-list .text-secondary {
+    color: #e0e0e0 !important;
 }

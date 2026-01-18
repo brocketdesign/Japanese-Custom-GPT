@@ -1,7 +1,7 @@
 /* Enhanced Chat List Styling - Ultra Compact Design for 260px sidebar */
 .chat-item-enhanced {
-    background: linear-gradient(145deg, #ffffff, #f8f9fa);
-    border: 1px solid #e9ecef;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
     transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     cursor: pointer;
     padding: 6px 8px !important; /* More compact padding */
@@ -11,15 +11,31 @@
 
 .chat-item-enhanced:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(110, 32, 244, 0.15);
+    box-shadow: 0 4px 15px rgba(110, 32, 244, 0.3);
     border-color: #6E20F4;
-    background: linear-gradient(145deg, #f0e6ff, #e6d3ff);
+    background: #4a3a5a;
 }
 
 .chat-item-enhanced.active {
-    background: linear-gradient(145deg, #f0e6ff, #e6d3ff);
+    background: #4a3a5a;
     border-color: #6E20F4;
-    box-shadow: 0 2px 10px rgba(110, 32, 244, 0.2);
+    box-shadow: 0 2px 10px rgba(110, 32, 244, 0.3);
+}
+
+.chat-item-enhanced.active .chat-name {
+    color: #1a1a1a !important;
+}
+
+.chat-item-enhanced.active .chat-preview {
+    color: #2a2a2a !important;
+}
+
+.chat-item-enhanced.active .chat-time {
+    color: #3a3a3a !important;
+}
+
+.chat-item-enhanced.active .text-muted {
+    color: #3a3a3a !important;
 }
 
 .chat-avatar {
@@ -33,22 +49,41 @@
 }
 
 .chat-name {
-    color: #2c3e50;
+    color: #e0e0e0;
     font-weight: 600;
     font-size: 0.8rem !important; /* Smaller font */
     line-height: 1.1;
     max-width: 120px !important; /* Tighter width constraint */
 }
 
+.chat-item-enhanced:hover .chat-name {
+    color: #1a1a1a !important;
+}
+
 .chat-preview {
     font-size: 0.7rem !important; /* Smaller preview text */
     line-height: 1.2;
     max-width: 130px !important; /* Tighter width constraint */
+    color: #b0b0b0;
+}
+
+.chat-item-enhanced:hover .chat-preview {
+    color: #2a2a2a !important;
 }
 
 .chat-time {
     font-size: 0.65rem !important; /* Smaller time text */
     white-space: nowrap;
+    color: #888888;
+}
+
+.chat-item-enhanced:hover .chat-time {
+    color: #3a3a3a !important;
+}
+
+/* Override Bootstrap text-muted class on hover */
+.chat-item-enhanced:hover .text-muted {
+    color: #3a3a3a !important;
 }
 
 .chat-menu-btn {
@@ -100,9 +135,9 @@
 
 /* Load More Button - More Compact */
 .chat-load-more-btn {
-    background-color: #f8f9fa;
-    border: 2px dashed #dee2e6;
-    color: #6c757d;
+    background-color: #2a2a2a;
+    border: 2px dashed #3a3a3a;
+    color: #b0b0b0;
     transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     font-weight: 500;
     font-size: 0.75rem !important; /* Smaller font */
@@ -124,9 +159,9 @@
 
 /* Load More Button Styling */
 .chat-load-more-btn {
-    background-color: #f8f9fa;
-    border: 2px dashed #dee2e6;
-    color: #6c757d;
+    background-color: #2a2a2a;
+    border: 2px dashed #3a3a3a;
+    color: #b0b0b0;
     transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     font-weight: 500;
     font-size: 0.8rem;
@@ -146,12 +181,12 @@
 }
 
 .chat-load-more-btn.loading {
-    background: linear-gradient(135deg, #f8f9fa, #ffffff);
+    background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
     border: 2px solid #6E20F4;
     color: #6E20F4;
     cursor: not-allowed;
     transform: none;
-    box-shadow: 0 4px 15px rgba(110, 32, 244, 0.1);
+    box-shadow: 0 4px 15px rgba(110, 32, 244, 0.2);
     animation: pulseGlow 3s infinite;
 }
 
@@ -222,11 +257,11 @@
 }
 
 .loading-card {
-    background: linear-gradient(145deg, #ffffff, #f8f9fa);
-    border: 1px solid #e9ecef;
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+    border: 1px solid #3a3a3a;
     border-radius: 12px !important; /* Smaller radius */
     padding: 16px 12px !important; /* Reduced padding */
-    box-shadow: 0 6px 24px rgba(110, 32, 244, 0.1); /* Reduced shadow */
+    box-shadow: 0 6px 24px rgba(110, 32, 244, 0.2); /* Reduced shadow */
     backdrop-filter: blur(10px);
     animation: fadeInScale 0.5s ease-out;
 }
@@ -256,7 +291,7 @@
 }
 
 .loading-text h6 {
-    color: #2c3e50;
+    color: #e0e0e0;
     font-weight: 600;
     font-size: 0.8rem !important; /* Smaller text */
     margin: 0;
@@ -264,13 +299,13 @@
 
 .loading-text small {
     font-size: 0.7rem !important; /* Smaller text */
-    color: #6c757d;
+    color: #b0b0b0;
 }
 
 .loading-progress-bar {
     width: 100%;
     height: 3px !important; /* Thinner progress bar */
-    background-color: #e9ecef;
+    background-color: #3a3a3a;
     border-radius: 2px;
     overflow: hidden;
     margin-bottom: 12px; /* Reduced margin */
@@ -284,7 +319,7 @@
 }
 
 .loading-dot {
-    background: linear-gradient(90deg, #e9ecef 25%, #f0f0f0 50%, #e9ecef 75%);
+    background: linear-gradient(90deg, #3a3a3a 25%, #2a2a2a 50%, #3a3a3a 75%);
     background-size: 200% 100%;
     animation: shimmerLoading 2s infinite;
     border-radius: 8px;
@@ -303,7 +338,7 @@
     content: '';
     width: 32px;
     height: 32px;
-    background: linear-gradient(90deg, #d0d0d0 25%, #e0e0e0 50%, #d0d0d0 75%);
+    background: linear-gradient(90deg, #4a4a4a 25%, #3a3a3a 50%, #4a4a4a 75%);
     background-size: 200% 100%;
     animation: shimmerLoading 2s infinite;
     border-radius: 50%;
@@ -314,7 +349,7 @@
     content: '';
     flex: 1;
     height: 12px;
-    background: linear-gradient(90deg, #d0d0d0 25%, #e0e0e0 50%, #d0d0d0 75%);
+    background: linear-gradient(90deg, #4a4a4a 25%, #3a3a3a 50%, #4a4a4a 75%);
     background-size: 200% 100%;
     animation: shimmerLoading 2s infinite;
     border-radius: 4px;

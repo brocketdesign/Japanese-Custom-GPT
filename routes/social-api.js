@@ -39,11 +39,28 @@ async function lateApiRequest(endpoint, method = 'GET', body = null) {
   
   try {
     const response = await fetch(`${LATE_API_BASE_URL}${endpoint}`, options);
-    const data = await response.json();
+    
+    // Get the response text first to check if it's valid JSON
+    const responseText = await response.text();
+    
+    // Check if response is HTML (error page) instead of JSON
+    if (responseText.startsWith('<!DOCTYPE') || responseText.startsWith('<html')) {
+      console.error(`[Social API] Late.dev returned HTML instead of JSON for ${endpoint}`);
+      throw new Error(`Late.dev API returned error page (status ${response.status}). The endpoint may be unavailable or the profileId may be invalid.`);
+    }
+    
+    // Try to parse as JSON
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error(`[Social API] Failed to parse response as JSON:`, responseText.substring(0, 200));
+      throw new Error(`Late.dev API returned invalid JSON (status ${response.status})`);
+    }
     
     if (!response.ok) {
       console.error(`[Social API] Late.dev error:`, data);
-      throw new Error(data.message || `Late.dev API error: ${response.status}`);
+      throw new Error(data.message || data.error || `Late.dev API error: ${response.status}`);
     }
     
     return data;

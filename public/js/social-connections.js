@@ -571,6 +571,14 @@
             } else if (data.needsConnection) {
                 showNotification(getTranslation('need_connection', 'Please connect your accounts first'), 'warning');
                 openSettingsConnectionsTab();
+            } else if (data.needsReconnect) {
+                // Account IDs couldn't be resolved - need to reconnect
+                const failedList = data.failedPlatforms ? data.failedPlatforms.join(', ') : 'selected platforms';
+                showNotification(
+                    getTranslation('reconnect_required', `Please reconnect your ${failedList} account(s)`),
+                    'warning'
+                );
+                openSettingsConnectionsTab();
             } else {
                 throw new Error(data.error || 'Failed to publish');
             }

@@ -137,8 +137,7 @@ function getImageTools({chatId, userChatId, imageId, isLiked = false, title, pro
                         <i class="bi bi-box-arrow-up"></i>${window.translations?.image_tools?.share || 'Share'}
                     </span>
 
-                    <span class="badge bg-gradient image-tool-badge share-sns-btn" 
-                          style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;"
+                    <span class="badge bg-white text-secondary image-tool-badge share-sns-btn"
                           data-id="${imageId}"
                           data-url="${imageUrl}"
                           data-prompt="${prompt}"

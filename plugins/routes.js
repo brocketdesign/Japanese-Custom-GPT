@@ -33,12 +33,17 @@ async function registerRoutes(fastify) {
   fastify.register(require('../routes/chat-completion-api'));
   fastify.register(require('../routes/admin-models'));
   fastify.register(require('../routes/admin-image-test'));
+  fastify.register(require('../routes/dashboard-video'));
   fastify.register(require('../routes/chat-suggestions-api'));
   fastify.register(require('../routes/speech-to-text-api'));
   fastify.register(require('../routes/favorites-api'));
   fastify.register(require('../routes/cold-onboarding-api'));
   fastify.register(require('../routes/novita-webhook'));
   fastify.register(require('../routes/social-api'));
+  fastify.register(require('../routes/prompt-mutation-api'));
+  fastify.register(require('../routes/posts-schedules-api'));
+  fastify.register(require('../routes/dashboard-posts'));
+  fastify.register(require('../routes/feature-access-api'));
 }
 
 module.exports = registerRoutes;

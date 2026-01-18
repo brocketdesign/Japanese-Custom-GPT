@@ -157,6 +157,31 @@
                 <a class="list-group-item list-group-item-action border-0 menu-item" href="/affiliation">
                     <i class="bi bi-link me-3"></i>{{translations.avatar.affiliation}}
                 </a>
+                
+                <hr class="my-2">
+                <div class="px-3 py-2">
+                    <small class="text-muted fw-bold">DASHBOARDS</small>
+                </div>
+                
+                <a class="list-group-item list-group-item-action border-0 menu-item" href="/dashboard/image">
+                    <i class="bi bi-card-image me-3"></i>{{translations.avatar.imageDashboard}}
+                </a>
+                
+                <a class="list-group-item list-group-item-action border-0 menu-item" href="/dashboard/video">
+                    <i class="bi bi-film me-3"></i>{{translations.avatar.videoDashboard}}
+                </a>
+                
+                <a class="list-group-item list-group-item-action border-0 menu-item" href="/dashboard/posts">
+                    <i class="bi bi-images me-3"></i>{{translations.avatar.myPosts}}
+                </a>
+                
+                <a class="list-group-item list-group-item-action border-0 menu-item" href="/dashboard/schedules">
+                    <i class="bi bi-calendar-event me-3"></i>{{translations.avatar.mySchedules}}
+                </a>
+                
+                <a class="list-group-item list-group-item-action border-0 menu-item" href="/dashboard/templates">
+                    <i class="bi bi-file-text me-3"></i>{{translations.avatar.promptTemplates}}
+                </a>
 
                 {{#if isAdmin}}
                     <hr class="my-2">
@@ -205,9 +230,7 @@
                         <i class="bi bi-flask me-3"></i>{{translations.admin_model_test.title}}
                     </a>
                     
-                    <a class="list-group-item list-group-item-action border-0 menu-item" href="/admin/image-test">
-                        <i class="bi bi-images me-3"></i>Image Model
-                    </a>
+                    <hr class="my-2">
                     
                     <a class="list-group-item list-group-item-action border-0 menu-item" href="/admin/notifications">
                         <i class="bi bi-bell me-3"></i>{{translations.admin.notifications}}

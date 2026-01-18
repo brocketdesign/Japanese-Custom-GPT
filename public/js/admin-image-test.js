@@ -21,8 +21,85 @@ const state = {
         }
     },
     currentStyle: '',
-    customizedPrompt: null // Track if user has manually edited the final prompt
+    customizedPrompt: null, // Track if user has manually edited the final prompt
+    // Pricing state
+    imageCostPerUnit: window.PRICING?.imageCostPerUnit || 50,
+    userPoints: window.PRICING?.userPoints || 0
 };
+
+/**
+ * Calculate and update the total cost display
+ */
+function updateCostDisplay() {
+    const selectedModels = getSelectedModels();
+    const selectedSDModels = getSelectedSDModels();
+    const imagesPerModel = parseInt(document.getElementById('imagesPerModel')?.value) || 1;
+    
+    const totalModels = selectedModels.length + selectedSDModels.length;
+    const totalImages = totalModels * imagesPerModel;
+    const totalCost = totalImages * state.imageCostPerUnit;
+    
+    // Update display elements
+    const totalCostDisplay = document.getElementById('totalCostDisplay');
+    const imageCountDisplay = document.getElementById('imageCountDisplay');
+    const userPointsDisplay = document.getElementById('userPointsDisplay');
+    const costSection = document.getElementById('costDisplaySection');
+    const costStatusBadge = document.getElementById('costStatusBadge');
+    
+    if (totalCostDisplay) {
+        totalCostDisplay.textContent = totalCost;
+    }
+    
+    if (imageCountDisplay) {
+        imageCountDisplay.textContent = totalImages;
+    }
+    
+    // Check if user has enough points
+    const hasEnoughPoints = state.userPoints >= totalCost;
+    
+    // Update user points display
+    if (userPointsDisplay) {
+        userPointsDisplay.textContent = state.userPoints;
+        if (hasEnoughPoints || totalCost === 0) {
+            userPointsDisplay.style.color = '#4ade80'; // Green
+        } else {
+            userPointsDisplay.style.color = '#f87171'; // Red
+        }
+    }
+    
+    // Update status badge
+    if (costStatusBadge) {
+        if (totalCost === 0) {
+            costStatusBadge.innerHTML = '<i class="bi bi-hand-index me-1"></i>Select models';
+            costStatusBadge.style.background = 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)';
+            costStatusBadge.style.color = '#fff';
+        } else if (hasEnoughPoints) {
+            costStatusBadge.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Ready';
+            costStatusBadge.style.background = 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)';
+            costStatusBadge.style.color = '#000';
+        } else {
+            costStatusBadge.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>Need more points';
+            costStatusBadge.style.background = 'linear-gradient(135deg, #f87171 0%, #ef4444 100%)';
+            costStatusBadge.style.color = '#fff';
+        }
+    }
+    
+    // Update cost section border based on affordability
+    if (costSection && totalCost > 0) {
+        if (!hasEnoughPoints) {
+            costSection.style.border = '1px solid rgba(248, 113, 113, 0.5)';
+            costSection.style.boxShadow = '0 0 20px rgba(248, 113, 113, 0.1)';
+        } else {
+            costSection.style.border = '1px solid rgba(74, 222, 128, 0.3)';
+            costSection.style.boxShadow = '0 0 20px rgba(74, 222, 128, 0.1)';
+        }
+    } else if (costSection) {
+        costSection.style.border = '1px solid rgba(255,255,255,0.1)';
+        costSection.style.boxShadow = 'none';
+    }
+    
+    return { totalCost, totalImages, hasEnoughPoints };
+}
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -44,6 +121,27 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize the preview
     updateFinalPromptPreview();
+    
+    // Initialize cost display
+    updateCostDisplay();
+    
+    // Add event listener for images per model change
+    const imagesPerModelSelect = document.getElementById('imagesPerModel');
+    if (imagesPerModelSelect) {
+        imagesPerModelSelect.addEventListener('change', updateCostDisplay);
+    }
+    
+    // Check for prompt from Templates page
+    const storedPrompt = sessionStorage.getItem('promptFromTemplates');
+    if (storedPrompt) {
+        const promptInput = document.getElementById('promptInput');
+        if (promptInput) {
+            promptInput.value = storedPrompt;
+            showNotification('Prompt loaded from Templates!', 'success');
+            updateFinalPromptPreview();
+        }
+        sessionStorage.removeItem('promptFromTemplates');
+    }
     
     // Add event delegation for copy prompt buttons (for dynamically loaded content)
     document.addEventListener('click', function(e) {
@@ -178,6 +276,9 @@ function initializeModelCheckboxes() {
             if (sdInput) {
                 updateSDParamsVisibility();
             }
+            
+            // Update cost display whenever selection changes
+            updateCostDisplay();
         });
     });
 }
@@ -197,6 +298,9 @@ function selectAllModels() {
             cb.classList.add('selected');
         }
     });
+    
+    // Update cost display
+    updateCostDisplay();
 }
 
 /**
@@ -216,6 +320,9 @@ function selectAllSDModels() {
     });
     
     updateSDParamsVisibility();
+    
+    // Update cost display
+    updateCostDisplay();
 }
 
 /**
@@ -284,6 +391,13 @@ async function startGeneration() {
         return;
     }
 
+    // Check if user has enough points before proceeding
+    const { totalCost, totalImages, hasEnoughPoints } = updateCostDisplay();
+    if (!hasEnoughPoints) {
+        showNotification(`Insufficient points. You need ${totalCost} points but only have ${state.userPoints} points.`, 'error');
+        return;
+    }
+
     const size = document.getElementById('sizeSelect').value;
     const style = document.querySelector('input[name="stylePreset"]:checked')?.value || '';
     const imagesPerModel = parseInt(document.getElementById('imagesPerModel').value) || 1;
@@ -346,7 +460,7 @@ async function startGeneration() {
             requestBody.samplerName = sdParams.samplerName;
         }
         
-        const response = await fetch('/admin/image-test/generate', {
+        const response = await fetch('/dashboard/image/generate', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -357,8 +471,25 @@ async function startGeneration() {
         const data = await response.json();
 
         if (!response.ok) {
+            // Handle insufficient points error
+            if (response.status === 402) {
+                showNotification(data.message || `Insufficient points. Need ${data.required} but have ${data.available}.`, 'error');
+                state.userPoints = data.available || 0;
+                updateCostDisplay();
+                state.isGenerating = false;
+                updateGenerateButton(false);
+                stopTotalTimer();
+                return;
+            }
             throw new Error(data.error || 'Generation failed');
         }
+
+        // Update user points after successful deduction
+        const totalModelsCount = selectedModels.length + selectedSDModels.length;
+        const totalImagesCount = totalModelsCount * imagesPerModel;
+        const deductedCost = totalImagesCount * state.imageCostPerUnit;
+        state.userPoints -= deductedCost;
+        updateCostDisplay();
 
         console.log('[AdminImageTest] Generation started:', data);
 
@@ -584,14 +715,28 @@ function previewImage(imageUrl, modelId, time, testId = null) {
     
     const task = state.activeTasks.get(modelId);
     const modelName = task?.modelName || modelId;
+    const prompt = task?.finalPrompt || task?.originalPrompt || '';
+    
     document.getElementById('previewModelName').textContent = modelName;
     document.getElementById('previewTime').textContent = `Generated in ${(time / 1000).toFixed(1)} seconds`;
     
-    // Store current image info for rating
+    // Show truncated prompt
+    const promptEl = document.getElementById('previewPrompt');
+    if (promptEl && prompt) {
+        const truncatedPrompt = prompt.length > 100 ? prompt.substring(0, 100) + '...' : prompt;
+        promptEl.textContent = truncatedPrompt;
+        promptEl.title = prompt;
+        promptEl.style.display = 'block';
+    } else if (promptEl) {
+        promptEl.style.display = 'none';
+    }
+    
+    // Store current image info for rating and draft
     modalElement.dataset.modelId = modelId;
     modalElement.dataset.modelName = modelName;
     modalElement.dataset.imageUrl = imageUrl;
     modalElement.dataset.testId = testId || '';
+    modalElement.dataset.prompt = prompt;
     
     // Reset rating stars
     resetRatingStars();
@@ -611,7 +756,7 @@ function startTaskPolling(task, cardId) {
     const actualCardId = cardId || task.modelId;
     const pollInterval = setInterval(async () => {
         try {
-            const response = await fetch(`/admin/image-test/status/${task.taskId}`);
+            const response = await fetch(`/dashboard/image/status/${task.taskId}`);
             const data = await response.json();
 
             console.log(`[AdminImageTest] Poll ${actualCardId}:`, data.status, data.progress || 0);
@@ -670,7 +815,7 @@ function handleTaskFailure(task) {
  * Save test result to database
  */
 async function saveTestResult(modelId, task) {
-    return fetch('/admin/image-test/save-result', {
+    return fetch('/dashboard/image/save-result', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -839,7 +984,7 @@ function updateGenerateButton(isLoading) {
  */
 async function refreshStats() {
     try {
-        const response = await fetch('/admin/image-test/stats');
+        const response = await fetch('/dashboard/image/stats');
         const data = await response.json();
 
         if (data.stats) {
@@ -895,8 +1040,8 @@ async function loadHistory() {
         // Get selected model filter
         const modelFilter = document.getElementById('modelFilter')?.value || '';
         const url = modelFilter 
-            ? `/admin/image-test/history?limit=50&modelId=${encodeURIComponent(modelFilter)}`
-            : '/admin/image-test/history?limit=50';
+            ? `/dashboard/image/history?limit=50&modelId=${encodeURIComponent(modelFilter)}`
+            : '/dashboard/image/history?limit=50';
         
         const response = await fetch(url);
         const data = await response.json();
@@ -1037,7 +1182,7 @@ function showCopyFeedback(button) {
 /**
  * Preview image from history
  */
-function previewHistoryImage(imageUrl, modelName, generationTime, testId = null) {
+function previewHistoryImage(imageUrl, modelName, generationTime, testId = null, prompt = '') {
     const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
     const modalElement = document.getElementById('imagePreviewModal');
     
@@ -1047,11 +1192,23 @@ function previewHistoryImage(imageUrl, modelName, generationTime, testId = null)
         ? `Generated in ${(generationTime / 1000).toFixed(1)} seconds`
         : '';
     
-    // Store current image info for rating
-    modalElement.dataset.modelId = 'sd-txt2img'; // Default for history, could be improved
+    // Show truncated prompt
+    const promptEl = document.getElementById('previewPrompt');
+    if (promptEl && prompt) {
+        const truncatedPrompt = prompt.length > 100 ? prompt.substring(0, 100) + '...' : prompt;
+        promptEl.textContent = truncatedPrompt;
+        promptEl.title = prompt;
+        promptEl.style.display = 'block';
+    } else if (promptEl) {
+        promptEl.style.display = 'none';
+    }
+    
+    // Store current image info for rating and draft
+    modalElement.dataset.modelId = 'sd-txt2img'; // Default for history
     modalElement.dataset.modelName = modelName || 'Unknown Model';
     modalElement.dataset.imageUrl = imageUrl;
     modalElement.dataset.testId = testId || '';
+    modalElement.dataset.prompt = prompt || '';
     
     // Reset rating stars
     resetRatingStars();
@@ -1150,7 +1307,7 @@ async function saveImageRating(rating) {
     }
     
     try {
-        const response = await fetch('/admin/image-test/rate-image', {
+        const response = await fetch('/dashboard/image/rate-image', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1186,7 +1343,7 @@ async function loadImageRating(testId) {
     if (!testId) return;
     
     try {
-        const response = await fetch(`/admin/image-test/rating/${testId}`);
+        const response = await fetch(`/dashboard/image/rating/${testId}`);
         const data = await response.json();
         
         if (data.success && data.rating) {
@@ -1202,7 +1359,7 @@ async function loadImageRating(testId) {
  */
 async function setDefaultModel(style, modelId) {
     try {
-        const response = await fetch('/admin/image-test/default-model', {
+        const response = await fetch('/dashboard/image/default-model', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -1232,7 +1389,7 @@ async function resetAllStats() {
     }
 
     try {
-        const response = await fetch('/admin/image-test/stats/reset', {
+        const response = await fetch('/dashboard/image/stats/reset', {
             method: 'DELETE'
         });
 
@@ -1284,4 +1441,170 @@ function showNotification(message, type = 'info') {
         
         toast.addEventListener('hidden.bs.toast', () => toast.remove());
     }
+}
+
+// Draft post state
+let currentDraftData = null;
+let saveDraftModal = null;
+
+/**
+ * Save current image as draft post
+ */
+function saveAsDraftPost() {
+    const modal = document.getElementById('imagePreviewModal');
+    const imageUrl = modal.dataset.imageUrl;
+    const modelId = modal.dataset.modelId;
+    const modelName = modal.dataset.modelName;
+    const testId = modal.dataset.testId;
+    
+    if (!imageUrl) {
+        showNotification('No image to save', 'error');
+        return;
+    }
+    
+    // Get the prompt from the current task or input
+    const task = state.activeTasks.get(modelId);
+    const prompt = task?.finalPrompt || task?.originalPrompt || document.getElementById('promptInput')?.value || '';
+    
+    // Store data for the draft
+    currentDraftData = {
+        imageUrl,
+        prompt,
+        model: modelName,
+        testId: testId || null,
+        parameters: {
+            size: document.getElementById('sizeSelect')?.value,
+            style: document.querySelector('input[name="stylePreset"]:checked')?.value
+        }
+    };
+    
+    // Update draft modal preview
+    document.getElementById('draftPreviewImage').src = imageUrl;
+    document.getElementById('draftCaptionText').value = '';
+    
+    // Close preview modal and open draft modal
+    bootstrap.Modal.getInstance(modal)?.hide();
+    
+    if (!saveDraftModal) {
+        saveDraftModal = new bootstrap.Modal(document.getElementById('saveDraftModal'));
+    }
+    saveDraftModal.show();
+}
+
+/**
+ * Generate caption for draft post using AI
+ */
+async function generateDraftCaption() {
+    const captionInput = document.getElementById('draftCaptionText');
+    const btn = document.getElementById('generateCaptionBtn');
+    
+    if (!currentDraftData?.prompt) {
+        showNotification('No prompt available for caption generation', 'warning');
+        return;
+    }
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Generating...';
+    captionInput.disabled = true;
+    
+    try {
+        const response = await fetch('/api/posts/generate-caption', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                prompt: currentDraftData.prompt,
+                platform: 'general',
+                style: 'engaging'
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.caption) {
+            captionInput.value = data.caption;
+            showNotification('Caption generated!', 'success');
+        } else {
+            throw new Error(data.error || 'Failed to generate caption');
+        }
+    } catch (error) {
+        console.error('[ImageDashboard] Error generating caption:', error);
+        showNotification('Failed to generate caption', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-magic me-1"></i>Generate Caption with AI';
+        captionInput.disabled = false;
+    }
+}
+
+/**
+ * Confirm and save draft post
+ */
+async function confirmSaveDraft() {
+    if (!currentDraftData) {
+        showNotification('No draft data available', 'error');
+        return;
+    }
+    
+    const caption = document.getElementById('draftCaptionText').value;
+    const btn = document.getElementById('confirmSaveDraftBtn');
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+    
+    try {
+        const response = await fetch('/api/posts/draft', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                imageUrl: currentDraftData.imageUrl,
+                prompt: currentDraftData.prompt,
+                model: currentDraftData.model,
+                testId: currentDraftData.testId,
+                parameters: currentDraftData.parameters,
+                generateCaption: !caption, // Generate caption if not provided
+                caption: caption || undefined
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('Draft post saved! Redirecting to My Posts...', 'success');
+            
+            // Close modal
+            saveDraftModal?.hide();
+            
+            // Redirect to My Posts after short delay
+            setTimeout(() => {
+                window.location.href = '/dashboard/posts';
+            }, 1500);
+        } else {
+            throw new Error(data.error || 'Failed to save draft');
+        }
+    } catch (error) {
+        console.error('[ImageDashboard] Error saving draft:', error);
+        showNotification('Failed to save draft: ' + error.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check me-1"></i>Save Draft';
+    }
+}
+
+/**
+ * Open share to social modal (placeholder for social sharing)
+ */
+function openShareModal() {
+    const modal = document.getElementById('imagePreviewModal');
+    const imageUrl = modal.dataset.imageUrl;
+    
+    if (!imageUrl) {
+        showNotification('No image to share', 'error');
+        return;
+    }
+    
+    // For now, redirect to My Posts where social sharing is available
+    showNotification('Saving image first...', 'info');
+    saveAsDraftPost();
 }

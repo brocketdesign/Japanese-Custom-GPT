@@ -239,6 +239,13 @@ window.updateImageCount = function(chatId, count) {
 const sentImageIds = new Set();
 const trasckedImageTitles = new Set();
 window.generateImage = async function(data, disableCompletion = false) {
+    console.log('[generateImage] Called with data:', JSON.stringify({
+        imageId: data?.imageId || data?.id,
+        userChatId: data?.userChatId,
+        isMergeFace: data?.isMergeFace,
+        hasImageUrl: !!(data?.imageUrl || data?.url)
+    }, null, 2));
+    
     // Validate essential data
     if (!data || !data.userChatId || (!data.imageUrl && !data.url)) {
         console.error('[generateImage] Missing essential data:', {
@@ -254,7 +261,7 @@ window.generateImage = async function(data, disableCompletion = false) {
     const imageUrl = data.imageUrl || data.url;
     const imageId = data.imageId || data.id;
     const checkImageExist = $(`.assistant-image-box[data-id='${imageId}']`);
-    console.log(`[generateImage] Processing image with ID ${imageId} for chat ${data.userChatId}`);
+    console.log(`[generateImage] Processing image with ID ${imageId} for chat ${data.userChatId}, isMergeFace: ${data.isMergeFace}`);
     if(!imageId || imageId === '' || imageId === null || imageId === undefined) {
         console.warn(`[generateImage] Invalid image ID for chat ${data.userChatId}`);
         return;

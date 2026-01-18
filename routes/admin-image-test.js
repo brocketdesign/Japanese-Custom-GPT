@@ -20,20 +20,21 @@ const {
   saveImageRating,
   getImageRating
 } = require('../models/admin-image-test-utils');
+const { removeUserPoints, getUserPoints } = require('../models/user-points-utils');
+const { PRICING_CONFIG, getImageGenerationCost } = require('../config/pricing');
 
 async function routes(fastify, options) {
   
   /**
-   * GET /admin/image-test
-   * Render the image model test dashboard
+   * GET /dashboard/image
+   * Render the image model test dashboard (accessible to all authenticated users)
    */
-  fastify.get('/admin/image-test', async (request, reply) => {
+  fastify.get('/dashboard/image', async (request, reply) => {
     try {
       const user = request.user;
-      const isAdmin = await checkUserAdmin(fastify, user._id);
       
-      if (!isAdmin) {
-        return reply.status(403).send({ error: 'Access denied' });
+      if (!user) {
+        return reply.redirect('/login');
       }
 
       const db = fastify.mongo.db;
@@ -89,8 +90,11 @@ async function routes(fastify, options) {
         };
       });
 
+      // Get user's current points
+      const userPoints = await getUserPoints(db, user._id);
+
       return reply.view('/admin/image-test', {
-        title: 'Image Model Test Dashboard',
+        title: 'Image Dashboard',
         user,
         translations,
         models,
@@ -100,7 +104,9 @@ async function routes(fastify, options) {
         stylePresets: STYLE_PRESETS,
         recentTests,
         defaultModels,
-        modelConfigs: MODEL_CONFIGS
+        modelConfigs: MODEL_CONFIGS,
+        userPoints,
+        imageCostPerUnit: PRICING_CONFIG.IMAGE_GENERATION.BASE_COST_PER_IMAGE
       });
     } catch (error) {
       console.error('[AdminImageTest] Error loading dashboard:', error);
@@ -109,18 +115,18 @@ async function routes(fastify, options) {
   });
 
   /**
-   * POST /admin/image-test/generate
+   * POST /dashboard/image/generate
    * Start image generation test for selected models
    */
-  fastify.post('/admin/image-test/generate', async (request, reply) => {
+  fastify.post('/dashboard/image/generate', async (request, reply) => {
     try {
       const user = request.user;
-      const isAdmin = await checkUserAdmin(fastify, user._id);
       
-      if (!isAdmin) {
-        return reply.status(403).send({ error: 'Access denied' });
+      if (!user) {
+        return reply.status(401).send({ error: 'Unauthorized' });
       }
 
+      const db = fastify.mongo.db;
       const { models, selectedSDModels, prompt, basePrompt, size, style, skipStyleApplication, negativePrompt, steps, guidanceScale, samplerName, imagesPerModel } = request.body;
 
       if ((!models || !Array.isArray(models) || models.length === 0) && 
@@ -130,6 +136,41 @@ async function routes(fastify, options) {
 
       if (!prompt || prompt.trim() === '') {
         return reply.status(400).send({ error: 'Prompt is required' });
+      }
+
+      // Calculate total cost
+      const numImages = Math.max(1, Math.min(4, parseInt(imagesPerModel) || 1));
+      const standardModelCount = models?.length || 0;
+      const sdModelCount = selectedSDModels?.length || 0;
+      const totalModels = standardModelCount + sdModelCount;
+      const totalImages = totalModels * numImages;
+      const totalCost = getImageGenerationCost(totalImages);
+
+      // Check user points
+      const userPoints = await getUserPoints(db, user._id);
+      if (userPoints < totalCost) {
+        return reply.status(402).send({ 
+          error: 'Insufficient points', 
+          required: totalCost, 
+          available: userPoints,
+          message: `You need ${totalCost} points but only have ${userPoints} points.`
+        });
+      }
+
+      // Deduct points before starting generation
+      try {
+        await removeUserPoints(
+          db, 
+          user._id, 
+          totalCost, 
+          request.translations?.points?.deduction_reasons?.image_generation || 'Image generation', 
+          'image_generation', 
+          fastify
+        );
+        console.log(`[AdminImageTest] Deducted ${totalCost} points from user ${user._id} for ${totalImages} images`);
+      } catch (pointsError) {
+        console.error('[AdminImageTest] Error deducting points:', pointsError);
+        return reply.status(402).send({ error: 'Error deducting points for image generation.' });
       }
 
       console.log(`[AdminImageTest] Starting generation for ${models?.length || 0} standard models and ${selectedSDModels?.length || 0} SD models`);
@@ -273,16 +314,15 @@ async function routes(fastify, options) {
   });
 
   /**
-   * GET /admin/image-test/status/:taskId
+   * GET /dashboard/image/status/:taskId
    * Check status of an async generation task
    */
-  fastify.get('/admin/image-test/status/:taskId', async (request, reply) => {
+  fastify.get('/dashboard/image/status/:taskId', async (request, reply) => {
     try {
       const user = request.user;
-      const isAdmin = await checkUserAdmin(fastify, user._id);
       
-      if (!isAdmin) {
-        return reply.status(403).send({ error: 'Access denied' });
+      if (!user) {
+        return reply.status(401).send({ error: 'Unauthorized' });
       }
 
       const { taskId } = request.params;
@@ -295,7 +335,7 @@ async function routes(fastify, options) {
       
       return reply.send(result);
     } catch (error) {
-      console.error('[AdminImageTest] Error checking status:', error);
+      console.error('[ImageDashboard] Error checking status:', error);
       return reply.status(500).send({ 
         status: 'error', 
         error: error.message 
@@ -304,16 +344,15 @@ async function routes(fastify, options) {
   });
 
   /**
-   * POST /admin/image-test/save-result
+   * POST /dashboard/image/save-result
    * Save a completed test result
    */
-  fastify.post('/admin/image-test/save-result', async (request, reply) => {
+  fastify.post('/dashboard/image/save-result', async (request, reply) => {
     try {
       const user = request.user;
-      const isAdmin = await checkUserAdmin(fastify, user._id);
       
-      if (!isAdmin) {
-        return reply.status(403).send({ error: 'Access denied' });
+      if (!user) {
+        return reply.status(401).send({ error: 'Unauthorized' });
       }
 
       const db = fastify.mongo.db;
@@ -328,7 +367,7 @@ async function routes(fastify, options) {
               const s3Url = await uploadTestImageToS3(img.imageUrl, result.modelId);
               result.images[i].s3Url = s3Url;
             } catch (err) {
-              console.error(`[AdminImageTest] Failed to upload to S3:`, err.message);
+              console.error(`[ImageDashboard] Failed to upload to S3:`, err.message);
             }
           }
         }
@@ -339,22 +378,21 @@ async function routes(fastify, options) {
 
       return reply.send({ success: true, testId });
     } catch (error) {
-      console.error('[AdminImageTest] Error saving result:', error);
+      console.error('[ImageDashboard] Error saving result:', error);
       return reply.status(500).send({ error: error.message });
     }
   });
 
   /**
-   * GET /admin/image-test/stats
+   * GET /dashboard/image/stats
    * Get model statistics
    */
-  fastify.get('/admin/image-test/stats', async (request, reply) => {
+  fastify.get('/dashboard/image/stats', async (request, reply) => {
     try {
       const user = request.user;
-      const isAdmin = await checkUserAdmin(fastify, user._id);
       
-      if (!isAdmin) {
-        return reply.status(403).send({ error: 'Access denied' });
+      if (!user) {
+        return reply.status(401).send({ error: 'Unauthorized' });
       }
 
       const db = fastify.mongo.db;
@@ -362,22 +400,21 @@ async function routes(fastify, options) {
 
       return reply.send({ stats });
     } catch (error) {
-      console.error('[AdminImageTest] Error getting stats:', error);
+      console.error('[ImageDashboard] Error getting stats:', error);
       return reply.status(500).send({ error: error.message });
     }
   });
 
   /**
-   * GET /admin/image-test/history
+   * GET /dashboard/image/history
    * Get recent test history
    */
-  fastify.get('/admin/image-test/history', async (request, reply) => {
+  fastify.get('/dashboard/image/history', async (request, reply) => {
     try {
       const user = request.user;
-      const isAdmin = await checkUserAdmin(fastify, user._id);
       
-      if (!isAdmin) {
-        return reply.status(403).send({ error: 'Access denied' });
+      if (!user) {
+        return reply.status(401).send({ error: 'Unauthorized' });
       }
 
       const db = fastify.mongo.db;
@@ -387,22 +424,22 @@ async function routes(fastify, options) {
 
       return reply.send({ history });
     } catch (error) {
-      console.error('[AdminImageTest] Error getting history:', error);
+      console.error('[ImageDashboard] Error getting history:', error);
       return reply.status(500).send({ error: error.message });
     }
   });
 
   /**
-   * PUT /admin/image-test/default-model
+   * PUT /dashboard/image/default-model
    * Set the default character creation model for a style
    */
-  fastify.put('/admin/image-test/default-model', async (request, reply) => {
+  fastify.put('/dashboard/image/default-model', async (request, reply) => {
     try {
       const user = request.user;
       const isAdmin = await checkUserAdmin(fastify, user._id);
       
       if (!isAdmin) {
-        return reply.status(403).send({ error: 'Access denied' });
+        return reply.status(403).send({ error: 'Access denied. Admin only.' });
       }
 
       const { style, modelId } = request.body;
@@ -423,22 +460,21 @@ async function routes(fastify, options) {
         message: `Default ${style} model set to ${MODEL_CONFIGS[modelId].name}` 
       });
     } catch (error) {
-      console.error('[AdminImageTest] Error setting default model:', error);
+      console.error('[ImageDashboard] Error setting default model:', error);
       return reply.status(500).send({ error: error.message });
     }
   });
 
   /**
-   * GET /admin/image-test/default-models
+   * GET /dashboard/image/default-models
    * Get default character creation models
    */
-  fastify.get('/admin/image-test/default-models', async (request, reply) => {
+  fastify.get('/dashboard/image/default-models', async (request, reply) => {
     try {
       const user = request.user;
-      const isAdmin = await checkUserAdmin(fastify, user._id);
       
-      if (!isAdmin) {
-        return reply.status(403).send({ error: 'Access denied' });
+      if (!user) {
+        return reply.status(401).send({ error: 'Unauthorized' });
       }
 
       const db = fastify.mongo.db;
@@ -446,22 +482,22 @@ async function routes(fastify, options) {
 
       return reply.send({ defaultModels });
     } catch (error) {
-      console.error('[AdminImageTest] Error getting default models:', error);
+      console.error('[ImageDashboard] Error getting default models:', error);
       return reply.status(500).send({ error: error.message });
     }
   });
 
   /**
-   * DELETE /admin/image-test/stats/reset
-   * Reset model statistics (for testing purposes)
+   * DELETE /dashboard/image/stats/reset
+   * Reset model statistics (admin only)
    */
-  fastify.delete('/admin/image-test/stats/reset', async (request, reply) => {
+  fastify.delete('/dashboard/image/stats/reset', async (request, reply) => {
     try {
       const user = request.user;
       const isAdmin = await checkUserAdmin(fastify, user._id);
       
       if (!isAdmin) {
-        return reply.status(403).send({ error: 'Access denied' });
+        return reply.status(403).send({ error: 'Access denied. Admin only.' });
       }
 
       const db = fastify.mongo.db;
@@ -480,22 +516,21 @@ async function routes(fastify, options) {
         message: modelId ? `Stats reset for ${modelId}` : 'All stats reset' 
       });
     } catch (error) {
-      console.error('[AdminImageTest] Error resetting stats:', error);
+      console.error('[ImageDashboard] Error resetting stats:', error);
       return reply.status(500).send({ error: error.message });
     }
   });
 
   /**
-   * POST /admin/image-test/rate-image
+   * POST /dashboard/image/rate-image
    * Save an image rating
    */
-  fastify.post('/admin/image-test/rate-image', async (request, reply) => {
+  fastify.post('/dashboard/image/rate-image', async (request, reply) => {
     try {
       const user = request.user;
-      const isAdmin = await checkUserAdmin(fastify, user._id);
       
-      if (!isAdmin) {
-        return reply.status(403).send({ error: 'Access denied' });
+      if (!user) {
+        return reply.status(401).send({ error: 'Unauthorized' });
       }
 
       const db = fastify.mongo.db;
@@ -513,22 +548,21 @@ async function routes(fastify, options) {
 
       return reply.send({ success: true });
     } catch (error) {
-      console.error('[AdminImageTest] Error saving rating:', error);
+      console.error('[ImageDashboard] Error saving rating:', error);
       return reply.status(500).send({ error: error.message });
     }
   });
 
   /**
-   * GET /admin/image-test/rating/:testId
+   * GET /dashboard/image/rating/:testId
    * Get rating for a test
    */
-  fastify.get('/admin/image-test/rating/:testId', async (request, reply) => {
+  fastify.get('/dashboard/image/rating/:testId', async (request, reply) => {
     try {
       const user = request.user;
-      const isAdmin = await checkUserAdmin(fastify, user._id);
       
-      if (!isAdmin) {
-        return reply.status(403).send({ error: 'Access denied' });
+      if (!user) {
+        return reply.status(401).send({ error: 'Unauthorized' });
       }
 
       const db = fastify.mongo.db;
@@ -542,7 +576,7 @@ async function routes(fastify, options) {
         return reply.send({ success: false, rating: null });
       }
     } catch (error) {
-      console.error('[AdminImageTest] Error getting rating:', error);
+      console.error('[ImageDashboard] Error getting rating:', error);
       return reply.status(500).send({ error: error.message });
     }
   });

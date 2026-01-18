@@ -92,13 +92,17 @@ async function getOrCreateProfile(db, userId, userEmail, userName) {
     console.log(`[Social API] Creating Late.dev profile for user ${userId}`);
     const profileData = {
       name: userName || `User ${userId}`,
-      ...(userEmail && { email: userEmail })
+      description: `Profile for user ${userId}`,
+      color: '#6E20F4' // Match app's primary color
     };
 
     const response = await lateApiRequest('/profiles', 'POST', profileData);
-    const profileId = response.id || response.profileId || response._id;
+    
+    // Response format: { message: "...", profile: { _id: "...", ... } }
+    const profileId = response.profile?._id || response.profile?.id;
 
     if (!profileId) {
+      console.error(`[Social API] Unexpected response format:`, response);
       throw new Error('Profile ID not returned from Late.dev');
     }
 
@@ -115,10 +119,11 @@ async function getOrCreateProfile(db, userId, userEmail, userName) {
     // Try to list existing profiles as fallback
     try {
       const profilesResponse = await lateApiRequest('/profiles');
-      const profiles = Array.isArray(profilesResponse) ? profilesResponse : (profilesResponse.profiles || []);
+      // Response format: { profiles: [{ _id: "...", ... }, ...] }
+      const profiles = profilesResponse.profiles || [];
       
       if (profiles.length > 0) {
-        const defaultProfileId = profiles[0].id || profiles[0].profileId || profiles[0]._id;
+        const defaultProfileId = profiles[0]._id || profiles[0].id;
         if (defaultProfileId) {
           await db.collection('users').updateOne(
             { _id: new ObjectId(userId) },

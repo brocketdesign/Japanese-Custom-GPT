@@ -278,7 +278,7 @@ async function routes(fastify, options) {
       }
 
       // Fetch connected accounts from Late.dev to get the actual account ID
-      let lateAccountId = username; // Fallback to username
+      let lateAccountId = null;
       try {
         const accountsResponse = await lateApiRequest(`/profiles/${profileIdForConnection}/accounts`);
         const accounts = accountsResponse.accounts || accountsResponse || [];
@@ -301,7 +301,15 @@ async function routes(fastify, options) {
           }
         }
       } catch (fetchError) {
-        console.warn(`[Social API] Could not fetch accounts from Late.dev, using username as fallback:`, fetchError.message);
+        console.warn(`[Social API] Could not fetch accounts from Late.dev:`, fetchError.message);
+        // Don't use username as fallback - it will cause posting to fail
+        // The lateAccountId will be resolved on first post attempt
+      }
+      
+      // If we couldn't get the account ID, we'll try to resolve it later when posting
+      if (!lateAccountId) {
+        console.warn(`[Social API] Could not resolve Late.dev account ID for ${platform}/@${username}, will retry on post`);
+        lateAccountId = `pending_${username}`; // Mark as pending resolution
       }
 
       const connection = {
@@ -535,14 +543,24 @@ async function routes(fastify, options) {
       // Resolve Late.dev account IDs for each connection
       // For connections that don't have a proper account ID, try to fetch it
       const resolvedPlatforms = [];
+      const failedPlatforms = [];
+      
       for (const conn of targetConnections) {
         let accountId = conn.lateAccountId;
         
-        // If accountId looks like a username (no special chars, not a typical MongoDB ID), try to resolve it
-        if (accountId && !accountId.match(/^[a-f0-9]{24}$/i) && profileId) {
+        // If accountId is missing, pending, or looks like a username (not a MongoDB ObjectId), try to resolve it
+        const needsResolution = !accountId || 
+                               accountId.startsWith('pending_') || 
+                               !accountId.match(/^[a-f0-9]{24}$/i);
+        
+        if (needsResolution && profileId) {
           try {
+            console.log(`[Social API] Attempting to resolve account ID for ${conn.platform}/@${conn.username}`);
             const accountsResponse = await lateApiRequest(`/profiles/${profileId}/accounts`);
             const accounts = accountsResponse.accounts || accountsResponse || [];
+            
+            console.log(`[Social API] Found ${accounts.length} accounts for profile ${profileId}`);
+            
             const matchingAccount = accounts.find(acc => 
               acc.platform === conn.platform && 
               (acc.username === conn.username || acc.handle === conn.username || acc.name === conn.username)
@@ -550,23 +568,55 @@ async function routes(fastify, options) {
             
             if (matchingAccount) {
               accountId = matchingAccount._id || matchingAccount.id || matchingAccount.accountId;
-              console.log(`[Social API] Resolved account ID for ${conn.platform}: ${accountId}`);
               
-              // Update stored connection with proper account ID
-              await db.collection('users').updateOne(
-                { _id: new ObjectId(user._id), 'snsConnections.platform': conn.platform },
-                { $set: { 'snsConnections.$.lateAccountId': accountId } }
-              );
+              // Verify it's a valid ObjectId format
+              if (accountId && accountId.match(/^[a-f0-9]{24}$/i)) {
+                console.log(`[Social API] Resolved account ID for ${conn.platform}: ${accountId}`);
+                
+                // Update stored connection with proper account ID
+                await db.collection('users').updateOne(
+                  { _id: new ObjectId(user._id), 'snsConnections.platform': conn.platform },
+                  { $set: { 'snsConnections.$.lateAccountId': accountId } }
+                );
+              } else {
+                console.error(`[Social API] Invalid account ID format returned for ${conn.platform}: ${accountId}`);
+                accountId = null;
+              }
+            } else {
+              console.warn(`[Social API] No matching account found for ${conn.platform}/@${conn.username}`);
+              accountId = null;
             }
           } catch (resolveError) {
-            console.warn(`[Social API] Could not resolve account ID for ${conn.platform}:`, resolveError.message);
+            console.error(`[Social API] Could not resolve account ID for ${conn.platform}:`, resolveError.message);
+            accountId = null;
           }
         }
         
-        resolvedPlatforms.push({
-          accountId: accountId,
-          platformSpecificData: {}
+        // Only add to resolved platforms if we have a valid account ID
+        if (accountId && accountId.match(/^[a-f0-9]{24}$/i)) {
+          resolvedPlatforms.push({
+            accountId: accountId,
+            platformSpecificData: {}
+          });
+        } else {
+          failedPlatforms.push(conn.platform);
+          console.error(`[Social API] Failed to resolve valid account ID for ${conn.platform}/@${conn.username}`);
+        }
+      }
+      
+      // If all platforms failed, return an error
+      if (resolvedPlatforms.length === 0) {
+        console.error(`[Social API] No valid account IDs could be resolved. Failed platforms: ${failedPlatforms.join(', ')}`);
+        return reply.code(400).send({ 
+          error: 'Could not resolve account IDs for any selected platforms. Please try reconnecting your accounts.',
+          failedPlatforms,
+          needsReconnect: true
         });
+      }
+      
+      // Warn if some platforms failed
+      if (failedPlatforms.length > 0) {
+        console.warn(`[Social API] Some platforms failed to resolve: ${failedPlatforms.join(', ')}`);
       }
 
       // Create post via Late.dev

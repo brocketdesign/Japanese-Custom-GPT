@@ -850,27 +850,38 @@
   display: none;
 }
 
-#snsPostModal .sns-platform-label {
+#snsPostModal .sns-platform-btn {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(30, 30, 30, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  outline: none;
 }
 
-#snsPostModal .sns-platform-label:hover {
-  background: rgba(255, 255, 255, 0.15);
+#snsPostModal .sns-platform-btn:hover {
+  background: rgba(40, 40, 40, 0.9);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
 }
 
-#snsPostModal .sns-platform-checkbox:checked + .sns-platform-label {
-  background: rgba(110, 32, 244, 0.2);
-  border-color: #6E20F4;
+#snsPostModal .sns-platform-btn.active {
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.3) 0%, rgba(75, 0, 130, 0.3) 100%);
+  border-color: #8A2BE2;
   color: #fff;
+  box-shadow: 0 0 15px rgba(138, 43, 226, 0.4), inset 0 0 20px rgba(138, 43, 226, 0.1);
+  transform: translateY(-1px);
+}
+
+#snsPostModal .sns-platform-btn.active:hover {
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.4) 0%, rgba(75, 0, 130, 0.4) 100%);
+  box-shadow: 0 0 20px rgba(138, 43, 226, 0.5), inset 0 0 25px rgba(138, 43, 226, 0.15);
 }
 
 #snsPostModal .caption-style-btn.active {
@@ -884,6 +895,7 @@
   border: 1px solid rgba(130, 64, 255, 0.2);
   color: rgba(255, 255, 255, 0.9);
   resize: vertical;
+  min-height: 180px;
 }
 
 #snsPostModal textarea:focus {

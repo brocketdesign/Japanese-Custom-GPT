@@ -349,6 +349,15 @@
         // Platform checkbox change
         $(document).on('change', '.sns-platform-checkbox', updatePublishButton);
         
+        // Platform button click - toggle checkbox
+        $(document).on('click', '.sns-platform-btn', function() {
+            const checkboxId = $(this).data('checkbox-id');
+            const $checkbox = $(`#${checkboxId}`);
+            const isChecked = !$checkbox.prop('checked');
+            $checkbox.prop('checked', isChecked).trigger('change');
+            updatePlatformButtonState($(this), isChecked);
+        });
+        
         // Modal events
         $modal.on('show.bs.modal', onSnsPostModalOpen);
         $modal.on('hidden.bs.modal', onSnsPostModalClose);
@@ -419,16 +428,36 @@
                     <input type="checkbox" class="sns-platform-checkbox" 
                            id="platform_${conn.platform}_${conn.id}" 
                            data-platform="${conn.platform}"
-                           value="${conn.id}">
-                    <label for="platform_${conn.platform}_${conn.id}" class="sns-platform-label">
+                           value="${conn.id}"
+                           style="display: none;">
+                    <button type="button" class="sns-platform-btn" 
+                            data-checkbox-id="platform_${conn.platform}_${conn.id}">
                         ${platformIcon}
                         <span>@${conn.username}</span>
-                    </label>
+                    </button>
                 </div>
             `;
         }).join('');
 
         container.html(html);
+        
+        // Initialize button states based on checkbox states
+        $('.sns-platform-btn').each(function() {
+            const checkboxId = $(this).data('checkbox-id');
+            const $checkbox = $(`#${checkboxId}`);
+            updatePlatformButtonState($(this), $checkbox.prop('checked'));
+        });
+    }
+
+    /**
+     * Update platform button active state
+     */
+    function updatePlatformButtonState($button, isActive) {
+        if (isActive) {
+            $button.addClass('active');
+        } else {
+            $button.removeClass('active');
+        }
     }
 
     /**

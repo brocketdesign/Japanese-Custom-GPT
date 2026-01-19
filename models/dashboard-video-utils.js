@@ -408,22 +408,42 @@ function validateAndTruncatePrompt(prompt, defaultPrompt = 'Generate a dynamic v
  * @returns {Object} - Task info with taskId and startTime
  */
 async function initializeVideoTest(modelId, params) {
+  console.log('[VideoDashboard-Utils] ========== initializeVideoTest START ==========');
+  console.log('[VideoDashboard-Utils] Model ID:', modelId);
+  console.log('[VideoDashboard-Utils] Params received:', {
+    prompt: params.prompt?.substring(0, 100) + (params.prompt?.length > 100 ? '...' : ''),
+    duration: params.duration,
+    aspectRatio: params.aspectRatio,
+    imageUrl: params.imageUrl ? `[BASE64 - ${params.imageUrl.length} chars]` : 'NOT PROVIDED',
+    image: params.image ? `[BASE64 - ${params.image.length} chars]` : 'NOT PROVIDED',
+    video_file: params.video_file ? `[BASE64 - ${params.video_file.length} chars]` : 'NOT PROVIDED',
+    face_image_file: params.face_image_file ? `[BASE64 - ${params.face_image_file.length} chars]` : 'NOT PROVIDED'
+  });
+  
   const config = VIDEO_MODEL_CONFIGS[modelId];
   if (!config) {
+    console.log('[VideoDashboard-Utils] ❌ Unknown model:', modelId);
     throw new Error(`Unknown model: ${modelId}`);
   }
 
+  console.log('[VideoDashboard-Utils] Model config found:', config.name);
+  console.log('[VideoDashboard-Utils] Endpoint:', config.endpoint);
+  console.log('[VideoDashboard-Utils] Category:', config.category);
+  console.log('[VideoDashboard-Utils] Async:', config.async);
+
   const startTime = Date.now();
-  console.log(`[VideoDashboard] 🚀 Starting ${config.name} generation`);
-  console.log(`[VideoDashboard] Prompt: ${params.prompt?.substring(0, 100)}...`);
-  console.log(`[VideoDashboard] Category: ${config.category}`);
+  console.log(`[VideoDashboard-Utils] 🚀 Starting ${config.name} generation at ${new Date().toISOString()}`);
+  console.log(`[VideoDashboard-Utils] Prompt: ${params.prompt?.substring(0, 100)}${params.prompt?.length > 100 ? '...' : ''}`);
+  console.log(`[VideoDashboard-Utils] Category: ${config.category}`);
 
   // Validate requirements based on category
   if (config.category === 'i2v' && !params.imageUrl && !params.image) {
+    console.log('[VideoDashboard-Utils] ❌ I2V mode but no image provided');
     throw new Error(`${config.name} requires an image input`);
   }
   
   if (config.category === 'face' && (!params.video_file || !params.face_image_file)) {
+    console.log('[VideoDashboard-Utils] ❌ Face mode but missing video or face image');
     throw new Error(`${config.name} requires both a video file and a face image`);
   }
 
@@ -840,10 +860,25 @@ async function initializeVideoTest(modelId, params) {
           url: webhookUrl
         }
       };
+      console.log(`[VideoDashboard-Utils] Added webhook URL: ${webhookUrl}`);
     }
 
-    console.log(`[VideoDashboard] Request body:`, JSON.stringify(requestBody, null, 2));
+    // Log the request body (with truncated base64 data for readability)
+    const logSafeRequestBody = JSON.stringify(requestBody, (key, value) => {
+      if (typeof value === 'string' && value.length > 200 && (value.startsWith('data:') || value.startsWith('http'))) {
+        return value.substring(0, 100) + `... [${value.length} chars total]`;
+      }
+      return value;
+    }, 2);
+    console.log(`[VideoDashboard-Utils] Request body (truncated):`, logSafeRequestBody);
+    console.log(`[VideoDashboard-Utils] Full request body size:`, JSON.stringify(requestBody).length, 'chars');
 
+    console.log(`[VideoDashboard-Utils] 📤 Sending POST request to: ${config.endpoint}`);
+    console.log(`[VideoDashboard-Utils] API Key present: ${!!process.env.NOVITA_API_KEY}`);
+    console.log(`[VideoDashboard-Utils] API Key (first 10 chars): ${process.env.NOVITA_API_KEY?.substring(0, 10)}...`);
+    
+    const requestStartTime = Date.now();
+    
     const response = await axios.post(config.endpoint, requestBody, {
       headers: {
         'Authorization': `Bearer ${process.env.NOVITA_API_KEY}`,
@@ -852,22 +887,36 @@ async function initializeVideoTest(modelId, params) {
       timeout: 120000 // 2 minutes timeout
     });
 
-    console.log(`[VideoDashboard] Response status: ${response.status}`);
+    const requestDuration = Date.now() - requestStartTime;
+    console.log(`[VideoDashboard-Utils] 📥 Response received in ${requestDuration}ms`);
+    console.log(`[VideoDashboard-Utils] Response status: ${response.status}`);
+    console.log(`[VideoDashboard-Utils] Response headers:`, JSON.stringify(response.headers, null, 2));
+    console.log(`[VideoDashboard-Utils] Response data:`, JSON.stringify(response.data, null, 2));
 
     if (response.status !== 200) {
       const errorMsg = response.data?.message || response.data?.error || `API returned status ${response.status}`;
+      console.log(`[VideoDashboard-Utils] ❌ Non-200 status: ${errorMsg}`);
       throw new Error(errorMsg);
     }
 
     // Async API returns task_id
     const taskId = response.data.task_id || response.data.data?.task_id || response.data.id;
+    console.log(`[VideoDashboard-Utils] Looking for task_id in response...`);
+    console.log(`[VideoDashboard-Utils]   - response.data.task_id: ${response.data.task_id}`);
+    console.log(`[VideoDashboard-Utils]   - response.data.data?.task_id: ${response.data.data?.task_id}`);
+    console.log(`[VideoDashboard-Utils]   - response.data.id: ${response.data.id}`);
+    console.log(`[VideoDashboard-Utils]   - Resolved task_id: ${taskId}`);
     
     if (!taskId) {
-      console.error(`[VideoDashboard] No task_id found in response:`, JSON.stringify(response.data, null, 2));
+      console.error(`[VideoDashboard-Utils] ❌ No task_id found in response:`, JSON.stringify(response.data, null, 2));
       throw new Error('No task_id returned from API. Response: ' + JSON.stringify(response.data));
     }
     
-    console.log(`[VideoDashboard] ✅ Task created with ID: ${taskId}`);
+    console.log(`[VideoDashboard-Utils] ✅ Task created successfully`);
+    console.log(`[VideoDashboard-Utils]   - Task ID: ${taskId}`);
+    console.log(`[VideoDashboard-Utils]   - Model: ${config.name}`);
+    console.log(`[VideoDashboard-Utils]   - Category: ${config.category}`);
+    console.log('[VideoDashboard-Utils] ========== initializeVideoTest END ==========');
     
     return {
       modelId,
@@ -879,13 +928,14 @@ async function initializeVideoTest(modelId, params) {
       async: true
     };
   } catch (error) {
-    console.error(`[VideoDashboard] ❌ Error with ${config.name}:`, error.message);
+    console.error(`[VideoDashboard-Utils] ❌ Error with ${config.name}:`, error.message);
     
     let errorMessage = error.message;
     
     if (error.response) {
-      console.error(`[VideoDashboard] Response status:`, error.response.status);
-      console.error(`[VideoDashboard] Response data:`, JSON.stringify(error.response.data, null, 2));
+      console.error(`[VideoDashboard-Utils] Response status:`, error.response.status);
+      console.error(`[VideoDashboard-Utils] Response data:`, JSON.stringify(error.response.data, null, 2));
+      console.error(`[VideoDashboard-Utils] Response headers:`, JSON.stringify(error.response.headers, null, 2));
       
       const data = error.response.data;
       if (data?.message) {
@@ -893,7 +943,19 @@ async function initializeVideoTest(modelId, params) {
       } else if (data?.error) {
         errorMessage = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
       }
+    } else if (error.request) {
+      console.error(`[VideoDashboard-Utils] No response received (request made but no response)`);
+      console.error(`[VideoDashboard-Utils] Request config:`, {
+        url: error.config?.url,
+        method: error.config?.method,
+        timeout: error.config?.timeout
+      });
+    } else {
+      console.error(`[VideoDashboard-Utils] Error setting up request:`, error.message);
     }
+    
+    console.error(`[VideoDashboard-Utils] Error stack:`, error.stack);
+    console.log('[VideoDashboard-Utils] ========== initializeVideoTest END (ERROR) ==========');
     
     const enhancedError = new Error(errorMessage);
     enhancedError.originalError = error;
@@ -908,47 +970,72 @@ async function initializeVideoTest(modelId, params) {
  * @returns {Object} - Task status and results
  */
 async function checkVideoTaskResult(taskId) {
+  console.log('[VideoDashboard-Utils] ========== checkVideoTaskResult START ==========');
+  console.log('[VideoDashboard-Utils] Task ID:', taskId);
+  console.log('[VideoDashboard-Utils] Timestamp:', new Date().toISOString());
+  
   try {
-    const response = await axios.get(
-      `https://api.novita.ai/v3/async/task-result?task_id=${taskId}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.NOVITA_API_KEY}`
-        },
-        timeout: 10000
-      }
-    );
+    const apiUrl = `https://api.novita.ai/v3/async/task-result?task_id=${taskId}`;
+    console.log('[VideoDashboard-Utils] 📤 Fetching task status from:', apiUrl);
+    
+    const response = await axios.get(apiUrl, {
+      headers: {
+        'Authorization': `Bearer ${process.env.NOVITA_API_KEY}`
+      },
+      timeout: 10000
+    });
+
+    console.log('[VideoDashboard-Utils] 📥 Response received');
+    console.log('[VideoDashboard-Utils] Response status:', response.status);
+    console.log('[VideoDashboard-Utils] Response data:', JSON.stringify(response.data, null, 2));
 
     const taskData = response.data.task || response.data.data?.task || {};
     const taskStatus = taskData.status || response.data.status;
     const progressPercent = taskData.progress_percent || response.data.progress_percent || 0;
 
-    console.log(`[VideoDashboard] Task ${taskId} status: ${taskStatus}, progress: ${progressPercent}%`);
+    console.log('[VideoDashboard-Utils] Parsed task data:');
+    console.log('[VideoDashboard-Utils]   - taskStatus:', taskStatus);
+    console.log('[VideoDashboard-Utils]   - progressPercent:', progressPercent);
+    console.log('[VideoDashboard-Utils]   - taskData.reason:', taskData.reason);
+    console.log('[VideoDashboard-Utils]   - taskData.eta:', taskData.eta);
 
     if (taskStatus === 'TASK_STATUS_SUCCEED' || taskStatus === 'succeed') {
       const videos = response.data.videos || response.data.data?.videos || [];
       
-      console.log(`[VideoDashboard] ✅ Task ${taskId} completed with ${videos.length} video(s)`);
+      console.log(`[VideoDashboard-Utils] ✅ Task ${taskId} completed with ${videos.length} video(s)`);
+      console.log('[VideoDashboard-Utils] Videos array:', JSON.stringify(videos, null, 2));
       
       // Download video and upload to S3
       let s3VideoUrl = null;
       if (videos.length > 0 && videos[0].video_url) {
+        console.log('[VideoDashboard-Utils] 📥 Downloading video from:', videos[0].video_url);
         try {
           const videoResponse = await axios.get(videos[0].video_url, { 
             responseType: 'arraybuffer',
             timeout: 120000
           });
+          console.log('[VideoDashboard-Utils] Video downloaded, size:', videoResponse.data.length, 'bytes');
+          
           const videoBuffer = Buffer.from(videoResponse.data);
           const hash = createHash('md5').update(videoBuffer).digest('hex');
+          console.log('[VideoDashboard-Utils] Video hash:', hash);
+          
+          console.log('[VideoDashboard-Utils] 📤 Uploading to S3...');
           s3VideoUrl = await uploadToS3(videoBuffer, hash, 'dashboard_video.mp4');
-          console.log(`[VideoDashboard] Video uploaded to S3: ${s3VideoUrl}`);
+          console.log(`[VideoDashboard-Utils] ✅ Video uploaded to S3: ${s3VideoUrl}`);
         } catch (uploadError) {
-          console.error(`[VideoDashboard] Failed to upload to S3:`, uploadError.message);
+          console.error(`[VideoDashboard-Utils] ❌ Failed to upload to S3:`, uploadError.message);
+          console.error(`[VideoDashboard-Utils] Upload error stack:`, uploadError.stack);
           s3VideoUrl = videos[0].video_url; // Fallback to Novita URL
+          console.log('[VideoDashboard-Utils] Using fallback Novita URL:', s3VideoUrl);
         }
+      } else {
+        console.log('[VideoDashboard-Utils] ⚠️ No videos or no video_url in response');
+        console.log('[VideoDashboard-Utils] videos.length:', videos.length);
+        console.log('[VideoDashboard-Utils] videos[0]?.video_url:', videos[0]?.video_url);
       }
       
-      return {
+      const result = {
         status: 'completed',
         progress: 100,
         videos: videos.map(video => ({
@@ -956,35 +1043,64 @@ async function checkVideoTaskResult(taskId) {
           duration: video.duration
         }))
       };
+      console.log('[VideoDashboard-Utils] Returning completed result:', JSON.stringify(result, null, 2));
+      console.log('[VideoDashboard-Utils] ========== checkVideoTaskResult END ==========');
+      return result;
+      
     } else if (taskStatus === 'TASK_STATUS_FAILED' || taskStatus === 'failed') {
       const reason = taskData.reason || response.data.reason || response.data.error || 'Unknown error';
-      console.error(`[VideoDashboard] ❌ Task ${taskId} failed: ${reason}`);
+      console.error(`[VideoDashboard-Utils] ❌ Task ${taskId} failed: ${reason}`);
+      console.error('[VideoDashboard-Utils] Full taskData:', JSON.stringify(taskData, null, 2));
       
-      return {
+      const result = {
         status: 'failed',
         error: reason,
         progress: 0
       };
+      console.log('[VideoDashboard-Utils] Returning failed result:', JSON.stringify(result, null, 2));
+      console.log('[VideoDashboard-Utils] ========== checkVideoTaskResult END ==========');
+      return result;
+      
     } else if (taskStatus === 'TASK_STATUS_QUEUED' || taskStatus === 'TASK_STATUS_PROCESSING' || taskStatus === 'queued' || taskStatus === 'processing') {
-      return {
+      const result = {
         status: 'processing',
         progress: progressPercent,
         eta: taskData.eta || null
       };
+      console.log('[VideoDashboard-Utils] Task still processing:', JSON.stringify(result, null, 2));
+      console.log('[VideoDashboard-Utils] ========== checkVideoTaskResult END ==========');
+      return result;
+      
     } else {
-      console.warn(`[VideoDashboard] ⚠️ Unknown task status: ${taskStatus} for task ${taskId}`);
-      return {
+      console.warn(`[VideoDashboard-Utils] ⚠️ Unknown task status: ${taskStatus} for task ${taskId}`);
+      console.warn('[VideoDashboard-Utils] Full response.data:', JSON.stringify(response.data, null, 2));
+      const result = {
         status: 'processing',
         progress: progressPercent
       };
+      console.log('[VideoDashboard-Utils] Returning processing (unknown status):', JSON.stringify(result, null, 2));
+      console.log('[VideoDashboard-Utils] ========== checkVideoTaskResult END ==========');
+      return result;
     }
   } catch (error) {
-    console.error(`[VideoDashboard] ❌ Error checking task ${taskId}:`, error.message);
-    return {
+    console.error(`[VideoDashboard-Utils] ❌ Error checking task ${taskId}:`, error.message);
+    console.error('[VideoDashboard-Utils] Error stack:', error.stack);
+    
+    if (error.response) {
+      console.error('[VideoDashboard-Utils] Response status:', error.response.status);
+      console.error('[VideoDashboard-Utils] Response data:', JSON.stringify(error.response.data, null, 2));
+    } else if (error.request) {
+      console.error('[VideoDashboard-Utils] No response received');
+    }
+    
+    const result = {
       status: 'error',
       error: error.message || 'Failed to check task status',
       progress: 0
     };
+    console.log('[VideoDashboard-Utils] Returning error result:', JSON.stringify(result, null, 2));
+    console.log('[VideoDashboard-Utils] ========== checkVideoTaskResult END (ERROR) ==========');
+    return result;
   }
 }
 

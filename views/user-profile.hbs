@@ -9,14 +9,30 @@
     <link rel="stylesheet" href="/css/user-points.css">
     <link rel="stylesheet" href="/css/chat-footer.css">
     <link rel="stylesheet" href="/css/personas.css">
+    {{#if isCreator}}
+    <link rel="stylesheet" href="/css/creators.css">
+    <link rel="stylesheet" href="/css/subscriptions.css">
+    {{/if}}
 </head>
 <body>
     {{> dashboard-nav}}
 
-    <div id="swup" class="profile-container">
+    <div id="swup" class="profile-container {{#if isCreator}}creator-profile{{/if}}">
         <!-- Profile Header -->
-        <div class="profile-header">
+        <div class="profile-header {{#if isCreator}}creator-header{{/if}}">
+            {{#if isCreator}}
+            <!-- Creator Cover Image -->
+            <div class="profile-cover creator-cover" 
+                 style="{{#if creatorData.coverImage}}background-image: url('{{creatorData.coverImage}}');{{/if}}">
+                {{#if (or isMyProfile isAdmin)}}
+                <button class="cover-edit-btn" id="editCoverBtn" title="Change cover image">
+                    <i class="bi bi-camera"></i>
+                </button>
+                {{/if}}
+                <div class="cover-gradient-overlay"></div>
+            {{else}}
             <div class="profile-cover">
+            {{/if}}
                 <div class="profile-avatar-container">
                     <img id="profileImage" src="{{default userData.profileUrl '/img/avatar.png'}}" alt="{{userData.nickname}}" class="profile-avatar">
                     {{#if (or isMyProfile isAdmin)}}
@@ -24,21 +40,93 @@
                             <i class="bi bi-pencil"></i>
                         </div>
                     {{/if}}
+                    {{#if creatorData.verified}}
+                    <div class="creator-verified-badge" title="Verified Creator">
+                        <i class="bi bi-patch-check-fill"></i>
+                    </div>
+                    {{/if}}
                 </div>
                 
                 <div class="profile-info">
+                    {{#if isCreator}}
+                    <h1 class="profile-name">
+                        {{default creatorData.displayName userData.nickname}}
+                        {{#if creatorData.verified}}
+                        <i class="bi bi-patch-check-fill text-primary ms-2" style="font-size: 0.7em;"></i>
+                        {{/if}}
+                    </h1>
+                    <span class="creator-category-badge">
+                        <i class="bi bi-tag-fill me-1"></i>{{creatorData.categoryLabel}}
+                    </span>
+                    {{else}}
                     <h1 class="profile-name">{{userData.nickname}}</h1>
+                    {{/if}}
                     {{#if userData.bio}}
                         <p class="profile-intro">{{userData.bio}}</p>
+                    {{else if creatorData.bio}}
+                        <p class="profile-intro">{{creatorData.bio}}</p>
+                    {{/if}}
+                    
+                    {{!-- Creator Social Links --}}
+                    {{#if isCreator}}
+                    {{#if creatorData.socialLinks}}
+                    <div class="creator-social-links">
+                        {{#if creatorData.socialLinks.instagram}}
+                        <a href="{{creatorData.socialLinks.instagram}}" target="_blank" class="social-link" title="Instagram">
+                            <i class="bi bi-instagram"></i>
+                        </a>
+                        {{/if}}
+                        {{#if creatorData.socialLinks.twitter}}
+                        <a href="{{creatorData.socialLinks.twitter}}" target="_blank" class="social-link" title="Twitter">
+                            <i class="bi bi-twitter-x"></i>
+                        </a>
+                        {{/if}}
+                        {{#if creatorData.socialLinks.youtube}}
+                        <a href="{{creatorData.socialLinks.youtube}}" target="_blank" class="social-link" title="YouTube">
+                            <i class="bi bi-youtube"></i>
+                        </a>
+                        {{/if}}
+                        {{#if creatorData.socialLinks.website}}
+                        <a href="{{creatorData.socialLinks.website}}" target="_blank" class="social-link" title="Website">
+                            <i class="bi bi-globe"></i>
+                        </a>
+                        {{/if}}
+                    </div>
+                    {{/if}}
                     {{/if}}
                 </div>
             </div>
         </div>
 
         <!-- Action Buttons -->
-        <div class="profile-actions {{#if isMyProfile}}d-none{{/if}}">
+        <div class="profile-actions {{#if isMyProfile}}{{#unless isCreator}}my-profile-actions{{/unless}}{{/if}}">
             {{#if isMyProfile}}
+                {{!-- My Profile Actions --}}
+                {{#unless userData.isCreator}}
+                <a href="/creators/apply" class="action-btn action-btn-gradient become-creator-btn">
+                    <i class="bi bi-rocket-takeoff"></i>
+                    <span class="fw-bold">
+                        {{#if translations.profile.becomeCreator}}
+                            {{translations.profile.becomeCreator}}
+                        {{else}}
+                            Become a Creator
+                        {{/if}}
+                    </span>
+                </a>
+                {{else}}
+                <a href="/dashboard/posts" class="action-btn action-btn-secondary">
+                    <i class="bi bi-grid"></i>
+                    <span class="fw-bold">
+                        {{#if translations.profile.manageContent}}
+                            {{translations.profile.manageContent}}
+                        {{else}}
+                            Manage Content
+                        {{/if}}
+                    </span>
+                </a>
+                {{/unless}}
             {{else}}
+                {{!-- Other User's Profile Actions --}}
                 <button class="action-btn action-btn-primary follow-button {{#if userData.follow}}following{{/if}}" 
                         data-user-id="{{userData._id}}"
                         onclick="toggleFollow(this)">
@@ -51,6 +139,22 @@
                         {{/if}}
                     </span>
                 </button>
+                
+                {{!-- Subscribe Button for Creator Profiles (Placeholder for Phase 3) --}}
+                {{#if isCreator}}
+                <button class="action-btn action-btn-gradient subscribe-btn" 
+                        data-creator-id="{{userData._id}}"
+                        onclick="handleSubscribe(this)">
+                    <i class="bi bi-star-fill"></i>
+                    <span class="fw-bold">
+                        {{#if translations.profile.subscribe}}
+                            {{translations.profile.subscribe}}
+                        {{else}}
+                            Subscribe
+                        {{/if}}
+                    </span>
+                </button>
+                {{/if}}
             {{/if}}
         </div>
 
@@ -95,12 +199,11 @@
                     <i class="bi bi-chat-dots-fill"></i>
                     {{translations.profile.characters}}
                 </button>
-                {{#if isMyProfile}}
+                <!-- Posts tab visible to everyone (Phase 1) -->
                 <button class="tab-btn" data-tab="posts">
                     <i class="bi bi-images"></i>
                     {{translations.profile.posts}}
                 </button>
-                {{/if}}
             </div>
         </div>
 
@@ -122,29 +225,44 @@
                 <div id="user-chat-pagination-controls" class="d-flex justify-content-center my-3"></div>
             </div>
 
-            <!-- Posts Tab (My Social Posts & Schedules) -->
-            {{#if isMyProfile}}
+            <!-- Posts Tab (Public Profile Posts - Phase 1) -->
             <div id="posts-tab" class="tab-pane p-3" style="display: none;">
-                <!-- Recent Social Posts -->
-                <div class="posts-section mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="mb-0">
-                            <i class="bi bi-send-fill me-2 text-primary"></i>{{translations.profile.recentPosts}}
-                        </h6>
-                        <a href="/dashboard/posts" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-grid me-1"></i>{{translations.profile.viewAll}}
-                        </a>
+                <!-- Post Controls (Owner Only) -->
+                {{#if isMyProfile}}
+                <div class="posts-controls mb-4">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="showNsfwPosts">
+                                <label class="form-check-label" for="showNsfwPosts">Show NSFW</label>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="/dashboard/posts" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-grid me-1"></i>{{translations.profile.viewAll}}
+                            </a>
+                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                                <i class="bi bi-plus-lg me-1"></i>{{translations.profile.createPost}}
+                            </button>
+                        </div>
                     </div>
-                    <div id="user-social-posts" class="recent-posts-list">
+                </div>
+                {{/if}}
+
+                <!-- Profile Posts Grid -->
+                <div class="profile-posts-section">
+                    <div id="profile-posts-grid" class="posts-grid">
                         <div class="text-center p-4 text-muted">
                             <i class="bi bi-hourglass-split fs-4 mb-2"></i>
                             <p class="mb-0">{{translations.profile.loadingPosts}}</p>
                         </div>
                     </div>
+                    <div id="posts-pagination-controls" class="d-flex justify-content-center my-3"></div>
                 </div>
 
-                <!-- Scheduled Posts & Cron Jobs -->
-                <div class="schedules-section">
+                {{#if isMyProfile}}
+                <!-- Scheduled Posts Section (Owner Only) -->
+                <div class="schedules-section mt-4">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h6 class="mb-0">
                             <i class="bi bi-calendar-event me-2 text-warning"></i>{{translations.profile.scheduledPosts}}
@@ -160,8 +278,8 @@
                         </div>
                     </div>
                 </div>
+                {{/if}}
             </div>
-            {{/if}}
         </div>
 
         <!-- File Input (Hidden) -->
@@ -279,62 +397,168 @@
                     displayUserChats(userId, 1, true);
                 } else if (tabName === 'posts') {
                     $('#posts-tab').show();
-                    loadUserSocialPosts();
-                    loadUserSchedules();
+                    loadProfilePosts(1);
+                    if (isMyProfile) {
+                        loadUserSchedules();
+                    }
                 }
             });
+
+            // Current posts page state
+            let currentPostsPage = 1;
+            let showNsfw = false;
+
+            // NSFW toggle handler
+            $('#showNsfwPosts').on('change', function() {
+                showNsfw = $(this).is(':checked');
+                loadProfilePosts(1);
+            });
             
-            // Load user's social posts
-            async function loadUserSocialPosts() {
-                const container = $('#user-social-posts');
+            // Load profile posts (Phase 1 - public posts visible to all)
+            async function loadProfilePosts(page = 1) {
+                const container = $('#profile-posts-grid');
+                const paginationContainer = $('#posts-pagination-controls');
+                currentPostsPage = page;
+                
+                container.html(`
+                    <div class="text-center p-4 text-muted">
+                        <i class="bi bi-hourglass-split fs-4 mb-2"></i>
+                        <p class="mb-0">Loading posts...</p>
+                    </div>
+                `);
+                
                 try {
-                    const response = await fetch('/api/social/posts?limit=5');
+                    const response = await fetch(`/api/user/${userId}/public-posts?page=${page}&limit=12&nsfw=${showNsfw}`);
                     const data = await response.json();
                     
                     if (!data.success || !data.posts || data.posts.length === 0) {
                         container.html(`
                             <div class="text-center p-4 text-muted">
-                                <i class="bi bi-inbox fs-1 mb-2"></i>
-                                <p class="mb-0">No posts yet</p>
+                                <i class="bi bi-images fs-1 mb-2"></i>
+                                <p class="mb-0">${isMyProfile ? 'No posts yet. Create your first post!' : 'No posts yet.'}</p>
                             </div>
                         `);
+                        paginationContainer.html('');
                         return;
                     }
                     
-                    container.html(data.posts.map(post => `
-                        <div class="recent-post-item">
-                            <div class="post-thumbnail">
-                                ${post.mediaUrls && post.mediaUrls[0] 
-                                    ? `<img src="${post.mediaUrls[0]}" alt="Post" onerror="this.src='/img/placeholder.png'">`
-                                    : '<i class="bi bi-image text-muted fs-4"></i>'
-                                }
-                            </div>
-                            <div class="post-details">
-                                <div class="post-text">${post.text || 'No caption'}</div>
-                                <div class="post-meta">
-                                    <span class="post-platforms">
-                                        ${(post.platforms || []).map(p => `
-                                            <span class="platform-badge">
-                                                <i class="bi bi-${p.platform === 'instagram' ? 'instagram' : 'twitter-x'}"></i>
-                                            </span>
-                                        `).join('')}
-                                    </span>
-                                    <span class="post-time">
-                                        <i class="bi bi-clock me-1"></i>${formatTimeAgo(post.createdAt)}
-                                    </span>
-                                    <span class="badge ${post.status === 'published' ? 'bg-success' : 'bg-warning'}">${post.status || 'pending'}</span>
-                                </div>
-                            </div>
-                        </div>
-                    `).join(''));
+                    // Render posts grid
+                    container.html(data.posts.map(post => renderPostCard(post)).join(''));
+                    
+                    // Render pagination
+                    if (data.pagination.totalPages > 1) {
+                        renderPostsPagination(data.pagination, paginationContainer);
+                    } else {
+                        paginationContainer.html('');
+                    }
                 } catch (error) {
-                    console.error('Error loading social posts:', error);
+                    console.error('Error loading profile posts:', error);
                     container.html(`
                         <div class="text-center p-4 text-muted">
                             <i class="bi bi-exclamation-triangle fs-4 mb-2"></i>
                             <p class="mb-0">Failed to load posts</p>
                         </div>
                     `);
+                }
+            }
+
+            // Render a single post card
+            function renderPostCard(post) {
+                const mediaUrl = post.content?.imageUrl || post.content?.thumbnailUrl || post.content?.videoUrl;
+                const isVideo = post.type === 'video';
+                const caption = post.content?.caption || '';
+                const likes = post.likes || 0;
+                const commentsCount = (post.comments || []).length;
+                const isNsfw = post.metadata?.nsfw;
+                const visibility = post.visibility || 'public';
+                
+                // Visibility badge
+                let visibilityBadge = '';
+                if (isMyProfile && visibility !== 'public') {
+                    const visIcons = {
+                        'followers': '<i class="bi bi-people-fill"></i>',
+                        'subscribers': '<i class="bi bi-credit-card-fill"></i>',
+                        'private': '<i class="bi bi-lock-fill"></i>'
+                    };
+                    visibilityBadge = `<span class="visibility-badge">${visIcons[visibility] || ''}</span>`;
+                }
+                
+                return `
+                    <div class="post-card" data-post-id="${post._id}" onclick="openPostModal('${post._id}')">
+                        <div class="post-media ${isNsfw && !showNsfw ? 'nsfw-blur' : ''}">
+                            ${isVideo 
+                                ? `<video src="${mediaUrl}" muted></video><span class="video-indicator"><i class="bi bi-play-fill"></i></span>`
+                                : `<img src="${mediaUrl}" alt="Post" onerror="this.src='/img/placeholder.png'">`
+                            }
+                            ${visibilityBadge}
+                            ${isNsfw ? '<span class="nsfw-badge">NSFW</span>' : ''}
+                        </div>
+                        <div class="post-overlay">
+                            <div class="post-stats">
+                                <span><i class="bi bi-heart-fill"></i> ${likes}</span>
+                                <span><i class="bi bi-chat-fill"></i> ${commentsCount}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Render pagination controls for posts
+            function renderPostsPagination(pagination, container) {
+                const { page, totalPages } = pagination;
+                let html = '<nav><ul class="pagination pagination-sm mb-0">';
+                
+                // Previous button
+                html += `<li class="page-item ${page === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="loadProfilePosts(${page - 1}); return false;">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>`;
+                
+                // Page numbers
+                const startPage = Math.max(1, page - 2);
+                const endPage = Math.min(totalPages, page + 2);
+                
+                for (let i = startPage; i <= endPage; i++) {
+                    html += `<li class="page-item ${i === page ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="loadProfilePosts(${i}); return false;">${i}</a>
+                    </li>`;
+                }
+                
+                // Next button
+                html += `<li class="page-item ${page === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="loadProfilePosts(${page + 1}); return false;">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>`;
+                
+                html += '</ul></nav>';
+                container.html(html);
+            }
+
+            // Make loadProfilePosts available globally for pagination
+            window.loadProfilePosts = loadProfilePosts;
+
+            // Open post modal (placeholder - can be enhanced)
+            window.openPostModal = function(postId) {
+                // TODO: Implement full post modal view
+                console.log('Opening post:', postId);
+            }
+
+            // Toggle post like
+            async function togglePostLike(postId, action) {
+                try {
+                    const response = await fetch(`/api/posts/${postId}/like`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        loadProfilePosts(currentPostsPage);
+                    }
+                } catch (error) {
+                    console.error('Error toggling like:', error);
                 }
             }
             
@@ -697,6 +921,641 @@
             padding: 16px;
             border: 1px solid rgba(130, 64, 255, 0.1);
         }
+
+        /* Phase 1: Profile Posts Grid Styles */
+        .posts-controls {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 12px 16px;
+            border: 1px solid rgba(130, 64, 255, 0.1);
+        }
+
+        .posts-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .posts-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .post-card {
+            position: relative;
+            aspect-ratio: 1;
+            overflow: hidden;
+            border-radius: 4px;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .post-card .post-media {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .post-card .post-media img,
+        .post-card .post-media video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .post-card .post-media.nsfw-blur img,
+        .post-card .post-media.nsfw-blur video {
+            filter: blur(20px);
+        }
+
+        .post-card .video-indicator {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .post-card .visibility-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(130, 64, 255, 0.8);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        .post-card .nsfw-badge {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            background: rgba(220, 53, 69, 0.9);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .post-card .post-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .post-card:hover .post-overlay {
+            opacity: 1;
+        }
+
+        .post-card .post-stats {
+            display: flex;
+            gap: 16px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .post-card .post-stats span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .profile-posts-section {
+            min-height: 200px;
+        }
+
+        /* Form check styling */
+        .form-check-input:checked {
+            background-color: #8240FF;
+            border-color: #8240FF;
+        }
+
+        .form-check-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        /* ========================================
+           CREATOR PROFILE ENHANCEMENTS
+           ======================================== */
+        
+        /* Creator Header Styles */
+        .creator-profile .profile-header.creator-header {
+            background: transparent;
+        }
+        
+        .creator-cover {
+            background-size: cover !important;
+            background-position: center !important;
+            position: relative;
+        }
+        
+        .cover-gradient-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, 
+                rgba(0,0,0,0.1) 0%, 
+                rgba(0,0,0,0.3) 50%,
+                rgba(0,0,0,0.7) 100%);
+            z-index: 0;
+        }
+        
+        .cover-edit-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.5);
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+        }
+        
+        .cover-edit-btn:hover {
+            background: rgba(130, 64, 255, 0.8);
+            transform: scale(1.1);
+        }
+        
+        /* Creator Verified Badge on Avatar */
+        .creator-verified-badge {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: #4CAF50;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        /* Creator Category Badge */
+        .creator-category-badge {
+            display: inline-block;
+            background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        
+        /* Creator Social Links */
+        .creator-social-links {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        
+        .social-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+        }
+        
+        .social-link:hover {
+            background: rgba(130, 64, 255, 0.8);
+            transform: translateY(-3px);
+            color: white;
+        }
+        
+        /* Action Button Variants */
+        .action-btn-gradient {
+            background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+            color: white;
+            border: none;
+        }
+        
+        .action-btn-gradient:hover {
+            background: linear-gradient(90.9deg, #E0C8FF 2.74%, #9050FF 102.92%);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(130, 64, 255, 0.3);
+        }
+        
+        .become-creator-btn i,
+        .subscribe-btn i {
+            color: #FFD700;
+        }
+        
+        .my-profile-actions {
+            display: flex !important;
+        }
+        
+        /* Creator Profile Avatar Container */
+        .creator-profile .profile-avatar-container {
+            position: relative;
+        }
+        
+        /* Responsive Creator Styles */
+        @media (max-width: 768px) {
+            .creator-social-links {
+                gap: 8px;
+            }
+            
+            .social-link {
+                width: 36px;
+                height: 36px;
+                font-size: 0.9rem;
+            }
+            
+            .cover-edit-btn {
+                top: 10px;
+                right: 10px;
+                width: 38px;
+                height: 38px;
+            }
+        }
     </style>
+    
+    {{!-- Cover Image Input for Creators --}}
+    {{#if isCreator}}
+    {{#if (or isMyProfile isAdmin)}}
+    <input type="file" id="coverImageInput" name="coverImage" accept="image/*" style="display: none;">
+    <script>
+        // Cover image upload functionality
+        $(document).ready(function() {
+            const editCoverBtn = document.getElementById('editCoverBtn');
+            const coverImageInput = document.getElementById('coverImageInput');
+            
+            if (editCoverBtn && coverImageInput) {
+                editCoverBtn.addEventListener('click', function() {
+                    coverImageInput.click();
+                });
+                
+                coverImageInput.addEventListener('change', async function(e) {
+                    if (this.files && this.files[0]) {
+                        const file = this.files[0];
+                        
+                        // Validate file type
+                        if (!file.type.startsWith('image/')) {
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Invalid File',
+                                    text: 'Please select an image file.',
+                                    confirmButtonColor: '#8240FF'
+                                });
+                            }
+                            return;
+                        }
+                        
+                        // Show loading
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: 'Uploading...',
+                                text: 'Please wait while we upload your cover image.',
+                                allowOutsideClick: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                }
+                            });
+                        }
+                        
+                        try {
+                            const formData = new FormData();
+                            formData.append('coverImage', file);
+                            
+                            const response = await fetch('/api/creators/cover-image', {
+                                method: 'POST',
+                                body: formData
+                            });
+                            
+                            const result = await response.json();
+                            
+                            if (result.success) {
+                                // Update the cover image
+                                const coverDiv = document.querySelector('.creator-cover');
+                                if (coverDiv) {
+                                    coverDiv.style.backgroundImage = `url('${result.coverImage}')`;
+                                }
+                                
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Success!',
+                                        text: 'Cover image updated successfully.',
+                                        confirmButtonColor: '#8240FF'
+                                    });
+                                }
+                            } else {
+                                throw new Error(result.error || 'Upload failed');
+                            }
+                        } catch (error) {
+                            console.error('Cover upload error:', error);
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Upload Failed',
+                                    text: error.message || 'Failed to upload cover image.',
+                                    confirmButtonColor: '#8240FF'
+                                });
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+    {{/if}}
+    {{/if}}
+    
+    {{#if isCreator}}
+    {{#unless isMyProfile}}
+    <!-- Subscribe Modal -->
+    <div class="modal fade" id="subscribeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-white border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">
+                        <i class="bi bi-star me-2"></i>{{translations.subscriptions.subscribeTo}} {{default creatorData.displayName userData.nickname}}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="subscribeTierOptions" class="subscribe-modal">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        {{translations.subscriptions.cancel}}
+                    </button>
+                    <button type="button" class="btn btn-primary" id="confirmSubscribeBtn" disabled>
+                        <i class="bi bi-star-fill me-1"></i>{{translations.subscriptions.subscribe}}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{/unless}}
+    {{/if}}
+
+    <script src="/js/subscriptions.js"></script>
+    <script>
+        // Subscribe button handler
+        const creatorId = '{{userData._id}}';
+        let selectedTierId = null;
+        let creatorTiers = [];
+        
+        async function handleSubscribe(button) {
+            // Check if user is logged in
+            const isLoggedIn = '{{user._id}}' !== '';
+            
+            if (!isLoggedIn) {
+                window.location.href = '/login?redirect=/user/' + creatorId;
+                return;
+            }
+            
+            // Check if already subscribed
+            try {
+                const checkResponse = await fetch(`/api/subscriptions/check/${creatorId}`);
+                const checkData = await checkResponse.json();
+                
+                if (checkData.isSubscribed) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'info',
+                            title: '{{translations.subscriptions.alreadySubscribed}}',
+                            text: `You're already subscribed with the ${checkData.subscription?.tier?.name || 'current'} tier.`,
+                            confirmButtonColor: '#8240FF',
+                            showCancelButton: true,
+                            cancelButtonText: 'OK',
+                            confirmButtonText: 'Manage Subscriptions'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = '/subscriptions';
+                            }
+                        });
+                    }
+                    return;
+                }
+            } catch (error) {
+                console.error('Error checking subscription:', error);
+            }
+            
+            // Load tiers and show modal
+            await loadCreatorTiers();
+            new bootstrap.Modal(document.getElementById('subscribeModal')).show();
+        }
+        
+        async function loadCreatorTiers() {
+            const container = document.getElementById('subscribeTierOptions');
+            
+            try {
+                const response = await fetch(`/api/tiers/creator/${creatorId}`);
+                const data = await response.json();
+                
+                if (data.success && data.tiers && data.tiers.length > 0) {
+                    creatorTiers = data.tiers;
+                    renderTierOptions();
+                } else {
+                    container.innerHTML = `
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-info-circle fs-1 mb-2"></i>
+                            <p>This creator hasn't set up subscription tiers yet.</p>
+                        </div>
+                    `;
+                    document.getElementById('confirmSubscribeBtn').disabled = true;
+                }
+            } catch (error) {
+                console.error('Error loading tiers:', error);
+                container.innerHTML = `
+                    <div class="text-center py-4 text-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Failed to load tiers
+                    </div>
+                `;
+            }
+        }
+        
+        function renderTierOptions() {
+            const container = document.getElementById('subscribeTierOptions');
+            
+            container.innerHTML = creatorTiers.map(tier => `
+                <div class="tier-option ${tier.isFree ? 'free' : ''}" data-tier-id="${tier._id}" onclick="selectTier('${tier._id}')">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="tier-radio"></div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-white">${escapeHtml(tier.name)}</span>
+                                <span class="fw-bold ${tier.isFree ? 'text-muted' : 'text-primary'}">
+                                    ${tier.isFree ? '{{translations.subscriptions.free}}' : formatPrice(tier.price, tier.currency)}
+                                </span>
+                            </div>
+                            <p class="mb-2 small text-muted">${escapeHtml(tier.description || '')}</p>
+                            ${tier.benefits && tier.benefits.length > 0 ? `
+                                <ul class="list-unstyled mb-0 small">
+                                    ${tier.benefits.slice(0, 3).map(b => `
+                                        <li class="text-muted">
+                                            <i class="bi bi-check text-success me-1"></i>${escapeHtml(b)}
+                                        </li>
+                                    `).join('')}
+                                    ${tier.benefits.length > 3 ? `<li class="text-muted">+ ${tier.benefits.length - 3} more</li>` : ''}
+                                </ul>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Auto-select free tier if exists
+            const freeTier = creatorTiers.find(t => t.isFree);
+            if (freeTier) {
+                selectTier(freeTier._id);
+            }
+        }
+        
+        function selectTier(tierId) {
+            selectedTierId = tierId;
+            
+            document.querySelectorAll('.tier-option').forEach(option => {
+                option.classList.toggle('selected', option.dataset.tierId === tierId);
+            });
+            
+            document.getElementById('confirmSubscribeBtn').disabled = false;
+        }
+        
+        document.getElementById('confirmSubscribeBtn')?.addEventListener('click', async function() {
+            if (!selectedTierId) {
+                alert('Please select a tier');
+                return;
+            }
+            
+            const tier = creatorTiers.find(t => t._id === selectedTierId);
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processing...';
+            
+            try {
+                if (tier.isFree || tier.price === 0) {
+                    // Free subscription
+                    const response = await fetch('/api/subscriptions/free', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            creatorId: creatorId,
+                            tierId: selectedTierId
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        bootstrap.Modal.getInstance(document.getElementById('subscribeModal')).hide();
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: '{{translations.subscriptions.subscriptionSuccess}}',
+                                text: `You're now subscribed to ${tier.name} tier!`,
+                                confirmButtonColor: '#8240FF'
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            window.location.reload();
+                        }
+                    } else {
+                        throw new Error(data.error || 'Failed to subscribe');
+                    }
+                } else {
+                    // Paid subscription - redirect to checkout
+                    const response = await fetch('/api/subscriptions/checkout', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            creatorId: creatorId,
+                            tierId: selectedTierId
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.url) {
+                        window.location.href = data.url;
+                    } else {
+                        throw new Error(data.error || 'Failed to create checkout session');
+                    }
+                }
+            } catch (error) {
+                console.error('Error subscribing:', error);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: '{{translations.subscriptions.subscriptionFailed}}',
+                        text: error.message,
+                        confirmButtonColor: '#8240FF'
+                    });
+                } else {
+                    alert('Failed to subscribe: ' + error.message);
+                }
+            } finally {
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-star-fill me-1"></i>{{translations.subscriptions.subscribe}}';
+            }
+        });
+        
+        // Utility functions
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+        
+        function formatPrice(priceInCents, currency) {
+            const symbols = { USD: '$', EUR: '€', JPY: '¥', GBP: '£' };
+            const symbol = symbols[currency] || currency;
+            
+            if (currency === 'JPY') {
+                return `${symbol}${priceInCents}/mo`;
+            }
+            return `${symbol}${(priceInCents / 100).toFixed(2)}/mo`;
+        }
+    </script>
 </body>
 </html>

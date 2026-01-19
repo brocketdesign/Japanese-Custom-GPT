@@ -8,6 +8,12 @@ const { checkLimits, checkUserAdmin, getUserData, updateUserLang, listFiles, upl
 const { moderateImage } = require('../models/openai');
 const { refreshAccessToken, addContactToCampaign } = require('../models/zohomail');
 const { trackConversion } = require('../models/affiliation-utils');
+const { 
+  getCreatorProfile, 
+  updateCreatorProfile, 
+  formatCreatorForDisplay,
+  getCreatorCategories 
+} = require('../models/creator-utils');
 
 async function routes(fastify, options) {
 
@@ -540,9 +546,16 @@ async function routes(fastify, options) {
        isAdmin = await checkUserAdmin(fastify, currentUser._id);
       }
 
+      // Get creator profile data if user is a creator
+      let creatorData = null;
+      if (userData.isCreator && userData.creatorProfile) {
+        creatorData = formatCreatorForDisplay(userData);
+      }
+
       const translations = request.translations;
       // Add onboarding translations
       const onboardingTranslations = request.translations.onboarding || {};
+      const categories = getCreatorCategories();
 
       return reply.renderWithGtm('/user-profile.hbs', {
         title: `${userData.nickname}さんのプロフィール`,
@@ -554,10 +567,50 @@ async function routes(fastify, options) {
         isMyProfile,
         user: request.user,
         userData,
+        creatorData,
+        isCreator: userData.isCreator || false,
+        categories
       });
     } catch (error) {
       console.log(error);
       return reply.status(500).send({ error: 'An error occurred' });
+    }
+  });
+
+  // Get user's creator profile data (API endpoint)
+  fastify.get('/api/user/:userId/creator-profile', async (request, reply) => {
+    try {
+      const { userId } = request.params;
+      const db = fastify.mongo.db;
+
+      if (!ObjectId.isValid(userId)) {
+        return reply.status(400).send({ success: false, error: 'Invalid user ID' });
+      }
+
+      const result = await getCreatorProfile(db, userId);
+      return reply.send(result);
+    } catch (error) {
+      console.error('Error fetching creator profile:', error);
+      return reply.status(500).send({ success: false, error: 'Internal server error' });
+    }
+  });
+
+  // Update creator profile settings
+  fastify.put('/api/user/creator-profile', async (request, reply) => {
+    try {
+      if (!request.user || request.user.isTemporary) {
+        return reply.status(401).send({ success: false, error: 'Authentication required' });
+      }
+
+      const db = fastify.mongo.db;
+      const userId = request.user._id;
+      const profileData = request.body;
+
+      const result = await updateCreatorProfile(db, userId, profileData);
+      return reply.send(result);
+    } catch (error) {
+      console.error('Error updating creator profile:', error);
+      return reply.status(500).send({ success: false, error: 'Internal server error' });
     }
   });
 

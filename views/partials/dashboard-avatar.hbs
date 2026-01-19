@@ -163,6 +163,16 @@
                     <i class="bi bi-link me-3"></i>{{translations.avatar.affiliation}}
                 </a>
                 
+                <a class="list-group-item list-group-item-action border-0 menu-item" href="/subscriptions">
+                    <i class="bi bi-heart me-3"></i>{{translations.avatar.mySubscriptions}}
+                </a>
+                
+                {{#unless user.isCreator}}
+                <a class="list-group-item list-group-item-action border-0 menu-item text-white" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);" href="/creators/apply">
+                    <i class="bi bi-stars me-3"></i>{{translations.avatar.becomeCreator}}
+                </a>
+                {{/unless}}
+                
                 <hr class="my-2">
                 <div class="px-3 py-2">
                     <small class="text-muted fw-bold">DASHBOARDS</small>
@@ -187,6 +197,25 @@
                 <a class="list-group-item list-group-item-action border-0 menu-item" href="/dashboard/templates">
                     <i class="bi bi-file-text me-3"></i>{{translations.avatar.promptTemplates}}
                 </a>
+
+                {{#if user.isCreator}}
+                    <hr class="my-2">
+                    <div class="px-3 py-2">
+                        <small class="text-muted fw-bold">CREATOR</small>
+                    </div>
+                    
+                    <a class="list-group-item list-group-item-action border-0 menu-item" href="/dashboard/earnings">
+                        <i class="bi bi-wallet2 me-3"></i>{{translations.avatar.earnings}}
+                    </a>
+                    
+                    <a class="list-group-item list-group-item-action border-0 menu-item" href="/dashboard/tiers">
+                        <i class="bi bi-layers me-3"></i>{{translations.avatar.tiers}}
+                    </a>
+                    
+                    <a class="list-group-item list-group-item-action border-0 menu-item" href="/dashboard/subscribers">
+                        <i class="bi bi-people-fill me-3"></i>{{translations.avatar.subscribers}}
+                    </a>
+                {{/if}}
 
                 {{#if isAdmin}}
                     <hr class="my-2">

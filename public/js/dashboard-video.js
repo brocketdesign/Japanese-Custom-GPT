@@ -388,19 +388,30 @@ function clearImageUpload() {
 async function startGeneration() {
     const mode = state.videoMode;
     
+    console.log('[VideoDashboard] 🚀 startGeneration() called');
+    console.log('[VideoDashboard] Current mode:', mode);
+    
     // Validate inputs based on mode
     if (mode === 'i2v') {
+        console.log('[VideoDashboard] I2V mode - checking base image...');
+        console.log('[VideoDashboard] baseImageDataUrl exists:', !!state.baseImageDataUrl);
+        console.log('[VideoDashboard] baseImageDataUrl length:', state.baseImageDataUrl?.length || 0);
         if (!state.baseImageDataUrl) {
             showNotification('Please upload a base image first', 'warning');
             return;
         }
     } else if (mode === 't2v') {
         const prompt = document.getElementById('promptInput').value.trim();
+        console.log('[VideoDashboard] T2V mode - checking prompt...');
+        console.log('[VideoDashboard] Prompt:', prompt);
         if (!prompt) {
             showNotification('Please enter a prompt for text-to-video generation', 'warning');
             return;
         }
     } else if (mode === 'face') {
+        console.log('[VideoDashboard] Face mode - checking video and face image...');
+        console.log('[VideoDashboard] videoDataUrl exists:', !!state.videoDataUrl);
+        console.log('[VideoDashboard] faceImageDataUrl exists:', !!state.faceImageDataUrl);
         if (!state.videoDataUrl) {
             showNotification('Please upload a source video', 'warning');
             return;
@@ -412,6 +423,7 @@ async function startGeneration() {
     }
     
     const selectedModel = document.querySelector('input[name="videoModel"]:checked');
+    console.log('[VideoDashboard] Selected model element:', selectedModel);
     if (!selectedModel) {
         showNotification('Please select a video model', 'warning');
         return;
@@ -419,6 +431,7 @@ async function startGeneration() {
     
     // Check if user has enough points before proceeding
     const { totalCost, hasEnoughPoints } = updateCostDisplay();
+    console.log('[VideoDashboard] Points check - total cost:', totalCost, 'user points:', state.userPoints, 'has enough:', hasEnoughPoints);
     if (!hasEnoughPoints) {
         showNotification(`Insufficient points. You need ${totalCost} points but only have ${state.userPoints} points.`, 'error');
         return;
@@ -430,16 +443,17 @@ async function startGeneration() {
     const duration = document.getElementById('durationSelect').value;
     const aspectRatio = document.getElementById('aspectRatioSelect').value;
     
-    console.log('[VideoDashboard] Starting generation:', {
-        mode,
-        modelId,
-        prompt,
-        duration,
-        aspectRatio,
-        hasBaseImage: !!state.baseImageDataUrl,
-        hasVideo: !!state.videoDataUrl,
-        hasFaceImage: !!state.faceImageDataUrl
-    });
+    console.log('[VideoDashboard] ========== GENERATION REQUEST ==========');
+    console.log('[VideoDashboard] Model ID:', modelId);
+    console.log('[VideoDashboard] Model Name:', modelName);
+    console.log('[VideoDashboard] Prompt:', prompt);
+    console.log('[VideoDashboard] Duration:', duration);
+    console.log('[VideoDashboard] Aspect Ratio:', aspectRatio);
+    console.log('[VideoDashboard] Mode:', mode);
+    console.log('[VideoDashboard] Has Base Image:', !!state.baseImageDataUrl);
+    console.log('[VideoDashboard] Has Video:', !!state.videoDataUrl);
+    console.log('[VideoDashboard] Has Face Image:', !!state.faceImageDataUrl);
+    console.log('[VideoDashboard] =========================================');
     
     // Clear previous results
     clearResults();
@@ -464,11 +478,22 @@ async function startGeneration() {
         // Add mode-specific data
         if (mode === 'i2v') {
             requestBody.baseImageUrl = state.baseImageDataUrl;
+            console.log('[VideoDashboard] Added baseImageUrl to request (length:', state.baseImageDataUrl?.length, ')');
         } else if (mode === 'face') {
             requestBody.videoFile = state.videoDataUrl;
             requestBody.faceImageFile = state.faceImageDataUrl;
+            console.log('[VideoDashboard] Added videoFile and faceImageFile to request');
         }
         // T2V just needs the prompt which is already included
+        
+        console.log('[VideoDashboard] 📤 Sending request to /dashboard/video/generate');
+        console.log('[VideoDashboard] Request body keys:', Object.keys(requestBody));
+        console.log('[VideoDashboard] Request body (without image data):', {
+            ...requestBody,
+            baseImageUrl: requestBody.baseImageUrl ? `[BASE64 DATA - ${requestBody.baseImageUrl.length} chars]` : undefined,
+            videoFile: requestBody.videoFile ? `[BASE64 DATA - ${requestBody.videoFile.length} chars]` : undefined,
+            faceImageFile: requestBody.faceImageFile ? `[BASE64 DATA - ${requestBody.faceImageFile.length} chars]` : undefined
+        });
         
         const response = await fetch('/dashboard/video/generate', {
             method: 'POST',
@@ -478,11 +503,17 @@ async function startGeneration() {
             body: JSON.stringify(requestBody)
         });
         
+        console.log('[VideoDashboard] 📥 Response received');
+        console.log('[VideoDashboard] Response status:', response.status);
+        console.log('[VideoDashboard] Response ok:', response.ok);
+        
         const data = await response.json();
+        console.log('[VideoDashboard] Response data:', JSON.stringify(data, null, 2));
         
         if (!response.ok) {
             // Handle insufficient points error
             if (response.status === 402) {
+                console.log('[VideoDashboard] ❌ Insufficient points error');
                 showNotification(data.message || `Insufficient points. Need ${data.required} but have ${data.available}.`, 'error');
                 state.userPoints = data.available || 0;
                 updateCostDisplay();
@@ -491,6 +522,7 @@ async function startGeneration() {
                 stopTotalTimer();
                 return;
             }
+            console.log('[VideoDashboard] ❌ Request failed with error:', data.error);
             throw new Error(data.error || 'Generation failed');
         }
         
@@ -498,7 +530,8 @@ async function startGeneration() {
         state.userPoints -= state.videoCostPerUnit;
         updateCostDisplay();
         
-        console.log('[VideoDashboard] Generation started:', data);
+        console.log('[VideoDashboard] ✅ Generation started successfully');
+        console.log('[VideoDashboard] Task data:', data.task);
         
         // Create result card
         createResultCard(modelId, modelName);
@@ -508,15 +541,23 @@ async function startGeneration() {
         state.activeTask.modelId = modelId;
         state.activeTask.modelName = modelName;
         
+        console.log('[VideoDashboard] Task ID:', data.task?.taskId);
+        console.log('[VideoDashboard] Task status:', data.task?.status);
+        console.log('[VideoDashboard] Task async:', data.task?.async);
+        
         // Update card
         updateResultCard(data.task);
         
         // Start polling
         if (data.task.status === 'processing' && data.task.async) {
+            console.log('[VideoDashboard] 🔄 Starting task polling for task:', data.task.taskId);
             startTaskPolling(data.task);
+        } else {
+            console.log('[VideoDashboard] ⚠️ Not starting polling - status:', data.task?.status, 'async:', data.task?.async);
         }
     } catch (error) {
-        console.error('[VideoDashboard] Generation error:', error);
+        console.error('[VideoDashboard] ❌ Generation error:', error);
+        console.error('[VideoDashboard] Error stack:', error.stack);
         showNotification(error.message, 'error');
         state.isGenerating = false;
         updateGenerateButton(false);
@@ -744,12 +785,33 @@ function previewHistoryVideo(videoUrl, modelName, generationTime, testId = null,
  * Start polling for task status
  */
 function startTaskPolling(task) {
+    let pollCount = 0;
+    console.log('[VideoDashboard] 🔄 Starting polling for task:', task.taskId);
+    console.log('[VideoDashboard] Task start time:', task.startTime);
+    
     const pollInterval = setInterval(async () => {
+        pollCount++;
+        console.log(`[VideoDashboard] ========== POLL #${pollCount} ==========`);
+        console.log(`[VideoDashboard] Task ID: ${task.taskId}`);
+        console.log(`[VideoDashboard] Elapsed time: ${((Date.now() - task.startTime) / 1000).toFixed(1)}s`);
+        
         try {
+            console.log(`[VideoDashboard] 📤 Fetching status from /dashboard/video/status/${task.taskId}`);
             const response = await fetch(`/dashboard/video/status/${task.taskId}`);
+            
+            console.log(`[VideoDashboard] 📥 Response status: ${response.status}`);
             const data = await response.json();
             
-            console.log(`[VideoDashboard] Poll ${task.modelId}:`, data.status, data.progress || 0);
+            console.log(`[VideoDashboard] Poll response data:`, JSON.stringify(data, null, 2));
+            console.log(`[VideoDashboard] Status: ${data.status}, Progress: ${data.progress || 0}%`);
+            
+            if (data.error) {
+                console.log(`[VideoDashboard] ⚠️ Error in response: ${data.error}`);
+            }
+            
+            if (data.videos && data.videos.length > 0) {
+                console.log(`[VideoDashboard] 🎥 Videos found:`, data.videos);
+            }
             
             // Update task
             const updatedTask = {
@@ -763,21 +825,28 @@ function startTaskPolling(task) {
             
             // Stop polling if complete or failed
             if (data.status === 'completed' || data.status === 'failed' || data.status === 'error') {
+                console.log(`[VideoDashboard] 🏁 Polling complete - Final status: ${data.status}`);
                 clearInterval(pollInterval);
                 state.pollInterval = null;
                 
                 if (data.status === 'completed') {
+                    console.log(`[VideoDashboard] ✅ Task completed successfully`);
                     handleTaskCompletion(updatedTask);
                 } else {
+                    console.log(`[VideoDashboard] ❌ Task failed: ${data.error || 'Unknown error'}`);
                     handleTaskFailure(updatedTask);
                 }
             }
+            console.log(`[VideoDashboard] ========== END POLL #${pollCount} ==========`);
         } catch (error) {
-            console.error(`[VideoDashboard] Polling error:`, error);
+            console.error(`[VideoDashboard] ❌ Polling error at poll #${pollCount}:`, error);
+            console.error(`[VideoDashboard] Error message:`, error.message);
+            console.error(`[VideoDashboard] Error stack:`, error.stack);
         }
     }, 3000); // Poll every 3 seconds (videos take longer than images)
     
     state.pollInterval = pollInterval;
+    console.log('[VideoDashboard] Polling interval started (3s intervals)');
 }
 
 /**

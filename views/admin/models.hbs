@@ -146,15 +146,17 @@
             <form id="styleForm" class="mb-3">
               <div class="mb-3">
                 <label class="form-label">Default Style</label>
-                <div class="btn-group w-100" role="group" aria-label="Style selection">
+                <div class="segmented-control segmented-control-light" role="group" aria-label="Style selection">
                   <input type="radio" class="btn-check" name="styleOption" id="styleAnime" value="anime" autocomplete="off">
-                  <label class="btn btn-outline-primary" for="styleAnime">
-                    <i class="bi bi-square me-1"></i>Anime
+                  <label class="segment-btn" for="styleAnime">
+                    <i class="bi bi-palette"></i>
+                    <span>Anime</span>
                   </label>
                   
                   <input type="radio" class="btn-check" name="styleOption" id="stylePhotorealistic" value="photorealistic" autocomplete="off">
-                  <label class="btn btn-outline-primary" for="stylePhotorealistic">
-                    <i class="bi bi-square me-1"></i>Photorealistic
+                  <label class="segment-btn" for="stylePhotorealistic">
+                    <i class="bi bi-camera"></i>
+                    <span>Photorealistic</span>
                   </label>
                 </div>
                 <div class="form-text text-muted">This style will be used as default when generating images with this model.</div>

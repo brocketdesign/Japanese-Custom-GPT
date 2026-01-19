@@ -199,12 +199,18 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-4">
                                 <h5 class="card-title mb-0">{{translations.section_results}}</h5>
-                                <div class="btn-group btn-group-sm" role="group">
+                                <div class="segmented-control segmented-control-sm segmented-control-light" role="group">
                                     <input type="radio" class="btn-check" name="viewMode" id="comparisonView" value="comparison" checked>
-                                    <label class="btn btn-outline-secondary" for="comparisonView">{{translations.tabs_comparison}}</label>
+                                    <label class="segment-btn" for="comparisonView">
+                                        <i class="bi bi-table"></i>
+                                        <span>{{translations.tabs_comparison}}</span>
+                                    </label>
                                     
                                     <input type="radio" class="btn-check" name="viewMode" id="statsView" value="statistics">
-                                    <label class="btn btn-outline-secondary" for="statsView">{{translations.tabs_statistics}}</label>
+                                    <label class="segment-btn" for="statsView">
+                                        <i class="bi bi-bar-chart"></i>
+                                        <span>{{translations.tabs_statistics}}</span>
+                                    </label>
                                 </div>
                             </div>
 

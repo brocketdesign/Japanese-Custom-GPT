@@ -42,21 +42,21 @@
                         <!-- Generation Mode Selection -->
                         <div class="mb-4">
                             <label class="form-label text-white fw-bold">Generation Mode</label>
-                            <div class="generation-mode-group" role="group">
+                            <div class="segmented-control" role="group">
                                 <input type="radio" class="btn-check" name="generationMode" id="mode-txt2img" value="txt2img" checked>
-                                <label class="mode-btn" for="mode-txt2img">
+                                <label class="segment-btn" for="mode-txt2img">
                                     <i class="bi bi-card-text"></i>
                                     <span>Text to Image</span>
                                 </label>
                                 
                                 <input type="radio" class="btn-check" name="generationMode" id="mode-img2img" value="img2img">
-                                <label class="mode-btn" for="mode-img2img">
+                                <label class="segment-btn" for="mode-img2img">
                                     <i class="bi bi-image"></i>
                                     <span>Image to Image</span>
                                 </label>
                                 
                                 <input type="radio" class="btn-check" name="generationMode" id="mode-face" value="face">
-                                <label class="mode-btn" for="mode-face">
+                                <label class="segment-btn" for="mode-face">
                                     <i class="bi bi-person-bounding-box"></i>
                                     <span>Face Tools</span>
                                 </label>
@@ -85,20 +85,26 @@
                         <!-- Edit Strength (for img2img) -->
                         <div class="mb-4" id="editStrengthSection" style="display: none;">
                             <label class="form-label text-white fw-bold">Edit Strength</label>
-                            <div class="btn-group w-100" role="group">
+                            <div class="segmented-control" role="group">
                                 <input type="radio" class="btn-check" name="editStrength" id="strength-low" value="low">
-                                <label class="btn btn-outline-info" for="strength-low">
-                                    Low<br><small class="text-muted">30%</small>
+                                <label class="segment-btn" for="strength-low">
+                                    <i class="bi bi-speedometer"></i>
+                                    <span>Low</span>
+                                    <small class="text-muted" style="font-size: 0.6rem;">30%</small>
                                 </label>
                                 
                                 <input type="radio" class="btn-check" name="editStrength" id="strength-medium" value="medium" checked>
-                                <label class="btn btn-outline-info" for="strength-medium">
-                                    Medium<br><small class="text-muted">60%</small>
+                                <label class="segment-btn" for="strength-medium">
+                                    <i class="bi bi-speedometer2"></i>
+                                    <span>Medium</span>
+                                    <small class="text-muted" style="font-size: 0.6rem;">60%</small>
                                 </label>
                                 
                                 <input type="radio" class="btn-check" name="editStrength" id="strength-high" value="high">
-                                <label class="btn btn-outline-info" for="strength-high">
-                                    High<br><small class="text-muted">85%</small>
+                                <label class="segment-btn" for="strength-high">
+                                    <i class="bi bi-lightning-charge"></i>
+                                    <span>High</span>
+                                    <small class="text-muted" style="font-size: 0.6rem;">85%</small>
                                 </label>
                             </div>
                             <div class="form-text text-muted mt-1">
@@ -406,21 +412,21 @@
                         <!-- Style Preset -->
                         <div class="mb-4">
                             <label class="form-label text-white fw-bold">Style Preset</label>
-                            <div class="generation-mode-group" role="group">
+                            <div class="segmented-control" role="group">
                                 <input type="radio" class="btn-check" name="stylePreset" id="style-none" value="" checked>
-                                <label class="mode-btn" for="style-none">
+                                <label class="segment-btn" for="style-none">
                                     <i class="bi bi-slash-circle"></i>
                                     <span>None</span>
                                 </label>
                                 
                                 <input type="radio" class="btn-check" name="stylePreset" id="style-anime" value="anime">
-                                <label class="mode-btn" for="style-anime">
+                                <label class="segment-btn" for="style-anime">
                                     <i class="bi bi-palette"></i>
                                     <span>Anime</span>
                                 </label>
                                 
                                 <input type="radio" class="btn-check" name="stylePreset" id="style-photo" value="photorealistic">
-                                <label class="mode-btn" for="style-photo">
+                                <label class="segment-btn" for="style-photo">
                                     <i class="bi bi-camera"></i>
                                     <span>Photorealistic</span>
                                 </label>

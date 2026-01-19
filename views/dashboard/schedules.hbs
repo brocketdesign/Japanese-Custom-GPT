@@ -155,14 +155,16 @@
                     <!-- Schedule Type Toggle -->
                     <div class="mb-4">
                         <label class="form-label">{{translations.dashboard.scheduleType}}</label>
-                        <div class="btn-group w-100" role="group">
+                        <div class="segmented-control" role="group">
                             <input type="radio" class="btn-check" name="scheduleTypeRadio" id="typeSingle" value="single" checked>
-                            <label class="btn btn-outline-primary" for="typeSingle">
-                                <i class="bi bi-calendar-event me-1"></i>{{translations.dashboard.singleSchedule}}
+                            <label class="segment-btn" for="typeSingle">
+                                <i class="bi bi-calendar-event"></i>
+                                <span>{{translations.dashboard.singleSchedule}}</span>
                             </label>
                             <input type="radio" class="btn-check" name="scheduleTypeRadio" id="typeRecurring" value="recurring">
-                            <label class="btn btn-outline-warning" for="typeRecurring">
-                                <i class="bi bi-arrow-repeat me-1"></i>{{translations.dashboard.recurringCron}}
+                            <label class="segment-btn" for="typeRecurring">
+                                <i class="bi bi-arrow-repeat"></i>
+                                <span>{{translations.dashboard.recurringCron}}</span>
                             </label>
                         </div>
                     </div>

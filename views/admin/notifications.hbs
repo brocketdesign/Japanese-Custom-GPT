@@ -177,18 +177,21 @@
                                 <h6 class="card-title mb-3"><i class="bi bi-people me-2"></i>Target Recipients</h6>
                                 
                                 <!-- Target Type Selection -->
-                                <div class="btn-group w-100 mb-3" role="group">
+                                <div class="segmented-control segmented-control-light mb-3" role="group">
                                     <input type="radio" class="btn-check" name="targetType" id="targetAll" value="all" autocomplete="off">
-                                    <label class="btn btn-outline-primary" for="targetAll">
-                                        <i class="bi bi-globe me-1"></i> All Users
+                                    <label class="segment-btn" for="targetAll">
+                                        <i class="bi bi-globe"></i>
+                                        <span>All Users</span>
                                     </label>
                                     <input type="radio" class="btn-check" name="targetType" id="targetSpecific" value="specific" autocomplete="off" checked>
-                                    <label class="btn btn-outline-primary" for="targetSpecific">
-                                        <i class="bi bi-person me-1"></i> Specific Users
+                                    <label class="segment-btn" for="targetSpecific">
+                                        <i class="bi bi-person"></i>
+                                        <span>Specific Users</span>
                                     </label>
                                     <input type="radio" class="btn-check" name="targetType" id="targetSticky" value="sticky" autocomplete="off">
-                                    <label class="btn btn-outline-primary" for="targetSticky">
-                                        <i class="bi bi-pin-angle me-1"></i> Sticky (Everyone)
+                                    <label class="segment-btn" for="targetSticky">
+                                        <i class="bi bi-pin-angle"></i>
+                                        <span>Sticky</span>
                                     </label>
                                 </div>
 

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="{{lang}}">
+{{> dashboard-header}}
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/css/subscriptions.css">
+</head>
+<body class="bg-dark">
+    {{> dashboard-nav}}
+
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                    <div>
+                        <h1 class="text-white mb-1">
+                            <i class="bi bi-layers me-2"></i>{{translations.subscriptions.tierManagement}}
+                        </h1>
+                        <p class="text-muted mb-0">{{translations.subscriptions.tierManagementDescription}}</p>
+                    </div>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTierModal">
+                        <i class="bi bi-plus-lg me-1"></i>{{translations.subscriptions.createTier}}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row mb-4">
+            <div class="col-6 col-md-3">
+                <div class="card bg-dark border-primary h-100">
+                    <div class="card-body text-center py-3">
+                        <i class="bi bi-layers text-primary fs-2"></i>
+                        <h3 class="text-white mt-2 mb-0" id="totalTiers">0</h3>
+                        <p class="text-muted mb-0 small">{{translations.subscriptions.totalTiers}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card bg-dark border-success h-100">
+                    <div class="card-body text-center py-3">
+                        <i class="bi bi-people text-success fs-2"></i>
+                        <h3 class="text-white mt-2 mb-0" id="totalSubscribers">0</h3>
+                        <p class="text-muted mb-0 small">{{translations.subscriptions.totalSubscribers}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card bg-dark border-info h-100">
+                    <div class="card-body text-center py-3">
+                        <i class="bi bi-currency-dollar text-info fs-2"></i>
+                        <h3 class="text-white mt-2 mb-0" id="paidSubscribers">0</h3>
+                        <p class="text-muted mb-0 small">{{translations.subscriptions.paidSubscribers}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-body text-center py-3">
+                        <i class="bi bi-gift text-secondary fs-2"></i>
+                        <h3 class="text-white mt-2 mb-0" id="freeSubscribers">0</h3>
+                        <p class="text-muted mb-0 small">{{translations.subscriptions.freeSubscribers}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tiers Grid -->
+        <div class="row" id="tiersContainer">
+            <!-- Tiers will be loaded here -->
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="text-center py-5" style="display: none;">
+            <i class="bi bi-layers fs-1 text-muted"></i>
+            <h3 class="text-white mt-3">{{translations.subscriptions.noTiers}}</h3>
+            <p class="text-muted">{{translations.subscriptions.noTiersDescription}}</p>
+            <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#createTierModal">
+                <i class="bi bi-plus-lg me-1"></i>{{translations.subscriptions.createFirstTier}}
+            </button>
+        </div>
+
+        <!-- Quick Link to Subscribers -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <a href="/dashboard/subscribers" class="btn btn-outline-info">
+                    <i class="bi bi-people me-1"></i>{{translations.subscriptions.viewSubscribers}}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Tier Modal -->
+    <div class="modal fade" id="createTierModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content bg-dark text-white border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">
+                        <i class="bi bi-plus-circle me-2"></i>{{translations.subscriptions.createTier}}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Templates Section -->
+                    <div class="mb-4">
+                        <label class="form-label">{{translations.subscriptions.useTemplate}}</label>
+                        <div class="row g-2" id="tierTemplates">
+                            <!-- Templates will be loaded here -->
+                        </div>
+                    </div>
+                    <hr class="border-secondary">
+                    
+                    <form id="createTierForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{translations.subscriptions.tierName}} *</label>
+                                <input type="text" class="form-control bg-secondary text-white border-secondary" 
+                                       id="tierName" name="name" required maxlength="50"
+                                       placeholder="e.g., Bronze, Silver, Gold">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">{{translations.subscriptions.price}} *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-secondary border-secondary text-white">$</span>
+                                    <input type="number" class="form-control bg-secondary text-white border-secondary" 
+                                           id="tierPrice" name="price" min="0" step="0.01" value="0"
+                                           placeholder="0.00">
+                                </div>
+                                <small class="text-muted">{{translations.subscriptions.pricePerMonth}}</small>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">{{translations.subscriptions.currency}}</label>
+                                <select class="form-select bg-secondary text-white border-secondary" id="tierCurrency" name="currency">
+                                    <option value="USD">USD ($)</option>
+                                    <option value="EUR">EUR (€)</option>
+                                    <option value="JPY">JPY (¥)</option>
+                                    <option value="GBP">GBP (£)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{translations.subscriptions.description}}</label>
+                            <textarea class="form-control bg-secondary text-white border-secondary" 
+                                      id="tierDescription" name="description" rows="2" maxlength="200"
+                                      placeholder="Describe what subscribers will get..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{translations.subscriptions.benefits}}</label>
+                            <div id="benefitsContainer">
+                                <div class="input-group mb-2 benefit-row">
+                                    <input type="text" class="form-control bg-secondary text-white border-secondary benefit-input" 
+                                           placeholder="Enter a benefit...">
+                                    <button type="button" class="btn btn-outline-danger remove-benefit" style="display: none;">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-info" id="addBenefitBtn">
+                                <i class="bi bi-plus me-1"></i>{{translations.subscriptions.addBenefit}}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        {{translations.subscriptions.cancel}}
+                    </button>
+                    <button type="button" class="btn btn-primary" id="saveTierBtn">
+                        <i class="bi bi-check me-1"></i>{{translations.subscriptions.create}}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Tier Modal -->
+    <div class="modal fade" id="editTierModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content bg-dark text-white border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil me-2"></i>{{translations.subscriptions.editTier}}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editTierForm">
+                        <input type="hidden" id="editTierId">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{translations.subscriptions.tierName}} *</label>
+                                <input type="text" class="form-control bg-secondary text-white border-secondary" 
+                                       id="editTierName" name="name" required maxlength="50">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">{{translations.subscriptions.price}}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-secondary border-secondary text-white" id="editPriceCurrencySymbol">$</span>
+                                    <input type="number" class="form-control bg-secondary text-white border-secondary" 
+                                           id="editTierPrice" name="price" min="0" step="0.01" disabled>
+                                </div>
+                                <small class="text-warning">{{translations.subscriptions.priceCannotChange}}</small>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">{{translations.subscriptions.currency}}</label>
+                                <input type="text" class="form-control bg-secondary text-white border-secondary" 
+                                       id="editTierCurrency" disabled>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{translations.subscriptions.description}}</label>
+                            <textarea class="form-control bg-secondary text-white border-secondary" 
+                                      id="editTierDescription" name="description" rows="2" maxlength="200"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{translations.subscriptions.benefits}}</label>
+                            <div id="editBenefitsContainer">
+                                <!-- Benefits will be loaded here -->
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-info" id="editAddBenefitBtn">
+                                <i class="bi bi-plus me-1"></i>{{translations.subscriptions.addBenefit}}
+                            </button>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="editTierActive" checked>
+                                <label class="form-check-label" for="editTierActive">{{translations.subscriptions.tierActive}}</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-danger me-auto" id="deleteTierBtn">
+                        <i class="bi bi-trash me-1"></i>{{translations.subscriptions.delete}}
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        {{translations.subscriptions.cancel}}
+                    </button>
+                    <button type="button" class="btn btn-primary" id="updateTierBtn">
+                        <i class="bi bi-check me-1"></i>{{translations.subscriptions.save}}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{> dashboard-footer}}
+    <script src="/js/subscriptions.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof TiersDashboard !== 'undefined') {
+                TiersDashboard.init();
+            }
+        });
+    </script>
+</body>
+</html>

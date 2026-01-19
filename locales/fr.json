@@ -1905,6 +1905,13 @@
   "background2": "Arrière-plan 2",
   "selectPose": "Sélectionner une pose",
   "selectPose_description": "Sélectionnez une pose pour le personnage. Une pose est une position ou une attitude que le personnage prend dans l'image.",
+  "poseFilter": {
+    "all": "Tout",
+    "sfw": "SFW",
+    "nsfw": "NSFW",
+    "noSfwPoses": "Aucune pose SFW disponible",
+    "noNsfwPoses": "Aucune pose NSFW disponible"
+  },
   "pose1": "Pose 1",
   "pose2": "Pose 2",
   "selectCharacter": "Sélectionner un personnage",

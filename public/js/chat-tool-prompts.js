@@ -32,6 +32,9 @@ class PromptManager {
             this.hide();
         });
 
+        // Pose filter toggle event handler
+        this.bindPoseFilterEvents();
+
         // Click handler for individual prompt cards
         $(document).off('click', '.prompt-card').on('click', '.prompt-card', async (e) => {
             e.preventDefault();
@@ -199,10 +202,132 @@ class PromptManager {
         });
     }
 
+    // Bind pose filter toggle events
+    bindPoseFilterEvents() {
+        const $toggle = $('#poseFilterToggle');
+        const $buttons = $toggle.find('.pose-filter-btn');
+        const $slider = $toggle.find('.pose-filter-slider');
+
+        // Initialize slider position and width
+        this.updateSliderPosition($toggle, $buttons.filter('.active'), $slider);
+
+        // Click handler for filter buttons
+        $buttons.on('click', (e) => {
+            const $clickedBtn = $(e.currentTarget);
+            const filter = $clickedBtn.data('filter');
+
+            // Update active state
+            $buttons.removeClass('active');
+            $clickedBtn.addClass('active');
+
+            // Update toggle data attribute for color changes
+            $toggle.attr('data-active', filter);
+
+            // Animate slider to new position
+            this.updateSliderPosition($toggle, $clickedBtn, $slider);
+
+            // Apply filter to pose cards
+            this.filterPoseCards(filter);
+            
+            // Save filter preference to localStorage
+            localStorage.setItem('pose_filter_preference', filter);
+        });
+
+        // Restore saved filter preference
+        const savedFilter = localStorage.getItem('pose_filter_preference') || 'all';
+        const $savedBtn = $buttons.filter(`[data-filter="${savedFilter}"]`);
+        if ($savedBtn.length && savedFilter !== 'all') {
+            $savedBtn.trigger('click');
+        }
+    }
+
+    // Update slider position and width
+    updateSliderPosition($toggle, $activeBtn, $slider) {
+        if (!$activeBtn.length) return;
+        
+        const btnLeft = $activeBtn.position().left;
+        const btnWidth = $activeBtn.outerWidth();
+        
+        $slider.css({
+            left: btnLeft + 'px',
+            width: btnWidth + 'px'
+        });
+    }
+
+    // Filter pose cards based on SFW/NSFW selection
+    filterPoseCards(filter) {
+        const $cards = $('.prompt-card');
+        const $promptList = $('#promptList');
+        
+        // Remove any existing empty state
+        $promptList.find('.pose-empty-state').remove();
+        
+        let visibleCount = 0;
+
+        $cards.each(function() {
+            const $card = $(this);
+            const isNsfw = $card.data('nsfw') === true || $card.data('nsfw') === 'true';
+            
+            let shouldShow = false;
+            
+            switch (filter) {
+                case 'all':
+                    shouldShow = true;
+                    break;
+                case 'sfw':
+                    shouldShow = !isNsfw;
+                    break;
+                case 'nsfw':
+                    shouldShow = isNsfw;
+                    break;
+            }
+            
+            if (shouldShow) {
+                $card.removeClass('pose-filtered-hidden pose-filtering-out');
+                $card.addClass('pose-filtering-in');
+                visibleCount++;
+                
+                // Remove animation class after animation completes
+                setTimeout(() => {
+                    $card.removeClass('pose-filtering-in');
+                }, 300);
+            } else {
+                $card.addClass('pose-filtering-out');
+                
+                // Hide after animation
+                setTimeout(() => {
+                    $card.addClass('pose-filtered-hidden').removeClass('pose-filtering-out');
+                }, 200);
+            }
+        });
+
+        // Show empty state if no poses match the filter
+        if (visibleCount === 0) {
+            const emptyStateHtml = `
+                <div class="pose-empty-state">
+                    <i class="bi bi-${filter === 'sfw' ? 'shield-check' : 'fire'}"></i>
+                    <p>${filter === 'sfw' ? 
+                        (window.translations?.poseFilter?.noSfwPoses || 'No SFW poses available') : 
+                        (window.translations?.poseFilter?.noNsfwPoses || 'No NSFW poses available')
+                    }</p>
+                </div>
+            `;
+            $promptList.append(emptyStateHtml);
+        }
+    }
+
     // Show the main prompt container
     show() {
         $('#promptContainer').hide().addClass('visible').slideDown('fast');
         $('#suggestions').removeClass('d-flex').hide();
+        
+        // Re-initialize slider position after container is visible
+        setTimeout(() => {
+            const $toggle = $('#poseFilterToggle');
+            const $activeBtn = $toggle.find('.pose-filter-btn.active');
+            const $slider = $toggle.find('.pose-filter-slider');
+            this.updateSliderPosition($toggle, $activeBtn, $slider);
+        }, 100);
     }
 
     // Hide the main prompt container

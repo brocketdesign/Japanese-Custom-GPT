@@ -1960,6 +1960,13 @@
   "background2": "背景2",
   "selectPose": "ポーズを選択してください",
   "selectPose_description": "キャラクターのポーズを選択してください。ポーズとは、画像内でキャラクターが取る位置や態度のことです。",
+  "poseFilter": {
+    "all": "すべて",
+    "sfw": "SFW",
+    "nsfw": "NSFW",
+    "noSfwPoses": "SFWポーズがありません",
+    "noNsfwPoses": "NSFWポーズがありません"
+  },
   "pose1": "体勢1",
   "pose2": "体勢2",
   "selectCharacter": "キャラクターを選択してください",

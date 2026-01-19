@@ -300,21 +300,31 @@ async function createModelChat(db, model, promptData, language = 'en', fastify =
       console.log('[civitai/createModelChat] Full character data received from API:', chatData.name);
       console.log(`[civitai/createModelChat] Chat ID: ${chatId}`);
       try {
-        // Update the chatdData with systemGenerated true
+        // Update the chatdData with systemGenerated true and set initial chatImageUrl from civitai preview
+        // This ensures the character appears in "Recently Generated Chats" immediately
+        // The chatImageUrl will be updated later when actual image generation completes
+        const updateData = { 
+          systemGenerated: true,
+          imageModel: model.model,
+          civitaiModelId: model.modelId,
+          modelName: model.model,
+          modelId: model.modelId,
+        };
+        
+        // Set initial chatImageUrl from civitai preview image if available
+        if (promptData.imageUrl) {
+          updateData.chatImageUrl = promptData.imageUrl;
+          console.log(`[civitai/createModelChat] Setting initial chatImageUrl from civitai preview: ${promptData.imageUrl}`);
+        }
+        
         const result = await fastify.mongo.db.collection('chats').updateOne(
           { _id: new ObjectId(chatId) },
-          { $set: { 
-            systemGenerated: true,
-            imageModel: model.model,
-            civitaiModelId: model.modelId,
-            modelName: model.model,
-            modelId: model.modelId,
-          } }
+          { $set: updateData }
         );
         if (result.modifiedCount === 0) {
           console.warn('[civitai/createModelChat] No chat updated with systemGenerated flag');
         } else {
-          console.log('[civitai/createModelChat] Chat updated with systemGenerated flag successfully');
+          console.log('[civitai/createModelChat] Chat updated with systemGenerated flag and chatImageUrl successfully');
         }
       } catch (error) {
         console.error('[civitai/createModelChat] Error updating chat with systemGenerated flag:', error);

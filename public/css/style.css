@@ -867,6 +867,115 @@ opacity: 0.8;
   }
 
   /* ============================================================================
+   12.5 SEGMENTED CONTROL (Native App-like Toggle Buttons)
+   ============================================================================ */
+  .segmented-control {
+    display: flex;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 4px;
+    gap: 4px;
+  }
+
+  .segmented-control .btn-check {
+    position: absolute;
+    clip: rect(0, 0, 0, 0);
+    pointer-events: none;
+  }
+
+  .segmented-control .segment-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 8px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.7rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    gap: 4px;
+    min-height: 60px;
+  }
+
+  .segmented-control .segment-btn i {
+    font-size: 1rem;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+  }
+
+  .segmented-control .segment-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  .segmented-control .segment-btn:hover i {
+    opacity: 0.9;
+  }
+
+  .segmented-control .btn-check:checked + .segment-btn {
+    background: rgba(130, 64, 255, 0.25);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(130, 64, 255, 0.2);
+  }
+
+  .segmented-control .btn-check:checked + .segment-btn i {
+    opacity: 1;
+    color: #a78bfa;
+  }
+
+  /* Compact variant for inline/header use */
+  .segmented-control.segmented-control-sm {
+    padding: 3px;
+    gap: 3px;
+  }
+
+  .segmented-control.segmented-control-sm .segment-btn {
+    flex-direction: row;
+    padding: 6px 12px;
+    min-height: auto;
+    font-size: 0.75rem;
+    gap: 6px;
+  }
+
+  .segmented-control.segmented-control-sm .segment-btn i {
+    font-size: 0.875rem;
+  }
+
+  /* Horizontal variant (text beside icon) */
+  .segmented-control.segmented-control-horizontal .segment-btn {
+    flex-direction: row;
+    gap: 6px;
+  }
+
+  /* Light theme variant */
+  .segmented-control.segmented-control-light {
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  .segmented-control.segmented-control-light .segment-btn {
+    color: rgba(0, 0, 0, 0.5);
+  }
+
+  .segmented-control.segmented-control-light .segment-btn:hover {
+    background: rgba(0, 0, 0, 0.08);
+    color: rgba(0, 0, 0, 0.75);
+  }
+
+  .segmented-control.segmented-control-light .btn-check:checked + .segment-btn {
+    background: rgba(130, 64, 255, 0.15);
+    color: #6b21a8;
+  }
+
+  .segmented-control.segmented-control-light .btn-check:checked + .segment-btn i {
+    color: #7c3aed;
+  }
+
+  /* ============================================================================
    13. TABLES (Dark Theme)
    ============================================================================ */
   .table {
@@ -2552,7 +2661,37 @@ opacity: 0.8;
 
 #imagePreviewModal {
   z-index: 10000;
-  }
+}
+
+/* Make image preview modal scrollable */
+#imagePreviewModal .modal-body {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding-top: 80px !important;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scroll-behavior: smooth;
+}
+
+#imagePreviewModal .image-preview-swiper {
+  min-height: 100% !important;
+  height: auto !important;
+  padding-top: 20px !important;
+  padding-bottom: 200px !important;
+}
+
+#imagePreviewModal .modal-header {
+  position: fixed !important;
+  background: rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(10px) !important;
+  width: 100% !important;
+  justify-content: flex-end !important;
+  padding: 1rem !important;
+}
+
+/* Adjust like button position to account for fixed header */
+#imagePreviewModal .image-like-overlay {
+  top: 80px !important;
+}
 
 /* Gallery card styles moved to character-cards.css */
 /* Tag hover effect for .gallery-tags */
@@ -4593,6 +4732,8 @@ opacity: 0.8;
     display: flex;
     justify-content: center;
     align-items: center;
+    padding-top: 60px; /* Add padding to prevent header overlap */
+    padding-bottom: 40px; /* Add padding for bottom info */
 }
 
 .image-preview-swiper .swiper-zoom-container {

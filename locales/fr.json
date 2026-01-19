@@ -1375,7 +1375,12 @@
     "videoDashboard": "Tableau de bord des vidéos",
     "myPosts": "Mes publications",
     "mySchedules": "Mes planifications",
-    "promptTemplates": "Modèles de prompts"
+    "promptTemplates": "Modèles de prompts",
+    "earnings": "Revenus",
+    "tiers": "Niveaux d'abonnement",
+    "subscribers": "Abonnés",
+    "mySubscriptions": "Mes Abonnements",
+    "becomeCreator": "Devenir Créateur"
   },
   "notifications": {
     "title": "Notifications",
@@ -2473,7 +2478,21 @@
     "contentLocked": "Contenu Verrouillé",
     "unlockWith": "Déverrouiller avec",
     "tierRequired": "niveau ou supérieur",
-    "subscribeToUnlock": "Abonnez-vous pour déverrouiller ce contenu"
+    "subscribeToUnlock": "Abonnez-vous pour déverrouiller ce contenu",
+    "pageDescription": "Gérez vos abonnements aux créateurs",
+    "loading": "Chargement...",
+    "noSubscriptionsYet": "Aucun Abonnement",
+    "noSubscriptionsDescription": "Lorsque vous vous abonnez à des créateurs, ils apparaîtront ici",
+    "discoverCreators": "Découvrir des Créateurs",
+    "subscriptionRemainsActive": "Votre abonnement restera actif jusqu'à la fin de la période de facturation en cours.",
+    "keepSubscription": "Garder l'Abonnement",
+    "failedLoadSubscriptions": "Échec du chargement des abonnements",
+    "subscriptionCancelledSuccess": "Abonnement Annulé",
+    "subscriptionCancelledMessage": "Votre abonnement restera actif jusqu'à la fin de la période de facturation.",
+    "failedCancelSubscription": "Échec de l'annulation de l'abonnement",
+    "viewProfile": "Voir le Profil",
+    "subscribeDate": "Abonné le",
+    "renewDate": "Renouvellement le"
   },
 
   "creators": {

@@ -15,7 +15,7 @@
                 <h1 class="text-white mb-1">
                     <i class="bi bi-heart me-2"></i>{{translations.subscriptions.mySubscriptions}}
                 </h1>
-                <p class="text-muted mb-0">Manage your subscriptions to creators</p>
+                <p class="text-muted mb-0">{{translations.subscriptions.pageDescription}}</p>
             </div>
         </div>
 
@@ -23,7 +23,7 @@
         <div class="row" id="subscriptionsContainer">
             <div class="col-12 text-center py-5">
                 <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
+                    <span class="visually-hidden">{{translations.subscriptions.loading}}</span>
                 </div>
             </div>
         </div>
@@ -31,10 +31,10 @@
         <!-- Empty State -->
         <div id="emptySubscriptions" class="text-center py-5" style="display: none;">
             <i class="bi bi-heart fs-1 text-muted"></i>
-            <h3 class="text-white mt-3">No Subscriptions Yet</h3>
-            <p class="text-muted">When you subscribe to creators, they will appear here</p>
+            <h3 class="text-white mt-3">{{translations.subscriptions.noSubscriptionsYet}}</h3>
+            <p class="text-muted">{{translations.subscriptions.noSubscriptionsDescription}}</p>
             <a href="/creators" class="btn btn-primary mt-3">
-                <i class="bi bi-search me-1"></i>Discover Creators
+                <i class="bi bi-search me-1"></i>{{translations.subscriptions.discoverCreators}}
             </a>
         </div>
 
@@ -55,16 +55,16 @@
                 <div class="modal-body">
                     <p>{{translations.subscriptions.cancelSubscriptionConfirm}}</p>
                     <p class="text-muted small mb-0">
-                        Your subscription will remain active until the end of the current billing period.
+                        {{translations.subscriptions.subscriptionRemainsActive}}
                     </p>
                     <input type="hidden" id="cancelSubscriptionId">
                 </div>
                 <div class="modal-footer border-secondary">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        Keep Subscription
+                        {{translations.subscriptions.keepSubscription}}
                     </button>
                     <button type="button" class="btn btn-danger" id="confirmCancelBtn">
-                        <i class="bi bi-x-circle me-1"></i>Cancel Subscription
+                        <i class="bi bi-x-circle me-1"></i>{{translations.subscriptions.cancelSubscription}}
                     </button>
                 </div>
             </div>
@@ -108,7 +108,7 @@
                     console.error('Error loading subscriptions:', error);
                     container.innerHTML = `
                         <div class="col-12 text-center py-5 text-danger">
-                            <i class="bi bi-exclamation-triangle me-2"></i>Failed to load subscriptions
+                            <i class="bi bi-exclamation-triangle me-2"></i>${window.translations?.subscriptions?.failedLoadSubscriptions || 'Failed to load subscriptions'}
                         </div>
                     `;
                 }
@@ -144,18 +144,18 @@
                                     </span>
                                 </div>
                                 <div class="text-white fw-bold">
-                                    ${sub.tier?.isFree ? 'Free' : `$${((sub.tier?.price || 0) / 100).toFixed(2)}/mo`}
+                                    ${sub.tier?.isFree ? (window.translations?.subscriptions?.free || 'Free') : `$${((sub.tier?.price || 0) / 100).toFixed(2)}${window.translations?.subscriptions?.perMonth || '/mo'}`}
                                 </div>
                             </div>
                             
                             <div class="text-muted small mb-3">
-                                <div><i class="bi bi-calendar-event me-1"></i>Subscribed: ${this.formatDate(sub.startDate || sub.createdAt)}</div>
-                                ${sub.currentPeriodEnd ? `<div><i class="bi bi-arrow-repeat me-1"></i>Renews: ${this.formatDate(sub.currentPeriodEnd)}</div>` : ''}
+                                <div><i class="bi bi-calendar-event me-1"></i>${window.translations?.subscriptions?.subscribeDate || 'Subscribed'}: ${this.formatDate(sub.startDate || sub.createdAt)}</div>
+                                ${sub.currentPeriodEnd ? `<div><i class="bi bi-arrow-repeat me-1"></i>${window.translations?.subscriptions?.renewDate || 'Renews'}: ${this.formatDate(sub.currentPeriodEnd)}</div>` : ''}
                             </div>
                             
                             <div class="d-flex gap-2">
                                 <a href="/user/${sub.creatorId}" class="btn btn-outline-primary btn-sm flex-fill">
-                                    <i class="bi bi-person me-1"></i>View Profile
+                                    <i class="bi bi-person me-1"></i>${window.translations?.subscriptions?.viewProfile || 'View Profile'}
                                 </a>
                                 ${sub.status === 'active' ? `
                                     <button class="btn btn-outline-danger btn-sm" onclick="MySubscriptions.showCancelModal('${sub._id}')">
@@ -221,17 +221,17 @@
                         if (typeof Swal !== 'undefined') {
                             Swal.fire({
                                 icon: 'success',
-                                title: 'Subscription Cancelled',
-                                text: 'Your subscription will remain active until the end of the billing period.',
+                                title: window.translations?.subscriptions?.subscriptionCancelledSuccess || 'Subscription Cancelled',
+                                text: window.translations?.subscriptions?.subscriptionCancelledMessage || 'Your subscription will remain active until the end of the billing period.',
                                 timer: 3000
                             });
                         }
                     } else {
-                        alert(data.error || 'Failed to cancel subscription');
+                        alert(data.error || window.translations?.subscriptions?.failedCancelSubscription || 'Failed to cancel subscription');
                     }
                 } catch (error) {
                     console.error('Error cancelling subscription:', error);
-                    alert('Failed to cancel subscription');
+                    alert(window.translations?.subscriptions?.failedCancelSubscription || 'Failed to cancel subscription');
                 }
             },
             
@@ -252,11 +252,12 @@
             },
             
             formatStatus(status) {
+                const t = window.translations?.subscriptions || {};
                 const statuses = {
-                    active: 'Active',
-                    past_due: 'Past Due',
-                    cancelled: 'Cancelled',
-                    pending: 'Pending'
+                    active: t.active || 'Active',
+                    past_due: t.pastDue || 'Past Due',
+                    cancelled: t.cancelled || 'Cancelled',
+                    pending: t.pending || 'Pending'
                 };
                 return statuses[status] || status;
             },

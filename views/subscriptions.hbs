@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="{{lang}}">
+{{> dashboard-header}}
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/css/subscriptions.css">
+</head>
+<body class="bg-dark">
+    {{> dashboard-nav}}
+
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="text-white mb-1">
+                    <i class="bi bi-heart me-2"></i>{{translations.subscriptions.mySubscriptions}}
+                </h1>
+                <p class="text-muted mb-0">Manage your subscriptions to creators</p>
+            </div>
+        </div>
+
+        <!-- Subscriptions List -->
+        <div class="row" id="subscriptionsContainer">
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptySubscriptions" class="text-center py-5" style="display: none;">
+            <i class="bi bi-heart fs-1 text-muted"></i>
+            <h3 class="text-white mt-3">No Subscriptions Yet</h3>
+            <p class="text-muted">When you subscribe to creators, they will appear here</p>
+            <a href="/creators" class="btn btn-primary mt-3">
+                <i class="bi bi-search me-1"></i>Discover Creators
+            </a>
+        </div>
+
+        <!-- Pagination -->
+        <div id="subscriptionsPagination" class="d-flex justify-content-center mt-4"></div>
+    </div>
+
+    <!-- Cancel Subscription Modal -->
+    <div class="modal fade" id="cancelSubscriptionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-white border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">
+                        <i class="bi bi-exclamation-triangle text-warning me-2"></i>{{translations.subscriptions.cancelSubscription}}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>{{translations.subscriptions.cancelSubscriptionConfirm}}</p>
+                    <p class="text-muted small mb-0">
+                        Your subscription will remain active until the end of the current billing period.
+                    </p>
+                    <input type="hidden" id="cancelSubscriptionId">
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Keep Subscription
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmCancelBtn">
+                        <i class="bi bi-x-circle me-1"></i>Cancel Subscription
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{> dashboard-footer}}
+    <script src="/js/subscriptions.js"></script>
+    <script>
+        const MySubscriptions = {
+            subscriptions: [],
+            currentPage: 1,
+            
+            async init() {
+                await this.loadSubscriptions();
+                this.setupEventListeners();
+            },
+            
+            async loadSubscriptions() {
+                const container = document.getElementById('subscriptionsContainer');
+                const emptyState = document.getElementById('emptySubscriptions');
+                
+                try {
+                    const response = await fetch(`/api/subscriptions/my?page=${this.currentPage}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.subscriptions = data.subscriptions || [];
+                        
+                        if (this.subscriptions.length === 0) {
+                            container.innerHTML = '';
+                            emptyState.style.display = 'block';
+                            return;
+                        }
+                        
+                        emptyState.style.display = 'none';
+                        this.renderSubscriptions();
+                        this.renderPagination(data.pagination);
+                    }
+                } catch (error) {
+                    console.error('Error loading subscriptions:', error);
+                    container.innerHTML = `
+                        <div class="col-12 text-center py-5 text-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>Failed to load subscriptions
+                        </div>
+                    `;
+                }
+            },
+            
+            renderSubscriptions() {
+                const container = document.getElementById('subscriptionsContainer');
+                
+                container.innerHTML = this.subscriptions.map(sub => `
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="tier-card">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <img src="${sub.creator?.profileUrl || '/img/avatar.png'}" 
+                                     alt="${this.escapeHtml(sub.creator?.nickname || 'Creator')}"
+                                     class="rounded-circle" style="width: 60px; height: 60px; object-fit: cover;">
+                                <div>
+                                    <h5 class="text-white mb-0">
+                                        <a href="/user/${sub.creatorId}" class="text-white text-decoration-none">
+                                            ${this.escapeHtml(sub.creator?.creatorProfile?.displayName || sub.creator?.nickname || 'Creator')}
+                                        </a>
+                                    </h5>
+                                    <span class="badge ${sub.tier?.isFree ? 'bg-secondary' : 'bg-primary'}">
+                                        ${this.escapeHtml(sub.tier?.name || 'Unknown Tier')}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <span class="status-badge ${sub.status}">
+                                        <i class="bi bi-${this.getStatusIcon(sub.status)}"></i>
+                                        ${this.formatStatus(sub.status)}
+                                    </span>
+                                </div>
+                                <div class="text-white fw-bold">
+                                    ${sub.tier?.isFree ? 'Free' : `$${((sub.tier?.price || 0) / 100).toFixed(2)}/mo`}
+                                </div>
+                            </div>
+                            
+                            <div class="text-muted small mb-3">
+                                <div><i class="bi bi-calendar-event me-1"></i>Subscribed: ${this.formatDate(sub.startDate || sub.createdAt)}</div>
+                                ${sub.currentPeriodEnd ? `<div><i class="bi bi-arrow-repeat me-1"></i>Renews: ${this.formatDate(sub.currentPeriodEnd)}</div>` : ''}
+                            </div>
+                            
+                            <div class="d-flex gap-2">
+                                <a href="/user/${sub.creatorId}" class="btn btn-outline-primary btn-sm flex-fill">
+                                    <i class="bi bi-person me-1"></i>View Profile
+                                </a>
+                                ${sub.status === 'active' ? `
+                                    <button class="btn btn-outline-danger btn-sm" onclick="MySubscriptions.showCancelModal('${sub._id}')">
+                                        <i class="bi bi-x-circle"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            },
+            
+            renderPagination(pagination) {
+                const container = document.getElementById('subscriptionsPagination');
+                if (!pagination || pagination.pages <= 1) {
+                    container.innerHTML = '';
+                    return;
+                }
+                
+                // Simple pagination
+                container.innerHTML = `
+                    <nav>
+                        <ul class="pagination">
+                            <li class="page-item ${pagination.page <= 1 ? 'disabled' : ''}">
+                                <a class="page-link" href="#" onclick="MySubscriptions.goToPage(${pagination.page - 1})">&laquo;</a>
+                            </li>
+                            <li class="page-item active">
+                                <span class="page-link">${pagination.page} / ${pagination.pages}</span>
+                            </li>
+                            <li class="page-item ${pagination.page >= pagination.pages ? 'disabled' : ''}">
+                                <a class="page-link" href="#" onclick="MySubscriptions.goToPage(${pagination.page + 1})">&raquo;</a>
+                            </li>
+                        </ul>
+                    </nav>
+                `;
+            },
+            
+            goToPage(page) {
+                this.currentPage = page;
+                this.loadSubscriptions();
+            },
+            
+            showCancelModal(subscriptionId) {
+                document.getElementById('cancelSubscriptionId').value = subscriptionId;
+                new bootstrap.Modal(document.getElementById('cancelSubscriptionModal')).show();
+            },
+            
+            async cancelSubscription() {
+                const subscriptionId = document.getElementById('cancelSubscriptionId').value;
+                
+                try {
+                    const response = await fetch(`/api/subscriptions/${subscriptionId}/cancel`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ immediate: false })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        bootstrap.Modal.getInstance(document.getElementById('cancelSubscriptionModal')).hide();
+                        await this.loadSubscriptions();
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Subscription Cancelled',
+                                text: 'Your subscription will remain active until the end of the billing period.',
+                                timer: 3000
+                            });
+                        }
+                    } else {
+                        alert(data.error || 'Failed to cancel subscription');
+                    }
+                } catch (error) {
+                    console.error('Error cancelling subscription:', error);
+                    alert('Failed to cancel subscription');
+                }
+            },
+            
+            setupEventListeners() {
+                document.getElementById('confirmCancelBtn')?.addEventListener('click', () => this.cancelSubscription());
+            },
+            
+            // Utility methods
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text || '';
+                return div.innerHTML;
+            },
+            
+            formatDate(dateStr) {
+                if (!dateStr) return '—';
+                return new Date(dateStr).toLocaleDateString();
+            },
+            
+            formatStatus(status) {
+                const statuses = {
+                    active: 'Active',
+                    past_due: 'Past Due',
+                    cancelled: 'Cancelled',
+                    pending: 'Pending'
+                };
+                return statuses[status] || status;
+            },
+            
+            getStatusIcon(status) {
+                const icons = {
+                    active: 'check-circle',
+                    past_due: 'exclamation-triangle',
+                    cancelled: 'x-circle',
+                    pending: 'hourglass-split'
+                };
+                return icons[status] || 'question-circle';
+            }
+        };
+        
+        document.addEventListener('DOMContentLoaded', () => MySubscriptions.init());
+    </script>
+</body>
+</html>

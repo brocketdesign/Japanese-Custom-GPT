@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="{{lang}}">
+{{> dashboard-header}}
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/css/subscriptions.css">
+</head>
+<body class="bg-dark">
+    {{> dashboard-nav}}
+
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                    <div>
+                        <h1 class="text-white mb-1">
+                            <i class="bi bi-people me-2"></i>{{translations.subscriptions.subscribers}}
+                        </h1>
+                        <p class="text-muted mb-0">{{translations.subscriptions.subscribersDescription}}</p>
+                    </div>
+                    <a href="/dashboard/tiers" class="btn btn-outline-primary">
+                        <i class="bi bi-layers me-1"></i>{{translations.subscriptions.manageTiers}}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row mb-4">
+            <div class="col-6 col-md-3">
+                <div class="card bg-dark border-success h-100">
+                    <div class="card-body text-center py-3">
+                        <i class="bi bi-people-fill text-success fs-2"></i>
+                        <h3 class="text-white mt-2 mb-0" id="activeSubscribers">0</h3>
+                        <p class="text-muted mb-0 small">{{translations.subscriptions.activeSubscribers}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card bg-dark border-info h-100">
+                    <div class="card-body text-center py-3">
+                        <i class="bi bi-currency-dollar text-info fs-2"></i>
+                        <h3 class="text-white mt-2 mb-0" id="paidSubscribersCount">0</h3>
+                        <p class="text-muted mb-0 small">{{translations.subscriptions.paidSubscribers}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-body text-center py-3">
+                        <i class="bi bi-gift text-secondary fs-2"></i>
+                        <h3 class="text-white mt-2 mb-0" id="freeSubscribersCount">0</h3>
+                        <p class="text-muted mb-0 small">{{translations.subscriptions.freeSubscribers}}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card bg-dark border-warning h-100">
+                    <div class="card-body text-center py-3">
+                        <i class="bi bi-exclamation-triangle text-warning fs-2"></i>
+                        <h3 class="text-white mt-2 mb-0" id="pastDueSubscribers">0</h3>
+                        <p class="text-muted mb-0 small">{{translations.subscriptions.pastDueSubscribers}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6 col-md-3">
+                        <label class="form-label text-white">{{translations.subscriptions.filterByTier}}</label>
+                        <select id="filterTier" class="form-select bg-dark text-white border-secondary">
+                            <option value="">{{translations.subscriptions.allTiers}}</option>
+                            <!-- Tiers will be loaded here -->
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label class="form-label text-white">{{translations.subscriptions.status}}</label>
+                        <select id="filterStatus" class="form-select bg-dark text-white border-secondary">
+                            <option value="active">{{translations.subscriptions.active}}</option>
+                            <option value="past_due">{{translations.subscriptions.pastDue}}</option>
+                            <option value="cancelled">{{translations.subscriptions.cancelled}}</option>
+                            <option value="">{{translations.subscriptions.all}}</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6 d-flex align-items-end">
+                        <div class="input-group">
+                            <input type="text" class="form-control bg-dark text-white border-secondary" 
+                                   id="searchSubscribers" placeholder="{{translations.subscriptions.searchPlaceholder}}">
+                            <button class="btn btn-outline-info" type="button" id="searchBtn">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subscribers List -->
+        <div class="card bg-dark border-secondary">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th class="border-secondary">{{translations.subscriptions.subscriber}}</th>
+                                <th class="border-secondary">{{translations.subscriptions.tier}}</th>
+                                <th class="border-secondary">{{translations.subscriptions.status}}</th>
+                                <th class="border-secondary">{{translations.subscriptions.subscribedOn}}</th>
+                                <th class="border-secondary">{{translations.subscriptions.renewsOn}}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subscribersTableBody">
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptySubscribers" class="text-center py-5" style="display: none;">
+            <i class="bi bi-people fs-1 text-muted"></i>
+            <h3 class="text-white mt-3">{{translations.subscriptions.noSubscribers}}</h3>
+            <p class="text-muted">{{translations.subscriptions.noSubscribersDescription}}</p>
+        </div>
+
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <div class="text-muted" id="subscribersPaginationInfo">
+                <!-- Pagination info -->
+            </div>
+            <nav id="subscribersPagination">
+                <!-- Pagination will be rendered here -->
+            </nav>
+        </div>
+    </div>
+
+    {{> dashboard-footer}}
+    <script src="/js/subscriptions.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof SubscribersDashboard !== 'undefined') {
+                SubscribersDashboard.init();
+            }
+        });
+    </script>
+</body>
+</html>

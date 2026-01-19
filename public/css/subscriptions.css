@@ -1,0 +1,504 @@
+/**
+ * Subscriptions & Tiers Styles
+ * For tier management and subscriber dashboards
+ */
+
+/* ===== Tier Cards ===== */
+.tier-card {
+    background: linear-gradient(145deg, rgba(30, 30, 40, 0.95), rgba(20, 20, 30, 0.9));
+    border: 1px solid rgba(130, 64, 255, 0.2);
+    border-radius: 16px;
+    padding: 24px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.tier-card:hover {
+    border-color: rgba(130, 64, 255, 0.5);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(130, 64, 255, 0.15);
+}
+
+.tier-card.free-tier {
+    border-color: rgba(108, 117, 125, 0.3);
+}
+
+.tier-card.featured {
+    border-color: rgba(255, 193, 7, 0.5);
+    background: linear-gradient(145deg, rgba(40, 35, 20, 0.95), rgba(30, 25, 15, 0.9));
+}
+
+.tier-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #8240FF, #C850C0);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.tier-card:hover::before {
+    opacity: 1;
+}
+
+.tier-card.free-tier::before {
+    background: linear-gradient(90deg, #6c757d, #495057);
+}
+
+/* Tier Header */
+.tier-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.tier-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.tier-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.tier-badge.free {
+    background: rgba(108, 117, 125, 0.3);
+    color: #adb5bd;
+}
+
+.tier-badge.paid {
+    background: linear-gradient(135deg, #8240FF, #C850C0);
+    color: #fff;
+}
+
+.tier-badge.inactive {
+    background: rgba(220, 53, 69, 0.3);
+    color: #dc3545;
+}
+
+/* Tier Price */
+.tier-price {
+    margin-bottom: 16px;
+}
+
+.tier-price .amount {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+}
+
+.tier-price .currency {
+    font-size: 1.25rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-right: 4px;
+}
+
+.tier-price .period {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Tier Description */
+.tier-description {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+/* Tier Benefits */
+.tier-benefits {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px 0;
+}
+
+.tier-benefits li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.9rem;
+}
+
+.tier-benefits li i {
+    color: #8240FF;
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.tier-benefits li.free-benefit i {
+    color: #6c757d;
+}
+
+/* Tier Stats */
+.tier-stats {
+    display: flex;
+    gap: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: auto;
+}
+
+.tier-stat {
+    text-align: center;
+}
+
+.tier-stat .stat-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.tier-stat .stat-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+}
+
+/* Tier Actions */
+.tier-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.tier-actions .btn {
+    flex: 1;
+}
+
+/* ===== Template Cards ===== */
+.template-card {
+    background: rgba(30, 30, 40, 0.8);
+    border: 2px dashed rgba(130, 64, 255, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.template-card:hover {
+    border-color: #8240FF;
+    background: rgba(130, 64, 255, 0.1);
+}
+
+.template-card.selected {
+    border-style: solid;
+    border-color: #8240FF;
+    background: rgba(130, 64, 255, 0.15);
+}
+
+.template-card .template-name {
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.template-card .template-price {
+    color: #8240FF;
+    font-weight: 700;
+}
+
+/* ===== Subscribers Table ===== */
+.table-dark {
+    --bs-table-bg: transparent;
+}
+
+.table-dark th {
+    background: rgba(30, 30, 40, 0.9);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 16px;
+}
+
+.table-dark td {
+    padding: 16px;
+    vertical-align: middle;
+    border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.subscriber-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.subscriber-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(130, 64, 255, 0.3);
+}
+
+.subscriber-name {
+    font-weight: 600;
+    color: #fff;
+}
+
+.subscriber-email {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-badge.active {
+    background: rgba(25, 135, 84, 0.2);
+    color: #198754;
+}
+
+.status-badge.past_due {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+}
+
+.status-badge.cancelled {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+.status-badge.pending {
+    background: rgba(13, 202, 240, 0.2);
+    color: #0dcaf0;
+}
+
+/* ===== Subscribe Modal (for user profile) ===== */
+.subscribe-modal .tier-option {
+    background: rgba(30, 30, 40, 0.9);
+    border: 2px solid rgba(130, 64, 255, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.subscribe-modal .tier-option:hover {
+    border-color: rgba(130, 64, 255, 0.5);
+}
+
+.subscribe-modal .tier-option.selected {
+    border-color: #8240FF;
+    background: rgba(130, 64, 255, 0.1);
+}
+
+.subscribe-modal .tier-option input[type="radio"] {
+    display: none;
+}
+
+.subscribe-modal .tier-option .tier-radio {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(130, 64, 255, 0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.subscribe-modal .tier-option.selected .tier-radio {
+    border-color: #8240FF;
+}
+
+.subscribe-modal .tier-option.selected .tier-radio::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: #8240FF;
+    border-radius: 50%;
+}
+
+/* ===== Benefits Input ===== */
+.benefit-row {
+    display: flex;
+    gap: 8px;
+}
+
+.benefit-row .benefit-input {
+    flex: 1;
+}
+
+.benefit-row .remove-benefit {
+    padding: 0.375rem 0.75rem;
+}
+
+/* ===== Pagination ===== */
+.pagination .page-item .page-link {
+    background: rgba(30, 30, 40, 0.9);
+    border-color: rgba(130, 64, 255, 0.2);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.pagination .page-item .page-link:hover {
+    background: rgba(130, 64, 255, 0.2);
+    border-color: rgba(130, 64, 255, 0.5);
+    color: #fff;
+}
+
+.pagination .page-item.active .page-link {
+    background: #8240FF;
+    border-color: #8240FF;
+    color: #fff;
+}
+
+.pagination .page-item.disabled .page-link {
+    background: rgba(30, 30, 40, 0.5);
+    border-color: rgba(130, 64, 255, 0.1);
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* ===== Drag & Drop Reordering ===== */
+.tier-card.dragging {
+    opacity: 0.5;
+    transform: scale(0.98);
+}
+
+.tier-card.drag-over {
+    border-color: #8240FF;
+    box-shadow: 0 0 20px rgba(130, 64, 255, 0.3);
+}
+
+.drag-handle {
+    cursor: grab;
+    color: rgba(255, 255, 255, 0.3);
+    transition: color 0.3s ease;
+}
+
+.drag-handle:hover {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .tier-card {
+        padding: 16px;
+    }
+
+    .tier-name {
+        font-size: 1.25rem;
+    }
+
+    .tier-price .amount {
+        font-size: 2rem;
+    }
+
+    .tier-stats {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .tier-stat {
+        flex: 1 1 45%;
+    }
+
+    .tier-actions {
+        flex-direction: column;
+    }
+
+    .subscriber-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .subscriber-avatar {
+        width: 32px;
+        height: 32px;
+    }
+
+    .table-dark th,
+    .table-dark td {
+        padding: 12px 8px;
+    }
+}
+
+/* ===== Animation ===== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tier-card {
+    animation: fadeIn 0.3s ease forwards;
+}
+
+.tier-card:nth-child(2) { animation-delay: 0.1s; }
+.tier-card:nth-child(3) { animation-delay: 0.2s; }
+.tier-card:nth-child(4) { animation-delay: 0.3s; }
+.tier-card:nth-child(5) { animation-delay: 0.4s; }
+
+/* ===== Subscribe Button on Profile ===== */
+.subscribe-btn {
+    background: linear-gradient(135deg, #8240FF, #C850C0);
+    border: none;
+    padding: 12px 32px;
+    border-radius: 25px;
+    font-weight: 600;
+    color: #fff;
+    transition: all 0.3s ease;
+}
+
+.subscribe-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(130, 64, 255, 0.4);
+}
+
+.subscribe-btn.subscribed {
+    background: rgba(25, 135, 84, 0.8);
+}
+
+.subscribe-btn.subscribed:hover {
+    background: rgba(220, 53, 69, 0.8);
+}
+
+/* ===== Loading State ===== */
+.tier-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+}
+
+.tier-loading .spinner-border {
+    width: 3rem;
+    height: 3rem;
+}

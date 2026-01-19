@@ -416,6 +416,20 @@ function initializeWebSocket(onConnectionResult = null) {
               // No need to generate them again via WebSocket notification
               break;
           }
+          case 'imageRequestDetectedPremiumRequired': {
+              // Image request was detected but user needs premium to auto-generate
+              const { message, chatId: notifChatId, userChatId: notifUserChatId } = data.notification;
+              console.log('[WebSocket] Image request detected - premium required notification');
+              
+              // Show a notification to the user
+              showNotification(message, 'info');
+              
+              // Optionally show premium upsell modal
+              if (window.showPremiumUpsellModal) {
+                  window.showPremiumUpsellModal('image_auto_generation');
+              }
+              break;
+          }
           default:
             // Removed console.log('[WebSocket] Unhandled notification type:', data.notification.type);
             break;

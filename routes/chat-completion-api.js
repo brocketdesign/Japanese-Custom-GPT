@@ -548,10 +548,12 @@ async function routes(fastify, options) {
                     await updateChatLastMessage(db, chatId, userId, completion, userData.updatedAt);
                     await updateUserChat(db, userId, userChatId, userData.messages, userData.updatedAt);
 
-                    // Check if the assistant's new message was an image request [ONLY IF THE USER SETTING IS ENABLED] // New Update
+                    // Check if the assistant's new message was an image request - Detection enabled for ALL users
                     const newUserPointsBalance = await getUserPoints(db, userId);
                     const autoImageGenerationEnabled = await getAutoImageGenerationSetting(db, userId, chatId);
-                      if( messagesForCompletion.length > 2 && newUserPointsBalance >= 50 && autoImageGenerationEnabled ) {
+                    
+                    // Run image detection for all users (regardless of autoImageGenerationEnabled setting)
+                    if (messagesForCompletion.length > 2 && newUserPointsBalance >= 50) {
                         let assistantImageRequest = null;
                         const disableImageAnalysis = request.body.disableImageAnalysis === true ? true : false;
                         if(!disableImageAnalysis && lastUserMessage.name !== 'pose_request' && lastUserMessage.name !== 'gift_request') {
@@ -560,22 +562,34 @@ async function routes(fastify, options) {
                         } else {
                             console.log(`📷🔍  [openai-chat-completion:${requestId}] Skipping auto image generation for ${disableImageAnalysis ? 'request disableImageAnalysis: '+disableImageAnalysis : 'message name: '+lastUserMessage.name}`);
                         }
+                        
                         if (assistantImageRequest && assistantImageRequest.image_request) {
-                            lastUserMessage.content += ' ' + newAssistantMessage.content;
-                            // [OVERWRITE] Use the character nsfw setting for auto image generation
-                            // assistantImageRequest.nsfw = nsfw;
+                            // Check if user is premium
+                            if (isPremium && autoImageGenerationEnabled) {
+                                // Premium user with auto-generation enabled: proceed with image generation
+                                lastUserMessage.content += ' ' + newAssistantMessage.content;
+                                // [OVERWRITE] Use the character nsfw setting for auto image generation
+                                // assistantImageRequest.nsfw = nsfw;
 
-                            // [FIND FIX] Duplication of the parameters assistantImageRequest; it should be currentUserMessage
-                            const imageResult = await handleImageGeneration(
-                                db, assistantImageRequest, lastUserMessage, assistantImageRequest, userData,
-                                userInfo, isAdmin, characterDescription, nsfw, userChatId, chatId, userId, request.translations, fastify
-                            );
-                            
-                            if(!imageResult.genImage.canAfford) {
-                                fastify.sendNotificationToUser(userId, 'showNotification', { message: request.userPointsTranslations.insufficientFunds.replace('{{points}}', getImageGenerationCost()), icon: 'warning' });
-                            }   
+                                // [FIND FIX] Duplication of the parameters assistantImageRequest; it should be currentUserMessage
+                                const imageResult = await handleImageGeneration(
+                                    db, assistantImageRequest, lastUserMessage, assistantImageRequest, userData,
+                                    userInfo, isAdmin, characterDescription, nsfw, userChatId, chatId, userId, request.translations, fastify
+                                );
+                                
+                                if(!imageResult.genImage.canAfford) {
+                                    fastify.sendNotificationToUser(userId, 'showNotification', { message: request.userPointsTranslations.insufficientFunds.replace('{{points}}', getImageGenerationCost()), icon: 'warning' });
+                                }
+                            } else if (!isPremium) {
+                                // Free user: send notification that image was detected but premium is required
+                                console.log(`📷🔍 [openai-chat-completion:${requestId}] Image request detected for free user - sending premium required notification`);
+                                fastify.sendNotificationToUser(userId, 'imageRequestDetectedPremiumRequired', { 
+                                    message: request.translations?.websocket?.imageRequestDetectedPremiumRequired || 'Image request detected! Upgrade to Premium to automatically generate images.',
+                                    chatId,
+                                    userChatId
+                                });
+                            }
                         }
-                    } else {
                     }
                 } else {
                     console.error(`[openai-chat-completion:${requestId}] ERROR - No completion received from generateCompletion`);

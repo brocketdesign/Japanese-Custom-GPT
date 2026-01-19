@@ -669,7 +669,8 @@
     "connection_lost": "Connection lost",
     "connection_lost_message": "The connection to the server has been lost. Please check your internet connection.",
     "connection_failed": "Connection failed",
-    "connection_failed_message": "Failed to connect to the server. Please try again later."
+    "connection_failed_message": "Failed to connect to the server. Please try again later.",
+    "imageRequestDetectedPremiumRequired": "Image request detected! Upgrade to Premium to automatically generate images during chat."
   },
   "currency": "$",
   "premium": " 💎 Premium",

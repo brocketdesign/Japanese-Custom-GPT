@@ -79,7 +79,8 @@ const VIDEO_MODEL_CONFIGS = {
       duration: '5',
       resolution: '720p'
     },
-    supportedParams: ['image', 'prompt', 'duration', 'resolution', 'seed'],
+    // Wan 2.1 uses flat structure: image_url, prompt, width, height, steps, guidance_scale, flow_shift, seed, negative_prompt
+    supportedParams: ['image_url', 'prompt', 'width', 'height', 'steps', 'guidance_scale', 'flow_shift', 'seed', 'negative_prompt'],
     description: 'Wan 2.1 model for image-to-video generation with smooth motion'
   },
   'wan-2.2-i2v': {
@@ -88,10 +89,11 @@ const VIDEO_MODEL_CONFIGS = {
     async: true,
     category: 'i2v',
     defaultParams: {
-      duration: '5',
-      resolution: '720p'
+      duration: 5,
+      resolution: '720P'
     },
-    supportedParams: ['image', 'prompt', 'duration', 'resolution', 'seed'],
+    // Wan 2.2 uses nested structure: input.img_url, input.prompt, input.negative_prompt, parameters.resolution, parameters.duration, parameters.seed, parameters.prompt_extend
+    supportedParams: ['img_url', 'prompt', 'negative_prompt', 'resolution', 'duration', 'seed', 'prompt_extend'],
     description: 'Wan 2.2 model with improved quality for image-to-video'
   },
   'wan-2.5-i2v-preview': {
@@ -100,11 +102,12 @@ const VIDEO_MODEL_CONFIGS = {
     async: true,
     category: 'i2v',
     defaultParams: {
-      duration: '5',
-      resolution: '720p'
+      duration: 5,
+      resolution: '720P'
     },
-    supportedParams: ['image', 'prompt', 'duration', 'resolution', 'seed'],
-    description: 'Wan 2.5 preview model with next-gen image-to-video capabilities'
+    // Wan 2.5 uses nested structure with audio support: input.img_url, input.prompt, input.audio_url, parameters.resolution, parameters.duration, parameters.audio, parameters.seed
+    supportedParams: ['img_url', 'prompt', 'negative_prompt', 'audio_url', 'resolution', 'duration', 'audio', 'seed', 'prompt_extend'],
+    description: 'Wan 2.5 preview model with next-gen image-to-video capabilities and audio support'
   },
   'wan2.6-i2v': {
     name: 'Wan 2.6 I2V',
@@ -112,11 +115,12 @@ const VIDEO_MODEL_CONFIGS = {
     async: true,
     category: 'i2v',
     defaultParams: {
-      duration: '5',
-      resolution: '720p'
+      duration: 5,
+      resolution: '720P'
     },
-    supportedParams: ['image', 'prompt', 'duration', 'resolution', 'seed'],
-    description: 'Wan 2.6 latest model for high-quality image-to-video generation'
+    // Wan 2.6 uses nested structure: input.img_url, input.prompt, parameters.resolution (720P/1080P), parameters.duration (5/10/15), shot_type, watermark, audio
+    supportedParams: ['img_url', 'prompt', 'negative_prompt', 'audio_url', 'template', 'resolution', 'duration', 'shot_type', 'watermark', 'audio', 'seed', 'prompt_extend'],
+    description: 'Wan 2.6 latest model for high-quality image-to-video generation with extended duration support (up to 15s)'
   },
   'minimax-i2v': {
     name: 'Minimax I2V',
@@ -124,43 +128,57 @@ const VIDEO_MODEL_CONFIGS = {
     async: true,
     category: 'i2v',
     defaultParams: {
-      duration: '6'
+      enable_prompt_expansion: true
     },
-    supportedParams: ['image', 'prompt', 'duration'],
-    description: 'Minimax Video model for image-to-video generation'
+    // Minimax uses image_url (not image), fixed 6-second 720p output
+    supportedParams: ['image_url', 'prompt', 'enable_prompt_expansion'],
+    description: 'Minimax Video model for image-to-video generation (fixed 6s, 720p)'
   },
   'vidu-i2v': {
-    name: 'Vidu I2V',
-    endpoint: 'https://api.novita.ai/v3/async/vidu-1.5-i2v',
+    name: 'Vidu Q1 I2V',
+    endpoint: 'https://api.novita.ai/v3/async/vidu-q1-img2video',
     async: true,
     category: 'i2v',
     defaultParams: {
-      duration: '4'
+      duration: 5,
+      resolution: '1080p',
+      aspect_ratio: '16:9',
+      movement_amplitude: 'auto',
+      style: 'general'
     },
-    supportedParams: ['image', 'prompt', 'duration', 'resolution'],
-    description: 'Vidu 1.5 model for creative image-to-video transformations'
+    // Vidu Q1 uses image (singular), fixed 5s duration, 1080p only
+    supportedParams: ['image', 'prompt', 'style', 'resolution', 'aspect_ratio', 'movement_amplitude', 'duration', 'seed', 'bgm'],
+    description: 'Vidu Q1 model for creative image-to-video transformations (1080p, 5s)'
   },
   'pixverse-i2v': {
-    name: 'PixVerse I2V',
+    name: 'PixVerse V4.5 I2V',
     endpoint: 'https://api.novita.ai/v3/async/pixverse-v4.5-i2v',
     async: true,
     category: 'i2v',
     defaultParams: {
-      duration: '5'
+      resolution: '540p',
+      fast_mode: false
     },
-    supportedParams: ['image', 'prompt', 'duration', 'aspect_ratio'],
-    description: 'PixVerse V4.5 model for anime-style image-to-video'
+    // PixVerse uses image, supports 360p/540p/720p/1080p (1080p only in normal mode)
+    supportedParams: ['image', 'prompt', 'resolution', 'negative_prompt', 'fast_mode', 'style', 'seed'],
+    description: 'PixVerse V4.5 model for high-quality image-to-video (5-8s)'
   },
   'seedance-i2v': {
-    name: 'Seedance I2V',
-    endpoint: 'https://api.novita.ai/v3/async/seedance-1.0-i2v',
+    name: 'Seedance 1.5 Pro I2V',
+    endpoint: 'https://api.novita.ai/v3/async/seedance-v1.5-pro-i2v',
     async: true,
     category: 'i2v',
     defaultParams: {
-      duration: '5'
+      duration: 5,
+      resolution: '720p',
+      ratio: 'adaptive',
+      fps: 24,
+      generate_audio: true,
+      camera_fixed: false
     },
-    supportedParams: ['image', 'prompt', 'duration', 'resolution'],
-    description: 'Seedance 1.0 model for dance and motion video generation'
+    // Seedance uses image (URL or Base64), duration 4-12s, resolution 480p/720p
+    supportedParams: ['image', 'prompt', 'duration', 'resolution', 'ratio', 'seed', 'fps', 'watermark', 'last_image', 'camera_fixed', 'generate_audio'],
+    description: 'Seedance 1.5 Pro model for dance and motion video generation with audio (4-12s)'
   },
   'luma-i2v': {
     name: 'Luma Dream Machine I2V',
@@ -168,9 +186,13 @@ const VIDEO_MODEL_CONFIGS = {
     async: true,
     category: 'i2v',
     defaultParams: {
-      duration: '5'
+      duration: '5s',
+      resolution: '720p',
+      aspect_ratio: '16:9',
+      model: 'ray-2'
     },
-    supportedParams: ['image', 'prompt', 'duration', 'aspect_ratio'],
+    // Luma uses keyframes structure: keyframes.frame0.type="image", keyframes.frame0.url
+    supportedParams: ['keyframes', 'prompt', 'model', 'resolution', 'duration', 'aspect_ratio', 'loop'],
     description: 'Luma Dream Machine for cinematic image-to-video generation'
   },
   
@@ -209,10 +231,13 @@ const VIDEO_MODEL_CONFIGS = {
     async: true,
     category: 't2v',
     defaultParams: {
-      duration: '5',
-      resolution: '720p'
+      model_name: 'hunyuan-video-fast',
+      width: 1280,
+      height: 720,
+      steps: 20
     },
-    supportedParams: ['prompt', 'duration', 'resolution', 'aspect_ratio', 'seed'],
+    // Hunyuan uses width/height (720x1280 or 1280x720), steps (2-30), seed, no duration param
+    supportedParams: ['prompt', 'model_name', 'width', 'height', 'steps', 'seed'],
     description: 'Tencent Hunyuan fast video generation model'
   },
   'wan-t2v': {
@@ -221,10 +246,10 @@ const VIDEO_MODEL_CONFIGS = {
     async: true,
     category: 't2v',
     defaultParams: {
-      duration: '5',
       resolution: '720p'
     },
-    supportedParams: ['prompt', 'duration', 'resolution', 'aspect_ratio', 'seed'],
+    // Wan 2.1 T2V uses flat structure with width/height
+    supportedParams: ['prompt', 'width', 'height', 'seed', 'negative_prompt'],
     description: 'Wan 2.1 model for text-to-video generation'
   },
   'wan-2.2-t2v': {
@@ -233,10 +258,11 @@ const VIDEO_MODEL_CONFIGS = {
     async: true,
     category: 't2v',
     defaultParams: {
-      duration: '5',
-      resolution: '720p'
+      duration: 5,
+      resolution: '720P'
     },
-    supportedParams: ['prompt', 'duration', 'resolution', 'aspect_ratio', 'seed'],
+    // Wan 2.2 T2V uses nested input/parameters structure with size param
+    supportedParams: ['prompt', 'negative_prompt', 'size', 'duration', 'seed', 'prompt_extend'],
     description: 'Wan 2.2 model with improved text-to-video quality'
   },
   'wan-2.5-t2v-preview': {
@@ -245,11 +271,12 @@ const VIDEO_MODEL_CONFIGS = {
     async: true,
     category: 't2v',
     defaultParams: {
-      duration: '5',
-      resolution: '720p'
+      duration: 5,
+      resolution: '720P'
     },
-    supportedParams: ['prompt', 'duration', 'resolution', 'aspect_ratio', 'seed'],
-    description: 'Wan 2.5 preview for next-gen text-to-video'
+    // Wan 2.5 T2V uses nested structure with audio support
+    supportedParams: ['prompt', 'negative_prompt', 'audio_url', 'size', 'duration', 'audio', 'seed', 'prompt_extend'],
+    description: 'Wan 2.5 preview for next-gen text-to-video with audio support'
   },
   'wan2.6-t2v': {
     name: 'Wan 2.6 T2V',
@@ -257,44 +284,54 @@ const VIDEO_MODEL_CONFIGS = {
     async: true,
     category: 't2v',
     defaultParams: {
-      duration: '5',
-      resolution: '720p'
+      duration: 5,
+      resolution: '720P'
     },
-    supportedParams: ['prompt', 'duration', 'resolution', 'aspect_ratio', 'seed'],
-    description: 'Wan 2.6 latest model for text-to-video generation'
+    // Wan 2.6 T2V uses nested structure, supports 5/10/15s, shot_type, watermark
+    supportedParams: ['prompt', 'negative_prompt', 'audio_url', 'size', 'duration', 'shot_type', 'watermark', 'audio', 'seed', 'prompt_extend'],
+    description: 'Wan 2.6 latest model for text-to-video generation (up to 15s)'
   },
   'minimax-t2v': {
     name: 'Minimax T2V',
-    endpoint: 'https://api.novita.ai/v3/async/minimax-video-01-t2v',
+    endpoint: 'https://api.novita.ai/v3/async/minimax-video-01',
     async: true,
     category: 't2v',
     defaultParams: {
-      duration: '6'
+      enable_prompt_expansion: true
     },
-    supportedParams: ['prompt', 'duration', 'aspect_ratio'],
-    description: 'Minimax Video model for text-to-video generation'
+    // Minimax T2V uses same endpoint as I2V, just without image_url. Fixed 6s, 720p
+    supportedParams: ['prompt', 'enable_prompt_expansion'],
+    description: 'Minimax Video model for text-to-video generation (fixed 6s, 720p)'
   },
   'vidu-t2v': {
-    name: 'Vidu T2V',
-    endpoint: 'https://api.novita.ai/v3/async/vidu-1.5-t2v',
+    name: 'Vidu Q1 T2V',
+    endpoint: 'https://api.novita.ai/v3/async/vidu-q1-text2video',
     async: true,
     category: 't2v',
     defaultParams: {
-      duration: '4'
+      duration: 5,
+      resolution: '1080p',
+      aspect_ratio: '16:9',
+      style: 'general',
+      movement_amplitude: 'auto'
     },
-    supportedParams: ['prompt', 'duration', 'resolution'],
-    description: 'Vidu 1.5 model for creative text-to-video generation'
+    // Vidu Q1 T2V - fixed 5s, 1080p
+    supportedParams: ['prompt', 'style', 'resolution', 'aspect_ratio', 'movement_amplitude', 'duration', 'seed', 'bgm'],
+    description: 'Vidu Q1 model for creative text-to-video generation (1080p, 5s)'
   },
   'pixverse-t2v': {
-    name: 'PixVerse T2V',
+    name: 'PixVerse V4.5 T2V',
     endpoint: 'https://api.novita.ai/v3/async/pixverse-v4.5-t2v',
     async: true,
     category: 't2v',
     defaultParams: {
-      duration: '5'
+      resolution: '540p',
+      aspect_ratio: '16:9',
+      fast_mode: false
     },
-    supportedParams: ['prompt', 'duration', 'aspect_ratio'],
-    description: 'PixVerse V4.5 model for anime-style text-to-video'
+    // PixVerse T2V requires aspect_ratio and resolution
+    supportedParams: ['prompt', 'aspect_ratio', 'resolution', 'negative_prompt', 'fast_mode', 'style', 'seed'],
+    description: 'PixVerse V4.5 model for high-quality text-to-video (5-8s)'
   },
   'luma-t2v': {
     name: 'Luma Dream Machine T2V',
@@ -302,9 +339,13 @@ const VIDEO_MODEL_CONFIGS = {
     async: true,
     category: 't2v',
     defaultParams: {
-      duration: '5'
+      duration: '5s',
+      resolution: '720p',
+      aspect_ratio: '16:9',
+      model: 'ray-2'
     },
-    supportedParams: ['prompt', 'duration', 'aspect_ratio'],
+    // Luma T2V uses prompt, model, resolution, duration, aspect_ratio
+    supportedParams: ['prompt', 'model', 'resolution', 'duration', 'aspect_ratio', 'loop'],
     description: 'Luma Dream Machine for cinematic text-to-video generation'
   },
   
@@ -402,81 +443,393 @@ async function initializeVideoTest(modelId, params) {
         face_image_file: params.face_image_file
       };
     } else if (config.category === 't2v') {
-      // Text-to-Video models
-      requestBody = {
-        prompt: validatedPrompt
-      };
+      // Text-to-Video models - handle different API structures
       
-      // Add duration
-      if (params.duration || config.defaultParams.duration) {
-        requestBody.duration = params.duration || config.defaultParams.duration;
-      }
-      
-      // Add aspect ratio
-      if (params.aspectRatio || config.defaultParams.aspect_ratio) {
-        requestBody.aspect_ratio = params.aspectRatio || config.defaultParams.aspect_ratio;
-      }
-      
-      // Add resolution for models that support it
-      if (config.supportedParams.includes('resolution')) {
-        requestBody.resolution = params.resolution || config.defaultParams.resolution || '720p';
-      }
-      
-      // Add Kling-specific params
-      if (modelId.startsWith('kling')) {
-        if (params.mode || config.defaultParams.mode) {
-          requestBody.mode = params.mode || config.defaultParams.mode;
+      if (modelId === 'hunyuan-video-fast') {
+        // Hunyuan uses model_name, width, height, steps structure
+        requestBody = {
+          model_name: config.defaultParams.model_name || 'hunyuan-video-fast',
+          prompt: validatedPrompt,
+          width: params.width || config.defaultParams.width || 1280,
+          height: params.height || config.defaultParams.height || 720,
+          steps: params.steps || config.defaultParams.steps || 20,
+          seed: params.seed !== undefined ? params.seed : -1
+        };
+        
+      } else if (modelId === 'wan-t2v') {
+        // Wan 2.1 T2V - flat structure with width/height
+        requestBody = {
+          prompt: validatedPrompt
+        };
+        
+        // Wan 2.1 uses width/height
+        const resolution = params.resolution || config.defaultParams.resolution || '720p';
+        if (resolution === '720p' || resolution === '720P') {
+          requestBody.width = 1280;
+          requestBody.height = 720;
+        } else if (resolution === '480p' || resolution === '480P') {
+          requestBody.width = 832;
+          requestBody.height = 480;
         }
-        if (params.guidance_scale !== undefined || config.defaultParams.guidance_scale !== undefined) {
-          requestBody.guidance_scale = params.guidance_scale !== undefined ? params.guidance_scale : config.defaultParams.guidance_scale;
+        
+        if (params.seed !== undefined) requestBody.seed = params.seed;
+        if (params.negative_prompt) requestBody.negative_prompt = params.negative_prompt;
+        
+      } else if (modelId === 'wan-2.2-t2v' || modelId === 'wan-2.5-t2v-preview' || modelId === 'wan2.6-t2v') {
+        // Wan 2.2, 2.5, 2.6 T2V - nested input/parameters structure
+        const resolution = params.resolution || config.defaultParams.resolution || '720P';
+        const duration = parseInt(params.duration || config.defaultParams.duration || '5', 10);
+        
+        // Wan T2V uses "size" parameter like "1280*720" or "1920*1080"
+        let size = '1280*720'; // default 720p
+        if (resolution === '1080p' || resolution === '1080P') {
+          size = '1920*1080';
+        } else if (resolution === '480p' || resolution === '480P') {
+          size = '832*480';
         }
-        if (params.negative_prompt || config.defaultParams.negative_prompt) {
-          requestBody.negative_prompt = params.negative_prompt || config.defaultParams.negative_prompt || '';
+        
+        requestBody = {
+          input: {
+            prompt: validatedPrompt
+          },
+          parameters: {
+            size: size,
+            duration: duration
+          }
+        };
+        
+        // Add negative_prompt
+        if (params.negative_prompt) {
+          requestBody.input.negative_prompt = params.negative_prompt;
         }
-      }
-      
-      // Add seed if provided
-      if (params.seed !== undefined) {
-        requestBody.seed = params.seed;
+        
+        // Add optional parameters
+        if (params.seed !== undefined) {
+          requestBody.parameters.seed = params.seed;
+        }
+        if (params.prompt_extend !== undefined) {
+          requestBody.parameters.prompt_extend = params.prompt_extend;
+        }
+        
+        // Wan 2.5 and 2.6 support audio
+        if (modelId === 'wan-2.5-t2v-preview' || modelId === 'wan2.6-t2v') {
+          if (params.audio_url) {
+            requestBody.input.audio_url = params.audio_url;
+          }
+          if (params.audio !== undefined) {
+            requestBody.parameters.audio = params.audio;
+          }
+        }
+        
+        // Wan 2.6 specific params
+        if (modelId === 'wan2.6-t2v') {
+          if (params.shot_type) requestBody.parameters.shot_type = params.shot_type;
+          if (params.watermark !== undefined) requestBody.parameters.watermark = params.watermark;
+        }
+        
+      } else {
+        // Generic T2V models (Kling, Minimax, PixVerse, Luma, etc.)
+        requestBody = {
+          prompt: validatedPrompt
+        };
+        
+        // Add duration
+        if (params.duration || config.defaultParams.duration) {
+          requestBody.duration = params.duration || config.defaultParams.duration;
+        }
+        
+        // Add aspect ratio
+        if (params.aspectRatio || config.defaultParams.aspect_ratio) {
+          requestBody.aspect_ratio = params.aspectRatio || config.defaultParams.aspect_ratio;
+        }
+        
+        // Add resolution for models that support it
+        if (config.supportedParams.includes('resolution')) {
+          requestBody.resolution = params.resolution || config.defaultParams.resolution || '720p';
+        }
+        
+        // Add Kling-specific params
+        if (modelId.startsWith('kling')) {
+          if (params.mode || config.defaultParams.mode) {
+            requestBody.mode = params.mode || config.defaultParams.mode;
+          }
+          if (params.guidance_scale !== undefined || config.defaultParams.guidance_scale !== undefined) {
+            requestBody.guidance_scale = params.guidance_scale !== undefined ? params.guidance_scale : config.defaultParams.guidance_scale;
+          }
+          if (params.negative_prompt || config.defaultParams.negative_prompt) {
+            requestBody.negative_prompt = params.negative_prompt || config.defaultParams.negative_prompt || '';
+          }
+        }
+        
+        // Add seed if provided
+        if (params.seed !== undefined) {
+          requestBody.seed = params.seed;
+        }
       }
     } else if (config.category === 'i2v') {
       // Image-to-Video models
-      requestBody = {
-        image: params.imageUrl || params.image,
-        prompt: validatedPrompt
-      };
+      const imageData = params.imageUrl || params.image;
       
-      // Add duration
-      if (params.duration || config.defaultParams.duration) {
-        requestBody.duration = params.duration || config.defaultParams.duration;
-      }
-      
-      // Add resolution for models that support it
-      if (config.supportedParams.includes('resolution')) {
+      // Handle different Wan model versions - they have different API structures
+      if (modelId === 'wan-i2v') {
+        // Wan 2.1 uses flat structure with image_url parameter
+        requestBody = {
+          image_url: imageData,
+          prompt: validatedPrompt
+        };
+        
+        // Wan 2.1 uses width/height instead of resolution string
+        // Supported: 480x832, 832x480, 720x1280, 1280x720
+        const resolution = params.resolution || config.defaultParams.resolution || '720p';
+        if (resolution === '720p' || resolution === '720P') {
+          requestBody.width = 1280;
+          requestBody.height = 720;
+        } else if (resolution === '480p' || resolution === '480P') {
+          requestBody.width = 832;
+          requestBody.height = 480;
+        }
+        
+        // Add optional Wan 2.1 params
+        if (params.steps) requestBody.steps = params.steps;
+        if (params.guidance_scale !== undefined) requestBody.guidance_scale = params.guidance_scale;
+        if (params.flow_shift !== undefined) requestBody.flow_shift = params.flow_shift;
+        if (params.seed !== undefined) requestBody.seed = params.seed;
+        if (params.negative_prompt) requestBody.negative_prompt = params.negative_prompt;
+        
+      } else if (modelId === 'wan-2.2-i2v' || modelId === 'wan-2.5-i2v-preview' || modelId === 'wan2.6-i2v') {
+        // Wan 2.2, 2.5, 2.6 use nested input/parameters structure with img_url
+        const resolution = params.resolution || config.defaultParams.resolution || '720p';
+        const duration = parseInt(params.duration || config.defaultParams.duration || '5', 10);
+        
+        requestBody = {
+          input: {
+            img_url: imageData,
+            prompt: validatedPrompt
+          },
+          parameters: {
+            resolution: resolution.toUpperCase().replace('P', 'P'), // Ensure format like "720P"
+            duration: duration
+          }
+        };
+        
+        // Add negative_prompt to input if provided
+        if (params.negative_prompt) {
+          requestBody.input.negative_prompt = params.negative_prompt;
+        }
+        
+        // Add optional parameters
+        if (params.seed !== undefined) {
+          requestBody.parameters.seed = params.seed;
+        }
+        if (params.prompt_extend !== undefined) {
+          requestBody.parameters.prompt_extend = params.prompt_extend;
+        }
+        
+        // Wan 2.5 and 2.6 support audio
+        if (modelId === 'wan-2.5-i2v-preview' || modelId === 'wan2.6-i2v') {
+          if (params.audio_url) {
+            requestBody.input.audio_url = params.audio_url;
+          }
+          if (params.audio !== undefined) {
+            requestBody.parameters.audio = params.audio;
+          }
+        }
+        
+        // Wan 2.6 specific params
+        if (modelId === 'wan2.6-i2v') {
+          if (params.template) requestBody.template = params.template;
+          if (params.shot_type) requestBody.shot_type = params.shot_type;
+          if (params.watermark !== undefined) requestBody.watermark = params.watermark;
+        }
+        
+      } else if (modelId === 'minimax-i2v') {
+        // Minimax uses image_url parameter, fixed 6-second output
+        requestBody = {
+          prompt: validatedPrompt,
+          image_url: imageData
+        };
+        
+        // Add enable_prompt_expansion
+        if (params.enable_prompt_expansion !== undefined) {
+          requestBody.enable_prompt_expansion = params.enable_prompt_expansion;
+        } else if (config.defaultParams.enable_prompt_expansion !== undefined) {
+          requestBody.enable_prompt_expansion = config.defaultParams.enable_prompt_expansion;
+        }
+        
+      } else if (modelId === 'vidu-i2v') {
+        // Vidu Q1 uses image parameter (singular), fixed 5s duration, 1080p only
+        requestBody = {
+          image: imageData,
+          prompt: validatedPrompt
+        };
+        
+        // Add Vidu-specific params
+        if (params.style || config.defaultParams.style) {
+          requestBody.style = params.style || config.defaultParams.style;
+        }
+        if (params.resolution || config.defaultParams.resolution) {
+          requestBody.resolution = params.resolution || config.defaultParams.resolution;
+        }
+        if (params.aspectRatio || params.aspect_ratio || config.defaultParams.aspect_ratio) {
+          requestBody.aspect_ratio = params.aspectRatio || params.aspect_ratio || config.defaultParams.aspect_ratio;
+        }
+        if (params.movement_amplitude || config.defaultParams.movement_amplitude) {
+          requestBody.movement_amplitude = params.movement_amplitude || config.defaultParams.movement_amplitude;
+        }
+        if (params.duration || config.defaultParams.duration) {
+          requestBody.duration = parseInt(params.duration || config.defaultParams.duration, 10);
+        }
+        if (params.seed !== undefined) {
+          requestBody.seed = params.seed;
+        }
+        if (params.bgm !== undefined) {
+          requestBody.bgm = params.bgm;
+        }
+        
+      } else if (modelId === 'pixverse-i2v') {
+        // PixVerse uses image parameter, supports resolution/style/fast_mode
+        requestBody = {
+          image: imageData,
+          prompt: validatedPrompt
+        };
+        
+        // Add resolution (required)
+        requestBody.resolution = params.resolution || config.defaultParams.resolution || '540p';
+        
+        // Add optional params
+        if (params.negative_prompt) {
+          requestBody.negative_prompt = params.negative_prompt;
+        }
+        if (params.fast_mode !== undefined) {
+          requestBody.fast_mode = params.fast_mode;
+        } else if (config.defaultParams.fast_mode !== undefined) {
+          requestBody.fast_mode = config.defaultParams.fast_mode;
+        }
+        if (params.style) {
+          requestBody.style = params.style;
+        }
+        if (params.seed !== undefined) {
+          requestBody.seed = params.seed;
+        }
+        
+      } else if (modelId === 'seedance-i2v') {
+        // Seedance 1.5 Pro uses image parameter (URL or Base64)
+        requestBody = {
+          image: imageData,
+          prompt: validatedPrompt
+        };
+        
+        // Add duration (4-12 seconds)
+        const duration = parseInt(params.duration || config.defaultParams.duration || '5', 10);
+        requestBody.duration = Math.max(4, Math.min(12, duration));
+        
+        // Add resolution (480p or 720p only)
         requestBody.resolution = params.resolution || config.defaultParams.resolution || '720p';
-      }
-      
-      // Add aspect ratio if supported
-      if (config.supportedParams.includes('aspect_ratio') && (params.aspectRatio || config.defaultParams.aspect_ratio)) {
-        requestBody.aspect_ratio = params.aspectRatio || config.defaultParams.aspect_ratio;
-      }
-      
-      // Add Kling-specific params
-      if (modelId.startsWith('kling')) {
-        if (params.mode || config.defaultParams.mode) {
-          requestBody.mode = params.mode || config.defaultParams.mode;
+        
+        // Add optional params
+        if (params.ratio || config.defaultParams.ratio) {
+          requestBody.ratio = params.ratio || config.defaultParams.ratio;
         }
-        if (params.guidance_scale !== undefined || config.defaultParams.guidance_scale !== undefined) {
-          requestBody.guidance_scale = params.guidance_scale !== undefined ? params.guidance_scale : config.defaultParams.guidance_scale;
+        if (params.fps || config.defaultParams.fps) {
+          requestBody.fps = params.fps || config.defaultParams.fps;
         }
-        if (params.negative_prompt || config.defaultParams.negative_prompt) {
-          requestBody.negative_prompt = params.negative_prompt || config.defaultParams.negative_prompt || '';
+        if (params.seed !== undefined) {
+          requestBody.seed = params.seed;
         }
-      }
-      
-      // Add seed if provided
-      if (params.seed !== undefined) {
-        requestBody.seed = params.seed;
+        if (params.watermark !== undefined) {
+          requestBody.watermark = params.watermark;
+        }
+        if (params.last_image) {
+          requestBody.last_image = params.last_image;
+        }
+        if (params.camera_fixed !== undefined) {
+          requestBody.camera_fixed = params.camera_fixed;
+        } else if (config.defaultParams.camera_fixed !== undefined) {
+          requestBody.camera_fixed = config.defaultParams.camera_fixed;
+        }
+        if (params.generate_audio !== undefined) {
+          requestBody.generate_audio = params.generate_audio;
+        } else if (config.defaultParams.generate_audio !== undefined) {
+          requestBody.generate_audio = config.defaultParams.generate_audio;
+        }
+        
+      } else if (modelId === 'luma-i2v') {
+        // Luma Dream Machine uses keyframes structure for I2V
+        requestBody = {
+          prompt: validatedPrompt,
+          keyframes: {
+            frame0: {
+              type: 'image',
+              url: imageData
+            }
+          }
+        };
+        
+        // Add model
+        if (params.model || config.defaultParams.model) {
+          requestBody.model = params.model || config.defaultParams.model;
+        }
+        
+        // Add resolution
+        if (params.resolution || config.defaultParams.resolution) {
+          requestBody.resolution = params.resolution || config.defaultParams.resolution;
+        }
+        
+        // Add duration (format: "5s", "10s")
+        if (params.duration || config.defaultParams.duration) {
+          const dur = params.duration || config.defaultParams.duration;
+          requestBody.duration = typeof dur === 'string' && dur.endsWith('s') ? dur : `${dur}s`;
+        }
+        
+        // Add aspect ratio
+        if (params.aspectRatio || params.aspect_ratio || config.defaultParams.aspect_ratio) {
+          requestBody.aspect_ratio = params.aspectRatio || params.aspect_ratio || config.defaultParams.aspect_ratio;
+        }
+        
+        // Add loop
+        if (params.loop !== undefined) {
+          requestBody.loop = params.loop;
+        }
+        
+      } else {
+        // Kling and other generic I2V models - use image parameter
+        requestBody = {
+          image: imageData,
+          prompt: validatedPrompt
+        };
+        
+        // Add duration
+        if (params.duration || config.defaultParams.duration) {
+          requestBody.duration = params.duration || config.defaultParams.duration;
+        }
+        
+        // Add resolution for models that support it
+        if (config.supportedParams.includes('resolution')) {
+          requestBody.resolution = params.resolution || config.defaultParams.resolution || '720p';
+        }
+        
+        // Add aspect ratio if supported
+        if (config.supportedParams.includes('aspect_ratio') && (params.aspectRatio || config.defaultParams.aspect_ratio)) {
+          requestBody.aspect_ratio = params.aspectRatio || config.defaultParams.aspect_ratio;
+        }
+        
+        // Add Kling-specific params
+        if (modelId.startsWith('kling')) {
+          if (params.mode || config.defaultParams.mode) {
+            requestBody.mode = params.mode || config.defaultParams.mode;
+          }
+          if (params.guidance_scale !== undefined || config.defaultParams.guidance_scale !== undefined) {
+            requestBody.guidance_scale = params.guidance_scale !== undefined ? params.guidance_scale : config.defaultParams.guidance_scale;
+          }
+          if (params.negative_prompt || config.defaultParams.negative_prompt) {
+            requestBody.negative_prompt = params.negative_prompt || config.defaultParams.negative_prompt || '';
+          }
+        }
+        
+        // Add seed if provided
+        if (params.seed !== undefined) {
+          requestBody.seed = params.seed;
+        }
       }
     }
     

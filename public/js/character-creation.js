@@ -1629,6 +1629,9 @@
                 this.characterData.selectedImageUrl = imageUrls[0];
                 this.saveData();
                 
+                // Save the auto-selected image as the character's thumbnail
+                this.saveSelectedImage(imageUrls[0]);
+                
                 // Update summary image
                 const summaryImage = document.getElementById('summaryImage');
                 if (summaryImage) summaryImage.src = imageUrls[0];

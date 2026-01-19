@@ -91,6 +91,12 @@ $(document).ready(function() {
             method: 'GET',
             success: function(response) {
                 if (response.success) {
+                    console.log('[CharacterInfo] Loaded data:', {
+                        userCustomizations: response.chat.userCustomizations,
+                        userChatId: response.chat.userChatId,
+                        characterPersonality: response.chat.characterPersonality,
+                        relationship: response.chat.relationship
+                    });
                     currentChatData = response.chat;
                     currentUserChatId = response.chat.userChatId;
                     populateCharacterInfo(response.chat);
@@ -116,6 +122,11 @@ $(document).ready(function() {
         return chatData[defaultField] || '-';
     }
 
+    // Get the original character value (ignoring user customizations)
+    function getOriginalCharacterValue(chatData, field, defaultField) {
+        return chatData[defaultField] || chatData.details_description?.personality?.[field] || '-';
+    }
+
     // Populate character information in the modal - Native App Style
     function populateCharacterInfo(chatData) {
         // Character link
@@ -138,16 +149,24 @@ $(document).ready(function() {
             $('#charInfoImagePlaceholder').addClass('d-flex').show();
         }
 
+        // Store original character values for dropdown creation
+        const originalPersonality = chatData.characterPersonality || chatData.details_description?.personality?.personality || '-';
+        const originalRelationship = chatData.relationship || '-';
+        const originalOccupation = chatData.characterOccupation || chatData.details_description?.personality?.occupation || '-';
+        const originalPreferences = chatData.characterPreferences || '-';
+
         // Personality - check user customization first, then character default
         const personality = getEffectiveValue(chatData, 'personality', 'characterPersonality') || 
             chatData.details_description?.personality?.personality || '-';
         $('#charInfoPersonality').text(capitalizeFirst(personality));
         $('#charInfoPersonality').attr('data-value', personality);
+        $('#charInfoPersonality').attr('data-original', originalPersonality);
         
         // Relationship
         const relationship = getEffectiveValue(chatData, 'relationship', 'relationship') || '-';
         $('#charInfoRelationship').text(capitalizeFirst(relationship));
         $('#charInfoRelationship').attr('data-value', relationship);
+        $('#charInfoRelationship').attr('data-original', originalRelationship);
         
         // Occupation
         const occupation = getEffectiveValue(chatData, 'occupation', 'characterOccupation') || 
@@ -155,11 +174,13 @@ $(document).ready(function() {
         const occupationEmoji = getOccupationEmoji(occupation);
         $('#charInfoOccupation').text(occupationEmoji + ' ' + capitalizeFirst(occupation));
         $('#charInfoOccupation').attr('data-value', occupation);
+        $('#charInfoOccupation').attr('data-original', originalOccupation);
         
         // Preferences (kinks)
         const preferences = getEffectiveValue(chatData, 'preferences', 'characterPreferences') || '-';
         $('#charInfoPreferences').text(capitalizeFirst(preferences));
         $('#charInfoPreferences').attr('data-value', preferences);
+        $('#charInfoPreferences').attr('data-original', originalPreferences);
         
         // Custom Instructions
         const customInstructions = chatData.userCustomizations?.customInstructions || '';
@@ -229,7 +250,7 @@ $(document).ready(function() {
     });
 
     // Create dropdown HTML for a field
-    function createDropdown(field, currentValue) {
+    function createDropdown(field, currentValue, originalCharacterValue = null) {
         const translations = getTranslations();
         const options = field === 'personality' ? customizationOptions.personalities :
                        field === 'relationship' ? customizationOptions.relationships :
@@ -242,6 +263,16 @@ $(document).ready(function() {
                                   translations.preferences;
 
         let html = `<select class="char-info-dropdown" data-field="${field}">`;
+        
+        // Check if current value matches any predefined option
+        const hasMatchingOption = Object.keys(options).includes(currentValue);
+        
+        // If the original character value doesn't match any option, add it as "Original" option
+        if (originalCharacterValue && !Object.keys(options).includes(originalCharacterValue)) {
+            const isSelected = currentValue === originalCharacterValue || !hasMatchingOption ? 'selected' : '';
+            const displayValue = capitalizeFirst(originalCharacterValue);
+            html += `<option value="${originalCharacterValue}" ${isSelected}>${displayValue} (Original)</option>`;
+        }
         
         for (const [key, defaultLabel] of Object.entries(options)) {
             const label = translatedOptions[key] || defaultLabel;
@@ -277,6 +308,7 @@ $(document).ready(function() {
         const $card = $(this).closest('.char-info-detail-card');
         const $valueSpan = $card.find('.char-info-value');
         const currentValue = $valueSpan.attr('data-value') || '';
+        const originalValue = $valueSpan.attr('data-original') || '';
         
         // If already editing, don't do anything
         if ($card.hasClass('editing')) return;
@@ -284,8 +316,8 @@ $(document).ready(function() {
         $card.addClass('editing');
         $(this).hide();
         
-        // Replace text with dropdown
-        const dropdownHtml = createDropdown(field, currentValue);
+        // Replace text with dropdown (pass original value for custom options)
+        const dropdownHtml = createDropdown(field, currentValue, originalValue);
         $valueSpan.html(dropdownHtml);
         
         // Add save and cancel buttons
@@ -635,8 +667,22 @@ $(document).ready(function() {
 
     // Reset modal when hidden
     $('#characterInfoModal').on('hidden.bs.modal', function() {
+        // Clear all stored data to prevent stale values
+        currentChatData = null;
+        currentUserChatId = null;
+        
+        // Reset UI state
         $('#characterInfoLoading').show();
         $('#characterInfoContent').hide();
+        
+        // Remove any editing state
+        $('.char-info-detail-card').removeClass('editing');
+        $('.char-info-edit-actions').remove();
+        $('.char-info-purpose-section').removeClass('editing');
+        
+        // Reset data attributes
+        $('.char-info-value').removeAttr('data-value').removeAttr('data-original');
+        
         $.removeCookie('character-info-id', { path: '/' });
     });
 

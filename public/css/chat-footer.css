@@ -3520,3 +3520,12 @@ body.keyboard-open #chatInput {
 .user-message span {
     color: #fff !important;
 }
+
+/* Enhanced input text contrast for #userMessage */
+#userMessage {
+    color: rgba(255, 255, 255, 0.95) !important;
+}
+
+#userMessage::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}

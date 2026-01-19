@@ -175,7 +175,12 @@ class AffiliateManager {
         const subscriptionStatus = user.subscriptionStatus == 'active'
         console.log(`subscriptionStatus: ${subscriptionStatus}`);
         if (!subscriptionStatus) {
-            loadAffiliationPlanPage();
+            // Use the same Premium modal as navigation dashboard
+            if (typeof loadPlanPage === 'function') {
+                loadPlanPage();
+            } else {
+                this.showError(this.translations.premiumRequired || 'Premium subscription required');
+            }
             return;
         }
         console.log('[AffiliateManager] Starting affiliate link save...');

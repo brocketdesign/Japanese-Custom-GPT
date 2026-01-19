@@ -515,6 +515,10 @@
             if (data.success && data.caption) {
                 $('#snsPostCaption').val(data.caption).trigger('input');
                 updatePublishButton();
+                // Save to caption history
+                if (typeof window.CaptionHistory !== 'undefined') {
+                    window.CaptionHistory.saveCaption(data.caption, state.currentImage?.id);
+                }
                 showNotification(getTranslation('caption_generated', 'Caption generated!'), 'success');
             } else {
                 throw new Error(data.error || 'Failed to generate caption');

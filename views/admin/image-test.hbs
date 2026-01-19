@@ -4,6 +4,7 @@
 <body class="bg-dark">
     {{> dashboard-nav}}
     <link rel="stylesheet" href="/css/admin-image-test.css">
+    <link rel="stylesheet" href="/css/civitai-model-search.css">
     
     <section class="container-fluid py-4">
         <!-- Header -->
@@ -38,23 +39,163 @@
                         <h5 class="mb-0"><i class="bi bi-sliders me-2"></i>Generation Settings</h5>
                     </div>
                     <div class="card-body">
+                        <!-- Generation Mode Selection -->
+                        <div class="mb-4">
+                            <label class="form-label text-white fw-bold">Generation Mode</label>
+                            <div class="generation-mode-group" role="group">
+                                <input type="radio" class="btn-check" name="generationMode" id="mode-txt2img" value="txt2img" checked>
+                                <label class="mode-btn" for="mode-txt2img">
+                                    <i class="bi bi-card-text"></i>
+                                    <span>Text to Image</span>
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="generationMode" id="mode-img2img" value="img2img">
+                                <label class="mode-btn" for="mode-img2img">
+                                    <i class="bi bi-image"></i>
+                                    <span>Image to Image</span>
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="generationMode" id="mode-face" value="face">
+                                <label class="mode-btn" for="mode-face">
+                                    <i class="bi bi-person-bounding-box"></i>
+                                    <span>Face Tools</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Img2Img Image Upload Section (hidden by default) -->
+                        <div class="mb-4" id="img2imgUploadSection" style="display: none;">
+                            <label class="form-label text-white fw-bold">Source Image</label>
+                            <div class="base-image-upload" id="img2imgUploadArea">
+                                <input type="file" id="img2imgInput" accept="image/*" style="display: none;">
+                                <div class="upload-placeholder" onclick="document.getElementById('img2imgInput').click()">
+                                    <i class="bi bi-cloud-upload display-4 text-muted"></i>
+                                    <p class="text-muted mb-0">Click to upload source image</p>
+                                    <small class="text-muted">Supports JPG, PNG, WebP</small>
+                                </div>
+                                <div class="image-preview d-none" id="img2imgPreview">
+                                    <img id="img2imgPreviewImg" src="" alt="Preview" class="img-fluid rounded">
+                                    <button class="btn btn-sm btn-danger mt-2" onclick="clearImg2ImgUpload()">
+                                        <i class="bi bi-x me-1"></i>Clear
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Edit Strength (for img2img) -->
+                        <div class="mb-4" id="editStrengthSection" style="display: none;">
+                            <label class="form-label text-white fw-bold">Edit Strength</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="editStrength" id="strength-low" value="low">
+                                <label class="btn btn-outline-info" for="strength-low">
+                                    Low<br><small class="text-muted">30%</small>
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="editStrength" id="strength-medium" value="medium" checked>
+                                <label class="btn btn-outline-info" for="strength-medium">
+                                    Medium<br><small class="text-muted">60%</small>
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="editStrength" id="strength-high" value="high">
+                                <label class="btn btn-outline-info" for="strength-high">
+                                    High<br><small class="text-muted">85%</small>
+                                </label>
+                            </div>
+                            <div class="form-text text-muted mt-1">
+                                <small><i class="bi bi-info-circle me-1"></i>Higher strength = more changes to the original image</small>
+                            </div>
+                        </div>
+
+                        <!-- Merge Face Images Section (hidden by default) -->
+                        <div class="mb-4" id="mergeFaceSection" style="display: none;">
+                            <label class="form-label text-white fw-bold">Face to Merge (Source)</label>
+                            <div class="base-image-upload mb-3" id="faceImageUploadArea">
+                                <input type="file" id="faceImageInput" accept="image/*" style="display: none;">
+                                <div class="upload-placeholder" onclick="document.getElementById('faceImageInput').click()">
+                                    <i class="bi bi-person-circle display-4 text-muted"></i>
+                                    <p class="text-muted mb-0">Click to upload face image</p>
+                                    <small class="text-muted">The face to apply</small>
+                                </div>
+                                <div class="image-preview d-none" id="faceImagePreview">
+                                    <img id="faceImagePreviewImg" src="" alt="Face Preview" class="img-fluid rounded">
+                                    <button class="btn btn-sm btn-danger mt-2" onclick="clearFaceImageUpload()">
+                                        <i class="bi bi-x me-1"></i>Clear
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <label class="form-label text-white fw-bold">Target Image</label>
+                            <div class="base-image-upload" id="targetImageUploadArea">
+                                <input type="file" id="targetImageInput" accept="image/*" style="display: none;">
+                                <div class="upload-placeholder" onclick="document.getElementById('targetImageInput').click()">
+                                    <i class="bi bi-image display-4 text-muted"></i>
+                                    <p class="text-muted mb-0">Click to upload target image</p>
+                                    <small class="text-muted">Image where face will be merged</small>
+                                </div>
+                                <div class="image-preview d-none" id="targetImagePreview">
+                                    <img id="targetImagePreviewImg" src="" alt="Target Preview" class="img-fluid rounded">
+                                    <button class="btn btn-sm btn-danger mt-2" onclick="clearTargetImageUpload()">
+                                        <i class="bi bi-x me-1"></i>Clear
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Model Selection -->
                         <div class="mb-4">
                             <label class="form-label text-white fw-bold d-flex justify-content-between align-items-center">
                                 <span>Select Models to Test</span>
-                                <a href="/admin/models" class="btn btn-sm btn-outline-info" target="_blank" title="Manage SD Models">
-                                    <i class="bi bi-gear me-1"></i>Manage SD Models
-                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-info" onclick="openUserModelSearchModal()" title="Add Custom SD Models">
+                                    <i class="bi bi-plus-lg me-1"></i>Add Custom Model
+                                </button>
                             </label>
-                            <div class="model-selection">
+                            
+                            <!-- Text-to-Image Models -->
+                            <div class="model-selection" id="txt2imgModelsSection">
+                                <h6 class="text-info mb-2"><i class="bi bi-card-text me-1"></i>Text to Image Models</h6>
                                 {{#each models}}
                                 {{#unless this.requiresModel}}
+                                {{#if (eq this.category "txt2img")}}
                                 <div class="form-check model-checkbox mb-2">
-                                    <input class="form-check-input" type="checkbox" 
+                                    <input class="form-check-input txt2img-model-checkbox" type="checkbox" 
                                            value="{{this.id}}" 
                                            id="model-{{this.id}}" 
-                                           data-model-name="{{this.name}}">
+                                           data-model-name="{{this.name}}"
+                                           data-category="txt2img"
+                                           data-supports-img2img="{{this.supportsImg2Img}}">
                                     <label class="form-check-label text-white" for="model-{{this.id}}">
+                                        <span class="fw-semibold">{{this.name}}</span>
+                                        {{#if this.async}}
+                                        <span class="badge bg-info ms-1">Async</span>
+                                        {{else}}
+                                        <span class="badge bg-success ms-1">Sync</span>
+                                        {{/if}}
+                                        {{#if this.supportsImg2Img}}
+                                        <span class="badge bg-warning ms-1">+Img2Img</span>
+                                        {{/if}}
+                                        <br>
+                                        <small class="text-muted">{{this.description}}</small>
+                                    </label>
+                                </div>
+                                {{/if}}
+                                {{/unless}}
+                                {{/each}}
+                            </div>
+                            
+                            <!-- Image-to-Image Models -->
+                            <div class="model-selection mt-3" id="img2imgModelsSection" style="display: none;">
+                                <h6 class="text-success mb-2"><i class="bi bi-image me-1"></i>Image to Image Models</h6>
+                                {{#each models}}
+                                {{#unless this.requiresModel}}
+                                {{#if (or (eq this.category "img2img") this.supportsImg2Img)}}
+                                <div class="form-check model-checkbox mb-2">
+                                    <input class="form-check-input img2img-model-checkbox" type="checkbox" 
+                                           value="{{this.id}}" 
+                                           id="img2img-model-{{this.id}}" 
+                                           data-model-name="{{this.name}}"
+                                           data-category="{{this.category}}"
+                                           data-requires-image="{{this.requiresImage}}">
+                                    <label class="form-check-label text-white" for="img2img-model-{{this.id}}">
                                         <span class="fw-semibold">{{this.name}}</span>
                                         {{#if this.async}}
                                         <span class="badge bg-info ms-1">Async</span>
@@ -65,12 +206,79 @@
                                         <small class="text-muted">{{this.description}}</small>
                                     </label>
                                 </div>
+                                {{/if}}
                                 {{/unless}}
                                 {{/each}}
                             </div>
+                            
+                            <!-- Face Tools Models -->
+                            <div class="model-selection mt-3" id="faceModelsSection" style="display: none;">
+                                <h6 class="text-warning mb-2"><i class="bi bi-person-bounding-box me-1"></i>Face Tools</h6>
+                                {{#each models}}
+                                {{#if (eq this.category "face")}}
+                                <div class="form-check model-checkbox mb-2">
+                                    <input class="form-check-input face-model-checkbox" type="checkbox" 
+                                           value="{{this.id}}" 
+                                           id="face-model-{{this.id}}" 
+                                           data-model-name="{{this.name}}"
+                                           data-category="face"
+                                           data-requires-two-images="{{this.requiresTwoImages}}">
+                                    <label class="form-check-label text-white" for="face-model-{{this.id}}">
+                                        <span class="fw-semibold">{{this.name}}</span>
+                                        {{#if this.async}}
+                                        <span class="badge bg-info ms-1">Async</span>
+                                        {{else}}
+                                        <span class="badge bg-success ms-1">Sync</span>
+                                        {{/if}}
+                                        <br>
+                                        <small class="text-muted">{{this.description}}</small>
+                                    </label>
+                                </div>
+                                {{/if}}
+                                {{/each}}
+                                
+                                <!-- Reimagine (special case) -->
+                                {{#each models}}
+                                {{#if (eq this.id "reimagine")}}
+                                <div class="form-check model-checkbox mb-2">
+                                    <input class="form-check-input face-model-checkbox" type="checkbox" 
+                                           value="{{this.id}}" 
+                                           id="face-model-{{this.id}}" 
+                                           data-model-name="{{this.name}}"
+                                           data-category="img2img"
+                                           data-requires-image="true">
+                                    <label class="form-check-label text-white" for="face-model-{{this.id}}">
+                                        <span class="fw-semibold">{{this.name}}</span>
+                                        {{#if this.async}}
+                                        <span class="badge bg-info ms-1">Async</span>
+                                        {{else}}
+                                        <span class="badge bg-success ms-1">Sync</span>
+                                        {{/if}}
+                                        <br>
+                                        <small class="text-muted">{{this.description}}</small>
+                                    </label>
+                                </div>
+                                {{/if}}
+                                {{/each}}
+                            </div>
+                            
                             <button class="btn btn-sm btn-outline-light mt-2" onclick="selectAllModels()">
                                 <i class="bi bi-check-all me-1"></i>Select All Standard
                             </button>
+                        </div>
+
+                        <!-- User Custom SD Models Section -->
+                        <div class="mb-4" id="userCustomModelsSection">
+                            <label class="form-label text-white fw-bold d-flex justify-content-between align-items-center">
+                                <span><i class="bi bi-palette me-1"></i>My Custom Models <span class="badge bg-info" id="userCustomModelsCount">0</span></span>
+                            </label>
+                            <div class="model-selection" id="userCustomModelsList" style="max-height: 300px;">
+                                <div class="text-center text-muted py-3" id="noUserModelsPlaceholder">
+                                    <i class="bi bi-box-seam"></i>
+                                    <p class="mb-0 small">No custom models yet. Click "Add Custom Model" above to add your own SD models.</p>
+                                </div>
+                                <!-- User custom models will be dynamically inserted here -->
+                            </div>
                         </div>
 
                         <!-- SD Model Selection -->
@@ -188,9 +396,9 @@
                             </button>
                         </div>
                         {{else}}
-                        <div class="mb-4">
-                            <div class="alert alert-warning">
-                                <small><i class="bi bi-info-circle me-1"></i>No active SD models found. <a href="/admin/models" class="alert-link">Add models</a> to test SD txt2img.</small>
+                        <div class="mb-4" id="noSystemSDModelsAlert">
+                            <div class="alert alert-info">
+                                <small><i class="bi bi-info-circle me-1"></i>No system SD models available. Use "Add Custom Model" above to add your own models for testing.</small>
                             </div>
                         </div>
                         {{/if}}
@@ -198,15 +406,24 @@
                         <!-- Style Preset -->
                         <div class="mb-4">
                             <label class="form-label text-white fw-bold">Style Preset</label>
-                            <div class="btn-group w-100" role="group">
+                            <div class="generation-mode-group" role="group">
                                 <input type="radio" class="btn-check" name="stylePreset" id="style-none" value="" checked>
-                                <label class="btn btn-outline-secondary" for="style-none">None</label>
+                                <label class="mode-btn" for="style-none">
+                                    <i class="bi bi-slash-circle"></i>
+                                    <span>None</span>
+                                </label>
                                 
                                 <input type="radio" class="btn-check" name="stylePreset" id="style-anime" value="anime">
-                                <label class="btn btn-outline-primary" for="style-anime">Anime</label>
+                                <label class="mode-btn" for="style-anime">
+                                    <i class="bi bi-palette"></i>
+                                    <span>Anime</span>
+                                </label>
                                 
                                 <input type="radio" class="btn-check" name="stylePreset" id="style-photo" value="photorealistic">
-                                <label class="btn btn-outline-success" for="style-photo">Photorealistic</label>
+                                <label class="mode-btn" for="style-photo">
+                                    <i class="bi bi-camera"></i>
+                                    <span>Photorealistic</span>
+                                </label>
                             </div>
                         </div>
 
@@ -277,7 +494,7 @@
                                     <label class="form-label text-white small">Negative Prompt</label>
                                     <textarea class="form-control form-control-sm bg-secondary text-white border-secondary" 
                                               id="sdNegativePrompt" 
-                                              rows="2" 
+                                              rows="8" 
                                               placeholder="Optional negative prompt..."></textarea>
                                 </div>
                             </div>
@@ -326,7 +543,7 @@
                                     <small class="text-warning">Combined Final Prompt:</small>
                                     <textarea class="form-control bg-dark text-warning border-warning" 
                                               id="finalPromptInput" 
-                                              rows="4" 
+                                              rows="8" 
                                               style="font-size: 0.85rem;"></textarea>
                                     <div class="form-text text-muted">
                                         <small>This is what will be sent to the API. Edit freely!</small>
@@ -530,7 +747,7 @@
                             </thead>
                             <tbody id="historyTableBody">
                                 {{#each recentTests}}
-                                <tr>
+                                <tr {{#if this.images.length}}data-has-image="true" data-image-url="{{this.images.[0].imageUrl}}" data-model-name="{{this.modelName}}" data-generation-time="{{this.generationTime}}" data-test-id="{{this._id}}" data-prompt="{{this.prompt}}" style="cursor: pointer;"{{/if}}>
                                     <td>
                                         {{#if this.images.length}}
                                         <img src="{{this.images.[0].imageUrl}}" 
@@ -569,20 +786,7 @@
                                         {{/if}}
                                     </td>
                                     <td>
-                                        <div class="d-flex align-items-center gap-1">
-                                            <span class="small">{{formatDate this.testedAt}}</span>
-                                            {{#if this.images.length}}
-                                            <button class="btn btn-sm btn-outline-primary preview-history-btn" 
-                                                    data-image-url="{{this.images.[0].imageUrl}}"
-                                                    data-model-name="{{this.modelName}}"
-                                                    data-generation-time="{{this.generationTime}}"
-                                                    data-test-id="{{this._id}}"
-                                                    data-prompt="{{this.prompt}}"
-                                                    title="Preview & Use as Draft">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
-                                            {{/if}}
-                                        </div>
+                                        <span class="small">{{formatDate this.testedAt}}</span>
                                     </td>
                                 </tr>
                                 {{/each}}
@@ -625,9 +829,6 @@
                                 <button class="btn btn-outline-primary" id="saveAsDraftBtn" onclick="saveAsDraftPost()">
                                     <i class="bi bi-file-earmark-plus me-1"></i>Save as Draft Post
                                 </button>
-                                <button class="btn btn-outline-success" id="shareToSocialBtn" onclick="openShareModal()">
-                                    <i class="bi bi-share me-1"></i>Share to Social
-                                </button>
                             </div>
                             <small class="text-muted d-block mt-2">
                                 Save to My Posts and edit caption before publishing
@@ -663,6 +864,8 @@
                             <i class="bi bi-magic me-1"></i>Generate Caption with AI
                         </button>
                     </div>
+                    <!-- Caption History -->
+                    <div id="draftCaptionHistory" class="mt-3"></div>
                 </div>
                 <div class="modal-footer border-secondary">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -676,6 +879,55 @@
         </div>
     </div>
 
+    <!-- User Model Search Modal -->
+    <div class="modal fade civitai-search-modal" id="userModelSearchModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">
+                        <i class="bi bi-search me-2"></i>Search & Add Custom Models
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <input type="text" 
+                                class="form-control bg-secondary text-white border-secondary" 
+                                id="userModelSearchInput" 
+                                placeholder="Search for SD models (e.g., 'anime', 'realistic', 'portrait'...)"
+                                autocomplete="off">
+                            <button class="btn btn-primary" type="button" id="userModelSearchBtn">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">Search through thousands of Stable Diffusion models to add to your collection</small>
+                    </div>
+                    
+                    <!-- Search Results -->
+                    <div id="userModelSearchResults">
+                        <div class="text-center text-muted py-4" id="userModelSearchPlaceholder">
+                            <i class="bi bi-box-seam fs-1 d-block mb-2"></i>
+                            <p>Enter a search term to find models</p>
+                        </div>
+                        <div class="text-center py-4 d-none" id="userModelSearchLoading">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Searching models...</p>
+                        </div>
+                        <div id="userModelSearchResultsList"></div>
+                        <div class="text-center py-4 d-none" id="userModelNoResults">
+                            <i class="bi bi-emoji-frown fs-1 d-block mb-2 text-muted"></i>
+                            <p class="text-muted">No models found</p>
+                            <small class="text-muted">Try a different search term</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{> dashboard-footer}}
     <script>
         // Pricing configuration passed from server
@@ -683,6 +935,8 @@
             imageCostPerUnit: {{imageCostPerUnit}},
             userPoints: {{userPoints}}
         };
+        // User models data from server (if we want to preload)
+        window.userCustomModels = [];
     </script>
     <script src="/js/admin-image-test.js"></script>
 </body>

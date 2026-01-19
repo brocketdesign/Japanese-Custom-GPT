@@ -83,6 +83,10 @@ async function routes(fastify, options) {
           description: config.description,
           async: config.async,
           requiresModel: config.requiresModel || false,
+          category: config.category || 'txt2img',
+          supportsImg2Img: config.supportsImg2Img || false,
+          requiresImage: config.requiresImage || false,
+          requiresTwoImages: config.requiresTwoImages || false,
           totalTests: stats.totalTests || 0,
           averageTime: stats.averageTime || 0,
           recentAverageTime: stats.recentAverageTime || 0,
@@ -132,14 +136,22 @@ async function routes(fastify, options) {
       }
 
       const db = fastify.mongo.db;
-      const { models, selectedSDModels, prompt, basePrompt, size, style, skipStyleApplication, negativePrompt, steps, guidanceScale, samplerName, imagesPerModel } = request.body;
+      const { 
+        models, selectedSDModels, prompt, basePrompt, size, style, skipStyleApplication, 
+        negativePrompt, steps, guidanceScale, samplerName, imagesPerModel,
+        generationMode, editStrength, image_base64, face_image_file, image_file
+      } = request.body;
 
       if ((!models || !Array.isArray(models) || models.length === 0) && 
           (!selectedSDModels || !Array.isArray(selectedSDModels) || selectedSDModels.length === 0)) {
         return reply.status(400).send({ error: 'No models selected' });
       }
 
-      if (!prompt || prompt.trim() === '') {
+      // For face tools like reimagine and merge-face, prompt may not be required
+      const requiresPrompt = generationMode !== 'face' || 
+        (models && models.some(m => m !== 'reimagine' && m !== 'merge-face'));
+      
+      if (requiresPrompt && (!prompt || prompt.trim() === '')) {
         return reply.status(400).send({ error: 'Prompt is required' });
       }
 
@@ -179,15 +191,19 @@ async function routes(fastify, options) {
       }
 
       console.log(`[AdminImageTest] Starting generation for ${models?.length || 0} standard models and ${selectedSDModels?.length || 0} SD models`);
+      console.log(`[AdminImageTest] Mode: ${generationMode || 'txt2img'}`);
       console.log(`[AdminImageTest] Prompt: ${prompt}`);
       console.log(`[AdminImageTest] Base Prompt: ${basePrompt || 'N/A'}`);
       console.log(`[AdminImageTest] Size: ${size}`);
       console.log(`[AdminImageTest] Style: ${style}`);
-      console.log(`[AdminImageTest] Skip Style Application: ${skipStyleApplication}`);
+      console.log(`[AdminImageTest] Edit Strength: ${editStrength || 'medium'}`);
+      console.log(`[AdminImageTest] Has image_base64: ${!!image_base64}`);
+      console.log(`[AdminImageTest] Has face_image_file: ${!!face_image_file}`);
+      console.log(`[AdminImageTest] Has image_file: ${!!image_file}`);
 
       // Use prompt directly if style was already applied on frontend
       // Otherwise apply style preset if selected
-      let finalPrompt = prompt;
+      let finalPrompt = prompt || '';
       if (!skipStyleApplication && style && STYLE_PRESETS[style]) {
         const preset = STYLE_PRESETS[style];
         finalPrompt = preset.promptPrefix + prompt + preset.promptSuffix;
@@ -203,15 +219,39 @@ async function routes(fastify, options) {
             const numImages = Math.max(1, Math.min(4, parseInt(imagesPerModel) || 1));
             const config = MODEL_CONFIGS[modelId];
             
+            // Build base params
+            const baseParams = {
+              prompt: finalPrompt,
+              size: size || '1024*1024'
+            };
+            
+            // Add img2img parameters
+            if (generationMode === 'img2img' && image_base64) {
+              baseParams.image = image_base64;
+              baseParams.image_base64 = image_base64;
+              baseParams.editStrength = editStrength || 'medium';
+            }
+            
+            // Add face tool parameters
+            if (generationMode === 'face') {
+              if (modelId === 'merge-face') {
+                baseParams.face_image_file = face_image_file;
+                baseParams.image_file = image_file;
+              } else if (modelId === 'reimagine') {
+                baseParams.image_file = face_image_file || image_file;
+              } else {
+                // Other face tools that need an image
+                baseParams.image = face_image_file || image_file;
+                baseParams.image_base64 = face_image_file || image_file;
+              }
+            }
+            
             // For models that support multiple images natively, pass the parameter
+            // Note: flux-2-flex does NOT support image_num - it only generates one image per request
             if (numImages > 1 && config) {
-              if (modelId === 'flux-2-flex' && config.supportedParams.includes('images')) {
-                // Flux 2 Flex supports 'images' parameter
-                const params = {
-                  prompt: finalPrompt,
-                  size: size || '1024*1024',
-                  images: numImages
-                };
+              // For all models that don't support native batch generation, create multiple tasks
+              for (let i = 0; i < numImages; i++) {
+                const params = { ...baseParams };
 
                 const task = await initializeModelTest(modelId, params);
                 task.originalPrompt = basePrompt || prompt;
@@ -219,35 +259,17 @@ async function routes(fastify, options) {
                 task.size = size;
                 task.style = style;
                 task.userId = user._id.toString();
-                tasks.push(task);
-              } else {
-                // For other models, create multiple tasks (generate multiple times)
-                for (let i = 0; i < numImages; i++) {
-                  const params = {
-                    prompt: finalPrompt,
-                    size: size || '1024*1024'
-                  };
-
-                  const task = await initializeModelTest(modelId, params);
-                  task.originalPrompt = basePrompt || prompt;
-                  task.finalPrompt = finalPrompt;
-                  task.size = size;
-                  task.style = style;
-                  task.userId = user._id.toString();
-                  // Add index suffix to model name for multiple generations
-                  if (numImages > 1) {
-                    task.modelName = `${config?.name || modelId} (#${i + 1})`;
-                    task.cardId = `${modelId}-${i}`;
-                  }
-                  tasks.push(task);
+                task.generationMode = generationMode || 'txt2img';
+                // Add index suffix to model name for multiple generations
+                if (numImages > 1) {
+                  task.modelName = `${config?.name || modelId} (#${i + 1})`;
+                  task.cardId = `${modelId}-${i}`;
                 }
+                tasks.push(task);
               }
             } else {
               // Single image generation
-              const params = {
-                prompt: finalPrompt,
-                size: size || '1024*1024'
-              };
+              const params = { ...baseParams };
 
               const task = await initializeModelTest(modelId, params);
               task.originalPrompt = basePrompt || prompt;
@@ -255,6 +277,7 @@ async function routes(fastify, options) {
               task.size = size;
               task.style = style;
               task.userId = user._id.toString();
+              task.generationMode = generationMode || 'txt2img';
               tasks.push(task);
             }
           } catch (error) {
@@ -275,6 +298,11 @@ async function routes(fastify, options) {
         for (const sdModel of selectedSDModels) {
           try {
             const numImages = Math.max(1, Math.min(4, parseInt(imagesPerModel) || 1));
+            
+            // Determine if this is img2img or txt2img for SD models
+            const isImg2Img = generationMode === 'img2img' && image_base64;
+            const sdModelType = isImg2Img ? 'sd-img2img' : 'sd-txt2img';
+            
             const params = {
               prompt: finalPrompt,
               model_name: sdModel.model || sdModel.model_name,
@@ -285,21 +313,28 @@ async function routes(fastify, options) {
               sampler_name: samplerName || undefined,
               image_num: numImages // SD models support image_num parameter
             };
+            
+            // Add img2img parameters for SD models
+            if (isImg2Img) {
+              params.image_base64 = image_base64;
+              params.editStrength = editStrength || 'medium';
+            }
 
-            const task = await initializeModelTest('sd-txt2img', params);
+            const task = await initializeModelTest(sdModelType, params);
             task.originalPrompt = basePrompt || prompt;
             task.finalPrompt = finalPrompt;
             task.size = size;
             task.style = style;
-            task.modelName = `${MODEL_CONFIGS['sd-txt2img'].name} - ${sdModel.name || sdModel.model}`;
+            task.modelName = `${MODEL_CONFIGS[sdModelType].name} - ${sdModel.name || sdModel.model}`;
             task.sdModelName = sdModel.name || sdModel.model;
             task.userId = user._id.toString();
+            task.generationMode = generationMode || 'txt2img';
             tasks.push(task);
           } catch (error) {
             console.error(`[AdminImageTest] Error starting SD model ${sdModel.model}:`, error.message);
             tasks.push({
-              modelId: 'sd-txt2img',
-              modelName: `${MODEL_CONFIGS['sd-txt2img'].name} - ${sdModel.name || sdModel.model}`,
+              modelId: generationMode === 'img2img' ? 'sd-img2img' : 'sd-txt2img',
+              modelName: `SD ${generationMode === 'img2img' ? 'Image to Image' : 'Text to Image'} - ${sdModel.name || sdModel.model}`,
               status: 'failed',
               error: error.message,
               startTime: Date.now()

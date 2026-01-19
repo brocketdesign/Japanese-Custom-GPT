@@ -24,7 +24,12 @@ const state = {
     customizedPrompt: null, // Track if user has manually edited the final prompt
     // Pricing state
     imageCostPerUnit: window.PRICING?.imageCostPerUnit || 50,
-    userPoints: window.PRICING?.userPoints || 0
+    userPoints: window.PRICING?.userPoints || 0,
+    // Image upload state
+    generationMode: 'txt2img', // txt2img, img2img, face
+    img2imgDataUrl: null, // Base64 encoded image for img2img
+    faceImageDataUrl: null, // Face image for merge face
+    targetImageDataUrl: null // Target image for merge face
 };
 
 /**
@@ -134,6 +139,12 @@ document.addEventListener('DOMContentLoaded', function() {
         imagesPerModelSelect.addEventListener('change', updateCostDisplay);
     }
     
+    // Initialize generation mode handling
+    initializeGenerationModeHandlers();
+    
+    // Initialize image upload handlers
+    initializeImageUploadHandlers();
+    
     // Check for prompt from Templates page
     const storedPrompt = sessionStorage.getItem('promptFromTemplates');
     if (storedPrompt) {
@@ -166,12 +177,235 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
+ * Initialize generation mode radio button handlers
+ */
+function initializeGenerationModeHandlers() {
+    document.querySelectorAll('input[name="generationMode"]').forEach(radio => {
+        radio.addEventListener('change', handleGenerationModeChange);
+    });
+}
+
+/**
+ * Handle generation mode change
+ */
+function handleGenerationModeChange(event) {
+    const mode = event.target.value;
+    state.generationMode = mode;
+    
+    // Show/hide sections based on mode
+    const img2imgUpload = document.getElementById('img2imgUploadSection');
+    const editStrength = document.getElementById('editStrengthSection');
+    const mergeFaceSection = document.getElementById('mergeFaceSection');
+    const txt2imgModels = document.getElementById('txt2imgModelsSection');
+    const img2imgModels = document.getElementById('img2imgModelsSection');
+    const faceModels = document.getElementById('faceModelsSection');
+    
+    // Hide all sections first
+    if (img2imgUpload) img2imgUpload.style.display = 'none';
+    if (editStrength) editStrength.style.display = 'none';
+    if (mergeFaceSection) mergeFaceSection.style.display = 'none';
+    if (txt2imgModels) txt2imgModels.style.display = 'none';
+    if (img2imgModels) img2imgModels.style.display = 'none';
+    if (faceModels) faceModels.style.display = 'none';
+    
+    // Show relevant sections based on mode
+    switch (mode) {
+        case 'txt2img':
+            if (txt2imgModels) txt2imgModels.style.display = 'block';
+            break;
+        case 'img2img':
+            if (img2imgUpload) img2imgUpload.style.display = 'block';
+            if (editStrength) editStrength.style.display = 'block';
+            if (img2imgModels) img2imgModels.style.display = 'block';
+            break;
+        case 'face':
+            if (mergeFaceSection) mergeFaceSection.style.display = 'block';
+            if (faceModels) faceModels.style.display = 'block';
+            break;
+    }
+    
+    // Clear model selections
+    document.querySelectorAll('.model-checkbox.selected').forEach(cb => {
+        cb.classList.remove('selected');
+    });
+    
+    updateCostDisplay();
+}
+
+/**
+ * Initialize image upload handlers for img2img and merge face
+ */
+function initializeImageUploadHandlers() {
+    // Img2Img image upload
+    const img2imgInput = document.getElementById('img2imgInput');
+    const img2imgArea = document.getElementById('img2imgUploadArea');
+    
+    if (img2imgInput) {
+        img2imgInput.addEventListener('change', () => handleImageUpload(img2imgInput, 'img2img'));
+    }
+    
+    if (img2imgArea) {
+        img2imgArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            img2imgArea.classList.add('drag-over');
+        });
+        img2imgArea.addEventListener('dragleave', () => {
+            img2imgArea.classList.remove('drag-over');
+        });
+        img2imgArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            img2imgArea.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                img2imgInput.files = files;
+                handleImageUpload(img2imgInput, 'img2img');
+            }
+        });
+    }
+    
+    // Face image upload (for merge face)
+    const faceImageInput = document.getElementById('faceImageInput');
+    const faceImageArea = document.getElementById('faceImageUploadArea');
+    
+    if (faceImageInput) {
+        faceImageInput.addEventListener('change', () => handleImageUpload(faceImageInput, 'face'));
+    }
+    
+    if (faceImageArea) {
+        faceImageArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            faceImageArea.classList.add('drag-over');
+        });
+        faceImageArea.addEventListener('dragleave', () => {
+            faceImageArea.classList.remove('drag-over');
+        });
+        faceImageArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            faceImageArea.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                faceImageInput.files = files;
+                handleImageUpload(faceImageInput, 'face');
+            }
+        });
+    }
+    
+    // Target image upload (for merge face)
+    const targetImageInput = document.getElementById('targetImageInput');
+    const targetImageArea = document.getElementById('targetImageUploadArea');
+    
+    if (targetImageInput) {
+        targetImageInput.addEventListener('change', () => handleImageUpload(targetImageInput, 'target'));
+    }
+    
+    if (targetImageArea) {
+        targetImageArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            targetImageArea.classList.add('drag-over');
+        });
+        targetImageArea.addEventListener('dragleave', () => {
+            targetImageArea.classList.remove('drag-over');
+        });
+        targetImageArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            targetImageArea.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                targetImageInput.files = files;
+                handleImageUpload(targetImageInput, 'target');
+            }
+        });
+    }
+}
+
+/**
+ * Handle image upload and preview
+ */
+function handleImageUpload(fileInput, type) {
+    const file = fileInput.files[0];
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        showNotification('Please upload a valid image file', 'error');
+        return;
+    }
+    
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        showNotification('Image size must be less than 10MB', 'error');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const dataUrl = e.target.result;
+        
+        // Store data URL based on type
+        switch (type) {
+            case 'img2img':
+                state.img2imgDataUrl = dataUrl;
+                document.querySelector('#img2imgUploadArea .upload-placeholder')?.classList.add('d-none');
+                document.getElementById('img2imgPreview')?.classList.remove('d-none');
+                document.getElementById('img2imgPreviewImg').src = dataUrl;
+                break;
+            case 'face':
+                state.faceImageDataUrl = dataUrl;
+                document.querySelector('#faceImageUploadArea .upload-placeholder')?.classList.add('d-none');
+                document.getElementById('faceImagePreview')?.classList.remove('d-none');
+                document.getElementById('faceImagePreviewImg').src = dataUrl;
+                break;
+            case 'target':
+                state.targetImageDataUrl = dataUrl;
+                document.querySelector('#targetImageUploadArea .upload-placeholder')?.classList.add('d-none');
+                document.getElementById('targetImagePreview')?.classList.remove('d-none');
+                document.getElementById('targetImagePreviewImg').src = dataUrl;
+                break;
+        }
+        
+        showNotification('Image uploaded successfully', 'success');
+    };
+    reader.readAsDataURL(file);
+}
+
+/**
+ * Clear img2img image upload
+ */
+function clearImg2ImgUpload() {
+    state.img2imgDataUrl = null;
+    document.getElementById('img2imgInput').value = '';
+    document.querySelector('#img2imgUploadArea .upload-placeholder')?.classList.remove('d-none');
+    document.getElementById('img2imgPreview')?.classList.add('d-none');
+}
+
+/**
+ * Clear face image upload
+ */
+function clearFaceImageUpload() {
+    state.faceImageDataUrl = null;
+    document.getElementById('faceImageInput').value = '';
+    document.querySelector('#faceImageUploadArea .upload-placeholder')?.classList.remove('d-none');
+    document.getElementById('faceImagePreview')?.classList.add('d-none');
+}
+
+/**
+ * Clear target image upload
+ */
+function clearTargetImageUpload() {
+    state.targetImageDataUrl = null;
+    document.getElementById('targetImageInput').value = '';
+    document.querySelector('#targetImageUploadArea .upload-placeholder')?.classList.remove('d-none');
+    document.getElementById('targetImagePreview')?.classList.add('d-none');
+}
+
+/**
  * Initialize history preview buttons for server-rendered items
  */
 function initializeHistoryPreviewButtons() {
     // Handle thumbnail clicks
     document.querySelectorAll('#historyTableBody .history-thumbnail').forEach(thumbnail => {
-        thumbnail.addEventListener('click', function() {
+        thumbnail.addEventListener('click', function(e) {
+            e.stopPropagation();
             const imageUrl = this.dataset.imageUrl;
             const modelName = this.dataset.modelName || 'Unknown Model';
             const generationTime = parseInt(this.dataset.generationTime) || 0;
@@ -181,16 +415,24 @@ function initializeHistoryPreviewButtons() {
         });
     });
     
-    // Handle preview button clicks
-    document.querySelectorAll('#historyTableBody .preview-history-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
+    // Handle row clicks for preview
+    document.querySelectorAll('#historyTableBody tr[data-has-image="true"]').forEach(row => {
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', function(e) {
+            // Don't trigger if clicking on a button or link inside the row
+            if (e.target.closest('button') || e.target.closest('a') || e.target.tagName === 'BUTTON' || e.target.tagName === 'A') {
+                return;
+            }
+            
             const imageUrl = this.dataset.imageUrl;
             const modelName = this.dataset.modelName || 'Unknown Model';
             const generationTime = parseInt(this.dataset.generationTime) || 0;
             const testId = this.dataset.testId || '';
             const prompt = this.dataset.prompt || '';
-            previewHistoryImage(imageUrl, modelName, generationTime, testId, prompt);
+            
+            if (imageUrl) {
+                previewHistoryImage(imageUrl, modelName, generationTime, testId, prompt);
+            }
         });
     });
 }
@@ -359,37 +601,69 @@ function selectAllSDModels() {
 }
 
 /**
- * Get selected standard models
+ * Get selected standard models based on current generation mode
  */
 function getSelectedModels() {
+    let selector;
+    switch (state.generationMode) {
+        case 'txt2img':
+            selector = '.txt2img-model-checkbox';
+            break;
+        case 'img2img':
+            selector = '.img2img-model-checkbox';
+            break;
+        case 'face':
+            selector = '.face-model-checkbox';
+            break;
+        default:
+            selector = 'input[type="checkbox"]';
+    }
+    
     const checkboxes = document.querySelectorAll('.model-checkbox.selected');
-    const standardSelected = Array.from(checkboxes).filter(cb => !cb.querySelector('.sd-model-checkbox'));
+    const standardSelected = Array.from(checkboxes).filter(cb => {
+        const checkbox = cb.querySelector(selector);
+        return checkbox && !cb.classList.contains('user-custom-model-item') && !cb.querySelector('.sd-model-checkbox');
+    });
     
     return standardSelected.map(cb => {
-        const input = cb.querySelector('input[type="checkbox"]');
+        const input = cb.querySelector(selector) || cb.querySelector('input[type="checkbox"]');
         return {
             id: input.value,
-            name: input.dataset.modelName
+            name: input.dataset.modelName,
+            category: input.dataset.category,
+            requiresImage: input.dataset.requiresImage === 'true',
+            requiresTwoImages: input.dataset.requiresTwoImages === 'true',
+            supportsImg2Img: input.dataset.supportsImg2img === 'true'
         };
     });
 }
 
 /**
- * Get selected SD models
+ * Get selected SD models (both system and user custom models)
  */
 function getSelectedSDModels() {
-    const checkboxes = document.querySelectorAll('.model-checkbox.selected');
-    const sdSelected = Array.from(checkboxes).filter(cb => cb.querySelector('.sd-model-checkbox'));
+    // Get system SD models
+    const systemCheckboxes = document.querySelectorAll('.model-checkbox.selected');
+    const systemSdSelected = Array.from(systemCheckboxes).filter(cb => 
+        cb.querySelector('.sd-model-checkbox') && !cb.classList.contains('user-custom-model-item')
+    );
     
-    return sdSelected.map(cb => {
+    const systemModels = systemSdSelected.map(cb => {
         const input = cb.querySelector('.sd-model-checkbox');
         return {
             modelId: input.value,
             model: input.dataset.model,
             model_name: input.dataset.model,
-            name: input.dataset.modelName
+            name: input.dataset.modelName,
+            isUserModel: false
         };
     });
+    
+    // Get user custom SD models
+    const userModels = getSelectedUserSDModels();
+    
+    // Combine both
+    return [...systemModels, ...userModels];
 }
 
 /**
@@ -397,11 +671,30 @@ function getSelectedSDModels() {
  */
 function updateSDParamsVisibility() {
     const sdSection = document.getElementById('sdParamsSection');
-    const selectedSD = getSelectedSDModels();
+    const selectedSD = getSelectedSDModels(); // This now includes both system and user models
     
     if (sdSection) {
         sdSection.style.display = selectedSD.length > 0 ? 'block' : 'none';
     }
+}
+
+/**
+ * Select all user custom SD model checkboxes
+ */
+function selectAllUserSDModels() {
+    const userModelItems = document.querySelectorAll('.user-custom-model-item');
+    const allSelected = Array.from(userModelItems).every(item => item.classList.contains('selected'));
+    
+    userModelItems.forEach(item => {
+        if (allSelected) {
+            item.classList.remove('selected');
+        } else {
+            item.classList.add('selected');
+        }
+    });
+    
+    updateSDParamsVisibility();
+    updateCostDisplay();
 }
 
 // SD params visibility is now handled in initializeModelCheckboxes()
@@ -419,9 +712,36 @@ async function startGeneration() {
     }
 
     const basePrompt = document.getElementById('promptInput').value.trim();
-    if (!basePrompt) {
+    
+    // For face tools like Reimagine, prompt may not be required
+    const needsPrompt = state.generationMode !== 'face' || 
+        selectedModels.some(m => m.id !== 'reimagine' && m.id !== 'merge-face');
+    
+    if (needsPrompt && !basePrompt) {
         showNotification('Please enter a prompt', 'warning');
         return;
+    }
+    
+    // Validate image requirements based on mode
+    if (state.generationMode === 'img2img' && !state.img2imgDataUrl) {
+        showNotification('Please upload a source image for image-to-image generation', 'warning');
+        return;
+    }
+    
+    if (state.generationMode === 'face') {
+        const hasMergeFace = selectedModels.some(m => m.id === 'merge-face');
+        const hasReimagine = selectedModels.some(m => m.id === 'reimagine');
+        const hasOtherFaceTools = selectedModels.some(m => m.id !== 'merge-face' && m.id !== 'reimagine');
+        
+        if (hasMergeFace && (!state.faceImageDataUrl || !state.targetImageDataUrl)) {
+            showNotification('Please upload both face and target images for Merge Face', 'warning');
+            return;
+        }
+        
+        if ((hasReimagine || hasOtherFaceTools) && !state.faceImageDataUrl && !state.img2imgDataUrl) {
+            showNotification('Please upload an image for face tools', 'warning');
+            return;
+        }
     }
 
     // Check if user has enough points before proceeding
@@ -434,6 +754,7 @@ async function startGeneration() {
     const size = document.getElementById('sizeSelect').value;
     const style = document.querySelector('input[name="stylePreset"]:checked')?.value || '';
     const imagesPerModel = parseInt(document.getElementById('imagesPerModel').value) || 1;
+    const editStrength = document.querySelector('input[name="editStrength"]:checked')?.value || 'medium';
     
     // Get the final prompt (with style applied and any user edits)
     const finalPrompt = getFinalPrompt();
@@ -450,13 +771,17 @@ async function startGeneration() {
     }
 
     console.log('[AdminImageTest] Starting generation:', {
+        mode: state.generationMode,
         models: selectedModels.map(m => m.id),
         sdModels: selectedSDModels.map(m => m.model),
         basePrompt: basePrompt.substring(0, 50) + '...',
         finalPrompt: finalPrompt.substring(0, 80) + '...',
         size,
         style,
-        sdParams
+        editStrength,
+        hasImg2ImgImage: !!state.img2imgDataUrl,
+        hasFaceImage: !!state.faceImageDataUrl,
+        hasTargetImage: !!state.targetImageDataUrl
     });
 
     // Clear previous results
@@ -476,8 +801,28 @@ async function startGeneration() {
             size,
             style,
             skipStyleApplication: !!style, // Tell server not to apply style again
-            imagesPerModel: imagesPerModel // Number of images to generate per model
+            imagesPerModel: imagesPerModel, // Number of images to generate per model
+            generationMode: state.generationMode,
+            editStrength: editStrength
         };
+        
+        // Add image data based on mode
+        if (state.generationMode === 'img2img' && state.img2imgDataUrl) {
+            requestBody.image_base64 = state.img2imgDataUrl;
+        }
+        
+        if (state.generationMode === 'face') {
+            if (state.faceImageDataUrl) {
+                requestBody.face_image_file = state.faceImageDataUrl;
+            }
+            if (state.targetImageDataUrl) {
+                requestBody.image_file = state.targetImageDataUrl;
+            }
+            // For reimagine, use face image as the source
+            if (!state.targetImageDataUrl && state.faceImageDataUrl) {
+                requestBody.image_file = state.faceImageDataUrl;
+            }
+        }
         
         // Add standard models if any selected
         if (selectedModels.length > 0) {
@@ -491,6 +836,11 @@ async function startGeneration() {
             requestBody.steps = sdParams.steps;
             requestBody.guidanceScale = sdParams.guidanceScale;
             requestBody.samplerName = sdParams.samplerName;
+            
+            // For img2img mode with SD models, add the image
+            if (state.generationMode === 'img2img' && state.img2imgDataUrl) {
+                requestBody.image_base64 = state.img2imgDataUrl;
+            }
         }
         
         const response = await fetch('/dashboard/image/generate', {
@@ -532,7 +882,7 @@ async function startGeneration() {
             let cardId = task.cardId || task.modelId;
             
             // For SD models, use the custom card ID
-            if (task.modelId === 'sd-txt2img' && task.sdModelName) {
+            if ((task.modelId === 'sd-txt2img' || task.modelId === 'sd-img2img') && task.sdModelName) {
                 // Find the matching SD model to get the card ID
                 const matchingSD = selectedSDModels.find(sd => sd.model === task.sdModelName || sd.name === task.sdModelName);
                 if (matchingSD && !task.cardId) {
@@ -1101,20 +1451,20 @@ async function loadHistory() {
                              data-test-id="${test._id || ''}"
                              onerror="this.src='/img/placeholder.png'">
                     `;
+                    
+                    // Add data attributes to row for click handler
+                    row.dataset.hasImage = 'true';
+                    row.dataset.imageUrl = imgUrl;
+                    row.dataset.modelName = test.modelName || 'Unknown Model';
+                    row.dataset.generationTime = test.generationTime || 0;
+                    row.dataset.testId = test._id || '';
+                    row.dataset.prompt = test.prompt || '';
+                    row.style.cursor = 'pointer';
                 }
                 
                 // Escape prompt for HTML and JavaScript
                 const escapedPrompt = (test.prompt || '--').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n');
                 const displayPrompt = (test.prompt || '--').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                
-                // Store test data for preview
-                const testData = JSON.stringify({
-                    imageUrl: imgUrl,
-                    modelName: test.modelName || 'Unknown Model',
-                    generationTime: test.generationTime || 0,
-                    testId: test._id || '',
-                    prompt: test.prompt || ''
-                }).replace(/'/g, '&#39;');
                 
                 row.innerHTML = `
                     <td>${imageCell}</td>
@@ -1139,12 +1489,7 @@ async function loadHistory() {
                                 : `<span class="badge bg-warning">${test.status}</span>`}
                     </td>
                     <td>
-                        <div class="d-flex align-items-center gap-1">
-                            <span class="small">${new Date(test.testedAt).toLocaleString()}</span>
-                            ${imgUrl ? `<button class="btn btn-sm btn-outline-primary preview-history-btn" data-test='${testData}' title="Preview & Use as Draft">
-                                <i class="bi bi-eye"></i>
-                            </button>` : ''}
-                        </div>
+                        <span class="small">${new Date(test.testedAt).toLocaleString()}</span>
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -1152,19 +1497,27 @@ async function loadHistory() {
                 // Add click handler for thumbnail
                 const thumbnail = row.querySelector('.history-thumbnail');
                 if (thumbnail) {
-                    thumbnail.addEventListener('click', () => {
-                        const testDataObj = JSON.parse(testData.replace(/&#39;/g, "'"));
-                        previewHistoryImage(testDataObj.imageUrl, testDataObj.modelName, testDataObj.generationTime, testDataObj.testId, testDataObj.prompt);
+                    thumbnail.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        previewHistoryImage(imgUrl, test.modelName || 'Unknown Model', test.generationTime || 0, test._id || '', test.prompt || '');
                     });
                 }
                 
-                // Add click handler for preview button
-                const previewBtn = row.querySelector('.preview-history-btn');
-                if (previewBtn) {
-                    previewBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const testDataObj = JSON.parse(previewBtn.dataset.test.replace(/&#39;/g, "'"));
-                        previewHistoryImage(testDataObj.imageUrl, testDataObj.modelName, testDataObj.generationTime, testDataObj.testId, testDataObj.prompt);
+                // Add click handler for entire row if it has an image
+                if (imgUrl) {
+                    row.addEventListener('click', function(e) {
+                        // Don't trigger if clicking on a button or link inside the row
+                        if (e.target.closest('button') || e.target.closest('a') || e.target.tagName === 'BUTTON' || e.target.tagName === 'A') {
+                            return;
+                        }
+                        
+                        const imageUrl = this.dataset.imageUrl;
+                        const modelName = this.dataset.modelName || 'Unknown Model';
+                        const generationTime = parseInt(this.dataset.generationTime) || 0;
+                        const testId = this.dataset.testId || '';
+                        const prompt = this.dataset.prompt || '';
+                        
+                        previewHistoryImage(imageUrl, modelName, generationTime, testId, prompt);
                     });
                 }
             });
@@ -1562,8 +1915,148 @@ function saveAsDraftPost() {
     if (!saveDraftModal) {
         saveDraftModal = new bootstrap.Modal(document.getElementById('saveDraftModal'));
     }
+    
+    // Initialize caption history
+    CaptionHistory.renderHistory('draftCaptionHistory', 'draftCaptionText');
+    
     saveDraftModal.show();
 }
+
+/**
+ * Caption History Management
+ */
+const CaptionHistory = {
+    STORAGE_KEY: 'captionHistory',
+    MAX_ITEMS: 20,
+    
+    getHistory() {
+        try {
+            const stored = localStorage.getItem(this.STORAGE_KEY);
+            return stored ? JSON.parse(stored) : [];
+        } catch (e) {
+            console.error('[CaptionHistory] Error reading history:', e);
+            return [];
+        }
+    },
+    
+    saveCaption(caption, imageId = null) {
+        if (!caption || caption.trim().length === 0) return;
+        
+        try {
+            const history = this.getHistory();
+            const newEntry = {
+                id: Date.now().toString(),
+                caption: caption.trim(),
+                imageId: imageId,
+                createdAt: new Date().toISOString()
+            };
+            
+            // Check for duplicates (same caption text)
+            const exists = history.some(h => h.caption === newEntry.caption);
+            if (!exists) {
+                history.unshift(newEntry);
+                // Keep only the last MAX_ITEMS
+                if (history.length > this.MAX_ITEMS) {
+                    history.splice(this.MAX_ITEMS);
+                }
+                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(history));
+            }
+            
+            // Update UI if container exists
+            this.renderHistory('draftCaptionHistory', 'draftCaptionText');
+        } catch (e) {
+            console.error('[CaptionHistory] Error saving caption:', e);
+        }
+    },
+    
+    deleteCaption(captionId) {
+        try {
+            const history = this.getHistory();
+            const filtered = history.filter(h => h.id !== captionId);
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filtered));
+            this.renderHistory('draftCaptionHistory', 'draftCaptionText');
+        } catch (e) {
+            console.error('[CaptionHistory] Error deleting caption:', e);
+        }
+    },
+    
+    renderHistory(containerId, textareaId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        const history = this.getHistory();
+        
+        if (history.length === 0) {
+            container.innerHTML = '<small class="text-muted">No caption history yet</small>';
+            return;
+        }
+        
+        const html = history.slice(0, 10).map(item => {
+            const date = new Date(item.createdAt);
+            const timeAgo = this.formatTimeAgo(date);
+            const shortCaption = item.caption.length > 100 
+                ? item.caption.substring(0, 100) + '...' 
+                : item.caption;
+            
+            return `
+                <div class="caption-history-item d-flex align-items-start gap-2 p-2 mb-1 rounded" style="background: rgba(255,255,255,0.05); cursor: pointer;" 
+                     onclick="CaptionHistory.useCaption('${item.id}', '${textareaId}')">
+                    <div class="flex-grow-1">
+                        <small class="d-block text-white-50" style="font-size: 0.75rem;">${this.escapeHtml(shortCaption)}</small>
+                        <small class="text-muted" style="font-size: 0.65rem;">${timeAgo}</small>
+                    </div>
+                    <button type="button" class="btn btn-sm p-0 text-danger" onclick="event.stopPropagation(); CaptionHistory.deleteCaption('${item.id}')" title="Delete">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            `;
+        }).join('');
+        
+        container.innerHTML = `
+            <label class="form-label small text-muted mt-2">
+                <i class="bi bi-clock-history me-1"></i>Caption History
+            </label>
+            <div class="caption-history-list" style="max-height: 150px; overflow-y: auto;">
+                ${html}
+            </div>
+        `;
+    },
+    
+    useCaption(captionId, textareaId) {
+        const history = this.getHistory();
+        const item = history.find(h => h.id === captionId);
+        if (item) {
+            const textarea = document.getElementById(textareaId);
+            if (textarea) {
+                textarea.value = item.caption;
+                textarea.focus();
+                showNotification('Caption applied!', 'success');
+            }
+        }
+    },
+    
+    formatTimeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+        const intervals = { day: 86400, hour: 3600, minute: 60 };
+        
+        for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+            const interval = Math.floor(seconds / secondsInUnit);
+            if (interval >= 1) {
+                return `${interval} ${unit}${interval > 1 ? 's' : ''} ago`;
+            }
+        }
+        return 'Just now';
+    },
+    
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+};
+
+// Make CaptionHistory globally available
+window.CaptionHistory = CaptionHistory;
 
 /**
  * Generate caption for draft post using AI
@@ -1597,6 +2090,8 @@ async function generateDraftCaption() {
         
         if (data.success && data.caption) {
             captionInput.value = data.caption;
+            // Save to caption history
+            CaptionHistory.saveCaption(data.caption, currentDraftData.testId);
             showNotification('Caption generated!', 'success');
         } else {
             throw new Error(data.error || 'Failed to generate caption');
@@ -1666,19 +2161,425 @@ async function confirmSaveDraft() {
     }
 }
 
+
+// ==============================================
+// User Custom Model Management
+// ==============================================
+
+// User models state
+let userCustomModels = [];
+let userModelSearchModal = null;
+
 /**
- * Open share to social modal (placeholder for social sharing)
+ * Initialize user model management on page load
  */
-function openShareModal() {
-    const modal = document.getElementById('imagePreviewModal');
-    const imageUrl = modal.dataset.imageUrl;
+function initializeUserModelManagement() {
+    // Initialize modal
+    const modalElement = document.getElementById('userModelSearchModal');
+    if (modalElement) {
+        userModelSearchModal = new bootstrap.Modal(modalElement);
+    }
+
+    // Search input event listeners
+    const searchInput = document.getElementById('userModelSearchInput');
+    const searchBtn = document.getElementById('userModelSearchBtn');
     
-    if (!imageUrl) {
-        showNotification('No image to share', 'error');
-        return;
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                searchUserModels(searchInput.value.trim());
+            }
+        });
     }
     
-    // For now, redirect to My Posts where social sharing is available
-    showNotification('Saving image first...', 'info');
-    saveAsDraftPost();
+    if (searchBtn) {
+        searchBtn.addEventListener('click', function() {
+            searchUserModels(document.getElementById('userModelSearchInput').value.trim());
+        });
+    }
+    
+    // Load user's existing custom models
+    loadUserCustomModels();
 }
+
+/**
+ * Open the user model search modal
+ */
+function openUserModelSearchModal() {
+    // Reset search state
+    document.getElementById('userModelSearchInput').value = '';
+    document.getElementById('userModelSearchResultsList').innerHTML = '';
+    document.getElementById('userModelSearchPlaceholder').classList.remove('d-none');
+    document.getElementById('userModelNoResults').classList.add('d-none');
+    document.getElementById('userModelSearchLoading').classList.add('d-none');
+    
+    if (userModelSearchModal) {
+        userModelSearchModal.show();
+    }
+}
+
+/**
+ * Search for models using Civitai/Novita API
+ */
+async function searchUserModels(query) {
+    if (!query || query.length < 2) {
+        showNotification('Please enter at least 2 characters', 'warning');
+        return;
+    }
+
+    // Show loading state
+    document.getElementById('userModelSearchPlaceholder').classList.add('d-none');
+    document.getElementById('userModelNoResults').classList.add('d-none');
+    document.getElementById('userModelSearchLoading').classList.remove('d-none');
+    document.getElementById('userModelSearchResultsList').innerHTML = '';
+
+    try {
+        const response = await fetch(`/api/civitai/search?query=${encodeURIComponent(query)}&limit=20`);
+        const data = await response.json();
+
+        document.getElementById('userModelSearchLoading').classList.add('d-none');
+
+        if (data.success && data.models && data.models.length > 0) {
+            renderUserModelSearchResults(data.models);
+        } else {
+            document.getElementById('userModelNoResults').classList.remove('d-none');
+        }
+    } catch (error) {
+        console.error('[ImageDashboard] Error searching models:', error);
+        document.getElementById('userModelSearchLoading').classList.add('d-none');
+        document.getElementById('userModelNoResults').classList.remove('d-none');
+        showNotification('Failed to search models', 'error');
+    }
+}
+
+/**
+ * Render search results in the modal
+ */
+function renderUserModelSearchResults(models) {
+    const container = document.getElementById('userModelSearchResultsList');
+    container.innerHTML = '';
+
+    models.forEach(model => {
+        const previewImage = model.previewImage || model.cover_url || '/img/default-model.png';
+        const rating = model.stats?.rating ? Number(model.stats.rating).toFixed(1) : 'N/A';
+        const downloads = formatModelNumber(model.stats?.downloadCount || 0);
+        const favorites = formatModelNumber(model.stats?.favoriteCount || 0);
+        
+        // Check if model already exists in user's collection
+        const isAdded = userCustomModels.some(m => m.civitaiModelId === model.id.toString());
+
+        // For Novita API, use sd_name as the file name
+        const sdName = model.sd_name || model.name;
+        const baseModel = model.base_model || model.modelVersions?.[0]?.baseModel || 'SD 1.5';
+
+        const versionsHtml = model.modelVersions?.map((v, idx) => {
+            const file = v.files?.[0];
+            const fileName = file?.name || sdName;
+            return `<option value="${v.id}" 
+                data-name="${escapeModelHtml(v.name)}" 
+                data-file="${escapeModelHtml(fileName)}"
+                data-base="${escapeModelHtml(v.baseModel || baseModel)}">
+                ${escapeModelHtml(v.name)} ${v.baseModel ? `(${v.baseModel})` : ''}
+            </option>`;
+        }).join('') || `<option value="${model.id}" data-name="Default" data-file="${escapeModelHtml(sdName)}" data-base="${escapeModelHtml(baseModel)}">Default (${baseModel})</option>`;
+
+        const tagsHtml = model.tags?.slice(0, 3).map(tag => 
+            `<span class="badge bg-secondary">${escapeModelHtml(tag)}</span>`
+        ).join(' ') || '';
+
+        const cardHtml = `
+            <div class="civitai-model-card d-flex gap-3 mb-3 p-3 rounded ${isAdded ? 'opacity-50' : ''}" 
+                 data-model-id="${model.id}" 
+                 data-sd-name="${escapeModelHtml(sdName)}"
+                 style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+                <img src="${previewImage}" class="rounded" alt="${escapeModelHtml(model.name)}" 
+                     style="width: 80px; height: 80px; object-fit: cover;"
+                     onerror="this.src='/img/default-model.png'">
+                <div class="flex-grow-1">
+                    <div class="fw-bold text-white">${escapeModelHtml(model.name)}</div>
+                    <small class="text-muted d-block text-truncate" style="max-width: 300px;" title="${escapeModelHtml(sdName)}">${escapeModelHtml(sdName)}</small>
+                    <div class="my-1">
+                        <small class="text-muted me-2"><i class="bi bi-download"></i> ${downloads}</small>
+                        <small class="text-muted me-2"><i class="bi bi-heart"></i> ${favorites}</small>
+                        <small class="text-muted"><i class="bi bi-star"></i> ${rating}</small>
+                    </div>
+                    <div class="mb-2">${tagsHtml}</div>
+                    
+                    ${model.modelVersions?.length > 0 ? `
+                    <div class="mb-2">
+                        <select class="form-select form-select-sm bg-secondary text-white border-secondary version-select-dropdown" data-model-id="${model.id}">
+                            ${versionsHtml}
+                        </select>
+                    </div>
+                    ` : ''}
+                    
+                    <div>
+                        ${isAdded ? 
+                            `<span class="text-success small"><i class="bi bi-check-circle"></i> Already added</span>` :
+                            `<button class="btn btn-sm btn-primary add-user-model-btn" 
+                                data-model-id="${model.id}"
+                                data-model-name="${escapeModelHtml(model.name)}"
+                                data-model-image="${previewImage}"
+                                data-model-style="${model.tags?.[0] || ''}">
+                                <i class="bi bi-plus-lg me-1"></i>Add Model
+                            </button>`
+                        }
+                    </div>
+                </div>
+            </div>
+        `;
+
+        container.insertAdjacentHTML('beforeend', cardHtml);
+    });
+
+    // Handle add model button clicks
+    container.querySelectorAll('.add-user-model-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const card = this.closest('.civitai-model-card');
+            const modelId = this.dataset.modelId;
+            const modelName = this.dataset.modelName;
+            const modelImage = this.dataset.modelImage;
+            const modelStyle = this.dataset.modelStyle;
+            
+            // Get sd_name from card data attribute (set from Novita API)
+            const cardSdName = card.dataset.sdName;
+            
+            // Get selected version info (if version dropdown exists)
+            const versionSelect = card.querySelector('.version-select-dropdown');
+            const versionId = versionSelect?.value || modelId;
+            const selectedOption = versionSelect?.options[versionSelect.selectedIndex];
+            const versionName = selectedOption?.dataset.name || 'Default';
+            const fileName = selectedOption?.dataset.file || cardSdName || modelName;
+            const baseModel = selectedOption?.dataset.base || 'SD 1.5';
+
+            addUserCustomModel({
+                civitaiModelId: modelId,
+                civitaiVersionId: versionId,
+                modelName: modelName,
+                versionName: versionName,
+                fileName: fileName,
+                image: modelImage,
+                style: modelStyle,
+                baseModel: baseModel
+            }, this);
+        });
+    });
+}
+
+/**
+ * Add a model to user's custom collection
+ */
+async function addUserCustomModel(modelData, btn) {
+    try {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+        const response = await fetch('/api/user/models', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(modelData)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            userCustomModels.push(data.model);
+            renderUserCustomModelsInDashboard();
+            updateUserModelsCount();
+            
+            // Update button state
+            btn.replaceWith(document.createRange().createContextualFragment(
+                `<span class="text-success small"><i class="bi bi-check-circle"></i> Added</span>`
+            ));
+            btn.closest('.civitai-model-card')?.classList.add('opacity-50');
+            
+            showNotification('Model added successfully!', 'success');
+        } else {
+            throw new Error(data.error || 'Failed to add model');
+        }
+    } catch (error) {
+        console.error('[ImageDashboard] Error adding model:', error);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-plus-lg me-1"></i>Add Model';
+        showNotification(error.message || 'Failed to add model', 'error');
+    }
+}
+
+/**
+ * Remove a model from user's collection
+ */
+async function removeUserCustomModel(modelId) {
+    if (!confirm('Remove this model from your collection?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/user/models/${modelId}`, {
+            method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            userCustomModels = userCustomModels.filter(m => m._id !== modelId);
+            renderUserCustomModelsInDashboard();
+            updateUserModelsCount();
+            showNotification('Model removed', 'success');
+        } else {
+            throw new Error(data.error || 'Failed to remove model');
+        }
+    } catch (error) {
+        console.error('[ImageDashboard] Error removing model:', error);
+        showNotification('Failed to remove model', 'error');
+    }
+}
+
+/**
+ * Load user's custom models from server
+ */
+async function loadUserCustomModels() {
+    try {
+        const response = await fetch('/api/user/models');
+        const data = await response.json();
+
+        if (data.success) {
+            userCustomModels = data.models || [];
+            renderUserCustomModelsInDashboard();
+            updateUserModelsCount();
+        }
+    } catch (error) {
+        console.error('[ImageDashboard] Error loading user models:', error);
+    }
+}
+
+/**
+ * Render user's custom models in the dashboard SD models section
+ */
+function renderUserCustomModelsInDashboard() {
+    const container = document.getElementById('userCustomModelsList');
+    const placeholder = document.getElementById('noUserModelsPlaceholder');
+    
+    if (!container) return;
+
+    // Clear existing model cards (but keep the placeholder)
+    container.querySelectorAll('.user-custom-model-item').forEach(el => el.remove());
+
+    if (userCustomModels.length === 0) {
+        if (placeholder) placeholder.style.display = 'block';
+        return;
+    }
+
+    if (placeholder) placeholder.style.display = 'none';
+
+    userCustomModels.forEach(model => {
+        const modelHtml = `
+            <div class="form-check model-checkbox mb-2 user-custom-model-item position-relative" data-user-model-id="${model._id}">
+                <button class="btn btn-sm btn-outline-danger position-absolute" 
+                        style="top: 5px; right: 5px; padding: 2px 6px; font-size: 0.7rem; z-index: 10;"
+                        onclick="event.stopPropagation(); removeUserCustomModel('${model._id}')"
+                        title="Remove model">
+                    <i class="bi bi-x"></i>
+                </button>
+                <input class="form-check-input sd-model-checkbox user-sd-model-checkbox" type="checkbox" 
+                       value="${model.modelId}" 
+                       id="user-sd-model-${model._id}" 
+                       data-model="${model.model}"
+                       data-model-name="${escapeModelHtml(model.name)}"
+                       data-model-id="${model.modelId}"
+                       data-is-user-model="true">
+                <label class="form-check-label text-white" for="user-sd-model-${model._id}">
+                    <div class="d-flex align-items-start gap-2">
+                        ${model.image ? `
+                        <img src="${model.image}" 
+                             alt="${escapeModelHtml(model.name)}" 
+                             class="model-thumbnail"
+                             style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"
+                             onerror="this.style.display='none'">
+                        ` : ''}
+                        <div class="flex-grow-1" style="padding-right: 25px;">
+                            <span class="fw-semibold">${escapeModelHtml(model.name)}</span>
+                            <span class="badge bg-primary ms-1">Custom</span>
+                            <br>
+                            <small class="text-muted text-truncate d-block" style="max-width: 200px;">${escapeModelHtml(model.model || '')}</small>
+                        </div>
+                    </div>
+                </label>
+            </div>
+        `;
+
+        container.insertAdjacentHTML('beforeend', modelHtml);
+    });
+
+    // Re-initialize click handlers for the new model checkboxes
+    container.querySelectorAll('.user-custom-model-item').forEach(checkbox => {
+        checkbox.addEventListener('click', function(e) {
+            // Don't trigger if clicking on the remove button
+            if (e.target.closest('button')) {
+                return;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            this.classList.toggle('selected');
+            updateSDParamsVisibility();
+            updateCostDisplay();
+        });
+    });
+}
+
+/**
+ * Update user models count badge
+ */
+function updateUserModelsCount() {
+    const countBadge = document.getElementById('userCustomModelsCount');
+    if (countBadge) {
+        countBadge.textContent = userCustomModels.length;
+    }
+}
+
+/**
+ * Get selected user custom SD models
+ */
+function getSelectedUserSDModels() {
+    const checkboxes = document.querySelectorAll('.user-custom-model-item.selected');
+    
+    return Array.from(checkboxes).map(cb => {
+        const input = cb.querySelector('.user-sd-model-checkbox');
+        return {
+            modelId: input.value,
+            model: input.dataset.model,
+            model_name: input.dataset.model,
+            name: input.dataset.modelName,
+            isUserModel: true
+        };
+    });
+}
+
+/**
+ * Format number with K/M suffix
+ */
+function formatModelNumber(num) {
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
+    }
+    if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
+}
+
+/**
+ * Escape HTML to prevent XSS
+ */
+function escapeModelHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Initialize user model management when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initializeUserModelManagement();
+});

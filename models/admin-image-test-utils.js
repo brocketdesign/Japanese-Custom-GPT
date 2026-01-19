@@ -36,6 +36,7 @@ const MODEL_CONFIGS = {
     name: 'Z Image Turbo',
     endpoint: 'https://api.novita.ai/v3/async/z-image-turbo',
     async: true,
+    category: 'txt2img',
     defaultParams: {
       size: '1024*1024',
       seed: -1,
@@ -48,17 +49,35 @@ const MODEL_CONFIGS = {
     name: 'Flux 2 Flex',
     endpoint: 'https://api.novita.ai/v3/async/flux-2-flex',
     async: true,
+    category: 'txt2img',
+    supportsImg2Img: true,
     defaultParams: {
       size: '1024*1024',
       seed: -1
     },
-    supportedParams: ['prompt', 'size', 'seed', 'images'],
-    description: 'FLUX.2 model family for fast, flexible text-to-image generation'
+    supportedParams: ['prompt', 'size', 'seed', 'image', 'strength'],
+    description: 'FLUX.2 model family for fast, flexible text-to-image and image-to-image generation'
+  },
+  'flux-2-dev': {
+    name: 'Flux 2 Dev',
+    endpoint: 'https://api.novita.ai/v3/async/flux-2-dev',
+    async: true,
+    category: 'txt2img',
+    supportsImg2Img: true,
+    defaultParams: {
+      size: '1024*1024',
+      seed: -1,
+      steps: 28,
+      guidance_scale: 3.5
+    },
+    supportedParams: ['prompt', 'size', 'seed', 'steps', 'guidance_scale', 'image', 'strength'],
+    description: 'FLUX.2 Dev model with advanced generation controls and img2img support'
   },
   'hunyuan-image-3': {
     name: 'Hunyuan Image 3',
     endpoint: 'https://api.novita.ai/v3/async/hunyuan-image-3',
     async: true,
+    category: 'txt2img',
     defaultParams: {
       size: '1024*1024',
       seed: -1
@@ -66,23 +85,105 @@ const MODEL_CONFIGS = {
     supportedParams: ['prompt', 'size', 'seed'],
     description: 'Tencent Hunyuan model for high-quality image generation'
   },
-  'seedream-4.5': {
-    name: 'Seedream 4.5',
-    endpoint: 'https://api.novita.ai/v3/seedream-4.5',
+  'seedream-4.0': {
+    name: 'Seedream 4.0',
+    endpoint: 'https://api.novita.ai/v3/seedream-4.0',
     async: false, // Synchronous API
+    category: 'txt2img',
+    supportsImg2Img: true,
     defaultParams: {
       size: '2048x2048', // Seedream uses 'x' separator and min 3.6M pixels
       watermark: false,
       sequential_image_generation: 'disabled'
     },
-    supportedParams: ['prompt', 'size', 'watermark', 'image', 'optimize_prompt_options', 'sequential_image_generation'],
+    supportedParams: ['prompt', 'size', 'watermark', 'image', 'optimize_prompt_options', 'sequential_image_generation', 'strength'],
     sizeFormat: 'x', // Uses 'x' instead of '*'
-    description: 'ByteDance Seedream model supporting text-to-image and image editing'
+    description: 'ByteDance Seedream 4.0 model for high-quality text-to-image and image editing'
+  },
+  'seedream-4.5': {
+    name: 'Seedream 4.5',
+    endpoint: 'https://api.novita.ai/v3/seedream-4.5',
+    async: false, // Synchronous API
+    category: 'txt2img',
+    supportsImg2Img: true,
+    defaultParams: {
+      size: '2048x2048', // Seedream uses 'x' separator and min 3.6M pixels
+      watermark: false,
+      sequential_image_generation: 'disabled'
+    },
+    supportedParams: ['prompt', 'size', 'watermark', 'image', 'optimize_prompt_options', 'sequential_image_generation', 'strength'],
+    sizeFormat: 'x', // Uses 'x' instead of '*'
+    description: 'ByteDance Seedream 4.5 model supporting text-to-image and image editing'
+  },
+  'flux-kontext-dev': {
+    name: 'FLUX.1 Kontext Dev',
+    endpoint: 'https://api.novita.ai/v3/async/flux-1-kontext-dev',
+    async: true,
+    category: 'img2img',
+    supportsImg2Img: true,
+    requiresImage: true,
+    defaultParams: {
+      seed: -1,
+      guidance_scale: 3.5,
+      steps: 28
+    },
+    supportedParams: ['prompt', 'image', 'seed', 'guidance_scale', 'steps', 'aspect_ratio'],
+    description: 'FLUX.1 Kontext Dev for advanced image editing and transformation'
+  },
+  'flux-kontext-pro': {
+    name: 'FLUX.1 Kontext Pro',
+    endpoint: 'https://api.novita.ai/v3/async/flux-1-kontext-pro',
+    async: true,
+    category: 'img2img',
+    supportsImg2Img: true,
+    requiresImage: true,
+    defaultParams: {
+      seed: -1,
+      guidance_scale: 3.5
+    },
+    supportedParams: ['prompt', 'image', 'seed', 'guidance_scale', 'aspect_ratio', 'output_format'],
+    description: 'FLUX.1 Kontext Pro for professional-grade image editing'
+  },
+  'flux-kontext-max': {
+    name: 'FLUX.1 Kontext Max',
+    endpoint: 'https://api.novita.ai/v3/async/flux-1-kontext-max',
+    async: true,
+    category: 'img2img',
+    supportsImg2Img: true,
+    requiresImage: true,
+    defaultParams: {
+      seed: -1,
+      guidance_scale: 3.5
+    },
+    supportedParams: ['prompt', 'image', 'seed', 'guidance_scale', 'aspect_ratio', 'output_format'],
+    description: 'FLUX.1 Kontext Max for maximum quality image editing'
+  },
+  'sd-img2img': {
+    name: 'SD Image to Image',
+    endpoint: 'https://api.novita.ai/v3/async/img2img',
+    async: true,
+    category: 'img2img',
+    supportsImg2Img: true,
+    requiresImage: true,
+    defaultParams: {
+      width: 1024,
+      height: 1024,
+      image_num: 1,
+      steps: 30,
+      guidance_scale: 7.5,
+      sampler_name: 'Euler a',
+      seed: -1,
+      strength: 0.75
+    },
+    supportedParams: ['model_name', 'prompt', 'negative_prompt', 'image_base64', 'width', 'height', 'image_num', 'steps', 'guidance_scale', 'sampler_name', 'seed', 'strength', 'loras', 'sd_vae'],
+    requiresModel: true, // This model requires a model_name from active models
+    description: 'Stable Diffusion image-to-image editing with custom models'
   },
   'sd-txt2img': {
     name: 'SD Text to Image',
     endpoint: 'https://api.novita.ai/v3/async/txt2img',
     async: true,
+    category: 'txt2img',
     defaultParams: {
       width: 1024,
       height: 1024,
@@ -95,6 +196,29 @@ const MODEL_CONFIGS = {
     supportedParams: ['model_name', 'prompt', 'negative_prompt', 'width', 'height', 'image_num', 'steps', 'guidance_scale', 'sampler_name', 'seed', 'loras', 'sd_vae'],
     requiresModel: true, // This model requires a model_name from active models
     description: 'Stable Diffusion text-to-image with custom models'
+  },
+  'reimagine': {
+    name: 'Reimagine',
+    endpoint: 'https://api.novita.ai/v3/async/reimagine',
+    async: true,
+    category: 'img2img',
+    supportsImg2Img: true,
+    requiresImage: true,
+    defaultParams: {},
+    supportedParams: ['image_file'],
+    description: 'Generate creative variations of a single image without prompts'
+  },
+  'merge-face': {
+    name: 'Merge Face',
+    endpoint: 'https://api.novita.ai/v3/merge-face',
+    async: false, // Synchronous API
+    category: 'face',
+    supportsImg2Img: true,
+    requiresImage: true,
+    requiresTwoImages: true,
+    defaultParams: {},
+    supportedParams: ['face_image_file', 'image_file', 'extra'],
+    description: 'Combine features from two faces into one image'
   }
 };
 
@@ -143,47 +267,237 @@ async function initializeModelTest(modelId, params) {
   console.log(`[AdminImageTest] 🚀 Starting ${config.name} generation`);
   console.log(`[AdminImageTest] Prompt: ${params.prompt?.substring(0, 100)}...`);
 
+  // Validate image requirements
+  if (config.requiresImage && !params.image && !params.image_base64 && !params.image_file) {
+    throw new Error(`${config.name} requires an image input`);
+  }
+  
+  if (config.requiresTwoImages && (!params.image_file || !params.face_image_file)) {
+    throw new Error(`${config.name} requires two images (face image and target image)`);
+  }
+
   try {
     let requestBody;
     
-      // Get webhook URL for async APIs
-      const webhookUrl = config.async ? getWebhookUrl() : null;
+    // Get webhook URL for async APIs
+    const webhookUrl = config.async ? getWebhookUrl() : null;
+    
+    // Handle SD txt2img
+    if (modelId === 'sd-txt2img') {
+      if (!params.model_name) {
+        throw new Error('SD txt2img requires a model_name parameter');
+      }
       
-      // SD txt2img uses a different API format (extra.request structure)
-      if (modelId === 'sd-txt2img') {
-        if (!params.model_name) {
-          throw new Error('SD txt2img requires a model_name parameter');
+      // Parse size from string format (e.g., "1024*1024") to width/height
+      const size = params.size || '1024*1024';
+      const [width, height] = size.split('*').map(Number);
+      
+      requestBody = {
+        extra: {
+          response_image_type: 'jpeg',
+          enable_nsfw_detection: false,
+          ...(webhookUrl ? { webhook: { url: webhookUrl } } : {})
+        },
+        request: {
+          model_name: params.model_name,
+          prompt: params.prompt,
+          negative_prompt: params.negative_prompt || '',
+          width: width || config.defaultParams.width,
+          height: height || config.defaultParams.height,
+          image_num: params.image_num || config.defaultParams.image_num,
+          steps: params.steps || config.defaultParams.steps,
+          guidance_scale: params.guidance_scale || config.defaultParams.guidance_scale,
+          sampler_name: params.sampler_name || config.defaultParams.sampler_name,
+          seed: params.seed !== undefined ? params.seed : config.defaultParams.seed
         }
-        
-        // Parse size from string format (e.g., "1024*1024") to width/height
-        const size = params.size || '1024*1024';
-        const [width, height] = size.split('*').map(Number);
-        
-        requestBody = {
-          extra: {
-            response_image_type: 'jpeg',
-            enable_nsfw_detection: false,
-            ...(webhookUrl ? { webhook: { url: webhookUrl } } : {})
-          },
-          request: {
-            model_name: params.model_name,
-            prompt: params.prompt,
-            negative_prompt: params.negative_prompt || '',
-            width: width || config.defaultParams.width,
-            height: height || config.defaultParams.height,
-            image_num: params.image_num || config.defaultParams.image_num,
-            steps: params.steps || config.defaultParams.steps,
-            guidance_scale: params.guidance_scale || config.defaultParams.guidance_scale,
-            sampler_name: params.sampler_name || config.defaultParams.sampler_name,
-            seed: params.seed !== undefined ? params.seed : config.defaultParams.seed
-          }
-        };
+      };
       
       // Add optional params if provided
       if (params.sd_vae) requestBody.request.sd_vae = params.sd_vae;
       if (params.loras && Array.isArray(params.loras)) requestBody.request.loras = params.loras;
-    } else {
-      // Standard format for other models
+    }
+    // Handle SD img2img
+    else if (modelId === 'sd-img2img') {
+      if (!params.model_name) {
+        throw new Error('SD img2img requires a model_name parameter');
+      }
+      if (!params.image_base64) {
+        throw new Error('SD img2img requires an image_base64 parameter');
+      }
+      
+      // Parse size from string format (e.g., "1024*1024") to width/height
+      const size = params.size || '1024*1024';
+      const [width, height] = size.split('*').map(Number);
+      
+      // Map editStrength to strength value
+      let strength = params.strength || config.defaultParams.strength;
+      if (params.editStrength) {
+        if (params.editStrength === 'low') strength = 0.3;
+        else if (params.editStrength === 'medium') strength = 0.6;
+        else if (params.editStrength === 'high') strength = 0.85;
+      }
+      
+      requestBody = {
+        extra: {
+          response_image_type: 'jpeg',
+          enable_nsfw_detection: false,
+          ...(webhookUrl ? { webhook: { url: webhookUrl } } : {})
+        },
+        request: {
+          model_name: params.model_name,
+          prompt: params.prompt,
+          negative_prompt: params.negative_prompt || '',
+          image_base64: params.image_base64,
+          width: width || config.defaultParams.width,
+          height: height || config.defaultParams.height,
+          image_num: params.image_num || config.defaultParams.image_num,
+          steps: params.steps || config.defaultParams.steps,
+          guidance_scale: params.guidance_scale || config.defaultParams.guidance_scale,
+          sampler_name: params.sampler_name || config.defaultParams.sampler_name,
+          seed: params.seed !== undefined ? params.seed : config.defaultParams.seed,
+          strength: strength
+        }
+      };
+      
+      // Add optional params if provided
+      if (params.sd_vae) requestBody.request.sd_vae = params.sd_vae;
+      if (params.loras && Array.isArray(params.loras)) requestBody.request.loras = params.loras;
+    }
+    // Handle Reimagine (requires only image, no prompt)
+    else if (modelId === 'reimagine') {
+      requestBody = {
+        image_file: params.image_file || params.image || params.image_base64
+      };
+      
+      if (webhookUrl) {
+        requestBody.extra = {
+          webhook: { url: webhookUrl }
+        };
+      }
+    }
+    // Handle Merge Face (requires two images)
+    else if (modelId === 'merge-face') {
+      requestBody = {
+        face_image_file: params.face_image_file,
+        image_file: params.image_file
+      };
+      
+      // Add extra params if needed
+      if (params.extra) {
+        requestBody.extra = params.extra;
+      }
+    }
+    // Handle Kontext models (img2img focused)
+    else if (modelId.startsWith('flux-kontext')) {
+      requestBody = {
+        prompt: params.prompt,
+        image: params.image || params.image_base64,
+        seed: params.seed !== undefined ? params.seed : config.defaultParams.seed,
+        guidance_scale: params.guidance_scale || config.defaultParams.guidance_scale
+      };
+      
+      // Add steps for dev model
+      if (modelId === 'flux-kontext-dev' && params.steps) {
+        requestBody.steps = params.steps;
+      }
+      
+      // Add aspect_ratio if provided
+      if (params.aspect_ratio) {
+        requestBody.aspect_ratio = params.aspect_ratio;
+      }
+      
+      // Add output_format for pro/max
+      if (params.output_format) {
+        requestBody.output_format = params.output_format;
+      }
+      
+      if (webhookUrl) {
+        requestBody.extra = {
+          webhook: { url: webhookUrl }
+        };
+      }
+    }
+    // Handle Flux 2 models with potential img2img
+    else if (modelId === 'flux-2-flex' || modelId === 'flux-2-dev') {
+      requestBody = {
+        prompt: params.prompt,
+        size: params.size || config.defaultParams.size,
+        seed: params.seed !== undefined ? params.seed : config.defaultParams.seed
+      };
+      
+      // Add img2img params if image is provided
+      if (params.image || params.image_base64) {
+        requestBody.image = params.image || params.image_base64;
+        
+        // Map editStrength to strength value
+        let strength = params.strength || 0.75;
+        if (params.editStrength) {
+          if (params.editStrength === 'low') strength = 0.3;
+          else if (params.editStrength === 'medium') strength = 0.6;
+          else if (params.editStrength === 'high') strength = 0.85;
+        }
+        requestBody.strength = strength;
+      }
+      
+      // Add advanced params for flux-2-dev
+      if (modelId === 'flux-2-dev') {
+        if (params.steps) requestBody.steps = params.steps;
+        if (params.guidance_scale) requestBody.guidance_scale = params.guidance_scale;
+      }
+      
+      if (webhookUrl) {
+        requestBody.extra = {
+          webhook: { url: webhookUrl }
+        };
+      }
+    }
+    // Handle Seedream models (txt2img and img2img)
+    else if (modelId.startsWith('seedream')) {
+      requestBody = {
+        prompt: params.prompt,
+        ...config.defaultParams,
+        ...params
+      };
+      
+      // Handle size format conversion for Seedream (uses 'x' instead of '*')
+      if (requestBody.size) {
+        const sizeStr = requestBody.size.replace('*', 'x');
+        const [width, height] = sizeStr.split('x').map(Number);
+        const totalPixels = width * height;
+        
+        // Seedream requires min 3,686,400 pixels (about 1920x1920)
+        if (totalPixels < 3686400) {
+          const scale = Math.ceil(Math.sqrt(3686400 / totalPixels));
+          const newWidth = width * scale;
+          const newHeight = height * scale;
+          requestBody.size = `${newWidth}x${newHeight}`;
+          console.log(`[AdminImageTest] Seedream size scaled: ${width}x${height} -> ${newWidth}x${newHeight}`);
+        } else {
+          requestBody.size = sizeStr;
+        }
+      }
+      
+      // Add img2img params if image is provided
+      if (params.image || params.image_base64) {
+        requestBody.image = params.image || params.image_base64;
+        
+        // Map editStrength to strength value for Seedream
+        if (params.editStrength) {
+          if (params.editStrength === 'low') requestBody.strength = 0.3;
+          else if (params.editStrength === 'medium') requestBody.strength = 0.6;
+          else if (params.editStrength === 'high') requestBody.strength = 0.85;
+        }
+      }
+      
+      // Remove non-supported params
+      Object.keys(requestBody).forEach(key => {
+        if (!config.supportedParams.includes(key) && key !== 'prompt') {
+          delete requestBody[key];
+        }
+      });
+    }
+    // Standard format for other models
+    else {
       requestBody = {
         prompt: params.prompt,
         ...config.defaultParams,
@@ -200,21 +514,18 @@ async function initializeModelTest(modelId, params) {
         };
       }
 
-      // Handle size format conversion for Seedream (uses 'x' instead of '*')
+      // Handle size format conversion for any model with sizeFormat
       if (config.sizeFormat === 'x' && requestBody.size) {
-        // Convert 1024*1024 to 2048x2048 format and ensure min pixel count
         const sizeStr = requestBody.size.replace('*', 'x');
         const [width, height] = sizeStr.split('x').map(Number);
         const totalPixels = width * height;
         
-        // Seedream requires min 3,686,400 pixels (about 1920x1920)
         if (totalPixels < 3686400) {
-          // Scale up to meet minimum requirement
           const scale = Math.ceil(Math.sqrt(3686400 / totalPixels));
           const newWidth = width * scale;
           const newHeight = height * scale;
           requestBody.size = `${newWidth}x${newHeight}`;
-          console.log(`[AdminImageTest] Seedream size scaled: ${width}x${height} -> ${newWidth}x${newHeight}`);
+          console.log(`[AdminImageTest] Size scaled: ${width}x${height} -> ${newWidth}x${newHeight}`);
         } else {
           requestBody.size = sizeStr;
         }
@@ -222,7 +533,7 @@ async function initializeModelTest(modelId, params) {
 
       // Remove non-supported params
       Object.keys(requestBody).forEach(key => {
-        if (!config.supportedParams.includes(key) && key !== 'prompt') {
+        if (!config.supportedParams.includes(key) && key !== 'prompt' && key !== 'extra') {
           delete requestBody[key];
         }
       });
@@ -230,7 +541,7 @@ async function initializeModelTest(modelId, params) {
 
     console.log(`[AdminImageTest] Request body:`, JSON.stringify(requestBody, null, 2));
 
-    // Sync APIs like Seedream need longer timeout (up to 5 minutes)
+    // Sync APIs like Seedream and Merge Face need longer timeout (up to 5 minutes)
     const timeout = config.async ? 120000 : 300000;
     
     const response = await axios.post(config.endpoint, requestBody, {
@@ -271,7 +582,26 @@ async function initializeModelTest(modelId, params) {
       };
     } else {
       // Sync API returns images directly
-      const images = response.data.images || [];
+      // Handle different response formats for different sync APIs
+      let images = [];
+      
+      // Merge Face returns merged_image
+      if (modelId === 'merge-face') {
+        if (response.data.merged_image) {
+          images = [response.data.merged_image];
+        } else if (response.data.image) {
+          images = [response.data.image];
+        }
+      }
+      // Seedream returns images array
+      else if (response.data.images) {
+        images = response.data.images;
+      }
+      // Some APIs return image_file
+      else if (response.data.image_file) {
+        images = [response.data.image_file];
+      }
+      
       const endTime = Date.now();
       const generationTime = endTime - startTime;
 

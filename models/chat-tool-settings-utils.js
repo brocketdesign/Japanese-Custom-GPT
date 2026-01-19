@@ -56,15 +56,22 @@ async function getUserChatToolSettings(db, userId, chatId = null) {
  * @param {string} chatId - Optional chat ID
  * @param {string} basePrompt - Base system prompt
  * @param {Object} chatDocument - Chat document containing character data
+ * @param {Object} userChatCustomizations - Optional user-specific customizations from userChat document
  * @returns {string} Enhanced system prompt with user preferences and character context
  */
-async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt, chatDocument = null) {
+async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt, chatDocument = null, userChatCustomizations = null) {
     try {
         let enhancedPrompt = basePrompt;
         
-        // Get character gender and relationship from chat document
+        // Get character gender from chat document
         const characterGender = chatDocument?.gender || 'female';
-        const relationshipType = chatDocument?.relationship || 'companion';
+        
+        // Use user customizations if available, otherwise fall back to character defaults
+        const relationshipType = userChatCustomizations?.relationship || chatDocument?.relationship || 'companion';
+        const personality = userChatCustomizations?.personality || chatDocument?.characterPersonality;
+        const occupation = userChatCustomizations?.occupation || chatDocument?.characterOccupation;
+        const preferences = userChatCustomizations?.preferences || chatDocument?.characterPreferences;
+        const customInstructions = userChatCustomizations?.customInstructions;
         
         // Apply relationship type from character creation - handle both new gender-based and legacy formats
         const { relationshipInstructions } = require('./relashionshipInstructions');
@@ -82,30 +89,34 @@ async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt, chatDoc
             enhancedPrompt += `\n# NSFW Relationship Context:\nYou are in a ${relationshipType} relationship. Use explicit, sensual language and describe intimate acts in detail.`;
         }
         
-        // Add character personality context from character creation
-        if (chatDocument) {
-            let characterContext = '\n# Character Context:';
-            
-            if (chatDocument.characterPersonality) {
-                characterContext += `\nPersonality: You have a ${chatDocument.characterPersonality} personality. Embody this trait in your responses.`;
-            }
-            
-            if (chatDocument.characterOccupation) {
-                characterContext += `\nOccupation: You work as a ${chatDocument.characterOccupation}. Reference this naturally in conversations when relevant.`;
-            }
-            
-            if (chatDocument.characterPreferences) {
-                characterContext += `\nPreferences: You are into ${chatDocument.characterPreferences}. Express this naturally when the conversation leads there.`;
-            }
-            
-            if (chatDocument.chatPurpose) {
-                characterContext += `\nSpecial Instructions: ${chatDocument.chatPurpose}`;
-            }
-            
-            // Only add character context section if we have any character data
-            if (characterContext !== '\n# Character Context:') {
-                enhancedPrompt += characterContext;
-            }
+        // Add character personality context (using user customizations or character defaults)
+        let characterContext = '\n# Character Context:';
+        
+        if (personality) {
+            characterContext += `\nPersonality: You have a ${personality} personality. Embody this trait in your responses.`;
+        }
+        
+        if (occupation) {
+            characterContext += `\nOccupation: You work as a ${occupation}. Reference this naturally in conversations when relevant.`;
+        }
+        
+        if (preferences) {
+            characterContext += `\nPreferences: You are into ${preferences}. Express this naturally when the conversation leads there.`;
+        }
+        
+        // Add character's original chat purpose if available
+        if (chatDocument?.chatPurpose) {
+            characterContext += `\nCharacter Background: ${chatDocument.chatPurpose}`;
+        }
+        
+        // Add user's custom instructions (this is user-specific for this chat session)
+        if (customInstructions && customInstructions.trim()) {
+            characterContext += `\nUser's Special Instructions: ${customInstructions}`;
+        }
+        
+        // Only add character context section if we have any character data
+        if (characterContext !== '\n# Character Context:') {
+            enhancedPrompt += characterContext;
         }
         
         return enhancedPrompt;
@@ -113,6 +124,33 @@ async function applyUserSettingsToPrompt(db, userId, chatId, basePrompt, chatDoc
     } catch (error) {
         console.error('[applyUserSettingsToPrompt] Error applying settings:', error);
         return basePrompt;
+    }
+}
+
+/**
+ * Get user customizations from userChat document
+ * @param {Object} db - MongoDB database instance
+ * @param {string} userId - User ID
+ * @param {string} chatId - Chat ID (character ID)
+ * @returns {Object|null} User customizations object or null if not found
+ */
+async function getUserChatCustomizations(db, userId, chatId) {
+    try {
+        if (!userId || !ObjectId.isValid(userId) || !chatId || !ObjectId.isValid(chatId)) {
+            return null;
+        }
+
+        const userChatCollection = db.collection('userChat');
+        const userChat = await userChatCollection.findOne({
+            userId: new ObjectId(userId),
+            chatId: new ObjectId(chatId)
+        });
+
+        return userChat?.userCustomizations || null;
+        
+    } catch (error) {
+        console.error('[getUserChatCustomizations] Error:', error.message);
+        return null;
     }
 }
 //getUserVideoPrompt
@@ -377,5 +415,6 @@ module.exports = {
     getUserPremiumStatus,
     getAutoImageGenerationSetting,
     hasUserChattedWithCharacter,
-    getAvailableRelationshipsByGender
+    getAvailableRelationshipsByGender,
+    getUserChatCustomizations
 };

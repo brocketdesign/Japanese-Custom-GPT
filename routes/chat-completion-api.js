@@ -18,6 +18,7 @@ const {
     getUserChatToolSettings,
     applyUserSettingsToPrompt,
     getAutoImageGenerationSetting,
+    getUserChatCustomizations,
 } = require('../models/chat-tool-settings-utils');
 const { getUserPoints } = require('../models/user-points-utils');
 const {
@@ -427,8 +428,11 @@ async function routes(fastify, options) {
                 subscriptionStatus
             );
 
-            // Apply user settings and character data to system prompt
-            enhancedSystemContent = await applyUserSettingsToPrompt(fastify.mongo.db, userId, chatId, enhancedSystemContent, chatDocument);
+            // Get user-specific character customizations from userChat document
+            const userChatCustomizations = await getUserChatCustomizations(fastify.mongo.db, userId, chatId);
+            
+            // Apply user settings and character data to system prompt (including user customizations)
+            enhancedSystemContent = await applyUserSettingsToPrompt(fastify.mongo.db, userId, chatId, enhancedSystemContent, chatDocument, userChatCustomizations);
       
             if (goalsEnabled && chatGoal) {
                 const goalContext = `\n\n# Current Conversation Goal:\n` +

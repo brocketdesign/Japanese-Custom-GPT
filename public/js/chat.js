@@ -1223,9 +1223,17 @@ function setupChatInterface(chat, character, userChat, isNew) {
 
     window.openShareModal = function(el) {
         const title = $(el).data('title');
-        const url = $(el).data('url');
-        $('#twitterShareButton').off('click').on('click', () => shareOnTwitter(title, url));
-        $('#facebookShareButton').off('click').on('click', () => shareOnFacebook(title, url));
+        const imageId = $(el).data('image-id');
+        const chatId = $(el).data('chat-id');
+        
+        // Generate clean share URL using the share endpoint instead of raw AWS URL
+        // This provides proper meta tags for social media and hides the AWS URL
+        // Always use production domain for share links
+        const shareDomain = 'https://app.chatlamix.com';
+        const shareUrl = imageId ? `${shareDomain}/share/image/${imageId}` : $(el).data('url');
+        
+        $('#twitterShareButton').off('click').on('click', () => shareOnTwitter(title, shareUrl));
+        $('#facebookShareButton').off('click').on('click', () => shareOnFacebook(title, shareUrl));
         $('#shareModal').modal('show');
     }
     function shareOnTwitter(title, url) {

@@ -132,7 +132,8 @@ function getImageTools({chatId, userChatId, imageId, isLiked = false, title, pro
 
                     <span class="badge bg-white text-secondary image-tool-badge share-image"
                           data-title="${title}"
-                          data-url="${imageUrl}"
+                          data-image-id="${imageId}"
+                          data-chat-id="${chatId}"
                           onclick="openShareModal(this)">
                         <i class="bi bi-box-arrow-up"></i>${window.translations?.image_tools?.share || 'Share'}
                     </span>

@@ -1098,6 +1098,138 @@ fastify.get('/character/:chatId', async (request, reply) => {
   const redirectUrl = `/character/slug/${encodeURIComponent(chat.slug)}${queryString}`;
   return reply.code(301).redirect(redirectUrl);
 });
+
+/**
+ * Share Image Route - Provides clean URLs with proper meta tags for social media sharing
+ * This route serves a page with OpenGraph/Twitter Card meta tags, then redirects to the character page
+ */
+fastify.get('/share/image/:imageId', async (request, reply) => {
+  const db = fastify.mongo.db;
+  const { imageId } = request.params;
+  const { translations, lang } = request;
+  
+  try {
+    // Validate imageId format
+    let imageIdObjectId;
+    try {
+      imageIdObjectId = new fastify.mongo.ObjectId(imageId);
+    } catch (e) {
+      console.error(`[share/image] Invalid image ID format: ${imageId}`);
+      return reply.code(400).send({ error: 'Invalid image ID format' });
+    }
+
+    // Find the image in the gallery collection
+    const galleryDoc = await db.collection('gallery').aggregate([
+      { $unwind: '$images' },
+      { $match: { 'images._id': imageIdObjectId } },
+      { $project: { 
+        image: '$images', 
+        chatId: 1,
+        _id: 0 
+      }}
+    ]).toArray();
+
+    if (!galleryDoc.length || !galleryDoc[0].image) {
+      console.warn(`[share/image] Image not found: ${imageId}`);
+      return reply.code(404).send({ error: 'Image not found' });
+    }
+
+    const image = galleryDoc[0].image;
+    const chatId = galleryDoc[0].chatId;
+
+    // Fetch associated chat for character info
+    const chat = await db.collection('chats').findOne({ _id: chatId });
+    if (!chat) {
+      console.warn(`[share/image] Chat not found for image: ${imageId}`);
+      return reply.code(404).send({ error: 'Character not found' });
+    }
+
+    // Build the image title
+    const imageTitle = typeof image.title === 'string' 
+      ? image.title 
+      : (image.title?.[lang] || image.title?.en || image.title?.ja || image.title?.fr || '');
+    
+    // Always use production domain for share URLs and meta tags
+    const baseUrl = 'https://app.chatlamix.com';
+    
+    const imageUrl = image.imageUrl || image.url;
+    const ogImageUrl = /^https?:\/\//i.test(imageUrl) 
+      ? imageUrl 
+      : `${baseUrl}${imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`}`;
+
+    // Build the canonical/redirect URL to the character page
+    const characterSlug = chat.slug || chat._id.toString();
+    const imageSlug = image.slug || imageId;
+    const canonicalUrl = `${baseUrl}/character/slug/${encodeURIComponent(characterSlug)}?imageSlug=${encodeURIComponent(imageSlug)}`;
+    const sharePageUrl = `${baseUrl}/share/image/${imageId}`;
+
+    // Get page title and description
+    const pageTitle = imageTitle 
+      ? `${imageTitle} | ${chat.name} | ${translations?.seo?.title_character || 'ChatLamix'}`
+      : `${chat.name} | ${translations?.seo?.title_character || 'ChatLamix'}`;
+    
+    const pageDescription = imageTitle || chat.description || chat.short_intro || 
+      translations?.seo?.description_character || 'Check out this AI-generated image';
+
+    // Check if this is a social media crawler/bot by User-Agent
+    const userAgent = (request.headers['user-agent'] || '').toLowerCase();
+    const isSocialBot = userAgent.includes('twitterbot') || 
+                        userAgent.includes('facebookexternalhit') || 
+                        userAgent.includes('linkedinbot') ||
+                        userAgent.includes('discordbot') ||
+                        userAgent.includes('slackbot') ||
+                        userAgent.includes('telegrambot') ||
+                        userAgent.includes('whatsapp');
+
+    // For social media bots, serve the meta tags page
+    // For regular browsers, redirect immediately
+    if (!isSocialBot) {
+      return reply.code(302).redirect(canonicalUrl);
+    }
+
+    // Serve the share page with meta tags for social media crawlers
+    return reply.renderWithGtm('share-image.hbs', {
+      title: pageTitle,
+      chatName: chat.name,
+      imageTitle: imageTitle,
+      imageUrl: ogImageUrl,
+      canonicalUrl: canonicalUrl,
+      sharePageUrl: sharePageUrl,
+      chatSlug: characterSlug,
+      imageSlug: imageSlug,
+      description: pageDescription,
+      lang: lang,
+      seo: [
+        // Basic meta tags
+        { name: 'description', content: pageDescription },
+        { name: 'robots', content: 'noindex' }, // Don't index share pages
+        
+        // OpenGraph tags
+        { property: 'og:title', content: pageTitle },
+        { property: 'og:description', content: pageDescription },
+        { property: 'og:image', content: ogImageUrl },
+        { property: 'og:image:width', content: '1200' },
+        { property: 'og:image:height', content: '630' },
+        { property: 'og:url', content: sharePageUrl },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:site_name', content: 'ChatLamix' },
+        { property: 'og:locale', content: lang || 'en' },
+        
+        // Twitter Card tags - summary_large_image shows the image prominently
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:title', content: pageTitle },
+        { name: 'twitter:description', content: pageDescription },
+        { name: 'twitter:image', content: ogImageUrl },
+        { name: 'twitter:image:alt', content: imageTitle || `Image from ${chat.name}` },
+      ],
+    });
+
+  } catch (err) {
+    console.error(`[share/image] Error processing share for image ${imageId}:`, err);
+    return reply.code(500).send({ error: 'Internal server error' });
+  }
+});
+
 // feature
 fastify.get('/features', async (request, reply) => {
   const db = fastify.mongo.db;

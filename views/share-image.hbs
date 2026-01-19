@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="{{lang}}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    
+    <!-- SEO Meta Tags for Social Media Sharing -->
+    {{#each seo}}
+    <meta {{#if name}}name="{{name}}"{{/if}} {{#if property}}property="{{property}}"{{/if}} content="{{content}}">
+    {{/each}}
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{{canonicalUrl}}">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="/img/logo.webp" type="image/webp">
+    
+    <!-- Auto-redirect for browsers (fallback if JS is disabled) -->
+    <meta http-equiv="refresh" content="0; url={{canonicalUrl}}">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 500px;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            opacity: 0.9;
+        }
+        p {
+            font-size: 0.875rem;
+            opacity: 0.7;
+        }
+        .redirect-link {
+            display: inline-block;
+            margin-top: 1.5rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #fff;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .redirect-link:hover {
+            background: rgba(255,255,255,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="spinner"></div>
+        <h1>Redirecting to {{chatName}}</h1>
+        <p>Taking you to view this image...</p>
+        <a href="{{canonicalUrl}}" class="redirect-link">Click here if not redirected</a>
+    </div>
+    
+    <!-- JavaScript redirect (immediate) -->
+    <script>
+        window.location.replace("{{canonicalUrl}}");
+    </script>
+</body>
+</html>

@@ -3471,6 +3471,7 @@ opacity: 0.8;
     margin-bottom: 12px;
     padding-bottom: 8px;
     border-bottom: none;
+    text-align: left;
 }
 
 .settings-section-title {
@@ -3479,8 +3480,10 @@ opacity: 0.8;
     color: #1a1a1a;
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     margin-bottom: 4px;
     letter-spacing: -0.1px;
+    text-align: left;
 }
 
 .settings-section-title i {

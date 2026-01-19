@@ -457,6 +457,7 @@
     margin-bottom: 14px;
     padding-bottom: 12px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    text-align: left;
 }
 
 .settings-section-title {
@@ -466,8 +467,10 @@
     margin: 0;
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 8px;
     letter-spacing: -0.2px;
+    text-align: left;
 }
 
 .settings-section-title i {

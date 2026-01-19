@@ -52,7 +52,7 @@
                                     class="form-control" 
                                     style="min-height: 90px;"
                                     id="editPromptTextarea-${imageId}" 
-                                    rows="4" 
+                                    rows="8" 
                                     maxlength="500" 
                                     placeholder="e.g., change the background to a beach, make the character smile..."
                                 ></textarea>

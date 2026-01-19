@@ -1471,7 +1471,7 @@ function setupChatInterface(chat, character, userChat, isNew) {
             <form id="commentForm" class="form-group">
                 <div class="mb-3">
                 <label for="comment" class="form-label text-white">投稿を作成する</label>
-                <textarea id="comment" class="form-control" rows="4" placeholder="ここにコメントを追加してください..." required></textarea>
+                <textarea id="comment" class="form-control" rows="8" placeholder="ここにコメントを追加してください..." required></textarea>
                 </div>
             </form>
           </div>

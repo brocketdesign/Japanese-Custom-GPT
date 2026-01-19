@@ -137,7 +137,7 @@ function showVideoPromptModal() {
                                     class="form-control" 
                                     style="min-height: 90px;"
                                     id="videoPromptTextarea" 
-                                    rows="4" 
+                                    rows="8" 
                                     maxlength="200" 
                                     placeholder="${window.img2videoTranslations.video_prompt_placeholder || 'e.g., slow zoom in, dramatic lighting, smooth camera movement...'}"
                                 ></textarea>

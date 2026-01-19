@@ -113,7 +113,7 @@ class PromptManager {
                                         class="form-control" 
                                         style="min-height: 90px;"
                                         id="customPromptTextarea" 
-                                        rows="4" 
+                                        rows="8" 
                                         maxlength="500" 
                                         placeholder="${placeholderText}"
                                     ></textarea>

@@ -3976,7 +3976,7 @@ function openCharacterModal(modalChatId, event) {
     closeAllModals();
 
     const characterModal = new bootstrap.Modal(document.getElementById('characterModal'));
-    $('#character-modal-container').html('<div class="position-absolute d-flex justify-content-center align-items-center" style="inset:0;"><div class="spinner-border" role="status"></div></div>');
+    $('#character-modal-container').html('<div class="d-flex justify-content-center align-items-center w-100" style="min-height:200px;"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
     characterModal.show();
 
     const url = `/character/${modalChatId}?modal=true`;

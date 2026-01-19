@@ -23,6 +23,7 @@ const {
     getUserMinImages
 } = require('./chat-tool-settings-utils');
 const { addUserPoints, removeUserPoints, getUserPoints } = require('./user-points-utils');
+const { incrementMessageCount } = require('./user-chat-stats-utils');
 const { getImageGenerationCost } = require('../config/pricing');
 const { user } = require('@elevenlabs/elevenlabs-js/api');
 
@@ -439,6 +440,9 @@ async function updateUserChat(db, userId, userChatId, newMessages, updatedAt) {
     const existingMessages = userChat.messages || [];
     const combinedMessages = [...existingMessages];
 
+    // Track how many new messages are added (not updates) for stats
+    let newMessageCount = 0;
+
     for (const newMsg of newMessages) {
         const index = combinedMessages.findIndex(
             (msg) => msg.content === newMsg.content
@@ -447,6 +451,10 @@ async function updateUserChat(db, userId, userChatId, newMessages, updatedAt) {
             combinedMessages[index] = newMsg;
         } else {
             combinedMessages.push(newMsg);
+            // Only count user and assistant messages for stats
+            if (newMsg.role === 'user' || newMsg.role === 'assistant') {
+                newMessageCount++;
+            }
         }
     }
 
@@ -457,6 +465,11 @@ async function updateUserChat(db, userId, userChatId, newMessages, updatedAt) {
         },
         { $set: { messages: combinedMessages, updatedAt } }
     );
+
+    // Increment message count in user_chat_stats if new messages were added
+    if (newMessageCount > 0 && userChat.chatId) {
+        await incrementMessageCount(db, userId, userChat.chatId, userChatId, newMessageCount);
+    }
 }
 
 // Removes content between asterisks to clean up the message

@@ -141,9 +141,12 @@ async function getUserChatCustomizations(db, userId, chatId) {
         }
 
         const userChatCollection = db.collection('userChat');
+        // Handle both ObjectId and string formats for chatId
         const userChat = await userChatCollection.findOne({
-            userId: new ObjectId(userId),
-            chatId: new ObjectId(chatId)
+            $or: [
+                { userId: new ObjectId(userId), chatId: new ObjectId(chatId) },
+                { userId: new ObjectId(userId), chatId: chatId.toString() }
+            ]
         });
 
         return userChat?.userCustomizations || null;

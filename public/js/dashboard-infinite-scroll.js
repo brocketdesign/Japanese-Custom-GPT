@@ -484,20 +484,25 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, subscripti
             </span>
         </div>` : '';
     
+    // Use thumbnail for grid display if available, fallback to full imageUrl
+    const displayUrl = item.thumbnailUrl || item.imageUrl;
+    // Always keep full imageUrl for preview/modal (stored in data-full-url)
+    const fullUrl = item.imageUrl;
+    
     return `
-        <div class="image-card col-6 col-md-3 col-lg-2 mb-2 px-1" data-image-id="${item._id}">
+        <div class="image-card col-6 col-md-3 col-lg-2 mb-2 px-1" data-image-id="${item._id}" data-full-url="${fullUrl}">
             <div class="card shadow-0 position-relative">
                 ${!isBlur ? `${addToChatButton}` : ''}
                 ${isBlur ? 
                     `<div class="position-relative">
                         <div type="button" onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary})">
-                            <img data-src="${item.imageUrl}" data-id="${item._id}" src="/img/logo.webp" class="card-img-top img-blur lazy-image" style="object-fit: cover;" loading="lazy">
+                            <img data-src="${displayUrl}" data-full-url="${fullUrl}" data-id="${item._id}" src="/img/logo.webp" class="card-img-top img-blur lazy-image" style="object-fit: cover;" loading="lazy">
                         </div>
                     </div>` :
                     `<div href="${linkUrl}" data-index="${loadedIndex}" 
                         class="image-container image-fav-double-click"
                         data-id="${item._id}" data-chat-id="${chatId}" onclick="toggleImageFavorite(this)">
-                        <img data-src="${item.imageUrl}" src="/img/logo.webp" alt="${item.prompt}" class="card-img-top lazy-image" style="object-fit: cover;" loading="lazy">
+                        <img data-src="${displayUrl}" data-full-url="${fullUrl}" src="/img/logo.webp" alt="${item.prompt}" class="card-img-top lazy-image" style="object-fit: cover;" loading="lazy">
                     </div>`
                 }
                 ${isTemporary || (!subscriptionStatus && isBlur) ? '':

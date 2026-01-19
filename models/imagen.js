@@ -2024,9 +2024,10 @@ async function getImageSeed(db, imageId) {
     }
   }
 }
-async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title, slug, imageUrl, aspectRatio, seed, blurredImageUrl = null, nsfw = false, fastify, isMerged = false, originalImageUrl = null, mergeId = null, shouldAutoMerge = false}) {
+async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title, slug, imageUrl, aspectRatio, seed, blurredImageUrl = null, nsfw = false, fastify, isMerged = false, originalImageUrl = null, mergeId = null, shouldAutoMerge = false, thumbnailUrl = null}) {
   
   const db = fastify.mongo.db;
+  const { generateThumbnailFromUrl } = require('../models/tool');
   try {
     const chatsGalleryCollection = db.collection('gallery');
 
@@ -2065,6 +2066,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
           return { 
             imageId: image._id, 
             imageUrl: image.imageUrl,
+            thumbnailUrl: image.thumbnailUrl || null,
             prompt: image.prompt,
             title: image.title,
             nsfw: image.nsfw,
@@ -2113,6 +2115,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
           return { 
             imageId: image._id, 
             imageUrl: image.imageUrl,
+            thumbnailUrl: image.thumbnailUrl || null,
             prompt: image.prompt,
             title: image.title,
             nsfw: image.nsfw,
@@ -2170,6 +2173,22 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
         }
       }
     }
+    // Generate thumbnail if not provided
+    let finalThumbnailUrl = thumbnailUrl;
+    if (!finalThumbnailUrl && imageUrl) {
+      try {
+        console.log(`[saveImageToDB] Generating thumbnail for image: ${imageUrl.substring(0, 80)}...`);
+        const thumbResult = await generateThumbnailFromUrl(imageUrl);
+        finalThumbnailUrl = thumbResult.thumbnailUrl;
+        if (finalThumbnailUrl) {
+          console.log(`[saveImageToDB] Thumbnail generated successfully`);
+        }
+      } catch (thumbError) {
+        console.error('[saveImageToDB] Failed to generate thumbnail:', thumbError.message);
+        // Continue without thumbnail - it's an optimization, not required
+      }
+    }
+
     const imageDocument = { 
       _id: imageId, 
       taskId,
@@ -2177,6 +2196,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       title,
       slug,
       imageUrl, 
+      thumbnailUrl: finalThumbnailUrl,
       originalImageUrl: imageUrl,
       blurredImageUrl, 
       aspectRatio, 
@@ -2237,6 +2257,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       return { 
         imageId, 
         imageUrl,
+        thumbnailUrl: finalThumbnailUrl,
         prompt,
         title,
         nsfw,
@@ -2289,6 +2310,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
     return { 
       imageId, 
       imageUrl,
+      thumbnailUrl: finalThumbnailUrl,
       prompt,
       title,
       nsfw,
@@ -2339,17 +2361,18 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
 
     for (let index = 0; index < images.length; index++) {
       const image = images[index];
-      const { imageId, imageUrl, prompt, title, nsfw, isMerged } = image;
+      const { imageId, imageUrl, thumbnailUrl, prompt, title, nsfw, isMerged } = image;
       const { userId: taskUserId, userChatId } = taskStatus;
             
       if (chatCreation) {
-        fastify.sendNotificationToUser(userId, 'characterImageGenerated', { imageUrl, nsfw, chatId });
+        fastify.sendNotificationToUser(userId, 'characterImageGenerated', { imageUrl, thumbnailUrl, nsfw, chatId });
         characterImageUrls.push(imageUrl);
       } else {
         const notificationData = {
           id: imageId?.toString(),
           imageId: imageId?.toString(),
           imageUrl,
+          thumbnailUrl,
           userChatId,
           title: getTitleString(title),
           prompt,

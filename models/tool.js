@@ -93,6 +93,126 @@ const uploadToS3 = async (buffer, hash, filename) => {
     }
 };
 
+/**
+ * Thumbnail configuration
+ * - Small: 400px width, quality 70 - for grids and gallery thumbnails
+ */
+const THUMBNAIL_CONFIG = {
+    small: { width: 400, quality: 70 }
+};
+
+/**
+ * Generate a thumbnail from a buffer and upload to S3
+ * @param {Buffer} originalBuffer - The original image buffer
+ * @param {string} hash - The hash of the original image
+ * @param {string} filename - The original filename
+ * @returns {Promise<{thumbnailUrl: string}>} Object with thumbnail URL
+ */
+const generateThumbnailFromBuffer = async (originalBuffer, hash, filename) => {
+    try {
+        const { width, quality } = THUMBNAIL_CONFIG.small;
+        
+        // Generate thumbnail using sharp
+        const thumbnailBuffer = await sharp(originalBuffer)
+            .resize(width, null, { 
+                fit: 'inside',
+                withoutEnlargement: true 
+            })
+            .jpeg({ quality, progressive: true })
+            .toBuffer();
+        
+        // Create thumbnail filename with prefix
+        const thumbnailFilename = `thumb_${filename.replace(/\.[^/.]+$/, '')}.jpg`;
+        const thumbnailKey = `thumbnails/${hash}_${thumbnailFilename}`;
+        
+        const params = {
+            Bucket: process.env.AWS_S3_BUCKET_NAME,
+            Key: thumbnailKey,
+            Body: thumbnailBuffer,
+            ACL: 'public-read',
+            ContentType: 'image/jpeg',
+        };
+        
+        const command = new PutObjectCommand(params);
+        await s3.send(command);
+        
+        const thumbnailUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${thumbnailKey}`;
+        
+        return { thumbnailUrl };
+    } catch (error) {
+        console.error("Thumbnail generation error:", error.message);
+        // Return null instead of throwing - thumbnails are optional optimization
+        return { thumbnailUrl: null };
+    }
+};
+
+/**
+ * Generate a thumbnail from an existing S3 image URL
+ * @param {string} imageUrl - The S3 URL of the original image
+ * @returns {Promise<{thumbnailUrl: string}>} Object with thumbnail URL
+ */
+const generateThumbnailFromUrl = async (imageUrl) => {
+    try {
+        // Validate URL
+        if (!imageUrl || !isValidUrl(imageUrl)) {
+            console.error('Invalid image URL for thumbnail generation');
+            return { thumbnailUrl: null };
+        }
+        
+        // Fetch the original image
+        const response = await axios.get(imageUrl, { 
+            responseType: 'arraybuffer',
+            timeout: 30000 // 30 second timeout
+        });
+        const originalBuffer = Buffer.from(response.data, 'binary');
+        
+        // Extract hash and filename from the URL
+        const urlParts = imageUrl.split('/');
+        const fullKey = urlParts[urlParts.length - 1];
+        
+        // Parse the key - format is typically: hash_filename or just filename
+        let hash, filename;
+        const underscoreIndex = fullKey.indexOf('_');
+        if (underscoreIndex > 0 && underscoreIndex < 65) { // SHA256 hash is 64 chars
+            hash = fullKey.substring(0, underscoreIndex);
+            filename = fullKey.substring(underscoreIndex + 1);
+        } else {
+            // Generate hash from buffer if not available in URL
+            hash = createHash('sha256').update(originalBuffer).digest('hex');
+            filename = fullKey;
+        }
+        
+        // Generate thumbnail
+        const result = await generateThumbnailFromBuffer(originalBuffer, hash, filename);
+        
+        return result;
+    } catch (error) {
+        console.error('Error generating thumbnail from URL:', error.message);
+        return { thumbnailUrl: null };
+    }
+};
+
+/**
+ * Upload an image and automatically generate a thumbnail
+ * @param {Buffer} buffer - The original image buffer
+ * @param {string} hash - The hash of the image
+ * @param {string} filename - The filename
+ * @returns {Promise<{imageUrl: string, thumbnailUrl: string}>} Object with both URLs
+ */
+const uploadImageWithThumbnail = async (buffer, hash, filename) => {
+    try {
+        // Upload original image
+        const imageUrl = await uploadToS3(buffer, hash, filename);
+        
+        // Generate and upload thumbnail (don't fail if thumbnail fails)
+        const { thumbnailUrl } = await generateThumbnailFromBuffer(buffer, hash, filename);
+        
+        return { imageUrl, thumbnailUrl };
+    } catch (error) {
+        console.error('Error in uploadImageWithThumbnail:', error.message);
+        throw error;
+    }
+};
 
 const isValidUrl = (string) => {
     try {
@@ -696,5 +816,10 @@ module.exports = {
     saveUserChatBackgroundImageToDB,
     addAdminEmails,
     getApiUrl,
-    generateSeoMetadata
+    generateSeoMetadata,
+    // Thumbnail functions
+    generateThumbnailFromBuffer,
+    generateThumbnailFromUrl,
+    uploadImageWithThumbnail,
+    THUMBNAIL_CONFIG
 };

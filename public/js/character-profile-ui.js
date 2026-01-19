@@ -517,7 +517,10 @@ function displayImagesInGrid(images = [], chatId = null) {
     let displayedCount = 0;
     
     images.forEach((image, index) => {
-        let imgSrc = image.imageUrl;
+        // Use thumbnail for grid display if available, fallback to full imageUrl
+        let imgSrc = image.thumbnailUrl || image.imageUrl;
+        // Keep the full URL for preview/modal
+        let fullImgSrc = image.imageUrl;
         let isLiked = image.isLiked || false;
         let isNSFW = image.nsfw || false;
         
@@ -569,7 +572,7 @@ function displayImagesInGrid(images = [], chatId = null) {
         if (shouldBlur && subscriptionStatus) {
             // Premium user with NSFW OFF - show normal image with overlay that will add blur effect
             item.innerHTML = `
-                <img src="${imgSrc}" alt="Image ${index + 1}" loading="lazy" onerror="this.style.display='none'" 
+                <img src="${imgSrc}" data-full-url="${fullImgSrc}" alt="Image ${index + 1}" loading="lazy" onerror="this.style.display='none'" 
                      style="width: 100%; height: 100%; object-fit: cover;">
                 <div class="media-item-actions">
                     <button class="media-action-btn image-fav ${isLiked ? 'liked' : ''}" 
@@ -608,6 +611,7 @@ function displayImagesInGrid(images = [], chatId = null) {
                     <img alt="Image ${index + 1}" loading="lazy" 
                          class="blur-image-character" 
                          data-src="${imgSrc}"
+                         data-full-url="${fullImgSrc}"
                          style="width: 100%; height: 100%; object-fit: cover;" 
                          onerror="this.style.display='none'">
                 </div>
@@ -615,7 +619,7 @@ function displayImagesInGrid(images = [], chatId = null) {
         } else {
             // Show normal image with like button
             item.innerHTML = `
-                <img src="${imgSrc}" alt="Image ${index + 1}" loading="lazy" onerror="this.style.display='none'">
+                <img src="${imgSrc}" data-full-url="${fullImgSrc}" alt="Image ${index + 1}" loading="lazy" onerror="this.style.display='none'">
                 <div class="media-item-actions">
                     <button class="media-action-btn image-fav ${isLiked ? 'liked' : ''}" 
                             data-id="${image._id}" 
@@ -776,7 +780,10 @@ function displayMoreImagesInGrid(images = [], chatId = null) {
             return;
         }
         
-        let imgSrc = image.imageUrl;
+        // Use thumbnail for grid display if available, fallback to full imageUrl
+        let imgSrc = image.thumbnailUrl || image.imageUrl;
+        // Keep the full URL for preview/modal
+        let fullImgSrc = image.imageUrl;
         let isLiked = image.isLiked || false;
         let isNSFW = image.nsfw || false;
         
@@ -795,7 +802,7 @@ function displayMoreImagesInGrid(images = [], chatId = null) {
         if (shouldBlur && subscriptionStatus) {
             // Premium user with NSFW OFF - show normal image with overlay that will add blur effect
             item.innerHTML = `
-                <img src="${imgSrc}" alt="Image" loading="lazy" onerror="this.style.display='none'"
+                <img src="${imgSrc}" data-full-url="${fullImgSrc}" alt="Image" loading="lazy" onerror="this.style.display='none'"
                      style="width: 100%; height: 100%; object-fit: cover;">
                 <div class="media-item-actions">
                     <button class="media-action-btn image-fav ${isLiked ? 'liked' : ''}" 
@@ -837,6 +844,7 @@ function displayMoreImagesInGrid(images = [], chatId = null) {
                     <img alt="Image" loading="lazy" 
                          class="blur-image-character" 
                          data-src="${imgSrc}"
+                         data-full-url="${fullImgSrc}"
                          style="width: 100%; height: 100%; object-fit: cover;" 
                          onerror="this.style.display='none'">
                 </div>
@@ -844,7 +852,7 @@ function displayMoreImagesInGrid(images = [], chatId = null) {
         } else {
             // Show normal image with like button (SAME as displayImagesInGrid)
             item.innerHTML = `
-                <img src="${imgSrc}" alt="Image" loading="lazy" onerror="this.style.display='none'">
+                <img src="${imgSrc}" data-full-url="${fullImgSrc}" alt="Image" loading="lazy" onerror="this.style.display='none'">
                 <div class="media-item-actions">
                     <button class="media-action-btn image-fav ${isLiked ? 'liked' : ''}" 
                             data-id="${image._id}" 

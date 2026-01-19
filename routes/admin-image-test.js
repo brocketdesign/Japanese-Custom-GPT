@@ -398,6 +398,11 @@ async function routes(fastify, options) {
       const db = fastify.mongo.db;
       const result = request.body;
 
+      console.log(`[ImageDashboard] 📥 Save request for ${result.modelName}, images: ${result.images?.length || 0}`);
+      if (result.images && result.images.length > 0) {
+        console.log(`[ImageDashboard] 📥 First image keys: ${Object.keys(result.images[0]).join(', ')}`);
+      }
+
       // Optionally upload images to S3
       if (result.images && Array.isArray(result.images)) {
         for (let i = 0; i < result.images.length; i++) {

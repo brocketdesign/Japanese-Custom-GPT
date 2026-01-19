@@ -585,12 +585,25 @@ async function initializeModelTest(modelId, params) {
       // Handle different response formats for different sync APIs
       let images = [];
       
-      // Merge Face returns merged_image
+      // Merge Face returns image_file (raw base64) and image_type
       if (modelId === 'merge-face') {
-        if (response.data.merged_image) {
+        console.log(`[AdminImageTest] 🔍 Merge Face response keys:`, Object.keys(response.data));
+        if (response.data.image_file) {
+          // Convert raw base64 to data URL format
+          const imageType = response.data.image_type || 'png';
+          const base64Length = response.data.image_file.length;
+          console.log(`[AdminImageTest] ✅ Found image_file (${base64Length} chars), type: ${imageType}`);
+          const dataUrl = `data:image/${imageType};base64,${response.data.image_file}`;
+          images = [dataUrl];
+          console.log(`[AdminImageTest] 📦 Created data URL (${dataUrl.length} chars)`);
+        } else if (response.data.merged_image) {
+          console.log(`[AdminImageTest] ✅ Found merged_image`);
           images = [response.data.merged_image];
         } else if (response.data.image) {
+          console.log(`[AdminImageTest] ✅ Found image`);
           images = [response.data.image];
+        } else {
+          console.log(`[AdminImageTest] ⚠️ No image field found in merge-face response`);
         }
       }
       // Seedream returns images array
@@ -606,8 +619,9 @@ async function initializeModelTest(modelId, params) {
       const generationTime = endTime - startTime;
 
       console.log(`[AdminImageTest] ✅ ${config.name} completed in ${generationTime}ms`);
+      console.log(`[AdminImageTest] 📊 Returning ${images.length} images for ${modelId}`);
 
-      return {
+      const result = {
         modelId,
         modelName: config.name,
         taskId: `sync-${Date.now()}`,
@@ -621,6 +635,13 @@ async function initializeModelTest(modelId, params) {
           isBase64: typeof img === 'string' && img.startsWith('data:')
         }))
       };
+      
+      console.log(`[AdminImageTest] 📤 Result images array length: ${result.images.length}`);
+      if (result.images.length > 0) {
+        console.log(`[AdminImageTest] 📤 First image isBase64: ${result.images[0].isBase64}, URL length: ${result.images[0].imageUrl?.length || 0}`);
+      }
+      
+      return result;
     }
   } catch (error) {
     console.error(`[AdminImageTest] ❌ Error with ${config.name}:`, error.message);
@@ -769,7 +790,14 @@ async function saveTestResult(db, result) {
     
     // Normalize images array to ensure consistent structure
     let normalizedImages = [];
+    console.log(`[AdminImageTest] 📥 saveTestResult received ${result.images?.length || 0} images for ${result.modelName}`);
     if (result.images && Array.isArray(result.images)) {
+      result.images.forEach((img, idx) => {
+        console.log(`[AdminImageTest] 📥 Image ${idx}: type=${typeof img}, keys=${typeof img === 'object' ? Object.keys(img).join(',') : 'N/A'}`);
+        if (typeof img === 'object' && img.imageUrl) {
+          console.log(`[AdminImageTest] 📥 Image ${idx} imageUrl length: ${img.imageUrl?.length || 0}, isBase64: ${img.isBase64}`);
+        }
+      });
       normalizedImages = result.images.map(img => {
         if (typeof img === 'string') {
           return { imageUrl: img };

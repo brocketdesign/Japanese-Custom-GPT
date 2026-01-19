@@ -28,10 +28,12 @@ function getWebhookUrl() {
 
 // Video model configurations
 const VIDEO_MODEL_CONFIGS = {
+  // =============== IMAGE TO VIDEO (I2V) MODELS ===============
   'kling-v2.1-i2v': {
-    name: 'Kling V2.1 (Image to Video)',
+    name: 'Kling V2.1 I2V',
     endpoint: 'https://api.novita.ai/v3/async/kling-v2.1-i2v',
     async: true,
+    category: 'i2v',
     defaultParams: {
       mode: 'Standard',
       duration: '5',
@@ -40,6 +42,281 @@ const VIDEO_MODEL_CONFIGS = {
     },
     supportedParams: ['image', 'prompt', 'mode', 'duration', 'guidance_scale', 'negative_prompt'],
     description: 'Kling V2.1 model for generating videos from images with natural motion'
+  },
+  'kling-v2.1-i2v-master': {
+    name: 'Kling V2.1 Master I2V',
+    endpoint: 'https://api.novita.ai/v3/async/kling-v2.1-i2v-master',
+    async: true,
+    category: 'i2v',
+    defaultParams: {
+      mode: 'Standard',
+      duration: '5',
+      guidance_scale: 0.5,
+      negative_prompt: 'blurry, low quality, distorted'
+    },
+    supportedParams: ['image', 'prompt', 'mode', 'duration', 'guidance_scale', 'negative_prompt'],
+    description: 'Kling V2.1 Master model with enhanced quality for image-to-video generation'
+  },
+  'kling-v1.6-i2v': {
+    name: 'Kling V1.6 I2V',
+    endpoint: 'https://api.novita.ai/v3/async/kling-v1.6-i2v',
+    async: true,
+    category: 'i2v',
+    defaultParams: {
+      mode: 'Standard',
+      duration: '5',
+      guidance_scale: 0.5
+    },
+    supportedParams: ['image', 'prompt', 'mode', 'duration', 'guidance_scale', 'negative_prompt'],
+    description: 'Kling V1.6 model for image-to-video generation'
+  },
+  'wan-i2v': {
+    name: 'Wan 2.1 I2V',
+    endpoint: 'https://api.novita.ai/v3/async/wan-i2v',
+    async: true,
+    category: 'i2v',
+    defaultParams: {
+      duration: '5',
+      resolution: '720p'
+    },
+    supportedParams: ['image', 'prompt', 'duration', 'resolution', 'seed'],
+    description: 'Wan 2.1 model for image-to-video generation with smooth motion'
+  },
+  'wan-2.2-i2v': {
+    name: 'Wan 2.2 I2V',
+    endpoint: 'https://api.novita.ai/v3/async/wan-2.2-i2v',
+    async: true,
+    category: 'i2v',
+    defaultParams: {
+      duration: '5',
+      resolution: '720p'
+    },
+    supportedParams: ['image', 'prompt', 'duration', 'resolution', 'seed'],
+    description: 'Wan 2.2 model with improved quality for image-to-video'
+  },
+  'wan-2.5-i2v-preview': {
+    name: 'Wan 2.5 I2V Preview',
+    endpoint: 'https://api.novita.ai/v3/async/wan-2.5-i2v-preview',
+    async: true,
+    category: 'i2v',
+    defaultParams: {
+      duration: '5',
+      resolution: '720p'
+    },
+    supportedParams: ['image', 'prompt', 'duration', 'resolution', 'seed'],
+    description: 'Wan 2.5 preview model with next-gen image-to-video capabilities'
+  },
+  'wan2.6-i2v': {
+    name: 'Wan 2.6 I2V',
+    endpoint: 'https://api.novita.ai/v3/async/wan2.6-i2v',
+    async: true,
+    category: 'i2v',
+    defaultParams: {
+      duration: '5',
+      resolution: '720p'
+    },
+    supportedParams: ['image', 'prompt', 'duration', 'resolution', 'seed'],
+    description: 'Wan 2.6 latest model for high-quality image-to-video generation'
+  },
+  'minimax-i2v': {
+    name: 'Minimax I2V',
+    endpoint: 'https://api.novita.ai/v3/async/minimax-video-01',
+    async: true,
+    category: 'i2v',
+    defaultParams: {
+      duration: '6'
+    },
+    supportedParams: ['image', 'prompt', 'duration'],
+    description: 'Minimax Video model for image-to-video generation'
+  },
+  'vidu-i2v': {
+    name: 'Vidu I2V',
+    endpoint: 'https://api.novita.ai/v3/async/vidu-1.5-i2v',
+    async: true,
+    category: 'i2v',
+    defaultParams: {
+      duration: '4'
+    },
+    supportedParams: ['image', 'prompt', 'duration', 'resolution'],
+    description: 'Vidu 1.5 model for creative image-to-video transformations'
+  },
+  'pixverse-i2v': {
+    name: 'PixVerse I2V',
+    endpoint: 'https://api.novita.ai/v3/async/pixverse-v4.5-i2v',
+    async: true,
+    category: 'i2v',
+    defaultParams: {
+      duration: '5'
+    },
+    supportedParams: ['image', 'prompt', 'duration', 'aspect_ratio'],
+    description: 'PixVerse V4.5 model for anime-style image-to-video'
+  },
+  'seedance-i2v': {
+    name: 'Seedance I2V',
+    endpoint: 'https://api.novita.ai/v3/async/seedance-1.0-i2v',
+    async: true,
+    category: 'i2v',
+    defaultParams: {
+      duration: '5'
+    },
+    supportedParams: ['image', 'prompt', 'duration', 'resolution'],
+    description: 'Seedance 1.0 model for dance and motion video generation'
+  },
+  'luma-i2v': {
+    name: 'Luma Dream Machine I2V',
+    endpoint: 'https://api.novita.ai/v3/async/luma-dream-machine-i2v',
+    async: true,
+    category: 'i2v',
+    defaultParams: {
+      duration: '5'
+    },
+    supportedParams: ['image', 'prompt', 'duration', 'aspect_ratio'],
+    description: 'Luma Dream Machine for cinematic image-to-video generation'
+  },
+  
+  // =============== TEXT TO VIDEO (T2V) MODELS ===============
+  'kling-v2.1-t2v-master': {
+    name: 'Kling V2.1 Master T2V',
+    endpoint: 'https://api.novita.ai/v3/async/kling-v2.1-t2v-master',
+    async: true,
+    category: 't2v',
+    defaultParams: {
+      mode: 'Standard',
+      duration: '5',
+      guidance_scale: 0.5,
+      aspect_ratio: '16:9'
+    },
+    supportedParams: ['prompt', 'mode', 'duration', 'guidance_scale', 'aspect_ratio', 'negative_prompt'],
+    description: 'Kling V2.1 Master model for high-quality text-to-video generation'
+  },
+  'kling-v1.6-t2v': {
+    name: 'Kling V1.6 T2V',
+    endpoint: 'https://api.novita.ai/v3/async/kling-v1.6-t2v',
+    async: true,
+    category: 't2v',
+    defaultParams: {
+      mode: 'Standard',
+      duration: '5',
+      guidance_scale: 0.5,
+      aspect_ratio: '16:9'
+    },
+    supportedParams: ['prompt', 'mode', 'duration', 'guidance_scale', 'aspect_ratio', 'negative_prompt'],
+    description: 'Kling V1.6 model for text-to-video generation'
+  },
+  'hunyuan-video-fast': {
+    name: 'Hunyuan Video Fast',
+    endpoint: 'https://api.novita.ai/v3/async/hunyuan-video-fast',
+    async: true,
+    category: 't2v',
+    defaultParams: {
+      duration: '5',
+      resolution: '720p'
+    },
+    supportedParams: ['prompt', 'duration', 'resolution', 'aspect_ratio', 'seed'],
+    description: 'Tencent Hunyuan fast video generation model'
+  },
+  'wan-t2v': {
+    name: 'Wan 2.1 T2V',
+    endpoint: 'https://api.novita.ai/v3/async/wan-t2v',
+    async: true,
+    category: 't2v',
+    defaultParams: {
+      duration: '5',
+      resolution: '720p'
+    },
+    supportedParams: ['prompt', 'duration', 'resolution', 'aspect_ratio', 'seed'],
+    description: 'Wan 2.1 model for text-to-video generation'
+  },
+  'wan-2.2-t2v': {
+    name: 'Wan 2.2 T2V',
+    endpoint: 'https://api.novita.ai/v3/async/wan-2.2-t2v',
+    async: true,
+    category: 't2v',
+    defaultParams: {
+      duration: '5',
+      resolution: '720p'
+    },
+    supportedParams: ['prompt', 'duration', 'resolution', 'aspect_ratio', 'seed'],
+    description: 'Wan 2.2 model with improved text-to-video quality'
+  },
+  'wan-2.5-t2v-preview': {
+    name: 'Wan 2.5 T2V Preview',
+    endpoint: 'https://api.novita.ai/v3/async/wan-2.5-t2v-preview',
+    async: true,
+    category: 't2v',
+    defaultParams: {
+      duration: '5',
+      resolution: '720p'
+    },
+    supportedParams: ['prompt', 'duration', 'resolution', 'aspect_ratio', 'seed'],
+    description: 'Wan 2.5 preview for next-gen text-to-video'
+  },
+  'wan2.6-t2v': {
+    name: 'Wan 2.6 T2V',
+    endpoint: 'https://api.novita.ai/v3/async/wan2.6-t2v',
+    async: true,
+    category: 't2v',
+    defaultParams: {
+      duration: '5',
+      resolution: '720p'
+    },
+    supportedParams: ['prompt', 'duration', 'resolution', 'aspect_ratio', 'seed'],
+    description: 'Wan 2.6 latest model for text-to-video generation'
+  },
+  'minimax-t2v': {
+    name: 'Minimax T2V',
+    endpoint: 'https://api.novita.ai/v3/async/minimax-video-01-t2v',
+    async: true,
+    category: 't2v',
+    defaultParams: {
+      duration: '6'
+    },
+    supportedParams: ['prompt', 'duration', 'aspect_ratio'],
+    description: 'Minimax Video model for text-to-video generation'
+  },
+  'vidu-t2v': {
+    name: 'Vidu T2V',
+    endpoint: 'https://api.novita.ai/v3/async/vidu-1.5-t2v',
+    async: true,
+    category: 't2v',
+    defaultParams: {
+      duration: '4'
+    },
+    supportedParams: ['prompt', 'duration', 'resolution'],
+    description: 'Vidu 1.5 model for creative text-to-video generation'
+  },
+  'pixverse-t2v': {
+    name: 'PixVerse T2V',
+    endpoint: 'https://api.novita.ai/v3/async/pixverse-v4.5-t2v',
+    async: true,
+    category: 't2v',
+    defaultParams: {
+      duration: '5'
+    },
+    supportedParams: ['prompt', 'duration', 'aspect_ratio'],
+    description: 'PixVerse V4.5 model for anime-style text-to-video'
+  },
+  'luma-t2v': {
+    name: 'Luma Dream Machine T2V',
+    endpoint: 'https://api.novita.ai/v3/async/luma-dream-machine-t2v',
+    async: true,
+    category: 't2v',
+    defaultParams: {
+      duration: '5'
+    },
+    supportedParams: ['prompt', 'duration', 'aspect_ratio'],
+    description: 'Luma Dream Machine for cinematic text-to-video generation'
+  },
+  
+  // =============== VIDEO MERGE FACE ===============
+  'video-merge-face': {
+    name: 'Video Merge Face',
+    endpoint: 'https://api.novita.ai/v3/async/video-merge-face',
+    async: true,
+    category: 'face',
+    defaultParams: {},
+    supportedParams: ['video_file', 'face_image_file'],
+    description: 'Merge a face into an existing video - replace faces in videos with a source face'
   }
 };
 
@@ -98,6 +375,16 @@ async function initializeVideoTest(modelId, params) {
   const startTime = Date.now();
   console.log(`[VideoDashboard] 🚀 Starting ${config.name} generation`);
   console.log(`[VideoDashboard] Prompt: ${params.prompt?.substring(0, 100)}...`);
+  console.log(`[VideoDashboard] Category: ${config.category}`);
+
+  // Validate requirements based on category
+  if (config.category === 'i2v' && !params.imageUrl && !params.image) {
+    throw new Error(`${config.name} requires an image input`);
+  }
+  
+  if (config.category === 'face' && (!params.video_file || !params.face_image_file)) {
+    throw new Error(`${config.name} requires both a video file and a face image`);
+  }
 
   try {
     const webhookUrl = config.async ? getWebhookUrl() : null;
@@ -105,14 +392,93 @@ async function initializeVideoTest(modelId, params) {
     // Validate and truncate prompt
     const validatedPrompt = validateAndTruncatePrompt(params.prompt);
     
-    const requestBody = {
-      image: params.imageUrl,
-      prompt: validatedPrompt,
-      mode: params.mode || config.defaultParams.mode,
-      duration: params.duration || config.defaultParams.duration,
-      guidance_scale: params.guidance_scale !== undefined ? params.guidance_scale : config.defaultParams.guidance_scale,
-      negative_prompt: params.negative_prompt || config.defaultParams.negative_prompt
-    };
+    let requestBody = {};
+    
+    // Build request body based on model category and type
+    if (config.category === 'face') {
+      // Video Merge Face
+      requestBody = {
+        video_file: params.video_file,
+        face_image_file: params.face_image_file
+      };
+    } else if (config.category === 't2v') {
+      // Text-to-Video models
+      requestBody = {
+        prompt: validatedPrompt
+      };
+      
+      // Add duration
+      if (params.duration || config.defaultParams.duration) {
+        requestBody.duration = params.duration || config.defaultParams.duration;
+      }
+      
+      // Add aspect ratio
+      if (params.aspectRatio || config.defaultParams.aspect_ratio) {
+        requestBody.aspect_ratio = params.aspectRatio || config.defaultParams.aspect_ratio;
+      }
+      
+      // Add resolution for models that support it
+      if (config.supportedParams.includes('resolution')) {
+        requestBody.resolution = params.resolution || config.defaultParams.resolution || '720p';
+      }
+      
+      // Add Kling-specific params
+      if (modelId.startsWith('kling')) {
+        if (params.mode || config.defaultParams.mode) {
+          requestBody.mode = params.mode || config.defaultParams.mode;
+        }
+        if (params.guidance_scale !== undefined || config.defaultParams.guidance_scale !== undefined) {
+          requestBody.guidance_scale = params.guidance_scale !== undefined ? params.guidance_scale : config.defaultParams.guidance_scale;
+        }
+        if (params.negative_prompt || config.defaultParams.negative_prompt) {
+          requestBody.negative_prompt = params.negative_prompt || config.defaultParams.negative_prompt || '';
+        }
+      }
+      
+      // Add seed if provided
+      if (params.seed !== undefined) {
+        requestBody.seed = params.seed;
+      }
+    } else if (config.category === 'i2v') {
+      // Image-to-Video models
+      requestBody = {
+        image: params.imageUrl || params.image,
+        prompt: validatedPrompt
+      };
+      
+      // Add duration
+      if (params.duration || config.defaultParams.duration) {
+        requestBody.duration = params.duration || config.defaultParams.duration;
+      }
+      
+      // Add resolution for models that support it
+      if (config.supportedParams.includes('resolution')) {
+        requestBody.resolution = params.resolution || config.defaultParams.resolution || '720p';
+      }
+      
+      // Add aspect ratio if supported
+      if (config.supportedParams.includes('aspect_ratio') && (params.aspectRatio || config.defaultParams.aspect_ratio)) {
+        requestBody.aspect_ratio = params.aspectRatio || config.defaultParams.aspect_ratio;
+      }
+      
+      // Add Kling-specific params
+      if (modelId.startsWith('kling')) {
+        if (params.mode || config.defaultParams.mode) {
+          requestBody.mode = params.mode || config.defaultParams.mode;
+        }
+        if (params.guidance_scale !== undefined || config.defaultParams.guidance_scale !== undefined) {
+          requestBody.guidance_scale = params.guidance_scale !== undefined ? params.guidance_scale : config.defaultParams.guidance_scale;
+        }
+        if (params.negative_prompt || config.defaultParams.negative_prompt) {
+          requestBody.negative_prompt = params.negative_prompt || config.defaultParams.negative_prompt || '';
+        }
+      }
+      
+      // Add seed if provided
+      if (params.seed !== undefined) {
+        requestBody.seed = params.seed;
+      }
+    }
     
     // Add webhook for async models
     if (config.async && webhookUrl) {
@@ -153,6 +519,7 @@ async function initializeVideoTest(modelId, params) {
     return {
       modelId,
       modelName: config.name,
+      category: config.category,
       taskId,
       startTime,
       status: 'processing',

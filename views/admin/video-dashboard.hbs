@@ -35,18 +35,47 @@
                         <h5 class="mb-0"><i class="bi bi-sliders me-2"></i>Generation Settings</h5>
                     </div>
                     <div class="card-body">
+                        <!-- Video Generation Mode Selection -->
+                        <div class="mb-4">
+                            <label class="form-label text-white fw-bold">Generation Mode</label>
+                            <div class="generation-mode-group" role="group">
+                                <input type="radio" class="btn-check" name="videoMode" id="video-mode-i2v" value="i2v" checked>
+                                <label class="mode-btn" for="video-mode-i2v">
+                                    <i class="bi bi-image"></i>
+                                    <span>Image to Video</span>
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="videoMode" id="video-mode-t2v" value="t2v">
+                                <label class="mode-btn" for="video-mode-t2v">
+                                    <i class="bi bi-card-text"></i>
+                                    <span>Text to Video</span>
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="videoMode" id="video-mode-face" value="face">
+                                <label class="mode-btn" for="video-mode-face">
+                                    <i class="bi bi-person-bounding-box"></i>
+                                    <span>Merge Face</span>
+                                </label>
+                            </div>
+                        </div>
+
                         <!-- Model Selection -->
                         <div class="mb-4">
                             <label class="form-label text-white fw-bold">Select Video Model</label>
-                            <div class="model-selection">
+                            
+                            <!-- Image to Video Models -->
+                            <div class="model-selection" id="i2vModelsSection">
+                                <h6 class="text-primary mb-2"><i class="bi bi-image me-1"></i>Image to Video Models</h6>
                                 {{#each models}}
+                                {{#if (eq this.category "i2v")}}
                                 <div class="form-check model-checkbox mb-2">
-                                    <input class="form-check-input" type="radio" 
+                                    <input class="form-check-input i2v-model-radio" type="radio" 
                                            name="videoModel"
                                            value="{{this.id}}" 
                                            id="model-{{this.id}}" 
                                            data-model-name="{{this.name}}"
-                                           {{#if @first}}checked{{/if}}>
+                                           data-category="i2v"
+                                           {{#if (eq this.id "kling-v2.1-i2v")}}checked{{/if}}>
                                     <label class="form-check-label text-white" for="model-{{this.id}}">
                                         <span class="fw-semibold">{{this.name}}</span>
                                         <span class="badge bg-info ms-1">Async</span>
@@ -54,12 +83,59 @@
                                         <small class="text-muted">{{this.description}}</small>
                                     </label>
                                 </div>
+                                {{/if}}
+                                {{/each}}
+                            </div>
+                            
+                            <!-- Text to Video Models -->
+                            <div class="model-selection mt-3" id="t2vModelsSection" style="display: none;">
+                                <h6 class="text-success mb-2"><i class="bi bi-card-text me-1"></i>Text to Video Models</h6>
+                                {{#each models}}
+                                {{#if (eq this.category "t2v")}}
+                                <div class="form-check model-checkbox mb-2">
+                                    <input class="form-check-input t2v-model-radio" type="radio" 
+                                           name="videoModel"
+                                           value="{{this.id}}" 
+                                           id="model-{{this.id}}" 
+                                           data-model-name="{{this.name}}"
+                                           data-category="t2v">
+                                    <label class="form-check-label text-white" for="model-{{this.id}}">
+                                        <span class="fw-semibold">{{this.name}}</span>
+                                        <span class="badge bg-info ms-1">Async</span>
+                                        <br>
+                                        <small class="text-muted">{{this.description}}</small>
+                                    </label>
+                                </div>
+                                {{/if}}
+                                {{/each}}
+                            </div>
+                            
+                            <!-- Video Merge Face Models -->
+                            <div class="model-selection mt-3" id="faceModelsSection" style="display: none;">
+                                <h6 class="text-warning mb-2"><i class="bi bi-person-bounding-box me-1"></i>Video Face Tools</h6>
+                                {{#each models}}
+                                {{#if (eq this.category "face")}}
+                                <div class="form-check model-checkbox mb-2">
+                                    <input class="form-check-input face-model-radio" type="radio" 
+                                           name="videoModel"
+                                           value="{{this.id}}" 
+                                           id="model-{{this.id}}" 
+                                           data-model-name="{{this.name}}"
+                                           data-category="face">
+                                    <label class="form-check-label text-white" for="model-{{this.id}}">
+                                        <span class="fw-semibold">{{this.name}}</span>
+                                        <span class="badge bg-info ms-1">Async</span>
+                                        <br>
+                                        <small class="text-muted">{{this.description}}</small>
+                                    </label>
+                                </div>
+                                {{/if}}
                                 {{/each}}
                             </div>
                         </div>
 
-                        <!-- Base Image Upload -->
-                        <div class="mb-4">
+                        <!-- Base Image Upload (for I2V) -->
+                        <div class="mb-4" id="baseImageSection">
                             <label class="form-label text-white fw-bold">Base Image</label>
                             <div class="base-image-upload" id="imageUploadArea">
                                 <input type="file" id="baseImageInput" accept="image/*" style="display: none;">
@@ -71,6 +147,43 @@
                                 <div class="image-preview d-none" id="imagePreview">
                                     <img id="previewImg" src="" alt="Preview" class="img-fluid rounded">
                                     <button class="btn btn-sm btn-danger mt-2" onclick="clearImageUpload()">
+                                        <i class="bi bi-x me-1"></i>Clear
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Video Merge Face Section (hidden by default) -->
+                        <div class="mb-4" id="videoMergeFaceSection" style="display: none;">
+                            <label class="form-label text-white fw-bold">Source Video</label>
+                            <div class="base-image-upload mb-3" id="videoUploadArea">
+                                <input type="file" id="baseVideoInput" accept="video/*" style="display: none;">
+                                <div class="upload-placeholder" onclick="document.getElementById('baseVideoInput').click()">
+                                    <i class="bi bi-film display-4 text-muted"></i>
+                                    <p class="text-muted mb-0">Click to upload video</p>
+                                    <small class="text-muted">Supports MP4, MOV, WebM</small>
+                                </div>
+                                <div class="video-preview d-none" id="videoPreview">
+                                    <video id="previewVideo" controls class="img-fluid rounded" style="max-height: 150px;">
+                                        <source id="previewVideoSource" src="" type="video/mp4">
+                                    </video>
+                                    <button class="btn btn-sm btn-danger mt-2" onclick="clearVideoUpload()">
+                                        <i class="bi bi-x me-1"></i>Clear
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <label class="form-label text-white fw-bold">Face Image (to merge)</label>
+                            <div class="base-image-upload" id="faceImageUploadArea">
+                                <input type="file" id="faceImageInput" accept="image/*" style="display: none;">
+                                <div class="upload-placeholder" onclick="document.getElementById('faceImageInput').click()">
+                                    <i class="bi bi-person-circle display-4 text-muted"></i>
+                                    <p class="text-muted mb-0">Click to upload face image</p>
+                                    <small class="text-muted">The face to apply to the video</small>
+                                </div>
+                                <div class="image-preview d-none" id="faceImagePreview">
+                                    <img id="facePreviewImg" src="" alt="Face Preview" class="img-fluid rounded">
+                                    <button class="btn btn-sm btn-danger mt-2" onclick="clearFaceImageUpload()">
                                         <i class="bi bi-x me-1"></i>Clear
                                     </button>
                                 </div>
@@ -101,7 +214,7 @@
                             <label class="form-label text-white fw-bold">Motion Prompt (Optional)</label>
                             <textarea class="form-control bg-secondary text-white border-secondary" 
                                       id="promptInput" 
-                                      rows="6" 
+                                      rows="8" 
                                       placeholder="Describe the motion or camera movement (e.g., slow zoom in, camera pans left, dramatic lighting)..."
                                       style="min-height: 120px;">Dynamic camera movement with natural motion</textarea>
                             <div class="form-text text-muted mt-1">

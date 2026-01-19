@@ -55,6 +55,8 @@ async function routes(fastify, options) {
           name: config.name,
           description: config.description,
           async: config.async,
+          category: config.category || 'i2v',
+          supportedParams: config.supportedParams || [],
           totalTests: stats.totalTests || 0,
           averageTime: stats.averageTime || 0,
           recentAverageTime: stats.recentAverageTime || 0,
@@ -101,14 +103,33 @@ async function routes(fastify, options) {
       }
 
       const db = fastify.mongo.db;
-      const { modelId, baseImageUrl, prompt, basePrompt, duration, aspectRatio, motionIntensity, fps } = request.body;
+      const { 
+        modelId, baseImageUrl, prompt, basePrompt, duration, aspectRatio, 
+        motionIntensity, fps, videoMode, videoFile, faceImageFile 
+      } = request.body;
 
       if (!modelId) {
         return reply.status(400).send({ error: 'Model ID is required' });
       }
 
-      if (!baseImageUrl) {
-        return reply.status(400).send({ error: 'Base image URL is required' });
+      const config = VIDEO_MODEL_CONFIGS[modelId];
+      if (!config) {
+        return reply.status(400).send({ error: 'Invalid model ID' });
+      }
+
+      // Validate inputs based on mode/category
+      const category = config.category || videoMode || 'i2v';
+      
+      if (category === 'i2v' && !baseImageUrl) {
+        return reply.status(400).send({ error: 'Base image is required for image-to-video generation' });
+      }
+      
+      if (category === 'face' && (!videoFile || !faceImageFile)) {
+        return reply.status(400).send({ error: 'Both video file and face image are required for video merge face' });
+      }
+      
+      if (category === 't2v' && !prompt && !basePrompt) {
+        return reply.status(400).send({ error: 'Prompt is required for text-to-video generation' });
       }
 
       // Get video generation cost
@@ -142,23 +163,36 @@ async function routes(fastify, options) {
       }
 
       console.log(`[VideoDashboard] Starting video generation for model: ${modelId}`);
+      console.log(`[VideoDashboard] Category: ${category}`);
       console.log(`[VideoDashboard] Prompt: ${prompt}`);
 
-      // Start generation
-      const task = await initializeVideoTest(modelId, {
-        imageUrl: baseImageUrl,
-        prompt: prompt || basePrompt || 'Dynamic video from image',
+      // Build params based on category
+      const params = {
+        prompt: prompt || basePrompt || 'Dynamic video generation',
         duration: duration || '5',
         aspectRatio: aspectRatio || '16:9',
         motionIntensity: motionIntensity,
         fps: fps
-      });
+      };
+      
+      // Add category-specific params
+      if (category === 'i2v') {
+        params.imageUrl = baseImageUrl;
+      } else if (category === 'face') {
+        params.video_file = videoFile;
+        params.face_image_file = faceImageFile;
+      }
+      // T2V doesn't need additional params - just prompt
+
+      // Start generation
+      const task = await initializeVideoTest(modelId, params);
 
       task.originalPrompt = basePrompt || prompt;
       task.finalPrompt = prompt;
       task.duration = duration;
       task.aspectRatio = aspectRatio;
       task.userId = user._id.toString();
+      task.videoMode = category;
 
       return reply.send({
         success: true,

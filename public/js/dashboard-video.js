@@ -14,7 +14,11 @@ const state = {
     totalTimerInterval: null,
     // Pricing state
     videoCostPerUnit: window.PRICING?.videoCostPerUnit || 100,
-    userPoints: window.PRICING?.userPoints || 0
+    userPoints: window.PRICING?.userPoints || 0,
+    // Video mode state
+    videoMode: 'i2v', // i2v, t2v, face
+    videoDataUrl: null, // Base64 encoded video for merge face
+    faceImageDataUrl: null // Face image for merge face
 };
 
 /**
@@ -78,6 +82,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize file upload
     initializeImageUpload();
     
+    // Initialize video mode handlers
+    initializeVideoModeHandlers();
+    
+    // Initialize video merge face upload handlers
+    initializeVideoMergeFaceHandlers();
+    
     // Initialize rating stars
     initializeRatingStars();
     
@@ -90,6 +100,211 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize cost display
     updateCostDisplay();
 });
+
+/**
+ * Initialize video mode radio button handlers
+ */
+function initializeVideoModeHandlers() {
+    document.querySelectorAll('input[name="videoMode"]').forEach(radio => {
+        radio.addEventListener('change', handleVideoModeChange);
+    });
+}
+
+/**
+ * Handle video mode change
+ */
+function handleVideoModeChange(event) {
+    const mode = event.target.value;
+    state.videoMode = mode;
+    
+    // Show/hide sections based on mode
+    const baseImageSection = document.getElementById('baseImageSection');
+    const videoMergeFaceSection = document.getElementById('videoMergeFaceSection');
+    const i2vModels = document.getElementById('i2vModelsSection');
+    const t2vModels = document.getElementById('t2vModelsSection');
+    const faceModels = document.getElementById('faceModelsSection');
+    
+    // Hide all sections first
+    if (baseImageSection) baseImageSection.style.display = 'none';
+    if (videoMergeFaceSection) videoMergeFaceSection.style.display = 'none';
+    if (i2vModels) i2vModels.style.display = 'none';
+    if (t2vModels) t2vModels.style.display = 'none';
+    if (faceModels) faceModels.style.display = 'none';
+    
+    // Show relevant sections based on mode
+    switch (mode) {
+        case 'i2v':
+            if (baseImageSection) baseImageSection.style.display = 'block';
+            if (i2vModels) i2vModels.style.display = 'block';
+            // Auto-select first I2V model
+            const firstI2vRadio = document.querySelector('.i2v-model-radio');
+            if (firstI2vRadio) firstI2vRadio.checked = true;
+            break;
+        case 't2v':
+            if (t2vModels) t2vModels.style.display = 'block';
+            // Auto-select first T2V model
+            const firstT2vRadio = document.querySelector('.t2v-model-radio');
+            if (firstT2vRadio) firstT2vRadio.checked = true;
+            break;
+        case 'face':
+            if (videoMergeFaceSection) videoMergeFaceSection.style.display = 'block';
+            if (faceModels) faceModels.style.display = 'block';
+            // Auto-select first face model
+            const firstFaceRadio = document.querySelector('.face-model-radio');
+            if (firstFaceRadio) firstFaceRadio.checked = true;
+            break;
+    }
+}
+
+/**
+ * Initialize video merge face upload handlers
+ */
+function initializeVideoMergeFaceHandlers() {
+    // Video upload for merge face
+    const videoInput = document.getElementById('baseVideoInput');
+    const videoArea = document.getElementById('videoUploadArea');
+    
+    if (videoInput) {
+        videoInput.addEventListener('change', handleVideoUpload);
+    }
+    
+    if (videoArea) {
+        videoArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            videoArea.classList.add('drag-over');
+        });
+        videoArea.addEventListener('dragleave', () => {
+            videoArea.classList.remove('drag-over');
+        });
+        videoArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            videoArea.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                videoInput.files = files;
+                handleVideoUpload();
+            }
+        });
+    }
+    
+    // Face image upload for merge face
+    const faceInput = document.getElementById('faceImageInput');
+    const faceArea = document.getElementById('faceImageUploadArea');
+    
+    if (faceInput) {
+        faceInput.addEventListener('change', handleFaceImageUpload);
+    }
+    
+    if (faceArea) {
+        faceArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            faceArea.classList.add('drag-over');
+        });
+        faceArea.addEventListener('dragleave', () => {
+            faceArea.classList.remove('drag-over');
+        });
+        faceArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            faceArea.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                faceInput.files = files;
+                handleFaceImageUpload();
+            }
+        });
+    }
+}
+
+/**
+ * Handle video upload for merge face
+ */
+function handleVideoUpload() {
+    const fileInput = document.getElementById('baseVideoInput');
+    const file = fileInput.files[0];
+    
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('video/')) {
+        showNotification('Please upload a valid video file', 'error');
+        return;
+    }
+    
+    // Validate file size (max 100MB)
+    if (file.size > 100 * 1024 * 1024) {
+        showNotification('Video size must be less than 100MB', 'error');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        state.videoDataUrl = e.target.result;
+        
+        // Show preview
+        document.querySelector('#videoUploadArea .upload-placeholder')?.classList.add('d-none');
+        document.getElementById('videoPreview')?.classList.remove('d-none');
+        document.getElementById('previewVideoSource').src = state.videoDataUrl;
+        document.getElementById('previewVideo')?.load();
+        
+        showNotification('Video uploaded successfully', 'success');
+    };
+    reader.readAsDataURL(file);
+}
+
+/**
+ * Handle face image upload for merge face
+ */
+function handleFaceImageUpload() {
+    const fileInput = document.getElementById('faceImageInput');
+    const file = fileInput.files[0];
+    
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        showNotification('Please upload a valid image file', 'error');
+        return;
+    }
+    
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        showNotification('Image size must be less than 10MB', 'error');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        state.faceImageDataUrl = e.target.result;
+        
+        // Show preview
+        document.querySelector('#faceImageUploadArea .upload-placeholder')?.classList.add('d-none');
+        document.getElementById('faceImagePreview')?.classList.remove('d-none');
+        document.getElementById('facePreviewImg').src = state.faceImageDataUrl;
+        
+        showNotification('Face image uploaded successfully', 'success');
+    };
+    reader.readAsDataURL(file);
+}
+
+/**
+ * Clear video upload
+ */
+function clearVideoUpload() {
+    state.videoDataUrl = null;
+    document.getElementById('baseVideoInput').value = '';
+    document.querySelector('#videoUploadArea .upload-placeholder')?.classList.remove('d-none');
+    document.getElementById('videoPreview')?.classList.add('d-none');
+}
+
+/**
+ * Clear face image upload (for video merge face)
+ */
+function clearFaceImageUpload() {
+    state.faceImageDataUrl = null;
+    document.getElementById('faceImageInput').value = '';
+    document.querySelector('#faceImageUploadArea .upload-placeholder')?.classList.remove('d-none');
+    document.getElementById('faceImagePreview')?.classList.add('d-none');
+}
 
 /**
  * Initialize image upload functionality
@@ -171,9 +386,29 @@ function clearImageUpload() {
  * Start video generation
  */
 async function startGeneration() {
-    if (!state.baseImageDataUrl) {
-        showNotification('Please upload a base image first', 'warning');
-        return;
+    const mode = state.videoMode;
+    
+    // Validate inputs based on mode
+    if (mode === 'i2v') {
+        if (!state.baseImageDataUrl) {
+            showNotification('Please upload a base image first', 'warning');
+            return;
+        }
+    } else if (mode === 't2v') {
+        const prompt = document.getElementById('promptInput').value.trim();
+        if (!prompt) {
+            showNotification('Please enter a prompt for text-to-video generation', 'warning');
+            return;
+        }
+    } else if (mode === 'face') {
+        if (!state.videoDataUrl) {
+            showNotification('Please upload a source video', 'warning');
+            return;
+        }
+        if (!state.faceImageDataUrl) {
+            showNotification('Please upload a face image', 'warning');
+            return;
+        }
     }
     
     const selectedModel = document.querySelector('input[name="videoModel"]:checked');
@@ -196,10 +431,14 @@ async function startGeneration() {
     const aspectRatio = document.getElementById('aspectRatioSelect').value;
     
     console.log('[VideoDashboard] Starting generation:', {
+        mode,
         modelId,
         prompt,
         duration,
-        aspectRatio
+        aspectRatio,
+        hasBaseImage: !!state.baseImageDataUrl,
+        hasVideo: !!state.videoDataUrl,
+        hasFaceImage: !!state.faceImageDataUrl
     });
     
     // Clear previous results
@@ -213,19 +452,30 @@ async function startGeneration() {
     startTotalTimer();
     
     try {
+        const requestBody = {
+            modelId,
+            prompt,
+            basePrompt: prompt,
+            duration,
+            aspectRatio,
+            videoMode: mode
+        };
+        
+        // Add mode-specific data
+        if (mode === 'i2v') {
+            requestBody.baseImageUrl = state.baseImageDataUrl;
+        } else if (mode === 'face') {
+            requestBody.videoFile = state.videoDataUrl;
+            requestBody.faceImageFile = state.faceImageDataUrl;
+        }
+        // T2V just needs the prompt which is already included
+        
         const response = await fetch('/dashboard/video/generate', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                modelId,
-                baseImageUrl: state.baseImageDataUrl,
-                prompt,
-                basePrompt: prompt,
-                duration,
-                aspectRatio
-            })
+            body: JSON.stringify(requestBody)
         });
         
         const data = await response.json();

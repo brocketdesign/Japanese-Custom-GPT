@@ -253,7 +253,9 @@
 padding-top: 60px !important;
 }
 #imagePreviewModal .modal-body{
-  padding-top: 0 !important;
+  padding-top: 80px !important; /* Override to allow space for fixed header */
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
 }
 #imagePreviewModal .image-like-overlay {
   display: none !important;

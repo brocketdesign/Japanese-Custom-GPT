@@ -6,16 +6,16 @@ function createPreviewModalIfNeeded() {
         <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-fullscreen m-0">
                 <div class="modal-content mx-auto w-100">
-                    <div class="modal-header border-0 position-absolute" style="top: 0; right: 0; z-index: 10000; background: transparent;">
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="modal-header border-0 position-fixed w-100" style="top: 0; right: 0; z-index: 10000; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(10px); justify-content: flex-end; padding: 1rem;">
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body p-0" style="height: 100vh; overflow: hidden;">
-                        <div class="swiper-container image-preview-swiper" style="height: 100%; width: 100%;">
+                    <div class="modal-body p-0" style="height: 100vh; overflow-y: auto; overflow-x: hidden; padding-top: 80px !important;">
+                        <div class="swiper-container image-preview-swiper" style="min-height: 100%; width: 100%; padding-top: 20px; padding-bottom: 200px;">
                             <div class="swiper-wrapper"></div>
                             <div class="swiper-button-next" style="color: white; opacity: 0.8; right: 20px;"></div>
                             <div class="swiper-button-prev" style="color: white; opacity: 0.8; left: 20px;"></div>
                             <div class="swiper-pagination" style="bottom: 140px;"></div>
-                            <div class="image-like-overlay position-absolute" style="top: 60px; left: 20px; z-index: 1000;">
+                            <div class="image-like-overlay position-absolute" style="top: 80px; left: 20px; z-index: 1000;">
                                 <button class="btn btn-light rounded-circle image-like-btn d-flex justify-content-center align-items-center" style="width: 50px; height: 50px; opacity: 0.9; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.2);">
                                     <i class="bi bi-heart fs-4"></i>
                                 </button>
@@ -24,7 +24,7 @@ function createPreviewModalIfNeeded() {
                                 <div class="container text-center">
                                     <div class="d-none image-info-container mx-auto" style="max-width: 600px; padding: 15px; border-radius: 12px; backdrop-filter: blur(10px);">
                                         <div class="image-title text-white fw-bold mb-2" style="font-size: 18px;"></div>
-                                        <div class="image-prompt-container d-none" style="max-height: 60px; overflow-y: auto; scrollbar-width: thin;">
+                                        <div class="image-prompt-container d-none" style="max-height: 100px; overflow-y: auto; scrollbar-width: thin;">
                                             <div class="image-prompt text-white-50" style="font-size: 14px; line-height: 1.4;"></div>
                                         </div>
                                     </div>

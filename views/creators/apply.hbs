@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="{{lang}}">
+{{> dashboard-header}}
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/css/creators.css">
+    <title>{{title}}</title>
+</head>
+<body>
+    {{> dashboard-nav}}
+
+    <div id="swup" class="creator-apply-page">
+        <!-- Header -->
+        <section class="apply-hero">
+            <div class="hero-content">
+                <div class="hero-icon">
+                    <i class="bi bi-rocket-takeoff"></i>
+                </div>
+                <h1 class="hero-title">
+                    {{#if translations.creators.applyHeroTitle}}
+                        {{translations.creators.applyHeroTitle}}
+                    {{else}}
+                        Become a Creator
+                    {{/if}}
+                </h1>
+                <p class="hero-subtitle">
+                    {{#if translations.creators.applyHeroSubtitle}}
+                        {{translations.creators.applyHeroSubtitle}}
+                    {{else}}
+                        Share your AI creations with the world, build your audience, and monetize your content
+                    {{/if}}
+                </p>
+            </div>
+        </section>
+
+        <!-- Benefits Section -->
+        <section class="benefits-section">
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <h3>Build Your Audience</h3>
+                    <p>Connect with fans who love your unique style and creations</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <h3>Earn Money</h3>
+                    <p>Monetize through subscriptions, tips, and exclusive content</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                    <h3>Grow Your Brand</h3>
+                    <p>Get featured on the platform and boost your visibility</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <i class="bi bi-tools"></i>
+                    </div>
+                    <h3>Creator Tools</h3>
+                    <p>Access analytics, scheduling, and content management tools</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Application Form -->
+        <section class="application-section">
+            <div class="form-container">
+                <h2 class="form-title">
+                    <i class="bi bi-pencil-square me-2"></i>
+                    {{#if translations.creators.applicationForm}}
+                        {{translations.creators.applicationForm}}
+                    {{else}}
+                        Creator Application
+                    {{/if}}
+                </h2>
+
+                <form id="creatorApplicationForm" class="creator-form">
+                    <!-- Display Name -->
+                    <div class="form-group">
+                        <label for="displayName" class="form-label">
+                            <i class="bi bi-person-badge me-1"></i>
+                            {{#if translations.creators.displayName}}{{translations.creators.displayName}}{{else}}Creator Name{{/if}}
+                            <span class="required">*</span>
+                        </label>
+                        <input type="text" 
+                               id="displayName" 
+                               name="displayName" 
+                               class="form-input"
+                               value="{{user.nickname}}"
+                               placeholder="{{#if translations.creators.displayNamePlaceholder}}{{translations.creators.displayNamePlaceholder}}{{else}}Your public creator name{{/if}}"
+                               required
+                               minlength="2"
+                               maxlength="50">
+                        <span class="form-hint">This is how you'll appear to your followers</span>
+                    </div>
+
+                    <!-- Bio -->
+                    <div class="form-group">
+                        <label for="bio" class="form-label">
+                            <i class="bi bi-chat-quote me-1"></i>
+                            {{#if translations.creators.bio}}{{translations.creators.bio}}{{else}}Bio{{/if}}
+                        </label>
+                        <textarea id="bio" 
+                                  name="bio" 
+                                  class="form-textarea"
+                                  rows="4"
+                                  placeholder="{{#if translations.creators.bioPlaceholder}}{{translations.creators.bioPlaceholder}}{{else}}Tell people about yourself and your content...{{/if}}"
+                                  maxlength="500"></textarea>
+                        <span class="form-hint char-count"><span id="bioCount">0</span>/500</span>
+                    </div>
+
+                    <!-- Category -->
+                    <div class="form-group">
+                        <label for="category" class="form-label">
+                            <i class="bi bi-tag me-1"></i>
+                            {{#if translations.creators.category}}{{translations.creators.category}}{{else}}Content Category{{/if}}
+                            <span class="required">*</span>
+                        </label>
+                        <select id="category" name="category" class="form-select" required>
+                            {{#each categories}}
+                            <option value="{{this.id}}">{{this.label}}</option>
+                            {{/each}}
+                        </select>
+                    </div>
+
+                    <!-- Tags -->
+                    <div class="form-group">
+                        <label for="tags" class="form-label">
+                            <i class="bi bi-tags me-1"></i>
+                            {{#if translations.creators.tags}}{{translations.creators.tags}}{{else}}Tags{{/if}}
+                        </label>
+                        <input type="text" 
+                               id="tags" 
+                               name="tags" 
+                               class="form-input"
+                               placeholder="{{#if translations.creators.tagsPlaceholder}}{{translations.creators.tagsPlaceholder}}{{else}}anime, fantasy, portraits (comma separated){{/if}}">
+                        <span class="form-hint">Add up to 5 tags to help people find you</span>
+                        <div id="tagsPreview" class="tags-preview"></div>
+                    </div>
+
+                    <!-- Social Links Section -->
+                    <div class="form-section">
+                        <h3 class="section-subtitle">
+                            <i class="bi bi-link-45deg me-2"></i>
+                            {{#if translations.creators.socialLinks}}{{translations.creators.socialLinks}}{{else}}Social Links{{/if}}
+                        </h3>
+                        <p class="section-hint">Optional - Connect your social media to help fans find you</p>
+
+                        <div class="social-links-grid">
+                            <div class="form-group social-input">
+                                <label for="instagram" class="form-label">
+                                    <i class="bi bi-instagram"></i>
+                                </label>
+                                <input type="url" 
+                                       id="instagram" 
+                                       name="instagram" 
+                                       class="form-input"
+                                       placeholder="https://instagram.com/username">
+                            </div>
+
+                            <div class="form-group social-input">
+                                <label for="twitter" class="form-label">
+                                    <i class="bi bi-twitter-x"></i>
+                                </label>
+                                <input type="url" 
+                                       id="twitter" 
+                                       name="twitter" 
+                                       class="form-input"
+                                       placeholder="https://twitter.com/username">
+                            </div>
+
+                            <div class="form-group social-input">
+                                <label for="youtube" class="form-label">
+                                    <i class="bi bi-youtube"></i>
+                                </label>
+                                <input type="url" 
+                                       id="youtube" 
+                                       name="youtube" 
+                                       class="form-input"
+                                       placeholder="https://youtube.com/@channel">
+                            </div>
+
+                            <div class="form-group social-input">
+                                <label for="website" class="form-label">
+                                    <i class="bi bi-globe"></i>
+                                </label>
+                                <input type="url" 
+                                       id="website" 
+                                       name="website" 
+                                       class="form-input"
+                                       placeholder="https://yourwebsite.com">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Terms Agreement -->
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="agreeTerms" name="agreeTerms" required>
+                            <span class="checkmark"></span>
+                            {{#if translations.creators.agreeTerms}}
+                                {{{translations.creators.agreeTerms}}}
+                            {{else}}
+                                I agree to the <a href="/legal/terms" target="_blank">Creator Terms of Service</a> and <a href="/legal/privacy" target="_blank">Privacy Policy</a>
+                            {{/if}}
+                        </label>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="form-actions">
+                        <a href="/creators" class="btn-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            {{#if translations.creators.cancel}}{{translations.creators.cancel}}{{else}}Cancel{{/if}}
+                        </a>
+                        <button type="submit" class="btn-primary" id="submitBtn">
+                            <span class="btn-text">
+                                <i class="bi bi-rocket me-2"></i>
+                                {{#if translations.creators.submitApplication}}{{translations.creators.submitApplication}}{{else}}Start Creating{{/if}}
+                            </span>
+                            <span class="btn-loading" style="display: none;">
+                                <i class="bi bi-hourglass-split me-2"></i>
+                                {{#if translations.creators.submitting}}{{translations.creators.submitting}}{{else}}Processing...{{/if}}
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section class="faq-section">
+            <h2 class="faq-title">
+                <i class="bi bi-question-circle me-2"></i>
+                Frequently Asked Questions
+            </h2>
+            <div class="faq-list">
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFaq(this)">
+                        <span>How do I earn money as a creator?</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Creators can earn through subscription tiers (coming soon), tips from followers, and exclusive content sales. You'll have access to a dashboard showing your earnings and analytics.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFaq(this)">
+                        <span>What type of content can I create?</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>You can create and share AI-generated images, characters, and videos. All content must comply with our community guidelines and terms of service.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFaq(this)">
+                        <span>How do I get verified?</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Verified badges are given to creators who consistently produce quality content, have a significant following, and maintain good standing in the community. We review accounts periodically for verification.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFaq(this)">
+                        <span>Can I change my creator profile later?</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Yes! You can update your display name, bio, category, tags, and social links anytime from your profile settings.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    {{> dashboard-footer}}
+
+    <script>
+        // Bio character counter
+        document.getElementById('bio').addEventListener('input', function() {
+            document.getElementById('bioCount').textContent = this.value.length;
+        });
+
+        // Tags preview
+        document.getElementById('tags').addEventListener('input', function() {
+            const tagsPreview = document.getElementById('tagsPreview');
+            const tags = this.value.split(',').map(t => t.trim()).filter(t => t.length > 0).slice(0, 5);
+            
+            if (tags.length > 0) {
+                tagsPreview.innerHTML = tags.map(tag => `<span class="tag-preview">${tag}</span>`).join('');
+            } else {
+                tagsPreview.innerHTML = '';
+            }
+        });
+
+        // FAQ toggle
+        function toggleFaq(element) {
+            const faqItem = element.closest('.faq-item');
+            faqItem.classList.toggle('active');
+        }
+
+        // Form submission
+        document.getElementById('creatorApplicationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const btnLoading = submitBtn.querySelector('.btn-loading');
+            
+            // Show loading state
+            btnText.style.display = 'none';
+            btnLoading.style.display = 'inline-flex';
+            submitBtn.disabled = true;
+
+            try {
+                const formData = {
+                    displayName: document.getElementById('displayName').value.trim(),
+                    bio: document.getElementById('bio').value.trim(),
+                    category: document.getElementById('category').value,
+                    tags: document.getElementById('tags').value.split(',').map(t => t.trim()).filter(t => t.length > 0).slice(0, 5),
+                    instagram: document.getElementById('instagram').value.trim(),
+                    twitter: document.getElementById('twitter').value.trim(),
+                    youtube: document.getElementById('youtube').value.trim(),
+                    website: document.getElementById('website').value.trim()
+                };
+
+                const response = await fetch('/api/creators/apply', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Show success message
+                    if (typeof Swal !== 'undefined') {
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'Welcome, Creator!',
+                            text: 'Your creator profile has been set up. Start sharing your amazing content!',
+                            confirmButtonColor: '#8240FF'
+                        });
+                    } else {
+                        alert('Your creator profile has been set up successfully!');
+                    }
+                    // Redirect to profile
+                    window.location.href = '/user/{{user._id}}';
+                } else {
+                    throw new Error(result.error || 'Application failed');
+                }
+            } catch (error) {
+                console.error('Application error:', error);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops!',
+                        text: error.message || 'Something went wrong. Please try again.',
+                        confirmButtonColor: '#8240FF'
+                    });
+                } else {
+                    alert(error.message || 'Something went wrong. Please try again.');
+                }
+            } finally {
+                // Reset button state
+                btnText.style.display = 'inline-flex';
+                btnLoading.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

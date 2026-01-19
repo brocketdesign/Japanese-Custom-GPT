@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="{{lang}}">
+{{> dashboard-header}}
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/css/creators.css">
+    <title>{{title}}</title>
+</head>
+<body>
+    {{> dashboard-nav}}
+
+    <div id="swup" class="creators-page">
+        <!-- Hero Section -->
+        <section class="creators-hero">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <i class="bi bi-stars me-2"></i>
+                    {{#if translations.creators.heroTitle}}
+                        {{translations.creators.heroTitle}}
+                    {{else}}
+                        Discover Amazing Creators
+                    {{/if}}
+                </h1>
+                <p class="hero-subtitle">
+                    {{#if translations.creators.heroSubtitle}}
+                        {{translations.creators.heroSubtitle}}
+                    {{else}}
+                        Follow your favorite AI artists and unlock exclusive content
+                    {{/if}}
+                </p>
+                
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <div class="search-input-wrapper">
+                        <i class="bi bi-search search-icon"></i>
+                        <input type="text" 
+                               id="creatorSearch" 
+                               class="search-input" 
+                               placeholder="{{#if translations.creators.searchPlaceholder}}{{translations.creators.searchPlaceholder}}{{else}}Search creators...{{/if}}">
+                        <button class="search-btn" onclick="searchCreators()">
+                            <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Become a Creator CTA -->
+        {{#unless user.isCreator}}
+        <section class="become-creator-cta">
+            <div class="cta-content">
+                <div class="cta-icon">
+                    <i class="bi bi-rocket-takeoff"></i>
+                </div>
+                <div class="cta-text">
+                    <h3>
+                        {{#if translations.creators.becomeCreatorTitle}}
+                            {{translations.creators.becomeCreatorTitle}}
+                        {{else}}
+                            Start Your Creator Journey
+                        {{/if}}
+                    </h3>
+                    <p>
+                        {{#if translations.creators.becomeCreatorDesc}}
+                            {{translations.creators.becomeCreatorDesc}}
+                        {{else}}
+                            Share your AI creations, build a following, and earn money doing what you love.
+                        {{/if}}
+                    </p>
+                </div>
+                <a href="/creators/apply" class="cta-btn">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    {{#if translations.creators.becomeCreator}}
+                        {{translations.creators.becomeCreator}}
+                    {{else}}
+                        Become a Creator
+                    {{/if}}
+                </a>
+            </div>
+        </section>
+        {{/unless}}
+
+        <!-- Featured Creators Section -->
+        {{#if featuredCreators.length}}
+        <section class="creators-section featured-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="bi bi-award me-2"></i>
+                    {{#if translations.creators.featured}}
+                        {{translations.creators.featured}}
+                    {{else}}
+                        Featured Creators
+                    {{/if}}
+                </h2>
+                <span class="verified-badge">
+                    <i class="bi bi-patch-check-fill"></i> Verified
+                </span>
+            </div>
+            <div class="creators-carousel" id="featuredCarousel">
+                {{#each featuredCreators}}
+                <a href="/user/{{this._id}}" class="creator-card featured">
+                    <div class="creator-cover" style="{{#if this.coverImage}}background-image: url('{{this.coverImage}}'){{/if}}">
+                        <div class="cover-overlay"></div>
+                        {{#if this.verified}}
+                        <div class="verified-indicator">
+                            <i class="bi bi-patch-check-fill"></i>
+                        </div>
+                        {{/if}}
+                    </div>
+                    <div class="creator-avatar">
+                        <img src="{{default this.profileUrl '/img/avatar.png'}}" alt="{{this.displayName}}">
+                    </div>
+                    <div class="creator-info">
+                        <h3 class="creator-name">{{this.displayName}}</h3>
+                        <span class="creator-category">{{this.categoryLabel}}</span>
+                        <div class="creator-stats">
+                            <span><i class="bi bi-people-fill"></i> {{this.followerCount}}</span>
+                            <span><i class="bi bi-heart-fill"></i> {{this.imageLikeCount}}</span>
+                        </div>
+                    </div>
+                </a>
+                {{/each}}
+            </div>
+        </section>
+        {{/if}}
+
+        <!-- Trending Creators Section -->
+        {{#if trendingCreators.length}}
+        <section class="creators-section trending-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="bi bi-fire me-2"></i>
+                    {{#if translations.creators.trending}}
+                        {{translations.creators.trending}}
+                    {{else}}
+                        Trending Now
+                    {{/if}}
+                </h2>
+            </div>
+            <div class="creators-carousel" id="trendingCarousel">
+                {{#each trendingCreators}}
+                <a href="/user/{{this._id}}" class="creator-card trending">
+                    <div class="creator-cover" style="{{#if this.coverImage}}background-image: url('{{this.coverImage}}'){{/if}}">
+                        <div class="cover-overlay"></div>
+                    </div>
+                    <div class="creator-avatar">
+                        <img src="{{default this.profileUrl '/img/avatar.png'}}" alt="{{this.displayName}}">
+                        {{#if this.verified}}
+                        <span class="avatar-badge">
+                            <i class="bi bi-patch-check-fill"></i>
+                        </span>
+                        {{/if}}
+                    </div>
+                    <div class="creator-info">
+                        <h3 class="creator-name">{{this.displayName}}</h3>
+                        <span class="creator-category">{{this.categoryLabel}}</span>
+                        <div class="creator-stats">
+                            <span><i class="bi bi-people-fill"></i> {{this.followerCount}}</span>
+                        </div>
+                    </div>
+                </a>
+                {{/each}}
+            </div>
+        </section>
+        {{/if}}
+
+        <!-- Category Filter -->
+        <section class="category-filter-section">
+            <div class="filter-container">
+                <button class="filter-btn active" data-category="all">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                    {{#if translations.creators.allCategories}}
+                        {{translations.creators.allCategories}}
+                    {{else}}
+                        All
+                    {{/if}}
+                </button>
+                {{#each categories}}
+                <button class="filter-btn" data-category="{{this.id}}">
+                    <i class="{{this.icon}}"></i>
+                    {{this.label}}
+                </button>
+                {{/each}}
+            </div>
+        </section>
+
+        <!-- All Creators Grid -->
+        <section class="creators-section all-creators-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="bi bi-people me-2"></i>
+                    {{#if translations.creators.allCreators}}
+                        {{translations.creators.allCreators}}
+                    {{else}}
+                        All Creators
+                    {{/if}}
+                </h2>
+                <div class="sort-dropdown">
+                    <select id="sortSelect" class="sort-select" onchange="handleSortChange()">
+                        <option value="popular">{{#if translations.creators.sortPopular}}{{translations.creators.sortPopular}}{{else}}Most Popular{{/if}}</option>
+                        <option value="newest">{{#if translations.creators.sortNewest}}{{translations.creators.sortNewest}}{{else}}Newest{{/if}}</option>
+                        <option value="trending">{{#if translations.creators.sortTrending}}{{translations.creators.sortTrending}}{{else}}Trending{{/if}}</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="creators-grid" id="creatorsGrid">
+                {{#each creators}}
+                <a href="/user/{{this._id}}" class="creator-card-grid">
+                    <div class="card-cover" style="{{#if this.coverImage}}background-image: url('{{this.coverImage}}'){{/if}}">
+                        <div class="cover-overlay"></div>
+                        {{#if this.verified}}
+                        <div class="verified-badge-small">
+                            <i class="bi bi-patch-check-fill"></i>
+                        </div>
+                        {{/if}}
+                    </div>
+                    <div class="card-body">
+                        <div class="card-avatar">
+                            <img src="{{default this.profileUrl '/img/avatar.png'}}" alt="{{this.displayName}}">
+                        </div>
+                        <h3 class="card-name">{{this.displayName}}</h3>
+                        <span class="card-category">{{this.categoryLabel}}</span>
+                        {{#if this.bio}}
+                        <p class="card-bio">{{this.bio}}</p>
+                        {{/if}}
+                        <div class="card-stats">
+                            <div class="stat">
+                                <i class="bi bi-people-fill"></i>
+                                <span>{{this.followerCount}}</span>
+                            </div>
+                            <div class="stat">
+                                <i class="bi bi-chat-dots-fill"></i>
+                                <span>{{this.chatCount}}</span>
+                            </div>
+                            <div class="stat">
+                                <i class="bi bi-heart-fill"></i>
+                                <span>{{this.imageLikeCount}}</span>
+                            </div>
+                        </div>
+                        {{#if this.tags.length}}
+                        <div class="card-tags">
+                            {{#each this.tags}}
+                            <span class="tag">{{this}}</span>
+                            {{/each}}
+                        </div>
+                        {{/if}}
+                    </div>
+                </a>
+                {{/each}}
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <i class="bi bi-search fs-1"></i>
+                <p>{{#if translations.creators.noCreatorsFound}}{{translations.creators.noCreatorsFound}}{{else}}No creators found{{/if}}</p>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="loading-state" style="display: none;">
+                <div class="spinner"></div>
+                <p>{{#if translations.creators.loading}}{{translations.creators.loading}}{{else}}Loading...{{/if}}</p>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination-container" id="paginationContainer">
+                {{#if pagination.hasMore}}
+                <button class="load-more-btn" onclick="loadMoreCreators()">
+                    <i class="bi bi-arrow-down-circle me-2"></i>
+                    {{#if translations.creators.loadMore}}
+                        {{translations.creators.loadMore}}
+                    {{else}}
+                        Load More
+                    {{/if}}
+                </button>
+                {{/if}}
+            </div>
+        </section>
+    </div>
+
+    {{> dashboard-footer}}
+
+    <script src="/js/creators.js"></script>
+    <script>
+        // Initialize with data from server
+        const initialPagination = {{{json pagination}}};
+        const initialCategory = 'all';
+        const initialSort = 'popular';
+        
+        // Initialize the creators page
+        document.addEventListener('DOMContentLoaded', function() {
+            initCreatorsPage({
+                pagination: initialPagination,
+                category: initialCategory,
+                sortBy: initialSort
+            });
+        });
+    </script>
+</body>
+</html>

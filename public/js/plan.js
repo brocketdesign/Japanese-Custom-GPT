@@ -2,9 +2,9 @@ $(document).ready(function() {
   let plan = {};
   let stripe;
   if(window.location.href.indexOf('https://') >= 0){
-    stripe = Stripe('pk_live_51PjtRbE5sP7DA1XvCkdmezori9qPGoO21y7yKSVvgkQVyrhWZfHAUkNsjPMnbwpPlp4zzoYsRjn79Ad7XN7HTHcc00UjBA9adF'); // Use your publishable key here
+    stripe = Stripe('pk_live_51PjtRbE5sP7DA1XvCkdmezori9qPGoO21y7yKSVvgkQVyrhWZfHAUkNsjPMnbwpPlp4zzoYsRjn79Ad7XN7HTHcc00UjBA9adF');
   }else{
-    stripe = Stripe('pk_test_51PjtRbE5sP7DA1XvD68v7X7Qj7pG6ZJpQmvuNodJjxc7MbH1ss2Te2gahFAS9nms4pbmEdMYdfCPxFDWHBbu9CxR003ikTnRES'); // Use your publishable key here
+    stripe = Stripe('pk_test_51PjtRbE5sP7DA1XvD68v7X7Qj7pG6ZJpQmvuNodJjxc7MbH1ss2Te2gahFAS9nms4pbmEdMYdfCPxFDWHBbu9CxR003ikTnRES');
   }
 
   // Function to fetch plans from the server
@@ -13,94 +13,172 @@ $(document).ready(function() {
       type: 'GET',
       url: `/plan/list?lang=${lang}`,
       dataType: 'json',
-      success: function({plans,features}) {
+      success: function({plans, features}) {
         const dayPassPlans = plans.filter(plan => plan.isOneTime);
         const subscriptionPlans = plans.filter(plan => !plan.isOneTime);
         
-        // Render features and plans into the new layout
-        renderFeatures(features || []);
-        renderBottomPlanList(subscriptionPlans, dayPassPlans);
-        // keep comparison rendering optional (removed from UI)
+        // Render plan cards with the new professional design
+        renderPlanCards(subscriptionPlans, dayPassPlans);
       },
       error: function(xhr, status, error) {
         console.error('Failed to fetch plans:', error);
+        $('#planCardsContainer').html(`
+          <div class="text-center py-5 text-danger">
+            <i class="bi bi-exclamation-triangle fs-1 mb-3 d-block"></i>
+            <p>Failed to load plans. Please refresh the page.</p>
+          </div>
+        `);
       }
     });
   }
 
-  // New: render top features area (concise, mobile-friendly)
-  function renderFeatures(features) {
-    console.log('Rendering features:', features);
-    const $extra = $('#additionalFeatures');
-    $extra.empty();
-    // If server provides features array, use it; otherwise do nothing (we already have 3 core features in template)
-    if (Array.isArray(features) && features.length) {
-      features.forEach(f => {
-        const el = $(`
-          <div class="feature-item">
-            <i class="${f.icon || 'bi bi-star'}"></i>
-            <div>
-              <div class="fw-bold">${f.title || f.name}</div>
-              <div class="text-muted small">${f.description || ''}</div>
-            </div>
-          </div>
-        `);
-        $extra.append(el);
-      });
-    }
-  }
-
-  // New: render plans into sticky bottom horizontally scrollable list
-  function renderBottomPlanList(subscriptionPlans, dayPassPlans) {
-    const $container = $('#planListBottom');
+  // Render plan cards with professional dark design
+  function renderPlanCards(subscriptionPlans, dayPassPlans) {
+    const $container = $('#planCardsContainer');
     $container.empty();
 
-    // combine day pass first (if any) then subscriptions
-    const allPlans = [...dayPassPlans, ...subscriptionPlans];
+    // Combine subscription plans first, then day passes
+    const allPlans = [...subscriptionPlans, ...dayPassPlans];
 
-    allPlans.forEach((plan) => {
-      const isOneTime = !!plan.isOneTime;
-      const badge = isOneTime ? `<span class="badge bg-info ms-2">${translations.one_time}</span>` : '';
-      const priceLine = `<div class="price">${plan.price}${isOneTime ? '' : `<span class="meta"> / ${translations.monthly}</span>`}</div>`;
-      const discount = plan.discount ? `<div class="meta small text-danger">${plan.discount}</div>` : '';
-      const name = `<div class="name">${plan.name} ${badge}</div>`;
-      const meta = `<div class="meta">${plan.shortDescription || ''}</div>`;
-
-      const card = $(`
-        <div class="plan-compact" data-plan-id="${plan.id}">
-          <div>
-            ${name}
-            ${priceLine}
-            ${discount}
-            ${meta}
-          </div>
-          <button class="cta" data-plan-id="${plan.id}">${translations.plan_page.get_started}</button>
+    if (allPlans.length === 0) {
+      $container.html(`
+        <div class="text-center py-5 text-muted">
+          <i class="bi bi-inbox fs-1 mb-3 d-block"></i>
+          <p>No plans available at the moment.</p>
         </div>
       `);
-      $container.append(card);
+      return;
+    }
+
+    allPlans.forEach((plan, index) => {
+      const isOneTime = !!plan.isOneTime;
+      const isPopular = plan.popular || plan.isPopular || false;
+      const isBestValue = plan.bestValue || false;
+      
+      // Determine card class
+      let cardClass = 'plan-card';
+      if (isPopular) cardClass += ' popular';
+      else if (isOneTime) cardClass += ' one-time';
+      
+      // Build badge HTML
+      let badgeHtml = '';
+      if (isPopular) {
+        badgeHtml = `<span class="plan-badge popular"><i class="bi bi-star-fill me-1"></i>${translations.plan_page.popular || 'Popular'}</span>`;
+      } else if (isBestValue) {
+        badgeHtml = `<span class="plan-badge best-value"><i class="bi bi-award-fill me-1"></i>${translations.plan_page.best_value || 'Best Value'}</span>`;
+      } else if (isOneTime) {
+        badgeHtml = `<span class="plan-badge one-time"><i class="bi bi-clock me-1"></i>${translations.one_time || 'One-time'}</span>`;
+      }
+      
+      // Parse price - handle various formats
+      let priceDisplay = plan.price || '$0';
+      let currency = '$';
+      let amount = '0';
+      let period = isOneTime ? '' : `/ ${translations.monthly || 'month'}`;
+      
+      // Extract numeric value from price string
+      const priceMatch = String(priceDisplay).match(/([¥$€£]?)(\d+(?:,\d{3})*(?:\.\d{2})?)/);
+      if (priceMatch) {
+        currency = priceMatch[1] || '$';
+        amount = priceMatch[2];
+      }
+      
+      // Build discount HTML
+      let discountHtml = '';
+      if (plan.discount) {
+        discountHtml = `<span class="plan-discount"><i class="bi bi-tag-fill me-1"></i>${plan.discount}</span>`;
+      }
+      
+      // Build features list
+      let featuresHtml = '';
+      if (plan.features && Array.isArray(plan.features)) {
+        featuresHtml = `
+          <ul class="plan-features-list">
+            ${plan.features.slice(0, 4).map(feature => `
+              <li>
+                <i class="bi bi-check-circle-fill"></i>
+                <span>${escapeHtml(feature)}</span>
+              </li>
+            `).join('')}
+          </ul>
+        `;
+      }
+      
+      // Build card HTML
+      const cardHtml = `
+        <div class="${cardClass}" data-plan-id="${plan.id}">
+          <div class="plan-card-header">
+            <h3 class="plan-name">${escapeHtml(plan.name)}</h3>
+            ${badgeHtml}
+          </div>
+          
+          <div class="plan-price-container">
+            <div class="plan-price">
+              <span class="currency">${currency}</span>
+              <span class="amount">${amount}</span>
+              <span class="period">${period}</span>
+            </div>
+            ${discountHtml}
+          </div>
+          
+          ${plan.shortDescription ? `<p class="plan-description">${escapeHtml(plan.shortDescription)}</p>` : ''}
+          
+          ${featuresHtml}
+          
+          <button class="plan-cta-btn" data-plan-id="${plan.id}">
+            <i class="bi bi-lightning-charge-fill"></i>
+            ${translations.plan_page.get_started || 'Get Started'}
+          </button>
+        </div>
+      `;
+      
+      $container.append(cardHtml);
     });
 
-    // Touch / click handlers: subscribe on CTA or card tap
-    $container.find('.cta, .plan-compact').on('click', function(e) {
+    // Click handlers for plan cards
+    $container.find('.plan-cta-btn').on('click', function(e) {
       e.stopPropagation();
-      const pid = $(this).closest('.plan-compact').data('plan-id') || $(this).data('plan-id');
-      if (!pid) return;
-      // provide small visual feedback
-      const $card = $(this).closest('.plan-compact');
-      $card.css('transform','scale(0.98)');
-      setTimeout(()=> $card.css('transform',''), 140);
-      // Update text of the CTA and disable to prevent multiple clicks
-      $card.find('.cta').text(translations.plan_page.processing || 'Processing...').attr('disabled', true);
-      // Also disable other CTAs & prevent multiple clicks
-      $container.find('.cta').not($card.find('.cta')).attr('disabled', true);
-      // Proceed to create checkout session
-      createCheckoutSession(pid);
+      const planId = $(this).data('plan-id');
+      handlePlanSelection(planId, $(this).closest('.plan-card'));
+    });
+    
+    $container.find('.plan-card').on('click', function(e) {
+      if ($(e.target).closest('.plan-cta-btn').length === 0) {
+        const planId = $(this).data('plan-id');
+        handlePlanSelection(planId, $(this));
+      }
+    });
+  }
+
+  // Handle plan selection
+  function handlePlanSelection(planId, $card) {
+    if (!planId) return;
+    
+    // Visual feedback
+    $card.css('transform', 'scale(0.98)');
+    setTimeout(() => $card.css('transform', ''), 150);
+    
+    // Update button state
+    const $btn = $card.find('.plan-cta-btn');
+    const originalText = $btn.html();
+    $btn.html(`<i class="bi bi-hourglass-split"></i> ${translations.plan_page.processing || 'Processing...'}`);
+    $btn.prop('disabled', true);
+    
+    // Disable all other buttons
+    $('#planCardsContainer .plan-cta-btn').not($btn).prop('disabled', true);
+    
+    // Create checkout session
+    createCheckoutSession(planId).catch(() => {
+      // Restore button states on error
+      $btn.html(originalText);
+      $btn.prop('disabled', false);
+      $('#planCardsContainer .plan-cta-btn').prop('disabled', false);
     });
   }
 
   // Function to create a checkout session
   function createCheckoutSession(billingCycle) {
-    $.ajax({
+    return $.ajax({
       type: 'POST',
       url: '/plan/subscribe',
       headers: {
@@ -108,35 +186,39 @@ $(document).ready(function() {
       },
       data: JSON.stringify({ billingCycle }),
       success: function(response) {
-          if (response.action == 'upgrade') {
-              $.post('/plan/upgrade', { 
-                  newPlanId: response.newPlanId,
-                  billingCycle :response.billingCycle
-              })
-              .done(function(data) {
-                  const newPlan = data.newPlan;
-                  const planName = newPlan.name;
-                  console.log('Upgrade successful:', planName);
-                  
-                  Swal.fire({
-                    icon: 'success',
-                    title: translations.upgrade_successful,
-                    text: `${translations.new_plan}: ${planName}`,
-                    showCloseButton: true
-                  });
-              })
-              .fail(function(xhr, status, error) {
-                  console.error('Error upgrading plan:', error);
-                  const errorMessage = xhr.responseJSON ? xhr.responseJSON.error : translations.plan_page.upgrade_error; // Use new translation key
-                  Swal.fire({
-                      icon: 'error',
-                      title: translations.error, // Use new translation key
-                      text: errorMessage,
-                      confirmButtonText: 'OK'
-                  });
-              });
-              return;
-          }
+        if (response.action == 'upgrade') {
+          $.post('/plan/upgrade', { 
+            newPlanId: response.newPlanId,
+            billingCycle: response.billingCycle
+          })
+          .done(function(data) {
+            const newPlan = data.newPlan;
+            const planName = newPlan.name;
+            console.log('Upgrade successful:', planName);
+            
+            Swal.fire({
+              icon: 'success',
+              title: translations.upgrade_successful,
+              text: `${translations.new_plan}: ${planName}`,
+              showCloseButton: true,
+              background: '#1a1a2e',
+              color: '#fff'
+            });
+          })
+          .fail(function(xhr, status, error) {
+            console.error('Error upgrading plan:', error);
+            const errorMessage = xhr.responseJSON ? xhr.responseJSON.error : translations.plan_page.upgrade_error;
+            Swal.fire({
+              icon: 'error',
+              title: translations.error,
+              text: errorMessage,
+              confirmButtonText: 'OK',
+              background: '#1a1a2e',
+              color: '#fff'
+            });
+          });
+          return;
+        }
         window.location.href = response.url;
       },
       error: function(xhr, status, error) {
@@ -146,23 +228,36 @@ $(document).ready(function() {
             title: translations.already_subscribed,
             text: translations.already_subscribed_message,
             icon: 'warning',
-            showCloseButton: true
+            showCloseButton: true,
+            background: '#1a1a2e',
+            color: '#fff'
           });
         } else {
           Swal.fire({
             title: translations.error_occurred,
             text: translations.subscription_creation_failed,
             icon: 'error',
-            showCloseButton: true
+            showCloseButton: true,
+            background: '#1a1a2e',
+            color: '#fff'
           });
         }
       }
     });
   }
 
+  // Utility function to escape HTML
+  function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Initialize
   fetchPlans();
 
-  // Keep plan-switch behavior but simplified to re-fetch
+  // Keep plan-switch behavior
   $('#plan-switch').on('change', function() {
     fetchPlans();
   });

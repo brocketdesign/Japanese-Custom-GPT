@@ -1,185 +1,125 @@
 <script>startCountdown();</script>
 <link rel="stylesheet" href="/css/plan.css">
 
-<style>
-/* filepath: /Users/user/Documents/GitHub/Japanese-Custom-GPT/views/plan.hbs (inline styles for mobile-first layout) */
-/* Mobile-native feel: large touch targets, smooth scrolling, sticky bottom plan bar */
-
-/* Keep html/body full height and remove page-level vertical scroll */
-body, html { height: 100%; margin: 0; }
-
-/* Make the page a fixed-height flex column so only features-scroll can scroll */
-.plan-page-root { display: flex; flex-direction: column; height: 100vh; min-height: 100vh; overflow: hidden; background: var(--bs-body-bg, #fff); }
-
-/* Header unchanged */
-.header-compact { padding: 14px; text-align: center; }
-.header-compact h2 { font-size: 1.1rem; margin: 0; font-weight: 700; }
-.countdown-banner { display:flex; justify-content:center; align-items:center; gap:12px; padding:10px; background:linear-gradient(90deg,#2e2b6f,#5b2ebf); color:#fff; border-radius:12px; margin:10px; font-weight:700; }
-
-/* Top features: make this the only vertical scroller.
-   Remove max-height calc() (which duplicated scrolling) and use flex to fill available space.
-   padding-bottom will be set dynamically to match the height of the bottom plan container. */
-.features-scroll {
-  -webkit-overflow-scrolling: touch;
-  overflow-y: auto;
-  padding: 12px;
-  padding-bottom: var(--features-bottom-space, 88px); /* reduced default */
-  display: block;
-  flex: 1 1 auto;
-  max-height: none;
-}
-
-/* Feature items styling */
-.feature-item { display:flex; gap:10px; align-items:flex-start; padding:12px; border-radius:12px; background: rgba(255,255,255,0.02); margin-bottom:10px; }
-.feature-item i { font-size: 1.6rem; color: var(--bs-indigo, #5b2ebf); }
-
-/* Sticky bottom plan list - keep visible but avoid its own vertical scrolling */
-.plan-list-bottom {
-  position: sticky;
-  bottom: 0;
-  background: linear-gradient(180deg, rgba(255,255,255,0.95), #fff);
-  border-top: 1px solid rgba(0,0,0,0.06);
-  padding: 10px 8px;
-  z-index: 1200;
-  box-shadow: 0 -6px 18px rgba(12,12,20,0.06);
-  overflow: visible; /* ensure the bar doesn't create an inner vertical scroller */
-}
-.plan-list-scroll {
-  display:flex;
-  gap:12px;
-  overflow-x:auto;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 10px;
-}
-.plan-compact {
-  min-width: 220px;
-  max-width: 280px;
-  background: #fff;
-  border-radius: 14px;
-  padding: 12px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-  gap:8px;
-  cursor:pointer;
-  border: 1px solid var(--primary-color);
-}
-.plan-compact:hover {
-  box-shadow: 0 10px 24px rgba(0,0,0,0.12);
-  transition: all 0.2s ease-in-out;
-}
-.plan-compact .name { font-weight:700; font-size: 1rem; }
-.plan-compact .price { font-size:1.4rem; font-weight:900; color:#111; }
-.plan-compact .cta {
-  margin-top:8px;
-  background: #4f2bdc;
-  color: #fff;
-  border: none;
-  padding: 8px 10px;
-  border-radius: 10px;
-  font-weight:700;
-  text-align:center;
-}
-
-/* make icons & text comfortable on touch */
-.plan-compact .meta { font-size:0.85rem; color:#666; }
-
-@media(min-width: 768px) {
-  /* slightly different spacing on larger screens; keep the same behavior */
-  .features-scroll { max-height: none; }
-  .plan-list-bottom { padding: 14px 20px; }
-}
-</style>
-
-<div class="plan-page-root container-fluid">
-  <!-- Header -->
-  <div class="header-compact">
-    <h2 class="mb-1">{{translations.plan_page.choose_your_plan}}</h2>
-    <div class="countdown-banner">
-      <span class="fw-bold"><span class="bi bi-coin"></span> {{translations.new_user_points_bonus}}</span>
-      <div id="countdown-timer" class="countdown-timer"></div>
+<div class="plan-page-container">
+  <!-- Hero Section -->
+  <div class="plan-hero">
+    <div class="plan-hero-content">
+      <div class="hero-icon-wrapper">
+        <i class="bi bi-crown-fill"></i>
+      </div>
+      <h1 class="plan-hero-title">{{translations.plan_page.choose_your_plan}}</h1>
+      <p class="plan-hero-subtitle">{{translations.subscriptionFeatures.subtitle}}</p>
+      
+      <!-- Countdown Banner -->
+      <div class="countdown-banner">
+        <i class="bi bi-gift-fill"></i>
+        <span class="fw-bold">{{translations.new_user_points_bonus}}</span>
+        <div id="countdown-timer" class="countdown-timer"></div>
+      </div>
     </div>
   </div>
 
-  <!-- Top: features in a scrollable area -->
-  <div id="featuresScroll" class="features-scroll">
-    <!-- Features rendered by plan.js -->
-    <div class="feature-item">
-      <i class="bi bi-infinity"></i>
-      <div>
-        <div class="fw-bold">{{translations.plan_page.unlimited_generation}}</div>
-        <div class="text-muted small">{{translations.plan_page.unlimited_generation_desc}}</div>
+  <!-- Features Section -->
+  <div class="plan-features-section">
+    <h2 class="features-section-title">
+      <i class="bi bi-stars me-2"></i>{{translations.subscriptionFeatures.title}}
+    </h2>
+    
+    <div class="premium-features-grid">
+      <div class="premium-feature-item">
+        <div class="feature-icon">
+          <i class="bi bi-infinity"></i>
+        </div>
+        <div class="feature-content">
+          <h6 class="feature-title">{{translations.plan_page.unlimited_generation}}</h6>
+          <p class="feature-desc">{{translations.plan_page.unlimited_generation_desc}}</p>
+        </div>
+      </div>
+
+      <div class="premium-feature-item">
+        <div class="feature-icon">
+          <i class="bi bi-unlock-fill"></i>
+        </div>
+        <div class="feature-content">
+          <h6 class="feature-title">{{translations.plan_page.all_content_access}}</h6>
+          <p class="feature-desc">{{translations.plan_page.all_content_access_desc}}</p>
+        </div>
+      </div>
+
+      <div class="premium-feature-item">
+        <div class="feature-icon">
+          <i class="bi bi-shield-check"></i>
+        </div>
+        <div class="feature-content">
+          <h6 class="feature-title">{{translations.plan_page.priority_processing}}</h6>
+          <p class="feature-desc">{{translations.plan_page.priority_processing_desc}}</p>
+        </div>
+      </div>
+
+      <div class="premium-feature-item">
+        <div class="feature-icon">
+          <i class="bi bi-image-fill"></i>
+        </div>
+        <div class="feature-content">
+          <h6 class="feature-title">{{translations.subscriptionFeatures.feature2_title}}</h6>
+          <p class="feature-desc">{{translations.subscriptionFeatures.feature2_desc}}</p>
+        </div>
+      </div>
+
+      <div class="premium-feature-item">
+        <div class="feature-icon">
+          <i class="bi bi-camera-video-fill"></i>
+        </div>
+        <div class="feature-content">
+          <h6 class="feature-title">{{translations.subscriptionFeatures.feature3_title}}</h6>
+          <p class="feature-desc">{{translations.subscriptionFeatures.feature3_desc}}</p>
+        </div>
+      </div>
+
+      <div class="premium-feature-item">
+        <div class="feature-icon">
+          <i class="bi bi-lightning-charge-fill"></i>
+        </div>
+        <div class="feature-content">
+          <h6 class="feature-title">{{translations.subscriptionFeatures.feature6_title}}</h6>
+          <p class="feature-desc">{{translations.subscriptionFeatures.feature6_desc}}</p>
+        </div>
       </div>
     </div>
-
-    <div class="feature-item">
-      <i class="bi bi-unlock-fill"></i>
-      <div>
-        <div class="fw-bold">{{translations.plan_page.all_content_access}}</div>
-        <div class="text-muted small">{{translations.plan_page.all_content_access_desc}}</div>
-      </div>
-    </div>
-
-    <div class="feature-item">
-      <i class="bi bi-shield-check"></i>
-      <div>
-        <div class="fw-bold">{{translations.plan_page.priority_processing}}</div>
-        <div class="text-muted small">{{translations.plan_page.priority_processing_desc}}</div>
-      </div>
-    </div>
-
-    <!-- Optionally: more features filled dynamically by JS -->
-    <div id="additionalFeatures"></div>
   </div>
 
-  <!-- Sticky bottom: horizontally scrollable plan cards with price/CTA visible -->
-  <div class="plan-list-bottom">
-    <div id="planListBottom" class="plan-list-scroll">
-      <!-- Plan cards inserted by plan.js -->
+  <!-- Plans Section -->
+  <div class="plans-section">
+    <h2 class="plans-section-title">
+      <i class="bi bi-credit-card me-2"></i>{{translations.plan_page.choose_your_plan}}
+    </h2>
+    
+    <div id="planCardsContainer" class="plan-cards-grid">
+      <!-- Plan cards will be rendered here by JS -->
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <!-- keep Trust badges and payment info -->
-    <!-- Trust badges and payment info -->
-    <div class="mt-2 text-center small" style="opacity:0.9;">
-      <p class="mb-1 fw-semibold">{{translations.plan_page.secure_payment}}</p>
-      <a href="https://stripe.com/jp/resources/more/secure-payment-systems-explained" target="_blank">
-        <img src="/img/stripe-logo.png" style="height: 28px; width: auto;" alt="Stripe" class="mb-1">
+  <!-- Trust Section -->
+  <div class="trust-section">
+    <div class="trust-content">
+      <p class="trust-title">
+        <i class="bi bi-shield-lock-fill me-2"></i>{{translations.plan_page.secure_payment}}
+      </p>
+      <a href="https://stripe.com/jp/resources/more/secure-payment-systems-explained" target="_blank" class="stripe-link">
+        <img src="/img/stripe-logo.png" alt="Stripe" class="stripe-logo">
       </a>
-      <div class="d-flex justify-content-center gap-2 mt-2">
-        <img src="/img/payment-methods/visa.png" alt="Visa" title="Visa" style="height:20px;">
-        <img src="/img/payment-methods/mastercard.png" alt="Mastercard" title="Mastercard" style="height:20px;">
-        <img src="/img/payment-methods/amex.png" alt="American Express" title="American Express" style="height:20px;">
-        <img src="/img/payment-methods/applepay.png" alt="Apple Pay" title="Apple Pay" style="height:20px;">
+      <div class="payment-methods">
+        <img src="/img/payment-methods/visa.png" alt="Visa" title="Visa">
+        <img src="/img/payment-methods/mastercard.png" alt="Mastercard" title="Mastercard">
+        <img src="/img/payment-methods/amex.png" alt="American Express" title="American Express">
+        <img src="/img/payment-methods/applepay.png" alt="Apple Pay" title="Apple Pay">
       </div>
     </div>
   </div>
 </div>
-
-<!-- after the bottom plan list element (planListBottom) add a small script to size the features padding -->
-<script>
-  (function(){
-    function updateFeaturesSpacing(){
-      var planBar = document.getElementById('planListBottom');
-      var features = document.getElementById('featuresScroll');
-      if(!planBar || !features) return;
-      // measure visible height of the plan container and add a small extra gap
-      var height = planBar.offsetHeight || planBar.getBoundingClientRect().height || 0;
-      var extraGap = 6; // reduced breathing room to remove excess space
-      features.style.paddingBottom = (height + extraGap) + 'px';
-    }
-
-    // update on DOM ready and on resize
-    document.addEventListener('DOMContentLoaded', updateFeaturesSpacing);
-    window.addEventListener('resize', updateFeaturesSpacing);
-
-    // If plan cards are inserted/changed dynamically, observe and recompute
-    var planListNode = document.getElementById('planListBottom');
-    if(planListNode){
-      new MutationObserver(function(){ updateFeaturesSpacing(); }).observe(planListNode, { childList: true, subtree: true, attributes: true, characterData: true });
-    }
-
-    // also run once after a short delay to catch late-rendered content
-    setTimeout(updateFeaturesSpacing, 400);
-  })();
-</script>

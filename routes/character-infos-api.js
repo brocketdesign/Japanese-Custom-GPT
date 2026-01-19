@@ -1,4 +1,5 @@
 const { ObjectId } = require('mongodb');
+const { getMessageCount } = require('../models/user-chat-stats-utils');
 
 async function routes(fastify, options) {
     // Get character information for preview modal (read-only)
@@ -28,36 +29,41 @@ async function routes(fastify, options) {
                 return reply.status(404).send({ error: 'Character not found or access denied' });
             }
 
-            // Get message count
-            const collectionMessages = fastify.mongo.db.collection('messages');
-            const messageCount = await collectionMessages.countDocuments({
-                chatId: new ObjectId(chatId)
-            });
-
-            // Get video count
-            const collectionVideos = fastify.mongo.db.collection('videos');
-            const videoCount = await collectionVideos.countDocuments({
-                chatId: new ObjectId(chatId)
-            });
-
-            // Get image count from gallery
-            let imageCount = 0;
-            let galleryImage = null;
-            const collectionGallery = fastify.mongo.db.collection('gallery');
-            const galleryDoc = await collectionGallery.findOne({ chatId: new ObjectId(chatId) });
-            if (galleryDoc && galleryDoc.images && galleryDoc.images.length > 0) {
-                imageCount = galleryDoc.images.length;
-            }
-
-            // Get user-specific customizations from userChat (if exists)
+            // Get user-specific data from userChat
+            // Handle both ObjectId and string formats for chatId lookup
             const collectionUserChat = fastify.mongo.db.collection('userChat');
             const userChat = await collectionUserChat.findOne({
+                $or: [
+                    { userId: new ObjectId(userId), chatId: new ObjectId(chatId) },
+                    { userId: new ObjectId(userId), chatId: chatId.toString() }
+                ]
+            });
+
+            // Get message count from user_chat_stats collection (fast lookup)
+            const messageCount = await getMessageCount(fastify.mongo.db, userId, chatId);
+
+            // Get video count for this user's chat with this character
+            const collectionVideos = fastify.mongo.db.collection('videos');
+            const videoCount = await collectionVideos.countDocuments({
                 userId: new ObjectId(userId),
                 chatId: new ObjectId(chatId)
             });
 
+            // Get image count from gallery for this character
+            // Gallery is typically stored per-character (chatId), not per-user
+            let imageCount = 0;
+            const collectionGallery = fastify.mongo.db.collection('gallery');
+            const galleryDoc = await collectionGallery.findOne({ 
+                chatId: new ObjectId(chatId)
+            });
+            if (galleryDoc && galleryDoc.images && Array.isArray(galleryDoc.images)) {
+                imageCount = galleryDoc.images.length;
+            }
+
             // User customizations override the default character data
             const userCustomizations = userChat?.userCustomizations || null;
+            
+            console.log(`[API/character-info] User ${userId} for chat ${chatId}: messages: ${messageCount}, videos: ${videoCount}, images: ${imageCount}`);
 
             reply.send({
                 success: true,
@@ -66,7 +72,6 @@ async function routes(fastify, options) {
                     messagesCount: messageCount,
                     imageCount: imageCount,
                     videoCount: videoCount,
-                    galleryImage: galleryImage,
                     userCustomizations: userCustomizations,
                     userChatId: userChat?._id || null
                 }
@@ -121,10 +126,12 @@ async function routes(fastify, options) {
             }
 
             if (!userChat) {
-                // Try to find by chatId
+                // Try to find by chatId (handle both ObjectId and string formats)
                 userChat = await collectionUserChat.findOne({
-                    userId: new ObjectId(userId),
-                    chatId: new ObjectId(chatId)
+                    $or: [
+                        { userId: new ObjectId(userId), chatId: new ObjectId(chatId) },
+                        { userId: new ObjectId(userId), chatId: chatId.toString() }
+                    ]
                 });
             }
 
@@ -189,12 +196,21 @@ async function routes(fastify, options) {
 
             const collectionUserChat = fastify.mongo.db.collection('userChat');
 
-            // Find and update the userChat document
-            const query = { userId: new ObjectId(userId) };
+            // Find and update the userChat document (handle both ObjectId and string formats)
+            let query;
             if (userChatId && ObjectId.isValid(userChatId)) {
-                query._id = new ObjectId(userChatId);
+                query = { 
+                    _id: new ObjectId(userChatId),
+                    userId: new ObjectId(userId) 
+                };
             } else {
-                query.chatId = new ObjectId(chatId);
+                query = {
+                    userId: new ObjectId(userId),
+                    $or: [
+                        { chatId: new ObjectId(chatId) },
+                        { chatId: chatId.toString() }
+                    ]
+                };
             }
 
             const result = await collectionUserChat.updateOne(

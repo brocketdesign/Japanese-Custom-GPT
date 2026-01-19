@@ -25,7 +25,7 @@ async function img2videoRoutes(fastify) {
      */
     fastify.post('/api/img2video/generate', async (request, reply) => {
         try {
-            const { imageId, prompt, nsfw, chatId, userChatId, placeholderId } = request.body;
+            const { imageId, prompt, modelId, nsfw, chatId, userChatId, placeholderId } = request.body;
             const userId = request?.user?._id;
 
             if (!userId) {
@@ -177,6 +177,7 @@ async function img2videoRoutes(fastify) {
                     imageUrl,
                     nsfw,
                     prompt: instructionPrompt,
+                    modelId: modelId || 'kling-v2.1-i2v',
                     userId,
                     chatId,
                     placeholderId

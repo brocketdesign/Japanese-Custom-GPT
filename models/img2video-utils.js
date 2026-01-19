@@ -4,6 +4,7 @@ const { createHash } = require('crypto');
 const { uploadToS3 } = require('../models/tool');
 const { awardVideoGenerationReward, awardCharacterVideoMilestoneReward } = require('./user-points-utils');
 const { Translations } = require('openai/resources/audio/translations.mjs');
+const { VIDEO_MODEL_CONFIGS } = require('./dashboard-video-utils');
 
 /**
  * Get webhook URL for Novita tasks
@@ -71,41 +72,130 @@ function validateAndTruncatePrompt(prompt, defaultPrompt = 'Generate a dynamic v
 /**
  * Generate video from image using Novita AI
  * @param {Object} params - Parameters for video generation
- * @param {string} params.imageUrl - Base64 encoded image
+ * @param {string} params.imageUrl - Base64 encoded image or image URL
  * @param {string} params.prompt - Text prompt for video generation
+ * @param {string} params.modelId - Model ID to use for generation
  * @param {string} params.userId - User ID
  * @param {string} params.chatId - Chat ID
  * @param {string} params.placeholderId - Placeholder ID for tracking
  * @returns {Object} Task result from Novita API
  */
-async function generateVideoFromImage({ imageUrl, nsfw, prompt, userId, chatId, placeholderId }) {
+async function generateVideoFromImage({ imageUrl, nsfw, prompt, modelId = 'kling-v2.1-i2v', userId, chatId, placeholderId }) {
   const novitaApiKey = process.env.NOVITA_API_KEY;
-  const apiUrl = 'https://api.novita.ai/v3/async/kling-v2.1-i2v';
   const webhookUrl = getWebhookUrl();
+
+  // Get model configuration
+  const modelConfig = VIDEO_MODEL_CONFIGS[modelId];
+  if (!modelConfig) {
+    console.error(`[generateVideoFromImage] Unknown model: ${modelId}, falling back to kling-v2.1-i2v`);
+    modelId = 'kling-v2.1-i2v';
+  }
+  
+  const config = VIDEO_MODEL_CONFIGS[modelId];
+  const apiUrl = config.endpoint;
 
   // Validate and truncate prompt to meet Novita API requirements (1-2000 runes)
   const validatedPrompt = validateAndTruncatePrompt(prompt, 'Generate a dynamic video from this image');
   
   // Log the prompt for debugging
+  console.log('[generateVideoFromImage] Model:', modelId);
   console.log('[generateVideoFromImage] Original prompt:', prompt);
   console.log('[generateVideoFromImage] Validated prompt:', validatedPrompt);
   console.log('[generateVideoFromImage] Prompt rune count:', countRunes(validatedPrompt));
   console.log('[generateVideoFromImage] Prompt char length:', validatedPrompt?.length);
 
-  // Kling V2.1 API expects parameters directly in the body (not nested under "request")
-  // Supported parameters: image, prompt, mode, duration, guidance_scale, negative_prompt
-  // Webhook goes in "extra" at root level
-  const requestData = {
-    image: imageUrl,
-    prompt: validatedPrompt,
-    mode: "Standard",
-    duration: "5",
-    guidance_scale: 0.5,
-    negative_prompt: 'blurry, low quality, distorted',
-    extra: {
-      webhook: {
-        url: webhookUrl
+  // Build request body based on model type
+  let requestData = {};
+  
+  if (modelId === 'wan-i2v') {
+    // Wan 2.1 uses flat structure with image_url parameter
+    requestData = {
+      image_url: imageUrl,
+      prompt: validatedPrompt,
+      width: 1280,
+      height: 720
+    };
+  } else if (modelId === 'wan-2.2-i2v' || modelId === 'wan-2.5-i2v-preview' || modelId === 'wan2.6-i2v') {
+    // Wan 2.2, 2.5, 2.6 use nested input/parameters structure
+    requestData = {
+      input: {
+        img_url: imageUrl,
+        prompt: validatedPrompt
+      },
+      parameters: {
+        resolution: '720P',
+        duration: 5
       }
+    };
+  } else if (modelId === 'minimax-i2v') {
+    // Minimax uses image_url parameter
+    requestData = {
+      prompt: validatedPrompt,
+      image_url: imageUrl,
+      enable_prompt_expansion: true
+    };
+  } else if (modelId === 'vidu-i2v') {
+    // Vidu Q1 uses image parameter
+    requestData = {
+      image: imageUrl,
+      prompt: validatedPrompt,
+      style: 'general',
+      resolution: '1080p',
+      aspect_ratio: '16:9',
+      movement_amplitude: 'auto',
+      duration: 5
+    };
+  } else if (modelId === 'pixverse-i2v') {
+    // PixVerse uses image parameter
+    requestData = {
+      image: imageUrl,
+      prompt: validatedPrompt,
+      resolution: '540p',
+      fast_mode: false
+    };
+  } else if (modelId === 'seedance-i2v') {
+    // Seedance uses image parameter
+    requestData = {
+      image: imageUrl,
+      prompt: validatedPrompt,
+      duration: 5,
+      resolution: '720p',
+      ratio: 'adaptive',
+      fps: 24,
+      generate_audio: true,
+      camera_fixed: false
+    };
+  } else if (modelId === 'luma-i2v') {
+    // Luma Dream Machine uses keyframes structure
+    requestData = {
+      prompt: validatedPrompt,
+      keyframes: {
+        frame0: {
+          type: 'image',
+          url: imageUrl
+        }
+      },
+      model: 'ray-2',
+      resolution: '720p',
+      duration: '5s',
+      aspect_ratio: '16:9'
+    };
+  } else {
+    // Kling and other generic I2V models - use image parameter
+    requestData = {
+      image: imageUrl,
+      prompt: validatedPrompt,
+      mode: "Standard",
+      duration: "5",
+      guidance_scale: 0.5,
+      negative_prompt: 'blurry, low quality, distorted'
+    };
+  }
+  
+  // Add webhook for async processing
+  requestData.extra = {
+    webhook: {
+      url: webhookUrl
     }
   };
   
@@ -123,6 +213,7 @@ async function generateVideoFromImage({ imageUrl, nsfw, prompt, userId, chatId, 
       return {
         success: true,
         taskId: response.data.task_id,
+        modelId: modelId,
         message: 'Video generation started'
       };
     } else {

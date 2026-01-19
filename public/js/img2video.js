@@ -35,12 +35,15 @@ window.generateVideoFromImage = async function(imageId, chatId, userChatId, prom
     }
 
     // Show prompt modal
-    const userPrompt = await showVideoPromptModal();
+    const modalResult = await showVideoPromptModal();
     
     // If user cancelled, return
-    if (userPrompt === null) {
+    if (modalResult === null) {
         return;
     }
+    
+    const userPrompt = modalResult.prompt;
+    const selectedModelId = modalResult.modelId;
 
     // Generate consistent placeholder ID once
     const placeholderId = `video_${Date.now()}_${imageId}_${userChatId}`;
@@ -77,6 +80,7 @@ window.generateVideoFromImage = async function(imageId, chatId, userChatId, prom
                 chatId,
                 userChatId,
                 prompt: userPrompt || prompt,
+                modelId: selectedModelId,
                 nsfw,
                 placeholderId
             })
@@ -107,52 +111,137 @@ window.generateVideoFromImage = async function(imageId, chatId, userChatId, prom
     }
 };
 
+// Available I2V models for video generation (same as video dashboard)
+const VIDEO_I2V_MODELS = {
+    'kling-v2.1-i2v': {
+        name: 'Kling V2.1 I2V',
+        description: 'Kling V2.1 model for generating videos from images with natural motion'
+    },
+    'kling-v2.1-i2v-master': {
+        name: 'Kling V2.1 Master I2V',
+        description: 'Kling V2.1 Master model with enhanced quality for image-to-video generation'
+    },
+    'kling-v1.6-i2v': {
+        name: 'Kling V1.6 I2V',
+        description: 'Kling V1.6 model for image-to-video generation'
+    },
+    'wan-i2v': {
+        name: 'Wan 2.1 I2V',
+        description: 'Wan 2.1 model for image-to-video generation with smooth motion'
+    },
+    'wan-2.2-i2v': {
+        name: 'Wan 2.2 I2V',
+        description: 'Wan 2.2 model with improved quality for image-to-video'
+    },
+    'wan-2.5-i2v-preview': {
+        name: 'Wan 2.5 I2V Preview',
+        description: 'Wan 2.5 preview model with next-gen image-to-video capabilities and audio support'
+    },
+    'wan2.6-i2v': {
+        name: 'Wan 2.6 I2V',
+        description: 'Wan 2.6 latest model for high-quality image-to-video generation with extended duration support (up to 15s)'
+    },
+    'minimax-i2v': {
+        name: 'Minimax I2V',
+        description: 'Minimax Video model for image-to-video generation (fixed 6s, 720p)'
+    },
+    'vidu-i2v': {
+        name: 'Vidu Q1 I2V',
+        description: 'Vidu Q1 model for creative image-to-video transformations (1080p, 5s)'
+    },
+    'pixverse-i2v': {
+        name: 'PixVerse V4.5 I2V',
+        description: 'PixVerse V4.5 model for high-quality image-to-video (5-8s)'
+    },
+    'seedance-i2v': {
+        name: 'Seedance 1.5 Pro I2V',
+        description: 'Seedance 1.5 Pro model for dance and motion video generation with audio (4-12s)'
+    },
+    'luma-i2v': {
+        name: 'Luma Dream Machine I2V',
+        description: 'Luma Dream Machine for cinematic image-to-video generation'
+    }
+};
+
 /**
  * Show modal for video prompt input
- * @returns {Promise<string|null>} User prompt or null if cancelled
+ * @returns {Promise<Object|null>} Object with prompt and modelId, or null if cancelled
  */
 function showVideoPromptModal() {
     return new Promise((resolve) => {
+        // Build model options HTML
+        let modelOptionsHtml = '';
+        const savedModelId = localStorage.getItem('img2video_last_model') || 'kling-v2.1-i2v';
+        
+        Object.entries(VIDEO_I2V_MODELS).forEach(([modelId, model]) => {
+            const isChecked = modelId === savedModelId ? 'checked' : '';
+            modelOptionsHtml += `
+                <div class="form-check video-model-option mb-2">
+                    <input class="form-check-input" type="radio" name="videoModelSelect" 
+                           value="${modelId}" id="model-${modelId}" ${isChecked}>
+                    <label class="form-check-label w-100" for="model-${modelId}">
+                        <span class="fw-semibold">${model.name}</span>
+                        <br>
+                        <small class="text-muted">${model.description}</small>
+                    </label>
+                </div>
+            `;
+        });
+
         // Create modal HTML
         const modalHtml = `
             <div class="modal fade" id="videoPromptModal" tabindex="-1" aria-labelledby="videoPromptModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content mx-auto" style="height: auto;">
+                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content mx-auto" style="height: auto; max-height: 90vh;">
                         <div class="modal-header">
-                            <div class="d-flex align-items-center flex-column w-100">
-                                <h5 class="modal-title" id="videoPromptModalLabel">
-                                    <i class="bi bi-camera-video me-2"></i>
-                                    ${window.img2videoTranslations.video_prompt_title || 'Video Generation Prompt'}
-                                </h5>
-                                <span>${window.img2videoTranslations.video_prompt_subtitle.replace('{{points}}', 100) || 'Generating a video from an image will use up to {{points}} points.'}</span>
-                            </div>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <h5 class="modal-title ms-auto" id="videoPromptModalLabel">
+                                <i class="bi bi-camera-video me-2"></i>
+                                ${window.img2videoTranslations?.video_prompt_title || 'Video Generation Prompt'}
+                            </h5>
                         </div>
                         <div class="modal-body">
+                            <div class="alert alert-info py-2 mb-3">
+                                <small><i class="bi bi-info-circle me-1"></i>${window.img2videoTranslations?.video_prompt_subtitle?.replace('{{points}}', 100) || 'Generating a video from an image will use up to 100 points.'}</small>
+                            </div>
+                            
+                            <!-- Model Selection Section -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-robot me-1"></i>
+                                    ${window.img2videoTranslations?.select_video_model || 'Select Video Model'}
+                                </label>
+                                <div class="video-model-selection p-2 rounded" style="max-height: 200px; overflow-y: auto; background: var(--bs-tertiary-bg, #f8f9fa);">
+                                    ${modelOptionsHtml}
+                                </div>
+                            </div>
+                            
+                            <!-- Prompt Section -->
                             <div class="mb-3">
-                                <label for="videoPromptTextarea" class="form-label">
-                                    ${window.img2videoTranslations.video_prompt_description || 'Describe the video motion or style (optional)'}
+                                <label for="videoPromptTextarea" class="form-label fw-bold">
+                                    <i class="bi bi-pencil me-1"></i>
+                                    ${window.img2videoTranslations?.video_prompt_description || 'Describe the video motion or style (optional)'}
                                 </label>
                                 <textarea 
                                     class="form-control" 
                                     style="min-height: 90px;"
                                     id="videoPromptTextarea" 
-                                    rows="8" 
+                                    rows="4" 
                                     maxlength="200" 
-                                    placeholder="${window.img2videoTranslations.video_prompt_placeholder || 'e.g., slow zoom in, dramatic lighting, smooth camera movement...'}"
+                                    placeholder="${window.img2videoTranslations?.video_prompt_placeholder || 'e.g., slow zoom in, dramatic lighting, smooth camera movement...'}"
                                 ></textarea>
                                 <div class="form-text">
-                                    <span id="charCount">0</span>/200 ${window.img2videoTranslations.characters || 'characters'}
+                                    <span id="charCount">0</span>/200 ${window.img2videoTranslations?.characters || 'characters'}
                                 </div>
                             </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                ${window.img2videoTranslations.cancel || 'Cancel'}
+                                ${window.img2videoTranslations?.cancel || 'Cancel'}
                             </button>
                             <button type="button" class="btn btn-primary" id="generateVideoBtn">
                                 <i class="bi bi-film me-2"></i>
-                                ${window.img2videoTranslations.generate_video || 'Generate Video'}
+                                ${window.img2videoTranslations?.generate_video || 'Generate Video'}
                             </button>
                         </div>
                     </div>
@@ -186,8 +275,13 @@ function showVideoPromptModal() {
         // Generate button click
         generateBtn.on('click', function() {
             const prompt = textarea.val().trim();
+            const selectedModel = $('input[name="videoModelSelect"]:checked').val() || 'kling-v2.1-i2v';
+            
+            // Save selected model to localStorage
+            localStorage.setItem('img2video_last_model', selectedModel);
+            
             modal.hide();
-            resolve(prompt);
+            resolve({ prompt, modelId: selectedModel });
         });
 
         // Save and restore last prompt using localStorage

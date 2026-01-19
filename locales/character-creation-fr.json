@@ -156,7 +156,10 @@
         "custom_prompt_title": "Personnalité et Historique du Personnage",
         "custom_prompt_label": "Personnalité et Historique du Personnage",
         "custom_prompt_description": "Décrivez l'historique de votre personnage, les éléments liés à son histoire et son comportement (pas la description physique)",
-        "custom_prompt_placeholder": "Par exemple, elle est une enseignante bienveillante qui aime aider ses élèves, aime lire des livres pendant son temps libre et essaie toujours de voir le bon côté des situations..."
+        "custom_prompt_placeholder": "Par exemple, elle est une enseignante bienveillante qui aime aider ses élèves, aime lire des livres pendant son temps libre et essaie toujours de voir le bon côté des situations...",
+        "character_purpose_title": "Histoire et Objectif du Personnage",
+        "character_purpose_description": "Décrivez l'histoire de votre personnage, ses motivations et l'objectif de votre conversation. Cela aide à définir sa personnalité pendant les conversations (pas de description physique).",
+        "character_purpose_placeholder": "Par exemple, elle a grandi dans une petite ville et a déménagé en ville pour poursuivre ses rêves. Elle est passionnée par l'art et aime les conversations profondes sur la vie et la philosophie..."
     },
     
     "step6": {
@@ -207,14 +210,18 @@
         "regenerate_button": "Générer Plus",
         "generating": "Génération en cours...",
         "select_image": "Sélectionnez une image pour continuer",
-        "placeholder_text": "Cliquez sur générer pour créer des images"
+        "placeholder_text": "Cliquez sur générer pour créer des images",
+        "outfit_prompt_title": "Personnaliser la Tenue et les Détails",
+        "outfit_prompt_description": "Décrivez la tenue, les accessoires et les détails physiques que vous souhaitez dans l'image générée. Soyez précis sur le style vestimentaire, les couleurs et le cadre.",
+        "outfit_prompt_placeholder": "Ex: portant une robe rouge, assise dans un café, journée ensoleillée, souriante..."
     },
     
     "step8": {
         "title": "Votre Personnage est Prêt !",
         "subtitle": "Révisez votre personnage et commencez à discuter",
         "character_summary": "Résumé du Personnage",
-        "start_chat": "Commencer à Discuter"
+        "start_chat": "Commencer à Discuter",
+        "chat_purpose_label": "Objectif du Chat"
     },
     
     "buttons": {

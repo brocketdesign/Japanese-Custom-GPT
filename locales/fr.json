@@ -1745,6 +1745,16 @@
     "custom_prompt_title": "Détails Personnalisés",
     "custom_prompt_placeholder": "Ex: portant une robe rouge, assise dans un café, journée ensoleillée, souriante...",
     
+    "character_purpose_title": "Histoire et Objectif du Personnage",
+    "character_purpose_description": "Décrivez l'histoire de votre personnage, ses motivations et l'objectif de votre conversation. Cela aide à définir sa personnalité pendant les conversations (pas de description physique).",
+    "character_purpose_placeholder": "Par exemple, elle a grandi dans une petite ville et a déménagé en ville pour poursuivre ses rêves. Elle est passionnée par l'art et aime les conversations profondes sur la vie et la philosophie...",
+    
+    "outfit_prompt_title": "Personnaliser la Tenue et les Détails",
+    "outfit_prompt_description": "Décrivez la tenue, les accessoires et les détails physiques que vous souhaitez dans l'image générée. Soyez précis sur le style vestimentaire, les couleurs et le cadre.",
+    "outfit_prompt_placeholder": "Ex: portant une robe rouge, assise dans un café, journée ensoleillée, souriante...",
+    
+    "chat_purpose_label": "Objectif du Chat",
+    
     "voice_title": "Voix",
     "play_sample": "Écouter",
     "stop_sample": "Arrêter",
@@ -1871,8 +1881,15 @@
       "lingerie": "Lingerie",
       "outdoor": "Extérieur",
       "toys": "Jouets"
-    }
+    },
+    "custom_instructions_title": "Instructions personnalisées",
+    "custom_instructions_placeholder": "Ajoutez des instructions spéciales pour votre chat (ex: scénarios de jeu de rôle, sujets spécifiques, préférences de comportement)...",
+    "add_custom_instructions": "Ajouter des instructions personnalisées",
+    "reset_customizations": "Réinitialiser aux valeurs par défaut"
   },
+  "customization_saved": "Personnalisation enregistrée",
+  "customizations_reset": "Personnalisations réinitialisées",
+  "reset_customizations_confirm": "Réinitialiser toutes les personnalisations aux valeurs par défaut du personnage ?",
   "imageGenerationForm": "Formulaire de génération d'image",
   "selectImageType": "Sélectionner le type d'image",
   "sfwImage": "Image SFW",

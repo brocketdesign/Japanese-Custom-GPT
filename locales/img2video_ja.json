@@ -14,6 +14,7 @@
   "video_prompt_subtitle": "画像から動画を生成すると最大{{points}}ポイント消費されます。",
   "video_prompt_description": "動画の動きやスタイルを記述してください（任意）",
   "video_prompt_placeholder": "例：ゆっくりズームイン、ドラマチックな照明、滑らかなカメラの動き...",
+  "select_video_model": "動画モデルを選択",
   "characters": "文字",
   "cancel": "キャンセル",
   "generate_video": "動画を生成",

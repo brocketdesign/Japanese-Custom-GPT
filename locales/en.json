@@ -1862,6 +1862,16 @@
     "custom_prompt_title": "Custom Details",
     "custom_prompt_placeholder": "E.g., wearing a red dress, sitting in a cafe, sunny day, smiling...",
     
+    "character_purpose_title": "Character History & Purpose",
+    "character_purpose_description": "Describe your character's backstory, motivations, and the purpose of your chat. This helps define their personality during conversations (not physical description).",
+    "character_purpose_placeholder": "E.g., she grew up in a small town and moved to the city to pursue her dreams. She's passionate about art and loves deep conversations about life and philosophy...",
+    
+    "outfit_prompt_title": "Customize Outfit & Details",
+    "outfit_prompt_description": "Describe the outfit, accessories, and physical details you want in the generated image. Be specific about clothing style, colors, and setting.",
+    "outfit_prompt_placeholder": "E.g., wearing a red dress, sitting in a cafe, sunny day, smiling...",
+    
+    "chat_purpose_label": "Chat Purpose",
+    
     "voice_title": "Voice",
     "play_sample": "Play Sample",
     "stop_sample": "Stop",
@@ -1988,8 +1998,15 @@
       "lingerie": "Lingerie",
       "outdoor": "Outdoor",
       "toys": "Toys"
-    }
+    },
+    "custom_instructions_title": "Custom Instructions",
+    "custom_instructions_placeholder": "Add special instructions for your chat (e.g., roleplay scenarios, specific topics to discuss, behavior preferences)...",
+    "add_custom_instructions": "Add Custom Instructions",
+    "reset_customizations": "Reset to Character Defaults"
   },
+  "customization_saved": "Customization saved",
+  "customizations_reset": "Customizations reset to defaults",
+  "reset_customizations_confirm": "Reset all customizations to character defaults?",
   "previous_page": "Previous",
   "next_page": "Next",
   "imageGenerationForm": "Image Generation Form",

@@ -156,7 +156,10 @@
         "custom_prompt_title": "Character Personality & Background",
         "custom_prompt_label": "Character Personality & Background",
         "custom_prompt_description": "Describe your character's background, story-related elements, and behavior (not physical description)",
-        "custom_prompt_placeholder": "E.g., she is a kind teacher who loves helping students, enjoys reading books in her free time, and always tries to see the positive side of situations..."
+        "custom_prompt_placeholder": "E.g., she is a kind teacher who loves helping students, enjoys reading books in her free time, and always tries to see the positive side of situations...",
+        "character_purpose_title": "Character History & Purpose",
+        "character_purpose_description": "Describe your character's backstory, motivations, and the purpose of your chat. This helps define their personality during conversations (not physical description).",
+        "character_purpose_placeholder": "E.g., she grew up in a small town and moved to the city to pursue her dreams. She's passionate about art and loves deep conversations about life and philosophy..."
     },
     
     "step6": {
@@ -207,14 +210,18 @@
         "regenerate_button": "Generate More",
         "generating": "Generating...",
         "select_image": "Select an image to continue",
-        "placeholder_text": "Click generate to create images"
+        "placeholder_text": "Click generate to create images",
+        "outfit_prompt_title": "Customize Outfit & Details",
+        "outfit_prompt_description": "Describe the outfit, accessories, and physical details you want in the generated image. Be specific about clothing style, colors, and setting.",
+        "outfit_prompt_placeholder": "E.g., wearing a red dress, sitting in a cafe, sunny day, smiling..."
     },
     
     "step8": {
         "title": "Your Character is Ready!",
         "subtitle": "Review your character and start chatting",
         "character_summary": "Character Summary",
-        "start_chat": "Start Chat"
+        "start_chat": "Start Chat",
+        "chat_purpose_label": "Chat Purpose"
     },
     
     "buttons": {

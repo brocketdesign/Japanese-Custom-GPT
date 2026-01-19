@@ -14,6 +14,7 @@
   "video_prompt_subtitle": "Generating a video from an image will use up to {{points}} points.",
   "video_prompt_description": "Describe the video motion or style (optional)",
   "video_prompt_placeholder": "e.g., slow zoom in, dramatic lighting, smooth camera movement...",
+  "select_video_model": "Select Video Model",
   "characters": "characters",
   "cancel": "Cancel",
   "generate_video": "Generate Video",

@@ -1798,6 +1798,16 @@
     "custom_prompt_title": "カスタム詳細",
     "custom_prompt_placeholder": "例: 赤いドレスを着て、カフェに座っている、晴れた日、笑顔...",
     
+    "character_purpose_title": "キャラクターの経歴と目的",
+    "character_purpose_description": "キャラクターの背景ストーリー、動機、チャットの目的を説明してください。これは会話中の性格を定義するのに役立ちます（外見の説明ではありません）。",
+    "character_purpose_placeholder": "例：小さな町で育ち、夢を追いかけて都会に引っ越しました。芸術に情熱を持ち、人生や哲学についての深い会話が好きです...",
+    
+    "outfit_prompt_title": "衣装とディテールをカスタマイズ",
+    "outfit_prompt_description": "生成される画像に含めたい衣装、アクセサリー、外見の詳細を説明してください。服のスタイル、色、シチュエーションを具体的に指定してください。",
+    "outfit_prompt_placeholder": "例：赤いドレスを着て、カフェに座って、晴れた日、笑顔...",
+    
+    "chat_purpose_label": "チャットの目的",
+    
     "voice_title": "声",
     "play_sample": "サンプル再生",
     "stop_sample": "停止",
@@ -1924,8 +1934,15 @@
       "lingerie": "ランジェリー",
       "outdoor": "野外",
       "toys": "おもちゃ"
-    }
+    },
+    "custom_instructions_title": "カスタム指示",
+    "custom_instructions_placeholder": "チャット用の特別な指示を追加してください（例：ロールプレイシナリオ、特定のトピック、行動の好みなど）...",
+    "add_custom_instructions": "カスタム指示を追加",
+    "reset_customizations": "キャラクターデフォルトにリセット"
   },
+  "customization_saved": "カスタマイズを保存しました",
+  "customizations_reset": "カスタマイズをデフォルトにリセットしました",
+  "reset_customizations_confirm": "すべてのカスタマイズをキャラクターデフォルトにリセットしますか？",
   "imageGenerationForm": "画像生成フォーム",
   "selectImageType": "画像の種類を選択",
   "sfwImage": "SFW画像",

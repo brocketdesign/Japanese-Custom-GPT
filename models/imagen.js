@@ -1750,7 +1750,12 @@ async function fetchNovitaMagic(data, flux = false, hunyuan = false) {
         prompt: data.prompt,
         size: '768*1024', // Portrait orientation for character creation
         seed: data.seed || -1,
-        image_num: data.image_num || 4
+        image_num: data.image_num || 4,
+        extra: {
+          webhook: {
+            url: webhookUrl
+          }
+        }
       };
     } else {
       requestBody.data = {
@@ -2377,7 +2382,7 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
       console.error('[handleTaskCompletion] Error incrementing image generation count:', error);
     }
 
-    let characterImageUrls = [];
+    // Note: Using characterImageUrls declared at the top of the function (line 2349)
 
     for (let index = 0; index < images.length; index++) {
       const image = images[index];

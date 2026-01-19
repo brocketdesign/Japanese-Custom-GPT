@@ -1,6 +1,11 @@
 /**
  * Unified Post Model
  * Converts all dashboard outputs (images, videos) to a unified Post format
+ * 
+ * Phase 1: Clean Up In-App Posts
+ * - Added visibility system (public, followers, subscribers, private)
+ * - Added tier gating for subscriber-only content
+ * - Added isProfilePost flag for profile display
  */
 
 const { ObjectId } = require('mongodb');
@@ -23,7 +28,8 @@ const POST_SOURCES = {
   GALLERY: 'gallery',
   CRON_JOB: 'cron_job',
   API: 'api',
-  CHAT: 'chat' // Posts created in chat
+  CHAT: 'chat', // Posts created in chat
+  PROFILE: 'profile' // Posts created directly on profile
 };
 
 /**
@@ -35,6 +41,16 @@ const POST_STATUSES = {
   PUBLISHED: 'published',
   FAILED: 'failed',
   PROCESSING: 'processing'
+};
+
+/**
+ * Post visibility levels
+ */
+const POST_VISIBILITY = {
+  PUBLIC: 'public',           // Anyone can see
+  FOLLOWERS: 'followers',     // Only followers can see
+  SUBSCRIBERS: 'subscribers', // Only subscribers can see
+  PRIVATE: 'private'          // Only the creator can see
 };
 
 /**
@@ -57,7 +73,12 @@ async function createPostFromImage(data, db) {
     mutationData = null,
     scheduledFor = null,
     autoPublish = false,
-    socialPlatforms = []
+    socialPlatforms = [],
+    // New Phase 1 fields
+    visibility = POST_VISIBILITY.PRIVATE,
+    requiredTier = null,
+    isProfilePost = false,
+    caption = ''
   } = data;
 
   const post = {
@@ -71,6 +92,7 @@ async function createPostFromImage(data, db) {
       thumbnailUrl: imageUrl, // Could be optimized later
       prompt,
       negativePrompt,
+      caption,
       model,
       parameters: parameters || {}
     },
@@ -86,6 +108,11 @@ async function createPostFromImage(data, db) {
       seed: parameters?.seed || null
     },
     
+    // Visibility and access control (Phase 1)
+    visibility,
+    requiredTier: requiredTier ? new ObjectId(requiredTier) : null,
+    isProfilePost,
+    
     // Status and publishing
     status: scheduledFor ? POST_STATUSES.SCHEDULED : POST_STATUSES.DRAFT,
     scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
@@ -98,6 +125,7 @@ async function createPostFromImage(data, db) {
     
     // Engagement
     likes: 0,
+    likedBy: [],
     comments: [],
     views: 0,
     
@@ -138,7 +166,12 @@ async function createPostFromVideo(data, db) {
     mutationData = null,
     scheduledFor = null,
     autoPublish = false,
-    socialPlatforms = []
+    socialPlatforms = [],
+    // New Phase 1 fields
+    visibility = POST_VISIBILITY.PRIVATE,
+    requiredTier = null,
+    isProfilePost = false,
+    caption = ''
   } = data;
 
   const post = {
@@ -152,6 +185,7 @@ async function createPostFromVideo(data, db) {
       thumbnailUrl,
       inputImageUrl,
       prompt,
+      caption,
       model,
       parameters: parameters || {}
     },
@@ -166,6 +200,11 @@ async function createPostFromVideo(data, db) {
       aspectRatio: parameters?.aspectRatio || null
     },
     
+    // Visibility and access control (Phase 1)
+    visibility,
+    requiredTier: requiredTier ? new ObjectId(requiredTier) : null,
+    isProfilePost,
+    
     // Status and publishing
     status: scheduledFor ? POST_STATUSES.SCHEDULED : POST_STATUSES.DRAFT,
     scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
@@ -178,6 +217,7 @@ async function createPostFromVideo(data, db) {
     
     // Engagement
     likes: 0,
+    likedBy: [],
     comments: [],
     views: 0,
     
@@ -446,6 +486,10 @@ async function updatePost(postId, updates, db) {
     'metadata.nsfw': updates.nsfw,
     autoPublish: updates.autoPublish,
     socialPlatforms: updates.socialPlatforms,
+    // Phase 1: visibility updates
+    visibility: updates.visibility,
+    requiredTier: updates.requiredTier ? new ObjectId(updates.requiredTier) : updates.requiredTier,
+    isProfilePost: updates.isProfilePost,
     updatedAt: new Date()
   };
 
@@ -460,6 +504,373 @@ async function updatePost(postId, updates, db) {
     { _id: new ObjectId(postId) },
     { $set: allowedUpdates }
   );
+}
+
+/**
+ * Update post visibility (Phase 1)
+ * @param {string} postId - Post ID
+ * @param {string} userId - User ID (for ownership verification)
+ * @param {string} visibility - New visibility level
+ * @param {string|null} requiredTier - Required tier ID for subscribers visibility
+ * @param {Object} db - Database connection
+ */
+async function updatePostVisibility(postId, userId, visibility, requiredTier, db) {
+  // Validate visibility value
+  if (!Object.values(POST_VISIBILITY).includes(visibility)) {
+    throw new Error(`Invalid visibility: ${visibility}`);
+  }
+
+  const update = {
+    visibility,
+    updatedAt: new Date()
+  };
+
+  // Only set requiredTier if visibility is 'subscribers'
+  if (visibility === POST_VISIBILITY.SUBSCRIBERS && requiredTier) {
+    update.requiredTier = new ObjectId(requiredTier);
+  } else {
+    update.requiredTier = null;
+  }
+
+  const result = await db.collection('unifiedPosts').updateOne(
+    { _id: new ObjectId(postId), userId: new ObjectId(userId) },
+    { $set: update }
+  );
+
+  return result.modifiedCount > 0;
+}
+
+/**
+ * Create a profile post (Phase 1)
+ * Posts created directly on the user's profile
+ * @param {Object} data - Post data
+ * @param {Object} db - Database connection
+ * @returns {Object} Created post
+ */
+async function createProfilePost(data, db) {
+  const {
+    userId,
+    imageUrl,
+    videoUrl,
+    thumbnailUrl,
+    caption = '',
+    visibility = POST_VISIBILITY.PUBLIC,
+    requiredTier = null,
+    nsfw = false
+  } = data;
+
+  const isVideo = !!videoUrl;
+  
+  const post = {
+    userId: new ObjectId(userId),
+    type: isVideo ? POST_TYPES.VIDEO : POST_TYPES.IMAGE,
+    source: POST_SOURCES.PROFILE,
+    
+    // Content
+    content: {
+      imageUrl: imageUrl || null,
+      videoUrl: videoUrl || null,
+      thumbnailUrl: thumbnailUrl || imageUrl,
+      caption
+    },
+    
+    // Metadata
+    metadata: {
+      nsfw
+    },
+    
+    // Visibility and access control (Phase 1)
+    visibility,
+    requiredTier: requiredTier ? new ObjectId(requiredTier) : null,
+    isProfilePost: true,
+    
+    // Status - profile posts are published immediately
+    status: POST_STATUSES.PUBLISHED,
+    scheduledFor: null,
+    publishedAt: new Date(),
+    
+    // Social media (not auto-published)
+    autoPublish: false,
+    socialPlatforms: [],
+    socialPostIds: [],
+    
+    // Engagement
+    likes: 0,
+    likedBy: [],
+    comments: [],
+    views: 0,
+    
+    // Timestamps
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+
+  const result = await db.collection('unifiedPosts').insertOne(post);
+  
+  // Update user's post count
+  await db.collection('users').updateOne(
+    { _id: new ObjectId(userId) },
+    { $inc: { postCount: 1 } }
+  );
+
+  return { _id: result.insertedId, ...post };
+}
+
+/**
+ * Check if a user can access a post based on visibility rules (Phase 1)
+ * @param {Object} post - The post to check
+ * @param {string|null} viewerId - The user trying to view (null = anonymous)
+ * @param {Object} db - Database connection
+ * @returns {Object} { canAccess: boolean, reason: string }
+ */
+async function checkPostAccess(post, viewerId, db) {
+  const postOwnerId = post.userId.toString();
+  const viewerIdStr = viewerId ? viewerId.toString() : null;
+
+  // Owner can always access their own posts
+  if (viewerIdStr && viewerIdStr === postOwnerId) {
+    return { canAccess: true, reason: 'owner' };
+  }
+
+  // Check visibility level
+  switch (post.visibility) {
+    case POST_VISIBILITY.PUBLIC:
+      return { canAccess: true, reason: 'public' };
+
+    case POST_VISIBILITY.FOLLOWERS:
+      if (!viewerIdStr) {
+        return { canAccess: false, reason: 'login_required' };
+      }
+      // Check if viewer follows the post owner
+      const followDoc = await db.collection('followers').findOne({
+        followerId: new ObjectId(viewerIdStr),
+        followedId: new ObjectId(postOwnerId)
+      });
+      if (followDoc) {
+        return { canAccess: true, reason: 'follower' };
+      }
+      return { canAccess: false, reason: 'followers_only' };
+
+    case POST_VISIBILITY.SUBSCRIBERS:
+      if (!viewerIdStr) {
+        return { canAccess: false, reason: 'login_required' };
+      }
+      // Check if viewer has an active subscription to the creator
+      const subscription = await db.collection('subscriptions').findOne({
+        subscriberId: new ObjectId(viewerIdStr),
+        creatorId: new ObjectId(postOwnerId),
+        status: 'active'
+      });
+      if (subscription) {
+        // If post requires specific tier, check tier level
+        if (post.requiredTier) {
+          const subTier = await db.collection('creatorTiers').findOne({ _id: subscription.tierId });
+          const reqTier = await db.collection('creatorTiers').findOne({ _id: post.requiredTier });
+          if (subTier && reqTier && subTier.order >= reqTier.order) {
+            return { canAccess: true, reason: 'subscriber' };
+          }
+          return { canAccess: false, reason: 'higher_tier_required' };
+        }
+        return { canAccess: true, reason: 'subscriber' };
+      }
+      return { canAccess: false, reason: 'subscribers_only' };
+
+    case POST_VISIBILITY.PRIVATE:
+    default:
+      return { canAccess: false, reason: 'private' };
+  }
+}
+
+/**
+ * Get public posts for a user's profile (Phase 1)
+ * Returns posts that the viewer is allowed to see
+ * @param {Object} db - Database connection
+ * @param {string} profileUserId - The profile owner's user ID
+ * @param {string|null} viewerId - The viewing user's ID (null for anonymous)
+ * @param {Object} filters - Filter options
+ * @returns {Object} Posts and pagination
+ */
+async function getPublicUserPosts(db, profileUserId, viewerId, filters = {}) {
+  const {
+    type,
+    nsfw = false,
+    page = 1,
+    limit = 12,
+    sortBy = 'createdAt',
+    sortOrder = -1
+  } = filters;
+
+  const profileUserObjId = new ObjectId(profileUserId);
+  const viewerObjId = viewerId ? new ObjectId(viewerId) : null;
+  const isOwner = viewerObjId && viewerObjId.toString() === profileUserObjId.toString();
+
+  // Build visibility query based on viewer's relationship to profile owner
+  let visibilityQuery;
+  
+  if (isOwner) {
+    // Owner sees all their posts
+    visibilityQuery = {};
+  } else if (viewerObjId) {
+    // Logged-in user - check follow/subscription status
+    const [isFollowing, subscription] = await Promise.all([
+      db.collection('followers').findOne({
+        followerId: viewerObjId,
+        followedId: profileUserObjId
+      }),
+      db.collection('subscriptions').findOne({
+        subscriberId: viewerObjId,
+        creatorId: profileUserObjId,
+        status: 'active'
+      })
+    ]);
+
+    if (subscription) {
+      // Subscriber can see public, followers, and subscribers posts
+      visibilityQuery = {
+        visibility: { $in: [POST_VISIBILITY.PUBLIC, POST_VISIBILITY.FOLLOWERS, POST_VISIBILITY.SUBSCRIBERS] }
+      };
+    } else if (isFollowing) {
+      // Follower can see public and followers posts
+      visibilityQuery = {
+        visibility: { $in: [POST_VISIBILITY.PUBLIC, POST_VISIBILITY.FOLLOWERS] }
+      };
+    } else {
+      // Non-follower sees only public posts
+      visibilityQuery = { visibility: POST_VISIBILITY.PUBLIC };
+    }
+  } else {
+    // Anonymous user sees only public posts
+    visibilityQuery = { visibility: POST_VISIBILITY.PUBLIC };
+  }
+
+  // Build the main query
+  const query = {
+    userId: profileUserObjId,
+    isProfilePost: true,
+    status: POST_STATUSES.PUBLISHED,
+    ...visibilityQuery
+  };
+
+  if (type) query.type = type;
+  if (!nsfw) query['metadata.nsfw'] = { $ne: true };
+
+  const skip = (page - 1) * limit;
+
+  // Get posts with user info
+  const posts = await db.collection('unifiedPosts')
+    .find(query)
+    .sort({ [sortBy]: sortOrder })
+    .skip(skip)
+    .limit(limit)
+    .toArray();
+
+  const total = await db.collection('unifiedPosts').countDocuments(query);
+
+  // Add access info to each post for UI hints
+  const postsWithAccess = posts.map(post => ({
+    ...post,
+    _accessInfo: {
+      canView: true,
+      isOwner,
+      visibility: post.visibility
+    }
+  }));
+
+  return {
+    posts: postsWithAccess,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit)
+    }
+  };
+}
+
+/**
+ * Toggle like on a post (Phase 1)
+ * @param {string} postId - Post ID
+ * @param {string} userId - User ID
+ * @param {string} action - 'like' or 'unlike'
+ * @param {Object} db - Database connection
+ */
+async function togglePostLike(postId, userId, action, db) {
+  const postObjId = new ObjectId(postId);
+  const userObjId = new ObjectId(userId);
+
+  if (action === 'like') {
+    // Check if already liked
+    const post = await db.collection('unifiedPosts').findOne({
+      _id: postObjId,
+      likedBy: userObjId
+    });
+
+    if (post) {
+      return { success: false, error: 'Already liked' };
+    }
+
+    await db.collection('unifiedPosts').updateOne(
+      { _id: postObjId },
+      {
+        $inc: { likes: 1 },
+        $addToSet: { likedBy: userObjId },
+        $set: { updatedAt: new Date() }
+      }
+    );
+
+    // Also add to posts_likes collection for tracking
+    await db.collection('posts_likes').insertOne({
+      postId: postObjId,
+      userId: userObjId,
+      likedAt: new Date()
+    });
+
+    return { success: true, action: 'liked' };
+  } else if (action === 'unlike') {
+    await db.collection('unifiedPosts').updateOne(
+      { _id: postObjId, likes: { $gt: 0 } },
+      {
+        $inc: { likes: -1 },
+        $pull: { likedBy: userObjId },
+        $set: { updatedAt: new Date() }
+      }
+    );
+
+    await db.collection('posts_likes').deleteOne({
+      postId: postObjId,
+      userId: userObjId
+    });
+
+    return { success: true, action: 'unliked' };
+  }
+
+  return { success: false, error: 'Invalid action' };
+}
+
+/**
+ * Add comment to a post (Phase 1)
+ * @param {string} postId - Post ID
+ * @param {string} userId - User ID
+ * @param {string} comment - Comment text
+ * @param {Object} db - Database connection
+ */
+async function addPostComment(postId, userId, comment, db) {
+  const commentData = {
+    _id: new ObjectId(),
+    userId: new ObjectId(userId),
+    comment,
+    createdAt: new Date()
+  };
+
+  await db.collection('unifiedPosts').updateOne(
+    { _id: new ObjectId(postId) },
+    {
+      $push: { comments: commentData },
+      $set: { updatedAt: new Date() }
+    }
+  );
+
+  return commentData;
 }
 
 /**
@@ -637,21 +1048,43 @@ async function createDraftPostFromImage(data, db) {
 }
 
 module.exports = {
+  // Constants
   POST_TYPES,
   POST_SOURCES,
   POST_STATUSES,
+  POST_VISIBILITY,
+  
+  // Post creation
   createPostFromImage,
   createPostFromVideo,
+  createDraftPostFromImage,
+  createProfilePost,
   linkTestToPost,
+  
+  // Post retrieval
+  getPostById,
   getUserPosts,
   getCombinedUserPosts,
-  createDraftPostFromImage,
+  getPublicUserPosts,
+  getScheduledPostsToPublish,
+  
+  // Post updates
+  updatePost,
   updatePostStatus,
+  updatePostVisibility,
+  
+  // Scheduling
   schedulePost,
   cancelScheduledPost,
-  getScheduledPostsToPublish,
+  
+  // Social
   addSocialPostId,
-  deletePost,
-  getPostById,
-  updatePost
+  
+  // Engagement (Phase 1)
+  togglePostLike,
+  addPostComment,
+  checkPostAccess,
+  
+  // Delete
+  deletePost
 };

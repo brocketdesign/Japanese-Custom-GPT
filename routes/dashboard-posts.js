@@ -92,6 +92,35 @@ async function routes(fastify, options) {
       return reply.code(500).send('Internal Server Error');
     }
   });
+
+  /**
+   * GET /dashboard/analytics
+   * Analytics dashboard - Phase 5
+   */
+  fastify.get('/dashboard/analytics', async (request, reply) => {
+    try {
+      const user = request.user;
+      
+      if (!user || user.isTemporary) {
+        return reply.redirect('/login');
+      }
+
+      const lang = request.lang || 'en';
+      const translations = request.translations;
+
+      return reply.view('dashboard/analytics', {
+        user,
+        translations,
+        lang,
+        title: translations.analytics?.title || 'Analytics Dashboard',
+        pageType: 'dashboard',
+        canonical: `${request.protocol}://${request.hostname}/dashboard/analytics`
+      });
+    } catch (error) {
+      console.error('[Dashboard Analytics] Error loading page:', error);
+      return reply.code(500).send('Internal Server Error');
+    }
+  });
 }
 
 module.exports = routes;

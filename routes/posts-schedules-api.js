@@ -1,23 +1,36 @@
 /**
  * Unified Posts API Routes
+ * 
+ * Phase 1: Clean Up In-App Posts
+ * - Added public posts endpoint for profile viewing
+ * - Added profile post creation endpoint
+ * - Added visibility update endpoint
+ * - Added like/comment endpoints for unified posts
  */
 
 const {
   POST_TYPES,
   POST_SOURCES,
   POST_STATUSES,
+  POST_VISIBILITY,
   createPostFromImage,
   createPostFromVideo,
   linkTestToPost,
   getUserPosts,
   getCombinedUserPosts,
+  getPublicUserPosts,
   createDraftPostFromImage,
+  createProfilePost,
   updatePostStatus,
   schedulePost,
   cancelScheduledPost,
   deletePost,
   getPostById,
-  updatePost
+  updatePost,
+  updatePostVisibility,
+  togglePostLike,
+  addPostComment,
+  checkPostAccess
 } = require('../models/unified-post-utils');
 
 const { generateCompletion } = require('../models/openai');
@@ -716,6 +729,272 @@ Return ONLY the caption text with hashtags, nothing else.`;
       console.error('[Schedules API] Delete error:', error);
       return reply.code(500).send({ error: 'Failed to delete schedule' });
     }
+  });
+
+  // ============================================
+  // Phase 1: Public Posts & Profile Posts APIs
+  // ============================================
+
+  /**
+   * GET /api/user/:userId/public-posts
+   * Get public posts for a user's profile (respects visibility rules)
+   * Can be accessed by anyone (logged in or not)
+   */
+  fastify.get('/api/user/:userId/public-posts', async (request, reply) => {
+    try {
+      const { userId } = request.params;
+      const viewerId = request.user?._id || null;
+
+      const filters = {
+        type: request.query.type,
+        nsfw: request.query.nsfw === 'true',
+        page: parseInt(request.query.page) || 1,
+        limit: parseInt(request.query.limit) || 12,
+        sortBy: request.query.sortBy || 'createdAt',
+        sortOrder: request.query.sortOrder === 'asc' ? 1 : -1
+      };
+
+      const result = await getPublicUserPosts(db, userId, viewerId, filters);
+
+      return reply.send({
+        success: true,
+        ...result
+      });
+    } catch (error) {
+      console.error('[Posts API] Get public posts error:', error);
+      return reply.code(500).send({ error: 'Failed to get posts' });
+    }
+  });
+
+  /**
+   * POST /api/posts/create-profile-post
+   * Create a new post directly on user's profile
+   */
+  fastify.post('/api/posts/create-profile-post', async (request, reply) => {
+    try {
+      const user = request.user;
+      if (!user || user.isTemporary) {
+        return reply.code(401).send({ error: 'Authentication required' });
+      }
+
+      const {
+        imageUrl,
+        videoUrl,
+        thumbnailUrl,
+        caption,
+        visibility = 'public',
+        requiredTier,
+        nsfw = false
+      } = request.body;
+
+      // Validate that at least one media is provided
+      if (!imageUrl && !videoUrl) {
+        return reply.code(400).send({ error: 'Either imageUrl or videoUrl is required' });
+      }
+
+      // Validate visibility
+      if (!Object.values(POST_VISIBILITY).includes(visibility)) {
+        return reply.code(400).send({ error: 'Invalid visibility value' });
+      }
+
+      const post = await createProfilePost({
+        userId: user._id,
+        imageUrl,
+        videoUrl,
+        thumbnailUrl,
+        caption,
+        visibility,
+        requiredTier,
+        nsfw
+      }, db);
+
+      return reply.code(201).send({
+        success: true,
+        post
+      });
+    } catch (error) {
+      console.error('[Posts API] Create profile post error:', error);
+      return reply.code(500).send({ error: 'Failed to create post' });
+    }
+  });
+
+  /**
+   * PUT /api/posts/:postId/visibility
+   * Update post visibility settings
+   */
+  fastify.put('/api/posts/:postId/visibility', async (request, reply) => {
+    try {
+      const user = request.user;
+      if (!user || user.isTemporary) {
+        return reply.code(401).send({ error: 'Authentication required' });
+      }
+
+      const { postId } = request.params;
+      const { visibility, requiredTier } = request.body;
+
+      if (!visibility) {
+        return reply.code(400).send({ error: 'Visibility is required' });
+      }
+
+      if (!Object.values(POST_VISIBILITY).includes(visibility)) {
+        return reply.code(400).send({ error: 'Invalid visibility value' });
+      }
+
+      const updated = await updatePostVisibility(postId, user._id, visibility, requiredTier, db);
+
+      if (!updated) {
+        return reply.code(404).send({ error: 'Post not found or not authorized' });
+      }
+
+      return reply.send({
+        success: true,
+        message: 'Visibility updated'
+      });
+    } catch (error) {
+      console.error('[Posts API] Update visibility error:', error);
+      return reply.code(500).send({ error: error.message || 'Failed to update visibility' });
+    }
+  });
+
+  /**
+   * POST /api/posts/:postId/like
+   * Toggle like on a post
+   */
+  fastify.post('/api/posts/:postId/like', async (request, reply) => {
+    try {
+      const user = request.user;
+      if (!user || user.isTemporary) {
+        return reply.code(401).send({ error: 'Authentication required' });
+      }
+
+      const { postId } = request.params;
+      const { action } = request.body; // 'like' or 'unlike'
+
+      if (!action || !['like', 'unlike'].includes(action)) {
+        return reply.code(400).send({ error: 'Valid action (like/unlike) is required' });
+      }
+
+      // Check if user has access to the post
+      const post = await getPostById(postId, db);
+      if (!post) {
+        return reply.code(404).send({ error: 'Post not found' });
+      }
+
+      const access = await checkPostAccess(post, user._id, db);
+      if (!access.canAccess) {
+        return reply.code(403).send({ error: 'You do not have access to this post' });
+      }
+
+      const result = await togglePostLike(postId, user._id, action, db);
+
+      if (!result.success) {
+        return reply.code(400).send({ error: result.error });
+      }
+
+      return reply.send({
+        success: true,
+        action: result.action
+      });
+    } catch (error) {
+      console.error('[Posts API] Like toggle error:', error);
+      return reply.code(500).send({ error: 'Failed to update like' });
+    }
+  });
+
+  /**
+   * POST /api/posts/:postId/comment
+   * Add comment to a post
+   */
+  fastify.post('/api/posts/:postId/comment', async (request, reply) => {
+    try {
+      const user = request.user;
+      if (!user || user.isTemporary) {
+        return reply.code(401).send({ error: 'Authentication required' });
+      }
+
+      const { postId } = request.params;
+      const { comment } = request.body;
+
+      if (!comment || comment.trim().length === 0) {
+        return reply.code(400).send({ error: 'Comment is required' });
+      }
+
+      // Check if user has access to the post
+      const post = await getPostById(postId, db);
+      if (!post) {
+        return reply.code(404).send({ error: 'Post not found' });
+      }
+
+      const access = await checkPostAccess(post, user._id, db);
+      if (!access.canAccess) {
+        return reply.code(403).send({ error: 'You do not have access to this post' });
+      }
+
+      const commentData = await addPostComment(postId, user._id, comment.trim(), db);
+
+      return reply.send({
+        success: true,
+        comment: commentData
+      });
+    } catch (error) {
+      console.error('[Posts API] Add comment error:', error);
+      return reply.code(500).send({ error: 'Failed to add comment' });
+    }
+  });
+
+  /**
+   * PUT /api/posts/:postId/profile-status
+   * Toggle whether a post appears on the profile
+   */
+  fastify.put('/api/posts/:postId/profile-status', async (request, reply) => {
+    try {
+      const user = request.user;
+      if (!user || user.isTemporary) {
+        return reply.code(401).send({ error: 'Authentication required' });
+      }
+
+      const { postId } = request.params;
+      const { isProfilePost } = request.body;
+
+      if (typeof isProfilePost !== 'boolean') {
+        return reply.code(400).send({ error: 'isProfilePost must be a boolean' });
+      }
+
+      // Verify ownership
+      const post = await getPostById(postId, db);
+      if (!post) {
+        return reply.code(404).send({ error: 'Post not found' });
+      }
+      if (post.userId.toString() !== user._id.toString()) {
+        return reply.code(403).send({ error: 'Not authorized' });
+      }
+
+      await updatePost(postId, { isProfilePost }, db);
+
+      return reply.send({
+        success: true,
+        message: isProfilePost ? 'Post added to profile' : 'Post removed from profile'
+      });
+    } catch (error) {
+      console.error('[Posts API] Profile status error:', error);
+      return reply.code(500).send({ error: 'Failed to update profile status' });
+    }
+  });
+
+  /**
+   * GET /api/posts/visibility-options
+   * Get available visibility options (for UI)
+   */
+  fastify.get('/api/posts/visibility-options', async (request, reply) => {
+    return reply.send({
+      success: true,
+      options: [
+        { value: POST_VISIBILITY.PUBLIC, label: 'Public', description: 'Anyone can see this post' },
+        { value: POST_VISIBILITY.FOLLOWERS, label: 'Followers', description: 'Only your followers can see this post' },
+        { value: POST_VISIBILITY.SUBSCRIBERS, label: 'Subscribers', description: 'Only your subscribers can see this post' },
+        { value: POST_VISIBILITY.PRIVATE, label: 'Private', description: 'Only you can see this post' }
+      ]
+    });
   });
 }
 

@@ -43,8 +43,15 @@ async function sleep(ms) {
 
 async function migrateGalleryThumbnails() {
     const mongoUri = process.env.MONGODB_URI;
+    const dbName = process.env.MONGODB_NAME;
+    
     if (!mongoUri) {
         console.error('Error: MONGODB_URI environment variable is not set');
+        process.exit(1);
+    }
+    
+    if (!dbName) {
+        console.error('Error: MONGODB_NAME environment variable is not set');
         process.exit(1);
     }
 
@@ -53,8 +60,9 @@ async function migrateGalleryThumbnails() {
     try {
         await client.connect();
         console.log('Connected to MongoDB');
+        console.log(`Using database: ${dbName}`);
         
-        const db = client.db();
+        const db = client.db(dbName);
         const galleryCollection = db.collection('gallery');
         
         // Count total galleries

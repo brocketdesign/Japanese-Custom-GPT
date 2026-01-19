@@ -3,6 +3,142 @@
  * Frontend logic for viewing and managing posts (unified posts + chat posts)
  */
 
+/**
+ * Caption History Management (shared utility)
+ */
+const CaptionHistory = window.CaptionHistory || {
+  STORAGE_KEY: 'captionHistory',
+  MAX_ITEMS: 20,
+  
+  getHistory() {
+    try {
+      const stored = localStorage.getItem(this.STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      console.error('[CaptionHistory] Error reading history:', e);
+      return [];
+    }
+  },
+  
+  saveCaption(caption, imageId = null) {
+    if (!caption || caption.trim().length === 0) return;
+    
+    try {
+      const history = this.getHistory();
+      const newEntry = {
+        id: Date.now().toString(),
+        caption: caption.trim(),
+        imageId: imageId,
+        createdAt: new Date().toISOString()
+      };
+      
+      // Check for duplicates
+      const exists = history.some(h => h.caption === newEntry.caption);
+      if (!exists) {
+        history.unshift(newEntry);
+        if (history.length > this.MAX_ITEMS) {
+          history.splice(this.MAX_ITEMS);
+        }
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(history));
+      }
+      
+      this.renderHistory('editCaptionHistory', 'editCaptionText');
+    } catch (e) {
+      console.error('[CaptionHistory] Error saving caption:', e);
+    }
+  },
+  
+  deleteCaption(captionId) {
+    try {
+      const history = this.getHistory();
+      const filtered = history.filter(h => h.id !== captionId);
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filtered));
+      this.renderHistory('editCaptionHistory', 'editCaptionText');
+    } catch (e) {
+      console.error('[CaptionHistory] Error deleting caption:', e);
+    }
+  },
+  
+  renderHistory(containerId, textareaId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    const history = this.getHistory();
+    
+    if (history.length === 0) {
+      container.innerHTML = '<small class="text-muted">No caption history yet</small>';
+      return;
+    }
+    
+    const html = history.slice(0, 10).map(item => {
+      const date = new Date(item.createdAt);
+      const timeAgo = this.formatTimeAgo(date);
+      const shortCaption = item.caption.length > 100 
+        ? item.caption.substring(0, 100) + '...' 
+        : item.caption;
+      
+      return `
+        <div class="caption-history-item d-flex align-items-start gap-2 p-2 mb-1 rounded" style="background: rgba(255,255,255,0.05); cursor: pointer;" 
+             onclick="CaptionHistory.useCaption('${item.id}', '${textareaId}')">
+          <div class="flex-grow-1">
+            <small class="d-block text-white-50" style="font-size: 0.75rem;">${this.escapeHtml(shortCaption)}</small>
+            <small class="text-muted" style="font-size: 0.65rem;">${timeAgo}</small>
+          </div>
+          <button type="button" class="btn btn-sm p-0 text-danger" onclick="event.stopPropagation(); CaptionHistory.deleteCaption('${item.id}')" title="Delete">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+      `;
+    }).join('');
+    
+    container.innerHTML = `
+      <label class="form-label small text-muted mt-2">
+        <i class="bi bi-clock-history me-1"></i>Caption History
+      </label>
+      <div class="caption-history-list" style="max-height: 150px; overflow-y: auto;">
+        ${html}
+      </div>
+    `;
+  },
+  
+  useCaption(captionId, textareaId) {
+    const history = this.getHistory();
+    const item = history.find(h => h.id === captionId);
+    if (item) {
+      const textarea = document.getElementById(textareaId);
+      if (textarea) {
+        textarea.value = item.caption;
+        textarea.focus();
+        if (typeof window.showNotification === 'function') {
+          window.showNotification('Caption applied!', 'success');
+        }
+      }
+    }
+  },
+  
+  formatTimeAgo(date) {
+    const seconds = Math.floor((new Date() - date) / 1000);
+    const intervals = { day: 86400, hour: 3600, minute: 60 };
+    
+    for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+      const interval = Math.floor(seconds / secondsInUnit);
+      if (interval >= 1) {
+        return `${interval} ${unit}${interval > 1 ? 's' : ''} ago`;
+      }
+    }
+    return 'Just now';
+  },
+  
+  escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+};
+
+// Make CaptionHistory globally available
+window.CaptionHistory = CaptionHistory;
+
 class PostsDashboard {
   constructor() {
     this.currentPage = 1;
@@ -467,6 +603,9 @@ class PostsDashboard {
         });
     }
     
+    // Initialize caption history
+    CaptionHistory.renderHistory('editCaptionHistory', 'editCaptionText');
+    
     this.postModal?.hide();
     this.editCaptionModal?.show();
   }
@@ -498,6 +637,8 @@ class PostsDashboard {
       
       if (data.success && data.caption) {
         captionInput.value = data.caption;
+        // Save to caption history
+        CaptionHistory.saveCaption(data.caption, postId);
         this.showNotification('Caption generated!', 'success');
       } else {
         throw new Error(data.error || 'Failed to generate caption');

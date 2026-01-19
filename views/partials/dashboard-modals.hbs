@@ -600,134 +600,132 @@
 </div>
 
 
-<!-- Character Info Modal (Read-only) -->
+<!-- Character Info Modal (Read-only) - Native App Style -->
 <div class="modal fade character-info-modal" id="characterInfoModal" tabindex="-1" aria-labelledby="characterInfoModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable mx-0">
-        <div class="modal-content mx-auto">
-            <div class="modal-header">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable mx-auto" style="max-width: 420px;">
+        <div class="modal-content character-info-native">
+            <div class="modal-header border-0 pb-0">
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                <h5 class="modal-title" id="characterInfoModalLabel">
-                    <i class="bi bi-info-circle me-2"></i>{{translations.characterInfo.title}}
-                </h5>
             </div>
-            <div class="modal-body">
+            <div class="modal-body pt-0">
                 <div id="character-info-container">
                     <!-- Loading state -->
                     <div class="text-center p-4" id="characterInfoLoading">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
-                        <div class="mt-2 text-muted">Loading character information...</div>
+                        <div class="mt-2 text-muted">{{translations.loading}}</div>
                     </div>
                     
-                    <!-- Character info content -->
+                    <!-- Character info content - Native App Style -->
                     <div id="characterInfoContent" style="display: none;">
-                        <!-- Character Header -->
-                        <div class="character-info-header mb-4">
-                            <div class="row align-items-center">
-                                <div class="col-auto">
-                                    <div class="character-avatar">
-                                        <img id="charInfoImage" src="" alt="Character Image" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover; display: none;">
-                                        <div id="charInfoImagePlaceholder" class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-                                            <i class="bi bi-person fs-1 text-muted"></i>
-                                        </div>
-                                    </div>
+                        <!-- Character Header with Avatar -->
+                        <div class="char-info-header text-center mb-4">
+                            <div class="char-info-avatar-wrapper mx-auto mb-3">
+                                <img id="charInfoImage" src="" alt="Character" class="char-info-avatar" style="display: none;">
+                                <div id="charInfoImagePlaceholder" class="char-info-avatar-placeholder d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-person fs-1"></i>
                                 </div>
-                                <div class="col">
-                                    <h4 id="charInfoName" class="mb-1" style="display: inline-block;">-</h4>
-                                    <a href="#" id="charInfoLink" target="_blank" class="external-lin ms-1">
-                                        <i class="bi bi-box-arrow-up-right me-1"></i>{{translations.characterUpdate.viewCharacter}}
-                                    </a>
-                                    <div class="text-muted mb-2">
-                                        <span id="charInfoGender">-</span> • 
-                                        <span id="charInfoUpdatedAt">-</span>
-                                    </div>
-                                    <div class="d-flex gap-3">
-                                        <small class="text-muted">
-                                            <i class="bi bi-chat-dots me-1"></i>
-                                            <span id="charInfoMessages">0</span> messages
-                                        </small>
-                                        <small class="text-muted">
-                                            <i class="bi bi-image me-1"></i>
-                                            <span id="charInfoImages">0</span> images
-                                        </small>
-                                    </div>
+                            </div>
+                            <h4 id="charInfoName" class="char-info-name mb-2">-</h4>
+                            <div class="char-info-stats d-flex justify-content-center gap-4">
+                                <div class="char-info-stat">
+                                    <i class="bi bi-chat-dots"></i>
+                                    <span id="charInfoMessages">0</span>
+                                </div>
+                                <div class="char-info-stat">
+                                    <i class="bi bi-image"></i>
+                                    <span id="charInfoImages">0</span>
+                                </div>
+                                <div class="char-info-stat">
+                                    <i class="bi bi-camera-video"></i>
+                                    <span id="charInfoVideos">0</span>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Basic Information -->
-                        <div class="card mb-3">
-                            <div class="card-header">
-                                <h6 class="mb-0"><i class="bi bi-person-badge me-2"></i>Basic Information</h6>
+                        
+                        <!-- Character Details Grid - Native App Style -->
+                        <div class="char-info-details-grid">
+                            <!-- Personality -->
+                            <div class="char-info-detail-card">
+                                <span class="char-info-label">{{translations.newCharacter.personality_title}}</span>
+                                <span class="char-info-value" id="charInfoPersonality">-</span>
+                                <button type="button" class="char-info-edit-btn" data-field="personality"><i class="bi bi-pencil"></i></button>
                             </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label small text-muted">Short Introduction</label>
-                                            <div id="charInfoShortIntro" class="form-control-plaintext">-</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label small text-muted">NSFW</label>
-                                            <div id="charInfoNsfw" class="form-control-plaintext">-</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label small text-muted">Description</label>
-                                    <div id="charInfoDescription" class="form-control-plaintext">-</div>
-                                </div>
-                                <div class="mb-0">
-                                    <label class="form-label small text-muted">Tags</label>
-                                    <div id="charInfoTags" class="form-control-plaintext">-</div>
-                                </div>
+                            
+                            <!-- Relationship -->
+                            <div class="char-info-detail-card">
+                                <span class="char-info-label">{{translations.newCharacter.relationship_title}}</span>
+                                <span class="char-info-value" id="charInfoRelationship">-</span>
+                                <button type="button" class="char-info-edit-btn" data-field="relationship"><i class="bi bi-pencil"></i></button>
                             </div>
-                        </div>
-
-                        <!-- Model Information -->
-                        <div class="card mb-3">
-                            <div class="card-header">
-                                <h6 class="mb-0"><i class="bi bi-cpu me-2"></i>Model Information</h6>
+                            
+                            <!-- Occupation -->
+                            <div class="char-info-detail-card">
+                                <span class="char-info-label">{{translations.newCharacter.occupation_title}}</span>
+                                <span class="char-info-value" id="charInfoOccupation">-</span>
+                                <button type="button" class="char-info-edit-btn" data-field="occupation"><i class="bi bi-pencil"></i></button>
                             </div>
-                            <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col-auto">
-                                        <img id="charInfoModelImage" src="" alt="Model Image" class="rounded" style="width: 60px; height: 60px; object-fit: cover; display: none;">
-                                        <div id="charInfoModelPlaceholder" class="bg-light rounded align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                                            <i class="bi bi-cpu fs-4 text-muted"></i>
-                                        </div>
-                                    </div>
-                                    <div class="col">
-                                        <div class="mb-1">
-                                            <strong id="charInfoModelName">-</strong>
-                                        </div>
-                                        <div class="text-muted small">
-                                            Style: <span id="charInfoModelStyle">-</span>
-                                        </div>
-                                        <div class="text-muted small">
-                                            Model ID: <span id="charInfoModelId">-</span>
-                                        </div>
-                                    </div>
-                                </div>
+                            
+                            <!-- Preferences -->
+                            <div class="char-info-detail-card">
+                                <span class="char-info-label">{{translations.newCharacter.kinks_title}}</span>
+                                <span class="char-info-value" id="charInfoPreferences">-</span>
+                                <button type="button" class="char-info-edit-btn" data-field="preferences"><i class="bi bi-pencil"></i></button>
                             </div>
                         </div>
-
-                        <!-- Character Details -->
-                        <div class="card" id="charInfoDetailsCard" style="display: none;">
-                            <div class="card-header">
-                                <h6 class="mb-0"><i class="bi bi-list-ul me-2"></i>Character Details</h6>
-                            </div>
-                            <div class="card-body">
-                                <div id="charInfoDetails"></div>
-                            </div>
+                        
+                        <!-- Custom Instructions Section -->
+                        <div class="char-info-purpose-section" id="charInfoCustomInstructionsSection" style="display: none;">
+                            <span class="char-info-label">
+                                {{#if translations.newCharacter.custom_instructions_title}}
+                                    {{translations.newCharacter.custom_instructions_title}}
+                                {{else}}
+                                    Custom Instructions
+                                {{/if}}
+                            </span>
+                            <p class="char-info-purpose-text" id="charInfoCustomInstructions">-</p>
+                            <button type="button" class="char-info-edit-btn" data-field="customInstructions"><i class="bi bi-pencil"></i></button>
+                        </div>
+                        
+                        <!-- Add Custom Instructions Button (shown when no custom instructions exist) -->
+                        <div class="char-info-add-instructions mt-3" id="charInfoAddInstructionsBtn">
+                            <button type="button" class="btn btn-outline-primary btn-sm w-100" id="addCustomInstructionsBtn">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                {{#if translations.newCharacter.add_custom_instructions}}
+                                    {{translations.newCharacter.add_custom_instructions}}
+                                {{else}}
+                                    Add Custom Instructions
+                                {{/if}}
+                            </button>
+                        </div>
+                        
+                        <!-- Chat Purpose Section -->
+                        <div class="char-info-purpose-section" id="charInfoPurposeSection" style="display: none;">
+                            <span class="char-info-label">{{translations.newCharacter.chat_purpose_label}}</span>
+                            <p class="char-info-purpose-text" id="charInfoPurpose">-</p>
+                        </div>
+                        
+                        <!-- Reset Customizations Button -->
+                        <div class="char-info-reset mt-3" id="charInfoResetBtn" style="display: none;">
+                            <button type="button" class="btn btn-outline-warning btn-sm w-100">
+                                <i class="bi bi-arrow-counterclockwise me-2"></i>
+                                {{#if translations.newCharacter.reset_customizations}}
+                                    {{translations.newCharacter.reset_customizations}}
+                                {{else}}
+                                    Reset to Character Defaults
+                                {{/if}}
+                            </button>
+                        </div>
+                        
+                        <!-- View Character Link -->
+                        <div class="char-info-actions mt-4">
+                            <a href="#" id="charInfoLink" target="_blank" class="btn btn-outline-secondary btn-sm w-100">
+                                <i class="bi bi-box-arrow-up-right me-2"></i>{{translations.characterUpdate.viewCharacter}}
+                            </a>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="modal-footer">
             </div>
         </div>
     </div>

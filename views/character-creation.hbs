@@ -195,11 +195,15 @@
                         </div>
                     </div>
                     
-                    <!-- Custom Prompt (Optional) -->
+                    <!-- Character History/Purpose (Optional) -->
                     <div class="selection-section mt-4">
-                        <div class="custom-prompt-container">
-                            <label class="custom-prompt-label">{{translations.newCharacter.custom_prompt_label}}</label>
-                            <textarea class="custom-prompt-input" id="customPrompt" placeholder="{{translations.newCharacter.custom_prompt_placeholder}}" rows="8"></textarea>
+                        <div class="custom-prompt-section">
+                            <label class="section-label">{{translations.newCharacter.character_purpose_title}}</label>
+                            <p class="custom-prompt-description">{{translations.newCharacter.character_purpose_description}}</p>
+                            <textarea class="custom-prompt-input" id="characterPurpose" placeholder="{{translations.newCharacter.character_purpose_placeholder}}" rows="6" maxlength="1000"></textarea>
+                            <div class="char-counter">
+                                <span id="characterPurposeCounter">0</span>/1000
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -265,19 +269,19 @@
                         <input type="hidden" id="isUserModel" name="isUserModel" value="false">
                     </div>
                     
-                    <!-- Custom Prompt Section -->
+                    <!-- Outfit/Physical Customization Section -->
                     <div class="custom-prompt-section">
-                        <label for="customPrompt" class="section-label">{{translations.newCharacter.custom_prompt_label}}</label>
-                        <p class="custom-prompt-description">{{translations.newCharacter.custom_prompt_description}}</p>
+                        <label for="outfitPrompt" class="section-label">{{translations.newCharacter.outfit_prompt_title}}</label>
+                        <p class="custom-prompt-description">{{translations.newCharacter.outfit_prompt_description}}</p>
                         <textarea 
                             class="custom-prompt-input" 
-                            id="customPrompt" 
-                            placeholder="{{translations.newCharacter.custom_prompt_placeholder}}"
-                            rows="8"
+                            id="outfitPrompt" 
+                            placeholder="{{translations.newCharacter.outfit_prompt_placeholder}}"
+                            rows="6"
                             maxlength="500"
                         ></textarea>
                         <div class="char-counter">
-                            <span id="customPromptCounter">0</span>/500
+                            <span id="outfitPromptCounter">0</span>/500
                         </div>
                     </div>
                     
@@ -336,19 +340,54 @@
                     <h1 class="step-title">{{translations.newCharacter.step8_title}}</h1>
                     <p class="step-subtitle">{{translations.newCharacter.step8_subtitle}}</p>
                     
-                    <!-- Character Summary -->
-                    <div class="character-summary">
-                        <div class="summary-image-container">
-                            <img id="summaryImage" src="/img/default-character.png" alt="Character">
-                        </div>
-                        <div class="summary-details">
-                            <h3 class="summary-name" id="summaryName">-</h3>
-                            <div class="summary-traits">
-                                <span class="trait-badge" id="summaryAge">-</span>
-                                <span class="trait-badge" id="summaryEthnicity">-</span>
-                                <span class="trait-badge" id="summaryPersonality">-</span>
+                    <!-- Character Summary Card - Native App Style -->
+                    <div class="character-summary-card">
+                        <!-- Character Header -->
+                        <div class="summary-header">
+                            <div class="summary-avatar-container">
+                                <img id="summaryImage" src="/img/default-character.png" alt="Character" class="summary-avatar">
                             </div>
-                            <p class="summary-description" id="summaryDescription">-</p>
+                            <div class="summary-header-info">
+                                <h3 class="summary-name" id="summaryName">-</h3>
+                                <div class="summary-stats">
+                                    <span class="stat-item"><i class="bi bi-chat-dots"></i> <span id="summaryMessages">0</span></span>
+                                    <span class="stat-item"><i class="bi bi-image"></i> <span id="summaryImages">0</span></span>
+                                    <span class="stat-item"><i class="bi bi-camera-video"></i> <span id="summaryVideos">0</span></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Character Details Grid -->
+                        <div class="summary-details-grid">
+                            <!-- Personality -->
+                            <div class="summary-detail-card">
+                                <span class="detail-label">{{translations.newCharacter.personality_title}}</span>
+                                <span class="detail-value" id="summaryPersonality">-</span>
+                            </div>
+                            
+                            <!-- Relationship -->
+                            <div class="summary-detail-card">
+                                <span class="detail-label">{{translations.newCharacter.relationship_title}}</span>
+                                <span class="detail-value" id="summaryRelationship">-</span>
+                            </div>
+                            
+                            <!-- Occupation -->
+                            <div class="summary-detail-card">
+                                <span class="detail-label">{{translations.newCharacter.occupation_title}}</span>
+                                <span class="detail-value" id="summaryOccupation">-</span>
+                            </div>
+                            
+                            <!-- Preferences -->
+                            <div class="summary-detail-card">
+                                <span class="detail-label">{{translations.newCharacter.kinks_title}}</span>
+                                <span class="detail-value" id="summaryPreferences">-</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Chat Purpose Section -->
+                        <div class="summary-purpose-section" id="summaryPurposeSection" style="display: none;">
+                            <span class="detail-label">{{translations.newCharacter.chat_purpose_label}}</span>
+                            <p class="purpose-text" id="summaryPurpose">-</p>
                         </div>
                     </div>
                     

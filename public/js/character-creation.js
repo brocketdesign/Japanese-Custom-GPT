@@ -49,7 +49,7 @@
                 relationship: 'stranger',
                 occupation: 'student',
                 kinks: 'vanilla',
-                customPrompt: '',
+                characterPurpose: '',
                 
                 // Step 6: Voice
                 voice: 'Wise_Woman',
@@ -60,6 +60,7 @@
                 imageModel: null,
                 imageVersion: null,
                 isUserModel: false,
+                outfitPrompt: '',
                 
                 // Step 7: Generated Images
                 generatedImages: [],
@@ -430,23 +431,44 @@
                 });
             }
             
-            // Custom prompt with character counter
-            const customPrompt = document.getElementById('customPrompt');
-            const customPromptCounter = document.getElementById('customPromptCounter');
-            if (customPrompt) {
-                customPrompt.addEventListener('input', (e) => {
-                    this.characterData.customPrompt = e.target.value;
+            // Character Purpose (Step 5) with character counter
+            const characterPurpose = document.getElementById('characterPurpose');
+            const characterPurposeCounter = document.getElementById('characterPurposeCounter');
+            if (characterPurpose) {
+                characterPurpose.addEventListener('input', (e) => {
+                    this.characterData.characterPurpose = e.target.value;
                     this.saveData();
                     // Update character counter
-                    if (customPromptCounter) {
-                        customPromptCounter.textContent = e.target.value.length;
+                    if (characterPurposeCounter) {
+                        characterPurposeCounter.textContent = e.target.value.length;
                     }
                 });
                 // Initialize counter if there's saved data
-                if (this.characterData.customPrompt) {
-                    customPrompt.value = this.characterData.customPrompt;
-                    if (customPromptCounter) {
-                        customPromptCounter.textContent = this.characterData.customPrompt.length;
+                if (this.characterData.characterPurpose) {
+                    characterPurpose.value = this.characterData.characterPurpose;
+                    if (characterPurposeCounter) {
+                        characterPurposeCounter.textContent = this.characterData.characterPurpose.length;
+                    }
+                }
+            }
+            
+            // Outfit Prompt (Step 7) with character counter
+            const outfitPrompt = document.getElementById('outfitPrompt');
+            const outfitPromptCounter = document.getElementById('outfitPromptCounter');
+            if (outfitPrompt) {
+                outfitPrompt.addEventListener('input', (e) => {
+                    this.characterData.outfitPrompt = e.target.value;
+                    this.saveData();
+                    // Update character counter
+                    if (outfitPromptCounter) {
+                        outfitPromptCounter.textContent = e.target.value.length;
+                    }
+                });
+                // Initialize counter if there's saved data
+                if (this.characterData.outfitPrompt) {
+                    outfitPrompt.value = this.characterData.outfitPrompt;
+                    if (outfitPromptCounter) {
+                        outfitPromptCounter.textContent = this.characterData.outfitPrompt.length;
                     }
                 }
             }
@@ -1383,7 +1405,7 @@
                     prompt: prompt,
                     name: this.characterData.name,
                     gender: 'female',
-                    chatPurpose: this.characterData.customPrompt || '',
+                    chatPurpose: this.characterData.characterPurpose || '',
                     language: this.lang,
                     imageType: 'sfw',
                     chatId: this.chatId,
@@ -1723,8 +1745,9 @@
                 `${d.occupation}`
             ];
             
-            if (d.customPrompt) {
-                parts.push(d.customPrompt);
+            // Add outfit/physical customization prompt
+            if (d.outfitPrompt) {
+                parts.push(d.outfitPrompt);
             }
             
             return parts.join(', ');
@@ -1942,7 +1965,7 @@
         updateSummary() {
             const d = this.characterData;
             
-            // Update summary image
+            // Update summary image (avatar)
             const summaryImage = document.getElementById('summaryImage');
             if (summaryImage && d.selectedImageUrl) {
                 summaryImage.src = d.selectedImageUrl;
@@ -1954,27 +1977,68 @@
                 summaryName.textContent = d.name || this.t('unnamed', 'Unnamed');
             }
             
-            // Update traits
-            const summaryAge = document.getElementById('summaryAge');
-            if (summaryAge) summaryAge.textContent = `${d.age} ${this.t('years', 'years')}`;
+            // Update stats (default to 0 for new character)
+            const summaryMessages = document.getElementById('summaryMessages');
+            if (summaryMessages) summaryMessages.textContent = '0';
             
-            const summaryEthnicity = document.getElementById('summaryEthnicity');
-            if (summaryEthnicity) {
-                summaryEthnicity.textContent = this.t(`ethnicities.${d.ethnicity}`, d.ethnicity);
-            }
+            const summaryImages = document.getElementById('summaryImages');
+            if (summaryImages) summaryImages.textContent = d.generatedImages.length || '0';
             
+            const summaryVideos = document.getElementById('summaryVideos');
+            if (summaryVideos) summaryVideos.textContent = '0';
+            
+            // Update personality
             const summaryPersonality = document.getElementById('summaryPersonality');
             if (summaryPersonality) {
                 summaryPersonality.textContent = this.t(`personalities.${d.personality}`, d.personality);
             }
             
-            // Update description
-            const summaryDescription = document.getElementById('summaryDescription');
-            if (summaryDescription) {
-                const occupation = this.t(`occupations.${d.occupation}`, d.occupation);
-                const relationship = this.t(`relationships.${d.relationship}`, d.relationship);
-                summaryDescription.textContent = `${occupation} • ${relationship}`;
+            // Update relationship
+            const summaryRelationship = document.getElementById('summaryRelationship');
+            if (summaryRelationship) {
+                summaryRelationship.textContent = this.t(`relationships.${d.relationship}`, d.relationship);
             }
+            
+            // Update occupation
+            const summaryOccupation = document.getElementById('summaryOccupation');
+            if (summaryOccupation) {
+                const occupationEmoji = this.getOccupationEmoji(d.occupation);
+                summaryOccupation.textContent = `${occupationEmoji} ${this.t(`occupations.${d.occupation}`, d.occupation)}`;
+            }
+            
+            // Update preferences (kinks)
+            const summaryPreferences = document.getElementById('summaryPreferences');
+            if (summaryPreferences) {
+                summaryPreferences.textContent = this.t(`kinks.${d.kinks}`, d.kinks);
+            }
+            
+            // Update chat purpose
+            const summaryPurposeSection = document.getElementById('summaryPurposeSection');
+            const summaryPurpose = document.getElementById('summaryPurpose');
+            if (summaryPurposeSection && summaryPurpose) {
+                if (d.characterPurpose && d.characterPurpose.trim()) {
+                    summaryPurpose.textContent = d.characterPurpose;
+                    summaryPurposeSection.style.display = 'block';
+                } else {
+                    summaryPurposeSection.style.display = 'none';
+                }
+            }
+        }
+        
+        getOccupationEmoji(occupation) {
+            const emojiMap = {
+                'student': '🎓',
+                'teacher': '👩‍🏫',
+                'nurse': '👩‍⚕️',
+                'model': '📸',
+                'artist': '🎨',
+                'athlete': '🏃‍♀️',
+                'businesswoman': '💼',
+                'influencer': '📱',
+                'scientist': '🔬',
+                'musician': '🎵'
+            };
+            return emojiMap[occupation] || '';
         }
         
         // ===================

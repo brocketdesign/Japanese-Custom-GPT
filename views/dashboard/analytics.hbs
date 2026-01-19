@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+{{> dashboard-header}}
+<body class="bg-dark">
+    {{> dashboard-nav}}
+    <link rel="stylesheet" href="/css/dashboard-analytics.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    <section class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                    <div class="flex-grow-1">
+                        <h1 class="text-white mb-1">
+                            <i class="bi bi-graph-up me-2"></i>{{translations.analytics.title}}
+                        </h1>
+                        <p class="text-muted mb-0">{{translations.analytics.subtitle}}</p>
+                    </div>
+                    <div class="d-flex gap-2 w-100 w-md-auto">
+                        <select id="periodSelect" class="form-select bg-dark text-white border-secondary">
+                            <option value="last_7_days">{{translations.analytics.last7Days}}</option>
+                            <option value="last_30_days" selected>{{translations.analytics.last30Days}}</option>
+                            <option value="last_90_days">{{translations.analytics.last90Days}}</option>
+                            <option value="this_month">{{translations.analytics.thisMonth}}</option>
+                            <option value="this_year">{{translations.analytics.thisYear}}</option>
+                            <option value="all_time">{{translations.analytics.allTime}}</option>
+                        </select>
+                        <button class="btn btn-outline-primary" id="refreshBtn">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" id="exportBtn">
+                            <i class="bi bi-download me-1"></i>{{translations.analytics.export}}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats Overview -->
+        <div class="row mb-4 g-3">
+            <div class="col-6 col-md-3">
+                <div class="stat-card stat-primary">
+                    <div class="stat-icon">
+                        <i class="bi bi-eye"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalViews">0</h3>
+                        <p>{{translations.analytics.totalViews}}</p>
+                        <span class="stat-change positive" id="viewsChange">+0%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card stat-success">
+                    <div class="stat-icon">
+                        <i class="bi bi-heart"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalLikes">0</h3>
+                        <p>{{translations.analytics.totalLikes}}</p>
+                        <span class="stat-change positive" id="likesChange">+0%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card stat-info">
+                    <div class="stat-icon">
+                        <i class="bi bi-file-post"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalPosts">0</h3>
+                        <p>{{translations.analytics.totalPosts}}</p>
+                        <span class="stat-change" id="postsChange">+0%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card stat-warning">
+                    <div class="stat-icon">
+                        <i class="bi bi-percent"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="engagementRate">0%</h3>
+                        <p>{{translations.analytics.engagementRate}}</p>
+                        <span class="stat-change" id="engagementChange">+0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Creator Stats (if creator) -->
+        {{#if user.isCreator}}
+        <div class="row mb-4 g-3">
+            <div class="col-6 col-md-3">
+                <div class="stat-card stat-purple">
+                    <div class="stat-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalSubscribers">0</h3>
+                        <p>{{translations.analytics.subscribers}}</p>
+                        <span class="stat-change positive" id="subscribersChange">+0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card stat-gold">
+                    <div class="stat-icon">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalRevenue">$0</h3>
+                        <p>{{translations.analytics.revenue}}</p>
+                        <span class="stat-change positive" id="revenueChange">+0%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card stat-teal">
+                    <div class="stat-icon">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="newSubscribers">0</h3>
+                        <p>{{translations.analytics.newSubscribers}}</p>
+                        <span class="stat-change" id="newSubsChange">--</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card stat-danger">
+                    <div class="stat-icon">
+                        <i class="bi bi-arrow-down-right"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="churnRate">0%</h3>
+                        <p>{{translations.analytics.churnRate}}</p>
+                        <span class="stat-change negative" id="churnChange">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{/if}}
+
+        <!-- Charts Row -->
+        <div class="row mb-4 g-4">
+            <!-- Posts Performance Chart -->
+            <div class="col-lg-8">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 text-white">
+                            <i class="bi bi-graph-up me-2"></i>{{translations.analytics.postPerformance}}
+                        </h5>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-secondary active" data-metric="views">{{translations.analytics.views}}</button>
+                            <button type="button" class="btn btn-outline-secondary" data-metric="likes">{{translations.analytics.likes}}</button>
+                            <button type="button" class="btn btn-outline-secondary" data-metric="posts">{{translations.analytics.posts}}</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="performanceChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Distribution -->
+            <div class="col-lg-4">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-header border-secondary">
+                        <h5 class="mb-0 text-white">
+                            <i class="bi bi-pie-chart me-2"></i>{{translations.analytics.contentDistribution}}
+                        </h5>
+                    </div>
+                    <div class="card-body d-flex align-items-center justify-content-center">
+                        <canvas id="contentTypeChart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{#if user.isCreator}}
+        <!-- Revenue & Subscribers Charts -->
+        <div class="row mb-4 g-4">
+            <!-- Revenue Chart -->
+            <div class="col-lg-6">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-header border-secondary">
+                        <h5 class="mb-0 text-white">
+                            <i class="bi bi-cash-stack me-2"></i>{{translations.analytics.revenueOverTime}}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="revenueChart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subscriber Growth Chart -->
+            <div class="col-lg-6">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-header border-secondary">
+                        <h5 class="mb-0 text-white">
+                            <i class="bi bi-person-plus me-2"></i>{{translations.analytics.subscriberGrowth}}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="subscriberChart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Demographics Row -->
+        <div class="row mb-4 g-4">
+            <!-- Gender Distribution -->
+            <div class="col-md-4">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-header border-secondary">
+                        <h5 class="mb-0 text-white">
+                            <i class="bi bi-gender-ambiguous me-2"></i>{{translations.analytics.genderDistribution}}
+                        </h5>
+                    </div>
+                    <div class="card-body d-flex align-items-center justify-content-center">
+                        <canvas id="genderChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Age Distribution -->
+            <div class="col-md-4">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-header border-secondary">
+                        <h5 class="mb-0 text-white">
+                            <i class="bi bi-calendar3 me-2"></i>{{translations.analytics.ageDistribution}}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="ageChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Countries -->
+            <div class="col-md-4">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-header border-secondary">
+                        <h5 class="mb-0 text-white">
+                            <i class="bi bi-globe me-2"></i>{{translations.analytics.topCountries}}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="countriesList" class="countries-list">
+                            <!-- Countries will be loaded dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{/if}}
+
+        <!-- Top Performing Posts -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-dark border-secondary">
+                    <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 text-white">
+                            <i class="bi bi-trophy me-2"></i>{{translations.analytics.topPerformingPosts}}
+                        </h5>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-secondary active" data-sort="views">{{translations.analytics.byViews}}</button>
+                            <button type="button" class="btn btn-outline-secondary" data-sort="likes">{{translations.analytics.byLikes}}</button>
+                            <button type="button" class="btn btn-outline-secondary" data-sort="engagement">{{translations.analytics.byEngagement}}</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="topPostsGrid" class="top-posts-grid">
+                            <!-- Top posts will be loaded dynamically -->
+                        </div>
+                        <div id="topPostsLoading" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">{{translations.analytics.loading}}</span>
+                            </div>
+                        </div>
+                        <div id="noTopPosts" class="text-center py-4" style="display: none;">
+                            <i class="bi bi-inbox text-muted fs-1"></i>
+                            <p class="text-muted mt-2">{{translations.analytics.noPostsYet}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Statistics -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-dark border-secondary">
+                    <div class="card-header border-secondary">
+                        <h5 class="mb-0 text-white">
+                            <i class="bi bi-calendar-check me-2"></i>{{translations.analytics.scheduleStats}}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-6 col-md-2">
+                                <div class="mini-stat">
+                                    <span class="mini-stat-value" id="scheduleTotal">0</span>
+                                    <span class="mini-stat-label">{{translations.analytics.total}}</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <div class="mini-stat">
+                                    <span class="mini-stat-value text-success" id="scheduleActive">0</span>
+                                    <span class="mini-stat-label">{{translations.analytics.active}}</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <div class="mini-stat">
+                                    <span class="mini-stat-value text-warning" id="schedulePending">0</span>
+                                    <span class="mini-stat-label">{{translations.analytics.pending}}</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <div class="mini-stat">
+                                    <span class="mini-stat-value text-info" id="scheduleCompleted">0</span>
+                                    <span class="mini-stat-label">{{translations.analytics.completed}}</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <div class="mini-stat">
+                                    <span class="mini-stat-value text-danger" id="scheduleFailed">0</span>
+                                    <span class="mini-stat-label">{{translations.analytics.failed}}</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <div class="mini-stat">
+                                    <span class="mini-stat-value text-primary" id="scheduleSuccessRate">100%</span>
+                                    <span class="mini-stat-label">{{translations.analytics.successRate}}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{> dashboard-footer}}
+    <script>
+        // Pass translations to JavaScript
+        window.analyticsTranslations = {
+            views: "{{translations.analytics.views}}",
+            likes: "{{translations.analytics.likes}}",
+            posts: "{{translations.analytics.posts}}",
+            comments: "{{translations.analytics.comments}}",
+            subscriptions: "{{translations.analytics.subscriptions}}",
+            tips: "{{translations.analytics.tips}}",
+            newSubscribers: "{{translations.analytics.newSubscribers}}",
+            cancellations: "{{translations.analytics.cancellations}}",
+            noData: "{{translations.analytics.noData}}",
+            image: "{{translations.analytics.image}}",
+            video: "{{translations.analytics.video}}"
+        };
+        window.isCreator = {{#if user.isCreator}}true{{else}}false{{/if}};
+    </script>
+    <script src="/js/dashboard-analytics.js"></script>
+</body>
+</html>

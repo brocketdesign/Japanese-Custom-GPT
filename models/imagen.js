@@ -348,7 +348,8 @@ async function generateImg({
     placeholderId, 
     translations, 
     fastify, 
-    flux = false, 
+    flux = false,
+    hunyuan = false, 
     customPromptId = null, 
     customGiftId = null, 
     enableMergeFace = false,
@@ -625,7 +626,7 @@ async function generateImg({
     }
 
     // Send request to Novita and get taskId
-    const novitaResult = await fetchNovitaMagic(requestData, flux);
+    const novitaResult = await fetchNovitaMagic(requestData, flux, hunyuan);
 
     if (!novitaResult) {
         fastify.sendNotificationToUser(userId, 'showNotification', {
@@ -1698,7 +1699,7 @@ function getWebhookUrl() {
 }
 
 // Function to trigger the Novita API for text-to-image generation
-async function fetchNovitaMagic(data, flux = false) {
+async function fetchNovitaMagic(data, flux = false, hunyuan = false) {
   try {
     // Validate prompt before sending to API (must be 1-1024 characters)
     if (!data.prompt || typeof data.prompt !== 'string') {
@@ -1723,6 +1724,10 @@ async function fetchNovitaMagic(data, flux = false) {
       apiUrl = 'https://api.novita.ai/v3beta/flux-1-schnell';
       data.response_image_type = 'jpeg';
     }
+    if (hunyuan) {
+      apiUrl = 'https://api.novita.ai/v3/async/hunyuan-image-3';
+      console.log('[fetchNovitaMagic] Using Hunyuan Image 3 for photorealistic generation');
+    }
     
     // Get webhook URL
     const webhookUrl = getWebhookUrl();
@@ -1738,8 +1743,16 @@ async function fetchNovitaMagic(data, flux = false) {
       },
     }
     if (flux) {
-      requestBody.data = data
-    }else{
+      requestBody.data = data;
+    } else if (hunyuan) {
+      // Hunyuan Image 3 uses a different request format
+      requestBody.data = {
+        prompt: data.prompt,
+        size: '768*1024', // Portrait orientation for character creation
+        seed: data.seed || -1,
+        image_num: data.image_num || 4
+      };
+    } else {
       requestBody.data = {
         extra: {
           response_image_type: 'jpeg',
@@ -1760,6 +1773,13 @@ async function fetchNovitaMagic(data, flux = false) {
     if (response.status !== 200) {
       console.log(`Error - ${response.data.reason}`);
       return false;
+    }
+    
+    // For Hunyuan Image 3, return task_id for polling
+    if (hunyuan) {
+      const taskId = response.data.task_id;
+      console.log(`[fetchNovitaMagic] Hunyuan Image 3 task started with ID: ${taskId}`);
+      return taskId;
     }
         
     // For FLUX, return the complete response with images

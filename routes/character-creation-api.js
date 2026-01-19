@@ -460,6 +460,9 @@ async function routes(fastify, options) {
                 // Generate placeholder ID for tracking
                 const placeholderId = new fastify.mongo.ObjectId().toString();
 
+                // Determine if we should use Hunyuan Image 3 for photorealistic style
+                const useHunyuan = imageStyle === 'photorealistic' || (imageStyle !== 'anime' && !modelId);
+                
                 console.log('\x1b[36m🖼️ ===== IMAGE GENERATION PARAMS =====\x1b[0m');
                 console.log(`   - prompt: ${enhancedPrompt ? enhancedPrompt.substring(0, 80) + '...' : 'MISSING'}`);
                 console.log(`   - modelId: ${modelId || 'DEFAULT (not provided)'}`);
@@ -468,6 +471,7 @@ async function routes(fastify, options) {
                 console.log(`   - imageType: sfw`);
                 console.log(`   - image_num: 4`);
                 console.log(`   - chatCreation: true`);
+                console.log(`   - hunyuan: ${useHunyuan}`);
                 console.log('\x1b[36m=====================================\x1b[0m');
                 
                     generateImg({
@@ -484,7 +488,8 @@ async function routes(fastify, options) {
                         placeholderId: placeholderId,
                         translations: request.translations,
                         fastify: fastify,
-                        enableMergeFace: enableMergeFace || false
+                        enableMergeFace: enableMergeFace || false,
+                        hunyuan: useHunyuan
                     }).then(() => {
                         console.log('\x1b[32m✅ Image gen done\x1b[0m');
                     }).catch(error => {

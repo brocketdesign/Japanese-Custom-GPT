@@ -1523,8 +1523,8 @@ Sitemap: ${baseUrl}/sitemap.xml`;
   return reply.send(robotsTxt);
 });
 
-// Add legal routes before the existing routes
-fastify.get('/terms', async (request, reply) => {
+// Legal routes - serve at both /legal/* and /* for backwards compatibility
+const renderTermsPage = async (request, reply) => {
   try {
     const { translations, legalTranslations, lang } = request;
     
@@ -1536,16 +1536,21 @@ fastify.get('/terms', async (request, reply) => {
         { property: 'og:title', content: `${legalTranslations.terms?.title || 'Terms of Service'} | ${translations.seo.title}` },
         { property: 'og:description', content: `${legalTranslations.terms?.title || 'Terms of Service'} - ${translations.seo.description}` },
         { property: 'og:image', content: '/img/share.png' },
-        { property: 'og:url', content: 'https://chatlamix/terms' },
+        { property: 'og:url', content: 'https://chatlamix/legal/terms' },
       ],
+      translations,
+      legalTranslations,
+      lang,
+      user: request.user,
+      mode: process.env.MODE,
     });
   } catch (error) {
-    console.error('[/terms] Error:', error);
+    console.error('[/legal/terms] Error:', error);
     return reply.status(500).send({ error: 'Internal Server Error' });
   }
-});
+};
 
-fastify.get('/privacy', async (request, reply) => {
+const renderPrivacyPage = async (request, reply) => {
   try {
     const { translations, legalTranslations, lang } = request;
     
@@ -1557,14 +1562,27 @@ fastify.get('/privacy', async (request, reply) => {
         { property: 'og:title', content: `${legalTranslations.privacy?.title || 'Privacy Policy'} | ${translations.seo.title}` },
         { property: 'og:description', content: `${legalTranslations.privacy?.title || 'Privacy Policy'} - ${translations.seo.description}` },
         { property: 'og:image', content: '/img/share.png' },
-        { property: 'og:url', content: 'https://chatlamix/privacy' },
+        { property: 'og:url', content: 'https://chatlamix/legal/privacy' },
       ],
+      translations,
+      legalTranslations,
+      lang,
+      user: request.user,
+      mode: process.env.MODE,
     });
   } catch (error) {
-    console.error('[/privacy] Error:', error);
+    console.error('[/legal/privacy] Error:', error);
     return reply.status(500).send({ error: 'Internal Server Error' });
   }
-});
+};
+
+// Primary routes at /legal/*
+fastify.get('/legal/terms', renderTermsPage);
+fastify.get('/legal/privacy', renderPrivacyPage);
+
+// Legacy routes at /* for backwards compatibility
+fastify.get('/terms', renderTermsPage);
+fastify.get('/privacy', renderPrivacyPage);
 
 const start = async () => {
   try {

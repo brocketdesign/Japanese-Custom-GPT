@@ -1559,7 +1559,7 @@ async function checkTaskStatus(taskId, fastify) {
     const imageData = processedImages[arrayIndex];
     
     let nsfw = task.type === 'nsfw';
-    if (imageData.nsfw_detection_result && imageData.nsfw_detection_result.valid && imageData.nsfw_detection_result.confidence >= 50) {
+    if (imageData.nsfw_detection_result && imageData.nsfw_detection_result.valid && imageData.nsfw_detection_result.confidence >= 70) {
       nsfw = true;
     }
     
@@ -1762,7 +1762,7 @@ async function fetchNovitaMagic(data, flux = false, hunyuan = false) {
         extra: {
           response_image_type: 'jpeg',
           enable_nsfw_detection: true,
-          nsfw_detection_level: 0,
+          nsfw_detection_level: 1,
           webhook: {
             url: webhookUrl
           }

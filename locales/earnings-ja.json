@@ -1,0 +1,70 @@
+{
+    "pageTitle": "クリエイター収益",
+    "pageDescription": "収益を追跡し、支払いを管理し、収益分析を確認する",
+    
+    "heroTitle": "収益ダッシュボード",
+    "heroDescription": "サブスクリプションとチップからの収益を追跡し、支払いを管理して、クリエイター収入を増やしましょう。",
+    
+    "availableBalance": "利用可能残高",
+    "requestPayout": "支払いをリクエスト",
+    "totalEarnings": "総収益",
+    "thisMonth": "今月",
+    "allTime": "累計",
+    "activeSubscribers": "アクティブ会員",
+    "tipsReceived": "受け取ったチップ",
+    
+    "revenueOverview": "収益概要",
+    "last6Months": "過去6ヶ月",
+    "last12Months": "過去12ヶ月",
+    "revenueBreakdown": "収益内訳",
+    "subscriptions": "サブスクリプション",
+    "tips": "チップ",
+    "netEarnings": "純収益",
+    
+    "recentTransactions": "最近の取引",
+    "viewAll": "すべて見る",
+    "noTransactions": "取引履歴がありません",
+    "recentTips": "最近のチップ",
+    "noTips": "チップはまだ受け取っていません",
+    
+    "payoutSettings": "支払い設定",
+    "payoutSummary": "支払いサマリー",
+    "totalPaidOut": "支払い済み合計",
+    "pendingPayout": "保留中の支払い",
+    "minimumPayout": "最低支払い額",
+    "platformFee": "プラットフォーム手数料",
+    
+    "payoutPreferences": "支払い設定",
+    "payoutSchedule": "支払いスケジュール",
+    "weekly": "毎週",
+    "biweekly": "隔週",
+    "monthly": "毎月",
+    "customMinimum": "カスタム最低支払い額",
+    "minimumNote": "以下にすることはできません",
+    "autoPayout": "残高が最低額に達したら自動支払いを有効にする",
+    "saveSettings": "設定を保存",
+    
+    "payoutHistory": "支払い履歴",
+    "refresh": "更新",
+    "date": "日付",
+    "amount": "金額",
+    "status": "ステータス",
+    "method": "方法",
+    "noPayouts": "支払い履歴がありません",
+    
+    "payoutAmount": "支払い金額",
+    "availableToWithdraw": "引き出し可能",
+    "payoutNote": "支払いは通常3〜5営業日以内に処理されます。支払いが送信されると、メール通知が届きます。",
+    "cancel": "キャンセル",
+    "confirmPayout": "支払いを確認",
+    
+    "loadError": "収益データの読み込みに失敗しました",
+    "insufficientBalance": "支払いのための残高が不足しています",
+    "payoutRequested": "支払いリクエストが正常に送信されました！",
+    "settingsSaved": "設定が正常に保存されました！",
+    
+    "statusPending": "保留中",
+    "statusProcessing": "処理中",
+    "statusCompleted": "完了",
+    "statusFailed": "失敗"
+}

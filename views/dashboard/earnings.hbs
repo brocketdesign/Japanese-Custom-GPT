@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="{{lang}}">
+<head>
+    {{> dashboard-header}}
+    <title>{{earningsTranslations.pageTitle}}</title>
+    <meta name="description" content="{{earningsTranslations.pageDescription}}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        .gradient-card {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        .gradient-card-purple {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+        }
+        .stats-card {
+            transition: transform 0.2s ease-in-out;
+            border-radius: 16px;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        .earnings-hero {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        .payout-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .payout-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+            color: white;
+        }
+        .payout-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .transaction-item {
+            transition: all 0.2s ease-in-out;
+            border-left: 3px solid transparent;
+        }
+        .transaction-item:hover {
+            background-color: #f8f9fa;
+            border-left-color: #10b981;
+        }
+        .transaction-item.tip {
+            border-left-color: #8b5cf6;
+        }
+        .transaction-item.subscription {
+            border-left-color: #10b981;
+        }
+        .tip-badge {
+            background-color: #f3e8ff;
+            color: #7c3aed;
+        }
+        .subscription-badge {
+            background-color: #d1fae5;
+            color: #059669;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        .balance-display {
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        .progress-ring {
+            width: 120px;
+            height: 120px;
+        }
+        .settings-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 24px;
+        }
+    </style>
+</head>
+<body>
+    {{> dashboard-nav}}
+
+    <div class="container-fluid px-0">
+        <!-- Hero Section -->
+        <div class="earnings-hero py-5">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h1 class="display-5 fw-bold mb-3">
+                            <i class="bi bi-wallet2"></i> {{earningsTranslations.heroTitle}}
+                        </h1>
+                        <p class="lead mb-0 opacity-90">
+                            {{earningsTranslations.heroDescription}}
+                        </p>
+                    </div>
+                    <div class="col-lg-4 text-end d-none d-lg-block">
+                        <div class="balance-card bg-white bg-opacity-10 rounded-4 p-4">
+                            <small class="text-white-50">{{earningsTranslations.availableBalance}}</small>
+                            <div class="balance-display" id="availableBalance">$0.00</div>
+                            <button class="btn payout-btn mt-3 w-100" id="requestPayoutBtn" disabled>
+                                <i class="bi bi-bank"></i> {{earningsTranslations.requestPayout}}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container py-5">
+            <!-- Mobile Balance Card -->
+            <div class="d-lg-none mb-4">
+                <div class="card border-0 shadow-sm gradient-card">
+                    <div class="card-body text-center py-4">
+                        <small class="opacity-75">{{earningsTranslations.availableBalance}}</small>
+                        <div class="balance-display" id="availableBalanceMobile">$0.00</div>
+                        <button class="btn btn-light mt-3" id="requestPayoutBtnMobile" disabled>
+                            <i class="bi bi-bank"></i> {{earningsTranslations.requestPayout}}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="row mb-5" id="statsContainer">
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="card stats-card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center py-4">
+                            <div class="text-success mb-2">
+                                <i class="bi bi-graph-up-arrow fs-1"></i>
+                            </div>
+                            <h3 class="fw-bold mb-1" id="totalEarnings">$0.00</h3>
+                            <p class="text-muted mb-0">{{earningsTranslations.totalEarnings}}</p>
+                            <small class="text-muted">{{earningsTranslations.allTime}}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="card stats-card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center py-4">
+                            <div class="text-primary mb-2">
+                                <i class="bi bi-calendar-month fs-1"></i>
+                            </div>
+                            <h3 class="fw-bold mb-1" id="monthlyEarnings">$0.00</h3>
+                            <p class="text-muted mb-0">{{earningsTranslations.thisMonth}}</p>
+                            <small class="text-success" id="monthlyChange">+0%</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="card stats-card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center py-4">
+                            <div class="text-info mb-2">
+                                <i class="bi bi-people fs-1"></i>
+                            </div>
+                            <h3 class="fw-bold mb-1" id="activeSubscribers">0</h3>
+                            <p class="text-muted mb-0">{{earningsTranslations.activeSubscribers}}</p>
+                            <small class="text-muted" id="newSubscribers">+0 {{earningsTranslations.thisMonth}}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="card stats-card h-100 border-0 shadow-sm gradient-card-purple">
+                        <div class="card-body text-center py-4">
+                            <div class="mb-2">
+                                <i class="bi bi-heart-fill fs-1"></i>
+                            </div>
+                            <h3 class="fw-bold mb-1" id="tipsEarnings">$0.00</h3>
+                            <p class="mb-0 opacity-75">{{earningsTranslations.tipsReceived}}</p>
+                            <small class="opacity-75">{{earningsTranslations.allTime}}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row mb-5">
+                <div class="col-lg-8 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white border-0 py-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-bar-chart-line text-success"></i>
+                                    {{earningsTranslations.revenueOverview}}
+                                </h5>
+                                <select class="form-select form-select-sm w-auto" id="chartPeriod">
+                                    <option value="6">{{earningsTranslations.last6Months}}</option>
+                                    <option value="12" selected>{{earningsTranslations.last12Months}}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white border-0 py-4">
+                            <h5 class="mb-0">
+                                <i class="bi bi-pie-chart text-primary"></i>
+                                {{earningsTranslations.revenueBreakdown}}
+                            </h5>
+                        </div>
+                        <div class="card-body d-flex align-items-center justify-content-center">
+                            <div class="chart-container" style="height: 250px; width: 250px;">
+                                <canvas id="breakdownChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white border-0 py-3">
+                            <div class="d-flex justify-content-around text-center">
+                                <div>
+                                    <span class="badge subscription-badge mb-1">{{earningsTranslations.subscriptions}}</span>
+                                    <div class="fw-bold" id="subscriptionPercent">0%</div>
+                                </div>
+                                <div>
+                                    <span class="badge tip-badge mb-1">{{earningsTranslations.tips}}</span>
+                                    <div class="fw-bold" id="tipsPercent">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity & Payout History -->
+            <div class="row mb-5">
+                <!-- Recent Transactions -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white border-0 py-4 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-clock-history text-primary"></i>
+                                {{earningsTranslations.recentTransactions}}
+                            </h5>
+                            <a href="#" class="text-decoration-none small" id="viewAllTransactions">
+                                {{earningsTranslations.viewAll}} <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="transactionsList" class="list-group list-group-flush">
+                                <div class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-1"></i>
+                                    <p class="mb-0 mt-2">{{earningsTranslations.noTransactions}}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Tips -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white border-0 py-4">
+                            <h5 class="mb-0">
+                                <i class="bi bi-heart text-danger"></i>
+                                {{earningsTranslations.recentTips}}
+                            </h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="tipsList" class="list-group list-group-flush">
+                                <div class="text-center py-5 text-muted">
+                                    <i class="bi bi-heart fs-1"></i>
+                                    <p class="mb-0 mt-2">{{earningsTranslations.noTips}}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payout Section -->
+            <div class="row mb-5">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-0 py-4">
+                            <h5 class="mb-0">
+                                <i class="bi bi-bank2 text-success"></i>
+                                {{earningsTranslations.payoutSettings}}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- Payout Info -->
+                                <div class="col-lg-6 mb-4">
+                                    <div class="settings-section h-100">
+                                        <h6 class="fw-bold mb-3">{{earningsTranslations.payoutSummary}}</h6>
+                                        <div class="d-flex justify-content-between mb-3">
+                                            <span class="text-muted">{{earningsTranslations.totalPaidOut}}</span>
+                                            <span class="fw-bold" id="totalPaidOut">$0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-3">
+                                            <span class="text-muted">{{earningsTranslations.pendingPayout}}</span>
+                                            <span class="fw-bold text-warning" id="pendingPayout">$0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-3">
+                                            <span class="text-muted">{{earningsTranslations.availableBalance}}</span>
+                                            <span class="fw-bold text-success" id="availableBalanceSettings">$0.00</span>
+                                        </div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">{{earningsTranslations.minimumPayout}}</span>
+                                            <span class="fw-bold">${{minimumPayout}}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mt-2">
+                                            <span class="text-muted">{{earningsTranslations.platformFee}}</span>
+                                            <span class="fw-bold">{{platformCommission}}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Payout Settings -->
+                                <div class="col-lg-6 mb-4">
+                                    <div class="settings-section h-100">
+                                        <h6 class="fw-bold mb-3">{{earningsTranslations.payoutPreferences}}</h6>
+                                        <form id="payoutSettingsForm">
+                                            <div class="mb-3">
+                                                <label class="form-label">{{earningsTranslations.payoutSchedule}}</label>
+                                                <select class="form-select" id="payoutSchedule">
+                                                    <option value="weekly">{{earningsTranslations.weekly}}</option>
+                                                    <option value="biweekly">{{earningsTranslations.biweekly}}</option>
+                                                    <option value="monthly" selected>{{earningsTranslations.monthly}}</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">{{earningsTranslations.customMinimum}}</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">$</span>
+                                                    <input type="number" class="form-control" id="customMinimum" 
+                                                           min="{{minimumPayout}}" value="{{minimumPayout}}" step="10">
+                                                </div>
+                                                <small class="text-muted">{{earningsTranslations.minimumNote}} ${{minimumPayout}}</small>
+                                            </div>
+                                            <div class="form-check mb-3">
+                                                <input class="form-check-input" type="checkbox" id="autoPayoutEnabled">
+                                                <label class="form-check-label" for="autoPayoutEnabled">
+                                                    {{earningsTranslations.autoPayout}}
+                                                </label>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="bi bi-save"></i> {{earningsTranslations.saveSettings}}
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payout History -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-0 py-4 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-list-check text-primary"></i>
+                                {{earningsTranslations.payoutHistory}}
+                            </h5>
+                            <button class="btn btn-outline-primary btn-sm" id="refreshPayouts">
+                                <i class="bi bi-arrow-clockwise"></i> {{earningsTranslations.refresh}}
+                            </button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>{{earningsTranslations.date}}</th>
+                                            <th>{{earningsTranslations.amount}}</th>
+                                            <th>{{earningsTranslations.status}}</th>
+                                            <th>{{earningsTranslations.method}}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="payoutHistoryTable">
+                                        <tr>
+                                            <td colspan="4" class="text-center py-5 text-muted">
+                                                <i class="bi bi-inbox fs-1"></i>
+                                                <p class="mb-0 mt-2">{{earningsTranslations.noPayouts}}</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payout Request Modal -->
+    <div class="modal fade" id="payoutModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">
+                        <i class="bi bi-bank text-success"></i>
+                        {{earningsTranslations.requestPayout}}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="payoutRequestForm">
+                        <div class="mb-3">
+                            <label class="form-label">{{earningsTranslations.payoutAmount}}</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control form-control-lg" id="payoutAmount" 
+                                       min="{{minimumPayout}}" step="0.01" required>
+                            </div>
+                            <small class="text-muted">{{earningsTranslations.availableToWithdraw}}: <span id="modalAvailableBalance">$0.00</span></small>
+                        </div>
+                        <div class="alert alert-info mb-3">
+                            <i class="bi bi-info-circle"></i>
+                            {{earningsTranslations.payoutNote}}
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        {{earningsTranslations.cancel}}
+                    </button>
+                    <button type="button" class="btn payout-btn" id="confirmPayoutBtn">
+                        <i class="bi bi-send"></i> {{earningsTranslations.confirmPayout}}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{> dashboard-footer}}
+    
+    <style>
+        .sticky-bottom, #footer-toolbar {display:none !important;}
+        .site-footer {display: block !important;}
+    </style>
+    
+    <script>
+        // Make translations and config available to JavaScript
+        window.earningsTranslations = {{{json earningsTranslations}}};
+        window.minimumPayout = {{minimumPayout}};
+        window.platformCommission = {{platformCommission}};
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/dashboard-earnings.js"></script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+{
+    "pageTitle": "Creator Earnings",
+    "pageDescription": "Track your earnings, manage payouts, and view revenue analytics",
+    
+    "heroTitle": "Your Earnings Dashboard",
+    "heroDescription": "Track your revenue from subscriptions and tips, manage payouts, and grow your creator income.",
+    
+    "availableBalance": "Available Balance",
+    "requestPayout": "Request Payout",
+    "totalEarnings": "Total Earnings",
+    "thisMonth": "This Month",
+    "allTime": "All Time",
+    "activeSubscribers": "Active Subscribers",
+    "tipsReceived": "Tips Received",
+    
+    "revenueOverview": "Revenue Overview",
+    "last6Months": "Last 6 Months",
+    "last12Months": "Last 12 Months",
+    "revenueBreakdown": "Revenue Breakdown",
+    "subscriptions": "Subscriptions",
+    "tips": "Tips",
+    "netEarnings": "Net Earnings",
+    
+    "recentTransactions": "Recent Transactions",
+    "viewAll": "View All",
+    "noTransactions": "No transactions yet",
+    "recentTips": "Recent Tips",
+    "noTips": "No tips received yet",
+    
+    "payoutSettings": "Payout Settings",
+    "payoutSummary": "Payout Summary",
+    "totalPaidOut": "Total Paid Out",
+    "pendingPayout": "Pending Payout",
+    "minimumPayout": "Minimum Payout",
+    "platformFee": "Platform Fee",
+    
+    "payoutPreferences": "Payout Preferences",
+    "payoutSchedule": "Payout Schedule",
+    "weekly": "Weekly",
+    "biweekly": "Bi-weekly",
+    "monthly": "Monthly",
+    "customMinimum": "Custom Minimum Payout",
+    "minimumNote": "Cannot be lower than",
+    "autoPayout": "Enable automatic payouts when balance reaches minimum",
+    "saveSettings": "Save Settings",
+    
+    "payoutHistory": "Payout History",
+    "refresh": "Refresh",
+    "date": "Date",
+    "amount": "Amount",
+    "status": "Status",
+    "method": "Method",
+    "noPayouts": "No payouts yet",
+    
+    "payoutAmount": "Payout Amount",
+    "availableToWithdraw": "Available to withdraw",
+    "payoutNote": "Payouts are typically processed within 3-5 business days. You will receive an email notification when your payout has been sent.",
+    "cancel": "Cancel",
+    "confirmPayout": "Confirm Payout",
+    
+    "loadError": "Failed to load earnings data",
+    "insufficientBalance": "Insufficient balance for payout",
+    "payoutRequested": "Payout requested successfully!",
+    "settingsSaved": "Settings saved successfully!",
+    
+    "statusPending": "Pending",
+    "statusProcessing": "Processing",
+    "statusCompleted": "Completed",
+    "statusFailed": "Failed"
+}

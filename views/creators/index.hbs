@@ -15,18 +15,10 @@
             <div class="hero-content">
                 <h1 class="hero-title">
                     <i class="bi bi-stars me-2"></i>
-                    {{#if translations.creators.heroTitle}}
-                        {{translations.creators.heroTitle}}
-                    {{else}}
-                        Discover Amazing Creators
-                    {{/if}}
+                    {{creatorTranslations.heroTitle}}
                 </h1>
                 <p class="hero-subtitle">
-                    {{#if translations.creators.heroSubtitle}}
-                        {{translations.creators.heroSubtitle}}
-                    {{else}}
-                        Follow your favorite AI artists and unlock exclusive content
-                    {{/if}}
+                    {{creatorTranslations.heroSubtitle}}
                 </p>
                 
                 <!-- Search Bar -->
@@ -36,7 +28,7 @@
                         <input type="text" 
                                id="creatorSearch" 
                                class="search-input" 
-                               placeholder="{{#if translations.creators.searchPlaceholder}}{{translations.creators.searchPlaceholder}}{{else}}Search creators...{{/if}}">
+                               placeholder="{{creatorTranslations.searchPlaceholder}}">
                         <button class="search-btn" onclick="searchCreators()">
                             <i class="bi bi-arrow-right"></i>
                         </button>
@@ -53,28 +45,12 @@
                     <i class="bi bi-rocket-takeoff"></i>
                 </div>
                 <div class="cta-text">
-                    <h3>
-                        {{#if translations.creators.becomeCreatorTitle}}
-                            {{translations.creators.becomeCreatorTitle}}
-                        {{else}}
-                            Start Your Creator Journey
-                        {{/if}}
-                    </h3>
-                    <p>
-                        {{#if translations.creators.becomeCreatorDesc}}
-                            {{translations.creators.becomeCreatorDesc}}
-                        {{else}}
-                            Share your AI creations, build a following, and earn money doing what you love.
-                        {{/if}}
-                    </p>
+                    <h3>{{creatorTranslations.becomeCreatorTitle}}</h3>
+                    <p>{{creatorTranslations.becomeCreatorDesc}}</p>
                 </div>
                 <a href="/creators/apply" class="cta-btn">
                     <i class="bi bi-plus-circle me-2"></i>
-                    {{#if translations.creators.becomeCreator}}
-                        {{translations.creators.becomeCreator}}
-                    {{else}}
-                        Become a Creator
-                    {{/if}}
+                    {{creatorTranslations.becomeCreator}}
                 </a>
             </div>
         </section>
@@ -86,14 +62,10 @@
             <div class="section-header">
                 <h2 class="section-title">
                     <i class="bi bi-award me-2"></i>
-                    {{#if translations.creators.featured}}
-                        {{translations.creators.featured}}
-                    {{else}}
-                        Featured Creators
-                    {{/if}}
+                    {{creatorTranslations.featured}}
                 </h2>
                 <span class="verified-badge">
-                    <i class="bi bi-patch-check-fill"></i> Verified
+                    <i class="bi bi-patch-check-fill"></i> {{creatorTranslations.verified}}
                 </span>
             </div>
             <div class="creators-carousel" id="featuredCarousel">
@@ -130,11 +102,7 @@
             <div class="section-header">
                 <h2 class="section-title">
                     <i class="bi bi-fire me-2"></i>
-                    {{#if translations.creators.trending}}
-                        {{translations.creators.trending}}
-                    {{else}}
-                        Trending Now
-                    {{/if}}
+                    {{creatorTranslations.trending}}
                 </h2>
             </div>
             <div class="creators-carousel" id="trendingCarousel">
@@ -169,11 +137,7 @@
             <div class="filter-container">
                 <button class="filter-btn active" data-category="all">
                     <i class="bi bi-grid-3x3-gap"></i>
-                    {{#if translations.creators.allCategories}}
-                        {{translations.creators.allCategories}}
-                    {{else}}
-                        All
-                    {{/if}}
+                    {{creatorTranslations.allCategories}}
                 </button>
                 {{#each categories}}
                 <button class="filter-btn" data-category="{{this.id}}">
@@ -189,17 +153,13 @@
             <div class="section-header">
                 <h2 class="section-title">
                     <i class="bi bi-people me-2"></i>
-                    {{#if translations.creators.allCreators}}
-                        {{translations.creators.allCreators}}
-                    {{else}}
-                        All Creators
-                    {{/if}}
+                    {{creatorTranslations.allCreators}}
                 </h2>
                 <div class="sort-dropdown">
                     <select id="sortSelect" class="sort-select" onchange="handleSortChange()">
-                        <option value="popular">{{#if translations.creators.sortPopular}}{{translations.creators.sortPopular}}{{else}}Most Popular{{/if}}</option>
-                        <option value="newest">{{#if translations.creators.sortNewest}}{{translations.creators.sortNewest}}{{else}}Newest{{/if}}</option>
-                        <option value="trending">{{#if translations.creators.sortTrending}}{{translations.creators.sortTrending}}{{else}}Trending{{/if}}</option>
+                        <option value="popular">{{creatorTranslations.sortPopular}}</option>
+                        <option value="newest">{{creatorTranslations.sortNewest}}</option>
+                        <option value="trending">{{creatorTranslations.sortTrending}}</option>
                     </select>
                 </div>
             </div>
@@ -253,13 +213,13 @@
             <!-- Empty State -->
             <div id="emptyState" class="empty-state" style="display: none;">
                 <i class="bi bi-search fs-1"></i>
-                <p>{{#if translations.creators.noCreatorsFound}}{{translations.creators.noCreatorsFound}}{{else}}No creators found{{/if}}</p>
+                <p>{{creatorTranslations.noCreatorsFound}}</p>
             </div>
 
             <!-- Loading State -->
             <div id="loadingState" class="loading-state" style="display: none;">
                 <div class="spinner"></div>
-                <p>{{#if translations.creators.loading}}{{translations.creators.loading}}{{else}}Loading...{{/if}}</p>
+                <p>{{creatorTranslations.loading}}</p>
             </div>
 
             <!-- Pagination -->
@@ -267,11 +227,7 @@
                 {{#if pagination.hasMore}}
                 <button class="load-more-btn" onclick="loadMoreCreators()">
                     <i class="bi bi-arrow-down-circle me-2"></i>
-                    {{#if translations.creators.loadMore}}
-                        {{translations.creators.loadMore}}
-                    {{else}}
-                        Load More
-                    {{/if}}
+                    {{creatorTranslations.loadMore}}
                 </button>
                 {{/if}}
             </div>

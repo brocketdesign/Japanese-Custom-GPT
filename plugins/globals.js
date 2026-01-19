@@ -34,6 +34,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     const buyPointsTranslationsCache = {}; // Add cache for buy-points translations
     const chatModelTestTranslationsCache = {}; // Add cache for chat model test translations
     const coldOnboardingTranslationsCache = {}; // Add cache for cold onboarding translations
+    const creatorTranslationsCache = {}; // Add cache for creator translations
     
     // Decorate Fastify with user, lang, and translations functions
     fastify.decorate('getUser', getUser);
@@ -55,6 +56,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorate('getBuyPointsTranslations', getBuyPointsTranslations); // Add buy-points translations decorator
     fastify.decorate('getChatModelTestTranslations', getChatModelTestTranslations); // Add chat model test translations decorator
     fastify.decorate('getColdOnboardingTranslations', getColdOnboardingTranslations); // Add cold onboarding translations decorator
+    fastify.decorate('getCreatorTranslations', getCreatorTranslations); // Add creator translations decorator
     
     // Attach `lang` and `user` dynamically
     Object.defineProperty(fastify, 'lang', {
@@ -88,6 +90,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
     fastify.decorateRequest('buyPointsTranslations', null); // Add buy-points translations to request
     fastify.decorateRequest('chatModelTestTranslations', null); // Add chat model test translations to request
     fastify.decorateRequest('coldOnboardingTranslations', null); // Add cold onboarding translations to request
+    fastify.decorateRequest('creatorTranslations', null); // Add creator translations to request
 
     // Pre-handler to set user, lang, and translations
     fastify.addHook('preHandler', async (request, reply) => {
@@ -111,6 +114,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
         request.buyPointsTranslations = getBuyPointsTranslations(request.lang); // Load buy-points translations
         request.chatModelTestTranslations = getChatModelTestTranslations(request.lang); // Load chat model test translations
         request.coldOnboardingTranslations = getColdOnboardingTranslations(request.lang); // Load cold onboarding translations
+        request.creatorTranslations = getCreatorTranslations(request.lang); // Load creator translations
    
         // Make translations available in Handlebars templates
         reply.locals = {
@@ -132,6 +136,7 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             buyPointsTranslations: request.buyPointsTranslations, // Make buy-points translations available
             chatModelTestTranslations: request.chatModelTestTranslations, // Make chat model test translations available
             coldOnboardingTranslations: request.coldOnboardingTranslations, // Make cold onboarding translations available
+            creatorTranslations: request.creatorTranslations, // Make creator translations available
             user: request.user, // Make user available
             isUserAdmin: request.isUserAdmin, // Make admin status available
             mode: process.env.MODE,
@@ -554,6 +559,9 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             legalTranslations: request.legalTranslations, // Add legal translations to locals
             speechToTextTranslations: request.speechToTextTranslations, // Add speech-to-text translations to locals
             buyPointsTranslations: request.buyPointsTranslations, // Add buy-points translations to locals
+            chatModelTestTranslations: request.chatModelTestTranslations, // Add chat model test translations to locals
+            coldOnboardingTranslations: request.coldOnboardingTranslations, // Add cold onboarding translations to locals
+            creatorTranslations: request.creatorTranslations, // Add creator translations to locals
             lang: request.lang,
             user: request.user,
             isAdmin: request.isAdmin
@@ -683,5 +691,17 @@ module.exports = fastifyPlugin(async function (fastify, opts) {
             }
         }
         return coldOnboardingTranslationsCache[currentLang];
+    }
+
+    /** Load CreatorTranslations for a specific language (from main locale file) */
+    function getCreatorTranslations(currentLang) {
+        if (!currentLang) currentLang = 'en';
+        
+        if (!creatorTranslationsCache[currentLang]) {
+            // Creator translations are stored in the main locale files under the "creators" key
+            const translations = getTranslations(currentLang);
+            creatorTranslationsCache[currentLang] = translations.creators || {};
+        }
+        return creatorTranslationsCache[currentLang];
     }
 });

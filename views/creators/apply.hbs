@@ -16,20 +16,8 @@
                 <div class="hero-icon">
                     <i class="bi bi-rocket-takeoff"></i>
                 </div>
-                <h1 class="hero-title">
-                    {{#if translations.creators.applyHeroTitle}}
-                        {{translations.creators.applyHeroTitle}}
-                    {{else}}
-                        Become a Creator
-                    {{/if}}
-                </h1>
-                <p class="hero-subtitle">
-                    {{#if translations.creators.applyHeroSubtitle}}
-                        {{translations.creators.applyHeroSubtitle}}
-                    {{else}}
-                        Share your AI creations with the world, build your audience, and monetize your content
-                    {{/if}}
-                </p>
+                <h1 class="hero-title">{{creatorTranslations.applyHeroTitle}}</h1>
+                <p class="hero-subtitle">{{creatorTranslations.applyHeroSubtitle}}</p>
             </div>
         </section>
 
@@ -40,29 +28,29 @@
                     <div class="benefit-icon">
                         <i class="bi bi-people-fill"></i>
                     </div>
-                    <h3>Build Your Audience</h3>
-                    <p>Connect with fans who love your unique style and creations</p>
+                    <h3>{{creatorTranslations.benefitBuildAudience}}</h3>
+                    <p>{{creatorTranslations.benefitBuildAudienceDesc}}</p>
                 </div>
                 <div class="benefit-card">
                     <div class="benefit-icon">
                         <i class="bi bi-currency-dollar"></i>
                     </div>
-                    <h3>Earn Money</h3>
-                    <p>Monetize through subscriptions, tips, and exclusive content</p>
+                    <h3>{{creatorTranslations.benefitEarnMoney}}</h3>
+                    <p>{{creatorTranslations.benefitEarnMoneyDesc}}</p>
                 </div>
                 <div class="benefit-card">
                     <div class="benefit-icon">
                         <i class="bi bi-graph-up-arrow"></i>
                     </div>
-                    <h3>Grow Your Brand</h3>
-                    <p>Get featured on the platform and boost your visibility</p>
+                    <h3>{{creatorTranslations.benefitGrowBrand}}</h3>
+                    <p>{{creatorTranslations.benefitGrowBrandDesc}}</p>
                 </div>
                 <div class="benefit-card">
                     <div class="benefit-icon">
                         <i class="bi bi-tools"></i>
                     </div>
-                    <h3>Creator Tools</h3>
-                    <p>Access analytics, scheduling, and content management tools</p>
+                    <h3>{{creatorTranslations.benefitCreatorTools}}</h3>
+                    <p>{{creatorTranslations.benefitCreatorToolsDesc}}</p>
                 </div>
             </div>
         </section>
@@ -72,11 +60,7 @@
             <div class="form-container">
                 <h2 class="form-title">
                     <i class="bi bi-pencil-square me-2"></i>
-                    {{#if translations.creators.applicationForm}}
-                        {{translations.creators.applicationForm}}
-                    {{else}}
-                        Creator Application
-                    {{/if}}
+                    {{creatorTranslations.applicationForm}}
                 </h2>
 
                 <form id="creatorApplicationForm" class="creator-form">
@@ -84,7 +68,7 @@
                     <div class="form-group">
                         <label for="displayName" class="form-label">
                             <i class="bi bi-person-badge me-1"></i>
-                            {{#if translations.creators.displayName}}{{translations.creators.displayName}}{{else}}Creator Name{{/if}}
+                            {{creatorTranslations.displayName}}
                             <span class="required">*</span>
                         </label>
                         <input type="text" 
@@ -92,24 +76,24 @@
                                name="displayName" 
                                class="form-input"
                                value="{{user.nickname}}"
-                               placeholder="{{#if translations.creators.displayNamePlaceholder}}{{translations.creators.displayNamePlaceholder}}{{else}}Your public creator name{{/if}}"
+                               placeholder="{{creatorTranslations.displayNamePlaceholder}}"
                                required
                                minlength="2"
                                maxlength="50">
-                        <span class="form-hint">This is how you'll appear to your followers</span>
+                        <span class="form-hint">{{creatorTranslations.displayNameHint}}</span>
                     </div>
 
                     <!-- Bio -->
                     <div class="form-group">
                         <label for="bio" class="form-label">
                             <i class="bi bi-chat-quote me-1"></i>
-                            {{#if translations.creators.bio}}{{translations.creators.bio}}{{else}}Bio{{/if}}
+                            {{creatorTranslations.bio}}
                         </label>
                         <textarea id="bio" 
                                   name="bio" 
                                   class="form-textarea"
                                   rows="4"
-                                  placeholder="{{#if translations.creators.bioPlaceholder}}{{translations.creators.bioPlaceholder}}{{else}}Tell people about yourself and your content...{{/if}}"
+                                  placeholder="{{creatorTranslations.bioPlaceholder}}"
                                   maxlength="500"></textarea>
                         <span class="form-hint char-count"><span id="bioCount">0</span>/500</span>
                     </div>
@@ -118,7 +102,7 @@
                     <div class="form-group">
                         <label for="category" class="form-label">
                             <i class="bi bi-tag me-1"></i>
-                            {{#if translations.creators.category}}{{translations.creators.category}}{{else}}Content Category{{/if}}
+                            {{creatorTranslations.category}}
                             <span class="required">*</span>
                         </label>
                         <select id="category" name="category" class="form-select" required>
@@ -132,14 +116,14 @@
                     <div class="form-group">
                         <label for="tags" class="form-label">
                             <i class="bi bi-tags me-1"></i>
-                            {{#if translations.creators.tags}}{{translations.creators.tags}}{{else}}Tags{{/if}}
+                            {{creatorTranslations.tags}}
                         </label>
                         <input type="text" 
                                id="tags" 
                                name="tags" 
                                class="form-input"
-                               placeholder="{{#if translations.creators.tagsPlaceholder}}{{translations.creators.tagsPlaceholder}}{{else}}anime, fantasy, portraits (comma separated){{/if}}">
-                        <span class="form-hint">Add up to 5 tags to help people find you</span>
+                               placeholder="{{creatorTranslations.tagsPlaceholder}}">
+                        <span class="form-hint">{{creatorTranslations.tagsHint}}</span>
                         <div id="tagsPreview" class="tags-preview"></div>
                     </div>
 
@@ -147,9 +131,9 @@
                     <div class="form-section">
                         <h3 class="section-subtitle">
                             <i class="bi bi-link-45deg me-2"></i>
-                            {{#if translations.creators.socialLinks}}{{translations.creators.socialLinks}}{{else}}Social Links{{/if}}
+                            {{creatorTranslations.socialLinks}}
                         </h3>
-                        <p class="section-hint">Optional - Connect your social media to help fans find you</p>
+                        <p class="section-hint">{{creatorTranslations.socialLinksHint}}</p>
 
                         <div class="social-links-grid">
                             <div class="form-group social-input">
@@ -203,11 +187,7 @@
                         <label class="checkbox-label">
                             <input type="checkbox" id="agreeTerms" name="agreeTerms" required>
                             <span class="checkmark"></span>
-                            {{#if translations.creators.agreeTerms}}
-                                {{{translations.creators.agreeTerms}}}
-                            {{else}}
-                                I agree to the <a href="/legal/terms" target="_blank">Creator Terms of Service</a> and <a href="/legal/privacy" target="_blank">Privacy Policy</a>
-                            {{/if}}
+                            {{{creatorTranslations.agreeTerms}}}
                         </label>
                     </div>
 
@@ -215,16 +195,16 @@
                     <div class="form-actions">
                         <a href="/creators" class="btn-secondary">
                             <i class="bi bi-arrow-left me-2"></i>
-                            {{#if translations.creators.cancel}}{{translations.creators.cancel}}{{else}}Cancel{{/if}}
+                            {{creatorTranslations.cancel}}
                         </a>
                         <button type="submit" class="btn-primary" id="submitBtn">
                             <span class="btn-text">
                                 <i class="bi bi-rocket me-2"></i>
-                                {{#if translations.creators.submitApplication}}{{translations.creators.submitApplication}}{{else}}Start Creating{{/if}}
+                                {{creatorTranslations.submitApplication}}
                             </span>
                             <span class="btn-loading" style="display: none;">
                                 <i class="bi bi-hourglass-split me-2"></i>
-                                {{#if translations.creators.submitting}}{{translations.creators.submitting}}{{else}}Processing...{{/if}}
+                                {{creatorTranslations.submitting}}
                             </span>
                         </button>
                     </div>
@@ -236,43 +216,43 @@
         <section class="faq-section">
             <h2 class="faq-title">
                 <i class="bi bi-question-circle me-2"></i>
-                Frequently Asked Questions
+                {{creatorTranslations.faqTitle}}
             </h2>
             <div class="faq-list">
                 <div class="faq-item">
                     <button class="faq-question" onclick="toggleFaq(this)">
-                        <span>How do I earn money as a creator?</span>
+                        <span>{{creatorTranslations.faqQuestion1}}</span>
                         <i class="bi bi-chevron-down"></i>
                     </button>
                     <div class="faq-answer">
-                        <p>Creators can earn through subscription tiers (coming soon), tips from followers, and exclusive content sales. You'll have access to a dashboard showing your earnings and analytics.</p>
+                        <p>{{creatorTranslations.faqAnswer1}}</p>
                     </div>
                 </div>
                 <div class="faq-item">
                     <button class="faq-question" onclick="toggleFaq(this)">
-                        <span>What type of content can I create?</span>
+                        <span>{{creatorTranslations.faqQuestion2}}</span>
                         <i class="bi bi-chevron-down"></i>
                     </button>
                     <div class="faq-answer">
-                        <p>You can create and share AI-generated images, characters, and videos. All content must comply with our community guidelines and terms of service.</p>
+                        <p>{{creatorTranslations.faqAnswer2}}</p>
                     </div>
                 </div>
                 <div class="faq-item">
                     <button class="faq-question" onclick="toggleFaq(this)">
-                        <span>How do I get verified?</span>
+                        <span>{{creatorTranslations.faqQuestion3}}</span>
                         <i class="bi bi-chevron-down"></i>
                     </button>
                     <div class="faq-answer">
-                        <p>Verified badges are given to creators who consistently produce quality content, have a significant following, and maintain good standing in the community. We review accounts periodically for verification.</p>
+                        <p>{{creatorTranslations.faqAnswer3}}</p>
                     </div>
                 </div>
                 <div class="faq-item">
                     <button class="faq-question" onclick="toggleFaq(this)">
-                        <span>Can I change my creator profile later?</span>
+                        <span>{{creatorTranslations.faqQuestion4}}</span>
                         <i class="bi bi-chevron-down"></i>
                     </button>
                     <div class="faq-answer">
-                        <p>Yes! You can update your display name, bio, category, tags, and social links anytime from your profile settings.</p>
+                        <p>{{creatorTranslations.faqAnswer4}}</p>
                     </div>
                 </div>
             </div>
@@ -345,12 +325,12 @@
                     if (typeof Swal !== 'undefined') {
                         await Swal.fire({
                             icon: 'success',
-                            title: 'Welcome, Creator!',
-                            text: 'Your creator profile has been set up. Start sharing your amazing content!',
+                            title: window.creatorTranslations?.successTitle || 'Welcome, Creator!',
+                            text: window.creatorTranslations?.successMessage || 'Your creator profile has been set up. Start sharing your amazing content!',
                             confirmButtonColor: '#8240FF'
                         });
                     } else {
-                        alert('Your creator profile has been set up successfully!');
+                        alert(window.creatorTranslations?.successMessage || 'Your creator profile has been set up successfully!');
                     }
                     // Redirect to profile
                     window.location.href = '/user/{{user._id}}';
@@ -362,12 +342,12 @@
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Oops!',
-                        text: error.message || 'Something went wrong. Please try again.',
+                        title: window.creatorTranslations?.errorTitle || 'Oops!',
+                        text: error.message || window.creatorTranslations?.errorMessage || 'Something went wrong. Please try again.',
                         confirmButtonColor: '#8240FF'
                     });
                 } else {
-                    alert(error.message || 'Something went wrong. Please try again.');
+                    alert(error.message || window.creatorTranslations?.errorMessage || 'Something went wrong. Please try again.');
                 }
             } finally {
                 // Reset button state

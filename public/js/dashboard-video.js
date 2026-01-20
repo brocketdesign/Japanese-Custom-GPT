@@ -92,6 +92,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize rating stars
     initializeRatingStars();
     
+    // Initialize video preview modal - stop video on close
+    initializeVideoPreviewModal();
+    
     // Load initial stats
     refreshStats();
     
@@ -718,6 +721,9 @@ async function startGeneration() {
             state.isGenerating = false;
             updateGenerateButton(false);
             
+            // Convert videoUrl to videos array format for consistency
+            data.task.videos = [{ videoUrl: data.task.videoUrl }];
+            
             // Update card to show completed video
             const statusEl = document.getElementById(`status-${modelId}`);
             if (statusEl) {
@@ -747,6 +753,12 @@ async function startGeneration() {
                     </div>
                 `;
             }
+            
+            // Save result to database for history
+            saveTestResult(modelId, data.task);
+            
+            // Reload history to show the new video
+            loadHistory();
             
             showNotification('Video generated successfully!', 'success');
         } else if (data.task.status === 'processing' && data.task.async) {
@@ -913,8 +925,13 @@ function previewVideo(videoUrl, modelId, time, testId = null) {
     const modal = new bootstrap.Modal(document.getElementById('videoPreviewModal'));
     const modalElement = document.getElementById('videoPreviewModal');
     
-    document.getElementById('previewVideoSource').src = videoUrl;
-    document.getElementById('previewVideo').load();
+    const modalVideo = document.getElementById('modalPreviewVideo');
+    const modalVideoSource = document.getElementById('modalPreviewVideoSource');
+    
+    modalVideoSource.src = videoUrl;
+    modalVideo.load();
+    // Auto-play the video when modal opens
+    modalVideo.play().catch(e => console.log('Auto-play prevented:', e));
     
     const task = state.activeTask;
     const modelName = task?.modelName || modelId;
@@ -945,8 +962,14 @@ function previewHistoryVideo(videoUrl, modelName, generationTime, testId = null,
     const modal = new bootstrap.Modal(document.getElementById('videoPreviewModal'));
     const modalElement = document.getElementById('videoPreviewModal');
     
-    document.getElementById('previewVideoSource').src = videoUrl;
-    document.getElementById('previewVideo').load();
+    const modalVideo = document.getElementById('modalPreviewVideo');
+    const modalVideoSource = document.getElementById('modalPreviewVideoSource');
+    
+    modalVideoSource.src = videoUrl;
+    modalVideo.load();
+    // Auto-play the video when modal opens
+    modalVideo.play().catch(e => console.log('Auto-play prevented:', e));
+    
     document.getElementById('previewModelName').textContent = modelName || 'Unknown Model';
     document.getElementById('previewTime').textContent = generationTime 
         ? `Generated in ${(generationTime / 1000).toFixed(1)} seconds`
@@ -1290,21 +1313,23 @@ async function loadHistory() {
                 
                 // Get first video if available
                 let videoCell = '<span class="text-muted">--</span>';
+                let videoUrl = null;
                 if (test.videos && test.videos.length > 0) {
-                    const videoUrl = test.videos[0].videoUrl || test.videos[0].video_url;
+                    videoUrl = test.videos[0].videoUrl || test.videos[0].video_url;
                     if (videoUrl) {
-                        const escapedUrl = videoUrl.replace(/'/g, "\\'");
-                        const escapedModelName = (test.modelName || '').replace(/'/g, "\\'");
-                        const testId = test._id || '';
                         videoCell = `
-                            <video class="history-video cursor-pointer" 
-                                   onclick="previewHistoryVideo('${escapedUrl}', '${escapedModelName}', ${test.generationTime || 0}, '${testId}')"
-                                   muted>
+                            <video class="history-video" muted preload="metadata">
                                 <source src="${videoUrl}" type="video/mp4">
                             </video>
                         `;
                     }
                 }
+                
+                const escapedUrl = videoUrl ? videoUrl.replace(/'/g, "\\'") : '';
+                const escapedModelName = (test.modelName || '').replace(/'/g, "\\'");
+                const escapedPrompt = (test.prompt || '').replace(/'/g, "\\'");
+                const testId = test._id || '';
+                const hasVideo = videoUrl && test.status === 'completed';
                 
                 row.innerHTML = `
                     <td>${videoCell}</td>
@@ -1323,6 +1348,18 @@ async function loadHistory() {
                     </td>
                     <td>${new Date(test.testedAt).toLocaleString()}</td>
                 `;
+                
+                // Make entire row clickable if video is available
+                if (hasVideo) {
+                    row.style.cursor = 'pointer';
+                    row.classList.add('history-row-clickable');
+                    row.addEventListener('click', function(e) {
+                        // Prevent click if user is selecting text
+                        if (window.getSelection().toString()) return;
+                        previewHistoryVideo(escapedUrl, escapedModelName, test.generationTime || 0, testId, escapedPrompt);
+                    });
+                }
+                
                 tbody.appendChild(row);
             });
         } else {
@@ -1336,6 +1373,30 @@ async function loadHistory() {
         console.log('[VideoDashboard] History loaded');
     } catch (error) {
         console.error('[VideoDashboard] Error loading history:', error);
+    }
+}
+
+/**
+ * Initialize video preview modal - stop video when modal closes
+ */
+function initializeVideoPreviewModal() {
+    const modalElement = document.getElementById('videoPreviewModal');
+    if (modalElement) {
+        modalElement.addEventListener('hidden.bs.modal', function() {
+            const video = document.getElementById('modalPreviewVideo');
+            if (video) {
+                video.pause();
+                video.currentTime = 0;
+            }
+        });
+        
+        // Also handle when modal is shown to ensure video plays
+        modalElement.addEventListener('shown.bs.modal', function() {
+            const video = document.getElementById('modalPreviewVideo');
+            if (video && video.src) {
+                video.play().catch(e => console.log('Auto-play prevented:', e));
+            }
+        });
     }
 }
 

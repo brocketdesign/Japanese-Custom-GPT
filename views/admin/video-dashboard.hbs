@@ -483,15 +483,15 @@
 
     <!-- Video Preview Modal -->
     <div class="modal fade" id="videoPreviewModal" tabindex="-1" aria-labelledby="videoPreviewModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content bg-dark text-white">
                 <div class="modal-header border-secondary">
                     <h5 class="modal-title" id="videoPreviewModalLabel">Video Preview</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body text-center">
-                    <video id="previewVideo" controls class="img-fluid rounded" style="max-height: 70vh;">
-                        <source id="previewVideoSource" src="" type="video/mp4">
+                <div class="modal-body text-center" style="overflow-y: auto; max-height: 80vh;">
+                    <video id="modalPreviewVideo" controls autoplay class="img-fluid rounded" style="max-height: 60vh;">
+                        <source id="modalPreviewVideoSource" src="" type="video/mp4">
                         Your browser does not support the video tag.
                     </video>
                     <div class="mt-3">

@@ -238,13 +238,25 @@
     border-radius: 6px;
     border: 2px solid rgba(255, 255, 255, 0.1);
     transition: all 0.2s ease;
-    cursor: pointer;
 }
 
-.history-video:hover {
-    transform: scale(1.1);
+/* Clickable history row styles */
+.history-row-clickable {
+    transition: all 0.2s ease;
+}
+
+.history-row-clickable:hover {
+    background: rgba(130, 64, 255, 0.15) !important;
+}
+
+.history-row-clickable:hover .history-video {
+    transform: scale(1.05);
     border-color: #8240FF;
     box-shadow: 0 4px 12px rgba(130, 64, 255, 0.4);
+}
+
+.history-row-clickable:hover td {
+    color: #fff !important;
 }
 
 /* Scrollbar Styles */

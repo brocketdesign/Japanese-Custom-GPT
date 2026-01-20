@@ -1284,6 +1284,115 @@
     color: white;
 }
 
+/* Base Face Upload Section */
+.base-face-upload-section {
+    margin-bottom: 25px;
+}
+
+.base-face-upload-section .section-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--cc-text);
+    margin-bottom: 8px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.base-face-upload-section .section-label .text-muted {
+    font-size: 0.85rem;
+    font-weight: 400;
+}
+
+.base-face-upload-section .section-description {
+    font-size: 0.85rem;
+    color: var(--cc-text-muted);
+    margin-bottom: 15px;
+    line-height: 1.4;
+    text-align: left;
+}
+
+.base-face-upload-area {
+    position: relative;
+}
+
+.base-face-upload-area .upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+    background: var(--cc-glass-bg);
+    border: 2px dashed var(--cc-glass-border);
+    border-radius: var(--cc-radius-md);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.base-face-upload-area .upload-placeholder:hover {
+    border-color: var(--cc-primary);
+    background: var(--cc-surface-hover);
+}
+
+.base-face-upload-area .upload-placeholder i {
+    font-size: 2.5rem;
+    color: var(--cc-primary-light);
+    margin-bottom: 10px;
+}
+
+.base-face-upload-area .upload-text {
+    color: var(--cc-text);
+    font-size: 0.95rem;
+    margin-bottom: 5px;
+}
+
+.base-face-upload-area .upload-hint {
+    color: var(--cc-text-muted);
+    font-size: 0.8rem;
+}
+
+.base-face-upload-area .face-preview {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+    background: var(--cc-glass-bg);
+    border: 2px solid var(--cc-primary);
+    border-radius: var(--cc-radius-md);
+}
+
+.base-face-upload-area .face-preview img {
+    max-width: 150px;
+    max-height: 150px;
+    width: auto;
+    height: auto;
+    border-radius: var(--cc-radius-md);
+    object-fit: cover;
+    margin-bottom: 10px;
+}
+
+.base-face-upload-area .btn-clear-face {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid var(--cc-error);
+    border-radius: var(--cc-radius-sm);
+    color: var(--cc-error);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.base-face-upload-area .btn-clear-face:hover {
+    background: var(--cc-error);
+    color: white;
+}
+
 /* Custom Prompt Section */
 .custom-prompt-section {
     margin-bottom: 25px;

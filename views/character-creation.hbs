@@ -267,6 +267,32 @@
                         <input type="hidden" id="imageModel" name="imageModel">
                         <input type="hidden" id="imageVersion" name="imageVersion">
                         <input type="hidden" id="isUserModel" name="isUserModel" value="false">
+                        <input type="hidden" id="baseFaceUrl" name="baseFaceUrl">
+                    </div>
+                    
+                    <!-- Upload Base Face Section -->
+                    <div class="base-face-upload-section">
+                        <h3 class="section-label">
+                            {{translations.newCharacter.step7_base_face_title}}
+                            <span class="text-muted small">{{translations.newCharacter.step7_base_face_optional}}</span>
+                        </h3>
+                        <p class="section-description text-muted small mb-3">{{translations.newCharacter.step7_base_face_description}}</p>
+                        
+                        <div class="base-face-upload-area" id="baseFaceUploadArea">
+                            <input type="file" id="baseFaceInput" accept="image/*" style="display: none;">
+                            <div class="upload-placeholder" id="baseFaceUploadPlaceholder" onclick="document.getElementById('baseFaceInput').click()">
+                                <i class="bi bi-person-circle"></i>
+                                <p class="upload-text">{{translations.newCharacter.step7_base_face_upload}}</p>
+                                <small class="upload-hint">{{translations.newCharacter.step7_base_face_supported}}</small>
+                            </div>
+                            <div class="face-preview" id="baseFacePreview" style="display: none;">
+                                <img id="baseFacePreviewImg" src="" alt="Face Preview">
+                                <button type="button" class="btn-clear-face" id="clearBaseFaceBtn">
+                                    <i class="bi bi-x-lg"></i>
+                                    {{translations.newCharacter.step7_base_face_clear}}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Outfit/Physical Customization Section -->

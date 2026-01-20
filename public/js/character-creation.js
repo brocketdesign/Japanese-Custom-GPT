@@ -61,6 +61,8 @@
                 imageVersion: null,
                 isUserModel: false,
                 outfitPrompt: '',
+                baseFaceUrl: null,
+                baseFaceBase64: null,
                 
                 // Step 7: Generated Images
                 generatedImages: [],
@@ -471,6 +473,27 @@
                         outfitPromptCounter.textContent = this.characterData.outfitPrompt.length;
                     }
                 }
+            }
+            
+            // Base Face Upload (Step 7)
+            const baseFaceInput = document.getElementById('baseFaceInput');
+            const clearBaseFaceBtn = document.getElementById('clearBaseFaceBtn');
+            
+            if (baseFaceInput) {
+                baseFaceInput.addEventListener('change', (e) => this.handleBaseFaceUpload(e));
+            }
+            
+            if (clearBaseFaceBtn) {
+                clearBaseFaceBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.clearBaseFace();
+                });
+            }
+            
+            // Initialize base face preview if there's saved data
+            if (this.characterData.baseFaceUrl) {
+                this.showBaseFacePreview(this.characterData.baseFaceUrl);
             }
             
             
@@ -1011,6 +1034,127 @@
         }
         
         // ===================
+        // BASE FACE UPLOAD
+        // ===================
+        
+        /**
+         * Handle base face image upload
+         */
+        handleBaseFaceUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                this.showError('Please upload a JPG, PNG, or WebP image');
+                return;
+            }
+            
+            // Validate file size (max 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                this.showError('Image file size must be less than 10MB');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const base64 = e.target.result;
+                
+                // Show preview immediately
+                this.showBaseFacePreview(base64);
+                
+                // Store base64 for image generation
+                this.characterData.baseFaceBase64 = base64;
+                
+                // Upload to server and get URL
+                try {
+                    const response = await fetch('/api/merge-face/upload-face', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/octet-stream',
+                            'X-Filename': file.name
+                        },
+                        credentials: 'include',
+                        body: file
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.faceImageUrl) {
+                        this.characterData.baseFaceUrl = data.faceImageUrl;
+                        this.characterData.baseFaceId = data.faceId;
+                        document.getElementById('baseFaceUrl').value = data.faceImageUrl;
+                        this.saveData();
+                        console.log('[CharacterCreation] Base face uploaded:', data.faceImageUrl);
+                    } else {
+                        console.warn('[CharacterCreation] Face upload response:', data);
+                        // Keep the base64 for generation even if S3 upload fails
+                    }
+                } catch (error) {
+                    console.error('[CharacterCreation] Error uploading base face:', error);
+                    // Keep the base64 for generation even if upload fails
+                }
+                
+                this.saveData();
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        /**
+         * Show base face preview
+         */
+        showBaseFacePreview(imageUrl) {
+            const placeholder = document.getElementById('baseFaceUploadPlaceholder');
+            const preview = document.getElementById('baseFacePreview');
+            const previewImg = document.getElementById('baseFacePreviewImg');
+            
+            if (placeholder && preview && previewImg) {
+                previewImg.src = imageUrl;
+                placeholder.style.display = 'none';
+                preview.style.display = 'flex';
+            }
+        }
+        
+        /**
+         * Clear base face upload
+         */
+        clearBaseFace() {
+            const placeholder = document.getElementById('baseFaceUploadPlaceholder');
+            const preview = document.getElementById('baseFacePreview');
+            const previewImg = document.getElementById('baseFacePreviewImg');
+            const input = document.getElementById('baseFaceInput');
+            const hiddenInput = document.getElementById('baseFaceUrl');
+            
+            // Reset UI
+            if (placeholder && preview) {
+                placeholder.style.display = 'flex';
+                preview.style.display = 'none';
+            }
+            
+            if (previewImg) {
+                previewImg.src = '';
+            }
+            
+            if (input) {
+                input.value = '';
+            }
+            
+            if (hiddenInput) {
+                hiddenInput.value = '';
+            }
+            
+            // Clear character data
+            this.characterData.baseFaceUrl = null;
+            this.characterData.baseFaceBase64 = null;
+            this.characterData.baseFaceId = null;
+            this.saveData();
+            
+            console.log('[CharacterCreation] Base face cleared');
+        }
+        
+        // ===================
         // MODEL SELECTION
         // ===================
         
@@ -1435,6 +1579,16 @@
                     });
                 } else {
                     console.warn('[CharacterCreation] No model selected - will use default');
+                }
+                
+                // Add base face data for auto-merge during generation
+                if (this.characterData.baseFaceBase64) {
+                    requestBody.baseFaceBase64 = this.characterData.baseFaceBase64;
+                    requestBody.enableMergeFace = true;
+                    console.log('[CharacterCreation] Including base face for auto-merge');
+                }
+                if (this.characterData.baseFaceUrl) {
+                    requestBody.baseFaceUrl = this.characterData.baseFaceUrl;
                 }
                 
                 console.log('[CharacterCreation] Full request body:', JSON.stringify(requestBody, null, 2));

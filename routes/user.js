@@ -1241,6 +1241,29 @@ async function routes(fastify, options) {
         res.status(500).send({ success: false, error: 'Internal server error' });
     }
   });
+
+  // Settings page route
+  fastify.get('/settings', async (request, reply) => {
+    try {
+        const user = request.user;
+        if (!user) {
+            return reply.status(401).send({ error: 'Unauthorized' });
+        }
+
+        const translations = request.translations;
+        const isAdmin = await checkUserAdmin(fastify.mongo.db, user._id);
+
+        return reply.view('settings', {
+            user,
+            translations,
+            isAdmin,
+            userData: user
+        });
+    } catch (error) {
+        console.error('[Settings] Error loading settings page:', error);
+        return reply.status(500).send({ error: 'Failed to load settings' });
+    }
+  });
 }
 
 module.exports = routes;

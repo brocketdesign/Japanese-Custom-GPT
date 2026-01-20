@@ -190,32 +190,32 @@ $(document).ready(function() {
     });
   });
 
-  // Handle settings modal footer visibility based on active tab
-  $('#myTab button').on('shown.bs.tab', function (e) {
-    const target = $(e.target).attr('data-bs-target');
-    if (target === '#profile') {
-      $('#settings-modal-footer').removeClass('d-none');
-    } else {
-      $('#settings-modal-footer').addClass('d-none');
-    }
+  // Handle section navigation
+  $(document).on('click', '.settings-nav-item', function() {
+    const section = $(this).data('section');
     
-    // Load connections when switching to connections tab
-    if (target === '#connections') {
-      console.log('[Settings] Switched to connections tab');
+    // Update active nav item
+    $('.settings-nav-item').removeClass('active');
+    $(this).addClass('active');
+    
+    // Update active section
+    $('.settings-section').removeClass('active');
+    $('#section-' + section).addClass('active');
+    
+    // Load connections when switching to connections section
+    if (section === 'connections') {
+      console.log('[Settings] Switched to connections section');
       if (window.SocialConnections && typeof window.SocialConnections.loadConnections === 'function') {
         window.SocialConnections.loadConnections();
       }
     }
+    
+    // Load API keys when switching to API section
+    if (section === 'api') {
+      console.log('[Settings] Switched to API section');
+      loadApiKeys();
+    }
   });
-
-  // Ensure submit button works
-  $('#settings-modal-footer button[type="submit"]').on('click', function() {
-    $('#user-info-form').submit();
-  });
-
-  // Show footer initially since profile is active
-  $('#settings-modal-footer').removeClass('d-none');
-});
 
 
 
@@ -431,13 +431,8 @@ $(document).ready(function() {
   // API Keys Management
   // ==========================================
   
-  // Load API keys when API tab is shown
-  $('button[data-bs-target="#api"]').on('shown.bs.tab', function() {
-    loadApiKeys();
-  });
-
-  // Also load if we're already on the API tab (in case page loads directly to it)
-  if ($('#api').hasClass('active')) {
+  // Load API keys initially if API section is active
+  if ($('#section-api').hasClass('active')) {
     loadApiKeys();
   }
 });

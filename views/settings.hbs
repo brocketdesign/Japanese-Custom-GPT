@@ -1,588 +1,605 @@
-<h2 class="h3 mb-4 page-title d-none">{{translations.setting.pageTitle}}</h2>
-<div class="my-4">
+<div class="settings-container">
+  <!-- Sidebar Navigation -->
+  <div class="settings-sidebar">
+    <div class="settings-nav">
+      <button class="settings-nav-item active" data-section="profile">
+        <div class="nav-item-icon">
+          <i class="bi bi-person-circle"></i>
+        </div>
+        <div class="nav-item-content">
+          <div class="nav-item-title">{{translations.setting.profile}}</div>
+          <div class="nav-item-subtitle">Personal information</div>
+        </div>
+        <i class="bi bi-chevron-right nav-item-arrow"></i>
+      </button>
 
-  <!-- Tab content -->
-  <div class="tab-content" id="myTabContent">
-          <!-- Profile Tab -->
-          <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-tab">
-            <!-- User Info Form -->
-            <form id="user-info-form" class="settings-form shadow-0">
-              
-              <!-- Profile Picture Section -->
-              <div class="settings-section">
-                <div class="settings-section-header mb-4">
-                  <h5 class="settings-section-title mb-1">
-                    <i class="bi bi-person-circle me-2 text-primary"></i>
-                    {{translations.setting.profilePicture}}
-                  </h5>
-                  <p class="settings-section-subtitle text-muted mb-0">
-                    {{translations.setting.profilePictureDescription}}
-                  </p>
-                </div>
-                
-                <div class="row">
-                  <div class="col-12">
-                    <div id="profileSection" data-user-id="{{userData._id}}" class="profile-picture-container">
-                      <div class="profile-picture-wrapper">
-                        <img id="profileImage" src="/img/avatar.png" alt="Profile Picture" class="profile-image">
-                        <div class="profile-picture-overlay">
-                          <i class="bi bi-camera-fill"></i>
-                          <span>{{translations.setting.changePhoto}}</span>
-                        </div>
-                      </div>
-                      
-                      <!-- Image Moderation Warning -->
-                      <div class="alert alert-warning mt-3" role="alert" id="imageModerationFlagged" style="display: none;">
-                        <i class="bi bi-exclamation-triangle me-2"></i>
-                        {{translations.setting.imageModerationFlagged}}
-                      </div>
-                    </div>
-                    
-                    <div class="mb-3 mt-3" id="thumbnailInputContainer" style="display: none;">
-                      <input type="file" class="form-control" id="profileImageInput" name="profileImageInput" accept="image/*">
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <!-- Personal Information Section -->
-              <div class="settings-section">
-                <div class="settings-section-header mb-4">
-                  <h5 class="settings-section-title mb-1">
-                    <i class="bi bi-person-lines-fill me-2 text-primary"></i>
-                    {{translations.setting.personalInformation}}
-                  </h5>
-                  <p class="settings-section-subtitle text-muted mb-0">
-                    {{translations.setting.personalInformationDescription}}
-                  </p>
-                </div>
+      <button class="settings-nav-item" data-section="connections">
+        <div class="nav-item-icon">
+          <i class="bi bi-share"></i>
+        </div>
+        <div class="nav-item-content">
+          <div class="nav-item-title">{{translations.setting.connections}}</div>
+          <div class="nav-item-subtitle">Social accounts</div>
+        </div>
+        <i class="bi bi-chevron-right nav-item-arrow"></i>
+      </button>
 
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <div class="form-floating">
-                      <input type="text" id="nickname" class="form-control" placeholder="{{translations.setting.nickname}}" />
-                      <label for="nickname">
-                        <i class="bi bi-person me-1"></i>
-                        {{translations.setting.nickname}}
-                      </label>
-                    </div>
-                  </div>
+      <button class="settings-nav-item" data-section="subscription">
+        <div class="nav-item-icon">
+          <i class="bi bi-star"></i>
+        </div>
+        <div class="nav-item-content">
+          <div class="nav-item-title">{{translations.setting.subscription}}</div>
+          <div class="nav-item-subtitle">Manage your plan</div>
+        </div>
+        <i class="bi bi-chevron-right nav-item-arrow"></i>
+      </button>
 
-                  <div class="col-md-6">
-                    <div class="form-floating">
-                      <input type="email" class="form-control" id="inputEmail4" placeholder="{{translations.setting.email}}" />
-                      <label for="inputEmail4">
-                        <i class="bi bi-envelope me-1"></i>
-                        {{translations.setting.email}}
-                      </label>
-                    </div>
-                  </div>
+      <button class="settings-nav-item" data-section="api">
+        <div class="nav-item-icon">
+          <i class="bi bi-code-slash"></i>
+        </div>
+        <div class="nav-item-content">
+          <div class="nav-item-title">API</div>
+          <div class="nav-item-subtitle">Keys & integrations</div>
+        </div>
+        <i class="bi bi-chevron-right nav-item-arrow"></i>
+      </button>
 
-                  <!-- Age Range Display -->
-                  <div class="col-md-6" id="ageRangeSection" style="display: none;">
-                    <div class="form-control h-auto py-3 bg-light">
-                      <div class="d-flex align-items-center">
-                        <i class="bi bi-calendar-range me-2 text-muted"></i>
-                        <div>
-                          <small class="text-muted d-block">{{translations.setting.ageRange}}</small>
-                          <span class="fw-semibold" id="userAgeRange"></span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+      <button class="settings-nav-item d-none" data-section="password">
+        <div class="nav-item-icon">
+          <i class="bi bi-shield-lock"></i>
+        </div>
+        <div class="nav-item-content">
+          <div class="nav-item-title">{{translations.setting.password}}</div>
+          <div class="nav-item-subtitle">Security settings</div>
+        </div>
+        <i class="bi bi-chevron-right nav-item-arrow"></i>
+      </button>
+    </div>
+  </div>
 
-                  <div class="col-md-6">
-                    <div class="form-floating">
-                      <select class="form-select" id="gender" name="gender">
-                        <option value="female" selected>{{translations.setting.female}}</option>
-                        <option value="male">{{translations.setting.male}}</option>
-                      </select>
-                      <label for="gender">
-                        <i class="bi bi-gender-ambiguous me-1"></i>
-                        {{translations.setting.gender}}
-                      </label>
-                    </div>
-                  </div>
+  <!-- Content Area -->
+  <div class="settings-content">
+    <!-- Profile Section -->
+    <div class="settings-section active" id="section-profile">
+      <div class="section-header">
+        <h2 class="section-title">{{translations.setting.profile}}</h2>
+        <p class="section-description">Manage your personal information and preferences</p>
+      </div>
 
-                  <div class="col-md-6">
-                    <div class="settings-field">
-                      <label class="form-label mb-2">
-                        <i class="bi bi-globe2 me-1"></i>
-                        {{translations.setting.language}}
-                      </label>
-                      <div class="dropdown w-100">
-                        <button data-user-lang="{{user.lang}}" class="btn btn-outline-secondary dropdown-toggle w-100 text-start" type="button" id="languageDropdownMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                          <i class="bi bi-globe2 me-2"></i>
-                          <span class="language-text">{{translations.setting.selectLanguage}}</span>
-                        </button>
-                        <ul class="dropdown-menu w-100" aria-labelledby="languageDropdownMenu">
-                          <li><a class="dropdown-item language-select" href="#" data-lang="ja">
-                            <i class="bi bi-flag me-2"></i>{{translations.setting.japanese}}
-                          </a></li>
-                          <li><a class="dropdown-item language-select" href="#" data-lang="en">
-                            <i class="bi bi-flag me-2"></i>{{translations.setting.english}}
-                          </a></li>
-                          <li><a class="dropdown-item language-select" href="#" data-lang="fr">
-                            <i class="bi bi-flag me-2"></i>{{translations.setting.french}}
-                          </a></li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <!-- Content Preferences Section -->
-              <div class="settings-section">
-                <div class="settings-section-header mb-4">
-                  <h5 class="settings-section-title mb-1">
-                    <i class="bi bi-sliders me-2 text-primary"></i>
-                    {{translations.setting.contentPreferences}}
-                  </h5>
-                  <p class="settings-section-subtitle text-muted mb-0">
-                    {{translations.setting.contentPreferencesDescription}}
-                  </p>
-                </div>
-
-                <!-- NSFW Toggle -->
-                <div class="settings-preference-item">
-                  <div class="d-flex align-items-start justify-content-between">
-                    <div class="preference-info">
-                      <div class="preference-title">
-                        <i class="bi bi-eye me-2"></i>
-                        {{translations.setting.showNSFW}}
-                        <i class="bi bi-crown-fill premium-icon ms-1 text-warning" id="nsfw-premium-icon" style="display: none;"></i>
-                      </div>
-                      <div class="preference-description text-muted">
-                        {{translations.setting.showNSFWDescription}}
-                      </div>
-                      <div id="nsfw-premium-indicator" class="premium-feature-indicator mt-2" style="display: none;">
-                        <small class="text-warning d-flex align-items-center">
-                          <i class="bi bi-star-fill me-1"></i> 
-                          Premium feature required to view adult content
-                        </small>
-                      </div>
-                    </div>
-                    <div class="preference-control">
-                      <label class="settings-switch">
-                        <input type="checkbox" id="nsfw-toggle">
-                        <span class="settings-switch-slider"></span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <!-- About You Section -->
-              <div class="settings-section">
-                <div class="settings-section-header mb-4">
-                  <h5 class="settings-section-title mb-1">
-                    <i class="bi bi-chat-quote me-2 text-primary"></i>
-                    {{translations.setting.aboutYou}}
-                  </h5>
-                  <p class="settings-section-subtitle text-muted mb-0">
-                    {{translations.setting.aboutYouDescription}}
-                  </p>
-                </div>
-
-                <div class="form-floating">
-                  <textarea class="form-control bio-textarea" id="bio" name="bio" rows="8" maxlength="400" placeholder="{{translations.setting.bioPlaceholder}}"></textarea>
-                  <label for="bio">
-                    <i class="bi bi-chat-quote me-1"></i>
-                    {{translations.setting.bio}}
-                  </label>
-                  <div class="form-text mt-2">
-                    <div class="d-flex justify-content-between">
-                      <span>{{translations.setting.bioHint}}</span>
-                      <span class="character-count text-muted">
-                        <span id="bio-char-count">0</span>/400
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {{#if isAdmin}}
-              <!-- Advanced Settings Section -->
-              <div class="settings-section">
-                <div class="settings-section-header mb-4">
-                  <h5 class="settings-section-title mb-1">
-                    <i class="bi bi-gear me-2 text-primary"></i>
-                    {{translations.setting.advancedSettings}}
-                  </h5>
-                  <p class="settings-section-subtitle text-muted mb-0">
-                    {{translations.setting.advancedSettingsDescription}}
-                  </p>
-                </div>
-                
-                <div class="advanced-setting-card">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div class="advanced-setting-info">
-                      <div class="advanced-setting-title">
-                        <i class="bi bi-arrow-clockwise me-2"></i>
-                        {{translations.restartOnboarding}}
-                      </div>
-                      <div class="advanced-setting-description text-muted">
-                        {{translations.restartOnboardingDesc}}
-                      </div>
-                    </div>
-                    <button type="button" id="restart-onboarding" class="btn btn-outline-primary btn-sm">
-                      <i class="bi bi-arrow-clockwise me-1"></i> 
-                      {{translations.restart}}
-                    </button>
-                  </div>
-                </div>
-              </div>
-              {{/if}}
-
-            </form>
+      <form id="user-info-form" class="settings-form">
+        <!-- Profile Picture Card -->
+        <div class="settings-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="bi bi-person-circle"></i>
+            </div>
+            <div class="card-header-content">
+              <h3 class="card-title">{{translations.setting.profilePicture}}</h3>
+              <p class="card-subtitle">{{translations.setting.profilePictureDescription}}</p>
+            </div>
           </div>
-
-          <!-- Connections Tab -->
-          <div class="tab-pane fade" id="connections" role="tabpanel" aria-labelledby="connections-tab">
-            <div class="settings-form shadow-0">
-              <!-- SNS Connections Section -->
-              <div class="settings-section">
-                <div class="settings-section-header mb-4">
-                  <h5 class="settings-section-title mb-1">
-                    <i class="bi bi-share me-2 text-primary"></i>
-                    {{translations.sns.connected_accounts}}
-                  </h5>
-                  <p class="settings-section-subtitle text-muted mb-0">
-                    {{translations.sns.connections_description}}
-                  </p>
-                </div>
-
-                <!-- Account Limit Info -->
-                <div class="account-limit-info mb-3 p-3 rounded" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(130, 64, 255, 0.2);">
-                  <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                      <i class="bi bi-info-circle me-2"></i>
-                      <span id="connectionLimitText">{{translations.sns.loading}}</span>
-                    </div>
-                    <span class="badge bg-primary" id="connectionCountBadge">0/1</span>
-                  </div>
-                </div>
-
-                <!-- Connected Accounts List -->
-                <div id="connectedAccountsList" class="connected-accounts-list mb-4">
-                  <div class="text-center p-4">
-                    <div class="spinner-border spinner-border-sm text-primary" role="status">
-                      <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <div class="mt-2 text-muted small">{{translations.sns.loading_connections}}</div>
-                  </div>
-                </div>
-
-                <!-- Connect New Account Section -->
-                <div class="connect-new-section">
-                  <h6 class="mb-3">
-                    <i class="bi bi-plus-circle me-2"></i>{{translations.sns.connect_new_account}}
-                  </h6>
-                  
-                  <!-- Platform Options -->
-                  <div class="platform-options d-flex flex-wrap gap-3">
-                    <!-- Instagram -->
-                    <button type="button" class="btn btn-outline-secondary platform-connect-btn d-flex align-items-center gap-2" 
-                            data-platform="instagram" id="connectInstagramBtn">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                      </svg>
-                      <span>Instagram</span>
-                    </button>
-
-                    <!-- X (Twitter) -->
-                    <button type="button" class="btn btn-outline-secondary platform-connect-btn d-flex align-items-center gap-2" 
-                            data-platform="twitter" id="connectTwitterBtn">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                      </svg>
-                      <span>X (Twitter)</span>
-                    </button>
-                  </div>
-
-                  <!-- Premium Upsell -->
-                  <div class="premium-upsell mt-3 p-3 rounded is-free-user" id="connectionPremiumUpsell" style="display: none; background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1)); border: 1px solid rgba(255, 193, 7, 0.3);">
-                    <div class="d-flex align-items-center gap-2">
-                      <i class="bi bi-crown-fill text-warning"></i>
-                      <div>
-                        <strong>{{translations.sns.premium_accounts}}</strong>
-                        <p class="mb-0 small text-muted">{{translations.sns.premium_description}}</p>
-                      </div>
-                      <button type="button" class="btn btn-warning btn-sm ms-auto" onclick="loadPlanPage()">
-                        {{translations.sns.upgrade}}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Recent Posts Section -->
-              <div class="settings-section">
-                <div class="settings-section-header mb-4">
-                  <h5 class="settings-section-title mb-1">
-                    <i class="bi bi-clock-history me-2 text-primary"></i>
-                    {{translations.sns.recent_posts}}
-                  </h5>
-                  <p class="settings-section-subtitle text-muted mb-0">
-                    {{translations.sns.recent_posts_description}}
-                  </p>
-                </div>
-
-                <div id="recentPostsList" class="recent-posts-list">
-                  <div class="text-center p-4 text-muted">
-                    <i class="bi bi-inbox fs-1 mb-2"></i>
-                    <p class="mb-0">{{translations.sns.no_posts_yet}}</p>
-                  </div>
+          <div class="card-body">
+            <div id="profileSection" data-user-id="{{userData._id}}" class="profile-upload-area">
+              <div class="profile-image-wrapper">
+                <img id="profileImage" src="/img/avatar.png" alt="Profile Picture" class="profile-image">
+                <div class="profile-overlay">
+                  <i class="bi bi-camera-fill"></i>
+                  <span>{{translations.setting.changePhoto}}</span>
                 </div>
               </div>
             </div>
+            <input type="file" class="d-none" id="profileImageInput" name="profileImageInput" accept="image/*">
+            <div class="alert alert-warning mt-3" role="alert" id="imageModerationFlagged" style="display: none;">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              {{translations.setting.imageModerationFlagged}}
+            </div>
           </div>
+        </div>
 
-          <!-- Password Tab -->
-          <div class="tab-pane fade" id="password" role="tabpanel" aria-labelledby="password-tab">
-            <h6>{{translations.setting.password}}</h6>
-            <form id="user-password-form">
-              <div class="row mb-4">
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label for="inputPassword4">{{translations.setting.oldPassword}}</label>
-                    <input type="password" class="form-control" id="inputPassword4" />
-                  </div>
-                  <div class="form-group">
-                    <label for="inputPassword5">{{translations.setting.newPassword}}</label>
-                    <input type="password" class="form-control" id="inputPassword5" />
-                  </div>
-                  <div class="form-group">
-                    <label for="inputPassword6">{{translations.setting.confirmPassword}}</label>
-                    <input type="password" class="form-control" id="inputPassword6" />
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <p class="mb-2">{{translations.setting.requirements}}</p>
-                  <p class="small text-muted mb-2">{{translations.setting.requirementsDescription}}</p>
-                  <ul class="small text-muted pl-4 mb-0">
-                    <li>{{translations.setting.minLength}}</li>
-                    <li>{{translations.setting.specialChar}}</li>
-                    <li>{{translations.setting.number}}</li>
-                    <li>{{translations.setting.differentPassword}}</li>
-                  </ul>
+        <!-- Personal Information Card -->
+        <div class="settings-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="bi bi-person-lines-fill"></i>
+            </div>
+            <div class="card-header-content">
+              <h3 class="card-title">{{translations.setting.personalInformation}}</h3>
+              <p class="card-subtitle">{{translations.setting.personalInformationDescription}}</p>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="nickname" class="form-label">
+                  <i class="bi bi-person me-1"></i>{{translations.setting.nickname}}
+                </label>
+                <input type="text" id="nickname" class="form-control" placeholder="{{translations.setting.nickname}}" />
+              </div>
+
+              <div class="form-group">
+                <label for="inputEmail4" class="form-label">
+                  <i class="bi bi-envelope me-1"></i>{{translations.setting.email}}
+                </label>
+                <input type="email" class="form-control" id="inputEmail4" placeholder="{{translations.setting.email}}" />
+              </div>
+
+              <div class="form-group" id="ageRangeSection" style="display: none;">
+                <label class="form-label">
+                  <i class="bi bi-calendar-range me-1"></i>{{translations.setting.ageRange}}
+                </label>
+                <div class="form-control-static">
+                  <span id="userAgeRange" class="fw-semibold"></span>
                 </div>
               </div>
-              <button type="submit" class="btn btn-secondary">{{translations.setting.changePassword}}</button>
-            </form>
-          </div>
 
-          <!-- Subscription Tab -->
-          <div class="tab-pane fade" id="subscription" role="tabpanel" aria-labelledby="subscription-tab">
-            <div class="settings-form shadow-0">
-              <p id="user-plan" style="display: none;"></p>
-              
-              <!-- No Subscription - Premium Features Section -->
-              <div id="no-subscription-section" class="subscription-promo-section">
-                <div class="subscription-promo-header text-center">
-                  <div class="promo-icon-wrapper">
-                    <i class="bi bi-stars"></i>
-                  </div>
-                  <h4 class="promo-title">{{translations.subscriptionFeatures.title}}</h4>
-                  <p class="promo-subtitle">{{translations.subscriptionFeatures.subtitle}}</p>
-                </div>
-                
-                <div class="premium-features-list">
-                  <div class="premium-feature-item">
-                    <div class="feature-icon">
-                      <i class="bi bi-infinity"></i>
-                    </div>
-                    <div class="feature-content">
-                      <h6 class="feature-title">{{translations.subscriptionFeatures.feature1_title}}</h6>
-                      <p class="feature-desc">{{translations.subscriptionFeatures.feature1_desc}}</p>
-                    </div>
-                  </div>
-                  
-                  <div class="premium-feature-item">
-                    <div class="feature-icon">
-                      <i class="bi bi-image-fill"></i>
-                    </div>
-                    <div class="feature-content">
-                      <h6 class="feature-title">{{translations.subscriptionFeatures.feature2_title}}</h6>
-                      <p class="feature-desc">{{translations.subscriptionFeatures.feature2_desc}}</p>
-                    </div>
-                  </div>
-                  
-                  <div class="premium-feature-item">
-                    <div class="feature-icon">
-                      <i class="bi bi-camera-video-fill"></i>
-                    </div>
-                    <div class="feature-content">
-                      <h6 class="feature-title">{{translations.subscriptionFeatures.feature3_title}}</h6>
-                      <p class="feature-desc">{{translations.subscriptionFeatures.feature3_desc}}</p>
-                    </div>
-                  </div>
-                  
-                  <div class="premium-feature-item">
-                    <div class="feature-icon">
-                      <i class="bi bi-fire"></i>
-                    </div>
-                    <div class="feature-content">
-                      <h6 class="feature-title">{{translations.subscriptionFeatures.feature4_title}}</h6>
-                      <p class="feature-desc">{{translations.subscriptionFeatures.feature4_desc}}</p>
-                    </div>
-                  </div>
-                  
-                  <div class="premium-feature-item">
-                    <div class="feature-icon">
-                      <i class="bi bi-person-hearts"></i>
-                    </div>
-                    <div class="feature-content">
-                      <h6 class="feature-title">{{translations.subscriptionFeatures.feature5_title}}</h6>
-                      <p class="feature-desc">{{translations.subscriptionFeatures.feature5_desc}}</p>
-                    </div>
-                  </div>
-                  
-                  <div class="premium-feature-item">
-                    <div class="feature-icon">
-                      <i class="bi bi-lightning-charge-fill"></i>
-                    </div>
-                    <div class="feature-content">
-                      <h6 class="feature-title">{{translations.subscriptionFeatures.feature6_title}}</h6>
-                      <p class="feature-desc">{{translations.subscriptionFeatures.feature6_desc}}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div class="subscription-cta-section">
-                  <button class="btn subscription-cta-btn" onclick="loadPlanPage()">
-                    <i class="bi bi-crown-fill me-2"></i>
-                    {{translations.subscriptionFeatures.cta_button}}
+              <div class="form-group">
+                <label for="gender" class="form-label">
+                  <i class="bi bi-gender-ambiguous me-1"></i>{{translations.setting.gender}}
+                </label>
+                <select class="form-control" id="gender" name="gender">
+                  <option value="female">{{translations.setting.female}}</option>
+                  <option value="male">{{translations.setting.male}}</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="bi bi-globe2 me-1"></i>{{translations.setting.language}}
+                </label>
+                <div class="dropdown w-100">
+                  <button data-user-lang="{{user.lang}}" class="form-control dropdown-toggle text-start" type="button" id="languageDropdownMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-globe2 me-2"></i>
+                    <span class="language-text">{{translations.setting.selectLanguage}}</span>
                   </button>
-                  <p class="cta-note">{{translations.subscriptionFeatures.cta_note}}</p>
-                </div>
-              </div>
-              <!-- End No Subscription Section -->
-              
-              <!-- Active Subscription Section -->
-              <div id="active-subscription-section" style="display: none;">
-                <div class="settings-section">
-                  <div class="settings-section-header mb-4">
-                    <h5 class="settings-section-title mb-1">
-                      <i class="bi bi-crown-fill me-2 text-warning"></i>
-                      {{translations.subscriptionFeatures.active_title}}
-                    </h5>
-                    <p class="settings-section-subtitle text-muted mb-0">
-                      {{translations.subscriptionFeatures.active_subtitle}}
-                    </p>
-                  </div>
-                  
-                  <div class="active-plan-card">
-                    <div class="plan-badge">
-                      <i class="bi bi-patch-check-fill"></i>
-                      <span id="active-plan-name">Premium</span>
-                    </div>
-                    <div class="plan-details">
-                      <div class="plan-detail-item">
-                        <span class="detail-label">{{translations.subscriptionFeatures.started}}</span>
-                        <span class="detail-value" id="subscription-start-date">-</span>
-                      </div>
-                      <div class="plan-detail-item">
-                        <span class="detail-label">{{translations.subscriptionFeatures.renews}}</span>
-                        <span class="detail-value" id="subscription-renewal-date">-</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <button id="cancel-plan" class="btn btn-outline-danger btn-sm rounded-pill" style="display: none;position: absolute; bottom: 20px;font-size: 10px;opacity: 0.5;" data-user-id="{{user._id}}">{{translations.setting.cancelSubscription}}</button>
-            
-              <!-- Day Pass Countdown Section -->
-              <div id="day-pass-countdown-section" class="text-center p-3 border rounded shadow-sm mt-3" style="display: none;">
-                <h4 class="mb-3"><i class="bi bi-clock-history me-2"></i>{{translations.setting.dayPassActiveTitle}}</h4>
-                <p class="lead">{{translations.setting.dayPassExpiresIn}}</p>
-                <div id="countdown-timer" class="display-4 fw-bold text-primary mb-3">
-                  <span id="hours">00</span>:<span id="minutes">00</span>:<span id="seconds">00</span>
-                </div>
-                <p id="day-pass-expired-message" class="text-danger mt-2" style="display: none;">
-                  {{translations.setting.dayPassExpired}} <br>
-                  <button class="btn custom-gradient-bg mt-2" onclick="loadPlanPage()">{{translations.select_plan_here}}</button>
-                </p>
-              </div>
-              <!-- End Day Pass Countdown Section -->
-            </div>
-          </div>
-
-          <!-- Usage Tab -->
-          <div class="tab-pane fade" id="usage" role="tabpanel" aria-labelledby="usage-tab">
-            <h6>{{translations.setting.usage}}</h6>
-            <div id="user-limit"></div>
-          </div>
-
-          <!-- API Tab -->
-          <div class="tab-pane fade" id="api" role="tabpanel" aria-labelledby="api-tab">
-            <div class="settings-form shadow-0">
-              <!-- API Keys Section -->
-              <div class="settings-section">
-                <div class="settings-section-header mb-4">
-                  <h5 class="settings-section-title mb-1">
-                    <i class="bi bi-key me-2 text-primary"></i>
-                    API Keys
-                  </h5>
-                  <p class="settings-section-subtitle text-muted mb-0">
-                    Manage your API keys to integrate with external applications
-                  </p>
-                </div>
-
-                <!-- API Keys List -->
-                <div id="apiKeysList" class="mb-4">
-                  <div class="text-center p-4">
-                    <div class="spinner-border spinner-border-sm text-primary" role="status">
-                      <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <div class="mt-2 text-muted small">Loading API keys...</div>
-                  </div>
-                </div>
-
-                <!-- Create New API Key Button -->
-                <button type="button" class="btn btn-primary w-100" id="createApiKeyBtn" onclick="createNewApiKey()">
-                  <i class="bi bi-plus-lg me-2"></i>Create New API Key
-                </button>
-                
-                <div class="alert alert-info mt-3" role="alert">
-                  <i class="bi bi-info-circle me-2"></i>
-                  <strong>Important:</strong> API keys are shown only once when created. Store them securely.
-                </div>
-              </div>
-
-              <!-- API Documentation Link -->
-              <div class="settings-section">
-                <div class="settings-section-header mb-4">
-                  <h5 class="settings-section-title mb-1">
-                    <i class="bi bi-book me-2 text-primary"></i>
-                    API Documentation
-                  </h5>
-                  <p class="settings-section-subtitle text-muted mb-0">
-                    Learn how to use the API to create characters and manage galleries
-                  </p>
-                </div>
-
-                <a href="/api/docs" target="_blank" class="btn btn-outline-info w-100">
-                  <i class="bi bi-box-arrow-up-right me-2"></i>View API Documentation
-                </a>
-                
-                <div class="mt-4 p-3 rounded" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(130, 64, 255, 0.2);">
-                  <h6 class="mb-3"><i class="bi bi-lightning-charge me-2"></i>Quick Start</h6>
-                  <p class="text-muted small mb-2">Use your API key in the header:</p>
-                  <code class="d-block p-2 rounded" style="background: rgba(0,0,0,0.3); font-size: 12px;">
-                    X-API-Key: your-api-key-here
-                  </code>
-                  
-                  <p class="text-muted small mb-2 mt-3">Available endpoints:</p>
-                  <ul class="text-muted small mb-0" style="font-size: 12px;">
-                    <li><code>POST /api/external/create-character</code> - Create a character</li>
-                    <li><code>POST /api/external/character/:id/add-image</code> - Add image to gallery</li>
-                    <li><code>POST /api/external/character/:id/add-video</code> - Add video to character</li>
-                    <li><code>GET /api/external/characters</code> - List your characters</li>
+                  <ul class="dropdown-menu w-100" aria-labelledby="languageDropdownMenu">
+                    <li><a class="dropdown-item language-select" href="#" data-lang="ja">
+                      <i class="bi bi-flag me-2"></i>{{translations.setting.japanese}}
+                    </a></li>
+                    <li><a class="dropdown-item language-select" href="#" data-lang="en">
+                      <i class="bi bi-flag me-2"></i>{{translations.setting.english}}
+                    </a></li>
+                    <li><a class="dropdown-item language-select" href="#" data-lang="fr">
+                      <i class="bi bi-flag me-2"></i>{{translations.setting.french}}
+                    </a></li>
                   </ul>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Content Preferences Card -->
+        <div class="settings-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="bi bi-sliders"></i>
+            </div>
+            <div class="card-header-content">
+              <h3 class="card-title">{{translations.setting.contentPreferences}}</h3>
+              <p class="card-subtitle">{{translations.setting.contentPreferencesDescription}}</p>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="preference-item">
+              <div class="preference-info">
+                <div class="preference-title">
+                  <i class="bi bi-eye me-2"></i>
+                  {{translations.setting.showNSFW}}
+                  <i class="bi bi-crown-fill premium-badge ms-1" id="nsfw-premium-icon" style="display: none;"></i>
+                </div>
+                <div class="preference-description">
+                  {{translations.setting.showNSFWDescription}}
+                </div>
+                <div id="nsfw-premium-indicator" class="premium-indicator mt-2" style="display: none;">
+                  <i class="bi bi-star-fill me-1"></i>Premium feature required
+                </div>
+              </div>
+              <div class="preference-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="nsfw-toggle">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- About You Card -->
+        <div class="settings-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="bi bi-chat-quote"></i>
+            </div>
+            <div class="card-header-content">
+              <h3 class="card-title">{{translations.setting.aboutYou}}</h3>
+              <p class="card-subtitle">{{translations.setting.aboutYouDescription}}</p>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label for="bio" class="form-label">
+                <i class="bi bi-chat-quote me-1"></i>{{translations.setting.bio}}
+              </label>
+              <textarea class="form-control" id="bio" name="bio" rows="6" maxlength="400" placeholder="{{translations.setting.bioPlaceholder}}"></textarea>
+              <div class="form-text d-flex justify-content-between mt-2">
+                <span>{{translations.setting.bioHint}}</span>
+                <span class="character-count">
+                  <span id="bio-char-count">0</span>/400
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {{#if isAdmin}}
+        <!-- Advanced Settings Card -->
+        <div class="settings-card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="bi bi-gear"></i>
+            </div>
+            <div class="card-header-content">
+              <h3 class="card-title">{{translations.setting.advancedSettings}}</h3>
+              <p class="card-subtitle">{{translations.setting.advancedSettingsDescription}}</p>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="advanced-option">
+              <div class="advanced-option-info">
+                <div class="advanced-option-title">
+                  <i class="bi bi-arrow-clockwise me-2"></i>{{translations.restartOnboarding}}
+                </div>
+                <div class="advanced-option-description">
+                  {{translations.restartOnboardingDesc}}
+                </div>
+              </div>
+              <button type="button" id="restart-onboarding" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-arrow-clockwise me-1"></i>{{translations.restart}}
+              </button>
+            </div>
+          </div>
+        </div>
+        {{/if}}
+
+        <!-- Save Button -->
+        <div class="settings-actions">
+          <button type="button" class="btn btn-outline-secondary" onclick="location.reload()">
+            <i class="bi bi-arrow-clockwise me-1"></i>{{translations.setting.reset}}
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle me-1"></i>{{translations.setting.saveUserInfo}}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Connections Section -->
+    <div class="settings-section" id="section-connections">
+      <div class="section-header">
+        <h2 class="section-title">{{translations.setting.connections}}</h2>
+        <p class="section-description">Connect and manage your social media accounts</p>
+      </div>
+
+      <!-- SNS Connections Card -->
+      <div class="settings-card">
+        <div class="card-header">
+          <div class="card-icon">
+            <i class="bi bi-share"></i>
+          </div>
+          <div class="card-header-content">
+            <h3 class="card-title">{{translations.sns.connected_accounts}}</h3>
+            <p class="card-subtitle">{{translations.sns.connections_description}}</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Account Limit Info -->
+          <div class="info-banner mb-3">
+            <i class="bi bi-info-circle me-2"></i>
+            <span id="connectionLimitText">{{translations.sns.loading}}</span>
+            <span class="badge bg-primary ms-auto" id="connectionCountBadge">0/1</span>
+          </div>
+
+          <!-- Connected Accounts List -->
+          <div id="connectedAccountsList" class="connected-accounts-list mb-4">
+            <div class="loading-state">
+              <div class="spinner-border spinner-border-sm text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <div class="mt-2 text-muted small">{{translations.sns.loading_connections}}</div>
+            </div>
+          </div>
+
+          <!-- Connect New Account -->
+          <div class="connect-section">
+            <h4 class="connect-title">
+              <i class="bi bi-plus-circle me-2"></i>{{translations.sns.connect_new_account}}
+            </h4>
+            
+            <div class="platform-buttons">
+              <button type="button" class="platform-btn" data-platform="instagram" id="connectInstagramBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                </svg>
+                <span>Instagram</span>
+              </button>
+
+              <button type="button" class="platform-btn" data-platform="twitter" id="connectTwitterBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+                <span>X (Twitter)</span>
+              </button>
+            </div>
+
+            <!-- Premium Upsell -->
+            <div class="premium-upsell mt-3" id="connectionPremiumUpsell" style="display: none;">
+              <i class="bi bi-crown-fill text-warning me-2"></i>
+              <div class="flex-grow-1">
+                <strong>{{translations.sns.premium_accounts}}</strong>
+                <p class="mb-0 small">{{translations.sns.premium_description}}</p>
+              </div>
+              <button type="button" class="btn btn-warning btn-sm" onclick="loadPlanPage()">
+                {{translations.sns.upgrade}}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Posts Card -->
+      <div class="settings-card">
+        <div class="card-header">
+          <div class="card-icon">
+            <i class="bi bi-clock-history"></i>
+          </div>
+          <div class="card-header-content">
+            <h3 class="card-title">{{translations.sns.recent_posts}}</h3>
+            <p class="card-subtitle">{{translations.sns.recent_posts_description}}</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="recentPostsList" class="recent-posts-list">
+            <div class="empty-state">
+              <i class="bi bi-inbox"></i>
+              <p>{{translations.sns.no_posts_yet}}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subscription Section -->
+    <div class="settings-section" id="section-subscription">
+      <div class="section-header">
+        <h2 class="section-title">{{translations.setting.subscription}}</h2>
+        <p class="section-description">Manage your subscription and billing</p>
+      </div>
+
+      <p id="user-plan" style="display: none;"></p>
+
+      <!-- No Subscription Card -->
+      <div id="no-subscription-section" class="settings-card premium-promo">
+        <div class="card-body text-center">
+          <div class="promo-icon">
+            <i class="bi bi-stars"></i>
+          </div>
+          <h3 class="promo-title">{{translations.subscriptionFeatures.title}}</h3>
+          <p class="promo-subtitle">{{translations.subscriptionFeatures.subtitle}}</p>
+          
+          <div class="features-grid">
+            <div class="feature-item">
+              <i class="bi bi-infinity"></i>
+              <h4>{{translations.subscriptionFeatures.feature1_title}}</h4>
+              <p>{{translations.subscriptionFeatures.feature1_desc}}</p>
+            </div>
+            <div class="feature-item">
+              <i class="bi bi-image-fill"></i>
+              <h4>{{translations.subscriptionFeatures.feature2_title}}</h4>
+              <p>{{translations.subscriptionFeatures.feature2_desc}}</p>
+            </div>
+            <div class="feature-item">
+              <i class="bi bi-camera-video-fill"></i>
+              <h4>{{translations.subscriptionFeatures.feature3_title}}</h4>
+              <p>{{translations.subscriptionFeatures.feature3_desc}}</p>
+            </div>
+            <div class="feature-item">
+              <i class="bi bi-fire"></i>
+              <h4>{{translations.subscriptionFeatures.feature4_title}}</h4>
+              <p>{{translations.subscriptionFeatures.feature4_desc}}</p>
+            </div>
+            <div class="feature-item">
+              <i class="bi bi-person-hearts"></i>
+              <h4>{{translations.subscriptionFeatures.feature5_title}}</h4>
+              <p>{{translations.subscriptionFeatures.feature5_desc}}</p>
+            </div>
+            <div class="feature-item">
+              <i class="bi bi-lightning-charge-fill"></i>
+              <h4>{{translations.subscriptionFeatures.feature6_title}}</h4>
+              <p>{{translations.subscriptionFeatures.feature6_desc}}</p>
+            </div>
+          </div>
+          
+          <button class="btn btn-primary btn-lg mt-4" onclick="loadPlanPage()">
+            <i class="bi bi-crown-fill me-2"></i>
+            {{translations.subscriptionFeatures.cta_button}}
+          </button>
+          <p class="cta-note mt-2">{{translations.subscriptionFeatures.cta_note}}</p>
+        </div>
+      </div>
+
+      <!-- Active Subscription Card -->
+      <div id="active-subscription-section" class="settings-card" style="display: none;">
+        <div class="card-header">
+          <div class="card-icon">
+            <i class="bi bi-crown-fill text-warning"></i>
+          </div>
+          <div class="card-header-content">
+            <h3 class="card-title">{{translations.subscriptionFeatures.active_title}}</h3>
+            <p class="card-subtitle">{{translations.subscriptionFeatures.active_subtitle}}</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="subscription-info">
+            <div class="subscription-badge">
+              <i class="bi bi-patch-check-fill"></i>
+              <span id="active-plan-name">Premium</span>
+            </div>
+            <div class="subscription-details">
+              <div class="detail-row">
+                <span class="detail-label">{{translations.subscriptionFeatures.started}}</span>
+                <span class="detail-value" id="subscription-start-date">-</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">{{translations.subscriptionFeatures.renews}}</span>
+                <span class="detail-value" id="subscription-renewal-date">-</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Day Pass Countdown -->
+      <div id="day-pass-countdown-section" class="settings-card" style="display: none;">
+        <div class="card-body text-center">
+          <h4 class="mb-3">
+            <i class="bi bi-clock-history me-2"></i>
+            {{translations.setting.dayPassActiveTitle}}
+          </h4>
+          <p class="text-muted">{{translations.setting.dayPassExpiresIn}}</p>
+          <div id="countdown-timer" class="countdown">
+            <span id="hours">00</span>:<span id="minutes">00</span>:<span id="seconds">00</span>
+          </div>
+          <p id="day-pass-expired-message" class="text-danger mt-3" style="display: none;">
+            {{translations.setting.dayPassExpired}}
+            <button class="btn btn-primary mt-2" onclick="loadPlanPage()">
+              {{translations.select_plan_here}}
+            </button>
+          </p>
+        </div>
+      </div>
+
+      <button id="cancel-plan" class="btn btn-outline-danger btn-sm mt-3" style="display: none; opacity: 0.7;" data-user-id="{{user._id}}">
+        {{translations.setting.cancelSubscription}}
+      </button>
+    </div>
+
+    <!-- API Section -->
+    <div class="settings-section" id="section-api">
+      <div class="section-header">
+        <h2 class="section-title">API</h2>
+        <p class="section-description">Manage your API keys and integrations</p>
+      </div>
+
+      <!-- API Keys Card -->
+      <div class="settings-card">
+        <div class="card-header">
+          <div class="card-icon">
+            <i class="bi bi-key"></i>
+          </div>
+          <div class="card-header-content">
+            <h3 class="card-title">API Keys</h3>
+            <p class="card-subtitle">Create and manage API keys for external integrations</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- API Keys List -->
+          <div id="apiKeysList" class="api-keys-list mb-3">
+            <div class="loading-state">
+              <div class="spinner-border spinner-border-sm text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <div class="mt-2 text-muted small">Loading API keys...</div>
+            </div>
+          </div>
+
+          <!-- Create Button -->
+          <button type="button" class="btn btn-primary w-100" id="createApiKeyBtn" onclick="createNewApiKey()">
+            <i class="bi bi-plus-lg me-2"></i>Create New API Key
+          </button>
+          
+          <div class="alert alert-info mt-3">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Important:</strong> API keys are shown only once when created. Store them securely.
+          </div>
+        </div>
+      </div>
+
+      <!-- API Documentation Card -->
+      <div class="settings-card">
+        <div class="card-header">
+          <div class="card-icon">
+            <i class="bi bi-book"></i>
+          </div>
+          <div class="card-header-content">
+            <h3 class="card-title">API Documentation</h3>
+            <p class="card-subtitle">Learn how to integrate with our API</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <a href="/api/docs" target="_blank" class="btn btn-outline-info w-100 mb-3">
+            <i class="bi bi-box-arrow-up-right me-2"></i>View Full Documentation
+          </a>
+          
+          <div class="quick-start">
+            <h4 class="quick-start-title">
+              <i class="bi bi-lightning-charge me-2"></i>Quick Start
+            </h4>
+            <p class="text-muted small mb-2">Use your API key in the request header:</p>
+            <code class="code-block">X-API-Key: your-api-key-here</code>
+            
+            <p class="text-muted small mb-2 mt-3">Available endpoints:</p>
+            <ul class="endpoint-list">
+              <li><code>POST /api/external/create-character</code> - Create a character</li>
+              <li><code>POST /api/external/character/:id/add-image</code> - Add image to gallery</li>
+              <li><code>POST /api/external/character/:id/add-video</code> - Add video</li>
+              <li><code>GET /api/external/characters</code> - List your characters</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Password Section -->
+    <div class="settings-section" id="section-password">
+      <div class="section-header">
+        <h2 class="section-title">{{translations.setting.password}}</h2>
+        <p class="section-description">Change your password and security settings</p>
+      </div>
+
+      <div class="settings-card">
+        <div class="card-body">
+          <form id="user-password-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="inputPassword4" class="form-label">{{translations.setting.oldPassword}}</label>
+                <input type="password" class="form-control" id="inputPassword4" />
+              </div>
+              <div class="form-group">
+                <label for="inputPassword5" class="form-label">{{translations.setting.newPassword}}</label>
+                <input type="password" class="form-control" id="inputPassword5" />
+              </div>
+              <div class="form-group">
+                <label for="inputPassword6" class="form-label">{{translations.setting.confirmPassword}}</label>
+                <input type="password" class="form-control" id="inputPassword6" />
+              </div>
+            </div>
+            
+            <div class="alert alert-info mt-3">
+              <p class="mb-2"><strong>{{translations.setting.requirements}}</strong></p>
+              <ul class="small mb-0">
+                <li>{{translations.setting.minLength}}</li>
+                <li>{{translations.setting.specialChar}}</li>
+                <li>{{translations.setting.number}}</li>
+                <li>{{translations.setting.differentPassword}}</li>
+              </ul>
+            </div>
+            
+            <button type="submit" class="btn btn-primary mt-3">
+              {{translations.setting.changePassword}}
+            </button>
+          </form>
         </div>
       </div>
     </div>
@@ -590,93 +607,303 @@
 </div>
 
 <style>
-/* Compact Native App Style Settings */
-.settings-form {
-  border-radius: 0;
-  padding: 0;
-  box-shadow: none;
+/* Modern Settings Container */
+.settings-container {
+  display: flex;
+  gap: 0;
+  height: calc(100vh - 120px);
+  max-height: 600px;
+  overflow: hidden;
+}
+
+/* Sidebar */
+.settings-sidebar {
+  width: 280px;
+  background: rgba(15, 15, 15, 0.95);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.settings-nav {
+  padding: 12px 8px;
+}
+
+.settings-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
   background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: left;
+  transition: all 0.2s ease;
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+
+.settings-nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(130, 64, 255, 0.2);
+}
+
+.settings-nav-item.active {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(110, 32, 244, 0.15) 100%);
+  border-color: rgba(139, 92, 246, 0.4);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.nav-item-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  flex-shrink: 0;
+  font-size: 18px;
+}
+
+.settings-nav-item.active .nav-item-icon {
+  background: linear-gradient(135deg, #8B5CF6 0%, #6E20F4 100%);
+}
+
+.nav-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.nav-item-title {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-item-subtitle {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-item-arrow {
+  font-size: 12px;
+  opacity: 0;
+  transition: all 0.2s ease;
+}
+
+.settings-nav-item:hover .nav-item-arrow,
+.settings-nav-item.active .nav-item-arrow {
+  opacity: 1;
+}
+
+/* Content Area */
+.settings-content {
+  flex: 1;
+  background: rgba(20, 20, 20, 0.5);
+  overflow-y: auto;
+  padding: 24px;
 }
 
 .settings-section {
-  margin-bottom: 24px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.settings-section:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
-  padding-bottom: 0;
-}
-
-.settings-section-header {
-  padding-bottom: 0;
-  margin-bottom: 12px;
-}
-
-.settings-section-title {
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.95);
-  font-size: 15px;
-  margin-bottom: 4px;
-  letter-spacing: -0.1px;
-}
-
-.settings-section-title i {
-  margin-right: 8px;
-  font-size: 16px;
-}
-
-.settings-section-subtitle {
-  font-size: 13px;
-  line-height: 1.4;
-  color: rgba(255, 255, 255, 0.75);
-  margin-top: 4px;
-}
-
-.settings-divider {
   display: none;
 }
 
-.profile-picture-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 16px;
+.settings-section.active {
+  display: block;
+  animation: fadeIn 0.3s ease;
 }
 
-.profile-picture-wrapper {
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.section-header {
+  margin-bottom: 24px;
+}
+
+.section-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 6px;
+}
+
+.section-description {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+/* Cards */
+.settings-card {
+  background: rgba(30, 30, 30, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.card-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(110, 32, 244, 0.2) 100%);
+  border-radius: 10px;
+  flex-shrink: 0;
+  font-size: 20px;
+  color: #A78BFA;
+}
+
+.card-header-content {
+  flex: 1;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 4px;
+}
+
+.card-subtitle {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+/* Form Elements */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.form-group {
+  margin-bottom: 0;
+}
+
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 8px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.form-control:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #6E20F4;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(110, 32, 244, 0.15);
+}
+
+.form-control-static {
+  padding: 10px 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+}
+
+select.form-control {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+  padding-right: 40px;
+}
+
+select.form-control option {
+  background: #1a1a1a;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+}
+
+.character-count {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Profile Upload */
+.profile-upload-area {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.profile-image-wrapper {
   position: relative;
-  width: 100px;
-  height: 100px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   overflow: hidden;
   cursor: pointer;
+  border: 3px solid rgba(139, 92, 246, 0.3);
   transition: all 0.2s ease;
-  border: 3px solid #f0f0f0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
-.profile-picture-wrapper:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+.profile-image-wrapper:hover {
+  border-color: rgba(139, 92, 246, 0.6);
+  transform: scale(1.02);
 }
 
 .profile-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: top;
 }
 
-.profile-picture-overlay {
+.profile-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.6);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -685,640 +912,364 @@
   opacity: 0;
   transition: opacity 0.2s ease;
   font-size: 12px;
+  gap: 4px;
 }
 
-.profile-picture-wrapper:hover .profile-picture-overlay {
+.profile-image-wrapper:hover .profile-overlay {
   opacity: 1;
 }
 
-.profile-picture-overlay i {
-  font-size: 20px;
-  margin-bottom: 4px;
+.profile-overlay i {
+  font-size: 24px;
 }
 
-.settings-preference-item {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  padding: 12px 16px;
-  border: 1px solid rgba(130, 64, 255, 0.2);
+/* Toggle Switch */
+.preference-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.preference-info {
+  flex: 1;
 }
 
 .preference-title {
+  font-size: 14px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.9);
   margin-bottom: 4px;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
 .preference-description {
-  font-size: 12px;
-  line-height: 1.4;
-  color: rgba(255, 255, 255, 0.75);
-  margin-top: 2px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
 }
 
-.settings-switch {
+.premium-indicator {
+  font-size: 12px;
+  color: #fbbf24;
+}
+
+.premium-badge {
+  color: #fbbf24;
+  font-size: 14px;
+}
+
+.toggle-switch {
   position: relative;
-  display: inline-block;
-  width: 44px;
-  height: 26px;
+  width: 50px;
+  height: 28px;
   flex-shrink: 0;
 }
 
-.settings-switch input {
+.toggle-switch input {
   opacity: 0;
   width: 0;
   height: 0;
 }
 
-.settings-switch-slider {
+.toggle-slider {
   position: absolute;
   cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #d1d5db;
-  transition: .2s;
-  border-radius: 26px;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 28px;
+  transition: 0.3s;
 }
 
-.settings-switch-slider:before {
-  position: absolute;
+.toggle-slider:before {
   content: "";
-  height: 20px;
-  width: 20px;
+  position: absolute;
+  height: 22px;
+  width: 22px;
   left: 3px;
   bottom: 3px;
-  background-color: white;
-  transition: .2s;
+  background: white;
   border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  transition: 0.3s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.settings-switch input:checked + .settings-switch-slider {
-  background-color: #6E20F4;
+.toggle-switch input:checked + .toggle-slider {
+  background: linear-gradient(135deg, #8B5CF6 0%, #6E20F4 100%);
 }
 
-.settings-switch input:checked + .settings-switch-slider:before {
-  transform: translateX(18px);
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(22px);
 }
 
-.settings-switch.disabled {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.bio-textarea {
-  resize: vertical;
-  min-height: 100px;
-  font-size: 14px;
-  border-radius: 10px;
-}
-
-.character-count {
-  font-size: 12px;
-}
-
-.advanced-setting-card {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  padding: 12px 16px;
-  border: 1px solid rgba(130, 64, 255, 0.2);
-}
-
-.advanced-setting-title {
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 4px;
-  font-size: 14px;
-}
-
-.advanced-setting-description {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.75);
-}
-
-.settings-form-actions {
-  padding-top: 16px;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  margin-top: 20px;
-}
-
-.premium-feature-indicator {
-  background: #fff3cd;
-  border: 1px solid #ffeaa7;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 12px;
-}
-
-/* Form Elements - Compact */
-.form-floating {
-  margin-bottom: 16px;
-}
-
-.form-floating > label {
-  font-size: 14px;
-  padding: 0.75rem 0.75rem;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.form-floating > .form-control,
-.form-floating > .form-select {
-  font-size: 14px;
-  padding: 0.75rem 0.75rem;
-  height: calc(3rem + 2px);
-  border-radius: 10px;
-  border: 1px solid rgba(130, 64, 255, 0.2);
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.9);
-}
-
-/* Form-select specific styling for dropdown arrow and appearance */
-.form-floating > .form-select {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 16px 12px;
-  padding-right: 2.5rem;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-}
-
-.form-floating > .form-select:focus {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23D2B8FF' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
-}
-
-/* Ensure options have proper styling */
-.form-floating > .form-select option {
-  background: #2d2d2d;
-  color: rgba(255, 255, 255, 0.9);
-  padding: 0.5rem;
-}
-
-.form-floating > .form-control:focus,
-.form-floating > .form-select:focus {
-  border-color: #6E20F4;
-  box-shadow: 0 0 0 3px rgba(110, 32, 244, 0.2);
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.row.g-3 {
-  --bs-gutter-y: 0.75rem;
-  --bs-gutter-x: 0.75rem;
-}
-
-/* Ensure text-muted elements have better contrast in settings modal */
-#settingsModal .text-muted,
-.settings-modal .text-muted,
-.settings-form .text-muted {
-  color: rgba(255, 255, 255, 0.7) !important;
-}
-
-/* Form labels in settings */
-.settings-form .form-label,
-.settings-form label {
-  color: rgba(255, 255, 255, 0.85) !important;
-}
-
-@media (max-width: 768px) {
-  .settings-form {
-    padding: 0;
-  }
-  
-  .profile-picture-wrapper {
-    width: 90px;
-    height: 90px;
-  }
-  
-  .settings-section-title {
-    font-size: 14px;
-  }
-  
-  .settings-section {
-    margin-bottom: 20px;
-    padding-bottom: 16px;
-  }
-}
-
-/* SNS Connections Styles */
-.connected-accounts-list .connected-account-item {
+/* Advanced Options */
+.advanced-option {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
+}
+
+.advanced-option-info {
+  flex: 1;
+}
+
+.advanced-option-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 4px;
+}
+
+.advanced-option-description {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Settings Actions */
+.settings-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding-top: 20px;
+}
+
+/* Info Banner */
+.info-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  border: 1px solid rgba(130, 64, 255, 0.2);
-  margin-bottom: 10px;
-  transition: all 0.2s ease;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
 }
 
-.connected-accounts-list .connected-account-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+/* Loading/Empty States */
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: rgba(255, 255, 255, 0.5);
 }
 
-.connected-account-item .account-info {
+.empty-state i {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Connected Accounts */
+.connected-accounts-list {
+  min-height: 80px;
+}
+
+.connected-account-item {
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
 }
 
-.connected-account-item .account-avatar {
+.connected-account-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.account-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.account-avatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
-  background: rgba(255, 255, 255, 0.1);
 }
 
-.connected-account-item .account-details {
-  display: flex;
-  flex-direction: column;
-}
-
-.connected-account-item .account-username {
+.account-username {
   font-weight: 500;
   color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
 }
 
-.connected-account-item .account-platform {
+.account-platform {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.6);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.connected-account-item .disconnect-btn {
-  color: #dc3545;
-  opacity: 0.7;
-  transition: opacity 0.2s;
-}
-
-.connected-account-item .disconnect-btn:hover {
-  opacity: 1;
-}
-
-.platform-connect-btn {
-  padding: 12px 20px;
-  border-radius: 10px;
-  transition: all 0.2s ease;
-  border: 1px solid rgba(130, 64, 255, 0.3);
-}
-
-.platform-connect-btn:hover {
-  background: rgba(130, 64, 255, 0.1);
-  border-color: rgba(130, 64, 255, 0.5);
-  transform: translateY(-1px);
-}
-
-.platform-connect-btn.connected {
-  background: rgba(40, 167, 69, 0.1);
-  border-color: rgba(40, 167, 69, 0.3);
-  color: #28a745;
-}
-
-.platform-connect-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Recent Posts Styles */
-.recent-posts-list {
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.recent-post-item {
-  display: flex;
-  gap: 12px;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  margin-bottom: 10px;
-  transition: background 0.2s;
-}
-
-.recent-post-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.recent-post-item .post-thumbnail {
-  width: 60px;
-  height: 60px;
-  border-radius: 8px;
-  overflow: hidden;
-  flex-shrink: 0;
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.recent-post-item .post-thumbnail img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.recent-post-item .post-details {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.recent-post-item .post-text {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.85);
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  line-height: 1.4;
-}
-
-.recent-post-item .post-meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 11px;
   color: rgba(255, 255, 255, 0.5);
+}
+
+/* Platform Buttons */
+.connect-section {
+  margin-top: 20px;
+}
+
+.connect-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 12px;
+}
+
+.platform-buttons {
+  display: flex;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
-.recent-post-item .post-platforms {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-
-.recent-post-item .platform-badge {
-  display: inline-flex;
-  align-items: center;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.recent-post-item .post-time {
-  display: flex;
-  align-items: center;
-}
-
-.recent-post-item .badge {
-  font-size: 10px;
-  padding: 2px 6px;
-}
-
-/* SNS Post Modal Styles */
-#snsPostModal .modal-body {
-  background: var(--bg-secondary);
-}
-
-#snsPostModal .sns-platform-checkbox {
-  display: none;
-}
-
-#snsPostModal .sns-platform-btn {
+.platform-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
-  background: rgba(30, 30, 30, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  cursor: pointer;
-  transition: all 0.3s ease;
+  color: rgba(255, 255, 255, 0.85);
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.7);
-  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-#snsPostModal .sns-platform-btn:hover {
-  background: rgba(40, 40, 40, 0.9);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.9);
-}
-
-#snsPostModal .sns-platform-btn.active {
-  background: linear-gradient(135deg, rgba(138, 43, 226, 0.3) 0%, rgba(75, 0, 130, 0.3) 100%);
-  border-color: #8A2BE2;
-  color: #fff;
-  box-shadow: 0 0 15px rgba(138, 43, 226, 0.4), inset 0 0 20px rgba(138, 43, 226, 0.1);
+.platform-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.95);
   transform: translateY(-1px);
 }
 
-#snsPostModal .sns-platform-btn.active:hover {
-  background: linear-gradient(135deg, rgba(138, 43, 226, 0.4) 0%, rgba(75, 0, 130, 0.4) 100%);
-  box-shadow: 0 0 20px rgba(138, 43, 226, 0.5), inset 0 0 25px rgba(138, 43, 226, 0.15);
+/* Premium Upsell */
+.premium-upsell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 8px;
 }
 
-#snsPostModal .caption-style-btn.active {
-  background: rgba(110, 32, 244, 0.2);
-  border-color: #6E20F4;
-  color: #fff;
-}
-
-#snsPostModal textarea {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(130, 64, 255, 0.2);
+.premium-upsell strong {
+  display: block;
   color: rgba(255, 255, 255, 0.9);
-  resize: vertical;
-  min-height: 180px;
+  margin-bottom: 2px;
 }
 
-#snsPostModal textarea:focus {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: #6E20F4;
-  box-shadow: 0 0 0 3px rgba(110, 32, 244, 0.2);
-  color: rgba(255, 255, 255, 0.9);
+/* Premium Promo */
+.premium-promo .card-body {
+  padding: 40px 30px;
 }
 
-#snsPostModal textarea::placeholder {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-/* Subscription Promo Section Styles */
-.subscription-promo-section {
-  padding: 0;
-}
-
-.subscription-promo-header {
-  margin-bottom: 24px;
-}
-
-.promo-icon-wrapper {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #8B5CF6 0%, #6E20F4 50%, #A855F7 100%);
+.promo-icon {
+  width: 70px;
+  height: 70px;
+  margin: 0 auto 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 16px;
-  box-shadow: 0 8px 24px rgba(110, 32, 244, 0.35);
-}
-
-.promo-icon-wrapper i {
-  font-size: 28px;
+  background: linear-gradient(135deg, #8B5CF6 0%, #6E20F4 100%);
+  border-radius: 50%;
+  font-size: 32px;
   color: white;
+  box-shadow: 0 8px 24px rgba(110, 32, 244, 0.3);
 }
 
 .promo-title {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.95);
   margin-bottom: 8px;
-  letter-spacing: -0.3px;
 }
 
 .promo-subtitle {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.7);
-  margin: 0;
-  max-width: 320px;
-  margin: 0 auto;
-  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 30px;
 }
 
-.premium-features-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 24px;
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+  text-align: left;
 }
 
-.premium-feature-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 12px;
-  border: 1px solid rgba(130, 64, 255, 0.15);
+.feature-item {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
   transition: all 0.2s ease;
 }
 
-.premium-feature-item:hover {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(130, 64, 255, 0.3);
-  transform: translateX(4px);
+.feature-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(139, 92, 246, 0.3);
+  transform: translateY(-2px);
 }
 
-.feature-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(110, 32, 244, 0.2) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.feature-icon i {
-  font-size: 18px;
+.feature-item i {
+  font-size: 24px;
   color: #A78BFA;
+  margin-bottom: 10px;
 }
 
-.feature-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.feature-title {
+.feature-item h4 {
   font-size: 14px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.95);
-  margin: 0 0 4px 0;
+  margin-bottom: 6px;
 }
 
-.feature-desc {
+.feature-item p {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.6);
   margin: 0;
-  line-height: 1.4;
-}
-
-.subscription-cta-section {
-  text-align: center;
-  padding-top: 8px;
-}
-
-.subscription-cta-btn {
-  width: 100%;
-  padding: 14px 24px;
-  font-size: 15px;
-  font-weight: 600;
-  color: white;
-  background: linear-gradient(135deg, #8B5CF6 0%, #6E20F4 50%, #7C3AED 100%);
-  border: none;
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(110, 32, 244, 0.35);
-}
-
-.subscription-cta-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(110, 32, 244, 0.45);
-  background: linear-gradient(135deg, #9061F9 0%, #7C3AED 50%, #8B5CF6 100%);
-  color: white;
-}
-
-.subscription-cta-btn:active {
-  transform: translateY(0);
-}
-
-.subscription-cta-btn i {
-  font-size: 18px;
 }
 
 .cta-note {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.5);
-  margin: 12px 0 0 0;
 }
 
-/* Active Subscription Card Styles */
-.active-plan-card {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(110, 32, 244, 0.1) 100%);
-  border: 1px solid rgba(139, 92, 246, 0.3);
-  border-radius: 16px;
-  padding: 20px;
+/* Subscription Info */
+.subscription-info {
+  padding: 20px 0;
 }
 
-.plan-badge {
+.subscription-badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, #8B5CF6, #6E20F4);
-  color: white;
   padding: 8px 16px;
+  background: linear-gradient(135deg, #8B5CF6 0%, #6E20F4 100%);
   border-radius: 20px;
+  color: white;
   font-weight: 600;
   font-size: 14px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
-.plan-badge i {
-  font-size: 16px;
-}
-
-.plan-details {
+.subscription-details {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.plan-detail-item {
+.detail-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1326,7 +1277,7 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.plan-detail-item:last-child {
+.detail-row:last-child {
   border-bottom: none;
 }
 
@@ -1336,65 +1287,457 @@
 }
 
 .detail-value {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.9);
 }
 
+/* Countdown */
+.countdown {
+  font-size: 48px;
+  font-weight: 700;
+  color: #6E20F4;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 2px;
+}
+
+/* API Keys */
+.api-keys-list {
+  min-height: 100px;
+}
+
+.api-key-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+}
+
+.api-key-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.key-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.key-info .fw-semibold {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 4px;
+}
+
+.key-info code {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.key-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Quick Start */
+.quick-start {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+}
+
+.quick-start-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 12px;
+}
+
+.code-block {
+  display: block;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 6px;
+  font-size: 12px;
+  color: #A78BFA;
+  font-family: 'Monaco', 'Menlo', monospace;
+  overflow-x: auto;
+}
+
+.endpoint-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.endpoint-list li {
+  padding: 6px 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.endpoint-list code {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+/* Buttons */
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #8B5CF6 0%, #6E20F4 100%);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(110, 32, 244, 0.4);
+}
+
+.btn-outline-secondary {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.btn-outline-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.btn-outline-primary {
+  background: transparent;
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  color: #A78BFA;
+}
+
+.btn-outline-primary:hover {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.6);
+}
+
+.btn-outline-danger {
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+.btn-outline-danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.6);
+}
+
+.btn-outline-info {
+  background: transparent;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+}
+
+.btn-outline-info:hover {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.6);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.btn-lg {
+  padding: 14px 28px;
+  font-size: 15px;
+}
+
+/* Alerts */
+.alert {
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  border: 1px solid;
+}
+
+.alert-info {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #93c5fd;
+}
+
+.alert-warning {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #fcd34d;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .settings-container {
+    flex-direction: column;
+    height: auto;
+    max-height: none;
+  }
+  
+  .settings-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .settings-nav {
+    display: flex;
+    overflow-x: auto;
+    padding: 8px;
+    gap: 8px;
+  }
+  
+  .settings-nav-item {
+    flex-direction: column;
+    min-width: 100px;
+    text-align: center;
+    padding: 12px 8px;
+  }
+  
+  .nav-item-content {
+    width: 100%;
+  }
+  
+  .nav-item-subtitle,
+  .nav-item-arrow {
+    display: none;
+  }
+  
+  .settings-content {
+    padding: 16px;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
-  .promo-icon-wrapper {
-    width: 56px;
-    height: 56px;
+  .section-title {
+    font-size: 20px;
   }
   
-  .promo-icon-wrapper i {
-    font-size: 24px;
+  .card-header {
+    padding: 16px;
   }
   
-  .promo-title {
-    font-size: 18px;
+  .card-body {
+    padding: 16px;
   }
   
-  .premium-feature-item {
-    padding: 12px 14px;
+  .settings-actions {
+    flex-direction: column;
   }
   
-  .feature-icon {
-    width: 36px;
-    height: 36px;
+  .settings-actions .btn {
+    width: 100%;
   }
-  
-  .feature-icon i {
-    font-size: 16px;
-  }
+}
+
+/* Dropdown styling */
+.dropdown-menu {
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 6px;
+}
+
+.dropdown-item {
+  color: rgba(255, 255, 255, 0.85);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* Badge */
+.badge {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 12px;
+}
+
+.bg-primary {
+  background: linear-gradient(135deg, #8B5CF6 0%, #6E20F4 100%);
+}
+
+.bg-success {
+  background: #10b981;
+}
+
+.bg-secondary {
+  background: #6b7280;
+}
+
+/* Text utilities */
+.text-muted {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.text-danger {
+  color: #f87171 !important;
+}
+
+.text-warning {
+  color: #fbbf24 !important;
+}
+
+.text-primary {
+  color: #A78BFA !important;
+}
+
+/* Recent Posts */
+.recent-post-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+}
+
+.recent-post-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.post-thumbnail {
+  width: 60px;
+  height: 60px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.post-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.post-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.post-text {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 6px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.post-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
 }
 </style>
 
 <script>
-// Character count for bio
+// Navigation between sections
 document.addEventListener('DOMContentLoaded', function() {
+  const navItems = document.querySelectorAll('.settings-nav-item');
+  const sections = document.querySelectorAll('.settings-section');
+  
+  navItems.forEach(item => {
+    item.addEventListener('click', function() {
+      const targetSection = this.getAttribute('data-section');
+      
+      // Update active nav item
+      navItems.forEach(nav => nav.classList.remove('active'));
+      this.classList.add('active');
+      
+      // Update active section
+      sections.forEach(section => section.classList.remove('active'));
+      document.getElementById('section-' + targetSection).classList.add('active');
+    });
+  });
+  
+  // Profile image click handler
+  const profileImageWrapper = document.querySelector('.profile-image-wrapper');
+  const profileImageInput = document.getElementById('profileImageInput');
+  
+  if (profileImageWrapper && profileImageInput) {
+    profileImageWrapper.addEventListener('click', function() {
+      profileImageInput.click();
+    });
+    
+    profileImageInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          document.getElementById('profileImage').src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+  
+  // Bio character count
   const bioTextarea = document.getElementById('bio');
   const charCount = document.getElementById('bio-char-count');
   
   if (bioTextarea && charCount) {
-    function updateCharCount() {
-      const count = bioTextarea.value.length;
+    bioTextarea.addEventListener('input', function() {
+      const count = this.value.length;
       charCount.textContent = count;
       
       if (count > 350) {
-        charCount.style.color = '#dc3545';
+        charCount.style.color = '#f87171';
       } else if (count > 300) {
-        charCount.style.color = '#ffc107';
+        charCount.style.color = '#fbbf24';
       } else {
-        charCount.style.color = '#6c757d';
+        charCount.style.color = 'rgba(255, 255, 255, 0.5)';
       }
-    }
+    });
     
-    bioTextarea.addEventListener('input', updateCharCount);
-    updateCharCount(); // Initial count
+    // Initial count
+    bioTextarea.dispatchEvent(new Event('input'));
   }
 });
 </script>
-
-</body>
-</html>

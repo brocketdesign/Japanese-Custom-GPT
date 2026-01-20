@@ -1432,23 +1432,7 @@ fastify.get('/debug/tasks-status', async (request, reply) => {
   };
 });
 
-fastify.get('/settings', async (request, reply) => {
-  try {
-    const db = fastify.mongo.db;
-    const userId = request.user._id;
-    const usersCollection = db.collection('users');
-    const userData = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-    const isAdmin = await checkUserAdmin(fastify, userId);
-
-    return reply.view('/settings', {
-      title: 'Settings - AI Image Generation | ChatLamix',
-      isAdmin,
-      user: userData,
-    });
-  } catch (err) {
-    return reply.status(500).send({ error: 'Unable to render the settings' });
-  }
-});
+// Settings route moved to routes/user.js
 
 // Add sitemap route before the existing routes
 fastify.get('/sitemap', async (request, reply) => {

@@ -61,10 +61,14 @@ async function routes(fastify, options) {
       // We'll store webhook data and let the existing handler process it
 
       // Process based on task type
-      if (taskType === 'TXT_TO_IMG' || taskType === 'IMG_TO_IMG') {
+      // Image task types: TXT_TO_IMG, IMG_TO_IMG, HUNYUAN_IMAGE_3, FLUX_2_FLEX, FLUX_2_DEV, etc.
+      const imageTaskTypes = ['TXT_TO_IMG', 'IMG_TO_IMG', 'HUNYUAN_IMAGE_3', 'FLUX_2_FLEX', 'FLUX_2_DEV', 'FLUX_1_KONTEXT_DEV', 'FLUX_1_KONTEXT_PRO', 'FLUX_1_KONTEXT_MAX'];
+      const videoTaskTypes = ['IMG_TO_VIDEO', 'WAN_2_2_I2V', 'WAN_2_5_I2V_PREVIEW', 'MINIMAX_VIDEO_01', 'WAN_2_2_T2V', 'WAN_2_5_T2V_PREVIEW', 'HUNYUAN_VIDEO_FAST'];
+      
+      if (imageTaskTypes.includes(taskType)) {
         // Handle image generation tasks
         await handleImageWebhook(taskId, task, payload, taskDoc, fastify, db);
-      } else if (taskType === 'IMG_TO_VIDEO' || taskId.startsWith('img2video-')) {
+      } else if (videoTaskTypes.includes(taskType) || taskId.startsWith('img2video-')) {
         // Handle video generation tasks
         await handleVideoWebhook(taskId, task, payload, taskDoc, fastify, db);
       } else {

@@ -281,7 +281,10 @@ async function routes(fastify, options) {
                 relationship = null,
                 personality = null,
                 occupation = null,
-                kinks = null
+                kinks = null,
+                // Base face for auto-merge
+                baseFaceUrl = null,
+                baseFaceBase64 = null
             } = request.body;
             let gender = request.body.gender || null;
             let chatId = request.body.chatId || request.query.chatId || request.params.chatId || null;
@@ -311,6 +314,8 @@ async function routes(fastify, options) {
             console.log(`   - enableEnhancedPrompt: ${enableEnhancedPrompt}`);
             console.log(`   - enableMergeFace: ${enableMergeFace || false}`);
             console.log(`   - chatId: ${chatId || 'new chat'}`);
+            console.log(`   - baseFaceUrl: ${baseFaceUrl ? 'PROVIDED' : 'NOT PROVIDED'}`);
+            console.log(`   - baseFaceBase64: ${baseFaceBase64 ? 'PROVIDED' : 'NOT PROVIDED'}`);
             console.log('\x1b[36m====================================\x1b[0m');
             
             // Check user subscription for NSFW content
@@ -472,8 +477,14 @@ async function routes(fastify, options) {
                 console.log(`   - image_num: 4`);
                 console.log(`   - chatCreation: true`);
                 console.log(`   - hunyuan: ${useHunyuan}`);
+                console.log(`   - baseFaceUrl: ${baseFaceUrl ? 'YES' : 'NO'}`);
+                console.log(`   - enableMergeFace: ${enableMergeFace || baseFaceBase64 ? 'YES' : 'NO'}`);
                 console.log('\x1b[36m=====================================\x1b[0m');
                 
+                    // Use baseFaceBase64 if provided, otherwise fall back to image_base64
+                    const faceBase64ForMerge = baseFaceBase64 || image_base64;
+                    const shouldEnableMergeFace = enableMergeFace || !!baseFaceBase64;
+                    
                     generateImg({
                         prompt: enhancedPrompt,
                         negativePrompt: negativePrompt || null,
@@ -483,12 +494,12 @@ async function routes(fastify, options) {
                         userChatId: null,
                         image_num: 4,
                         imageType: 'sfw',
-                        image_base64: image_base64 || null,
+                        image_base64: faceBase64ForMerge || null,
                         chatCreation: true,
                         placeholderId: placeholderId,
                         translations: request.translations,
                         fastify: fastify,
-                        enableMergeFace: enableMergeFace || false,
+                        enableMergeFace: shouldEnableMergeFace,
                         hunyuan: useHunyuan
                     }).then(() => {
                         console.log('\x1b[32m✅ Image gen done\x1b[0m');
@@ -549,6 +560,12 @@ async function routes(fastify, options) {
             if (occupation) chatData.characterOccupation = occupation;
             if (kinks) chatData.characterPreferences = kinks;
             if (chatPurpose) chatData.chatPurpose = chatPurpose;
+            
+            // Save base face URL for auto-merge during chats
+            if (baseFaceUrl) {
+                chatData.baseFaceUrl = baseFaceUrl;
+                console.log(`\x1b[32m✓ Saving baseFaceUrl to chat: ${baseFaceUrl.substring(0, 50)}...\x1b[0m`);
+            }
             
             const collectionChats = fastify.mongo.db.collection('chats');
             

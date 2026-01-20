@@ -94,7 +94,10 @@ async function routes(fastify, options) {
    * POST /dashboard/video/generate
    * Start video generation
    */
-  fastify.post('/dashboard/video/generate', async (request, reply) => {
+  fastify.post('/dashboard/video/generate', {
+    // Increase body limit to 10MB to handle base64 image uploads
+    bodyLimit: 10 * 1024 * 1024
+  }, async (request, reply) => {
     console.log('[VideoDashboard] ========== /dashboard/video/generate ==========');
     console.log('[VideoDashboard] Request received at:', new Date().toISOString());
     
@@ -110,7 +113,9 @@ async function routes(fastify, options) {
       const db = fastify.mongo.db;
       const { 
         modelId, baseImageUrl, prompt, basePrompt, duration, aspectRatio, 
-        motionIntensity, fps, videoMode, videoFile, faceImageFile 
+        motionIntensity, fps, videoMode, videoFile, faceImageFile,
+        // Segmind Wan 2.2 I2V Fast specific params
+        go_fast, num_frames, resolution, frames_per_second, negative_prompt, last_image
       } = request.body;
 
       console.log('[VideoDashboard] Request body received:');
@@ -216,6 +221,28 @@ async function routes(fastify, options) {
         console.log('[VideoDashboard] Added video_file and face_image_file to params');
       }
       // T2V doesn't need additional params - just prompt
+      
+      // Add Segmind Wan 2.2 I2V Fast specific params
+      if (modelId === 'wan-2.2-i2v-fast') {
+        params.go_fast = go_fast !== undefined ? go_fast : true;
+        params.num_frames = num_frames || 81;
+        params.resolution = resolution || '480p';
+        params.frames_per_second = frames_per_second || 16;
+        if (negative_prompt) {
+          params.negative_prompt = negative_prompt;
+        }
+        if (last_image) {
+          params.last_image = last_image;
+        }
+        console.log('[VideoDashboard] Added Segmind Wan params:', {
+          go_fast: params.go_fast,
+          num_frames: params.num_frames,
+          resolution: params.resolution,
+          frames_per_second: params.frames_per_second,
+          has_negative_prompt: !!params.negative_prompt,
+          has_last_image: !!params.last_image
+        });
+      }
 
       console.log('[VideoDashboard] Params to send to initializeVideoTest:', {
         ...params,

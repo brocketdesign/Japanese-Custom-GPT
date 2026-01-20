@@ -177,7 +177,7 @@ async function img2videoRoutes(fastify) {
                     imageUrl,
                     nsfw,
                     prompt: instructionPrompt,
-                    modelId: modelId || 'kling-v2.1-i2v',
+                    modelId: modelId || 'wan-2.2-i2v-fast',
                     userId,
                     chatId,
                     placeholderId
@@ -199,11 +199,39 @@ async function img2videoRoutes(fastify) {
                     prompt: prompt || image.prompt,
                     nsfw,
                     placeholderId,
-                    fastify
+                    fastify,
+                    // If Segmind returned completed status, include the result
+                    status: videoTask.status || 'processing',
+                    result: videoTask.videoUrl ? { videoUrl: videoTask.videoUrl } : undefined
                 });
                 console.log(`[img2video] Video task saved to DB: ${videoTask.taskId}`);
 
-                // Start polling for task completion in background
+                // For synchronous models like Segmind, handle completed status immediately
+                if (videoTask.status === 'completed' && videoTask.videoUrl) {
+                    console.log(`[img2video] Synchronous completion - video ready: ${videoTask.videoUrl}`);
+                    
+                    // Send video to chat immediately
+                    if (fastify.sendNotificationToUser) {
+                        fastify.sendNotificationToUser(userId, 'videoCompleted', {
+                            placeholderId,
+                            videoUrl: videoTask.videoUrl,
+                            chatId,
+                            userChatId,
+                            imageId
+                        });
+                    }
+                    
+                    return reply.send({
+                        success: true,
+                        taskId: videoTask.taskId,
+                        placeholderId,
+                        status: 'completed',
+                        videoUrl: videoTask.videoUrl,
+                        message: 'Video generated successfully'
+                    });
+                }
+
+                // Start polling for task completion in background (for async models)
                 pollVideoTaskStatus(videoTask.taskId, fastify, {
                     userId,
                     chatId,

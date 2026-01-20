@@ -78,23 +78,24 @@ function validateAndTruncatePrompt(prompt, defaultPrompt = 'Generate a dynamic v
  * @param {string} params.userId - User ID
  * @param {string} params.chatId - Chat ID
  * @param {string} params.placeholderId - Placeholder ID for tracking
- * @returns {Object} Task result from Novita API
+ * @returns {Object} Task result from Novita API or Segmind API
  */
-async function generateVideoFromImage({ imageUrl, nsfw, prompt, modelId = 'kling-v2.1-i2v', userId, chatId, placeholderId }) {
+async function generateVideoFromImage({ imageUrl, nsfw, prompt, modelId = 'wan-2.2-i2v-fast', userId, chatId, placeholderId }) {
   const novitaApiKey = process.env.NOVITA_API_KEY;
+  const segmindApiKey = process.env.SEGMIND_API_KEY;
   const webhookUrl = getWebhookUrl();
 
   // Get model configuration
   const modelConfig = VIDEO_MODEL_CONFIGS[modelId];
   if (!modelConfig) {
-    console.error(`[generateVideoFromImage] Unknown model: ${modelId}, falling back to kling-v2.1-i2v`);
-    modelId = 'kling-v2.1-i2v';
+    console.error(`[generateVideoFromImage] Unknown model: ${modelId}, falling back to wan-2.2-i2v-fast`);
+    modelId = 'wan-2.2-i2v-fast';
   }
   
   const config = VIDEO_MODEL_CONFIGS[modelId];
   const apiUrl = config.endpoint;
 
-  // Validate and truncate prompt to meet Novita API requirements (1-2000 runes)
+  // Validate and truncate prompt to meet API requirements (1-2000 runes)
   const validatedPrompt = validateAndTruncatePrompt(prompt, 'Generate a dynamic video from this image');
   
   // Log the prompt for debugging
@@ -107,7 +108,83 @@ async function generateVideoFromImage({ imageUrl, nsfw, prompt, modelId = 'kling
   // Build request body based on model type
   let requestData = {};
   
-  if (modelId === 'wan-i2v') {
+  if (modelId === 'wan-2.2-i2v-fast') {
+    // Wan 2.2 I2V Fast via Segmind - use go_fast mode for chat video generation
+    requestData = {
+      image: imageUrl,
+      prompt: validatedPrompt,
+      go_fast: true, // Always use go_fast for chat video generation
+      num_frames: 81,
+      resolution: '480p',
+      aspect_ratio: '16:9',
+      sample_shift: 12,
+      frames_per_second: 16,
+      high_noise_lora_scale: 1,
+      low_noise_lora_scale: 1,
+      high_noise_lora_scale_2: 1,
+      low_noise_lora_scale_2: 1,
+      high_noise_lora_scale_3: 1,
+      low_noise_lora_scale_3: 1
+    };
+    
+    // Handle Segmind API call separately (synchronous)
+    console.log('[generateVideoFromImage] Using Segmind API for wan-2.2-i2v-fast');
+    console.log('[generateVideoFromImage] Request data:', JSON.stringify({
+      ...requestData,
+      image: requestData.image ? `[${requestData.image.length} chars]` : undefined
+    }, null, 2));
+    
+    try {
+      const axios = require('axios');
+      const response = await axios.post(apiUrl, requestData, {
+        headers: {
+          'x-api-key': segmindApiKey,
+          'Content-Type': 'application/json'
+        },
+        timeout: 300000 // 5 minutes timeout for video generation
+      });
+      
+      console.log('[generateVideoFromImage] Segmind response status:', response.status);
+      
+      if (response.status === 200) {
+        const videoUrl = response.data?.output || response.data?.video_url || response.data?.url;
+        
+        if (!videoUrl) {
+          console.error('[generateVideoFromImage] No video URL in Segmind response:', response.data);
+          throw new Error('No video URL returned from Segmind API');
+        }
+        
+        // Upload video to S3 for persistence
+        const videoResponse = await axios.get(videoUrl, { 
+          responseType: 'arraybuffer',
+          timeout: 120000
+        });
+        const videoBuffer = Buffer.from(videoResponse.data);
+        const hash = createHash('md5').update(videoBuffer).digest('hex');
+        const s3VideoUrl = await uploadToS3(videoBuffer, hash, 'segmind_video.mp4');
+        
+        console.log('[generateVideoFromImage] Video uploaded to S3:', s3VideoUrl);
+        
+        // Return with synchronous completed status
+        return {
+          success: true,
+          taskId: `segmind_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+          modelId: modelId,
+          videoUrl: s3VideoUrl,
+          status: 'completed',
+          message: 'Video generated successfully'
+        };
+      } else {
+        throw new Error(`Segmind API returned status ${response.status}`);
+      }
+    } catch (error) {
+      console.error('[generateVideoFromImage] Segmind API error:', error.message);
+      if (error.response?.data) {
+        console.error('[generateVideoFromImage] Segmind error response:', error.response.data);
+      }
+      throw new Error('Failed to generate video with Segmind API: ' + error.message);
+    }
+  } else if (modelId === 'wan-i2v') {
     // Wan 2.1 uses flat structure with image_url parameter
     requestData = {
       image_url: imageUrl,
@@ -346,7 +423,9 @@ async function saveVideoTask({
   prompt,
   nsfw,
   placeholderId,
-  fastify
+  fastify,
+  status = 'pending',
+  result
 }) {
   const db = fastify.mongo.db;
   const tasksCollection = db.collection('tasks');
@@ -363,13 +442,14 @@ async function saveVideoTask({
     prompt,
     nsfw,
     placeholderId,
-    status: 'pending',
+    status: status,
+    result: result || null,
     createdAt: new Date(),
     updatedAt: new Date()
   };
 
-  const result = await tasksCollection.insertOne(taskData);
-  return { ...taskData, _id: result.insertedId };
+  const dbResult = await tasksCollection.insertOne(taskData);
+  return { ...taskData, _id: dbResult.insertedId };
 }
 
 /**

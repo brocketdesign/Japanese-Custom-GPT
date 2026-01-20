@@ -18,7 +18,8 @@ const state = {
     // Video mode state
     videoMode: 'i2v', // i2v, t2v, face
     videoDataUrl: null, // Base64 encoded video for merge face
-    faceImageDataUrl: null // Face image for merge face
+    faceImageDataUrl: null, // Face image for merge face
+    lastImageDataUrl: null // Last/end frame image for Segmind Wan model
 };
 
 /**
@@ -99,6 +100,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize cost display
     updateCostDisplay();
+    
+    // Initialize model selection handlers for model-specific options
+    initializeModelSelectionHandlers();
+    
+    // Initialize Segmind Wan options
+    initializeSegmindWanOptions();
 });
 
 /**
@@ -307,6 +314,128 @@ function clearFaceImageUpload() {
 }
 
 /**
+ * Initialize model selection handlers to show/hide model-specific options
+ */
+function initializeModelSelectionHandlers() {
+    document.querySelectorAll('input[name="videoModel"]').forEach(radio => {
+        radio.addEventListener('change', handleModelSelectionChange);
+    });
+    // Trigger initial check
+    const selectedModel = document.querySelector('input[name="videoModel"]:checked');
+    if (selectedModel) {
+        handleModelSelectionChange({ target: selectedModel });
+    }
+}
+
+/**
+ * Handle model selection change to show/hide model-specific options
+ */
+function handleModelSelectionChange(event) {
+    const modelId = event.target.value;
+    const segmindWanOptions = document.getElementById('segmindWanOptions');
+    
+    if (segmindWanOptions) {
+        if (modelId === 'wan-2.2-i2v-fast') {
+            segmindWanOptions.style.display = 'block';
+        } else {
+            segmindWanOptions.style.display = 'none';
+        }
+    }
+}
+
+/**
+ * Initialize Segmind Wan model specific options
+ */
+function initializeSegmindWanOptions() {
+    // Number of frames range slider
+    const numFramesRange = document.getElementById('numFramesRange');
+    const numFramesValue = document.getElementById('numFramesValue');
+    if (numFramesRange && numFramesValue) {
+        numFramesRange.addEventListener('input', function() {
+            numFramesValue.textContent = this.value;
+        });
+    }
+    
+    // FPS range slider
+    const fpsRange = document.getElementById('fpsRange');
+    const fpsValue = document.getElementById('fpsValue');
+    if (fpsRange && fpsValue) {
+        fpsRange.addEventListener('input', function() {
+            fpsValue.textContent = this.value;
+        });
+    }
+    
+    // Last image upload handler
+    const lastImageInput = document.getElementById('lastImageInput');
+    const lastImageUploadArea = document.getElementById('lastImageUploadArea');
+    
+    if (lastImageInput) {
+        lastImageInput.addEventListener('change', handleLastImageUpload);
+    }
+    
+    if (lastImageUploadArea) {
+        lastImageUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            lastImageUploadArea.classList.add('drag-over');
+        });
+        lastImageUploadArea.addEventListener('dragleave', () => {
+            lastImageUploadArea.classList.remove('drag-over');
+        });
+        lastImageUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            lastImageUploadArea.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                lastImageInput.files = files;
+                handleLastImageUpload();
+            }
+        });
+    }
+}
+
+/**
+ * Handle last image upload for Segmind Wan model
+ */
+function handleLastImageUpload() {
+    const fileInput = document.getElementById('lastImageInput');
+    const file = fileInput.files[0];
+    
+    if (!file) return;
+    
+    if (!file.type.startsWith('image/')) {
+        showNotification('Please upload a valid image file', 'error');
+        return;
+    }
+    
+    if (file.size > 10 * 1024 * 1024) {
+        showNotification('Image size must be less than 10MB', 'error');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        state.lastImageDataUrl = e.target.result;
+        
+        document.querySelector('#lastImageUploadArea .upload-placeholder')?.classList.add('d-none');
+        document.getElementById('lastImagePreview')?.classList.remove('d-none');
+        document.getElementById('lastPreviewImg').src = state.lastImageDataUrl;
+        
+        showNotification('End frame image uploaded successfully', 'success');
+    };
+    reader.readAsDataURL(file);
+}
+
+/**
+ * Clear last image upload
+ */
+function clearLastImageUpload() {
+    state.lastImageDataUrl = null;
+    document.getElementById('lastImageInput').value = '';
+    document.querySelector('#lastImageUploadArea .upload-placeholder')?.classList.remove('d-none');
+    document.getElementById('lastImagePreview')?.classList.add('d-none');
+}
+
+/**
  * Initialize image upload functionality
  */
 function initializeImageUpload() {
@@ -486,6 +615,39 @@ async function startGeneration() {
         }
         // T2V just needs the prompt which is already included
         
+        // Add Segmind Wan 2.2 I2V Fast specific parameters
+        if (modelId === 'wan-2.2-i2v-fast') {
+            const goFastToggle = document.getElementById('goFastToggle');
+            const numFramesRange = document.getElementById('numFramesRange');
+            const segmindResolutionSelect = document.getElementById('segmindResolutionSelect');
+            const fpsRange = document.getElementById('fpsRange');
+            const negativePromptInput = document.getElementById('negativePromptInput');
+            
+            requestBody.go_fast = goFastToggle ? goFastToggle.checked : true;
+            requestBody.num_frames = numFramesRange ? parseInt(numFramesRange.value, 10) : 81;
+            requestBody.resolution = segmindResolutionSelect ? segmindResolutionSelect.value : '480p';
+            requestBody.frames_per_second = fpsRange ? parseInt(fpsRange.value, 10) : 16;
+            
+            if (negativePromptInput && negativePromptInput.value.trim()) {
+                requestBody.negative_prompt = negativePromptInput.value.trim();
+            }
+            
+            // Add last image if uploaded
+            if (state.lastImageDataUrl) {
+                requestBody.last_image = state.lastImageDataUrl;
+                console.log('[VideoDashboard] Added last_image to request (length:', state.lastImageDataUrl?.length, ')');
+            }
+            
+            console.log('[VideoDashboard] Added Segmind Wan options:', {
+                go_fast: requestBody.go_fast,
+                num_frames: requestBody.num_frames,
+                resolution: requestBody.resolution,
+                frames_per_second: requestBody.frames_per_second,
+                has_negative_prompt: !!requestBody.negative_prompt,
+                has_last_image: !!requestBody.last_image
+            });
+        }
+        
         console.log('[VideoDashboard] 📤 Sending request to /dashboard/video/generate');
         console.log('[VideoDashboard] Request body keys:', Object.keys(requestBody));
         console.log('[VideoDashboard] Request body (without image data):', {
@@ -548,8 +710,47 @@ async function startGeneration() {
         // Update card
         updateResultCard(data.task);
         
-        // Start polling
-        if (data.task.status === 'processing' && data.task.async) {
+        // Handle sync vs async response
+        if (data.task.status === 'completed' && data.task.videoUrl) {
+            // Synchronous completion (e.g., Segmind)
+            console.log('[VideoDashboard] ✅ Synchronous completion - video ready');
+            stopTotalTimer();
+            state.isGenerating = false;
+            updateGenerateButton(false);
+            
+            // Update card to show completed video
+            const statusEl = document.getElementById(`status-${modelId}`);
+            if (statusEl) {
+                statusEl.className = 'status badge bg-success';
+                statusEl.innerHTML = '<i class="bi bi-check-circle me-1"></i>Complete';
+            }
+            const progressEl = document.getElementById(`progress-${modelId}`);
+            if (progressEl) {
+                progressEl.style.width = '100%';
+                progressEl.className = 'progress-bar bg-success';
+            }
+            
+            // Show video
+            const videoContainer = document.getElementById(`video-container-${modelId}`);
+            if (videoContainer) {
+                videoContainer.innerHTML = `
+                    <video controls class="w-100 rounded" style="max-height: 300px;" onclick="previewVideo('${data.task.videoUrl}', '${modelName}', ${data.task.generationTime || 0}, '${data.task.taskId}')">
+                        <source src="${data.task.videoUrl}" type="video/mp4">
+                    </video>
+                    <div class="d-flex gap-2 mt-2">
+                        <a href="${data.task.videoUrl}" download class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-download me-1"></i>Download
+                        </a>
+                        <button class="btn btn-sm btn-outline-info" onclick="previewVideo('${data.task.videoUrl}', '${modelName}', ${data.task.generationTime || 0}, '${data.task.taskId}')">
+                            <i class="bi bi-eye me-1"></i>Preview
+                        </button>
+                    </div>
+                `;
+            }
+            
+            showNotification('Video generated successfully!', 'success');
+        } else if (data.task.status === 'processing' && data.task.async) {
+            // Async processing - start polling
             console.log('[VideoDashboard] 🔄 Starting task polling for task:', data.task.taskId);
             startTaskPolling(data.task);
         } else {
@@ -1259,7 +1460,8 @@ async function loadVideoRating(testId) {
  * Show notification
  */
 function showNotification(message, type = 'info') {
-    if (typeof window.showNotification === 'function') {
+    // Check if there's a global showNotification that's different from this function
+    if (typeof window.showNotification === 'function' && window.showNotification !== showNotification) {
         window.showNotification(message, type);
     } else {
         console.log(`[${type.toUpperCase()}] ${message}`);

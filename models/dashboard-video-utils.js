@@ -195,6 +195,24 @@ const VIDEO_MODEL_CONFIGS = {
     supportedParams: ['keyframes', 'prompt', 'model', 'resolution', 'duration', 'aspect_ratio', 'loop'],
     description: 'Luma Dream Machine for cinematic image-to-video generation'
   },
+  'wan-2.2-i2v-fast': {
+    name: 'Wan 2.2 I2V Fast (Segmind)',
+    endpoint: 'https://api.segmind.com/v1/wan-2.2-i2v-fast',
+    async: false, // Segmind returns video directly
+    provider: 'segmind', // Custom provider flag to differentiate from Novita
+    category: 'i2v',
+    defaultParams: {
+      go_fast: true,
+      num_frames: 81,
+      resolution: '480p',
+      aspect_ratio: '16:9',
+      sample_shift: 12,
+      frames_per_second: 16
+    },
+    // Wan 2.2 I2V Fast (Segmind) parameters
+    supportedParams: ['image', 'prompt', 'go_fast', 'num_frames', 'resolution', 'aspect_ratio', 'sample_shift', 'frames_per_second', 'negative_prompt', 'last_image', 'seed'],
+    description: 'Wan 2.2 I2V Fast via Segmind - optimized for speed with go_fast mode (81-100 frames, 480p/720p)'
+  },
   
   // =============== TEXT TO VIDEO (T2V) MODELS ===============
   'kling-v2.1-t2v-master': {
@@ -811,6 +829,60 @@ async function initializeVideoTest(modelId, params) {
           requestBody.loop = params.loop;
         }
         
+      } else if (modelId === 'wan-2.2-i2v-fast') {
+        // Wan 2.2 I2V Fast via Segmind API
+        // Uses flat structure with image URL and specific parameters
+        // Segmind requires a URL, not base64 data - upload to S3 first
+        let imageUrl = imageData;
+        if (imageData && imageData.startsWith('data:')) {
+          console.log('[VideoDashboard-Utils] 📤 Uploading base64 image to S3 for Segmind...');
+          try {
+            // Extract base64 data from data URI
+            const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+            const imageBuffer = Buffer.from(base64Data, 'base64');
+            const hash = createHash('md5').update(imageBuffer).digest('hex');
+            imageUrl = await uploadToS3(imageBuffer, hash, 'segmind_input.jpg');
+            console.log('[VideoDashboard-Utils] ✅ Image uploaded to S3:', imageUrl.substring(0, 100) + '...');
+          } catch (uploadError) {
+            console.error('[VideoDashboard-Utils] ❌ Failed to upload image to S3:', uploadError.message);
+            throw new Error('Failed to upload image for video generation: ' + uploadError.message);
+          }
+        }
+        
+        requestBody = {
+          image: imageUrl,
+          prompt: validatedPrompt,
+          go_fast: params.go_fast !== undefined ? params.go_fast : config.defaultParams.go_fast,
+          num_frames: params.num_frames || config.defaultParams.num_frames || 81,
+          resolution: params.resolution || config.defaultParams.resolution || '480p',
+          aspect_ratio: params.aspectRatio || params.aspect_ratio || config.defaultParams.aspect_ratio || '16:9',
+          sample_shift: params.sample_shift || config.defaultParams.sample_shift || 12,
+          frames_per_second: params.frames_per_second || config.defaultParams.frames_per_second || 16
+        };
+        
+        // Add negative prompt if provided
+        if (params.negative_prompt) {
+          requestBody.negative_prompt = params.negative_prompt;
+        }
+        
+        // Add optional last_image for guiding final frame
+        if (params.last_image) {
+          requestBody.last_image = params.last_image;
+        }
+        
+        // Add seed if provided
+        if (params.seed !== undefined && params.seed !== null) {
+          requestBody.seed = params.seed;
+        }
+        
+        // LoRA scale parameters (keep defaults)
+        requestBody.high_noise_lora_scale = 1;
+        requestBody.low_noise_lora_scale = 1;
+        requestBody.high_noise_lora_scale_2 = 1;
+        requestBody.low_noise_lora_scale_2 = 1;
+        requestBody.high_noise_lora_scale_3 = 1;
+        requestBody.low_noise_lora_scale_3 = 1;
+        
       } else {
         // Kling and other generic I2V models - use image parameter
         requestBody = {
@@ -874,10 +946,81 @@ async function initializeVideoTest(modelId, params) {
     console.log(`[VideoDashboard-Utils] Full request body size:`, JSON.stringify(requestBody).length, 'chars');
 
     console.log(`[VideoDashboard-Utils] 📤 Sending POST request to: ${config.endpoint}`);
-    console.log(`[VideoDashboard-Utils] API Key present: ${!!process.env.NOVITA_API_KEY}`);
-    console.log(`[VideoDashboard-Utils] API Key (first 10 chars): ${process.env.NOVITA_API_KEY?.substring(0, 10)}...`);
     
     const requestStartTime = Date.now();
+    
+    // Handle Segmind provider differently
+    if (config.provider === 'segmind') {
+      console.log(`[VideoDashboard-Utils] Using Segmind API`);
+      console.log(`[VideoDashboard-Utils] Segmind API Key present: ${!!process.env.SEGMIND_API_KEY}`);
+      
+      const response = await axios.post(config.endpoint, requestBody, {
+        headers: {
+          'x-api-key': process.env.SEGMIND_API_KEY,
+          'Content-Type': 'application/json'
+        },
+        timeout: 300000 // 5 minutes timeout for video generation
+      });
+
+      const requestDuration = Date.now() - requestStartTime;
+      console.log(`[VideoDashboard-Utils] 📥 Segmind response received in ${requestDuration}ms`);
+      console.log(`[VideoDashboard-Utils] Response status: ${response.status}`);
+      
+      if (response.status !== 200) {
+        const errorMsg = response.data?.message || response.data?.error || `Segmind API returned status ${response.status}`;
+        console.log(`[VideoDashboard-Utils] ❌ Non-200 status: ${errorMsg}`);
+        throw new Error(errorMsg);
+      }
+
+      // Segmind returns video URL directly in the response
+      const videoUrl = response.data?.output || response.data?.video_url || response.data?.url;
+      
+      if (!videoUrl) {
+        console.error(`[VideoDashboard-Utils] ❌ No video URL found in Segmind response:`, JSON.stringify(response.data, null, 2));
+        throw new Error('No video URL returned from Segmind API. Response: ' + JSON.stringify(response.data));
+      }
+
+      console.log(`[VideoDashboard-Utils] ✅ Segmind video generated successfully`);
+      console.log(`[VideoDashboard-Utils]   - Original Video URL: ${videoUrl.substring(0, 100)}...`);
+      
+      // Upload video to S3 for persistence
+      let finalVideoUrl = videoUrl;
+      try {
+        console.log(`[VideoDashboard-Utils] 📤 Uploading video to S3...`);
+        const videoResponse = await axios.get(videoUrl, { 
+          responseType: 'arraybuffer',
+          timeout: 120000
+        });
+        const videoBuffer = Buffer.from(videoResponse.data);
+        const hash = createHash('md5').update(videoBuffer).digest('hex');
+        finalVideoUrl = await uploadToS3(videoBuffer, hash, 'segmind_video.mp4');
+        console.log(`[VideoDashboard-Utils] ✅ Video uploaded to S3: ${finalVideoUrl.substring(0, 100)}...`);
+      } catch (uploadError) {
+        console.error(`[VideoDashboard-Utils] ⚠️ Failed to upload to S3, using original URL:`, uploadError.message);
+        // Use original URL if S3 upload fails
+      }
+      
+      console.log('[VideoDashboard-Utils] ========== initializeVideoTest END (Segmind) ==========');
+      
+      // For Segmind, we return completed status since it's synchronous
+      const taskId = `segmind_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      
+      return {
+        modelId,
+        modelName: config.name,
+        category: config.category,
+        taskId,
+        startTime,
+        status: 'completed',
+        async: false,
+        videoUrl: finalVideoUrl,
+        generationTime: requestDuration
+      };
+    }
+    
+    // Novita and other async APIs
+    console.log(`[VideoDashboard-Utils] API Key present: ${!!process.env.NOVITA_API_KEY}`);
+    console.log(`[VideoDashboard-Utils] API Key (first 10 chars): ${process.env.NOVITA_API_KEY?.substring(0, 10)}...`);
     
     const response = await axios.post(config.endpoint, requestBody, {
       headers: {

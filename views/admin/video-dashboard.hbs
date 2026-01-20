@@ -209,6 +209,80 @@
                             </select>
                         </div>
 
+                        <!-- Wan 2.2 I2V Fast (Segmind) Options -->
+                        <div id="segmindWanOptions" style="display: none;">
+                            <hr class="border-secondary my-3">
+                            <h6 class="text-info mb-3"><i class="bi bi-gear-fill me-2"></i>Wan 2.2 I2V Fast Options</h6>
+                            
+                            <!-- Go Fast Toggle -->
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="goFastToggle" checked>
+                                    <label class="form-check-label text-white" for="goFastToggle">
+                                        <span class="fw-bold">Go Fast Mode</span>
+                                        <br><small class="text-muted">Faster generation (recommended)</small>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Number of Frames -->
+                            <div class="mb-3">
+                                <label class="form-label text-white fw-bold">Number of Frames</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="range" class="form-range flex-grow-1" id="numFramesRange" min="81" max="100" value="81">
+                                    <span class="badge bg-info" id="numFramesValue">81</span>
+                                </div>
+                                <small class="text-muted">More frames = smoother video (81-100)</small>
+                            </div>
+                            
+                            <!-- Resolution -->
+                            <div class="mb-3">
+                                <label class="form-label text-white fw-bold">Resolution</label>
+                                <select class="form-select bg-secondary text-white border-secondary" id="segmindResolutionSelect">
+                                    <option value="480p" selected>480p (Faster)</option>
+                                    <option value="720p">720p (Higher Quality)</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Frames Per Second -->
+                            <div class="mb-3">
+                                <label class="form-label text-white fw-bold">Frames Per Second</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="range" class="form-range flex-grow-1" id="fpsRange" min="5" max="24" value="16">
+                                    <span class="badge bg-info" id="fpsValue">16</span>
+                                </div>
+                                <small class="text-muted">16 fps recommended for optimal balance</small>
+                            </div>
+                            
+                            <!-- Negative Prompt -->
+                            <div class="mb-3">
+                                <label class="form-label text-white fw-bold">Negative Prompt (Optional)</label>
+                                <textarea class="form-control bg-secondary text-white border-secondary" 
+                                          id="negativePromptInput" 
+                                          rows="2" 
+                                          placeholder="Describe what to avoid (e.g., blurry, low quality, distorted)..."></textarea>
+                            </div>
+                            
+                            <!-- Last Image (Optional) -->
+                            <div class="mb-3">
+                                <label class="form-label text-white fw-bold">End Frame Image (Optional)</label>
+                                <div class="base-image-upload" id="lastImageUploadArea">
+                                    <input type="file" id="lastImageInput" accept="image/*" style="display: none;">
+                                    <div class="upload-placeholder small" onclick="document.getElementById('lastImageInput').click()">
+                                        <i class="bi bi-image display-6 text-muted"></i>
+                                        <p class="text-muted mb-0 small">Optional: Upload end frame</p>
+                                        <small class="text-muted">Guide video towards specific final frame</small>
+                                    </div>
+                                    <div class="image-preview d-none" id="lastImagePreview">
+                                        <img id="lastPreviewImg" src="" alt="End Frame Preview" class="img-fluid rounded" style="max-height: 100px;">
+                                        <button class="btn btn-sm btn-danger mt-2" type="button" onclick="clearLastImageUpload()">
+                                            <i class="bi bi-x me-1"></i>Clear
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Motion Prompt -->
                         <div class="mb-4">
                             <label class="form-label text-white fw-bold">Motion Prompt (Optional)</label>

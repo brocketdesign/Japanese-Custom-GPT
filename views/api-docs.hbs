@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation - ChatLamix</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f0f0f;
+            --bg-secondary: #1a1a1a;
+            --bg-card: #242424;
+            --text-primary: rgba(255, 255, 255, 0.95);
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --accent-primary: #8B5CF6;
+            --accent-secondary: #6E20F4;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .docs-header {
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            padding: 60px 0;
+            margin-bottom: 40px;
+        }
+
+        .docs-header h1 {
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .docs-nav {
+            position: sticky;
+            top: 20px;
+        }
+
+        .docs-nav .nav-link {
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            transition: all 0.2s;
+        }
+
+        .docs-nav .nav-link:hover,
+        .docs-nav .nav-link.active {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--accent-primary);
+        }
+
+        .docs-section {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .docs-section h2 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .docs-section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 24px;
+            margin-bottom: 12px;
+            color: var(--accent-primary);
+        }
+
+        .endpoint-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-get { background: #22c55e; color: white; }
+        .badge-post { background: #3b82f6; color: white; }
+        .badge-delete { background: #ef4444; color: white; }
+        .badge-patch { background: #f59e0b; color: white; }
+
+        .endpoint-url {
+            font-family: 'Monaco', 'Menlo', monospace;
+            background: var(--bg-card);
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: #a78bfa;
+            font-size: 14px;
+        }
+
+        .code-block {
+            background: #1e1e2e;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 16px 0;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            margin: 0;
+            color: #e2e8f0;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .param-table {
+            width: 100%;
+            margin: 16px 0;
+        }
+
+        .param-table th {
+            background: var(--bg-card);
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .param-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 14px;
+        }
+
+        .param-required {
+            color: #ef4444;
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .param-optional {
+            color: #6b7280;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .response-example {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 16px 0;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #93c5fd;
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: #fcd34d;
+        }
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--accent-primary);
+        }
+
+        @media (max-width: 992px) {
+            .docs-nav {
+                position: static;
+                margin-bottom: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="docs-header">
+        <div class="container">
+            <a href="/dashboard/image" class="back-link">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+            <h1><i class="bi bi-code-slash me-3"></i>API Documentation</h1>
+            <p class="mb-0 opacity-75">Integrate ChatLamix with your applications using our REST API</p>
+        </div>
+    </div>
+
+    <div class="container pb-5">
+        <div class="row">
+            <!-- Navigation -->
+            <div class="col-lg-3">
+                <nav class="docs-nav">
+                    <a class="nav-link active" href="#authentication">
+                        <i class="bi bi-shield-lock me-2"></i>Authentication
+                    </a>
+                    <a class="nav-link" href="#create-character">
+                        <i class="bi bi-person-plus me-2"></i>Create Character
+                    </a>
+                    <a class="nav-link" href="#list-characters">
+                        <i class="bi bi-people me-2"></i>List Characters
+                    </a>
+                    <a class="nav-link" href="#add-image">
+                        <i class="bi bi-image me-2"></i>Add Image to Gallery
+                    </a>
+                    <a class="nav-link" href="#add-video">
+                        <i class="bi bi-film me-2"></i>Add Video
+                    </a>
+                    <a class="nav-link" href="#errors">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Error Handling
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Content -->
+            <div class="col-lg-9">
+                <!-- Authentication Section -->
+                <section id="authentication" class="docs-section">
+                    <h2><i class="bi bi-shield-lock text-primary"></i>Authentication</h2>
+                    <p>All API requests require authentication using an API key. You can create and manage your API keys in your <a href="/settings" class="text-primary">account settings</a>.</p>
+                    
+                    <h3>Using Your API Key</h3>
+                    <p>Include your API key in the request header:</p>
+                    
+                    <div class="code-block position-relative">
+                        <button class="copy-btn" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                        <pre>X-API-Key: clx_your_api_key_here</pre>
+                    </div>
+
+                    <div class="alert alert-warning mt-4">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Security Note:</strong> Never expose your API key in client-side code. Always make API calls from your server.
+                    </div>
+                </section>
+
+                <!-- Create Character Section -->
+                <section id="create-character" class="docs-section">
+                    <h2><i class="bi bi-person-plus text-success"></i>Create Character</h2>
+                    <p>Create a new AI character from an image and personality description. The API uses AI to generate a complete character profile.</p>
+
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <span class="endpoint-badge badge-post">POST</span>
+                        <code class="endpoint-url">/api/external/create-character</code>
+                    </div>
+
+                    <h3>Request Body</h3>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <code>imageUrl</code>
+                                    <span class="param-required ms-2">required</span>
+                                </td>
+                                <td>string</td>
+                                <td>URL of the character's image</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <code>imagePrompt</code>
+                                    <span class="param-required ms-2">required</span>
+                                </td>
+                                <td>string</td>
+                                <td>Description/prompt used to generate the image (helps AI understand the character)</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <code>name</code>
+                                    <span class="param-optional ms-2">optional</span>
+                                </td>
+                                <td>string</td>
+                                <td>Character name. If not provided, AI will generate one.</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <code>personalityInput</code>
+                                    <span class="param-optional ms-2">optional</span>
+                                </td>
+                                <td>string</td>
+                                <td>Description of the character's personality, background, and traits</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <code>language</code>
+                                    <span class="param-optional ms-2">optional</span>
+                                </td>
+                                <td>string</td>
+                                <td>Language for the character profile: "english", "french", or "japanese". Default: "english"</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <code>nsfw</code>
+                                    <span class="param-optional ms-2">optional</span>
+                                </td>
+                                <td>boolean</td>
+                                <td>Mark character as NSFW. Default: false</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Example Request</h3>
+                    <div class="code-block position-relative">
+                        <button class="copy-btn" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                        <pre><code class="language-javascript">const response = await fetch('https://app.chatlamix.com/api/external/create-character', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': 'clx_your_api_key_here'
+    },
+    body: JSON.stringify({
+        imageUrl: 'https://example.com/character-image.jpg',
+        imagePrompt: 'anime girl with blue hair, wearing a school uniform, cheerful expression',
+        name: 'Sakura',
+        personalityInput: 'A cheerful and energetic high school student who loves helping others',
+        language: 'english',
+        nsfw: false
+    })
+});</code></pre>
+                    </div>
+
+                    <h3>Response</h3>
+                    <div class="response-example">
+                        <pre><code class="language-json">{
+    "success": true,
+    "chatId": "507f1f77bcf86cd799439011",
+    "slug": "sakura-abc123",
+    "character": {
+        "_id": "507f1f77bcf86cd799439011",
+        "name": "Sakura",
+        "short_intro": "A cheerful high school student who brightens everyone's day",
+        "gender": "female",
+        "tags": ["anime", "school", "cheerful", "student", "helpful"],
+        "thumbnail": "https://example.com/character-image.jpg"
+    }
+}</code></pre>
+                    </div>
+                </section>
+
+                <!-- List Characters Section -->
+                <section id="list-characters" class="docs-section">
+                    <h2><i class="bi bi-people text-info"></i>List Characters</h2>
+                    <p>Retrieve a list of all characters you have created.</p>
+
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <span class="endpoint-badge badge-get">GET</span>
+                        <code class="endpoint-url">/api/external/characters</code>
+                    </div>
+
+                    <h3>Query Parameters</h3>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <code>limit</code>
+                                    <span class="param-optional ms-2">optional</span>
+                                </td>
+                                <td>integer</td>
+                                <td>Number of characters to return. Default: 50, Max: 100</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <code>skip</code>
+                                    <span class="param-optional ms-2">optional</span>
+                                </td>
+                                <td>integer</td>
+                                <td>Number of characters to skip (for pagination). Default: 0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Example Request</h3>
+                    <div class="code-block position-relative">
+                        <button class="copy-btn" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                        <pre><code class="language-javascript">const response = await fetch('https://app.chatlamix.com/api/external/characters?limit=10', {
+    method: 'GET',
+    headers: {
+        'X-API-Key': 'clx_your_api_key_here'
+    }
+});</code></pre>
+                    </div>
+
+                    <h3>Response</h3>
+                    <div class="response-example">
+                        <pre><code class="language-json">{
+    "success": true,
+    "characters": [
+        {
+            "_id": "507f1f77bcf86cd799439011",
+            "name": "Sakura",
+            "short_intro": "A cheerful high school student",
+            "slug": "sakura-abc123",
+            "tags": ["anime", "school"],
+            "gender": "female",
+            "thumbnail": "https://...",
+            "createdAt": "2024-01-15T10:30:00Z"
+        }
+    ],
+    "count": 1
+}</code></pre>
+                    </div>
+                </section>
+
+                <!-- Add Image Section -->
+                <section id="add-image" class="docs-section">
+                    <h2><i class="bi bi-image text-warning"></i>Add Image to Gallery</h2>
+                    <p>Add an image to an existing character's gallery.</p>
+
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <span class="endpoint-badge badge-post">POST</span>
+                        <code class="endpoint-url">/api/external/character/:chatId/add-image</code>
+                    </div>
+
+                    <h3>URL Parameters</h3>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>chatId</code></td>
+                                <td>The character's ID (obtained from create-character or list-characters)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Request Body</h3>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <code>imageUrl</code>
+                                    <span class="param-required ms-2">required</span>
+                                </td>
+                                <td>string</td>
+                                <td>URL of the image to add</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <code>prompt</code>
+                                    <span class="param-optional ms-2">optional</span>
+                                </td>
+                                <td>string</td>
+                                <td>Description/prompt of the image</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <code>title</code>
+                                    <span class="param-optional ms-2">optional</span>
+                                </td>
+                                <td>string</td>
+                                <td>Title for the image</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <code>nsfw</code>
+                                    <span class="param-optional ms-2">optional</span>
+                                </td>
+                                <td>boolean</td>
+                                <td>Mark image as NSFW. Default: false</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Example Request</h3>
+                    <div class="code-block position-relative">
+                        <button class="copy-btn" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                        <pre><code class="language-javascript">const response = await fetch('https://app.chatlamix.com/api/external/character/507f1f77bcf86cd799439011/add-image', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': 'clx_your_api_key_here'
+    },
+    body: JSON.stringify({
+        imageUrl: 'https://example.com/new-image.jpg',
+        prompt: 'Sakura in a summer dress at the beach',
+        nsfw: false
+    })
+});</code></pre>
+                    </div>
+
+                    <h3>Response</h3>
+                    <div class="response-example">
+                        <pre><code class="language-json">{
+    "success": true,
+    "imageId": "507f1f77bcf86cd799439012",
+    "message": "Image added to gallery"
+}</code></pre>
+                    </div>
+                </section>
+
+                <!-- Add Video Section -->
+                <section id="add-video" class="docs-section">
+                    <h2><i class="bi bi-film text-danger"></i>Add Video</h2>
+                    <p>Add a video to an existing character.</p>
+
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <span class="endpoint-badge badge-post">POST</span>
+                        <code class="endpoint-url">/api/external/character/:chatId/add-video</code>
+                    </div>
+
+                    <h3>Request Body</h3>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <code>videoUrl</code>
+                                    <span class="param-required ms-2">required</span>
+                                </td>
+                                <td>string</td>
+                                <td>URL of the video to add</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <code>prompt</code>
+                                    <span class="param-optional ms-2">optional</span>
+                                </td>
+                                <td>string</td>
+                                <td>Description/prompt of the video</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <code>duration</code>
+                                    <span class="param-optional ms-2">optional</span>
+                                </td>
+                                <td>string</td>
+                                <td>Video duration in seconds</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <code>aspectRatio</code>
+                                    <span class="param-optional ms-2">optional</span>
+                                </td>
+                                <td>string</td>
+                                <td>Aspect ratio (e.g., "16:9", "9:16")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Example Request</h3>
+                    <div class="code-block position-relative">
+                        <button class="copy-btn" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                        <pre><code class="language-javascript">const response = await fetch('https://app.chatlamix.com/api/external/character/507f1f77bcf86cd799439011/add-video', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': 'clx_your_api_key_here'
+    },
+    body: JSON.stringify({
+        videoUrl: 'https://example.com/character-video.mp4',
+        prompt: 'Sakura waving hello',
+        duration: '5',
+        aspectRatio: '16:9'
+    })
+});</code></pre>
+                    </div>
+                </section>
+
+                <!-- Error Handling Section -->
+                <section id="errors" class="docs-section">
+                    <h2><i class="bi bi-exclamation-triangle text-warning"></i>Error Handling</h2>
+                    <p>The API uses standard HTTP status codes to indicate success or failure.</p>
+
+                    <h3>Status Codes</h3>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>200</code></td>
+                                <td>Success</td>
+                            </tr>
+                            <tr>
+                                <td><code>400</code></td>
+                                <td>Bad Request - Missing or invalid parameters</td>
+                            </tr>
+                            <tr>
+                                <td><code>401</code></td>
+                                <td>Unauthorized - Invalid or missing API key</td>
+                            </tr>
+                            <tr>
+                                <td><code>404</code></td>
+                                <td>Not Found - Resource doesn't exist</td>
+                            </tr>
+                            <tr>
+                                <td><code>500</code></td>
+                                <td>Server Error - Something went wrong on our end</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Error Response Format</h3>
+                    <div class="response-example">
+                        <pre><code class="language-json">{
+    "error": "Detailed error message here"
+}</code></pre>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+        // Initialize syntax highlighting
+        hljs.highlightAll();
+
+        // Copy code functionality
+        function copyCode(button) {
+            const codeBlock = button.parentElement.querySelector('pre');
+            const text = codeBlock.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                button.innerHTML = '<i class="bi bi-check"></i> Copied!';
+                setTimeout(() => {
+                    button.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
+                }, 2000);
+            });
+        }
+
+        // Smooth scroll for navigation
+        document.querySelectorAll('.docs-nav a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const target = document.querySelector(targetId);
+                
+                // Update active state
+                document.querySelectorAll('.docs-nav a').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Smooth scroll
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        // Update active nav on scroll
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('.docs-section');
+            let current = '';
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (scrollY >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+            
+            document.querySelectorAll('.docs-nav a').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

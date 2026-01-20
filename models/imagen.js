@@ -1650,7 +1650,9 @@ async function checkTaskStatus(taskId, fastify) {
     const imageData = processedImages[arrayIndex];
     
     let nsfw = task.type === 'nsfw';
-    if (imageData.nsfw_detection_result && imageData.nsfw_detection_result.valid && imageData.nsfw_detection_result.confidence >= 70) {
+    // Only flag as NSFW if confidence is very high (90+) to allow bikinis/swimwear
+    // Combined with nsfw_detection_level: 0, this only censors clearly visible nudity
+    if (imageData.nsfw_detection_result && imageData.nsfw_detection_result.valid && imageData.nsfw_detection_result.confidence >= 90) {
       nsfw = true;
     }
     
@@ -1853,7 +1855,7 @@ async function fetchNovitaMagic(data, flux = false, hunyuan = false) {
         extra: {
           response_image_type: 'jpeg',
           enable_nsfw_detection: true,
-          nsfw_detection_level: 1,
+          nsfw_detection_level: 0, // Level 0 = only explicit nudity (bikinis allowed)
           webhook: {
             url: webhookUrl
           }

@@ -2736,16 +2736,44 @@ function openCreateCharacterModal() {
     const previewModal = document.getElementById('imagePreviewModal');
     const imageUrl = previewModal.dataset.imageUrl;
     const prompt = previewModal.dataset.prompt;
+    const modelId = previewModal.dataset.modelId;
+    const modelName = previewModal.dataset.modelName;
     
     if (!imageUrl) {
         showNotification('No image selected', 'error');
         return;
     }
     
-    // Store current image data
+    // Get the task data if available to retrieve SD model information
+    let sdModelName = null;
+    let imageModel = null;
+    let imageVersion = 'sdxl';
+    let imageStyle = 'general';
+    
+    // Try to get model info from active task
+    if (modelId && state.activeTasks) {
+        const task = state.activeTasks.get(modelId);
+        if (task) {
+            sdModelName = task.sdModelName;
+            // For SD models, the actual model name is in sdModelName
+            if (task.modelId === 'sd-txt2img' || task.modelId === 'sd-img2img') {
+                imageModel = task.sdModelName || 'prefectPonyXL_v50_1128833';
+                imageVersion = 'sdxl';
+                imageStyle = 'general';
+            }
+        }
+    }
+    
+    // Store current image data including model info
     currentCharacterImageData = {
         imageUrl: imageUrl,
-        prompt: prompt || document.getElementById('promptInput')?.value || ''
+        prompt: prompt || document.getElementById('promptInput')?.value || '',
+        modelId: modelId,
+        modelName: modelName,
+        sdModelName: sdModelName,
+        imageModel: imageModel || sdModelName,
+        imageVersion: imageVersion,
+        imageStyle: imageStyle
     };
     
     // Update modal content
@@ -2814,7 +2842,13 @@ async function confirmCreateCharacter() {
                 name: name || undefined,
                 language: language,
                 nsfw: nsfw,
-                useImageAsBaseFace: useImageAsBaseFace
+                useImageAsBaseFace: useImageAsBaseFace,
+                // Include model information for consistent image generation in chat
+                modelId: currentCharacterImageData.modelId,
+                modelName: currentCharacterImageData.modelName,
+                imageModel: currentCharacterImageData.imageModel,
+                imageVersion: currentCharacterImageData.imageVersion,
+                imageStyle: currentCharacterImageData.imageStyle
             })
         });
         

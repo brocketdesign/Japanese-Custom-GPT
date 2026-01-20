@@ -217,7 +217,13 @@ async function routes(fastify, options) {
                 name: providedName,
                 language: requestLanguage,
                 nsfw = false,
-                useImageAsBaseFace = false
+                useImageAsBaseFace = false,
+                // Model information for consistent image generation in chat
+                modelId = null,
+                modelName = null,
+                imageModel = null,
+                imageVersion = 'sdxl',
+                imageStyle = 'general'
             } = request.body;
 
             const language = requestLanguage || request.lang || 'english';
@@ -230,6 +236,7 @@ async function routes(fastify, options) {
             console.log(`[DashboardIntegration] Creating character from image for user ${userId}`);
             console.log(`[DashboardIntegration] Image prompt: ${imagePrompt.substring(0, 100)}...`);
             console.log(`[DashboardIntegration] Use image as base face: ${useImageAsBaseFace}`);
+            console.log(`[DashboardIntegration] Model info: modelId=${modelId}, imageModel=${imageModel}, imageVersion=${imageVersion}, imageStyle=${imageStyle}`);
 
             // Generate character data from image prompt
             const { characterData, extractedDetails, gender } = await generateCharacterFromImagePrompt(
@@ -263,7 +270,12 @@ async function routes(fastify, options) {
                 thumbIsPortrait: true,
                 createdAt: now.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }),
                 updatedAt: now.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }),
-                createdFromImageDashboard: true
+                createdFromImageDashboard: true,
+                // Save model information for consistent image generation in chat
+                ...(imageModel && { imageModel: imageModel }),
+                ...(modelId && { modelId: modelId }),
+                imageStyle: imageStyle || 'general',
+                imageVersion: imageVersion || 'sdxl'
             };
             
             // If useImageAsBaseFace is true, set the image as baseFaceUrl for auto-merge
@@ -607,7 +619,12 @@ async function routes(fastify, options) {
                 personalityInput,
                 name: providedName,
                 language = 'english',
-                nsfw = false
+                nsfw = false,
+                // Model information for consistent image generation in chat
+                modelId = null,
+                imageModel = null,
+                imageVersion = 'sdxl',
+                imageStyle = 'general'
             } = request.body;
 
             if (!imageUrl || !imagePrompt) {
@@ -618,6 +635,7 @@ async function routes(fastify, options) {
             }
 
             console.log(`[ExternalAPI] Creating character for user ${userId}`);
+            console.log(`[ExternalAPI] Model info: modelId=${modelId}, imageModel=${imageModel}, imageVersion=${imageVersion}, imageStyle=${imageStyle}`);
 
             // Generate character data
             const { characterData, extractedDetails, gender } = await generateCharacterFromImagePrompt(
@@ -650,7 +668,12 @@ async function routes(fastify, options) {
                 thumbIsPortrait: true,
                 createdAt: now.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }),
                 updatedAt: now.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }),
-                createdFromExternalAPI: true
+                createdFromExternalAPI: true,
+                // Save model information for consistent image generation in chat
+                ...(imageModel && { imageModel: imageModel }),
+                ...(modelId && { modelId: modelId }),
+                imageStyle: imageStyle || 'general',
+                imageVersion: imageVersion || 'sdxl'
             };
 
             const insertResult = await collectionChats.insertOne(chatDocument);

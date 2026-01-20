@@ -2267,11 +2267,18 @@ async function confirmSaveDraft() {
 // User models state
 let userCustomModels = [];
 let userModelSearchModal = null;
+let isPremiumUser = false;
 
 /**
  * Initialize user model management on page load
  */
 function initializeUserModelManagement() {
+    // Check premium status
+    isPremiumUser = window.user?.subscriptionStatus === 'active';
+    
+    // Update premium UI
+    updateCustomModelsPremiumUI();
+    
     // Initialize modal
     const modalElement = document.getElementById('userModelSearchModal');
     if (modalElement) {
@@ -2302,9 +2309,40 @@ function initializeUserModelManagement() {
 }
 
 /**
+ * Update UI based on premium status for custom models section
+ */
+function updateCustomModelsPremiumUI() {
+    const premiumNotice = document.getElementById('customModelsPremiumNotice');
+    const userCustomModelsList = document.getElementById('userCustomModelsList');
+    const addModelBtn = document.querySelector('[onclick="openUserModelSearchModal()"]');
+    
+    if (!isPremiumUser) {
+        // Show premium notice for non-subscribers
+        if (premiumNotice) premiumNotice.style.display = 'flex';
+        // Hide the models list for non-premium users
+        if (userCustomModelsList) userCustomModelsList.style.display = 'none';
+        // Hide or disable add model button
+        if (addModelBtn) addModelBtn.style.display = 'none';
+    } else {
+        // Hide premium notice for subscribers
+        if (premiumNotice) premiumNotice.style.display = 'none';
+        // Show the models list for premium users
+        if (userCustomModelsList) userCustomModelsList.style.display = 'block';
+        // Show add model button
+        if (addModelBtn) addModelBtn.style.display = 'inline-flex';
+    }
+}
+
+/**
  * Open the user model search modal
  */
 function openUserModelSearchModal() {
+    // Check premium status - redirect to plan page if not premium
+    if (!isPremiumUser) {
+        loadPlanPage();
+        return;
+    }
+    
     // Reset search state
     document.getElementById('userModelSearchInput').value = '';
     document.getElementById('userModelSearchResultsList').innerHTML = '';

@@ -2,6 +2,67 @@
  * Admin Image Model Test Dashboard Styles
  */
 
+/* Premium Notice Card */
+.premium-notice-card {
+    display: flex;
+    gap: 15px;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(130, 64, 255, 0.15) 0%, rgba(88, 86, 214, 0.15) 100%);
+    border: 1px solid rgba(130, 64, 255, 0.3);
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+
+.premium-notice-icon {
+    flex-shrink: 0;
+}
+
+.premium-notice-icon i {
+    font-size: 1.75rem;
+    color: #8240FF;
+}
+
+.premium-notice-content {
+    flex: 1;
+}
+
+.premium-notice-content strong {
+    display: block;
+    margin-bottom: 6px;
+    color: #fff;
+    font-size: 1rem;
+}
+
+.premium-notice-content p {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+.btn-upgrade-premium {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 18px;
+    background: linear-gradient(135deg, #8240FF 0%, #5856D6 100%);
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-upgrade-premium:hover {
+    background: linear-gradient(135deg, #9050FF 0%, #6866E6 100%);
+    box-shadow: 0 4px 15px rgba(130, 64, 255, 0.4);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
 /* Style Preset Editor */
 .style-preset-editor {
     background: rgba(0, 0, 0, 0.3);

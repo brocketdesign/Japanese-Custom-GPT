@@ -1878,6 +1878,14 @@
     "outfit_prompt_description": "Describe the outfit, accessories, and physical details you want in the generated image. Be specific about clothing style, colors, and setting.",
     "outfit_prompt_placeholder": "E.g., wearing a red dress, sitting in a cafe, sunny day, smiling...",
     
+    "step7_base_face_title": "Upload Base Face",
+    "step7_base_face_description": "Upload a face image that will be used as the base face for your character. When generating images, the face will automatically be merged using AI.",
+    "step7_base_face_upload": "Click to upload face image",
+    "step7_base_face_supported": "Supports JPG, PNG, WebP",
+    "step7_base_face_clear": "Clear",
+    "step7_base_face_uploaded": "Face uploaded successfully",
+    "step7_base_face_optional": "(Optional)",
+    
     "chat_purpose_label": "Chat Purpose",
     
     "voice_title": "Voice",

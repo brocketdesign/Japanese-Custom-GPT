@@ -1814,6 +1814,14 @@
     "outfit_prompt_description": "生成される画像に含めたい衣装、アクセサリー、外見の詳細を説明してください。服のスタイル、色、シチュエーションを具体的に指定してください。",
     "outfit_prompt_placeholder": "例：赤いドレスを着て、カフェに座って、晴れた日、笑顔...",
     
+    "step7_base_face_title": "ベースフェイスをアップロード",
+    "step7_base_face_description": "キャラクターのベースとなる顔画像をアップロードします。画像生成時にAIで自動的に顔が合成されます。",
+    "step7_base_face_upload": "クリックして顔画像をアップロード",
+    "step7_base_face_supported": "JPG、PNG、WebPに対応",
+    "step7_base_face_clear": "クリア",
+    "step7_base_face_uploaded": "顔が正常にアップロードされました",
+    "step7_base_face_optional": "（オプション）",
+    
     "chat_purpose_label": "チャットの目的",
     
     "voice_title": "声",

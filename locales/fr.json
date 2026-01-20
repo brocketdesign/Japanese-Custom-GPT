@@ -1759,6 +1759,14 @@
     "outfit_prompt_description": "Décrivez la tenue, les accessoires et les détails physiques que vous souhaitez dans l'image générée. Soyez précis sur le style vestimentaire, les couleurs et le cadre.",
     "outfit_prompt_placeholder": "Ex: portant une robe rouge, assise dans un café, journée ensoleillée, souriante...",
     
+    "step7_base_face_title": "Télécharger un Visage de Base",
+    "step7_base_face_description": "Téléchargez une image de visage qui sera utilisée comme visage de base pour votre personnage. Lors de la génération d'images, le visage sera automatiquement fusionné par l'IA.",
+    "step7_base_face_upload": "Cliquez pour télécharger une image de visage",
+    "step7_base_face_supported": "Supporte JPG, PNG, WebP",
+    "step7_base_face_clear": "Effacer",
+    "step7_base_face_uploaded": "Visage téléchargé avec succès",
+    "step7_base_face_optional": "(Optionnel)",
+    
     "chat_purpose_label": "Objectif du Chat",
     
     "voice_title": "Voix",

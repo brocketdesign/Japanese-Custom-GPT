@@ -19,5 +19,10 @@
   "noFacesUploaded": "Aucun visage téléchargé pour le moment",
   "mergingInProgress": "Fusion des visages en cours...",
   "mergeCompleted": "Fusion des visages terminée",
-  "alreadyMerged": "Visage déjà fusionné"
+  "alreadyMerged": "Visage déjà fusionné",
+  "provider": "Fournisseur",
+  "selectProvider": "Sélectionner le fournisseur",
+  "providerNovita": "Novita AI",
+  "providerSegmind": "Segmind",
+  "providerDescription": "Choisissez le service IA à utiliser pour la fusion des visages"
 }

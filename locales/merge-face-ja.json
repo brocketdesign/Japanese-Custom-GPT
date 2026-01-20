@@ -19,5 +19,10 @@
   "noFacesUploaded": "まだ顔がアップロードされていません",
   "mergingInProgress": "顔マージが進行中です...",
   "mergeCompleted": "顔マージが完了しました",
-  "alreadyMerged": "既に顔がマージされています"
+  "alreadyMerged": "既に顔がマージされています",
+  "provider": "プロバイダー",
+  "selectProvider": "プロバイダーを選択",
+  "providerNovita": "Novita AI",
+  "providerSegmind": "Segmind",
+  "providerDescription": "顔マージに使用するAIサービスを選択してください"
 }

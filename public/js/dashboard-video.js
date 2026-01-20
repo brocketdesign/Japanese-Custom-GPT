@@ -1465,3 +1465,216 @@ function openShareModal() {
     showNotification('Saving video first...', 'info');
     saveAsDraftPost();
 }
+
+// ==============================================
+// Add Video to Character
+// ==============================================
+
+let addVideoToCharacterModal = null;
+let currentVideoData = null;
+let selectedCharacterForVideo = null;
+
+/**
+ * Open the add video to character modal
+ */
+function openAddVideoToCharacterModal() {
+    const previewModal = document.getElementById('videoPreviewModal');
+    const videoUrl = previewModal.dataset.videoUrl;
+    const prompt = previewModal.dataset.prompt;
+    
+    if (!videoUrl) {
+        showNotification('No video selected', 'error');
+        return;
+    }
+    
+    // Store current video data
+    currentVideoData = {
+        videoUrl: videoUrl,
+        prompt: prompt || document.getElementById('promptInput')?.value || '',
+        duration: document.getElementById('durationSelect')?.value || '5',
+        aspectRatio: document.getElementById('aspectRatioSelect')?.value || '16:9',
+        modelName: previewModal.dataset.modelName || state.activeTask?.modelName || 'Unknown'
+    };
+    
+    // Update modal content
+    document.getElementById('videoCharacterPreviewSource').src = videoUrl;
+    document.getElementById('videoCharacterPreview').load();
+    document.getElementById('videoPromptPreview').textContent = currentVideoData.prompt.length > 150 
+        ? currentVideoData.prompt.substring(0, 150) + '...' 
+        : currentVideoData.prompt;
+    document.getElementById('videoCharacterSearchInput').value = '';
+    document.getElementById('videoCharacterSearchResults').innerHTML = `
+        <div class="text-center text-muted py-4">
+            <i class="bi bi-person-circle display-4"></i>
+            <p class="mt-2">Search for a character to add this video to</p>
+        </div>
+    `;
+    document.getElementById('confirmAddVideoToCharacterBtn').disabled = true;
+    selectedCharacterForVideo = null;
+    
+    // Close preview modal and open character search modal
+    bootstrap.Modal.getInstance(previewModal)?.hide();
+    
+    if (!addVideoToCharacterModal) {
+        addVideoToCharacterModal = new bootstrap.Modal(document.getElementById('addVideoToCharacterModal'));
+    }
+    addVideoToCharacterModal.show();
+}
+
+/**
+ * Search for characters to add video to
+ */
+async function searchCharactersForVideo() {
+    const query = document.getElementById('videoCharacterSearchInput').value.trim();
+    const resultsContainer = document.getElementById('videoCharacterSearchResults');
+    
+    resultsContainer.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Searching characters...</p>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch(`/api/dashboard/search-characters?query=${encodeURIComponent(query)}&limit=20`);
+        const data = await response.json();
+        
+        if (data.success && data.characters && data.characters.length > 0) {
+            resultsContainer.innerHTML = '';
+            
+            data.characters.forEach(character => {
+                const thumbnail = character.thumbnail || '/img/default-thumbnail.png';
+                const cardHtml = `
+                    <div class="character-result-card d-flex align-items-center gap-3 p-2 mb-2 rounded cursor-pointer" 
+                         data-chat-id="${character._id}"
+                         data-chat-name="${escapeHtml(character.name)}"
+                         style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);"
+                         onclick="selectCharacterForVideo(this)">
+                        <img src="${thumbnail}" alt="${escapeHtml(character.name)}" 
+                             class="rounded" style="width: 50px; height: 50px; object-fit: cover;"
+                             onerror="this.src='/img/default-thumbnail.png'">
+                        <div class="flex-grow-1">
+                            <div class="fw-bold text-white">${escapeHtml(character.name)}</div>
+                            <small class="text-muted text-truncate d-block" style="max-width: 250px;">${escapeHtml(character.short_intro || '')}</small>
+                            ${character.tags?.slice(0, 3).map(tag => `<span class="badge bg-secondary me-1" style="font-size: 0.6rem;">${escapeHtml(tag)}</span>`).join('') || ''}
+                        </div>
+                        <i class="bi bi-chevron-right text-muted"></i>
+                    </div>
+                `;
+                resultsContainer.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        } else {
+            resultsContainer.innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-emoji-frown display-4"></i>
+                    <p class="mt-2">No characters found</p>
+                    <small>Try a different search term</small>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('[VideoDashboard] Error searching characters:', error);
+        resultsContainer.innerHTML = `
+            <div class="text-center text-danger py-4">
+                <i class="bi bi-exclamation-triangle display-4"></i>
+                <p class="mt-2">Failed to search characters</p>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Select a character for video addition
+ */
+function selectCharacterForVideo(element) {
+    // Remove selection from all cards
+    document.querySelectorAll('#videoCharacterSearchResults .character-result-card').forEach(card => {
+        card.style.border = '1px solid rgba(255,255,255,0.1)';
+        card.style.background = 'rgba(255,255,255,0.05)';
+    });
+    
+    // Select this card
+    element.style.border = '2px solid #0d6efd';
+    element.style.background = 'rgba(13,110,253,0.1)';
+    
+    selectedCharacterForVideo = {
+        chatId: element.dataset.chatId,
+        name: element.dataset.chatName
+    };
+    
+    // Enable confirm button
+    document.getElementById('confirmAddVideoToCharacterBtn').disabled = false;
+}
+
+/**
+ * Confirm adding video to character
+ */
+async function confirmAddVideoToCharacter() {
+    if (!selectedCharacterForVideo || !currentVideoData) {
+        showNotification('Please select a character', 'error');
+        return;
+    }
+    
+    const btn = document.getElementById('confirmAddVideoToCharacterBtn');
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Adding...';
+    
+    try {
+        const response = await fetch('/api/dashboard/add-video-to-character', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chatId: selectedCharacterForVideo.chatId,
+                videoUrl: currentVideoData.videoUrl,
+                prompt: currentVideoData.prompt,
+                duration: currentVideoData.duration,
+                aspectRatio: currentVideoData.aspectRatio,
+                modelName: currentVideoData.modelName
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification(`Video added to ${selectedCharacterForVideo.name}'s gallery!`, 'success');
+            
+            // Close modal
+            addVideoToCharacterModal?.hide();
+        } else {
+            throw new Error(data.error || 'Failed to add video');
+        }
+    } catch (error) {
+        console.error('[VideoDashboard] Error adding video:', error);
+        showNotification('Failed to add video: ' + error.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-plus-lg me-1"></i>Add Video to Character';
+    }
+}
+
+/**
+ * Escape HTML to prevent XSS
+ */
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Add enter key handler for character search
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('videoCharacterSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                searchCharactersForVideo();
+            }
+        });
+    }
+});

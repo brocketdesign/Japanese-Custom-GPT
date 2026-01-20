@@ -1135,7 +1135,14 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
                     }
                 },
                 { $project: { _sortCandidates: 0 } },
-                { $sort: { _chatSortKey: -1, _id: -1 } },
+                // Sort by creation date first (latest first), then by activity, then by _id
+                { 
+                    $sort: { 
+                        createdAt: -1,  // Latest created first
+                        _chatSortKey: -1, 
+                        _id: -1 
+                    } 
+                },
                 { $project: { _chatSortKey: 0 } },
 
                 // Pagination

@@ -4,18 +4,19 @@
    COLOR VARIABLES & BASE STYLING
    ==================================== */
 :root {
-    --bg-primary: #ffffff;
-    --bg-secondary: #f9fafb;
-    --text-primary: #1f2937;
-    --text-secondary: #6b7280;
-    --border-color: #e5e7eb;
-    --primary-color: #6366f1;
+    --bg-primary: #0f0f0f;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #252525;
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+    --border-color: #333333;
+    --primary-color: #8240FF;
     --secondary-color: #8b5cf6;
     --accent-color: #a855f7;
-    --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+    --primary-gradient: linear-gradient(135deg, #8240FF 0%, #9d5cff 50%, #b87dff 100%);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.7);
 }
 
 /* ====================================
@@ -26,6 +27,12 @@
     margin: 0;
     padding: 0;
     background: var(--bg-primary);
+    min-height: 100vh;
+}
+
+/* Ensure body has dark background */
+body:has(.profile-container) {
+    background-color: var(--bg-primary) !important;
 }
 
 /* ====================================
@@ -175,7 +182,7 @@
 .profile-stats {
     display: flex;
     padding: 30px 20px;
-    background: linear-gradient(to right, #f9fafb, #ffffff);
+    background: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
     gap: 0;
 }
@@ -352,7 +359,7 @@
 }
 
 .detail-card {
-    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    background: var(--bg-tertiary);
     border-radius: 12px;
     padding: 24px;
     border-left: 4px solid var(--secondary-color);
@@ -397,7 +404,7 @@
    BIO SECTION
    ==================================== */
 .profile-bio-section {
-    background: white;
+    background: var(--bg-secondary);
     border-radius: 12px;
     padding: 30px;
     border: 1px solid var(--border-color);
@@ -443,14 +450,14 @@
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 12px;
     padding: 20px;
-    background: var(--bg-secondary);
+    background: var(--bg-primary);
 }
 
 .media-item {
     position: relative;
     aspect-ratio: 1;
     overflow: hidden;
-    background: linear-gradient(135deg, var(--bg-secondary), #e0e7ff);
+    background: var(--bg-tertiary);
     cursor: pointer;
     transition: all 0.3s ease;
     border-radius: 8px;
@@ -513,7 +520,7 @@
     display: inline-flex;
     align-items: center;
     padding: 6px 12px;
-    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+    background: var(--bg-tertiary);
     color: var(--text-primary);
     border-radius: 20px;
     text-decoration: none;
@@ -560,7 +567,7 @@
    ==================================== */
 .similar-section {
     padding: 40px 20px;
-    background: linear-gradient(to right, #ffffff, #f9fafb);
+    background: var(--bg-primary);
     border-top: 1px solid var(--border-color);
 }
 

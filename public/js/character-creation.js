@@ -1615,6 +1615,7 @@
             const generateBtn = document.getElementById('generateImageBtn');
             const regenerateBtn = document.getElementById('regenerateImageBtn');
             const infoText = document.getElementById('imageSelectionInfo');
+            const nextBtn = document.getElementById('nextBtn');
             
             console.log('[CharacterCreation] Images generated (via webhook/WebSocket):', imageUrls);
             console.log('[CharacterCreation] Unique URLs:', [...new Set(imageUrls)].length, 'of', imageUrls.length);
@@ -1671,6 +1672,12 @@
                 regenerateBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i><span>' + this.t('regenerate', 'Regenerate') + '</span>';
             }
             if (infoText) infoText.style.display = 'block';
+            
+            // Change the Next button to "Start Chat" button
+            if (nextBtn && this.currentStep === 7) {
+                nextBtn.innerHTML = '<i class="bi bi-chat-dots-fill me-2"></i>' + this.t('start_chat', 'Start Chat');
+                nextBtn.classList.add('btn-start-chat-now');
+            }
             
             // Reset loading state
             this.isGeneratingImage = false;
@@ -1860,6 +1867,13 @@
         
         nextStep() {
             if (this.currentStep >= this.totalSteps) return;
+            
+            // If on step 7 and button says "Start Chat", start the chat instead
+            const nextBtn = document.getElementById('nextBtn');
+            if (this.currentStep === 7 && nextBtn && nextBtn.classList.contains('btn-start-chat-now')) {
+                this.startChat();
+                return;
+            }
             
             // Validate current step
             if (!this.validateStep(this.currentStep)) return;

@@ -2,18 +2,20 @@
 
 /* ====== BUTTON OVERRIDES ====== */
 .btn {
-  border-radius: var(--radius-pill) !important; /* Pill shape for all buttons */
-  padding: var(--btn-padding) !important;
-  font-weight: var(--btn-weight) !important;
+  border-radius: 8px !important; /* More compact rounded corners */
+  padding: 0.5rem 1rem !important; /* More compact padding */
+  font-weight: 600 !important; /* Professional weight */
+  font-size: 0.875rem !important; /* Smaller text */
   transition: var(--transition-smooth) !important;
   border: none !important;
   position: relative !important;
   overflow: hidden !important;
   text-transform: initial !important;
+  line-height: 1.4 !important;
 }
 
 .btn:hover {
-  transform: var(--btn-hover-transform) !important;
+  transform: translateY(-1px) !important; /* Subtle lift */
   box-shadow: var(--shadow-md) !important;
 }
 

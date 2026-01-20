@@ -584,6 +584,7 @@
   "createCharacterDescription": "Create your own character and start chatting with them!",
   "userProfile": "User Profile",
   "userProfileDescription": "See the images you liked and the characters created.",
+  "userProfileTitle": "{nickname}'s Profile",
   "exploreDescription": "Explore the latest characters & images",
   "signin": {
     "title": "Sign In - Redirecting",

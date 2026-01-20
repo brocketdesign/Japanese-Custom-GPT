@@ -585,6 +585,7 @@
   "createCharacterDescription": "自分のキャラクターを作成して、チャットを始めましょう！",
   "userProfile": "ユーザープロフィール",
   "userProfileDescription": "いいねした画像や作成したキャラクターを確認できます。",
+  "userProfileTitle": "{nickname}さんのプロフィール",
   "exploreDescription": "他のユーザーが作成した最新の投稿やキャラクターを探索しましょう。",
   "signin": {
     "title": "サインイン - リダイレクト中",

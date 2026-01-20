@@ -216,7 +216,8 @@ async function routes(fastify, options) {
                 personalityInput,
                 name: providedName,
                 language: requestLanguage,
-                nsfw = false
+                nsfw = false,
+                useImageAsBaseFace = false
             } = request.body;
 
             const language = requestLanguage || request.lang || 'english';
@@ -228,6 +229,7 @@ async function routes(fastify, options) {
 
             console.log(`[DashboardIntegration] Creating character from image for user ${userId}`);
             console.log(`[DashboardIntegration] Image prompt: ${imagePrompt.substring(0, 100)}...`);
+            console.log(`[DashboardIntegration] Use image as base face: ${useImageAsBaseFace}`);
 
             // Generate character data from image prompt
             const { characterData, extractedDetails, gender } = await generateCharacterFromImagePrompt(
@@ -263,6 +265,12 @@ async function routes(fastify, options) {
                 updatedAt: now.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }),
                 createdFromImageDashboard: true
             };
+            
+            // If useImageAsBaseFace is true, set the image as baseFaceUrl for auto-merge
+            if (useImageAsBaseFace) {
+                chatDocument.baseFaceUrl = imageUrl;
+                console.log(`[DashboardIntegration] Setting baseFaceUrl for auto-merge: ${imageUrl.substring(0, 50)}...`);
+            }
 
             const insertResult = await collectionChats.insertOne(chatDocument);
             const chatId = insertResult.insertedId;

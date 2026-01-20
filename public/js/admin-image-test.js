@@ -2583,3 +2583,292 @@ function escapeModelHtml(text) {
 document.addEventListener('DOMContentLoaded', function() {
     initializeUserModelManagement();
 });
+
+// ==============================================
+// Character Creation from Image
+// ==============================================
+
+let createCharacterModal = null;
+let addToGalleryModal = null;
+let currentCharacterImageData = null;
+let selectedCharacterForGallery = null;
+
+/**
+ * Open the create character modal
+ */
+function openCreateCharacterModal() {
+    const previewModal = document.getElementById('imagePreviewModal');
+    const imageUrl = previewModal.dataset.imageUrl;
+    const prompt = previewModal.dataset.prompt;
+    
+    if (!imageUrl) {
+        showNotification('No image selected', 'error');
+        return;
+    }
+    
+    // Store current image data
+    currentCharacterImageData = {
+        imageUrl: imageUrl,
+        prompt: prompt || document.getElementById('promptInput')?.value || ''
+    };
+    
+    // Update modal content
+    document.getElementById('characterPreviewImage').src = imageUrl;
+    document.getElementById('characterPromptPreview').textContent = currentCharacterImageData.prompt.length > 200 
+        ? currentCharacterImageData.prompt.substring(0, 200) + '...' 
+        : currentCharacterImageData.prompt;
+    document.getElementById('characterNameInput').value = '';
+    document.getElementById('characterPersonalityInput').value = '';
+    document.getElementById('characterNsfwCheck').checked = false;
+    
+    // Close preview modal and open character creation modal
+    bootstrap.Modal.getInstance(previewModal)?.hide();
+    
+    if (!createCharacterModal) {
+        createCharacterModal = new bootstrap.Modal(document.getElementById('createCharacterModal'));
+    }
+    createCharacterModal.show();
+}
+
+/**
+ * Confirm and create character from image
+ */
+async function confirmCreateCharacter() {
+    if (!currentCharacterImageData) {
+        showNotification('No image data available', 'error');
+        return;
+    }
+    
+    const btn = document.getElementById('confirmCreateCharacterBtn');
+    const name = document.getElementById('characterNameInput').value.trim();
+    const personalityInput = document.getElementById('characterPersonalityInput').value.trim();
+    const language = document.getElementById('characterLanguageSelect').value;
+    const nsfw = document.getElementById('characterNsfwCheck').checked;
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Creating Character...';
+    
+    try {
+        const response = await fetch('/api/dashboard/create-character-from-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                imageUrl: currentCharacterImageData.imageUrl,
+                imagePrompt: currentCharacterImageData.prompt,
+                personalityInput: personalityInput,
+                name: name || undefined,
+                language: language,
+                nsfw: nsfw
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('Character created successfully!', 'success');
+            
+            // Close modal
+            createCharacterModal?.hide();
+            
+            // Ask if user wants to view the character
+            if (confirm('Character created! Would you like to view it now?')) {
+                window.location.href = `/c/${data.slug || data.chatId}`;
+            }
+        } else {
+            throw new Error(data.error || 'Failed to create character');
+        }
+    } catch (error) {
+        console.error('[ImageDashboard] Error creating character:', error);
+        showNotification('Failed to create character: ' + error.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-person-plus me-1"></i>Create Character';
+    }
+}
+
+/**
+ * Open the add to gallery modal
+ */
+function openAddToGalleryModal() {
+    const previewModal = document.getElementById('imagePreviewModal');
+    const imageUrl = previewModal.dataset.imageUrl;
+    const prompt = previewModal.dataset.prompt;
+    
+    if (!imageUrl) {
+        showNotification('No image selected', 'error');
+        return;
+    }
+    
+    // Store current image data
+    currentCharacterImageData = {
+        imageUrl: imageUrl,
+        prompt: prompt || document.getElementById('promptInput')?.value || ''
+    };
+    
+    // Update modal content
+    document.getElementById('galleryPreviewImage').src = imageUrl;
+    document.getElementById('characterSearchInput').value = '';
+    document.getElementById('characterSearchResults').innerHTML = `
+        <div class="text-center text-muted py-4">
+            <i class="bi bi-person-circle display-4"></i>
+            <p class="mt-2">Search for a character to add this image to their gallery</p>
+        </div>
+    `;
+    document.getElementById('confirmAddToGalleryBtn').disabled = true;
+    selectedCharacterForGallery = null;
+    
+    // Close preview modal and open gallery modal
+    bootstrap.Modal.getInstance(previewModal)?.hide();
+    
+    if (!addToGalleryModal) {
+        addToGalleryModal = new bootstrap.Modal(document.getElementById('addToGalleryModal'));
+    }
+    addToGalleryModal.show();
+}
+
+/**
+ * Search for characters to add image to gallery
+ */
+async function searchCharactersForGallery() {
+    const query = document.getElementById('characterSearchInput').value.trim();
+    const resultsContainer = document.getElementById('characterSearchResults');
+    
+    resultsContainer.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Searching characters...</p>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch(`/api/dashboard/search-characters?query=${encodeURIComponent(query)}&limit=20`);
+        const data = await response.json();
+        
+        if (data.success && data.characters && data.characters.length > 0) {
+            resultsContainer.innerHTML = '';
+            
+            data.characters.forEach(character => {
+                const thumbnail = character.thumbnail || '/img/default-thumbnail.png';
+                const cardHtml = `
+                    <div class="character-result-card d-flex align-items-center gap-3 p-2 mb-2 rounded cursor-pointer" 
+                         data-chat-id="${character._id}"
+                         data-chat-name="${escapeModelHtml(character.name)}"
+                         style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);"
+                         onclick="selectCharacterForGallery(this)">
+                        <img src="${thumbnail}" alt="${escapeModelHtml(character.name)}" 
+                             class="rounded" style="width: 50px; height: 50px; object-fit: cover;"
+                             onerror="this.src='/img/default-thumbnail.png'">
+                        <div class="flex-grow-1">
+                            <div class="fw-bold text-white">${escapeModelHtml(character.name)}</div>
+                            <small class="text-muted text-truncate d-block" style="max-width: 250px;">${escapeModelHtml(character.short_intro || '')}</small>
+                            ${character.tags?.slice(0, 3).map(tag => `<span class="badge bg-secondary me-1" style="font-size: 0.6rem;">${escapeModelHtml(tag)}</span>`).join('') || ''}
+                        </div>
+                        <i class="bi bi-chevron-right text-muted"></i>
+                    </div>
+                `;
+                resultsContainer.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        } else {
+            resultsContainer.innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-emoji-frown display-4"></i>
+                    <p class="mt-2">No characters found</p>
+                    <small>Try a different search term</small>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('[ImageDashboard] Error searching characters:', error);
+        resultsContainer.innerHTML = `
+            <div class="text-center text-danger py-4">
+                <i class="bi bi-exclamation-triangle display-4"></i>
+                <p class="mt-2">Failed to search characters</p>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Select a character for gallery addition
+ */
+function selectCharacterForGallery(element) {
+    // Remove selection from all cards
+    document.querySelectorAll('.character-result-card').forEach(card => {
+        card.style.border = '1px solid rgba(255,255,255,0.1)';
+        card.style.background = 'rgba(255,255,255,0.05)';
+    });
+    
+    // Select this card
+    element.style.border = '2px solid #0d6efd';
+    element.style.background = 'rgba(13,110,253,0.1)';
+    
+    selectedCharacterForGallery = {
+        chatId: element.dataset.chatId,
+        name: element.dataset.chatName
+    };
+    
+    // Enable confirm button
+    document.getElementById('confirmAddToGalleryBtn').disabled = false;
+}
+
+/**
+ * Confirm adding image to character gallery
+ */
+async function confirmAddToGallery() {
+    if (!selectedCharacterForGallery || !currentCharacterImageData) {
+        showNotification('Please select a character', 'error');
+        return;
+    }
+    
+    const btn = document.getElementById('confirmAddToGalleryBtn');
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Adding...';
+    
+    try {
+        const response = await fetch('/api/dashboard/add-image-to-gallery', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chatId: selectedCharacterForGallery.chatId,
+                imageUrl: currentCharacterImageData.imageUrl,
+                prompt: currentCharacterImageData.prompt,
+                nsfw: false
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification(`Image added to ${selectedCharacterForGallery.name}'s gallery!`, 'success');
+            
+            // Close modal
+            addToGalleryModal?.hide();
+        } else {
+            throw new Error(data.error || 'Failed to add image');
+        }
+    } catch (error) {
+        console.error('[ImageDashboard] Error adding to gallery:', error);
+        showNotification('Failed to add image: ' + error.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-plus-lg me-1"></i>Add to Gallery';
+    }
+}
+
+// Add enter key handler for character search
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('characterSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                searchCharactersForGallery();
+            }
+        });
+    }
+});

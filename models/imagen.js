@@ -632,7 +632,40 @@ async function generateImg({
     }
 
     // Send request to Novita and get taskId
-    const novitaResult = await fetchNovitaMagic(requestData, flux, hunyuan);
+    // For Hunyuan: image_num is not supported, so we need multiple API calls
+    const hunyuanImageCount = hunyuan ? (image_num || 1) : 1;
+    let novitaResult;
+    let hunyuanTaskIds = [];
+    
+    if (hunyuan && hunyuanImageCount > 1) {
+      // Hunyuan doesn't support image_num, so make multiple API calls
+      console.log(`[generateImg] Hunyuan: Making ${hunyuanImageCount} separate API calls for multiple images`);
+      for (let i = 0; i < hunyuanImageCount; i++) {
+        // Use different seeds for each image to get variety
+        const seedForCall = requestData.seed === -1 ? -1 : (requestData.seed || 0) + i;
+        const callData = { ...requestData, seed: seedForCall };
+        const taskId = await fetchNovitaMagic(callData, flux, hunyuan);
+        if (taskId) {
+          hunyuanTaskIds.push(taskId);
+          console.log(`[generateImg] Hunyuan image ${i + 1}/${hunyuanImageCount} task started: ${taskId}`);
+        } else {
+          console.error(`[generateImg] Hunyuan image ${i + 1}/${hunyuanImageCount} failed to start`);
+        }
+      }
+      
+      if (hunyuanTaskIds.length === 0) {
+        fastify.sendNotificationToUser(userId, 'showNotification', {
+          message: 'Failed to initiate image generation',
+          icon: 'error'
+        });
+        return;
+      }
+      
+      // Use the first task ID as the primary result
+      novitaResult = hunyuanTaskIds[0];
+    } else {
+      novitaResult = await fetchNovitaMagic(requestData, flux, hunyuan);
+    }
 
     if (!novitaResult) {
         fastify.sendNotificationToUser(userId, 'showNotification', {
@@ -691,8 +724,16 @@ async function generateImg({
         createdAt: new Date(),
         updatedAt: new Date(),
         shouldAutoMerge,
-        enableMergeFace: enableMergeFace || false
+        enableMergeFace: enableMergeFace || false,
+        isHunyuan: hunyuan || false
     };
+    
+    // For Hunyuan with multiple images, store all task IDs
+    if (hunyuan && hunyuanTaskIds.length > 1) {
+        taskData.hunyuanTaskIds = hunyuanTaskIds;
+        taskData.hunyuanExpectedCount = hunyuanTaskIds.length;
+        taskData.hunyuanCompletedCount = 0;
+    }
     
     // Store original request data for character creation tasks with merge face enabled
     if (chatCreation && enableMergeFace && image_base64) {
@@ -712,12 +753,53 @@ async function generateImg({
     }
 
     await db.collection('tasks').insertOne(taskData);
+    
+    // For Hunyuan with multiple images, also create task records for additional task IDs
+    // so the webhook handler can process them individually
+    if (hunyuan && hunyuanTaskIds.length > 1) {
+        for (let i = 1; i < hunyuanTaskIds.length; i++) {
+            const additionalTaskData = {
+                taskId: hunyuanTaskIds[i],
+                type: imageType,
+                task_type: 'txt2img',
+                status: 'pending',
+                prompt: prompt,
+                title: newTitle,
+                slug: `${taskSlug}-${i + 1}`,
+                negative_prompt: image_request.negative_prompt,
+                aspectRatio: aspectRatio,
+                userId: new ObjectId(userId),
+                chatId: new ObjectId(chatId),
+                userChatId: userChatId ? new ObjectId(userChatId) : null,
+                blur: image_request.blur,
+                chatCreation,
+                placeholderId,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                shouldAutoMerge,
+                enableMergeFace: enableMergeFace || false,
+                isHunyuan: true,
+                hunyuanParentTaskId: novitaTaskId, // Link to the primary task
+                hunyuanImageIndex: i + 1
+            };
+            
+            // Store original request data for character creation tasks with merge face enabled
+            if (chatCreation && enableMergeFace && image_base64) {
+                additionalTaskData.originalRequestData = {
+                    image_base64: image_base64
+                };
+            }
+            
+            await db.collection('tasks').insertOne(additionalTaskData);
+            console.log(`[generateImg] Created task record for Hunyuan image ${i + 1}: ${hunyuanTaskIds[i]}`);
+        }
+    }
 
     if(chatCreation){
       fastify.sendNotificationToUser(userId, 'showNotification', { message:translations.character_image_generation_started , icon:'success' });
     }
 
-    return { taskId: novitaTaskId };
+    return { taskId: novitaTaskId, hunyuanTaskIds: hunyuan && hunyuanTaskIds.length > 1 ? hunyuanTaskIds : undefined };
 }
 
 // Add this function to your code
@@ -1755,11 +1837,11 @@ async function fetchNovitaMagic(data, flux = false, hunyuan = false) {
       requestBody.data = data;
     } else if (hunyuan) {
       // Hunyuan Image 3 uses a different request format
+      // Note: Hunyuan does NOT support image_num - only generates 1 image per call
       requestBody.data = {
         prompt: data.prompt,
         size: '768*1024', // Portrait orientation for character creation
         seed: data.seed || -1,
-        image_num: data.image_num || 4,
         extra: {
           webhook: {
             url: webhookUrl

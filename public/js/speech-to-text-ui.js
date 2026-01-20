@@ -150,28 +150,35 @@ class SpeechToTextUI {
         const button = document.getElementById(this.buttonId);
         if (!button) return;
         
+        // Remove all state classes
         button.classList.remove('recording', 'processing');
+        
+        // Get the label element if it exists
+        const labelSpan = button.querySelector('.tool-label');
+        const labelText = labelSpan ? labelSpan.outerHTML : '';
         
         switch (state) {
             case 'recording':
                 button.classList.add('recording');
-                button.innerHTML = '<i class="bi bi-mic-fill"></i>';
+                button.innerHTML = '<i class="bi bi-mic-fill"></i>' + labelText;
                 button.title = this.translations.stopRecording;
-                button.style.backgroundColor = '#dc3545';
-                button.style.color = 'white';
+                // Let CSS handle the styling
+                button.style.backgroundColor = '';
+                button.style.color = '';
                 break;
                 
             case 'processing':
                 button.classList.add('processing');
-                button.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+                button.innerHTML = '<i class="bi bi-arrow-repeat"></i>' + labelText;
                 button.title = this.translations.processing;
-                button.style.backgroundColor = '#ffc107';
-                button.style.color = 'black';
+                // Let CSS handle the styling
+                button.style.backgroundColor = '';
+                button.style.color = '';
                 break;
                 
             case 'idle':
             default:
-                button.innerHTML = '<i class="bi bi-mic"></i>';
+                button.innerHTML = '<i class="bi bi-mic"></i>' + labelText;
                 button.title = this.translations.startRecording;
                 button.style.backgroundColor = '';
                 button.style.color = '';
@@ -260,8 +267,12 @@ class SpeechToTextUI {
         // Reset button state but don't remove it since it's part of existing UI
         const button = document.getElementById(this.buttonId);
         if (button) {
+            // Preserve the label if it exists
+            const labelSpan = button.querySelector('.tool-label');
+            const labelText = labelSpan ? labelSpan.outerHTML : '';
+            
             button.classList.remove('recording', 'processing');
-            button.innerHTML = '<i class="bi bi-mic"></i>';
+            button.innerHTML = '<i class="bi bi-mic"></i>' + labelText;
             button.style.backgroundColor = '';
             button.style.color = '';
         }

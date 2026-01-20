@@ -1,61 +1,107 @@
 /* Speech to Text Feature Styles */
 
-.speech-btn {
+/* Voice Input Button - Base State */
+#voice-input-toggle {
     position: relative;
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-    border: none;
-    color: white;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#voice-input-toggle i {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Recording State - Pulsing Red Glow */
+#voice-input-toggle.recording {
+    background: rgba(239, 68, 68, 0.15) !important;
+    border-color: rgba(239, 68, 68, 0.4) !important;
+    animation: recording-pulse 1.5s ease-in-out infinite;
+}
+
+#voice-input-toggle.recording i {
+    color: #ef4444 !important;
+    animation: mic-pulse 1s ease-in-out infinite;
+}
+
+#voice-input-toggle.recording::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
     border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+    background: radial-gradient(circle, rgba(239, 68, 68, 0.3) 0%, transparent 70%);
+    animation: ripple-out 1.5s ease-out infinite;
+    pointer-events: none;
 }
 
-.speech-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
-    background: linear-gradient(135deg, #0056b3 0%, #007bff 100%);
+/* Processing State - Animated Gradient */
+#voice-input-toggle.processing {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%) !important;
+    border-color: rgba(99, 102, 241, 0.4) !important;
 }
 
-.speech-btn:active {
-    transform: translateY(0);
+#voice-input-toggle.processing i {
+    color: #8b5cf6 !important;
+    animation: processing-spin 1s linear infinite;
 }
 
-.speech-btn.recording {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    animation: pulse 1.5s infinite;
-    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+#voice-input-toggle.processing::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    border-top-color: #8b5cf6;
+    animation: spinner 0.8s linear infinite;
+    pointer-events: none;
 }
 
-.speech-btn.processing {
-    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
-    animation: spin 1s linear infinite;
-    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
-}
-
-@keyframes pulse {
-    0% {
-        transform: scale(1);
-        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+/* Animations */
+@keyframes recording-pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
     }
     50% {
-        transform: scale(1.05);
-        box-shadow: 0 6px 25px rgba(220, 53, 69, 0.6);
-    }
-    100% {
-        transform: scale(1);
-        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
     }
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+@keyframes mic-pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.15);
+        opacity: 0.8;
+    }
+}
+
+@keyframes ripple-out {
+    0% {
+        transform: scale(0.8);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.4);
+        opacity: 0;
+    }
+}
+
+@keyframes processing-spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes spinner {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Recording Wave Animation */

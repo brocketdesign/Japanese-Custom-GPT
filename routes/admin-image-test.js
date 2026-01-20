@@ -21,7 +21,7 @@ const {
   getImageRating
 } = require('../models/admin-image-test-utils');
 const { removeUserPoints, getUserPoints } = require('../models/user-points-utils');
-const { PRICING_CONFIG, getImageGenerationCost } = require('../config/pricing');
+const { PRICING_CONFIG, getImageGenerationCost, getFaceMergeCost } = require('../config/pricing');
 
 async function routes(fastify, options) {
   
@@ -115,6 +115,7 @@ async function routes(fastify, options) {
         modelConfigs: MODEL_CONFIGS,
         userPoints,
         imageCostPerUnit: PRICING_CONFIG.IMAGE_GENERATION.BASE_COST_PER_IMAGE,
+        faceMergeCost: PRICING_CONFIG.FACE_MERGE.COST,
         isAdmin
       });
     } catch (error) {
@@ -234,7 +235,7 @@ async function routes(fastify, options) {
             
             // Add face tool parameters
             if (generationMode === 'face') {
-              if (modelId === 'merge-face') {
+              if (modelId === 'merge-face' || modelId === 'merge-face-segmind') {
                 baseParams.face_image_file = face_image_file;
                 baseParams.image_file = image_file;
               } else if (modelId === 'reimagine') {

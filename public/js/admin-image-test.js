@@ -40,16 +40,43 @@ function updateCostDisplay() {
     const selectedSDModels = getSelectedSDModels();
     const imagesPerModel = parseInt(document.getElementById('imagesPerModel')?.value) || 1;
     
-    const totalModels = selectedModels.length + selectedSDModels.length;
-    const totalImages = totalModels * imagesPerModel;
-    const totalCost = totalImages * state.imageCostPerUnit;
-    
     // Update display elements
     const totalCostDisplay = document.getElementById('totalCostDisplay');
     const imageCountDisplay = document.getElementById('imageCountDisplay');
     const userPointsDisplay = document.getElementById('userPointsDisplay');
     const costSection = document.getElementById('costDisplaySection');
     const costStatusBadge = document.getElementById('costStatusBadge');
+    const costPerImageDisplay = document.getElementById('costPerImage');
+    
+    let totalCost, totalImages, costPerUnit;
+    
+    // For face mode, calculate cost differently
+    if (state.generationMode === 'face') {
+        // Face merge cost is fixed (30 points per PRICING_CONFIG)
+        const faceMergeCost = window.PRICING?.faceMergeCost || 30;
+        const faceModelsSelected = selectedModels.length;
+        
+        // If no face models selected, default to 1 (auto-select first model)
+        totalImages = faceModelsSelected > 0 ? faceModelsSelected : 1;
+        costPerUnit = faceMergeCost;
+        totalCost = totalImages * faceMergeCost;
+        
+        // Update cost per image display for face mode
+        if (costPerImageDisplay) {
+            costPerImageDisplay.textContent = faceMergeCost;
+        }
+    } else {
+        // Standard image generation cost
+        const totalModels = selectedModels.length + selectedSDModels.length;
+        totalImages = totalModels * imagesPerModel;
+        costPerUnit = state.imageCostPerUnit;
+        totalCost = totalImages * costPerUnit;
+        
+        // Reset cost per image display for non-face modes
+        if (costPerImageDisplay) {
+            costPerImageDisplay.textContent = state.imageCostPerUnit;
+        }
+    }
     
     if (totalCostDisplay) {
         totalCostDisplay.textContent = totalCost;
@@ -72,20 +99,41 @@ function updateCostDisplay() {
         }
     }
     
-    // Update status badge
+    // Update status badge based on mode and readiness
     if (costStatusBadge) {
-        if (totalCost === 0) {
-            costStatusBadge.innerHTML = '<i class="bi bi-hand-index me-1"></i>Select models';
-            costStatusBadge.style.background = 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)';
-            costStatusBadge.style.color = '#fff';
-        } else if (hasEnoughPoints) {
-            costStatusBadge.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Ready';
-            costStatusBadge.style.background = 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)';
-            costStatusBadge.style.color = '#000';
+        if (state.generationMode === 'face') {
+            // For face mode, check if images are uploaded
+            const hasFaceImage = !!state.faceImageDataUrl;
+            const hasTargetImage = !!state.targetImageDataUrl;
+            
+            if (!hasFaceImage || !hasTargetImage) {
+                costStatusBadge.innerHTML = '<i class="bi bi-upload me-1"></i>Upload images';
+                costStatusBadge.style.background = 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)';
+                costStatusBadge.style.color = '#fff';
+            } else if (!hasEnoughPoints) {
+                costStatusBadge.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>Need more points';
+                costStatusBadge.style.background = 'linear-gradient(135deg, #f87171 0%, #ef4444 100%)';
+                costStatusBadge.style.color = '#fff';
+            } else {
+                costStatusBadge.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Ready';
+                costStatusBadge.style.background = 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)';
+                costStatusBadge.style.color = '#000';
+            }
         } else {
-            costStatusBadge.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>Need more points';
-            costStatusBadge.style.background = 'linear-gradient(135deg, #f87171 0%, #ef4444 100%)';
-            costStatusBadge.style.color = '#fff';
+            // Standard mode status
+            if (totalCost === 0) {
+                costStatusBadge.innerHTML = '<i class="bi bi-hand-index me-1"></i>Select models';
+                costStatusBadge.style.background = 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)';
+                costStatusBadge.style.color = '#fff';
+            } else if (hasEnoughPoints) {
+                costStatusBadge.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Ready';
+                costStatusBadge.style.background = 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)';
+                costStatusBadge.style.color = '#000';
+            } else {
+                costStatusBadge.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>Need more points';
+                costStatusBadge.style.background = 'linear-gradient(135deg, #f87171 0%, #ef4444 100%)';
+                costStatusBadge.style.color = '#fff';
+            }
         }
     }
     
@@ -200,13 +248,54 @@ function handleGenerationModeChange(event) {
     const img2imgModels = document.getElementById('img2imgModelsSection');
     const faceModels = document.getElementById('faceModelsSection');
     
-    // Hide all sections first
+    // Sections to hide in face mode (not relevant for face tools)
+    const userCustomModelsSection = document.getElementById('userCustomModelsSection');
+    const sdModelsSection = document.getElementById('sdModelsSection');
+    const stylePresetSection = document.getElementById('stylePresetSection');
+    const sizeSelectionSection = document.getElementById('sizeSelectionSection');
+    const imagesPerModelSection = document.getElementById('imagesPerModelSection');
+    const sdParamsSection = document.getElementById('sdParamsSection');
+    const promptInputSection = document.getElementById('promptInputSection');
+    const stylePresetPreview = document.getElementById('stylePresetPreview');
+    const noSystemSDModelsAlert = document.getElementById('noSystemSDModelsAlert');
+    
+    // Elements inside model selection section that should be hidden in face mode
+    const addCustomModelBtn = document.getElementById('addCustomModelBtn');
+    const selectAllModelsBtn = document.querySelector('#modelSelectionSection .btn-outline-light');
+    const modelSelectionLabel = document.querySelector('#modelSelectionSection > label');
+    
+    // Hide all mode-specific sections first
     if (img2imgUpload) img2imgUpload.style.display = 'none';
     if (editStrength) editStrength.style.display = 'none';
     if (mergeFaceSection) mergeFaceSection.style.display = 'none';
     if (txt2imgModels) txt2imgModels.style.display = 'none';
     if (img2imgModels) img2imgModels.style.display = 'none';
     if (faceModels) faceModels.style.display = 'none';
+    
+    // Determine if face mode (hide generation-specific options)
+    const isFaceMode = mode === 'face';
+    
+    // Show/hide sections not relevant to face tools
+    if (userCustomModelsSection) userCustomModelsSection.style.display = isFaceMode ? 'none' : 'block';
+    if (sdModelsSection) sdModelsSection.style.display = isFaceMode ? 'none' : 'block';
+    if (stylePresetSection) stylePresetSection.style.display = isFaceMode ? 'none' : 'block';
+    if (sizeSelectionSection) sizeSelectionSection.style.display = isFaceMode ? 'none' : 'block';
+    if (imagesPerModelSection) imagesPerModelSection.style.display = isFaceMode ? 'none' : 'block';
+    if (sdParamsSection) sdParamsSection.style.display = isFaceMode ? 'none' : sdParamsSection.style.display; // Keep original logic for SD params
+    if (promptInputSection) promptInputSection.style.display = isFaceMode ? 'none' : 'block';
+    if (stylePresetPreview) stylePresetPreview.style.display = isFaceMode ? 'none' : stylePresetPreview.style.display; // Keep original logic
+    if (noSystemSDModelsAlert) noSystemSDModelsAlert.style.display = isFaceMode ? 'none' : 'block';
+    
+    // Hide/show elements inside model selection section for face mode
+    if (addCustomModelBtn) addCustomModelBtn.style.display = isFaceMode ? 'none' : 'inline-block';
+    if (selectAllModelsBtn) selectAllModelsBtn.style.display = isFaceMode ? 'none' : 'inline-block';
+    if (modelSelectionLabel) {
+        // Update the label text for face mode
+        const labelSpan = modelSelectionLabel.querySelector('span');
+        if (labelSpan) {
+            labelSpan.textContent = isFaceMode ? 'Select Face Tool' : 'Select Models to Test';
+        }
+    }
     
     // Show relevant sections based on mode
     switch (mode) {
@@ -221,13 +310,20 @@ function handleGenerationModeChange(event) {
         case 'face':
             if (mergeFaceSection) mergeFaceSection.style.display = 'block';
             if (faceModels) faceModels.style.display = 'block';
+            // Auto-select first face model (merge-face) for convenience
+            const firstFaceModel = document.querySelector('#faceModelsSection .model-checkbox');
+            if (firstFaceModel && !firstFaceModel.classList.contains('selected')) {
+                firstFaceModel.classList.add('selected');
+            }
             break;
     }
     
-    // Clear model selections
-    document.querySelectorAll('.model-checkbox.selected').forEach(cb => {
-        cb.classList.remove('selected');
-    });
+    // Clear model selections (but not for face mode since we auto-select)
+    if (mode !== 'face') {
+        document.querySelectorAll('.model-checkbox.selected').forEach(cb => {
+            cb.classList.remove('selected');
+        });
+    }
     
     updateCostDisplay();
 }
@@ -364,6 +460,9 @@ function handleImageUpload(fileInput, type) {
         }
         
         showNotification('Image uploaded successfully', 'success');
+        
+        // Update cost display (for face mode readiness check)
+        updateCostDisplay();
     };
     reader.readAsDataURL(file);
 }
@@ -376,6 +475,7 @@ function clearImg2ImgUpload() {
     document.getElementById('img2imgInput').value = '';
     document.querySelector('#img2imgUploadArea .upload-placeholder')?.classList.remove('d-none');
     document.getElementById('img2imgPreview')?.classList.add('d-none');
+    updateCostDisplay();
 }
 
 /**
@@ -386,6 +486,7 @@ function clearFaceImageUpload() {
     document.getElementById('faceImageInput').value = '';
     document.querySelector('#faceImageUploadArea .upload-placeholder')?.classList.remove('d-none');
     document.getElementById('faceImagePreview')?.classList.add('d-none');
+    updateCostDisplay();
 }
 
 /**
@@ -396,6 +497,7 @@ function clearTargetImageUpload() {
     document.getElementById('targetImageInput').value = '';
     document.querySelector('#targetImageUploadArea .upload-placeholder')?.classList.remove('d-none');
     document.getElementById('targetImagePreview')?.classList.add('d-none');
+    updateCostDisplay();
 }
 
 /**
@@ -2620,6 +2722,7 @@ function openCreateCharacterModal() {
     document.getElementById('characterNameInput').value = '';
     document.getElementById('characterPersonalityInput').value = '';
     document.getElementById('characterNsfwCheck').checked = false;
+    document.getElementById('useImageAsBaseFaceCheck').checked = false;
     
     // Close preview modal and open character creation modal
     bootstrap.Modal.getInstance(previewModal)?.hide();
@@ -2644,6 +2747,7 @@ async function confirmCreateCharacter() {
     const personalityInput = document.getElementById('characterPersonalityInput').value.trim();
     const language = document.getElementById('characterLanguageSelect').value;
     const nsfw = document.getElementById('characterNsfwCheck').checked;
+    const useImageAsBaseFace = document.getElementById('useImageAsBaseFaceCheck').checked;
     
     // Show loading state
     btn.disabled = true;
@@ -2659,7 +2763,8 @@ async function confirmCreateCharacter() {
                 personalityInput: personalityInput,
                 name: name || undefined,
                 language: language,
-                nsfw: nsfw
+                nsfw: nsfw,
+                useImageAsBaseFace: useImageAsBaseFace
             })
         });
         

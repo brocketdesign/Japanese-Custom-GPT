@@ -201,24 +201,39 @@ const MODEL_CONFIGS = {
     name: 'Reimagine',
     endpoint: 'https://api.novita.ai/v3/async/reimagine',
     async: true,
-    category: 'img2img',
-    supportsImg2Img: true,
+    category: 'face', // Face tools category - generates variations of a single image
+    supportsImg2Img: false, // Not a standard img2img model
     requiresImage: true,
     defaultParams: {},
     supportedParams: ['image_file'],
     description: 'Generate creative variations of a single image without prompts'
   },
   'merge-face': {
-    name: 'Merge Face',
+    name: 'Merge Face (Novita)',
     endpoint: 'https://api.novita.ai/v3/merge-face',
     async: false, // Synchronous API
     category: 'face',
-    supportsImg2Img: true,
+    supportsImg2Img: false, // Not a standard img2img model - this is a face merging tool
     requiresImage: true,
     requiresTwoImages: true,
     defaultParams: {},
     supportedParams: ['face_image_file', 'image_file', 'extra'],
-    description: 'Combine features from two faces into one image'
+    description: 'Combine features from two faces into one image (Novita AI)'
+  },
+  'merge-face-segmind': {
+    name: 'Merge Face (Segmind)',
+    endpoint: 'https://api.segmind.com/v1/faceswap-v5',
+    async: false, // Synchronous API
+    category: 'face',
+    supportsImg2Img: false,
+    requiresImage: true,
+    requiresTwoImages: true,
+    defaultParams: {
+      image_format: 'png',
+      quality: 95
+    },
+    supportedParams: ['source_image', 'target_image', 'seed', 'image_format', 'quality'],
+    description: 'FaceSwap V5 - Advanced face swapping using Segmind API'
   }
 };
 
@@ -387,6 +402,30 @@ async function initializeModelTest(modelId, params) {
         requestBody.extra = params.extra;
       }
     }
+    // Handle Merge Face Segmind (requires two images)
+    else if (modelId === 'merge-face-segmind') {
+      // Segmind API requires image URLs, not base64 data
+      // We need to upload the images to S3 first
+      let sourceImage = params.face_image_file;
+      let targetImage = params.image_file;
+      
+      // Upload images to S3 and get URLs
+      console.log(`[AdminImageTest] 📤 Uploading source image to S3 for Segmind...`);
+      const sourceImageUrl = await uploadTestImageToS3(sourceImage, 'face_source');
+      console.log(`[AdminImageTest] ✅ Source image uploaded: ${sourceImageUrl.substring(0, 50)}...`);
+      
+      console.log(`[AdminImageTest] 📤 Uploading target image to S3 for Segmind...`);
+      const targetImageUrl = await uploadTestImageToS3(targetImage, 'face_target');
+      console.log(`[AdminImageTest] ✅ Target image uploaded: ${targetImageUrl.substring(0, 50)}...`);
+      
+      requestBody = {
+        source_image: sourceImageUrl,
+        target_image: targetImageUrl,
+        seed: Math.floor(Math.random() * Number.MAX_SAFE_INTEGER),
+        image_format: 'png',
+        quality: 95
+      };
+    }
     // Handle Kontext models (img2img focused)
     else if (modelId.startsWith('flux-kontext')) {
       requestBody = {
@@ -544,16 +583,38 @@ async function initializeModelTest(modelId, params) {
     // Sync APIs like Seedream and Merge Face need longer timeout (up to 5 minutes)
     const timeout = config.async ? 120000 : 300000;
     
-    const response = await axios.post(config.endpoint, requestBody, {
-      headers: {
+    // Determine headers based on model provider
+    let headers;
+    if (modelId === 'merge-face-segmind') {
+      headers = {
+        'x-api-key': process.env.SEGMIND_API_KEY,
+        'Content-Type': 'application/json'
+      };
+    } else {
+      headers = {
         'Authorization': `Bearer ${process.env.NOVITA_API_KEY}`,
         'Content-Type': 'application/json'
-      },
+      };
+    }
+    
+    // Segmind returns image as arraybuffer
+    const responseConfig = {
+      headers,
       timeout
-    });
+    };
+    
+    if (modelId === 'merge-face-segmind') {
+      responseConfig.responseType = 'arraybuffer';
+    }
+    
+    const response = await axios.post(config.endpoint, requestBody, responseConfig);
 
     console.log(`[AdminImageTest] Response status: ${response.status}`);
-    console.log(`[AdminImageTest] Response data:`, JSON.stringify(response.data, null, 2));
+    
+    // Don't log arraybuffer data
+    if (modelId !== 'merge-face-segmind') {
+      console.log(`[AdminImageTest] Response data:`, JSON.stringify(response.data, null, 2));
+    }
 
     if (response.status !== 200) {
       const errorMsg = response.data?.message || response.data?.error || `API returned status ${response.status}`;
@@ -585,8 +646,21 @@ async function initializeModelTest(modelId, params) {
       // Handle different response formats for different sync APIs
       let images = [];
       
-      // Merge Face returns image_file (raw base64) and image_type
-      if (modelId === 'merge-face') {
+      // Segmind Merge Face returns image as arraybuffer
+      if (modelId === 'merge-face-segmind') {
+        console.log(`[AdminImageTest] 🔍 Segmind Merge Face - processing arraybuffer response`);
+        if (response.data && response.data.byteLength > 0) {
+          const imageBuffer = Buffer.from(response.data);
+          const base64Image = imageBuffer.toString('base64');
+          const dataUrl = `data:image/png;base64,${base64Image}`;
+          images = [dataUrl];
+          console.log(`[AdminImageTest] ✅ Segmind image processed (${imageBuffer.length} bytes)`);
+        } else {
+          console.log(`[AdminImageTest] ⚠️ No image data in Segmind response`);
+        }
+      }
+      // Novita Merge Face returns image_file (raw base64) and image_type
+      else if (modelId === 'merge-face') {
         console.log(`[AdminImageTest] 🔍 Merge Face response keys:`, Object.keys(response.data));
         if (response.data.image_file) {
           // Convert raw base64 to data URL format

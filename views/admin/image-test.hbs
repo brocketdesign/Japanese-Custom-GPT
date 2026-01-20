@@ -148,10 +148,10 @@
                         </div>
 
                         <!-- Model Selection -->
-                        <div class="mb-4">
+                        <div class="mb-4" id="modelSelectionSection">
                             <label class="form-label text-white fw-bold d-flex justify-content-between align-items-center">
                                 <span>Select Models to Test</span>
-                                <button type="button" class="btn btn-sm btn-outline-info" onclick="openUserModelSearchModal()" title="Add Custom SD Models">
+                                <button type="button" class="btn btn-sm btn-outline-info" onclick="openUserModelSearchModal()" title="Add Custom SD Models" id="addCustomModelBtn">
                                     <i class="bi bi-plus-lg me-1"></i>Add Custom Model
                                 </button>
                             </label>
@@ -242,30 +242,6 @@
                                 </div>
                                 {{/if}}
                                 {{/each}}
-                                
-                                <!-- Reimagine (special case) -->
-                                {{#each models}}
-                                {{#if (eq this.id "reimagine")}}
-                                <div class="form-check model-checkbox mb-2">
-                                    <input class="form-check-input face-model-checkbox" type="checkbox" 
-                                           value="{{this.id}}" 
-                                           id="face-model-{{this.id}}" 
-                                           data-model-name="{{this.name}}"
-                                           data-category="img2img"
-                                           data-requires-image="true">
-                                    <label class="form-check-label text-white" for="face-model-{{this.id}}">
-                                        <span class="fw-semibold">{{this.name}}</span>
-                                        {{#if this.async}}
-                                        <span class="badge bg-info ms-1">Async</span>
-                                        {{else}}
-                                        <span class="badge bg-success ms-1">Sync</span>
-                                        {{/if}}
-                                        <br>
-                                        <small class="text-muted">{{this.description}}</small>
-                                    </label>
-                                </div>
-                                {{/if}}
-                                {{/each}}
                             </div>
                             
                             <button class="btn btn-sm btn-outline-light mt-2" onclick="selectAllModels()">
@@ -289,7 +265,7 @@
 
                         <!-- SD Model Selection -->
                         {{#if activeSDModels.length}}
-                        <div class="mb-4">
+                        <div class="mb-4" id="sdModelsSection">
                             <label class="form-label text-white fw-bold">Select SD Models to Test</label>
                             <div class="model-selection" style="max-height: 400px;">
                                 <!-- Anime Style Models -->
@@ -410,7 +386,7 @@
                         {{/if}}
 
                         <!-- Style Preset -->
-                        <div class="mb-4">
+                        <div class="mb-4" id="stylePresetSection">
                             <label class="form-label text-white fw-bold">Style Preset</label>
                             <div class="segmented-control" role="group">
                                 <input type="radio" class="btn-check" name="stylePreset" id="style-none" value="" checked>
@@ -434,7 +410,7 @@
                         </div>
 
                         <!-- Size Selection -->
-                        <div class="mb-4">
+                        <div class="mb-4" id="sizeSelectionSection">
                             <label class="form-label text-white fw-bold">Image Size</label>
                             <select class="form-select bg-secondary text-white border-secondary" id="sizeSelect">
                                 {{#each sizeOptions}}
@@ -449,7 +425,7 @@
                         </div>
 
                         <!-- Number of Images per Model -->
-                        <div class="mb-4">
+                        <div class="mb-4" id="imagesPerModelSection">
                             <label class="form-label text-white fw-bold">Images per Model</label>
                             <select class="form-select bg-secondary text-white border-secondary" id="imagesPerModel">
                                 <option value="1" selected>1 image</option>
@@ -507,7 +483,7 @@
                         </div>
 
                         <!-- Prompt Input -->
-                        <div class="mb-4">
+                        <div class="mb-4" id="promptInputSection">
                             <label class="form-label text-white fw-bold">Base Prompt</label>
                             <textarea class="form-control bg-secondary text-white border-secondary" 
                                       id="promptInput" 
@@ -983,6 +959,13 @@
                                     Mark as NSFW
                                 </label>
                             </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="useImageAsBaseFaceCheck">
+                                <label class="form-check-label" for="useImageAsBaseFaceCheck">
+                                    <i class="bi bi-person-bounding-box me-1"></i>Use this Image as Base for the Face
+                                </label>
+                                <small class="d-block text-muted mt-1">When enabled, this face will be automatically merged into future generated images for this character</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1046,6 +1029,7 @@
         // Pricing configuration passed from server
         window.PRICING = {
             imageCostPerUnit: {{imageCostPerUnit}},
+            faceMergeCost: {{faceMergeCost}},
             userPoints: {{userPoints}}
         };
         // User models data from server (if we want to preload)

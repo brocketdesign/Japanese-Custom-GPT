@@ -1526,6 +1526,10 @@
             
             this.isGeneratingImage = true;
             
+            // Reset image tracking for new generation
+            this.characterData.generatedImages = [];
+            window.receivedCharacterImages = new Set();
+            
             // Update buttons
             if (generateBtn) {
                 generateBtn.disabled = true;
@@ -1759,8 +1763,10 @@
         /**
          * Called when images are generated (handles multiple images)
          * This is triggered by WebSocket (via webhook) or fallback polling
+         * @param {string[]} imageUrls - Array of image URLs to add
+         * @param {boolean} append - If true, append to existing images instead of replacing
          */
-        onImagesGenerated(imageUrls) {
+        onImagesGenerated(imageUrls, append = false) {
             // Stop any active polling since images have arrived
             this.stopPolling();
             
@@ -1772,6 +1778,7 @@
             const nextBtn = document.getElementById('nextBtn');
             
             console.log('[CharacterCreation] Images generated (via webhook/WebSocket):', imageUrls);
+            console.log('[CharacterCreation] Append mode:', append);
             console.log('[CharacterCreation] Unique URLs:', [...new Set(imageUrls)].length, 'of', imageUrls.length);
             
             // Log each URL for debugging
@@ -1779,39 +1786,99 @@
                 console.log(`[CharacterCreation] Image ${idx + 1}: ${url.substring(url.lastIndexOf('/') + 1)}`);
             });
             
-            // Store all images
-            this.characterData.generatedImages = imageUrls;
+            // Initialize generatedImages array if needed
+            if (!this.characterData.generatedImages) {
+                this.characterData.generatedImages = [];
+            }
             
-            // Clear the grid and render images (replaces placeholder)
+            // Filter out duplicates before adding
+            const existingUrls = new Set(this.characterData.generatedImages);
+            const newUrls = imageUrls.filter(url => !existingUrls.has(url));
+            
+            if (newUrls.length === 0) {
+                console.log('[CharacterCreation] No new images to add (all duplicates)');
+                return;
+            }
+            
+            // Append or replace based on mode
+            if (append) {
+                this.characterData.generatedImages = [...this.characterData.generatedImages, ...newUrls];
+            } else {
+                this.characterData.generatedImages = newUrls;
+            }
+            
+            const allImages = this.characterData.generatedImages;
+            console.log('[CharacterCreation] Total images now:', allImages.length);
+            
+            // Render all images to the grid
             if (grid) {
-                grid.innerHTML = imageUrls.map((url, index) => `
-                    <div class="generated-image-item${index === 0 ? ' selected' : ''}" data-image-url="${url}">
-                        <img src="${url}" alt="Generated Character ${index + 1}" onerror="this.parentElement.classList.add('error')">
-                        <div class="image-overlay">
-                            <i class="bi bi-check-circle-fill"></i>
-                        </div>
-                    </div>
-                `).join('');
+                // Remove placeholder if it exists
+                const existingPlaceholder = grid.querySelector('#imagePlaceholder');
+                if (existingPlaceholder) {
+                    existingPlaceholder.remove();
+                }
                 
-                // Bind click events to all images
-                grid.querySelectorAll('.generated-image-item').forEach(item => {
-                    item.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        this.selectImage(e.currentTarget);
+                if (append && newUrls.length > 0) {
+                    // Append only new images
+                    const startIndex = allImages.length - newUrls.length;
+                    const newHtml = newUrls.map((url, i) => {
+                        const index = startIndex + i;
+                        const isSelected = allImages.length === 1 && index === 0; // Only auto-select if it's the first image ever
+                        return `
+                            <div class="generated-image-item${isSelected ? ' selected' : ''}" data-image-url="${url}">
+                                <img src="${url}" alt="Generated Character ${index + 1}" onerror="this.parentElement.classList.add('error')">
+                                <div class="image-overlay">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    grid.insertAdjacentHTML('beforeend', newHtml);
+                    
+                    // Bind click events to new images only
+                    const newItems = grid.querySelectorAll('.generated-image-item:not([data-bound])');
+                    newItems.forEach(item => {
+                        item.setAttribute('data-bound', 'true');
+                        item.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            this.selectImage(e.currentTarget);
+                        });
                     });
-                });
+                } else {
+                    // Full render (replace all)
+                    grid.innerHTML = allImages.map((url, index) => `
+                        <div class="generated-image-item${index === 0 ? ' selected' : ''}" data-image-url="${url}" data-bound="true">
+                            <img src="${url}" alt="Generated Character ${index + 1}" onerror="this.parentElement.classList.add('error')">
+                            <div class="image-overlay">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    // Bind click events to all images
+                    grid.querySelectorAll('.generated-image-item').forEach(item => {
+                        item.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            this.selectImage(e.currentTarget);
+                        });
+                    });
+                }
                 
-                // Auto-select first image
-                this.characterData.selectedImageUrl = imageUrls[0];
-                this.saveData();
-                
-                // Save the auto-selected image as the character's thumbnail
-                this.saveSelectedImage(imageUrls[0]);
-                
-                // Update summary image
-                const summaryImage = document.getElementById('summaryImage');
-                if (summaryImage) summaryImage.src = imageUrls[0];
+                // Auto-select first image if none selected
+                if (!this.characterData.selectedImageUrl && allImages.length > 0) {
+                    this.characterData.selectedImageUrl = allImages[0];
+                    this.saveData();
+                    
+                    // Save the auto-selected image as the character's thumbnail
+                    this.saveSelectedImage(allImages[0]);
+                    
+                    // Update summary image
+                    const summaryImage = document.getElementById('summaryImage');
+                    if (summaryImage) summaryImage.src = allImages[0];
+                }
             }
             
             // Update buttons
@@ -1956,10 +2023,39 @@
             }
             
             try {
-                // Clear previous images
+                // Clear previous images and reset tracking
                 this.characterData.generatedImages = [];
                 this.characterData.selectedImageUrl = '';
                 window.pendingCharacterCreationImages = [];
+                window.receivedCharacterImages = new Set();
+                
+                // Clear the grid visually for fresh regeneration
+                if (grid) {
+                    grid.innerHTML = `
+                        <div class="image-placeholder-grid row" id="imagePlaceholder">
+                            <div class="placeholder-item col-6 ms-auto loading">
+                                <div class="placeholder-content">
+                                    <div class="spinner-border spinner-border-sm"></div>
+                                </div>
+                            </div>
+                            <div class="placeholder-item col-6 me-auto loading">
+                                <div class="placeholder-content">
+                                    <div class="spinner-border spinner-border-sm"></div>
+                                </div>
+                            </div>
+                            <div class="placeholder-item col-6 ms-auto loading">
+                                <div class="placeholder-content">
+                                    <div class="spinner-border spinner-border-sm"></div>
+                                </div>
+                            </div>
+                            <div class="placeholder-item col-6 me-auto loading">
+                                <div class="placeholder-content">
+                                    <div class="spinner-border spinner-border-sm"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
                 
                 // Build the prompt
                 const prompt = this.buildCharacterPrompt();

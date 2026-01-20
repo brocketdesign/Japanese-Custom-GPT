@@ -226,58 +226,30 @@ function initializeWebSocket(onConnectionResult = null) {
             
             // Check for new character creation container first
             if (hasNewContainer && window.characterCreation) {
-              console.log(`[WebSocket] New character creation container found, using characterCreation.onImagesGenerated`);
+              console.log(`[WebSocket] New character creation container found, appending image immediately`);
               console.log(`[WebSocket] Received imageUrl: ${imageUrl}`);
               
-              // Queue images for the new character creation system
-              if (!window.pendingCharacterCreationImages) {
-                window.pendingCharacterCreationImages = [];
+              // Track received images to avoid duplicates
+              if (!window.receivedCharacterImages) {
+                window.receivedCharacterImages = new Set();
               }
               
-              // Check if this image URL is already in the queue (avoid duplicates)
-              if (!window.pendingCharacterCreationImages.includes(imageUrl)) {
-                window.pendingCharacterCreationImages.push(imageUrl);
-                console.log(`[WebSocket] Added image to queue. Queue length: ${window.pendingCharacterCreationImages.length}`);
-                console.log(`[WebSocket] Current queue:`, window.pendingCharacterCreationImages);
-              } else {
+              // Check if this image URL was already received
+              if (window.receivedCharacterImages.has(imageUrl)) {
                 console.log(`[WebSocket] Duplicate imageUrl detected, skipping: ${imageUrl}`);
+                break;
               }
               
-              const expectedImageCount = 4;
-              const collectionTimeout = 15000; // 15 seconds max wait
+              // Add to received set
+              window.receivedCharacterImages.add(imageUrl);
+              console.log(`[WebSocket] Total unique images received: ${window.receivedCharacterImages.size}`);
               
-              // If we have all expected images, display immediately
-              if (window.pendingCharacterCreationImages.length >= expectedImageCount) {
-                console.log(`[WebSocket] All ${expectedImageCount} images received via webhook, displaying immediately`);
-                console.log(`[WebSocket] Final images:`, window.pendingCharacterCreationImages);
-                if (window.characterCreationImageTimeout) {
-                  clearTimeout(window.characterCreationImageTimeout);
-                }
-                // Stop polling since webhook delivered the images
-                if (window.characterCreation.stopPolling) {
-                  window.characterCreation.stopPolling();
-                }
-                window.characterCreation.onImagesGenerated([...window.pendingCharacterCreationImages]);
-                window.pendingCharacterCreationImages = [];
-              } else {
-                // Debounce to collect all images before displaying
-                if (window.characterCreationImageTimeout) {
-                  clearTimeout(window.characterCreationImageTimeout);
-                }
-                
-                // Reset the main timeout on each image received
-                window.characterCreationImageTimeout = setTimeout(() => {
-                  if (window.characterCreation && window.pendingCharacterCreationImages.length > 0) {
-                    console.log(`[WebSocket] Timeout reached, displaying ${window.pendingCharacterCreationImages.length} images (via webhook)`);
-                    console.log(`[WebSocket] Final images:`, window.pendingCharacterCreationImages);
-                    // Stop polling since webhook delivered the images
-                    if (window.characterCreation.stopPolling) {
-                      window.characterCreation.stopPolling();
-                    }
-                    window.characterCreation.onImagesGenerated([...window.pendingCharacterCreationImages]);
-                    window.pendingCharacterCreationImages = [];
-                  }
-                }, collectionTimeout);
+              // Append image immediately as it arrives (don't wait for all images)
+              window.characterCreation.onImagesGenerated([imageUrl], true);
+              
+              // Stop polling after first image arrives since webhook is working
+              if (window.characterCreation.stopPolling) {
+                window.characterCreation.stopPolling();
               }
               
             } else if (hasOldContainer) {

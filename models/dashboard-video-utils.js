@@ -954,50 +954,64 @@ async function initializeVideoTest(modelId, params) {
       console.log(`[VideoDashboard-Utils] Using Segmind API`);
       console.log(`[VideoDashboard-Utils] Segmind API Key present: ${!!process.env.SEGMIND_API_KEY}`);
       
+      // Segmind returns raw video binary data, not a URL
       const response = await axios.post(config.endpoint, requestBody, {
         headers: {
           'x-api-key': process.env.SEGMIND_API_KEY,
           'Content-Type': 'application/json'
         },
+        responseType: 'arraybuffer', // Expect binary data
         timeout: 300000 // 5 minutes timeout for video generation
       });
 
       const requestDuration = Date.now() - requestStartTime;
       console.log(`[VideoDashboard-Utils] 📥 Segmind response received in ${requestDuration}ms`);
       console.log(`[VideoDashboard-Utils] Response status: ${response.status}`);
+      console.log(`[VideoDashboard-Utils] Response content-type: ${response.headers['content-type']}`);
+      console.log(`[VideoDashboard-Utils] Response data size: ${response.data?.byteLength || response.data?.length} bytes`);
       
       if (response.status !== 200) {
-        const errorMsg = response.data?.message || response.data?.error || `Segmind API returned status ${response.status}`;
+        // Try to parse error message from response
+        let errorMsg = `Segmind API returned status ${response.status}`;
+        try {
+          const errorText = Buffer.from(response.data).toString('utf-8');
+          const errorJson = JSON.parse(errorText);
+          errorMsg = errorJson.message || errorJson.error || errorMsg;
+        } catch (e) {
+          // Ignore parsing errors
+        }
         console.log(`[VideoDashboard-Utils] ❌ Non-200 status: ${errorMsg}`);
         throw new Error(errorMsg);
       }
 
-      // Segmind returns video URL directly in the response
-      const videoUrl = response.data?.output || response.data?.video_url || response.data?.url;
+      // Segmind returns raw video binary data directly
+      const videoBuffer = Buffer.from(response.data);
       
-      if (!videoUrl) {
-        console.error(`[VideoDashboard-Utils] ❌ No video URL found in Segmind response:`, JSON.stringify(response.data, null, 2));
-        throw new Error('No video URL returned from Segmind API. Response: ' + JSON.stringify(response.data));
+      // Check if it's actually video data (MP4 starts with 'ftyp' signature)
+      const headerStr = videoBuffer.slice(0, 12).toString('utf-8');
+      const isVideo = headerStr.includes('ftyp') || headerStr.includes('moov');
+      
+      if (!isVideo && videoBuffer.length < 1000) {
+        // Small response might be an error message
+        const responseText = videoBuffer.toString('utf-8');
+        console.error(`[VideoDashboard-Utils] ❌ Unexpected Segmind response:`, responseText.substring(0, 500));
+        throw new Error('Unexpected response from Segmind API: ' + responseText.substring(0, 200));
       }
-
-      console.log(`[VideoDashboard-Utils] ✅ Segmind video generated successfully`);
-      console.log(`[VideoDashboard-Utils]   - Original Video URL: ${videoUrl.substring(0, 100)}...`);
       
-      // Upload video to S3 for persistence
-      let finalVideoUrl = videoUrl;
+      console.log(`[VideoDashboard-Utils] ✅ Segmind video generated successfully`);
+      console.log(`[VideoDashboard-Utils]   - Video size: ${videoBuffer.length} bytes`);
+      console.log(`[VideoDashboard-Utils]   - Is video: ${isVideo}`);
+      
+      // Upload video binary directly to S3
+      let finalVideoUrl;
       try {
         console.log(`[VideoDashboard-Utils] 📤 Uploading video to S3...`);
-        const videoResponse = await axios.get(videoUrl, { 
-          responseType: 'arraybuffer',
-          timeout: 120000
-        });
-        const videoBuffer = Buffer.from(videoResponse.data);
         const hash = createHash('md5').update(videoBuffer).digest('hex');
         finalVideoUrl = await uploadToS3(videoBuffer, hash, 'segmind_video.mp4');
         console.log(`[VideoDashboard-Utils] ✅ Video uploaded to S3: ${finalVideoUrl.substring(0, 100)}...`);
       } catch (uploadError) {
-        console.error(`[VideoDashboard-Utils] ⚠️ Failed to upload to S3, using original URL:`, uploadError.message);
-        // Use original URL if S3 upload fails
+        console.error(`[VideoDashboard-Utils] ❌ Failed to upload to S3:`, uploadError.message);
+        throw new Error('Failed to upload video to S3: ' + uploadError.message);
       }
       
       console.log('[VideoDashboard-Utils] ========== initializeVideoTest END (Segmind) ==========');

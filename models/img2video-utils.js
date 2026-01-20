@@ -136,30 +136,38 @@ async function generateVideoFromImage({ imageUrl, nsfw, prompt, modelId = 'wan-2
     
     try {
       const axios = require('axios');
+      // Segmind returns raw video binary data, not a URL
       const response = await axios.post(apiUrl, requestData, {
         headers: {
           'x-api-key': segmindApiKey,
           'Content-Type': 'application/json'
         },
+        responseType: 'arraybuffer', // Expect binary data
         timeout: 300000 // 5 minutes timeout for video generation
       });
       
       console.log('[generateVideoFromImage] Segmind response status:', response.status);
+      console.log('[generateVideoFromImage] Segmind response content-type:', response.headers['content-type']);
+      console.log('[generateVideoFromImage] Segmind response size:', response.data?.byteLength || response.data?.length, 'bytes');
       
       if (response.status === 200) {
-        const videoUrl = response.data?.output || response.data?.video_url || response.data?.url;
+        // Segmind returns raw video binary data directly
+        const videoBuffer = Buffer.from(response.data);
         
-        if (!videoUrl) {
-          console.error('[generateVideoFromImage] No video URL in Segmind response:', response.data);
-          throw new Error('No video URL returned from Segmind API');
+        // Check if it's actually video data (MP4 starts with 'ftyp' signature)
+        const headerStr = videoBuffer.slice(0, 12).toString('utf-8');
+        const isVideo = headerStr.includes('ftyp') || headerStr.includes('moov');
+        
+        if (!isVideo && videoBuffer.length < 1000) {
+          // Small response might be an error message
+          const responseText = videoBuffer.toString('utf-8');
+          console.error('[generateVideoFromImage] Unexpected Segmind response:', responseText.substring(0, 500));
+          throw new Error('Unexpected response from Segmind API: ' + responseText.substring(0, 200));
         }
         
-        // Upload video to S3 for persistence
-        const videoResponse = await axios.get(videoUrl, { 
-          responseType: 'arraybuffer',
-          timeout: 120000
-        });
-        const videoBuffer = Buffer.from(videoResponse.data);
+        console.log('[generateVideoFromImage] Video size:', videoBuffer.length, 'bytes, Is video:', isVideo);
+        
+        // Upload video binary directly to S3
         const hash = createHash('md5').update(videoBuffer).digest('hex');
         const s3VideoUrl = await uploadToS3(videoBuffer, hash, 'segmind_video.mp4');
         
@@ -175,12 +183,26 @@ async function generateVideoFromImage({ imageUrl, nsfw, prompt, modelId = 'wan-2
           message: 'Video generated successfully'
         };
       } else {
-        throw new Error(`Segmind API returned status ${response.status}`);
+        // Try to parse error message from response
+        let errorMsg = `Segmind API returned status ${response.status}`;
+        try {
+          const errorText = Buffer.from(response.data).toString('utf-8');
+          const errorJson = JSON.parse(errorText);
+          errorMsg = errorJson.message || errorJson.error || errorMsg;
+        } catch (e) {
+          // Ignore parsing errors
+        }
+        throw new Error(errorMsg);
       }
     } catch (error) {
       console.error('[generateVideoFromImage] Segmind API error:', error.message);
       if (error.response?.data) {
-        console.error('[generateVideoFromImage] Segmind error response:', error.response.data);
+        try {
+          const errorText = Buffer.from(error.response.data).toString('utf-8');
+          console.error('[generateVideoFromImage] Segmind error response:', errorText.substring(0, 500));
+        } catch (e) {
+          console.error('[generateVideoFromImage] Segmind error response:', error.response.data);
+        }
       }
       throw new Error('Failed to generate video with Segmind API: ' + error.message);
     }

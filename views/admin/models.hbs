@@ -39,30 +39,37 @@
   z-index: 3; 
 }
 
-.active-model-card .card-img-top {
-  transition: transform 0.3s ease-in-out;
+/* Active Models List Styling - Vertical List Design */
+#active-models-section .model-selection {
+    max-height: 400px;
+    overflow-y: auto;
 }
 
-.active-model-card:hover .card-img-top {
-  transform: scale(1.05); /* Smaller zoom for active cards */
+#active-models-section .model-checkbox {
+    padding: 10px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
 }
 
-/* Styling for active model cards to ensure consistency */
-#active-models .card {
-  border: 1px solid rgba(255, 255, 255, 0.125); /* Subtle border */
+#active-models-section .model-checkbox:hover {
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
-#active-models .fs-sm {
-    font-size: 0.8rem;
+#active-models-section .model-thumbnail {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
 }
 
-#active-models .active-model-info-btn i {
-    font-size: 0.9rem; /* Adjust icon size */
-    vertical-align: middle;
+#active-models-section .model-info-btn {
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
 }
 
-#active-models .active-model-info-btn {
-    line-height: 1; /* Ensure button padding is consistent */
+#active-models-section .model-info-btn:hover {
+    opacity: 1;
 }
 </style>
 <section>
@@ -83,39 +90,56 @@
       </div>
     </div>
 
-    {{!-- Active Models Horizontal Scroll --}}
-    <h4 class="text-white mb-2">Active Models</h4>
-    <div id="active-models" class="d-flex flex-row flex-nowrap overflow-auto mb-4 pb-3">
-      {{#each models}}
-      <div class="active-model-card card bg-dark text-white shadow-sm me-2 position-relative overflow-hidden animate__animated" style="min-width: 180px; width: 180px; height: 180px;">
-        <img src="{{image}}" class="card-img-top h-100 w-100" alt="{{model}}" style="object-fit: cover;">
-        
-        {{!-- Overlay for Name, Switch, and Info Button --}}
-        <div class="card-img-overlay d-flex flex-column justify-content-end p-2" style="background-image: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0)); z-index: 1;">
-          <h6 class="card-title fs-sm fw-semibold text-truncate mb-1" title="{{model}}">{{model}}</h6>
-          <div class="d-flex justify-content-between align-items-center">
-            <div class="form-check form-switch">
+    {{!-- Active Models Vertical List --}}
+    <div id="active-models-section" class="mb-4">
+      <div class="card bg-dark border-secondary">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="bi bi-check-circle me-2"></i>Active Models <span class="badge bg-light text-primary ms-2" id="activeModelsCount">{{models.length}}</span></h5>
+        </div>
+        <div class="card-body">
+          <div class="model-selection" id="active-models">
+            {{#each models}}
+            <div class="form-check model-checkbox mb-2">
               <input class="form-check-input model-switch" type="checkbox" checked
+                value="{{modelId}}"
+                id="active-model-{{modelId}}"
                 data-model-id="{{modelId}}"
                 data-model="{{model}}"
                 data-style="{{#if style}}{{style}}{{else}}anime{{/if}}"
                 data-version="{{version}}"
                 data-image="{{image}}"
                 data-name="{{model}}">
+              <label class="form-check-label text-white w-100" for="active-model-{{modelId}}">
+                <div class="d-flex align-items-center gap-3">
+                  {{#if image}}
+                  <img src="{{image}}" 
+                       alt="{{model}}" 
+                       class="model-thumbnail"
+                       onerror="this.style.display='none'">
+                  {{/if}}
+                  <div class="flex-grow-1">
+                    <span class="fw-semibold">{{model}}</span>
+                    <span class="badge bg-{{#if (eq style 'anime')}}info{{else}}success{{/if}} ms-1">{{#if style}}{{style}}{{else}}anime{{/if}}</span>
+                    <span class="badge bg-secondary ms-1">v{{version}}</span>
+                    <br>
+                    <small class="text-muted">ID: {{modelId}}</small>
+                  </div>
+                  <button class="btn btn-sm btn-outline-light model-info-btn p-2" type="button" title="View Details"
+                    data-model-id="{{modelId}}"
+                    data-model="{{model}}"
+                    data-style="{{#if style}}{{style}}{{else}}anime{{/if}}"
+                    data-version="{{version}}"
+                    data-image="{{image}}"
+                    data-name="{{name}}">
+                    <i class="bi bi-info-circle"></i>
+                  </button>
+                </div>
+              </label>
             </div>
-            <button class="btn btn-sm btn-outline-light active-model-info-btn p-1" type="button" title="View Details"
-              data-model-id="{{modelId}}"
-              data-model="{{model}}"
-              data-style="{{#if style}}{{style}}{{else}}anime{{/if}}"
-              data-version="{{version}}"
-              data-image="{{image}}"
-              data-name="{{name}}">
-              <i class="bi bi-info-circle"></i>
-            </button>
+            {{/each}}
           </div>
         </div>
       </div>
-      {{/each}}
     </div>
 
     {{!-- Infinite Scroll Gallery --}}
@@ -286,7 +310,7 @@ $(document).ready(function(){
     */
 
     // Active Model Card - Info Button Click (open modal)
-    $(document).on('click', '.active-model-info-btn', function() {
+    $(document).on('click', '.model-info-btn', function() {
         const modelId = $(this).data('model-id');
         const model = $(this).data('model');
         const style = $(this).data('style');
@@ -387,7 +411,7 @@ $(document).ready(function(){
                     // Update the style display in modal
                     $('#modalModelStyle').text(style === 'anime' ? 'Anime' : 'Photorealistic');
                     // Update the active model card data attribute
-                    $(`.active-model-info-btn[data-model-id="${currentModelId}"]`).data('style', style);
+                    $(`.model-info-btn[data-model-id="${currentModelId}"]`).data('style', style);
                     $(`.model-switch[data-model-id="${currentModelId}"]`).data('style', style);
                 },
                 error: function(xhr) {
@@ -427,7 +451,7 @@ $(document).ready(function(){
                 // Update the style display in modal
                 $('#modalModelStyle').text(style === 'anime' ? 'Anime' : 'Photorealistic');
                 // Update the active model card data attribute
-                $(`.active-model-info-btn[data-model-id="${currentModelId}"]`).data('style', style);
+                $(`.model-info-btn[data-model-id="${currentModelId}"]`).data('style', style);
                 $(`.model-switch[data-model-id="${currentModelId}"]`).data('style', style);
             },
             error: function(xhr) {

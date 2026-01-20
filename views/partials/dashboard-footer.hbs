@@ -205,6 +205,22 @@
 
     // Auto-launch pending chat after login
     document.addEventListener("DOMContentLoaded", function() {
+        // Only run on chat-related pages (chat, explore, character, home)
+        // Don't redirect from settings, profile, or other unrelated pages
+        const currentPath = window.location.pathname.toLowerCase();
+        const allowedPaths = ['/chat', '/explore', '/character', '/', '/home'];
+        const isAllowedPage = allowedPaths.some(path => 
+            currentPath === path || 
+            currentPath === path + '/' || 
+            currentPath.startsWith(path + '/') ||
+            currentPath.startsWith('/chat/') ||
+            currentPath.startsWith('/character/')
+        );
+        
+        if (!isAllowedPage) {
+            return; // Don't auto-redirect on other pages like settings, profile, etc.
+        }
+        
         // Check if user is logged in (window.user is set and not temporary)
         if (window.user && !window.isTemporary) {
             var pendingChatId = null;

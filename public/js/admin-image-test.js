@@ -2724,6 +2724,22 @@ function openCreateCharacterModal() {
     document.getElementById('characterNsfwCheck').checked = false;
     document.getElementById('useImageAsBaseFaceCheck').checked = false;
     
+    // Reset the create button to its original state
+    const createBtn = document.getElementById('confirmCreateCharacterBtn');
+    if (createBtn) {
+        createBtn.disabled = false;
+        createBtn.classList.remove('btn-primary');
+        createBtn.classList.add('btn-success');
+        createBtn.innerHTML = '<i class="bi bi-person-plus me-1"></i>Create Character';
+        createBtn.onclick = confirmCreateCharacter;
+    }
+    
+    // Reset cancel button text
+    const cancelBtn = createBtn?.previousElementSibling;
+    if (cancelBtn && cancelBtn.classList.contains('btn-secondary')) {
+        cancelBtn.textContent = 'Cancel';
+    }
+    
     // Close preview modal and open character creation modal
     bootstrap.Modal.getInstance(previewModal)?.hide();
     
@@ -2773,12 +2789,22 @@ async function confirmCreateCharacter() {
         if (data.success) {
             showNotification('Character created successfully!', 'success');
             
-            // Close modal
-            createCharacterModal?.hide();
+            // Store the chat URL for the start chat button
+            const chatUrl = `/c/${data.slug || data.chatId}`;
             
-            // Ask if user wants to view the character
-            if (confirm('Character created! Would you like to view it now?')) {
-                window.location.href = `/c/${data.slug || data.chatId}`;
+            // Transform the button to "Start Chat" button
+            btn.disabled = false;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-primary');
+            btn.innerHTML = '<i class="bi bi-chat-heart me-1"></i>Start Chat';
+            btn.onclick = function() {
+                window.location.href = chatUrl;
+            };
+            
+            // Also update the cancel button to "Close"
+            const cancelBtn = btn.previousElementSibling;
+            if (cancelBtn) {
+                cancelBtn.textContent = 'Close';
             }
         } else {
             throw new Error(data.error || 'Failed to create character');
@@ -2786,7 +2812,6 @@ async function confirmCreateCharacter() {
     } catch (error) {
         console.error('[ImageDashboard] Error creating character:', error);
         showNotification('Failed to create character: ' + error.message, 'error');
-    } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-person-plus me-1"></i>Create Character';
     }

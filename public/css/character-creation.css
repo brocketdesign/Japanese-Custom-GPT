@@ -1449,6 +1449,160 @@
     text-align: center;
 }
 
+/* Generation Progress Container */
+.generation-progress-container {
+    margin-bottom: 20px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.progress-status-card {
+    background: var(--cc-glass-bg);
+    border: 1px solid var(--cc-glass-border);
+    border-radius: var(--cc-radius-lg);
+    padding: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.progress-status-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.progress-spinner {
+    color: var(--cc-primary);
+}
+
+.progress-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--cc-text);
+}
+
+.progress-steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.progress-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--cc-radius-sm);
+    transition: all 0.3s ease;
+}
+
+.progress-step .step-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: var(--cc-text-muted);
+    transition: all 0.3s ease;
+}
+
+.progress-step .step-text {
+    flex: 1;
+    font-size: 0.875rem;
+    color: var(--cc-text-muted);
+    text-align: left;
+    transition: all 0.3s ease;
+}
+
+.progress-step .step-status {
+    font-size: 0.75rem;
+    color: var(--cc-text-muted);
+    min-width: 60px;
+    text-align: right;
+}
+
+/* Progress step states */
+.progress-step.pending .step-icon i {
+    color: var(--cc-text-muted);
+}
+
+.progress-step.active {
+    background: rgba(var(--cc-primary-rgb), 0.1);
+    border: 1px solid rgba(var(--cc-primary-rgb), 0.3);
+}
+
+.progress-step.active .step-icon {
+    color: var(--cc-primary);
+}
+
+.progress-step.active .step-icon i {
+    animation: pulse 1s ease-in-out infinite;
+}
+
+.progress-step.active .step-text {
+    color: var(--cc-text);
+    font-weight: 500;
+}
+
+.progress-step.completed {
+    background: rgba(34, 197, 94, 0.1);
+}
+
+.progress-step.completed .step-icon {
+    color: #22c55e;
+}
+
+.progress-step.completed .step-icon i::before {
+    content: "\F26B"; /* Bootstrap check-circle-fill */
+}
+
+.progress-step.completed .step-text {
+    color: #22c55e;
+}
+
+.progress-step.error {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.progress-step.error .step-icon {
+    color: #ef4444;
+}
+
+.progress-step.error .step-text {
+    color: #ef4444;
+}
+
+/* Mini progress bar */
+.progress-bar-mini {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--cc-primary), var(--cc-primary-light));
+    border-radius: 2px;
+    transition: width 0.5s ease;
+}
+
+.progress-message {
+    font-size: 0.8125rem;
+    color: var(--cc-text-muted);
+    margin: 0;
+    text-align: center;
+}
+
 .generated-images-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);

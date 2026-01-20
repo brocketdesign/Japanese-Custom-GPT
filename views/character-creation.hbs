@@ -313,6 +313,44 @@
                     
                     <!-- Image Generation Area -->
                     <div class="image-generation-section">
+                        <!-- Generation Progress Status -->
+                        <div class="generation-progress-container" id="generationProgressContainer" style="display: none;">
+                            <div class="progress-status-card">
+                                <div class="progress-status-header">
+                                    <div class="progress-spinner">
+                                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                                    </div>
+                                    <span class="progress-title" id="progressStatusTitle">{{translations.newCharacter.image_generation_in_progress}}</span>
+                                </div>
+                                <div class="progress-steps-list" id="progressStepsList">
+                                    <div class="progress-step" data-step="analyzing">
+                                        <span class="step-icon"><i class="bi bi-circle"></i></span>
+                                        <span class="step-text">{{translations.newCharacter.progress_analyzing}}</span>
+                                        <span class="step-status"></span>
+                                    </div>
+                                    <div class="progress-step" data-step="enhancing">
+                                        <span class="step-icon"><i class="bi bi-circle"></i></span>
+                                        <span class="step-text">{{translations.newCharacter.progress_enhancing}}</span>
+                                        <span class="step-status"></span>
+                                    </div>
+                                    <div class="progress-step" data-step="generating">
+                                        <span class="step-icon"><i class="bi bi-circle"></i></span>
+                                        <span class="step-text">{{translations.newCharacter.progress_generating}}</span>
+                                        <span class="step-status"></span>
+                                    </div>
+                                    <div class="progress-step" data-step="processing">
+                                        <span class="step-icon"><i class="bi bi-circle"></i></span>
+                                        <span class="step-text">{{translations.newCharacter.progress_processing}}</span>
+                                        <span class="step-status"></span>
+                                    </div>
+                                </div>
+                                <div class="progress-bar-mini">
+                                    <div class="progress-bar-fill" id="progressBarFill" style="width: 0%"></div>
+                                </div>
+                                <p class="progress-message" id="progressStatusMessage"></p>
+                            </div>
+                        </div>
+                        
                         <!-- Generated Images Grid (2x2 for 4 images) -->
                         <div class="generated-images-grid" id="generatedImagesGrid">
                             <!-- Placeholder shown before generation -->

@@ -1176,8 +1176,12 @@
     
     .benefits-grid {
         grid-template-columns: 1fr;
+        justify-items: center;
     }
     
+    .benefit-card {
+        max-width: 300px;
+        width: 100%;
     /* Application page full-width on small mobile */
     .application-section,
     .benefits-section,

@@ -394,7 +394,8 @@
                     loadUserImages(userId, 1, true);
                 } else if (tabName === 'characters') {
                     $('#characters-tab').show();
-                    displayUserChats(userId, 1, true);
+                    // Force refresh with cache-busting to show latest characters first
+                    displayUserChats(userId, 1, true, true);
                 } else if (tabName === 'posts') {
                     $('#posts-tab').show();
                     loadProfilePosts(1);

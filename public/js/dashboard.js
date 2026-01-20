@@ -1759,13 +1759,27 @@ function generatePagination(currentPage, totalPages, userId, type) {
   $('#pagination-controls').html(paginationHtml);
 }
 
-window.displayUserChats = async function(userId, page = 1, skipDeduplication) {
+window.displayUserChats = async function(userId, page = 1, skipDeduplication, forceRefresh = false) {
     try {
-        const response = await fetch(`/api/chats?userId=${userId}&page=${page}&skipDeduplication=${skipDeduplication}`);
+        // Add cache-busting timestamp to ensure fresh data (no browser caching)
+        const cacheBuster = Date.now();
+        const response = await fetch(`/api/chats?userId=${userId}&page=${page}&skipDeduplication=${skipDeduplication}&_t=${cacheBuster}`, {
+            cache: 'no-store', // Disable browser caching
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+            }
+        });
         const data = await response.json();
 
         let userChats = data.recent || [];
         let htmlContent = '';
+        
+        // Clear gallery on first page or force refresh to show latest characters
+        if (page === 1 || forceRefresh) {
+            $('#user-chat-gallery').empty();
+        }
+        
         displayChats(userChats, 'user-chat-gallery');
 
         // Update the gallery HTML

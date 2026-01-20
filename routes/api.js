@@ -1501,7 +1501,8 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
         ];
 
         // Optional deduplication by model (keeps the one with most images)
-        if (!skipDeduplication) {
+        // Skip deduplication when viewing a specific user's characters
+        if (!skipDeduplication && !hasValidUserId) {
         pipeline.push(
             { $sort: { imageModel: 1, imageCount: -1, _id: -1 } },
             { $group: { _id: '$imageModel', doc: { $first: '$$ROOT' } } },
@@ -1510,11 +1511,21 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
         }
 
         // Final sorting, pagination
-        pipeline.push(
-        { $sort: { imageCount: -1, _id: -1 } },
-        { $skip: skip },
-        { $limit: limit }
-        );
+        // When viewing a specific user's characters, sort by createdAt (newest first)
+        // Otherwise sort by imageCount
+        if (hasValidUserId) {
+            pipeline.push(
+                { $sort: { createdAt: -1, _id: -1 } },
+                { $skip: skip },
+                { $limit: limit }
+            );
+        } else {
+            pipeline.push(
+                { $sort: { imageCount: -1, _id: -1 } },
+                { $skip: skip },
+                { $limit: limit }
+            );
+        }
 
         // Execute main query
         const chats = await fastify.mongo.db
@@ -1559,10 +1570,11 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
 
         // -------------------------------
         // 8. Count total pages (respecting deduplication)
+        // Skip deduplication count when viewing a specific user's characters
         // -------------------------------
         const countPipeline = [{ $match: { $and: filters } }];
 
-        if (!skipDeduplication) {
+        if (!skipDeduplication && !hasValidUserId) {
         countPipeline.push(
             { $group: { _id: '$imageModel' } },
             { $count: 'total' }
@@ -1582,6 +1594,13 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
         // -------------------------------
         // 9. Send response
         // -------------------------------
+        // Disable caching for user-specific character lists to ensure fresh data
+        if (hasValidUserId) {
+            reply.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+            reply.header('Pragma', 'no-cache');
+            reply.header('Expires', '0');
+        }
+        
         reply.send({
         recent: recentWithUserAndSamples,
         page,

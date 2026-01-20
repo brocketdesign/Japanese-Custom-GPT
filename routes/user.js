@@ -1251,7 +1251,7 @@ async function routes(fastify, options) {
         }
 
         const translations = request.translations;
-        const isAdmin = await checkUserAdmin(fastify.mongo.db, user._id);
+        const isAdmin = await checkUserAdmin(fastify, user._id);
 
         return reply.view('settings', {
             user,

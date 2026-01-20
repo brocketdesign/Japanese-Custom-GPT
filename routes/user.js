@@ -558,7 +558,7 @@ async function routes(fastify, options) {
       const categories = getCreatorCategories();
 
       return reply.renderWithGtm('/user-profile.hbs', {
-        title: `${userData.nickname}さんのプロフィール`,
+        title: translations.userProfileTitle.replace('{nickname}', userData.nickname),
         translations,
         onboardingTranslations,
         mode: process.env.MODE,

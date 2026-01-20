@@ -1,6 +1,7 @@
 const { ObjectId } = require('mongodb');
 const {
   mergeFaceWithNovita,
+  mergeFaceWithSegmind,
   optimizeImageForMerge,
   saveMergedFaceToDB,
   findImageMessageAndUpdateWithMergeAction,
@@ -131,7 +132,7 @@ async function routes(fastify, options) {
     try {
       const user = request.user;
       const userId = user._id;
-      const { imageId, faceId, userChatId } = request.body;
+      const { imageId, faceId, userChatId, provider = 'segmind' } = request.body;
 
       console.log(`🧬 [merge-face-api] ════════════════════════════════════════════`);
       console.log(`🧬 [merge-face-api] Merge request received:`);
@@ -139,6 +140,7 @@ async function routes(fastify, options) {
       console.log(`🧬 [merge-face-api]   - imageId: ${imageId}`);
       console.log(`🧬 [merge-face-api]   - faceId: ${faceId}`);
       console.log(`🧬 [merge-face-api]   - userChatId: ${userChatId}`);
+      console.log(`🧬 [merge-face-api]   - provider: ${provider}`);
 
       if (!imageId || !faceId) {
         console.error(`🧬 [merge-face-api] ❌ Missing required fields - imageId: ${imageId}, faceId: ${faceId}`);
@@ -254,33 +256,39 @@ async function routes(fastify, options) {
         });
       }
 
-      // Merge the faces using Novita API with retry logic
+      // Merge the faces using selected provider with retry logic
       let mergeResult;
       const maxRetries = 2;
       let lastError;
 
+      // Select merge function based on provider
+      const mergeFaceFunction = provider === 'segmind' ? mergeFaceWithSegmind : mergeFaceWithNovita;
+      const providerName = provider === 'segmind' ? 'Segmind' : 'Novita';
+
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-          console.log(`[merge-face] Merge attempt ${attempt}/${maxRetries}`);
+          console.log(`[merge-face] Merge attempt ${attempt}/${maxRetries} using ${providerName}`);
           
-          mergeResult = await mergeFaceWithNovita({
+          mergeResult = await mergeFaceFunction({
             faceImageBase64,
             originalImageBase64
           });
           
           if (mergeResult.success) {
-            console.log(`[merge-face] Merge successful on attempt ${attempt}`);
+            console.log(`[merge-face] Merge successful on attempt ${attempt} using ${providerName}`);
             break;
           }
         } catch (error) {
           lastError = error;
-          console.error(`[merge-face] Attempt ${attempt} failed:`, error.message);
+          console.error(`[merge-face] Attempt ${attempt} failed with ${providerName}:`, error.message);
           
           // Don't retry on certain errors
           if (error.message.includes('Invalid API key') || 
               error.message.includes('Access forbidden') ||
               error.message.includes('Bad request') ||
-              error.message.includes('Invalid request')) {
+              error.message.includes('Invalid request') ||
+              error.message.includes('Insufficient') ||
+              error.message.includes('credits')) {
             break;
           }
           

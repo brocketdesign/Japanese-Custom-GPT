@@ -166,6 +166,197 @@ async function mergeFaceWithNovita({ faceImageBase64, originalImageBase64 }) {
 }
 
 /**
+ * Upload image to S3 for Segmind API (which requires URLs, not base64)
+ * @param {string} base64Image - Base64 image (with or without data URL prefix)
+ * @param {string} prefix - Filename prefix
+ * @returns {string} S3 URL
+ */
+async function uploadImageToS3ForSegmind(base64Image, prefix = 'segmind') {
+  const { uploadToS3 } = require('./tool');
+  const { createHash } = require('crypto');
+  
+  // Clean base64 data
+  const cleanBase64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
+  const imageBuffer = Buffer.from(cleanBase64, 'base64');
+  
+  // Generate hash for unique filename
+  const hash = createHash('md5').update(imageBuffer).digest('hex');
+  const filename = `${prefix}_${hash}.png`;
+  
+  // Upload to S3
+  const s3Url = await uploadToS3(imageBuffer, hash, filename);
+  return s3Url;
+}
+
+/**
+ * Merge face using Segmind FaceSwap V5 API with deduplication lock
+ * @param {Object} params - Parameters for face merging
+ * @param {string} params.faceImageBase64 - Base64 encoded face image (source face)
+ * @param {string} params.originalImageBase64 - Base64 encoded original image (target image)
+ * @returns {Object} Result from Segmind API
+ */
+async function mergeFaceWithSegmind({ faceImageBase64, originalImageBase64 }) {
+  const segmindApiKey = process.env.SEGMIND_API_KEY;
+  const apiUrl = 'https://api.segmind.com/v1/faceswap-v5';
+
+  // Validate inputs
+  if (!faceImageBase64 || !originalImageBase64) {
+    throw new Error('Both face image and original image are required');
+  }
+
+  if (!segmindApiKey) {
+    throw new Error('Segmind API key is not configured');
+  }
+
+  // ⭐ CREATE UNIQUE KEY FOR THIS MERGE OPERATION
+  const mergeKey = getMergeKey(faceImageBase64, originalImageBase64) + '_segmind';
+  const callId = mergeKey;
+
+  // Section header
+  console.log(`🧬 [MERGE-SEGMIND] ════════════════════════════════════════════`);
+  console.log(`🧬 [MERGE-SEGMIND] ▶️  FACE MERGE STARTED | Call ID: ${callId}`);
+
+  // ⭐ CHECK IF ALREADY MERGING
+  if (mergeInProgressLocks.has(mergeKey)) {
+    console.log(`🧬 [MERGE-SEGMIND] ⏳ Merge already in progress, waiting... | Call ID: ${callId}`);
+    const existingPromise = mergeInProgressLocks.get(mergeKey);
+    try {
+      const result = await existingPromise;
+      console.log(`🧬 [MERGE-SEGMIND] ✅ Returning cached result | Call ID: ${callId}`);
+      return result;
+    } catch (error) {
+      console.error(`🧬 [MERGE-SEGMIND] ❌ Cached merge failed, retrying... | Call ID: ${callId}`);
+    }
+  }
+
+  // ⭐ CREATE MERGE PROMISE
+  const mergePromise = (async () => {
+    try {
+      // Check image sizes first
+      const cleanSource = faceImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+      const cleanTarget = originalImageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+      const sourceSize = Buffer.from(cleanSource, 'base64').length;
+      const targetSize = Buffer.from(cleanTarget, 'base64').length;
+      const maxSize = 10 * 1024 * 1024; // 10MB limit for Segmind
+      
+      if (sourceSize > maxSize || targetSize > maxSize) {
+        throw new Error(`Image too large. Source: ${Math.round(sourceSize / 1024)}KB, Target: ${Math.round(targetSize / 1024)}KB. Max: 10MB per image.`);
+      }
+
+      // ⭐ Upload images to S3 first - Segmind API requires URLs, not base64/data URLs
+      console.log(`🧬 [MERGE-SEGMIND] 📤 Uploading source image to S3... | Call ID: ${callId}`);
+      const sourceImageUrl = await uploadImageToS3ForSegmind(faceImageBase64, 'face_source');
+      console.log(`🧬 [MERGE-SEGMIND] ✅ Source image uploaded: ${sourceImageUrl.substring(0, 60)}... | Call ID: ${callId}`);
+      
+      console.log(`🧬 [MERGE-SEGMIND] 📤 Uploading target image to S3... | Call ID: ${callId}`);
+      const targetImageUrl = await uploadImageToS3ForSegmind(originalImageBase64, 'face_target');
+      console.log(`🧬 [MERGE-SEGMIND] ✅ Target image uploaded: ${targetImageUrl.substring(0, 60)}... | Call ID: ${callId}`);
+
+      console.log(`🧬 [MERGE-SEGMIND] 🚀 Calling Segmind API | Call ID: ${callId}`);
+
+      const requestData = {
+        target_image: targetImageUrl,
+        source_image: sourceImageUrl,
+        seed: Math.floor(Math.random() * Number.MAX_SAFE_INTEGER),
+        image_format: 'png',
+        quality: 95
+      };
+
+      const response = await axios.post(apiUrl, requestData, {
+        headers: {
+          'x-api-key': segmindApiKey,
+          'Content-Type': 'application/json'
+        },
+        timeout: 120000,
+        responseType: 'arraybuffer' // Segmind returns image directly
+      });
+
+      // Segmind returns image data directly as arraybuffer
+      if (response.data && response.data.byteLength > 0) {
+        const imageBuffer = Buffer.from(response.data);
+        const base64Image = imageBuffer.toString('base64');
+        
+        const result = {
+          success: true,
+          imageBase64: base64Image,
+          imageType: 'png',
+          message: 'Face merge completed successfully via Segmind'
+        };
+
+        console.log(`🧬 [MERGE-SEGMIND] 🎉 Merge completed successfully | Call ID: ${callId}`);
+        return result;
+      } else {
+        console.error(`🧬 [MERGE-SEGMIND] ❌ Invalid API response | Call ID: ${callId}`);
+        throw new Error('Invalid response from Segmind API - no image returned');
+      }
+    } catch (error) {
+      if (error.response) {
+        const status = error.response.status;
+        let errorMessage = 'Unknown error';
+        
+        // Try to parse error message from response
+        try {
+          if (error.response.data) {
+            const errorData = error.response.headers['content-type']?.includes('application/json')
+              ? JSON.parse(Buffer.from(error.response.data).toString())
+              : { message: Buffer.from(error.response.data).toString() };
+            errorMessage = errorData?.message || errorData?.error || errorMessage;
+          }
+        } catch (parseError) {
+          errorMessage = 'Failed to parse error response';
+        }
+
+        switch (status) {
+          case 400:
+            console.error(`🧬 [MERGE-SEGMIND] ❌ Invalid request: ${errorMessage} | Call ID: ${callId}`);
+            throw new Error(`Invalid request: ${errorMessage}`);
+          case 401:
+            console.error(`🧬 [MERGE-SEGMIND] ❌ Invalid API key | Call ID: ${callId}`);
+            throw new Error('Invalid API key for Segmind service');
+          case 402:
+            console.error(`🧬 [MERGE-SEGMIND] ❌ Insufficient credits | Call ID: ${callId}`);
+            throw new Error('Insufficient Segmind credits - please top up your account');
+          case 403:
+            console.error(`🧬 [MERGE-SEGMIND] ❌ Access forbidden | Call ID: ${callId}`);
+            throw new Error('Access forbidden - check API key permissions');
+          case 429:
+            console.error(`🧬 [MERGE-SEGMIND] ❌ Rate limit exceeded | Call ID: ${callId}`);
+            throw new Error('Rate limit exceeded - please try again later');
+          case 500:
+            console.error(`🧬 [MERGE-SEGMIND] ❌ Segmind service error: ${errorMessage} | Call ID: ${callId}`);
+            throw new Error(`Segmind service error: ${errorMessage}`);
+          case 503:
+            console.error(`🧬 [MERGE-SEGMIND] ❌ Segmind service unavailable | Call ID: ${callId}`);
+            throw new Error('Segmind service is temporarily unavailable');
+          default:
+            console.error(`🧬 [MERGE-SEGMIND] ❌ Segmind API error (${status}): ${errorMessage} | Call ID: ${callId}`);
+            throw new Error(`Segmind API error (${status}): ${errorMessage}`);
+        }
+      } else if (error.code === 'ECONNABORTED') {
+        console.error(`🧬 [MERGE-SEGMIND] ❌ Request timeout | Call ID: ${callId}`);
+        throw new Error('Request timeout - the face merge operation took too long');
+      } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+        console.error(`🧬 [MERGE-SEGMIND] ❌ Cannot connect to Segmind API | Call ID: ${callId}`);
+        throw new Error('Cannot connect to Segmind API service');
+      } else {
+        console.error(`🧬 [MERGE-SEGMIND] ❌ Network error: ${error.message} | Call ID: ${callId}`);
+        throw new Error(`Network error: ${error.message}`);
+      }
+    } finally {
+      // ⭐ REMOVE LOCK AFTER COMPLETION
+      console.log(`🧬 [MERGE-SEGMIND] 🔓 Removing lock | Call ID: ${callId}`);
+      mergeInProgressLocks.delete(mergeKey);
+      console.log(`🧬 [MERGE-SEGMIND] ════════════════════════════════════════════`);
+    }
+  })();
+
+  // ⭐ STORE LOCK
+  mergeInProgressLocks.set(mergeKey, mergePromise);
+
+  return mergePromise;
+}
+
+/**
  * Optimize and convert image to JPEG with size limit
  * @param {Buffer} imageBuffer - Input image buffer
  * @param {number} maxSizeKB - Maximum size in KB (default 1MB)
@@ -458,6 +649,7 @@ async function getUserFaces(userId, fastify) {
 
 module.exports = {
   mergeFaceWithNovita,
+  mergeFaceWithSegmind,
   optimizeImageForMerge,
   saveMergedFaceToDB,
   findImageMessageAndUpdateWithMergeAction,

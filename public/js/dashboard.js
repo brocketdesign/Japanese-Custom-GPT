@@ -1715,7 +1715,6 @@ function generatePagination(currentPage, totalPages, userId, type) {
   $(window).off(eventName).on(eventName, function() {
     if($('#pagination-controls').length === 0) return;
     const scrollTresold = $('#pagination-controls').offset().top  - 1000;
-    console.log(`[peoplePagination_] Scroll threshold: ${scrollTresold}, Current scrollTop: ${$(window).scrollTop()}`);
     
     if (scrollTresold < $(window).scrollTop()) {
       if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
@@ -1801,7 +1800,6 @@ function generateUserChatsPagination(userId, currentPage, totalPages) {
   $(window).off(eventName).on(eventName, function() {
     if($('#user-chat-pagination-controls').length === 0) return;
     const scrollTresold = $('#user-chat-pagination-controls').offset().top  - 1000;
-    console.log(`[generateUserChatsPagination] Scroll threshold: ${scrollTresold}, Current scrollTop: ${$(window).scrollTop()}`);
     
     if (scrollTresold < $(window).scrollTop()) {
       if (currentPage < totalPages && !pagesShown.has(currentPage + 1)) {
@@ -2563,7 +2561,6 @@ window.loadAllChatImages = function (page = 1, reload = false) {
     $(window).off(eventName).on(eventName, () => {
       if($('#all-chats-images-pagination-controls').length === 0) return;
       const scrollTresold = $('#all-chats-images-pagination-controls').offset().top  - 1000;
-      console.log(`[generateAllChatsImagePagination] Scroll threshold: ${scrollTresold}, Current scrollTop: ${$(window).scrollTop()}`);
       if (
         !allChatsLoadingState &&
         allChatsCurrentPage < totalPages &&

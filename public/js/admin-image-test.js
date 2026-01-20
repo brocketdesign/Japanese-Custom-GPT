@@ -1935,35 +1935,31 @@ async function resetAllStats() {
  * Show notification
  */
 function showNotification(message, type = 'info') {
-    if (typeof window.showNotification === 'function') {
-        window.showNotification(message, type);
-    } else {
-        console.log(`[${type.toUpperCase()}] ${message}`);
-        
-        // Fallback toast notification
-        const toast = document.createElement('div');
-        toast.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} border-0`;
-        toast.setAttribute('role', 'alert');
-        toast.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">${message}</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
-        `;
-        
-        let container = document.querySelector('.toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.className = 'toast-container position-fixed top-0 end-0 p-3';
-            document.body.appendChild(container);
-        }
-        
-        container.appendChild(toast);
-        const bsToast = new bootstrap.Toast(toast);
-        bsToast.show();
-        
-        toast.addEventListener('hidden.bs.toast', () => toast.remove());
+    console.log(`[${type.toUpperCase()}] ${message}`);
+    
+    // Fallback toast notification
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container position-fixed top-0 end-0 p-3';
+        document.body.appendChild(container);
     }
+    
+    container.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    toast.addEventListener('hidden.bs.toast', () => toast.remove());
 }
 
 // Draft post state
@@ -2790,7 +2786,7 @@ async function confirmCreateCharacter() {
             showNotification('Character created successfully!', 'success');
             
             // Store the chat URL for the start chat button
-            const chatUrl = `/c/${data.slug || data.chatId}`;
+            const chatUrl = `/chat/${data.chatId}`;
             
             // Transform the button to "Start Chat" button
             btn.disabled = false;

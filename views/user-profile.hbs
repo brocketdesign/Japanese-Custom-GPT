@@ -3,12 +3,20 @@
 {{> dashboard-header}}
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <!-- Swiper CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <!-- Profile CSS -->
     <link rel="stylesheet" href="/css/user-profile.css">
     <link rel="stylesheet" href="/css/chat-list-tabs.css">
     <!-- Modal CSS -->
     <link rel="stylesheet" href="/css/user-points.css">
     <link rel="stylesheet" href="/css/chat-footer.css">
     <link rel="stylesheet" href="/css/personas.css">
+    <!-- Chat/Character CSS -->
+    <link rel="stylesheet" href="/css/chat-suggestions.css">
+    <link rel="stylesheet" href="/css/chat-scenario.css">
+    <link rel="stylesheet" href="/css/chat-goals-widget.css">
+    <link rel="stylesheet" href="/css/chat-history-sidebar.css">
     {{#if isCreator}}
     <link rel="stylesheet" href="/css/creators.css">
     <link rel="stylesheet" href="/css/subscriptions.css">
@@ -1339,6 +1347,25 @@
     {{/unless}}
     {{/if}}
 
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/blueimp-md5@2.19.0/js/md5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    
+    <!-- Core Scripts -->
+    <script src="/js/chat-list.js"></script>
+    <script src="/js/favorites.js"></script>
+    <script src="/js/character-infos.js"></script>
+    <script src="/js/dashboard-category.js"></script>
+    <script src="/js/social-connections.js"></script>
+    
+    <!-- Module Scripts -->
+    <script src="/js/modules/ui-helpers.js"></script>
+    <script src="/js/modules/chat-filters.js"></script>
+    <script src="/js/modules/popular-chats.js"></script>
+    <script src="/js/modules/latest-chats.js"></script>
+    <script src="/js/modules/checkout.js"></script>
+    
+    <!-- Subscriptions -->
     <script src="/js/subscriptions.js"></script>
     <script>
         // Subscribe button handler

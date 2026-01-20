@@ -1511,11 +1511,12 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
         }
 
         // Final sorting, pagination
-        // When viewing a specific user's characters, sort by createdAt (newest first)
+        // When viewing a specific user's characters, sort by _id descending (newest first)
+        // MongoDB ObjectId contains timestamp in the first 4 bytes, so sorting by _id is equivalent to sorting by creation date
         // Otherwise sort by imageCount
         if (hasValidUserId) {
             pipeline.push(
-                { $sort: { createdAt: -1, _id: -1 } },
+                { $sort: { _id: -1 } },
                 { $skip: skip },
                 { $limit: limit }
             );

@@ -426,3 +426,202 @@ $(document).ready(function() {
       }
     });
   });
+
+  // ==========================================
+  // API Keys Management
+  // ==========================================
+  
+  // Load API keys when API tab is shown
+  $('button[data-bs-target="#api"]').on('shown.bs.tab', function() {
+    loadApiKeys();
+  });
+
+  // Also load if we're already on the API tab (in case page loads directly to it)
+  if ($('#api').hasClass('active')) {
+    loadApiKeys();
+  }
+});
+
+/**
+ * Load user's API keys
+ */
+async function loadApiKeys() {
+  const container = $('#apiKeysList');
+  
+  try {
+    const response = await fetch('/api/user/api-keys');
+    const data = await response.json();
+    
+    if (data.success && data.keys) {
+      if (data.keys.length === 0) {
+        container.html(`
+          <div class="text-center p-4 text-muted">
+            <i class="bi bi-key display-4 mb-3"></i>
+            <p>No API keys yet. Create one to get started.</p>
+          </div>
+        `);
+      } else {
+        const keysHtml = data.keys.map(key => `
+          <div class="api-key-item d-flex align-items-center justify-content-between p-3 mb-2 rounded" 
+               style="background: rgba(255,255,255,0.05); border: 1px solid rgba(130, 64, 255, 0.2);">
+            <div class="key-info">
+              <div class="fw-semibold text-white">${escapeHtml(key.name)}</div>
+              <code class="text-muted small">${key.keyPreview}</code>
+              <div class="small text-muted mt-1">
+                Created: ${new Date(key.createdAt).toLocaleDateString()}
+                ${key.lastUsedAt ? ` • Last used: ${new Date(key.lastUsedAt).toLocaleDateString()}` : ''}
+                ${key.usageCount ? ` • Used ${key.usageCount} times` : ''}
+              </div>
+            </div>
+            <div class="key-actions d-flex gap-2">
+              <span class="badge ${key.active ? 'bg-success' : 'bg-secondary'}">${key.active ? 'Active' : 'Inactive'}</span>
+              <button class="btn btn-sm btn-outline-danger" onclick="deleteApiKey('${key._id}')" title="Delete key">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        `).join('');
+        
+        container.html(keysHtml);
+      }
+    } else {
+      container.html(`
+        <div class="text-center p-4 text-danger">
+          <i class="bi bi-exclamation-triangle display-4 mb-3"></i>
+          <p>Failed to load API keys</p>
+        </div>
+      `);
+    }
+  } catch (error) {
+    console.error('[Settings] Error loading API keys:', error);
+    container.html(`
+      <div class="text-center p-4 text-danger">
+        <i class="bi bi-exclamation-triangle display-4 mb-3"></i>
+        <p>Failed to load API keys</p>
+      </div>
+    `);
+  }
+}
+
+/**
+ * Create a new API key
+ */
+async function createNewApiKey() {
+  const result = await Swal.fire({
+    title: 'Create New API Key',
+    input: 'text',
+    inputLabel: 'Key Name (optional)',
+    inputPlaceholder: 'e.g., My App Integration',
+    showCancelButton: true,
+    confirmButtonText: 'Create Key',
+    confirmButtonColor: '#6E20F4'
+  });
+
+  if (result.isConfirmed) {
+    const btn = document.getElementById('createApiKeyBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
+
+    try {
+      const response = await fetch('/api/user/api-keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: result.value || undefined })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Show the API key in a modal (only shown once!)
+        await Swal.fire({
+          title: 'API Key Created!',
+          html: `
+            <div class="text-start">
+              <p class="text-warning mb-3">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>Important:</strong> Copy this key now. It will not be shown again!
+              </p>
+              <div class="p-3 rounded mb-3" style="background: rgba(0,0,0,0.3);">
+                <code id="newApiKey" style="word-break: break-all; font-size: 14px;">${data.key.apiKey}</code>
+              </div>
+              <button class="btn btn-sm btn-outline-primary" onclick="copyApiKey()">
+                <i class="bi bi-clipboard me-1"></i>Copy to Clipboard
+              </button>
+            </div>
+          `,
+          icon: 'success',
+          confirmButtonText: 'I\'ve copied the key',
+          confirmButtonColor: '#6E20F4'
+        });
+
+        // Reload the keys list
+        loadApiKeys();
+      } else {
+        throw new Error(data.error || 'Failed to create API key');
+      }
+    } catch (error) {
+      console.error('[Settings] Error creating API key:', error);
+      Swal.fire('Error', error.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-plus-lg me-2"></i>Create New API Key';
+    }
+  }
+}
+
+/**
+ * Copy API key to clipboard
+ */
+function copyApiKey() {
+  const keyElement = document.getElementById('newApiKey');
+  if (keyElement) {
+    navigator.clipboard.writeText(keyElement.textContent).then(() => {
+      showNotification('API key copied to clipboard!', 'success');
+    });
+  }
+}
+
+/**
+ * Delete an API key
+ */
+async function deleteApiKey(keyId) {
+  const result = await Swal.fire({
+    title: 'Delete API Key?',
+    text: 'This action cannot be undone. Any applications using this key will stop working.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, delete it',
+    confirmButtonColor: '#dc3545',
+    cancelButtonText: 'Cancel'
+  });
+
+  if (result.isConfirmed) {
+    try {
+      const response = await fetch(`/api/user/api-keys/${keyId}`, {
+        method: 'DELETE'
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showNotification('API key deleted successfully', 'success');
+        loadApiKeys();
+      } else {
+        throw new Error(data.error || 'Failed to delete API key');
+      }
+    } catch (error) {
+      console.error('[Settings] Error deleting API key:', error);
+      Swal.fire('Error', error.message, 'error');
+    }
+  }
+}
+
+/**
+ * Escape HTML to prevent XSS
+ */
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}

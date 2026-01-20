@@ -157,38 +157,44 @@ async function handleFluxCompletion({
         }
       }
       processedImages = mergedImages;
-    } else if (!chatCreation && chat.chatImageUrl && chat.chatImageUrl.length > 0) {
-      // Regular auto merge with chat image
+    } else if (!chatCreation) {
+      // Regular auto merge with chat image - prioritize baseFaceUrl over chatImageUrl
+      const faceUrl = chat.baseFaceUrl || chat.chatImageUrl;
       
-      const mergedImages = [];
-      for (const imageData of processedImages) {
-        try {
-          const mergedResult = await performAutoMergeFace(
-            { 
-              imageUrl: imageData.imageUrl, 
-              imageId: null,
-              seed: imageData.seed || 0,
-              nsfw_detection_result: null
-            }, 
-            chat.chatImageUrl, 
-            fastify
-          );
-          
-          if (mergedResult && mergedResult.imageUrl) {
-            mergedImages.push({
-              ...imageData,
-              ...mergedResult,
-              isMerged: true
-            });
-          } else {
+      if (faceUrl && faceUrl.length > 0) {
+        console.log(`[FLUX] Using ${chat.baseFaceUrl ? 'baseFaceUrl' : 'chatImageUrl'} for auto merge`);
+        const mergedImages = [];
+        for (const imageData of processedImages) {
+          try {
+            const mergedResult = await performAutoMergeFace(
+              { 
+                imageUrl: imageData.imageUrl, 
+                imageId: null,
+                seed: imageData.seed || 0,
+                nsfw_detection_result: null
+              }, 
+              faceUrl, 
+              fastify
+            );
+            
+            if (mergedResult && mergedResult.imageUrl) {
+              mergedImages.push({
+                ...imageData,
+                ...mergedResult,
+                isMerged: true
+              });
+            } else {
+              mergedImages.push({ ...imageData, isMerged: false });
+            }
+          } catch (error) {
+            console.error(`FLUX auto merge error:`, error.message);
             mergedImages.push({ ...imageData, isMerged: false });
           }
-        } catch (error) {
-          console.error(`FLUX auto merge error:`, error.message);
-          mergedImages.push({ ...imageData, isMerged: false });
         }
+        processedImages = mergedImages;
+      } else {
+        processedImages = processedImages.map(imageData => ({ ...imageData, isMerged: false }));
       }
-      processedImages = mergedImages;
     } else {
       processedImages = processedImages.map(imageData => ({ ...imageData, isMerged: false }));
     }
@@ -1514,11 +1520,14 @@ async function checkTaskStatus(taskId, fastify) {
       }
     } else {
       // Regular auto merge logic for existing chats
-      const faceImageUrl = chat.chatImageUrl;
+      // Prioritize baseFaceUrl over chatImageUrl for face merging
+      const faceImageUrl = chat.baseFaceUrl || chat.chatImageUrl;
       
       if (!faceImageUrl || faceImageUrl.length === 0) {
+        console.log(`[imagen] No face URL available for auto merge (baseFaceUrl: ${chat.baseFaceUrl ? 'yes' : 'no'}, chatImageUrl: ${chat.chatImageUrl ? 'yes' : 'no'})`);
         processedImages = images.map(imageData => ({ ...imageData, isMerged: false }));
       } else {
+        console.log(`[imagen] Using ${chat.baseFaceUrl ? 'baseFaceUrl' : 'chatImageUrl'} for auto merge`);
         processedImages = await Promise.all(images.map(async (imageData, arrayIndex) => {
           try {
             const mergedResult = await performAutoMergeFace(

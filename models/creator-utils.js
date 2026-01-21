@@ -74,6 +74,15 @@ function getDefaultCreatorProfile() {
 }
 
 /**
+ * Check if user has premium subscription
+ * @param {Object} user - User object from database
+ * @returns {boolean} Whether user has premium subscription
+ */
+function isPremiumUser(user) {
+  return user?.subscriptionStatus === 'active';
+}
+
+/**
  * Apply to become a creator
  * @param {Object} db - MongoDB database instance
  * @param {string} userId - User ID
@@ -91,6 +100,11 @@ async function applyAsCreator(db, userId, applicationData) {
 
     if (user.isCreator) {
       return { success: false, error: 'User is already a creator' };
+    }
+
+    // Check if user has premium subscription
+    if (!isPremiumUser(user)) {
+      return { success: false, error: 'Premium subscription required to become a creator', code: 'PREMIUM_REQUIRED' };
     }
 
     // Create creator profile

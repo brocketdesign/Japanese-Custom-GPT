@@ -1245,7 +1245,7 @@ fastify.get('/features', async (request, reply) => {
     // NSFW video generator
     { title: translations.features_page.nsfw_video_generator_title, description: translations.features_page.nsfw_video_generator_description, icon: 'fas fa-video', link: '/landingpage/nsfw-video-generator-en'  },
     // Become a Creator
-    { title: translations.features_page.become_creator_title || 'Become a Creator', description: translations.features_page.become_creator_description || 'Monetize your content by becoming a creator', icon: 'fas fa-dollar-sign', link: '/earnings'  },
+    { title: translations.features_page.become_creator_title || 'Become a Creator', description: translations.features_page.become_creator_description || 'Monetize your content by becoming a creator', icon: 'fas fa-dollar-sign', link: '/landingpage/become-creator-en'  },
     // Landing page
     { title: translations.features_page.landing_page_title || 'Welcome', description: translations.features_page.landing_page_description || 'Learn more about our platform', icon: 'fas fa-home', link: '/landing'  },
   ]

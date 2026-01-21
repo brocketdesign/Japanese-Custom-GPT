@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+{{> dashboard-header}}
+<link rel="stylesheet" href="/css/landingpage-influencer.css">
+
+<body>
+    {{> dashboard-nav}}
+
+    <!-- Hero Section with Animated Gradient Background -->
+    <section id="hero-section" class="position-relative overflow-hidden">
+        <div class="animated-gradient-bg"></div>
+        <div class="container py-5">
+            <div class="row align-items-center min-vh-100">
+                <div class="col-lg-6 text-white position-relative z-index-2" data-aos="fade-right">
+                    <div class="badge bg-white text-primary mb-3 px-3 py-2 rounded-pill">
+                        <i class="bi bi-stars me-2"></i>Creator Program
+                    </div>
+                    <h1 class="display-3 fw-bold mb-4 hero-title">
+                        Become a Creator.<br/>
+                        <span class="gradient-text">Monetize Your Passion.</span>
+                    </h1>
+                    <p class="lead mb-4 fs-4">
+                        Turn your creativity into income. Create AI characters, set up subscription tiers, and earn money from your dedicated fans. Your content, your rules.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3 mb-4">
+                        <a href="/earnings" class="btn btn-light btn-lg px-5 py-3 rounded-pill shadow-lg cta-pulse">
+                            <i class="bi bi-rocket-takeoff me-2"></i>Start Creating Now
+                        </a>
+                        <a href="#how-it-works" class="btn btn-outline-light btn-lg px-5 py-3 rounded-pill">
+                            <i class="bi bi-play-circle me-2"></i>How It Works
+                        </a>
+                    </div>
+                    <div class="d-flex align-items-center gap-4 flex-wrap">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-check-circle-fill text-success fs-5 me-2"></i>
+                            <span>Keep 70% of Earnings</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-check-circle-fill text-success fs-5 me-2"></i>
+                            <span>Weekly Payouts</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 position-relative" data-aos="fade-left" data-aos-delay="200">
+                    <div class="hero-image-container">
+                        <div class="creator-showcase card border-0 shadow-2xl" style="background: linear-gradient(145deg, rgba(40, 40, 50, 0.95), rgba(30, 30, 40, 0.98)); border-radius: 20px; overflow: hidden;">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-center mb-4">
+                                    <div class="creator-avatar me-3" style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                        <i class="bi bi-person-fill text-white fs-3"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-0 text-white fw-bold">Your Creator Dashboard</h5>
+                                        <small class="text-muted">Premium Creator</small>
+                                    </div>
+                                </div>
+                                <div class="row g-3 mb-4">
+                                    <div class="col-6">
+                                        <div class="stat-box p-3 rounded-3" style="background: rgba(102, 126, 234, 0.15);">
+                                            <small class="text-muted d-block">Total Earnings</small>
+                                            <h4 class="text-white fw-bold mb-0">$2,847</h4>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="stat-box p-3 rounded-3" style="background: rgba(118, 75, 162, 0.15);">
+                                            <small class="text-muted d-block">Subscribers</small>
+                                            <h4 class="text-white fw-bold mb-0">342</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="subscription-tiers">
+                                    <small class="text-muted d-block mb-2">Your Subscription Tiers</small>
+                                    <div class="tier-item d-flex justify-content-between align-items-center p-2 rounded mb-2" style="background: rgba(255,255,255,0.05);">
+                                        <span class="text-white"><i class="bi bi-star text-warning me-2"></i>Basic Fan</span>
+                                        <span class="badge bg-success">$5/mo</span>
+                                    </div>
+                                    <div class="tier-item d-flex justify-content-between align-items-center p-2 rounded mb-2" style="background: rgba(255,255,255,0.08);">
+                                        <span class="text-white"><i class="bi bi-star-fill text-warning me-2"></i>Super Fan</span>
+                                        <span class="badge bg-primary">$15/mo</span>
+                                    </div>
+                                    <div class="tier-item d-flex justify-content-between align-items-center p-2 rounded" style="background: rgba(255,255,255,0.1);">
+                                        <span class="text-white"><i class="bi bi-gem text-info me-2"></i>VIP Access</span>
+                                        <span class="badge bg-danger">$50/mo</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="floating-card card-1" data-aos="zoom-in" data-aos-delay="400">
+                            <i class="bi bi-currency-dollar fs-3 text-success"></i>
+                            <div class="ms-2">
+                                <small class="d-block text-muted">This Month</small>
+                                <strong class="fs-5">$847.50</strong>
+                            </div>
+                        </div>
+                        <div class="floating-card card-2" data-aos="zoom-in" data-aos-delay="600">
+                            <i class="bi bi-heart-fill fs-3 text-danger"></i>
+                            <div class="ms-2">
+                                <small class="d-block text-muted">New Fans</small>
+                                <strong class="fs-5">+28</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trust Bar -->
+    <section class="py-4 bg-white border-bottom">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-12 text-center">
+                    <p class="text-muted mb-3 fw-semibold">JOIN OUR GROWING CREATOR COMMUNITY</p>
+                    <div class="d-flex justify-content-center align-items-center gap-4 flex-wrap">
+                        <div class="trust-stat" data-aos="fade-up">
+                            <h3 class="fw-bold text-primary mb-0">5,000+</h3>
+                            <small class="text-muted">Active Creators</small>
+                        </div>
+                        <div class="trust-stat" data-aos="fade-up" data-aos-delay="100">
+                            <h3 class="fw-bold text-primary mb-0">$200K+</h3>
+                            <small class="text-muted">Paid to Creators</small>
+                        </div>
+                        <div class="trust-stat" data-aos="fade-up" data-aos-delay="200">
+                            <h3 class="fw-bold text-primary mb-0">70%</h3>
+                            <small class="text-muted">Revenue Share</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Monetization Highlight -->
+    <section class="py-5 bg-gradient-primary text-white">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 mb-4 mb-lg-0" data-aos="fade-right">
+                    <div class="affiliate-icon-container">
+                        <i class="bi bi-wallet2 display-1 mb-3"></i>
+                    </div>
+                    <h2 class="display-5 fw-bold mb-3">Multiple Revenue Streams</h2>
+                    <p class="lead mb-4">
+                        Maximize your earnings with subscription tiers, tips, and exclusive content. Set your own prices and build a sustainable income from your creativity.
+                    </p>
+                    <ul class="list-unstyled fs-5">
+                        <li class="mb-3"><i class="bi bi-check-circle-fill me-2"></i>Create unlimited subscription tiers</li>
+                        <li class="mb-3"><i class="bi bi-check-circle-fill me-2"></i>Receive tips from your biggest fans</li>
+                        <li class="mb-3"><i class="bi bi-check-circle-fill me-2"></i>Sell exclusive AI characters</li>
+                        <li class="mb-3"><i class="bi bi-check-circle-fill me-2"></i>Earn from affiliate referrals</li>
+                    </ul>
+                </div>
+                <div class="col-lg-6" data-aos="fade-left">
+                    <div class="card shadow-2xl border-0 bg-white text-dark">
+                        <div class="card-body p-5">
+                            <h4 class="fw-bold mb-4 text-center">Calculate Your Potential</h4>
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">Subscribers at $10/month</label>
+                                <input type="range" class="form-range" min="10" max="500" value="100" id="subscriberSlider">
+                                <div class="d-flex justify-content-between">
+                                    <small>10</small>
+                                    <small class="fw-bold text-primary" id="subscriberCount">100</small>
+                                    <small>500+</small>
+                                </div>
+                            </div>
+                            <div class="bg-light rounded-3 p-4 text-center">
+                                <small class="text-muted d-block mb-2">Potential Monthly Earnings (70%)</small>
+                                <h2 class="display-4 fw-bold text-primary mb-0">$<span id="monthlyEarnings">700</span></h2>
+                                <small class="text-muted">That's $<span id="yearlyEarnings">8,400</span>/year</small>
+                            </div>
+                            <div class="mt-4 text-center">
+                                <a href="/earnings" class="btn btn-primary btn-lg px-5 rounded-pill">
+                                    Become a Creator Now
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="display-5 fw-bold mb-3">Powerful Creator Tools</h2>
+                <p class="lead text-muted">Everything you need to build and grow your audience</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100">
+                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="feature-icon rounded-circle p-3 mb-3 d-inline-flex">
+                                <i class="bi bi-layers fs-2 text-primary"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3">Subscription Tiers</h4>
+                            <p class="text-muted">Create multiple subscription levels with different perks. Offer exclusive content to your most dedicated fans.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="200">
+                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="feature-icon rounded-circle p-3 mb-3 d-inline-flex">
+                                <i class="bi bi-person-hearts fs-2 text-success"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3">AI Character Creation</h4>
+                            <p class="text-muted">Design unique AI characters with custom personalities. Your subscribers can chat and interact with your creations.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="300">
+                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="feature-icon rounded-circle p-3 mb-3 d-inline-flex">
+                                <i class="bi bi-graph-up-arrow fs-2 text-warning"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3">Analytics Dashboard</h4>
+                            <p class="text-muted">Track your earnings, subscriber growth, and engagement. Make data-driven decisions to grow your audience.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="400">
+                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="feature-icon rounded-circle p-3 mb-3 d-inline-flex">
+                                <i class="bi bi-cash-stack fs-2 text-danger"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3">Fast Payouts</h4>
+                            <p class="text-muted">Get paid weekly with multiple payout options. No minimum threshold required to withdraw your earnings.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="500">
+                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="feature-icon rounded-circle p-3 mb-3 d-inline-flex">
+                                <i class="bi bi-megaphone fs-2 text-info"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3">Promotion Tools</h4>
+                            <p class="text-muted">Share your creator profile with customizable links. Get discovered by our community of AI enthusiasts.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="600">
+                    <div class="feature-card card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body p-4">
+                            <div class="feature-icon rounded-circle p-3 mb-3 d-inline-flex">
+                                <i class="bi bi-shield-check fs-2 text-purple"></i>
+                            </div>
+                            <h4 class="fw-bold mb-3">Content Protection</h4>
+                            <p class="text-muted">Your exclusive content stays exclusive. We protect your work and ensure only paying subscribers can access it.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="py-5">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="display-5 fw-bold mb-3">How to Get Started</h2>
+                <p class="lead text-muted">Launch your creator career in 4 simple steps</p>
+            </div>
+
+            <!-- Steps -->
+            <div class="row g-4">
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="text-center position-relative">
+                        <div class="step-number bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                            <span class="fs-3 fw-bold">1</span>
+                        </div>
+                        <h4 class="fw-bold mb-3">Apply as Creator</h4>
+                        <p class="text-muted">Sign up and apply for the creator program. Quick approval process to get you started fast.</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="text-center position-relative">
+                        <div class="step-number bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                            <span class="fs-3 fw-bold">2</span>
+                        </div>
+                        <h4 class="fw-bold mb-3">Set Up Tiers</h4>
+                        <p class="text-muted">Create your subscription tiers with custom prices and benefits. Design perks that attract fans.</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="text-center position-relative">
+                        <div class="step-number bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                            <span class="fs-3 fw-bold">3</span>
+                        </div>
+                        <h4 class="fw-bold mb-3">Create Content</h4>
+                        <p class="text-muted">Build AI characters, generate images, and create exclusive content for your subscribers.</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="400">
+                    <div class="text-center position-relative">
+                        <div class="step-number bg-danger text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                            <span class="fs-3 fw-bold">4</span>
+                        </div>
+                        <h4 class="fw-bold mb-3">Earn Money</h4>
+                        <p class="text-muted">Watch your subscriber count and earnings grow. Get paid weekly directly to your account.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-5" data-aos="fade-up">
+                <a href="/earnings" class="btn btn-primary btn-lg px-5 py-3 rounded-pill shadow-lg cta-pulse">
+                    <i class="bi bi-rocket-takeoff me-2"></i>Start Your Creator Journey
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Tiers Example -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="display-5 fw-bold mb-3">Subscription Tier Examples</h2>
+                <p class="lead text-muted">Set your own prices - here's what successful creators offer</p>
+            </div>
+            <div class="row g-4 justify-content-center">
+                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100">
+                    <div class="card h-100 border-0 shadow-sm hover-lift text-center">
+                        <div class="card-body p-4">
+                            <div class="tier-badge mb-3">
+                                <i class="bi bi-star text-warning fs-1"></i>
+                            </div>
+                            <h4 class="fw-bold">Basic Fan</h4>
+                            <h2 class="display-5 fw-bold text-primary my-3">$5<small class="fs-6 text-muted">/month</small></h2>
+                            <ul class="list-unstyled text-start mb-4">
+                                <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Access to public AI characters</li>
+                                <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Basic chat features</li>
+                                <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Community access</li>
+                                <li class="mb-2 text-muted"><i class="bi bi-x me-2"></i>Exclusive content</li>
+                            </ul>
+                            <div class="text-muted small">
+                                <strong>You earn:</strong> $3.50/subscriber
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="200">
+                    <div class="card h-100 border-0 shadow-lg hover-lift text-center position-relative" style="border: 2px solid #667eea !important;">
+                        <div class="position-absolute top-0 start-50 translate-middle">
+                            <span class="badge bg-primary px-3 py-2">Most Popular</span>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="tier-badge mb-3">
+                                <i class="bi bi-star-fill text-warning fs-1"></i>
+                            </div>
+                            <h4 class="fw-bold">Super Fan</h4>
+                            <h2 class="display-5 fw-bold text-primary my-3">$15<small class="fs-6 text-muted">/month</small></h2>
+                            <ul class="list-unstyled text-start mb-4">
+                                <li class="mb-2"><i class="bi bi-check text-success me-2"></i>All Basic perks</li>
+                                <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Exclusive AI characters</li>
+                                <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Priority chat responses</li>
+                                <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Monthly exclusive content</li>
+                            </ul>
+                            <div class="text-muted small">
+                                <strong>You earn:</strong> $10.50/subscriber
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="300">
+                    <div class="card h-100 border-0 shadow-sm hover-lift text-center">
+                        <div class="card-body p-4">
+                            <div class="tier-badge mb-3">
+                                <i class="bi bi-gem text-info fs-1"></i>
+                            </div>
+                            <h4 class="fw-bold">VIP Access</h4>
+                            <h2 class="display-5 fw-bold text-primary my-3">$50<small class="fs-6 text-muted">/month</small></h2>
+                            <ul class="list-unstyled text-start mb-4">
+                                <li class="mb-2"><i class="bi bi-check text-success me-2"></i>All Super Fan perks</li>
+                                <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Custom character requests</li>
+                                <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Direct messaging</li>
+                                <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Early access to everything</li>
+                            </ul>
+                            <div class="text-muted small">
+                                <strong>You earn:</strong> $35/subscriber
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="display-5 fw-bold mb-3">Creator Success Stories</h2>
+                <p class="lead text-muted">Hear from creators who are already earning</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                    <div class="testimonial-card card border-0 shadow-sm h-100 hover-lift">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="avatar-circle rounded-circle p-2 me-3" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                                    <i class="bi bi-person-fill fs-4 text-white"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-0 fw-bold">Emma K.</h5>
+                                    <div class="text-warning">★★★★★</div>
+                                </div>
+                            </div>
+                            <p class="text-muted mb-3">"I started 3 months ago with just one AI character. Now I have 150 subscribers and earn over $1,500/month. The tools are amazing!"</p>
+                            <div class="d-flex justify-content-between text-muted small">
+                                <span><i class="bi bi-people me-1"></i>150 subs</span>
+                                <span><i class="bi bi-calendar me-1"></i>3 months</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                    <div class="testimonial-card card border-0 shadow-sm h-100 hover-lift">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="avatar-circle rounded-circle p-2 me-3" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                                    <i class="bi bi-person-fill fs-4 text-white"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-0 fw-bold">Alex M.</h5>
+                                    <div class="text-warning">★★★★★</div>
+                                </div>
+                            </div>
+                            <p class="text-muted mb-3">"The subscription tier system is genius. My VIP tier brings in most of my revenue. I quit my day job 6 months ago!"</p>
+                            <div class="d-flex justify-content-between text-muted small">
+                                <span><i class="bi bi-people me-1"></i>420 subs</span>
+                                <span><i class="bi bi-calendar me-1"></i>8 months</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+                    <div class="testimonial-card card border-0 shadow-sm h-100 hover-lift">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="avatar-circle rounded-circle p-2 me-3" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                                    <i class="bi bi-person-fill fs-4 text-white"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-0 fw-bold">Sophie L.</h5>
+                                    <div class="text-warning">★★★★★</div>
+                                </div>
+                            </div>
+                            <p class="text-muted mb-3">"Weekly payouts and 70% revenue share is unbeatable. The analytics help me understand what my fans want."</p>
+                            <div class="d-flex justify-content-between text-muted small">
+                                <span><i class="bi bi-people me-1"></i>89 subs</span>
+                                <span><i class="bi bi-calendar me-1"></i>2 months</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="display-5 fw-bold mb-3">Frequently Asked Questions</h2>
+                <p class="lead text-muted">Everything you need to know about becoming a creator</p>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item border-0 shadow-sm mb-3">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq1" aria-expanded="true">
+                                    How much can I earn as a creator?
+                                </button>
+                            </h2>
+                            <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Your earnings depend on your subscriber count and tier prices. With 100 subscribers at $10/month average, you'd earn $700/month (70% of $1,000). Top creators earn $5,000+ monthly. There's no cap on your earning potential!
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item border-0 shadow-sm mb-3">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                    How do payouts work?
+                                </button>
+                            </h2>
+                            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    We process payouts weekly every Friday. You can withdraw via PayPal, bank transfer, or crypto. There's no minimum threshold - withdraw any amount you've earned. Processing typically takes 1-3 business days.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item border-0 shadow-sm mb-3">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                    What kind of content can I create?
+                                </button>
+                            </h2>
+                            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    You can create AI characters, generate images, and offer exclusive chat experiences. Design custom personalities, appearances, and scenarios. Both SFW and NSFW content is allowed (age-verified subscribers only for NSFW).
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item border-0 shadow-sm mb-3">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                    How do subscription tiers work?
+                                </button>
+                            </h2>
+                            <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    You can create up to 5 subscription tiers with custom prices ($1-$100/month) and benefits. Define what each tier includes - exclusive characters, priority responses, custom requests, etc. Subscribers choose the tier that fits their budget.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item border-0 shadow-sm">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                                    Is there a cost to become a creator?
+                                </button>
+                            </h2>
+                            <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Joining the creator program is completely free! We only take a 30% platform fee from your earnings. You keep 70% of everything you make. No upfront costs, no monthly fees, no hidden charges.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA Section -->
+    <section class="py-5 bg-gradient-primary text-white">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8 mx-auto text-center" data-aos="zoom-in">
+                    <h2 class="display-4 fw-bold mb-4">Ready to Start Earning?</h2>
+                    <p class="lead mb-4 fs-4">Join thousands of creators who are monetizing their creativity</p>
+                    <div class="d-flex flex-wrap gap-3 justify-content-center">
+                        <a href="/earnings" class="btn btn-light btn-lg px-5 py-3 rounded-pill shadow-lg cta-pulse">
+                            <i class="bi bi-rocket-takeoff me-2"></i>Become a Creator Today
+                        </a>
+                        <a href="#how-it-works" class="btn btn-outline-light btn-lg px-5 py-3 rounded-pill">
+                            <i class="bi bi-info-circle me-2"></i>Learn More
+                        </a>
+                    </div>
+                    <div class="mt-4">
+                        <small class="d-block opacity-75">✓ Free to Join  ✓ 70% Revenue Share  ✓ Weekly Payouts</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <style>
+        #footer-toolbar { display: none; }
+        .sticky-bottom { display: none; }
+        footer { display: inline !important; }
+        
+        .hero-image-container {
+            position: relative;
+        }
+        
+        .creator-showcase {
+            transform: perspective(1000px) rotateY(-5deg);
+            transition: transform 0.3s ease;
+        }
+        
+        .creator-showcase:hover {
+            transform: perspective(1000px) rotateY(0deg);
+        }
+    </style>
+
+    {{> dashboard-footer}}
+
+    <!-- AOS Animation Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 100
+        });
+
+        // Earnings Calculator
+        const slider = document.getElementById('subscriberSlider');
+        const subscriberCount = document.getElementById('subscriberCount');
+        const monthlyEarnings = document.getElementById('monthlyEarnings');
+        const yearlyEarnings = document.getElementById('yearlyEarnings');
+
+        slider.addEventListener('input', function() {
+            const value = parseInt(this.value);
+            const monthly = Math.round(value * 10 * 0.7); // $10/month * 70%
+            subscriberCount.textContent = value;
+            monthlyEarnings.textContent = monthly.toLocaleString();
+            yearlyEarnings.textContent = (monthly * 12).toLocaleString();
+        });
+    </script>
+</body>
+</html>

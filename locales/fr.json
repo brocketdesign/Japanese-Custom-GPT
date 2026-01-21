@@ -1304,8 +1304,10 @@
     "upgrade_to_premium": "Passer à Premium"
   },
   "sns": {
-    "share_to_social": "Partager sur les réseaux sociaux",
-    "select_platforms": "Sélectionner les plateformes",
+    "share_to_social": "Créer une publication",
+    "select_platforms": "Sélectionner les destinations",
+    "post_to_profile": "Mon Profil",
+    "post_to_profile_desc": "Partager sur votre profil",
     "loading_connections": "Chargement des connexions...",
     "caption": "Légende",
     "caption_placeholder": "Écrivez une légende pour votre publication...",
@@ -1358,7 +1360,7 @@
     "retry": "Réessayer"
   },
   "image_tools": {
-    "share_sns": "Publier sur SNS"
+    "share_sns": "Publier"
   },
   "avatar": {
     "affiliation": "Affiliation",

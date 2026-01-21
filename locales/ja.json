@@ -1359,8 +1359,10 @@
     "upgrade_to_premium": "プレミアムにアップグレード"
   },
   "sns": {
-    "share_to_social": "SNSでシェア",
-    "select_platforms": "プラットフォームを選択",
+    "share_to_social": "投稿を作成",
+    "select_platforms": "投稿先を選択",
+    "post_to_profile": "マイプロフィール",
+    "post_to_profile_desc": "プロフィールにシェア",
     "loading_connections": "接続を読み込み中...",
     "caption": "キャプション",
     "caption_placeholder": "投稿のキャプションを入力...",
@@ -1413,7 +1415,7 @@
     "retry": "再試行"
   },
   "image_tools": {
-    "share_sns": "SNSに投稿"
+    "share_sns": "投稿"
   },
   "avatar": {
     "affiliation": "アフィリエイト",

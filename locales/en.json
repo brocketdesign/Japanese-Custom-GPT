@@ -1374,8 +1374,10 @@
     "upgrade_to_premium": "Upgrade to Premium"
   },
   "sns": {
-    "share_to_social": "Share to Social Media",
-    "select_platforms": "Select Platforms",
+    "share_to_social": "Create Post",
+    "select_platforms": "Select Destinations",
+    "post_to_profile": "My Profile",
+    "post_to_profile_desc": "Share on your profile",
     "loading_connections": "Loading connections...",
     "caption": "Caption",
     "caption_placeholder": "Write a caption for your post...",
@@ -1428,7 +1430,7 @@
     "retry": "Retry"
   },
   "image_tools": {
-    "share_sns": "Post to SNS"
+    "share_sns": "Post"
   },
   "avatar": {
     "affiliation": "Affiliation",

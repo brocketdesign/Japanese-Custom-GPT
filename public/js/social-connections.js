@@ -410,18 +410,24 @@
     function renderPlatformCheckboxes() {
         const container = $('#snsPlatformCheckboxes');
         
-        if (state.connections.length === 0) {
-            container.html(`
-                <div class="text-muted small">${getTranslation('no_connections_to_post', 'No connected accounts')}</div>
-            `);
-            $('#noConnectionsWarning').show();
-            $('#publishSnsPostBtn').prop('disabled', true);
-            return;
-        }
-
-        $('#noConnectionsWarning').hide();
+        // Always show profile option first
+        let html = `
+            <div class="platform-checkbox-wrapper">
+                <input type="checkbox" class="sns-platform-checkbox" 
+                       id="platform_profile" 
+                       data-platform="profile"
+                       value="profile"
+                       style="display: none;">
+                <button type="button" class="sns-platform-btn" 
+                        data-checkbox-id="platform_profile">
+                    <i class="bi bi-person-circle"></i>
+                    <span>${getTranslation('post_to_profile', 'My Profile')}</span>
+                </button>
+            </div>
+        `;
         
-        const html = state.connections.map(conn => {
+        // Add SNS connections if any
+        html += state.connections.map(conn => {
             const platformIcon = getPlatformIcon(conn.platform);
             const platformName = getPlatformName(conn.platform);
             
@@ -442,6 +448,9 @@
         }).join('');
 
         container.html(html);
+        
+        // Hide no connections warning since profile is always available
+        $('#noConnectionsWarning').hide();
         
         // Initialize button states based on checkbox states
         $('.sns-platform-btn').each(function() {
@@ -553,6 +562,10 @@
         `);
         
         try {
+            // Separate profile posts from SNS posts
+            const postToProfile = platforms.includes('profile');
+            const snsPlatforms = platforms.filter(p => p !== 'profile');
+            
             const response = await fetch('/api/social/post', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -560,7 +573,9 @@
                 body: JSON.stringify({
                     text: caption,
                     mediaUrls: state.currentImage ? [state.currentImage.url] : [],
-                    platforms: platforms
+                    platforms: snsPlatforms,
+                    postToProfile: postToProfile,
+                    imageId: state.currentImage?.id || null
                 })
             });
 

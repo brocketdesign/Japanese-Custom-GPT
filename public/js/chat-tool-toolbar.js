@@ -143,7 +143,7 @@ function getImageTools({chatId, userChatId, imageId, isLiked = false, title, pro
                           data-url="${imageUrl}"
                           data-prompt="${prompt}"
                           onclick="openSnsShareModal(this)">
-                        <i class="bi bi-broadcast"></i>${window.translations?.image_tools?.share_sns || 'Post to SNS'}
+                        <i class="bi bi-send"></i>${window.translations?.image_tools?.share_sns || 'Post'}
                     </span>
                     
                     <span class="badge bg-white text-secondary image-tool-badge download-image" 

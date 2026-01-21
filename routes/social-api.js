@@ -5,6 +5,7 @@
 
 const { ObjectId } = require('mongodb');
 const { generateCompletion } = require('../models/openai');
+const { createProfilePost } = require('../models/unified-post-utils');
 
 // Late.dev API Configuration
 const LATE_API_BASE_URL = 'https://getlate.dev/api/v1';
@@ -516,7 +517,7 @@ async function routes(fastify, options) {
 
   /**
    * POST /api/social/post
-   * Create a post on connected platforms
+   * Create a post on connected platforms and/or user profile
    */
   fastify.post('/api/social/post', async (request, reply) => {
     try {
@@ -525,172 +526,191 @@ async function routes(fastify, options) {
         return reply.code(401).send({ error: 'Authentication required' });
       }
 
-      const { text, mediaUrls, platforms, scheduledFor } = request.body;
+      const { text, mediaUrls, platforms, scheduledFor, postToProfile, imageId } = request.body;
 
-      if (!text || !platforms || platforms.length === 0) {
-        return reply.code(400).send({ error: 'Text and at least one platform are required' });
+      // Check if posting to profile only (no SNS platforms)
+      const hasSnsPosting = platforms && platforms.length > 0;
+      
+      if (!text || (!hasSnsPosting && !postToProfile)) {
+        return reply.code(400).send({ error: 'Text and at least one destination are required' });
       }
 
-      // Get user's connections and profile
-      const userData = await db.collection('users').findOne(
-        { _id: new ObjectId(user._id) },
-        { projection: { snsConnections: 1, lateProfileId: 1 } }
-      );
+      let profilePostResult = null;
+      let snsPostResult = null;
 
-      const connections = userData?.snsConnections || [];
-      const profileId = userData?.lateProfileId;
-      
-      if (!profileId) {
-        return reply.code(400).send({ 
-          error: 'No profile found. Please connect an account first.',
-          needsConnection: true
-        });
-      }
-      
-      // Filter to requested platforms
-      const targetConnections = connections.filter(c => platforms.includes(c.platform));
-      
-      if (targetConnections.length === 0) {
-        return reply.code(400).send({ 
-          error: 'No connected accounts for selected platforms',
-          needsConnection: true
-        });
+      // Handle profile post if requested
+      if (postToProfile) {
+        console.log(`[Social API] Creating profile post for user ${user._id}`);
+        try {
+          const imageUrl = mediaUrls && mediaUrls.length > 0 ? mediaUrls[0] : null;
+          
+          profilePostResult = await createProfilePost({
+            userId: user._id,
+            imageUrl,
+            videoUrl: null,
+            thumbnailUrl: imageUrl,
+            caption: text,
+            visibility: 'public',
+            requiredTier: null,
+            nsfw: false
+          }, db);
+          
+          console.log(`[Social API] Profile post created: ${profilePostResult._id}`);
+        } catch (profileError) {
+          console.error(`[Social API] Profile post error:`, profileError);
+          // Continue with SNS posting even if profile post fails
+        }
       }
 
-      // Resolve Late.dev account IDs for each connection
-      // For connections that don't have a proper account ID, try to fetch it
-      const resolvedPlatforms = [];
-      const failedPlatforms = [];
-      
-      for (const conn of targetConnections) {
-        let accountId = conn.lateAccountId;
+      // Handle SNS posting if platforms are selected
+      if (hasSnsPosting) {
+        // Get user's connections and profile
+        const userData = await db.collection('users').findOne(
+          { _id: new ObjectId(user._id) },
+          { projection: { snsConnections: 1, lateProfileId: 1 } }
+        );
+
+        const connections = userData?.snsConnections || [];
+        const profileId = userData?.lateProfileId;
         
-        // If accountId is missing, pending, or looks like a username (not a MongoDB ObjectId), try to resolve it
-        const needsResolution = !accountId || 
-                               accountId.startsWith('pending_') || 
-                               !accountId.match(/^[a-f0-9]{24}$/i);
-        
-        if (needsResolution && profileId) {
-          try {
-            console.log(`[Social API] Attempting to resolve account ID for ${conn.platform}/@${conn.username}`);
-            const accountsResponse = await lateApiRequest(`/accounts?profileId=${profileId}`);
-            const accounts = accountsResponse.accounts || accountsResponse || [];
+        if (!profileId) {
+          // Only return error if we didn't successfully create a profile post
+          if (!profilePostResult) {
+            return reply.code(400).send({ 
+              error: 'No profile found. Please connect an account first.',
+              needsConnection: true
+            });
+          }
+          // Otherwise continue - SNS posting will be skipped but profile post succeeded
+        } else {
+          // Filter to requested platforms
+          const targetConnections = connections.filter(c => platforms.includes(c.platform));
+          
+          if (targetConnections.length === 0 && !profilePostResult) {
+            return reply.code(400).send({ 
+              error: 'No connected accounts for selected platforms',
+              needsConnection: true
+            });
+          }
+
+          if (targetConnections.length > 0) {
+            // Resolve Late.dev account IDs for each connection
+            const resolvedPlatforms = [];
+            const failedPlatforms = [];
             
-            console.log(`[Social API] Found ${accounts.length} accounts for profile ${profileId}`);
-            
-            const matchingAccount = accounts.find(acc => 
-              acc.platform === conn.platform && 
-              (acc.username === conn.username || acc.handle === conn.username || acc.name === conn.username)
-            ) || accounts.find(acc => acc.platform === conn.platform);
-            
-            if (matchingAccount) {
-              accountId = matchingAccount._id || matchingAccount.id || matchingAccount.accountId;
+            for (const conn of targetConnections) {
+              let accountId = conn.lateAccountId;
               
-              // Verify it's a valid ObjectId format
-              if (accountId && accountId.match(/^[a-f0-9]{24}$/i)) {
-                console.log(`[Social API] Resolved account ID for ${conn.platform}: ${accountId}`);
-                
-                // Update stored connection with proper account ID
-                await db.collection('users').updateOne(
-                  { _id: new ObjectId(user._id), 'snsConnections.platform': conn.platform },
-                  { $set: { 'snsConnections.$.lateAccountId': accountId } }
-                );
-              } else {
-                console.error(`[Social API] Invalid account ID format returned for ${conn.platform}: ${accountId}`);
-                accountId = null;
+              const needsResolution = !accountId || 
+                                     accountId.startsWith('pending_') || 
+                                     !accountId.match(/^[a-f0-9]{24}$/i);
+              
+              if (needsResolution && profileId) {
+                try {
+                  console.log(`[Social API] Attempting to resolve account ID for ${conn.platform}/@${conn.username}`);
+                  const accountsResponse = await lateApiRequest(`/accounts?profileId=${profileId}`);
+                  const accounts = accountsResponse.accounts || accountsResponse || [];
+                  
+                  const matchingAccount = accounts.find(acc => 
+                    acc.platform === conn.platform && 
+                    (acc.username === conn.username || acc.handle === conn.username || acc.name === conn.username)
+                  ) || accounts.find(acc => acc.platform === conn.platform);
+                  
+                  if (matchingAccount) {
+                    accountId = matchingAccount._id || matchingAccount.id || matchingAccount.accountId;
+                    
+                    if (accountId && accountId.match(/^[a-f0-9]{24}$/i)) {
+                      await db.collection('users').updateOne(
+                        { _id: new ObjectId(user._id), 'snsConnections.platform': conn.platform },
+                        { $set: { 'snsConnections.$.lateAccountId': accountId } }
+                      );
+                    } else {
+                      accountId = null;
+                    }
+                  } else {
+                    accountId = null;
+                  }
+                } catch (resolveError) {
+                  console.error(`[Social API] Could not resolve account ID for ${conn.platform}:`, resolveError.message);
+                  accountId = null;
+                }
               }
-            } else {
-              console.warn(`[Social API] No matching account found for ${conn.platform}/@${conn.username}`);
-              accountId = null;
+              
+              if (accountId && accountId.match(/^[a-f0-9]{24}$/i)) {
+                resolvedPlatforms.push({
+                  platform: conn.platform,
+                  accountId: accountId,
+                  platformSpecificData: {}
+                });
+              } else {
+                failedPlatforms.push(conn.platform);
+              }
             }
-          } catch (resolveError) {
-            console.error(`[Social API] Could not resolve account ID for ${conn.platform}:`, resolveError.message);
-            accountId = null;
+            
+            // Post to SNS if we have resolved platforms
+            if (resolvedPlatforms.length > 0) {
+              const postData = {
+                content: text,
+                mediaItems: (mediaUrls || []).map(url => ({
+                  url,
+                  type: 'image'
+                })),
+                platforms: resolvedPlatforms
+              };
+
+              if (scheduledFor) {
+                postData.scheduledAt = new Date(scheduledFor).toISOString();
+              }
+
+              console.log(`[Social API] Creating SNS post for user ${user._id}:`, {
+                platforms: postData.platforms,
+                mediaItems: postData.mediaItems?.length || 0
+              });
+
+              const response = await lateApiRequest('/posts', 'POST', postData);
+              const postId = response.id || response._id || response.postId || response.post?.id;
+              const postStatus = response.status || response.post?.status || 'pending';
+
+              await db.collection('socialPosts').insertOne({
+                userId: new ObjectId(user._id),
+                text,
+                mediaUrls,
+                platforms: postData.platforms,
+                latePostId: postId,
+                status: postStatus,
+                scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
+                createdAt: new Date()
+              });
+
+              snsPostResult = { postId, status: postStatus };
+              console.log(`[Social API] SNS post created: ${postId}`);
+            } else if (failedPlatforms.length > 0 && !profilePostResult) {
+              return reply.code(400).send({ 
+                error: 'Could not resolve account IDs. Please try reconnecting.',
+                failedPlatforms,
+                needsReconnect: true
+              });
+            }
           }
         }
-        
-        // Only add to resolved platforms if we have a valid account ID
-        if (accountId && accountId.match(/^[a-f0-9]{24}$/i)) {
-          resolvedPlatforms.push({
-            platform: conn.platform,
-            accountId: accountId,
-            platformSpecificData: {}
-          });
-        } else {
-          failedPlatforms.push(conn.platform);
-          console.error(`[Social API] Failed to resolve valid account ID for ${conn.platform}/@${conn.username}`);
-        }
-      }
-      
-      // If all platforms failed, return an error
-      if (resolvedPlatforms.length === 0) {
-        console.error(`[Social API] No valid account IDs could be resolved. Failed platforms: ${failedPlatforms.join(', ')}`);
-        return reply.code(400).send({ 
-          error: 'Could not resolve account IDs for any selected platforms. Please try reconnecting your accounts.',
-          failedPlatforms,
-          needsReconnect: true
-        });
-      }
-      
-      // Warn if some platforms failed
-      if (failedPlatforms.length > 0) {
-        console.warn(`[Social API] Some platforms failed to resolve: ${failedPlatforms.join(', ')}`);
       }
 
-      // Create post via Late.dev
-      // API expects: content, mediaItems[{url, type}], platforms[{platform, accountId, platformSpecificData}]
-      const postData = {
-        content: text,
-        mediaItems: (mediaUrls || []).map(url => ({
-          url,
-          type: 'image' // Default to image, could detect from URL if needed
-        })),
-        platforms: resolvedPlatforms
-      };
-
-      if (scheduledFor) {
-        postData.scheduledAt = new Date(scheduledFor).toISOString();
+      // Build response message
+      let message = '';
+      if (profilePostResult && snsPostResult) {
+        message = scheduledFor ? 'Post scheduled to profile and social media' : 'Post published to profile and social media';
+      } else if (profilePostResult) {
+        message = 'Post published to profile';
+      } else if (snsPostResult) {
+        message = scheduledFor ? 'Post scheduled to social media' : 'Post published to social media';
       }
-
-      console.log(`[Social API] Creating post for user ${user._id}:`, {
-        content: postData.content?.substring(0, 50) + (postData.content?.length > 50 ? '...' : ''),
-        contentLength: postData.content?.length || 0,
-        platforms: postData.platforms,
-        mediaItems: postData.mediaItems?.length || 0,
-        scheduled: !!scheduledFor
-      });
-      
-      // Debug: log full payload structure
-      console.log(`[Social API] Post payload:`, JSON.stringify(postData, null, 2));
-
-      const response = await lateApiRequest('/posts', 'POST', postData);
-
-      // Log the full response to debug structure
-      console.log(`[Social API] Post response:`, JSON.stringify(response, null, 2));
-
-      // Extract post ID from various possible response structures
-      const postId = response.id || response._id || response.postId || response.post?.id || response.post?._id;
-      const postStatus = response.status || response.post?.status || 'pending';
-
-      // Log the post
-      await db.collection('socialPosts').insertOne({
-        userId: new ObjectId(user._id),
-        text,
-        mediaUrls,
-        platforms: postData.platforms,
-        latePostId: postId,
-        status: postStatus,
-        scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
-        createdAt: new Date()
-      });
-
-      console.log(`[Social API] Post created successfully: ${postId || 'ID not found in response'}`);
 
       return reply.send({
         success: true,
-        postId: postId,
-        status: postStatus,
-        message: scheduledFor ? 'Post scheduled successfully' : 'Post published successfully'
+        profilePostId: profilePostResult?._id,
+        snsPostId: snsPostResult?.postId,
+        status: snsPostResult?.status || 'published',
+        message
       });
     } catch (error) {
       console.error(`[Social API] Post error:`, error);

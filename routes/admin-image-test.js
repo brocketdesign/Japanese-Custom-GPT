@@ -154,9 +154,9 @@ async function routes(fastify, options) {
         return reply.status(400).send({ error: 'No models selected' });
       }
 
-      // For face tools like reimagine and merge-face, prompt may not be required
+      // For face tools like merge-face, prompt may not be required
       const requiresPrompt = generationMode !== 'face' || 
-        (models && models.some(m => m !== 'reimagine' && m !== 'merge-face'));
+        (models && models.some(m => m !== 'merge-face'));
       
       if (requiresPrompt && (!prompt || prompt.trim() === '')) {
         return reply.status(400).send({ error: 'Prompt is required' });
@@ -234,9 +234,14 @@ async function routes(fastify, options) {
             
             // Add img2img parameters
             if (generationMode === 'img2img' && image_base64) {
-              baseParams.image = image_base64;
-              baseParams.image_base64 = image_base64;
-              baseParams.editStrength = editStrength || 'medium';
+              // For reimagine, use image_file parameter
+              if (modelId === 'reimagine') {
+                baseParams.image_file = image_base64;
+              } else {
+                baseParams.image = image_base64;
+                baseParams.image_base64 = image_base64;
+                baseParams.editStrength = editStrength || 'medium';
+              }
             }
             
             // Add face tool parameters
@@ -244,8 +249,6 @@ async function routes(fastify, options) {
               if (modelId === 'merge-face' || modelId === 'merge-face-segmind') {
                 baseParams.face_image_file = face_image_file;
                 baseParams.image_file = image_file;
-              } else if (modelId === 'reimagine') {
-                baseParams.image_file = face_image_file || image_file;
               } else {
                 // Other face tools that need an image
                 baseParams.image = face_image_file || image_file;

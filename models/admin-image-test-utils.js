@@ -222,13 +222,13 @@ const MODEL_CONFIGS = {
   },
   'reimagine': {
     name: 'Reimagine',
-    endpoint: 'https://api.novita.ai/v3/async/reimagine',
-    async: true,
-    category: 'face', // Face tools category - generates variations of a single image
-    supportsImg2Img: false, // Not a standard img2img model
+    endpoint: 'https://api.novita.ai/v3/reimagine',
+    async: false, // Synchronous API per Novita docs
+    category: 'img2img', // Image-to-image category - generates variations of a single image
+    supportsImg2Img: true,
     requiresImage: true,
     defaultParams: {},
-    supportedParams: ['image_file'],
+    supportedParams: ['image_file', 'extra'],
     description: 'Generate creative variations of a single image without prompts'
   },
   'merge-face': {
@@ -401,17 +401,16 @@ async function initializeModelTest(modelId, params) {
       if (params.sd_vae) requestBody.request.sd_vae = params.sd_vae;
       if (params.loras && Array.isArray(params.loras)) requestBody.request.loras = params.loras;
     }
-    // Handle Reimagine (requires only image, no prompt)
+    // Handle Reimagine (requires only image, no prompt) - Synchronous API
     else if (modelId === 'reimagine') {
       requestBody = {
         image_file: params.image_file || params.image || params.image_base64
       };
       
-      if (webhookUrl) {
-        requestBody.extra = {
-          webhook: { url: webhookUrl }
-        };
-      }
+      // Add extra params for response image type
+      requestBody.extra = {
+        response_image_type: 'png'
+      };
     }
     // Handle Merge Face (requires two images)
     else if (modelId === 'merge-face') {
@@ -699,6 +698,21 @@ async function initializeModelTest(modelId, params) {
           images = [response.data.image];
         } else {
           console.log(`[AdminImageTest] ⚠️ No image field found in merge-face response`);
+        }
+      }
+      // Novita Reimagine returns image_file (raw base64) and image_type
+      else if (modelId === 'reimagine') {
+        console.log(`[AdminImageTest] 🔍 Reimagine response keys:`, Object.keys(response.data));
+        if (response.data.image_file) {
+          // Convert raw base64 to data URL format
+          const imageType = response.data.image_type || 'png';
+          const base64Length = response.data.image_file.length;
+          console.log(`[AdminImageTest] ✅ Found image_file (${base64Length} chars), type: ${imageType}`);
+          const dataUrl = `data:image/${imageType};base64,${response.data.image_file}`;
+          images = [dataUrl];
+          console.log(`[AdminImageTest] 📦 Created data URL (${dataUrl.length} chars)`);
+        } else {
+          console.log(`[AdminImageTest] ⚠️ No image_file found in reimagine response`);
         }
       }
       // Seedream returns images array

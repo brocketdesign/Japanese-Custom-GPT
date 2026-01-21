@@ -956,9 +956,9 @@ async function startGeneration() {
 
     const basePrompt = document.getElementById('promptInput').value.trim();
     
-    // For face tools like Reimagine, prompt may not be required
+    // For face tools like Merge Face, prompt may not be required
     const needsPrompt = state.generationMode !== 'face' || 
-        selectedModels.some(m => m.id !== 'reimagine' && m.id !== 'merge-face');
+        selectedModels.some(m => m.id !== 'merge-face');
     
     if (needsPrompt && !basePrompt) {
         showNotification('Please enter a prompt', 'warning');
@@ -973,15 +973,14 @@ async function startGeneration() {
     
     if (state.generationMode === 'face') {
         const hasMergeFace = selectedModels.some(m => m.id === 'merge-face');
-        const hasReimagine = selectedModels.some(m => m.id === 'reimagine');
-        const hasOtherFaceTools = selectedModels.some(m => m.id !== 'merge-face' && m.id !== 'reimagine');
+        const hasOtherFaceTools = selectedModels.some(m => m.id !== 'merge-face');
         
         if (hasMergeFace && (!state.faceImageDataUrl || !state.targetImageDataUrl)) {
             showNotification('Please upload both face and target images for Merge Face', 'warning');
             return;
         }
         
-        if ((hasReimagine || hasOtherFaceTools) && !state.faceImageDataUrl && !state.img2imgDataUrl) {
+        if (hasOtherFaceTools && !state.faceImageDataUrl && !state.img2imgDataUrl) {
             showNotification('Please upload an image for face tools', 'warning');
             return;
         }
@@ -1061,7 +1060,7 @@ async function startGeneration() {
             if (state.targetImageDataUrl) {
                 requestBody.image_file = state.targetImageDataUrl;
             }
-            // For reimagine, use face image as the source
+            // For other face tools, use face image as the source
             if (!state.targetImageDataUrl && state.faceImageDataUrl) {
                 requestBody.image_file = state.faceImageDataUrl;
             }

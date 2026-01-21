@@ -480,8 +480,10 @@ async function routes(fastify, options) {
             const custom_relation = await userSettings.relationshipType || lastAssistantRelation || 'Casual';
             
             // Add user details to system content
+            // Note: User information should be used naturally during conversation, but NOT in your first/opening message.
+            // Never start the conversation by mentioning the user's birthday, age, or personal details.
             if (userDetails && userDetails.trim()) {
-                enhancedSystemContent += `\n\n# User Information:\n${userDetails}`;
+                enhancedSystemContent += `\n\n# User Information (for context only - DO NOT mention in your first message):\n${userDetails}\nIMPORTANT: Do not reference birthday, age, or personal details in your opening/first message. Start with a natural greeting based on the scenario.`;
             }
             
             const systemMsg = [

@@ -19,6 +19,9 @@ class GallerySearchManager {
     this.isSubscribed = window.user?.subscriptionStatus === 'active';
     this.isTemporary = window.user?.isTemporary || false;
     this.shouldBlurNSFW = this.isTemporary || !this.isSubscribed || !window?.showNSFW;
+    
+    // Track loaded images for preview functionality
+    this.loadedSearchImages = [];
 
     this.init();
   }
@@ -251,6 +254,40 @@ class GallerySearchManager {
 
     // For locked videos, use image thumbnail instead of video
     const mediaUrl = isImage ? item.imageUrl : item.videoUrl;
+    
+    // Track image index for preview
+    const imageIndex = isImage && !shouldBlur ? this.loadedSearchImages.length : -1;
+    if (isImage && !shouldBlur) {
+      this.loadedSearchImages.push({
+        _id: item._id,
+        imageUrl: item.imageUrl,
+        thumbnailUrl: item.thumbnailUrl,
+        chatId: item.chatId,
+        chatName: item.chatName,
+        chatSlug: item.chatSlug,
+        thumbnail: item.chatImageUrl,
+        prompt: item.prompt,
+        isLiked: item.isLiked || false
+      });
+    }
+    
+    // Character footer overlay for non-blurred images
+    const characterFooterOverlay = isImage && !shouldBlur ? `
+      <div class="search-character-footer position-absolute bottom-0 start-0 end-0" 
+           style="background: linear-gradient(transparent, rgba(0,0,0,0.85)); padding: 8px; z-index: 4;">
+        <div class="d-flex align-items-center gap-2 search-character-link" 
+             onclick="event.preventDefault(); event.stopPropagation(); openCharacterIntroModal('${item.chatId}')" 
+             style="cursor: pointer;">
+          <img src="${item.chatImageUrl || '/img/default-thumbnail.png'}" 
+               alt="${item.chatName}" 
+               class="rounded-circle" 
+               style="width: 28px; height: 28px; object-fit: cover; border: 2px solid rgba(255,255,255,0.3);"
+               onerror="this.src='/img/default-thumbnail.png'">
+          <span class="text-white text-truncate" style="font-size: 12px; font-weight: 500; max-width: 120px;">
+            ${item.chatName || 'Unknown'}
+          </span>
+        </div>
+      </div>` : '';
 
     let mediaContent;
 
@@ -258,13 +295,17 @@ class GallerySearchManager {
       // Build a safe wrapper without leaking real URL; overlay will be attached by createOverlay
       mediaContent = this.createCharacterImageOverlay(item);
     } else if (isImage) {
-      // Regular image - not NSFW or showNSFW is enabled
+      // Regular image - not NSFW or showNSFW is enabled - clickable for preview
       mediaContent = `
-        <a href="${linkUrl}" class="text-decoration-none">
-          <div class="gallery-media-wrapper position-relative" style="overflow: hidden; max-height: 400px; background-color: #f0f0f0;">
-            <img src="${mediaUrl}" alt="${item.chatName} - ${item.prompt || ''}" class="gallery-media" style="width: 100%; height: 100%; object-fit: cover;">
-          </div>
-        </a>
+        <div class="gallery-media-wrapper position-relative search-image-preview" 
+             style="overflow: hidden; max-height: 400px; background-color: #f0f0f0; cursor: pointer;"
+             data-image-index="${imageIndex}"
+             data-image-id="${item._id}"
+             data-chat-id="${item.chatId}"
+             onclick="openSearchImagePreview(this, ${imageIndex})">
+          <img src="${mediaUrl}" alt="${item.chatName} - ${item.prompt || ''}" class="gallery-media" style="width: 100%; height: 100%; object-fit: cover;">
+          ${characterFooterOverlay}
+        </div>
       `;
     } else {
       // Video content
@@ -378,6 +419,8 @@ class GallerySearchManager {
     if (gallery) {
       gallery.innerHTML = '';
     }
+    // Clear loaded images for preview
+    this.loadedSearchImages = [];
   }
 
   /**
@@ -562,3 +605,194 @@ window.handleUnlockOverlay = function(event) {
     console.error('handleUnlockOverlay error', err);
   }
 };
+
+/**
+ * Open image preview modal for search gallery images
+ * @param {HTMLElement} el - The clicked element
+ * @param {number} clickedIndex - The index of the clicked image
+ */
+window.openSearchImagePreview = function(el, clickedIndex) {
+  // Get loaded images from the gallery search manager
+  const images = window.gallerySearchManager?.loadedSearchImages || [];
+  
+  if (images.length === 0) {
+    console.warn('[openSearchImagePreview] No images loaded');
+    return;
+  }
+  
+  // Create preview modal if it doesn't exist
+  if (typeof createPreviewModalIfNeeded === 'function') {
+    createPreviewModalIfNeeded();
+  } else if (!$('#imagePreviewModal').length) {
+    // Fallback modal creation
+    const modalHTML = `
+      <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen m-0">
+          <div class="modal-content mx-auto w-100" style="background: #000;">
+            <div class="modal-header border-0 position-fixed w-100" style="top: 0; right: 0; z-index: 10000; background: transparent; justify-content: flex-end; padding: 1rem;">
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="background-color: rgba(0,0,0,0.5); border-radius: 50%; padding: 12px; opacity: 0.9;"></button>
+            </div>
+            <div class="modal-body p-0" style="height: 100vh; overflow-y: auto; overflow-x: hidden; padding-top: 0 !important;">
+              <div class="swiper-container image-preview-swiper" style="min-height: 100%; width: 100%; padding-top: 0; padding-bottom: 100px;">
+                <div class="swiper-wrapper"></div>
+                <div class="swiper-button-next" style="color: white; opacity: 0.8; right: 20px;"></div>
+                <div class="swiper-button-prev" style="color: white; opacity: 0.8; left: 20px;"></div>
+                <div class="swiper-pagination" style="bottom: 80px;"></div>
+                <div class="image-like-overlay position-absolute" style="top: 20px; left: 20px; z-index: 1000;">
+                  <button class="btn btn-light rounded-circle image-like-btn d-flex justify-content-center align-items-center" style="width: 50px; height: 50px; opacity: 0.9; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.2);">
+                    <i class="bi bi-heart fs-4"></i>
+                  </button>
+                </div>
+                <div class="image-info-overlay position-absolute w-100" style="bottom: 20px; left: 0; right: 0; z-index: 1000;">
+                  <div class="container text-center">
+                    <div class="d-none image-info-container mx-auto" style="max-width: 600px; padding: 15px; border-radius: 12px; backdrop-filter: blur(10px);">
+                      <div class="image-title text-white fw-bold mb-2" style="font-size: 18px;"></div>
+                      <div class="image-prompt-container d-none" style="max-height: 100px; overflow-y: auto; scrollbar-width: thin;">
+                        <div class="image-prompt text-white-50" style="font-size: 14px; line-height: 1.4;"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    $('body').append(modalHTML);
+  }
+  
+  // Build slides for the swiper
+  const wrapper = $('#imagePreviewModal .swiper-wrapper');
+  wrapper.empty();
+  
+  // Create image data for preview with character info
+  const previewItems = images.map(img => ({
+    type: 'image',
+    url: img.imageUrl || img.thumbnailUrl,
+    id: img._id,
+    title: img.chatName || 'Image',
+    prompt: img.prompt || '',
+    chatId: img.chatId,
+    chatName: img.chatName,
+    chatSlug: img.chatSlug,
+    thumbnail: img.thumbnail,
+    isLiked: img.isLiked
+  }));
+  
+  // Build slides with character info overlay
+  previewItems.forEach(item => {
+    const characterInfo = item.chatId ? `
+      <div class="position-absolute bottom-0 start-0 end-0 p-3" style="background: linear-gradient(transparent, rgba(0,0,0,0.8)); z-index: 10;">
+        <div class="d-flex align-items-center gap-2 character-preview-link" 
+             onclick="event.stopPropagation(); $('#imagePreviewModal').modal('hide'); setTimeout(() => openCharacterIntroModal('${item.chatId}'), 300);" 
+             style="cursor: pointer;">
+          <img src="${item.thumbnail || '/img/default-thumbnail.png'}" 
+               alt="${item.chatName || 'Character'}" 
+               class="rounded-circle" 
+               style="width: 40px; height: 40px; object-fit: cover; border: 2px solid rgba(255,255,255,0.5);"
+               onerror="this.src='/img/default-thumbnail.png'">
+          <span class="text-white" style="font-size: 14px; font-weight: 500;">
+            ${item.chatName || 'Unknown Character'}
+          </span>
+          <i class="bi bi-chevron-right text-white-50"></i>
+        </div>
+      </div>
+    ` : '';
+    
+    wrapper.append(`
+      <div class="swiper-slide d-flex align-items-center justify-content-center position-relative">
+        <div class="swiper-zoom-container">
+          <img src="${item.url}" 
+               class="img-fluid" 
+               style="max-height: 100vh; max-width: 100vw; object-fit: contain;" 
+               data-image-id="${item.id}" 
+               data-image-title="${item.title || ''}" 
+               data-image-prompt="${item.prompt || ''}"
+               data-chat-id="${item.chatId || ''}">
+        </div>
+        ${characterInfo}
+      </div>
+    `);
+  });
+  
+  // Store preview data for like button and other interactions
+  window.previewImages = previewItems;
+  window.initialSlideIndex = Math.max(0, Math.min(clickedIndex, previewItems.length - 1));
+  
+  // Show the modal
+  const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+  modal.show();
+  
+  // Initialize swiper after modal is shown
+  $('#imagePreviewModal').off('shown.bs.modal.searchGallery').on('shown.bs.modal.searchGallery', function() {
+    if (window.imageSwiper) {
+      window.imageSwiper.destroy(true, true);
+    }
+    
+    window.imageSwiper = new Swiper('.image-preview-swiper', {
+      loop: false,
+      initialSlide: window.initialSlideIndex || 0,
+      zoom: { maxRatio: 5, minRatio: 1, toggle: false, containerClass: 'swiper-zoom-container' },
+      navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
+      pagination: { el: '.swiper-pagination', clickable: true, dynamicBullets: true },
+      touchRatio: 1,
+      touchAngle: 45,
+      grabCursor: true,
+      keyboard: { enabled: true, onlyInViewport: false },
+      mousewheel: { invert: false },
+      lazy: { loadPrevNext: true, loadPrevNextAmount: 2 },
+      watchSlidesProgress: true,
+      watchSlidesVisibility: true,
+      on: {
+        slideChange: function() {
+          const realIndex = this.realIndex || this.activeIndex;
+          updateSearchPreviewInfo(realIndex);
+        },
+        init: function() {
+          setTimeout(() => {
+            const startIndex = window.initialSlideIndex || 0;
+            this.slideTo(startIndex, 0);
+            updateSearchPreviewInfo(startIndex);
+          }, 100);
+        }
+      }
+    });
+    
+    $('.swiper-slide').show();
+  });
+};
+
+/**
+ * Update the like button and info for search image preview
+ */
+function updateSearchPreviewInfo(activeIndex) {
+  const cur = window.previewImages && window.previewImages[activeIndex];
+  if (!cur) return;
+  
+  // Update like button
+  const $likeBtn = $('.image-like-btn');
+  const $likeIcon = $likeBtn.find('i');
+  
+  if (cur.id) {
+    $likeBtn.attr('data-id', cur.id);
+    
+    // Check if image is liked from the DOM
+    const isLiked = $(`.image-fav[data-id="${cur.id}"] i`).hasClass('bi-heart-fill');
+    
+    if (isLiked) {
+      $likeIcon.removeClass('bi-heart').addClass('bi-heart-fill text-danger');
+    } else {
+      $likeIcon.removeClass('bi-heart-fill text-danger').addClass('bi-heart');
+    }
+  }
+  
+  // Update title if info container exists
+  $('.image-title').text(cur.title || cur.chatName || 'Image');
+  if (cur.prompt) {
+    $('.image-prompt').text(cur.prompt);
+    $('.image-prompt-container').removeClass('d-none');
+  } else {
+    $('.image-prompt-container').addClass('d-none');
+  }
+}

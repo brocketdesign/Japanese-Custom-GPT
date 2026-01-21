@@ -1047,6 +1047,9 @@
             faceMergeCost: {{faceMergeCost}},
             userPoints: {{userPoints}}
         };
+        // User subscription info for NSFW blur handling
+        window.userSubscriptionStatus = {{#if subscriptionStatus}}true{{else}}false{{/if}};
+        window.isTemporaryUser = {{#if isTemporary}}true{{else}}false{{/if}};
         // User models data from server (if we want to preload)
         window.userCustomModels = [];
     </script>

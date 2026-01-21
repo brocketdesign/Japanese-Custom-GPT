@@ -101,6 +101,10 @@ async function routes(fastify, options) {
       // Get user's current points
       const userPoints = await getUserPoints(db, user._id);
 
+      // Get subscription status for NSFW blur handling
+      const subscriptionStatus = user.subscriptionStatus === 'active';
+      const isTemporary = !!user.isTemporary;
+
       return reply.view('/admin/image-test', {
         title: 'Image Dashboard',
         user,
@@ -116,7 +120,9 @@ async function routes(fastify, options) {
         userPoints,
         imageCostPerUnit: PRICING_CONFIG.IMAGE_GENERATION.BASE_COST_PER_IMAGE,
         faceMergeCost: PRICING_CONFIG.FACE_MERGE.COST,
-        isAdmin
+        isAdmin,
+        subscriptionStatus,
+        isTemporary
       });
     } catch (error) {
       console.error('[AdminImageTest] Error loading dashboard:', error);

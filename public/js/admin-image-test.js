@@ -29,8 +29,55 @@ const state = {
     generationMode: 'txt2img', // txt2img, img2img, face
     img2imgDataUrl: null, // Base64 encoded image for img2img
     faceImageDataUrl: null, // Face image for merge face
-    targetImageDataUrl: null // Target image for merge face
+    targetImageDataUrl: null, // Target image for merge face
+    // NSFW blur state
+    isSubscribed: window.userSubscriptionStatus || false,
+    isTemporary: window.isTemporaryUser || false,
+    showNSFW: sessionStorage.getItem('showNSFW') === 'true'
 };
+
+// NSFW keywords for content detection
+const NSFW_KEYWORDS = [
+    'nsfw', 'nude', 'naked', 'nudity', 'explicit', 'sexual', 'erotic', 'erotica',
+    'porn', 'xxx', 'adult', 'hentai', 'lewd', 'topless', 'bottomless',
+    'breast', 'breasts', 'boob', 'boobs', 'nipple', 'nipples',
+    'pussy', 'vagina', 'penis', 'cock', 'dick', 'ass', 'butt',
+    'sex', 'intercourse', 'penetration', 'orgasm', 'cum', 'cumshot',
+    'masturbat', 'fingering', 'blowjob', 'oral', 'anal', 'dildo', 'vibrator',
+    'bondage', 'bdsm', 'fetish', 'dominat', 'submissive',
+    'uncensored', 'exposed', 'revealing', 'spread', 'spreading'
+];
+
+/**
+ * Check if a prompt contains NSFW content
+ * @param {string} prompt - The prompt text to check
+ * @returns {boolean} - True if NSFW content detected
+ */
+function isNSFWPrompt(prompt) {
+    if (!prompt) return false;
+    const lowerPrompt = prompt.toLowerCase();
+    return NSFW_KEYWORDS.some(keyword => lowerPrompt.includes(keyword));
+}
+
+/**
+ * Determine if content should be blurred based on NSFW status and user settings
+ * @param {boolean} isNSFW - Whether the content is NSFW
+ * @returns {boolean} - True if content should be blurred
+ */
+function shouldBlurContent(isNSFW) {
+    if (!isNSFW) return false;
+    
+    // Always blur for temporary users
+    if (state.isTemporary) return true;
+    
+    // For subscribed users, check showNSFW setting
+    if (state.isSubscribed) {
+        return !state.showNSFW;
+    }
+    
+    // Non-subscribed users always see blur
+    return true;
+}
 
 /**
  * Calculate and update the total cost display
@@ -1170,23 +1217,174 @@ function displayImages(modelId, images, time) {
         const actualModelId = task?.modelId || modelId;
         const actualModelName = task?.modelName || modelId;
         
+        // Check if content is NSFW based on prompt or nsfw_detection result
+        const prompt = task?.finalPrompt || task?.originalPrompt || '';
+        const nsfwDetection = img.nsfw_detection;
+        const isNSFW = img.isNSFW || isNSFWPrompt(prompt) || (nsfwDetection && nsfwDetection.valid);
+        const shouldBlur = shouldBlurContent(isNSFW);
+        
+        // Store NSFW status in task for later reference
+        if (task && isNSFW) {
+            task.isNSFW = true;
+        }
+        
         // Create image element with onclick that will get updated testId from task
         const wrapper = document.createElement('div');
         wrapper.className = 'result-image-wrapper d-inline-block position-relative';
+        wrapper.style.position = 'relative';
+        
         const imgElement = document.createElement('img');
-        imgElement.src = imgUrl;
         imgElement.alt = `Generated Image ${index + 1}`;
         imgElement.className = 'result-image img-fluid rounded cursor-pointer';
         imgElement.onerror = function() { this.src = '/img/placeholder.png'; };
-        imgElement.onclick = function() {
-            // Get latest testId from task (may have been updated by saveTestResult)
-            const currentTask = state.activeTasks.get(modelId);
-            const currentTestId = currentTask?.testId || testId;
-            previewImage(escapedUrl, actualModelId, time, currentTestId);
-        };
-        wrapper.appendChild(imgElement);
+        
+        if (shouldBlur) {
+            // Apply blur effect for NSFW content
+            imgElement.style.filter = 'blur(15px)';
+            imgElement.style.transform = 'scale(1.1)';
+            imgElement.src = imgUrl;
+            
+            // Create overlay based on user status
+            const overlay = createNSFWOverlay(imgUrl, escapedUrl, actualModelId, time, testId);
+            wrapper.appendChild(imgElement);
+            wrapper.appendChild(overlay);
+        } else {
+            // Normal display for non-NSFW or unlocked content
+            imgElement.src = imgUrl;
+            imgElement.onclick = function() {
+                // Get latest testId from task (may have been updated by saveTestResult)
+                const currentTask = state.activeTasks.get(modelId);
+                const currentTestId = currentTask?.testId || testId;
+                previewImage(escapedUrl, actualModelId, time, currentTestId);
+            };
+            wrapper.appendChild(imgElement);
+        }
+        
+        // Add NSFW badge if content is NSFW
+        if (isNSFW) {
+            const badge = document.createElement('span');
+            badge.className = 'position-absolute top-0 end-0 badge bg-danger m-1';
+            badge.style.fontSize = '0.65rem';
+            badge.style.zIndex = '5';
+            badge.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>NSFW';
+            wrapper.appendChild(badge);
+        }
+        
         container.appendChild(wrapper);
     });
+}
+
+/**
+ * Create NSFW overlay for blurred images
+ * @param {string} imgUrl - Original image URL
+ * @param {string} escapedUrl - Escaped image URL for onclick
+ * @param {string} modelId - Model ID
+ * @param {number} time - Generation time
+ * @param {string} testId - Test ID
+ * @returns {HTMLElement} - Overlay element
+ */
+function createNSFWOverlay(imgUrl, escapedUrl, modelId, time, testId) {
+    const overlay = document.createElement('div');
+    overlay.className = 'gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center';
+    overlay.style.background = 'rgba(0, 0, 0, 0.25)';
+    overlay.style.zIndex = '3';
+    overlay.style.borderRadius = 'inherit';
+    
+    if (state.isTemporary) {
+        // Temporary user - show login prompt
+        overlay.style.cursor = 'pointer';
+        overlay.onclick = function(e) {
+            e.stopPropagation();
+            if (typeof openLoginForm === 'function') {
+                openLoginForm();
+            } else {
+                window.location.href = '/login';
+            }
+        };
+        
+        const lockIcon = document.createElement('i');
+        lockIcon.className = 'bi bi-lock-fill';
+        lockIcon.style.cssText = 'font-size: 1.5rem; color: #fff; opacity: 0.9; margin-bottom: 0.5rem;';
+        
+        const loginBtn = document.createElement('button');
+        loginBtn.className = 'btn btn-sm';
+        loginBtn.style.cssText = 'background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%); color: white; border: none; border-radius: 8px; font-weight: 600; padding: 0.4rem 0.8rem; font-size: 0.75rem;';
+        loginBtn.innerHTML = '<i class="bi bi-unlock-fill me-1"></i>Login';
+        loginBtn.onclick = function(e) {
+            e.stopPropagation();
+            if (typeof openLoginForm === 'function') {
+                openLoginForm();
+            } else {
+                window.location.href = '/login';
+            }
+        };
+        
+        overlay.appendChild(lockIcon);
+        overlay.appendChild(loginBtn);
+        
+    } else if (state.isSubscribed && !state.showNSFW) {
+        // Subscribed user with showNSFW disabled - can reveal on click
+        overlay.style.cursor = 'pointer';
+        overlay.onclick = function(e) {
+            e.stopPropagation();
+            // Remove blur and overlay
+            const imgElement = this.previousElementSibling;
+            if (imgElement && imgElement.tagName === 'IMG') {
+                imgElement.style.filter = 'none';
+                imgElement.style.transform = 'none';
+                imgElement.onclick = function() {
+                    previewImage(escapedUrl, modelId, time, testId);
+                };
+            }
+            this.style.display = 'none';
+        };
+        
+        const showBtn = document.createElement('button');
+        showBtn.className = 'btn btn-sm';
+        showBtn.style.cssText = 'background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%); color: white; border: none; border-radius: 8px; font-weight: 600; padding: 0.4rem 0.8rem; font-size: 0.75rem;';
+        showBtn.textContent = window.translations?.showContent || 'Show Content';
+        showBtn.onclick = function(e) {
+            e.stopPropagation();
+            // Trigger parent overlay click
+            overlay.click();
+        };
+        
+        overlay.appendChild(showBtn);
+        
+    } else {
+        // Non-subscribed user - show premium unlock prompt
+        overlay.style.cursor = 'pointer';
+        overlay.onclick = function(e) {
+            e.stopPropagation();
+            if (typeof loadPlanPage === 'function') {
+                loadPlanPage();
+            } else {
+                window.location.href = '/plan';
+            }
+        };
+        
+        const lockIcon = document.createElement('i');
+        lockIcon.className = 'bi bi-lock-fill';
+        lockIcon.style.cssText = 'font-size: 1.5rem; color: #fff; opacity: 0.9; margin-bottom: 0.5rem;';
+        
+        const unlockBtn = document.createElement('button');
+        unlockBtn.className = 'btn btn-sm';
+        unlockBtn.style.cssText = 'background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%); color: white; border: none; border-radius: 8px; font-weight: 600; padding: 0.4rem 0.8rem; font-size: 0.75rem;';
+        unlockBtn.innerHTML = '<i class="bi bi-unlock-fill me-1"></i>' + (window.translations?.blurButton || 'Unlock');
+        unlockBtn.onclick = function(e) {
+            e.stopPropagation();
+            if (typeof loadPlanPage === 'function') {
+                loadPlanPage();
+            } else {
+                window.location.href = '/plan';
+            }
+        };
+        
+        overlay.appendChild(lockIcon);
+        overlay.appendChild(unlockBtn);
+    }
+    
+    return overlay;
 }
 
 /**
@@ -1544,15 +1742,41 @@ async function loadHistory() {
                     ? (test.images[0].imageUrl || test.images[0].s3Url || test.images[0])
                     : null;
                 
+                // Check if content is NSFW based on prompt
+                const isNSFW = test.isNSFW || isNSFWPrompt(test.prompt || '');
+                const shouldBlur = shouldBlurContent(isNSFW);
+                
                 if (imgUrl) {
                     const escapedUrl = imgUrl.replace(/'/g, "\\'");
-                    imageCell = `
-                        <img src="${imgUrl}" 
-                             alt="Generated" 
-                             class="history-thumbnail cursor-pointer"
-                             data-test-id="${test._id || ''}"
-                             onerror="this.src='/img/placeholder.png'">
-                    `;
+                    
+                    if (shouldBlur) {
+                        // Blurred thumbnail for NSFW content
+                        imageCell = `
+                            <div class="position-relative d-inline-block">
+                                <img src="${imgUrl}" 
+                                     alt="Generated" 
+                                     class="history-thumbnail ${shouldBlur ? 'nsfw-blurred' : ''}"
+                                     style="filter: blur(8px); transform: scale(1.05);"
+                                     data-test-id="${test._id || ''}"
+                                     onerror="this.src='/img/placeholder.png'">
+                                <span class="position-absolute top-50 start-50 translate-middle">
+                                    <i class="bi bi-lock-fill text-white" style="font-size: 0.9rem; text-shadow: 0 0 4px rgba(0,0,0,0.7);"></i>
+                                </span>
+                                ${isNSFW ? '<span class="position-absolute top-0 end-0 badge bg-danger" style="font-size: 0.5rem;">NSFW</span>' : ''}
+                            </div>
+                        `;
+                    } else {
+                        imageCell = `
+                            <div class="position-relative d-inline-block">
+                                <img src="${imgUrl}" 
+                                     alt="Generated" 
+                                     class="history-thumbnail cursor-pointer"
+                                     data-test-id="${test._id || ''}"
+                                     onerror="this.src='/img/placeholder.png'">
+                                ${isNSFW ? '<span class="position-absolute top-0 end-0 badge bg-danger" style="font-size: 0.5rem;">NSFW</span>' : ''}
+                            </div>
+                        `;
+                    }
                     
                     // Add data attributes to row for click handler
                     row.dataset.hasImage = 'true';
@@ -1561,6 +1785,7 @@ async function loadHistory() {
                     row.dataset.generationTime = test.generationTime || 0;
                     row.dataset.testId = test._id || '';
                     row.dataset.prompt = test.prompt || '';
+                    row.dataset.isNsfw = isNSFW.toString();
                     row.style.cursor = 'pointer';
                 }
                 
@@ -1601,7 +1826,31 @@ async function loadHistory() {
                 if (thumbnail) {
                     thumbnail.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        previewHistoryImage(imgUrl, test.modelName || 'Unknown Model', test.generationTime || 0, test._id || '', test.prompt || '');
+                        // Check if content should be blurred and handle accordingly
+                        const rowIsNsfw = row.dataset.isNsfw === 'true';
+                        const rowShouldBlur = shouldBlurContent(rowIsNsfw);
+                        
+                        if (rowShouldBlur) {
+                            // Show appropriate action for blurred content
+                            if (state.isTemporary) {
+                                if (typeof openLoginForm === 'function') {
+                                    openLoginForm();
+                                } else {
+                                    window.location.href = '/login';
+                                }
+                            } else if (!state.isSubscribed) {
+                                if (typeof loadPlanPage === 'function') {
+                                    loadPlanPage();
+                                } else {
+                                    window.location.href = '/plan';
+                                }
+                            } else {
+                                // Subscribed user - show preview
+                                previewHistoryImage(imgUrl, test.modelName || 'Unknown Model', test.generationTime || 0, test._id || '', test.prompt || '', rowIsNsfw);
+                            }
+                        } else {
+                            previewHistoryImage(imgUrl, test.modelName || 'Unknown Model', test.generationTime || 0, test._id || '', test.prompt || '', rowIsNsfw);
+                        }
                     });
                 }
                 
@@ -1618,8 +1867,30 @@ async function loadHistory() {
                         const generationTime = parseInt(this.dataset.generationTime) || 0;
                         const testId = this.dataset.testId || '';
                         const prompt = this.dataset.prompt || '';
+                        const rowIsNsfw = this.dataset.isNsfw === 'true';
+                        const rowShouldBlur = shouldBlurContent(rowIsNsfw);
                         
-                        previewHistoryImage(imageUrl, modelName, generationTime, testId, prompt);
+                        if (rowShouldBlur) {
+                            // Show appropriate action for blurred content
+                            if (state.isTemporary) {
+                                if (typeof openLoginForm === 'function') {
+                                    openLoginForm();
+                                } else {
+                                    window.location.href = '/login';
+                                }
+                            } else if (!state.isSubscribed) {
+                                if (typeof loadPlanPage === 'function') {
+                                    loadPlanPage();
+                                } else {
+                                    window.location.href = '/plan';
+                                }
+                            } else {
+                                // Subscribed user - show preview
+                                previewHistoryImage(imageUrl, modelName, generationTime, testId, prompt, rowIsNsfw);
+                            }
+                        } else {
+                            previewHistoryImage(imageUrl, modelName, generationTime, testId, prompt, rowIsNsfw);
+                        }
                     });
                 }
             });
@@ -1704,11 +1975,79 @@ function showCopyFeedback(button) {
 /**
  * Preview image from history
  */
-function previewHistoryImage(imageUrl, modelName, generationTime, testId = null, prompt = '') {
+function previewHistoryImage(imageUrl, modelName, generationTime, testId = null, prompt = '', isNSFW = false) {
     const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
     const modalElement = document.getElementById('imagePreviewModal');
+    const previewImage = document.getElementById('previewImage');
+    const previewContainer = previewImage.parentElement;
     
-    document.getElementById('previewImage').src = imageUrl;
+    // Remove any existing NSFW overlay
+    const existingOverlay = previewContainer.querySelector('.preview-nsfw-overlay');
+    if (existingOverlay) {
+        existingOverlay.remove();
+    }
+    
+    // Check if content is NSFW (from parameter or prompt detection)
+    const contentIsNSFW = isNSFW || isNSFWPrompt(prompt || '');
+    const shouldBlur = shouldBlurContent(contentIsNSFW);
+    
+    if (shouldBlur && !state.isSubscribed) {
+        // For non-subscribed users, show blurred image with overlay
+        previewImage.src = imageUrl;
+        previewImage.style.filter = 'blur(20px)';
+        previewImage.style.transform = 'scale(1.05)';
+        
+        // Create preview overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'preview-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center';
+        overlay.style.cssText = 'background: rgba(0, 0, 0, 0.4); z-index: 10; border-radius: inherit;';
+        
+        const lockIcon = document.createElement('i');
+        lockIcon.className = 'bi bi-lock-fill';
+        lockIcon.style.cssText = 'font-size: 3rem; color: #fff; opacity: 0.9; margin-bottom: 1rem;';
+        
+        const message = document.createElement('p');
+        message.className = 'text-white text-center mb-3';
+        message.style.cssText = 'font-size: 1rem; max-width: 80%;';
+        message.textContent = state.isTemporary 
+            ? 'Login to view adult content' 
+            : 'Subscribe to unlock adult content';
+        
+        const actionBtn = document.createElement('button');
+        actionBtn.className = 'btn';
+        actionBtn.style.cssText = 'background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%); color: white; border: none; border-radius: 8px; font-weight: 600; padding: 0.6rem 1.5rem;';
+        actionBtn.innerHTML = state.isTemporary 
+            ? '<i class="bi bi-box-arrow-in-right me-2"></i>Login' 
+            : '<i class="bi bi-gem me-2"></i>Subscribe';
+        actionBtn.onclick = function() {
+            if (state.isTemporary) {
+                if (typeof openLoginForm === 'function') {
+                    openLoginForm();
+                } else {
+                    window.location.href = '/login';
+                }
+            } else {
+                if (typeof loadPlanPage === 'function') {
+                    loadPlanPage();
+                } else {
+                    window.location.href = '/plan';
+                }
+            }
+        };
+        
+        overlay.appendChild(lockIcon);
+        overlay.appendChild(message);
+        overlay.appendChild(actionBtn);
+        
+        previewContainer.style.position = 'relative';
+        previewContainer.appendChild(overlay);
+    } else {
+        // Show image normally (either not NSFW, or user is subscribed)
+        previewImage.src = imageUrl;
+        previewImage.style.filter = 'none';
+        previewImage.style.transform = 'none';
+    }
+    
     document.getElementById('previewModelName').textContent = modelName || 'Unknown Model';
     document.getElementById('previewTime').textContent = generationTime 
         ? `Generated in ${(generationTime / 1000).toFixed(1)} seconds`

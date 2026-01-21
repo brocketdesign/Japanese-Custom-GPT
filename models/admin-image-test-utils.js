@@ -12,6 +12,29 @@ const { ObjectId } = require('mongodb');
 const { createHash } = require('crypto');
 const { uploadToS3 } = require('./tool');
 
+// NSFW keywords for content detection
+const NSFW_KEYWORDS = [
+  'nsfw', 'nude', 'naked', 'nudity', 'explicit', 'sexual', 'erotic', 'erotica',
+  'porn', 'xxx', 'adult', 'hentai', 'lewd', 'topless', 'bottomless',
+  'breast', 'breasts', 'boob', 'boobs', 'nipple', 'nipples',
+  'pussy', 'vagina', 'penis', 'cock', 'dick', 'ass', 'butt',
+  'sex', 'intercourse', 'penetration', 'orgasm', 'cum', 'cumshot',
+  'masturbat', 'fingering', 'blowjob', 'oral', 'anal', 'dildo', 'vibrator',
+  'bondage', 'bdsm', 'fetish', 'dominat', 'submissive',
+  'uncensored', 'exposed', 'revealing', 'spread', 'spreading'
+];
+
+/**
+ * Check if a prompt contains NSFW content
+ * @param {string} prompt - The prompt text to check
+ * @returns {boolean} - True if NSFW content detected
+ */
+function isNSFWPrompt(prompt) {
+  if (!prompt) return false;
+  const lowerPrompt = prompt.toLowerCase();
+  return NSFW_KEYWORDS.some(keyword => lowerPrompt.includes(keyword));
+}
+
 /**
  * Get webhook URL for Novita tasks
  */
@@ -882,6 +905,9 @@ async function saveTestResult(db, result) {
       }).filter(img => img.imageUrl); // Only keep images with valid URLs
     }
     
+    // Check if prompt contains NSFW content
+    const isNSFW = isNSFWPrompt(normalizedPrompt);
+    
     const testRecord = {
       modelId: result.modelId,
       modelName: result.modelName,
@@ -892,7 +918,8 @@ async function saveTestResult(db, result) {
       images: normalizedImages,
       error: result.error,
       testedAt: now,
-      userId: result.userId
+      userId: result.userId,
+      isNSFW: isNSFW
     };
 
     const insertResult = await collection.insertOne(testRecord);
@@ -1326,6 +1353,8 @@ module.exports = {
   MODEL_CONFIGS,
   SIZE_OPTIONS,
   STYLE_PRESETS,
+  NSFW_KEYWORDS,
+  isNSFWPrompt,
   initializeModelTest,
   checkTaskResult,
   saveTestResult,

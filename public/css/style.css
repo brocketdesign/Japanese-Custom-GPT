@@ -5888,3 +5888,66 @@ color: #fff !important;
     overflow: hidden;
     border-radius: var(--radius-xs);
 }
+
+/* ============================================================================
+   SEARCH GALLERY - CHARACTER FOOTER OVERLAY
+   ============================================================================ */
+
+/* Character footer overlay on search gallery images */
+.search-character-footer {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 0 0 0.375rem 0.375rem;
+}
+
+.gallery-grid-item:hover .search-character-footer,
+.gallery-card:hover .search-character-footer {
+    opacity: 1;
+}
+
+/* Always show on touch devices */
+@media (hover: none) {
+    .search-character-footer {
+        opacity: 1;
+    }
+}
+
+/* Search character link hover effect */
+.search-character-link {
+    transition: transform 0.2s ease;
+}
+
+.search-character-link:hover {
+    transform: translateX(4px);
+}
+
+.search-character-link img {
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.search-character-link:hover img {
+    transform: scale(1.1);
+    border-color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Search image preview container */
+.search-image-preview {
+    cursor: pointer;
+    position: relative;
+}
+
+.search-image-preview::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0);
+    transition: background 0.2s ease;
+    pointer-events: none;
+}
+
+.search-image-preview:hover::after {
+    background: rgba(0, 0, 0, 0.1);
+}

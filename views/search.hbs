@@ -2,244 +2,110 @@
 <html lang="{{lang}}">
 {{> dashboard-header seoTitle=seoTitle seoDescription=seoDescription}}
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <link rel="stylesheet" href="/css/search.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/css/explore-gallery.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
 </head>
 
-<body>
-    {{> dashboard-nav}}
+<body class="explore-body">
+    <!-- Hide main nav for immersive experience -->
+    <style>#mainNav { display: none !important; }</style>
 
-    <div class="search-container" id="searchPage">
-        <!-- Search Header -->
-        <div class="search-header">
-            <div class="search-cover">
-                <div class="search-header-content">
-                    <div class="search-logo-wrapper">
-                        <img src="/img/logo.webp" alt="Lamix Logo" class="search-logo">
-                    </div>
-                    
-                    <div class="search-info">
-                        <h1 class="search-title">{{translations.free_ai_chat_and_image_generation}}</h1>
-                        <p class="search-subtitle">{{translations.ai_character_conversation}}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Search Bar Section -->
-        <div class="search-bar-section">
-            <form id="search-form" action="/search" method="GET" class="search-form">
-                <div class="search-input-wrapper">
-                    <i class="bi bi-search search-icon"></i>
-                    <input 
-                        type="text" 
-                        name="q" 
-                        id="search-input" 
-                        class="search-input" 
-                        placeholder="{{translations.searchPlaceholder}}" 
-                        aria-label="Search characters and images"
-                        value="{{query}}"
-                    >
-                    {{#if query}}
-                        <button type="reset" class="search-clear" aria-label="Clear search">
-                            <i class="bi bi-x-circle-fill"></i>
-                        </button>
-                    {{/if}}
-                </div>
-            </form>
-        </div>
-
-        <!-- Auth Prompt -->
-        {{#if user.isTemporary}}
-        <div class="auth-prompt">
-            <div class="auth-prompt-content">
-                <div class="auth-prompt-text">
-                    <h3 class="auth-prompt-title">{{translations.unlock_premium_features}}</h3>
-                    <p class="auth-prompt-description">{{translations.join_now_for_full_access}}</p>
-                </div>
-                <a href="/auth/login" onclick="openLoginForm(); return false;" class="auth-prompt-btn">
-                    <i class="bi bi-person-plus"></i>
-                    {{translations.sign_up_free}}
+    <div class="explore-container" id="explorePage">
+        <!-- Sticky Search & Filter Bar -->
+        <div class="explore-sticky-header">
+            <div class="explore-search-bar">
+                <!-- Back/Home Button -->
+                <a href="/" class="explore-back-btn" title="Home">
+                    <i class="bi bi-house-fill"></i>
                 </a>
-            </div>
-        </div>
-        {{/if}}
-
-        <!-- Search Results Section -->
-        <div class="search-results-section">
-            {{#if query}}
-                <div class="search-header-info">
-                    <h2 class="search-results-title">
-                        <i class="bi bi-image"></i>
-                        {{translations.result_image_query}} "<span class="search-query-highlight">{{query}}</span>"
-                    </h2>
-                    {{#if seoDescription}}
-                        <p class="search-description">{{seoDescription}}</p>
-                    {{/if}}
-                </div>
-            {{else}}
-                <div class="search-header-info">
-                    <h2 class="search-results-title">
-                        <i class="bi bi-collection"></i>
-                        {{translations.explore_latest_images}}
-                    </h2>
-                    <p class="search-welcome-message">{{translations.welcomeMessage}}</p>
-                </div>
-            {{/if}}
-
-            <!-- Gallery Container - Dynamic Loading -->
-            <div id="search-results-gallery" class="search-gallery">
-                {{#if imageResults.length}}
-                    {{#each imageResults}}
-                        <div class="gallery-card-wrapper">
-                            <div class="gallery-card">
-                                {{#if isBlur}}
-                                    <div class="gallery-image-container blur-container" onclick="handleClickRegisterOrPay(event,{{../user.isTemporary}})" type="button" role="button" tabindex="0">
-                                        <img data-src="{{imageUrl}}" alt="{{chatName}} - {{prompt}}" class="gallery-image img-blur">
-                                        <div class="blur-overlay">
-                                            <i class="bi bi-lock-fill"></i>
-                                        </div>
-                                    </div>
-                                {{else}}
-                                    <a href="/character/slug/{{chatSlug}}?imageId={{_id}}" class="gallery-image-link">
-                                        <div class="gallery-image-container">
-                                            <img src="{{imageUrl}}" alt="{{chatName}} - {{prompt}}" class="gallery-image">
-                                            <div class="gallery-overlay">
-                                                <div class="overlay-content">
-                                                    <i class="bi bi-eye"></i>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </a>
-                                {{/if}}
-                                
-                                <div class="gallery-card-body">
-                                    <div class="gallery-card-header">
-                                        <a href="/character/slug/{{chatSlug}}" class="character-link">
-                                            <img src="{{chatImageUrl}}" alt="{{chatName}} avatar" class="character-avatar">
-                                            <div class="character-info">
-                                                <h3 class="character-name">{{chatName}}</h3>
-                                                <p class="image-title">{{lookupOrFirst title lang}}</p>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    
-                                    {{#if chatTags.length}}
-                                        <div class="gallery-tags">
-                                            {{#each chatTags}}
-                                                <a href="/search?q={{this}}" class="tag-badge">{{this}}</a>
-                                            {{/each}}
-                                        </div>
-                                    {{/if}}
-                                </div>
-                            </div>
-                        </div>
-                    {{/each}}
-                {{/if}}
-            </div>
-
-            <!-- Loading Indicator -->
-            <div id="search-loading-indicator" class="text-center py-5" style="display: none;">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <p class="text-muted mt-3">{{translations.loading}}</p>
-            </div>
-
-            {{#if totalPages}}
-            <nav aria-label="Search results pagination" class="search-pagination">
-                <ul class="pagination-list">
-                    {{#if hasPrevPage}}
-                        <li class="pagination-item">
-                            <a href="/search?q={{query}}&page={{math currentPage '-' 1}}" class="pagination-link" aria-label="Previous page">
-                                <i class="bi bi-chevron-left"></i>
-                            </a>
-                        </li>
-                    {{else}}
-                        <li class="pagination-item disabled">
-                            <span class="pagination-link">
-                                <i class="bi bi-chevron-left"></i>
-                            </span>
-                        </li>
-                    {{/if}}
-
-                    <li class="pagination-item info">
-                        <span class="pagination-link">{{currentPage}} / {{totalPages}}</span>
-                    </li>
-
-                    {{#if hasNextPage}}
-                        <li class="pagination-item">
-                            <a href="/search?q={{query}}&page={{math currentPage '+' 1}}" class="pagination-link" aria-label="Next page">
-                                <i class="bi bi-chevron-right"></i>
-                            </a>
-                        </li>
-                    {{else}}
-                        <li class="pagination-item disabled">
-                            <span class="pagination-link">
-                                <i class="bi bi-chevron-right"></i>
-                            </span>
-                        </li>
-                    {{/if}}
-                </ul>
-            </nav>
-            {{/if}}
-
-            {{#if query}}
-                <div class="empty-state d-none">
-                    <div class="empty-state-icon mx-auto">
+                
+                <form id="search-form" action="/search" method="GET" class="explore-search-form">
+                    <div class="search-input-group">
                         <i class="bi bi-search"></i>
+                        <input 
+                            type="text" 
+                            name="q" 
+                            id="search-input" 
+                            placeholder="{{translations.searchPlaceholder}}" 
+                            value="{{query}}"
+                            autocomplete="off"
+                        >
+                        {{#if query}}
+                        <button type="button" class="search-clear-btn" id="clearSearch">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                        {{/if}}
                     </div>
-                    <h3 class="empty-state-title">{{translations.no_results_found_for}} "<span class="search-query-highlight">{{query}}</span>"</h3>
-                    <p class="empty-state-message">Try searching for different keywords or explore popular categories below</p>
+                </form>
+                
+                <!-- NSFW Toggle -->
+                <div class="nsfw-filter-toggle">
+                    <button type="button" id="nsfwToggleBtn" class="nsfw-btn" data-nsfw="{{#if showNSFW}}true{{else}}false{{/if}}">
+                        <i class="bi bi-shield-check"></i>
+                        <span class="nsfw-label">SFW</span>
+                    </button>
                 </div>
-            {{/if}}
-        </div>
-
-
-
-        <!-- Tags Section -->
-        {{#if tags.length}}
-        <div class="tags-section">
-            <h3 class="tags-section-title">
-                <i class="bi bi-tags"></i>
-                {{translations.search_ai_character_by_tag}}
-            </h3>
-            <div class="tags-wrapper">
-                {{#each tags}}
-                    <a href="/search?q={{this.name}}" class="tag-item">
-                        <i class="bi bi-tag"></i>
-                        {{this.name}}
-                    </a>
-                {{/each}}
             </div>
         </div>
-        {{/if}}
-    </div>
 
-    <!-- Hidden elements for backward compatibility -->
-    <div id="chat-images-gallery" style="display: none;"></div>
-    <div id="chat-videos-gallery" style="display: none;"></div>
-    <div class="row mx-0" id="all-chats-images-gallery" style="display: none;"></div>
+        <!-- Main Explore Gallery - Vertical Swiper (Characters) -->
+        <div class="explore-gallery-wrapper">
+            <div class="swiper explore-vertical-swiper" id="characterSwiper">
+                <div class="swiper-wrapper" id="characterSwiperWrapper">
+                    <!-- Character slides will be loaded dynamically -->
+                </div>
+            </div>
+            
+            <!-- Loading State -->
+            <div class="explore-loading" id="exploreLoading">
+                <div class="loading-spinner"></div>
+                <p>{{translations.loading}}</p>
+            </div>
+            
+            <!-- Empty State -->
+            <div class="explore-empty" id="exploreEmpty" style="display: none;">
+                <i class="bi bi-search"></i>
+                <h3>{{translations.no_results_found_for}}</h3>
+                <p>{{translations.start_searching}}</p>
+            </div>
+        </div>
+
+        <!-- Quick Action Buttons (floating) -->
+        <div class="explore-quick-actions" id="quickActions" style="display: none;">
+            <button class="quick-action-btn" id="viewProfileBtn" title="View Profile">
+                <i class="bi bi-person-circle"></i>
+            </button>
+            <button class="quick-action-btn primary" id="startChatBtn" title="Start Chat">
+                <i class="bi bi-chat-heart-fill"></i>
+            </button>
+        </div>
+
+        <!-- Swipe Hint (shows on first visit) -->
+        <div class="swipe-hint" id="swipeHint">
+            <div class="swipe-hint-content">
+                <div class="swipe-indicator horizontal">
+                    <i class="bi bi-chevron-left"></i>
+                    <span>Swipe for more images</span>
+                    <i class="bi bi-chevron-right"></i>
+                </div>
+                <div class="swipe-indicator vertical">
+                    <i class="bi bi-chevron-up"></i>
+                    <span>Swipe for more characters</span>
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+            </div>
+        </div>
+    </div>
 
     {{> dashboard-footer}}
 
-    <!-- Swiper for image preview -->
+    <!-- Swiper JS -->
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <script src="/js/chat-tool-swiper.js"></script>
     <script src="/js/character-infos.js"></script>
 
-    <!-- Gallery Search Scripts -->
-    <script src="/js/gallery-search.js"></script>
-
-    <style>
-        footer { display: inline !important; }
-        .sticky-bottom, #footer-toolbar { display: inline-block !important; width: 100%; }
-        .flagged-true { display: inline-block !important; }
-    </style>
-
     <script>
-        // Expose user data to global scope for gallery-search.js
+        // Global configuration
         window.user = {
             _id: '{{user._id}}',
             subscriptionStatus: '{{user.subscriptionStatus}}',
@@ -247,41 +113,15 @@
             lang: '{{user.lang}}'
         };
         
-        // Expose showNSFW setting for blur logic
         window.showNSFW = {{#if showNSFW}}true{{else}}false{{/if}};
-
-        // Expose translations to global scope
+        window.initialQuery = '{{query}}';
+        
         window.translations = {
             loading: '{{translations.loading}}',
-            start_searching: '{{translations.start_searching}}',
-            blurButton: '{{translations.blurButton}}',
-            showContent: '{{translations.showContent}}'
+            no_results_found: '{{translations.no_results_found_for}}',
+            try_different_search: '{{translations.start_searching}}'
         };
-
-        document.addEventListener('DOMContentLoaded', function() {
-            // Clear search input on clear button click
-            const clearBtn = document.querySelector('.search-clear');
-            if (clearBtn) {
-                clearBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    document.getElementById('search-input').value = '';
-                    document.getElementById('search-form').submit();
-                });
-            }
-
-            // Apply blur effect to images
-            document.querySelectorAll('.img-blur').forEach(function(img) {
-                if (typeof blurImage === 'function') {
-                    blurImage(img);
-                }
-            });
-
-            // Initialize gallery search manager if available
-            if (typeof GallerySearchManager !== 'undefined' && !window.gallerySearchManager) {
-                window.gallerySearchManager = new GallerySearchManager();
-                window.gallerySearchManager.loadFromURL();
-            }
-        });
     </script>
+    <script src="/js/explore-gallery.js"></script>
 </body>
 </html>

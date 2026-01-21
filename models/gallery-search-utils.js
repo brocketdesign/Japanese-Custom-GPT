@@ -499,6 +499,208 @@ async function searchVideos(db, user, queryStr, page = 1, limit = 24) {
   };
 }
 
+/**
+ * Search images grouped by character for explore gallery
+ * Returns characters with their images for swipe navigation
+ */
+async function searchImagesGroupedByCharacter(db, user, queryStr = '', page = 1, limit = 20, showNSFW = false) {
+  const language = getLanguageName(user?.lang);
+  const requestLang = user?.lang || 'en';
+  const skip = (page - 1) * limit;
+  const chatsGalleryCollection = db.collection('gallery');
+  const chatsCollection = db.collection('chats');
+
+  // Prepare search words
+  const queryWords = queryStr.split(' ').filter(word => word.replace(/[^\w\s]/gi, '').trim() !== '');
+  const hasQuery = queryWords.length > 0;
+
+  // Build the aggregation pipeline to group images by character
+  const pipeline = [
+    // Unwind images
+    { $unwind: '$images' },
+    
+    // Match images with URLs
+    { 
+      $match: { 
+        'images.imageUrl': { $exists: true, $ne: null }
+      } 
+    },
+
+    // NSFW filter - completely exclude NSFW if showNSFW is false
+    ...(showNSFW ? [] : [
+      { 
+        $match: { 
+          $or: [
+            { 'images.nsfw': { $ne: true } },
+            { 'images.nsfw': { $exists: false } }
+          ]
+        } 
+      }
+    ]),
+
+    // Lookup chat information
+    {
+      $lookup: {
+        from: 'chats',
+        localField: 'chatId',
+        foreignField: '_id',
+        as: 'chat'
+      }
+    },
+    { $unwind: '$chat' },
+
+    // Filter by language and public visibility
+    {
+      $match: {
+        'chat.visibility': 'public',
+        $or: [
+          { 'chat.language': language },
+          { 'chat.language': requestLang }
+        ]
+      }
+    }
+  ];
+
+  // Add search scoring if query exists
+  if (hasQuery) {
+    const scoreExpressions = queryWords.map(word => ({
+      $cond: [
+        {
+          $or: [
+            { $regexMatch: { input: { $ifNull: ['$images.prompt', ''] }, regex: new RegExp(word, 'i') } },
+            { $regexMatch: { input: { $ifNull: ['$chat.name', ''] }, regex: new RegExp(word, 'i') } },
+            { $regexMatch: { input: { $ifNull: ['$chat.description', ''] }, regex: new RegExp(word, 'i') } },
+            { 
+              $gt: [
+                { 
+                  $size: { 
+                    $filter: { 
+                      input: { $ifNull: ['$chat.tags', []] }, 
+                      cond: { $regexMatch: { input: '$$this', regex: new RegExp(word, 'i') } } 
+                    } 
+                  } 
+                }, 
+                0
+              ] 
+            }
+          ]
+        },
+        1,
+        0
+      ]
+    }));
+
+    pipeline.push({
+      $addFields: {
+        matchScore: { $sum: scoreExpressions }
+      }
+    });
+    pipeline.push({ $match: { matchScore: { $gt: 0 } } });
+  }
+
+  // Group by character
+  pipeline.push({
+    $group: {
+      _id: '$chatId',
+      chatId: { $first: '$chatId' },
+      chatName: { $first: '$chat.name' },
+      chatSlug: { $first: '$chat.slug' },
+      chatImageUrl: { $first: '$chat.chatImageUrl' },
+      chatTags: { $first: '$chat.tags' },
+      description: { $first: '$chat.description' },
+      images: {
+        $push: {
+          _id: '$images._id',
+          imageUrl: '$images.imageUrl',
+          thumbnailUrl: '$images.thumbnailUrl',
+          prompt: '$images.prompt',
+          title: '$images.title',
+          nsfw: '$images.nsfw',
+          createdAt: '$images.createdAt'
+        }
+      },
+      imageCount: { $sum: 1 },
+      latestImage: { $max: '$images.createdAt' },
+      totalScore: { $sum: { $ifNull: ['$matchScore', 0] } }
+    }
+  });
+
+  // Sort by relevance (if query) or by latest image date
+  if (hasQuery) {
+    pipeline.push({ $sort: { totalScore: -1, latestImage: -1 } });
+  } else {
+    pipeline.push({ $sort: { latestImage: -1 } });
+  }
+
+  // Pagination
+  pipeline.push({ $skip: skip });
+  pipeline.push({ $limit: limit });
+
+  // Limit images per character for performance (max 20 images per character)
+  pipeline.push({
+    $project: {
+      _id: 0,
+      chatId: 1,
+      chatName: 1,
+      chatSlug: 1,
+      chatImageUrl: { $ifNull: ['$chatImageUrl', '/img/default-thumbnail.png'] },
+      chatTags: { $ifNull: ['$chatTags', []] },
+      description: 1,
+      imageCount: 1,
+      images: { $slice: ['$images', 20] }
+    }
+  });
+
+  // Count total characters for pagination
+  const countPipeline = [
+    { $unwind: '$images' },
+    { $match: { 'images.imageUrl': { $exists: true, $ne: null } } },
+    ...(showNSFW ? [] : [
+      { $match: { $or: [{ 'images.nsfw': { $ne: true } }, { 'images.nsfw': { $exists: false } }] } }
+    ]),
+    {
+      $lookup: {
+        from: 'chats',
+        localField: 'chatId',
+        foreignField: '_id',
+        as: 'chat'
+      }
+    },
+    { $unwind: '$chat' },
+    {
+      $match: {
+        'chat.visibility': 'public',
+        $or: [
+          { 'chat.language': language },
+          { 'chat.language': requestLang }
+        ]
+      }
+    },
+    { $group: { _id: '$chatId' } },
+    { $count: 'total' }
+  ];
+
+  try {
+    const [characters, countResult] = await Promise.all([
+      chatsGalleryCollection.aggregate(pipeline).toArray(),
+      chatsGalleryCollection.aggregate(countPipeline).toArray()
+    ]);
+
+    const totalCharacters = countResult.length ? countResult[0].total : 0;
+    const hasMore = skip + characters.length < totalCharacters;
+
+    return {
+      characters,
+      page,
+      totalCharacters,
+      hasMore
+    };
+  } catch (err) {
+    console.error('[gallery-search-utils] Error in searchImagesGroupedByCharacter:', err);
+    throw err;
+  }
+}
+
 module.exports = {
   buildSearchPipeline,
   buildCountPipeline,
@@ -507,5 +709,6 @@ module.exports = {
   processImageResults,
   processVideoResults,
   searchImages,
-  searchVideos
+  searchVideos,
+  searchImagesGroupedByCharacter
 };

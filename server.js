@@ -1309,10 +1309,14 @@ fastify.get('/search', async (request, reply) => {
       seoDescription = translations.seo_description_query.replace('${query}', query);
     }
 
+    // Determine NSFW setting - only show if user is premium and has enabled it
+    const showNSFW = user.subscriptionStatus === 'active' && user.showNSFW === true;
+
     return reply.renderWithGtm('search.hbs', {
       title: seoTitle,
       query,
       user,
+      showNSFW,
       translations,
       seo: [
         { name: 'description', content: seoDescription },

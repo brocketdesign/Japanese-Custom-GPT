@@ -416,55 +416,7 @@
     margin-left: 4px;
 }
 
-/* ===== Quick Action Buttons (Floating) ===== */
-.explore-quick-actions {
-    position: fixed;
-    right: 16px;
-    bottom: calc(80px + var(--explore-safe-area-bottom));
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    z-index: 500;
-}
 
-.quick-action-btn {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: var(--explore-text);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-}
-
-.quick-action-btn i {
-    font-size: 22px;
-}
-
-.quick-action-btn:hover {
-    transform: scale(1.1);
-    background: rgba(255, 255, 255, 0.25);
-}
-
-.quick-action-btn:active {
-    transform: scale(0.95);
-}
-
-.quick-action-btn.primary {
-    background: var(--explore-accent);
-    border-color: var(--explore-accent);
-}
-
-.quick-action-btn.primary:hover {
-    background: var(--explore-accent-light);
-}
 
 /* ===== Loading State ===== */
 .explore-loading {

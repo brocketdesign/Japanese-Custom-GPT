@@ -329,6 +329,9 @@ class ExploreGallery {
         if (this.verticalSwiper) {
             this.verticalSwiper.update();
         }
+
+        // Initialize or update horizontal swipers for newly added slides
+        this.initHorizontalSwipers();
     }
     
     createCharacterSlide(character) {
@@ -337,20 +340,40 @@ class ExploreGallery {
         slide.dataset.characterId = character.chatId;
         
         const imagesHtml = character.images.map((img, idx) => {
-            const imageUrl = img.thumbnailUrl || img.imageUrl;
+            const thumb = (img.thumbnailUrl && img.thumbnailUrl.length) ? img.thumbnailUrl : '/img/placeholder.png';
+            const full = img.imageUrl || thumb;
             const isNsfw = img.nsfw && (!this.showNSFW || !this.isPremium);
-            
+
+            // Eager-load first two images for snappy UX, lazy-load the rest using Swiper's lazy module
+            if (idx < 2) {
+                return `
+                    <div class="swiper-slide">
+                        <div class="explore-image-card ${isNsfw ? 'nsfw-content' : ''}">
+                            <img 
+                                src="${full}" 
+                                alt="${this.escapeHtml(character.chatName)}"
+                                class="explore-image"
+                                loading="eager"
+                                onerror="this.src='/img/placeholder.png'"
+                            >
+                            ${isNsfw ? this.createNSFWOverlay() : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
             return `
                 <div class="swiper-slide">
                     <div class="explore-image-card ${isNsfw ? 'nsfw-content' : ''}">
                         <img 
-                            src="${imageUrl}" 
-                            data-full-src="${img.imageUrl}"
+                            src="${thumb}" 
+                            data-src="${full}"
                             alt="${this.escapeHtml(character.chatName)}"
-                            class="explore-image"
-                            loading="${idx < 3 ? 'eager' : 'lazy'}"
+                            class="explore-image swiper-lazy"
+                            loading="lazy"
                             onerror="this.src='/img/placeholder.png'"
                         >
+                        <div class="swiper-lazy-preloader"></div>
                         ${isNsfw ? this.createNSFWOverlay() : ''}
                     </div>
                 </div>
@@ -367,14 +390,14 @@ class ExploreGallery {
             </div>
             <div class="character-info-overlay">
                 <div class="character-header">
-                    <a href="/character/slug/${character.chatSlug}" class="character-avatar-link" onclick="event.stopPropagation()">
+                    <div class="character-avatar-link">
                         <img 
                             src="${character.chatImageUrl || '/img/default-thumbnail.png'}" 
                             alt="${this.escapeHtml(character.chatName)}"
                             class="character-avatar"
                             onerror="this.src='/img/default-thumbnail.png'"
                         >
-                    </a>
+                    </div>
                     <div class="character-details">
                         <h3 class="character-name">
                             <a href="/character/slug/${character.chatSlug}" onclick="event.stopPropagation()">${this.escapeHtml(character.chatName)}</a>
@@ -384,11 +407,11 @@ class ExploreGallery {
                         </p>
                     </div>
                     <div class="character-actions">
-                        <button class="action-btn" onclick="event.stopPropagation(); window.exploreGallery.openProfile('${character.chatId}')" title="View Profile">
-                            <i class="bi bi-person-circle"></i>
+                        <button class="action-btn" onclick="event.stopPropagation(); window.location.href='/character/slug/${character.chatSlug}'" title="View Profile">
+                            <i class="bi bi-person"></i>
                         </button>
-                        <button class="action-btn primary" onclick="event.stopPropagation(); window.exploreGallery.goToChat('${character.chatSlug}')" title="Start Chat">
-                            <i class="bi bi-chat-heart-fill"></i>
+                        <button class="action-btn primary" onclick="event.stopPropagation(); window.location.href='/chat/${character.chatId}'" title="Open Chat">
+                            <i class="bi bi-chat-dots"></i>
                         </button>
                     </div>
                 </div>
@@ -489,10 +512,21 @@ class ExploreGallery {
                 threshold: 20,
                 resistanceRatio: 0.85,
                 speed: 300,
+                preloadImages: false,
+                lazy: {
+                    loadPrevNext: true,
+                    loadPrevNextAmount: 2
+                },
+                observer: true,
+                observeParents: true,
+                watchSlidesProgress: true,
                 on: {
                     slideChange: (s) => this.onImageChange(charId, s.activeIndex)
                 }
             });
+            
+            // Force an update in case slides were added dynamically
+            swiper.update();
             
             this.horizontalSwipers.set(charId, swiper);
         });

@@ -1650,11 +1650,25 @@ async function checkTaskStatus(taskId, fastify) {
     const imageData = processedImages[arrayIndex];
     
     let nsfw = task.type === 'nsfw';
+    
+    // === NSFW DETECTION LOGGING ===
+    console.log(`[NSFW-CHECK] Task ${task.taskId} - Image ${arrayIndex + 1}:`);
+    console.log(`[NSFW-CHECK]   - Task type: ${task.type}`);
+    console.log(`[NSFW-CHECK]   - Initial NSFW flag (from task.type): ${nsfw}`);
+    console.log(`[NSFW-CHECK]   - nsfw_detection_result:`, JSON.stringify(imageData.nsfw_detection_result, null, 2));
+    
     // Only flag as NSFW if confidence is very high (90+) to allow bikinis/swimwear
     // Combined with nsfw_detection_level: 0, this only censors clearly visible nudity
     if (imageData.nsfw_detection_result && imageData.nsfw_detection_result.valid && imageData.nsfw_detection_result.confidence >= 90) {
+      console.log(`[NSFW-CHECK]   - ⚠️ FLAGGED: confidence ${imageData.nsfw_detection_result.confidence}% >= 90% threshold`);
       nsfw = true;
+    } else if (imageData.nsfw_detection_result && imageData.nsfw_detection_result.valid) {
+      console.log(`[NSFW-CHECK]   - ✅ PASSED: confidence ${imageData.nsfw_detection_result.confidence}% < 90% threshold`);
+    } else {
+      console.log(`[NSFW-CHECK]   - ℹ️ No valid NSFW detection result`);
     }
+    console.log(`[NSFW-CHECK]   - Final NSFW flag: ${nsfw}`);
+    // === END NSFW DETECTION LOGGING ===
     
     let uniqueSlug = task.slug;
     if (processedImages.length > 1) {

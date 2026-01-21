@@ -845,8 +845,14 @@ Return ONLY the caption text with hashtags, nothing else.`;
         result = taskInfo;
       }
 
-      // Get the image URL
-      const imageUrl = result.images?.[0] || result.imageUrl;
+      // Get the image URL - handle both object format {imageUrl: '...'} and direct URL string
+      let imageUrl = result.images?.[0];
+      if (imageUrl && typeof imageUrl === 'object') {
+        imageUrl = imageUrl.imageUrl || imageUrl.image_url || imageUrl.url;
+      }
+      if (!imageUrl) {
+        imageUrl = result.imageUrl;
+      }
       
       if (!imageUrl) {
         return reply.code(500).send({ error: 'No image generated' });

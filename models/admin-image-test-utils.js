@@ -55,7 +55,7 @@ const MODEL_CONFIGS = {
       size: '1024*1024',
       seed: -1
     },
-    supportedParams: ['prompt', 'size', 'seed', 'image', 'strength'],
+    supportedParams: ['prompt', 'size', 'seed', 'images'],
     description: 'FLUX.2 model family for fast, flexible text-to-image and image-to-image generation'
   },
   'flux-2-dev': {
@@ -70,7 +70,7 @@ const MODEL_CONFIGS = {
       steps: 28,
       guidance_scale: 3.5
     },
-    supportedParams: ['prompt', 'size', 'seed', 'steps', 'guidance_scale', 'image', 'strength'],
+    supportedParams: ['prompt', 'size', 'seed', 'steps', 'guidance_scale', 'images'],
     description: 'FLUX.2 Dev model with advanced generation controls and img2img support'
   },
   'hunyuan-image-3': {
@@ -96,7 +96,7 @@ const MODEL_CONFIGS = {
       watermark: false,
       sequential_image_generation: 'disabled'
     },
-    supportedParams: ['prompt', 'size', 'watermark', 'image', 'optimize_prompt_options', 'sequential_image_generation', 'strength'],
+    supportedParams: ['prompt', 'size', 'watermark', 'image', 'sequential_image_generation'],
     sizeFormat: 'x', // Uses 'x' instead of '*'
     description: 'ByteDance Seedream 4.0 model for high-quality text-to-image and image editing'
   },
@@ -111,7 +111,7 @@ const MODEL_CONFIGS = {
       watermark: false,
       sequential_image_generation: 'disabled'
     },
-    supportedParams: ['prompt', 'size', 'watermark', 'image', 'optimize_prompt_options', 'sequential_image_generation', 'strength'],
+    supportedParams: ['prompt', 'size', 'watermark', 'image', 'sequential_image_generation'],
     sizeFormat: 'x', // Uses 'x' instead of '*'
     description: 'ByteDance Seedream 4.5 model supporting text-to-image and image editing'
   },
@@ -124,10 +124,10 @@ const MODEL_CONFIGS = {
     requiresImage: true,
     defaultParams: {
       seed: -1,
-      guidance_scale: 3.5,
+      guidance_scale: 2.5,
       steps: 28
     },
-    supportedParams: ['prompt', 'image', 'seed', 'guidance_scale', 'steps', 'aspect_ratio'],
+    supportedParams: ['prompt', 'images', 'seed', 'guidance_scale', 'num_inference_steps', 'size', 'output_format'],
     description: 'FLUX.1 Kontext Dev for advanced image editing and transformation'
   },
   'flux-kontext-pro': {
@@ -141,7 +141,7 @@ const MODEL_CONFIGS = {
       seed: -1,
       guidance_scale: 3.5
     },
-    supportedParams: ['prompt', 'image', 'seed', 'guidance_scale', 'aspect_ratio', 'output_format'],
+    supportedParams: ['prompt', 'images', 'seed', 'guidance_scale', 'aspect_ratio', 'safety_tolerance'],
     description: 'FLUX.1 Kontext Pro for professional-grade image editing'
   },
   'flux-kontext-max': {
@@ -155,7 +155,7 @@ const MODEL_CONFIGS = {
       seed: -1,
       guidance_scale: 3.5
     },
-    supportedParams: ['prompt', 'image', 'seed', 'guidance_scale', 'aspect_ratio', 'output_format'],
+    supportedParams: ['prompt', 'images', 'seed', 'guidance_scale', 'aspect_ratio', 'safety_tolerance'],
     description: 'FLUX.1 Kontext Max for maximum quality image editing'
   },
   'sd-img2img': {
@@ -427,17 +427,21 @@ async function initializeModelTest(modelId, params) {
       };
     }
     // Handle Kontext models (img2img focused)
+    // Novita API requires 'images' as an array of strings (URLs or base64)
     else if (modelId.startsWith('flux-kontext')) {
+      // Get the image - can be URL or base64 string
+      const inputImage = params.image || params.image_base64;
+      
       requestBody = {
         prompt: params.prompt,
-        image: params.image || params.image_base64,
+        images: inputImage ? [inputImage] : [], // API requires array format
         seed: params.seed !== undefined ? params.seed : config.defaultParams.seed,
         guidance_scale: params.guidance_scale || config.defaultParams.guidance_scale
       };
       
-      // Add steps for dev model
-      if (modelId === 'flux-kontext-dev' && params.steps) {
-        requestBody.steps = params.steps;
+      // Add num_inference_steps for dev model (API uses this name, not 'steps')
+      if (modelId === 'flux-kontext-dev') {
+        requestBody.num_inference_steps = params.steps || config.defaultParams.steps || 28;
       }
       
       // Add aspect_ratio if provided
@@ -450,6 +454,11 @@ async function initializeModelTest(modelId, params) {
         requestBody.output_format = params.output_format;
       }
       
+      // Add safety_tolerance for pro/max (1=strict, 5=permissive)
+      if (modelId === 'flux-kontext-pro' || modelId === 'flux-kontext-max') {
+        requestBody.safety_tolerance = params.safety_tolerance || '5'; // Most permissive by default
+      }
+      
       if (webhookUrl) {
         requestBody.extra = {
           webhook: { url: webhookUrl }
@@ -457,6 +466,7 @@ async function initializeModelTest(modelId, params) {
       }
     }
     // Handle Flux 2 models with potential img2img
+    // Novita API requires 'images' as an array for img2img
     else if (modelId === 'flux-2-flex' || modelId === 'flux-2-dev') {
       requestBody = {
         prompt: params.prompt,
@@ -464,18 +474,13 @@ async function initializeModelTest(modelId, params) {
         seed: params.seed !== undefined ? params.seed : config.defaultParams.seed
       };
       
-      // Add img2img params if image is provided
+      // Add img2img params if image is provided - use 'images' array format
       if (params.image || params.image_base64) {
-        requestBody.image = params.image || params.image_base64;
+        const inputImage = params.image || params.image_base64;
+        requestBody.images = [inputImage]; // API requires array format
         
-        // Map editStrength to strength value
-        let strength = params.strength || 0.75;
-        if (params.editStrength) {
-          if (params.editStrength === 'low') strength = 0.3;
-          else if (params.editStrength === 'medium') strength = 0.6;
-          else if (params.editStrength === 'high') strength = 0.85;
-        }
-        requestBody.strength = strength;
+        // Note: Flux 2 Flex doesn't support strength parameter according to API docs
+        // It's a text-guided editing model, not strength-based
       }
       
       // Add advanced params for flux-2-dev
@@ -491,49 +496,42 @@ async function initializeModelTest(modelId, params) {
       }
     }
     // Handle Seedream models (txt2img and img2img)
+    // Novita API requires 'image' as an array for Seedream 4.5
     else if (modelId.startsWith('seedream')) {
       requestBody = {
         prompt: params.prompt,
-        ...config.defaultParams,
-        ...params
+        ...config.defaultParams
       };
       
       // Handle size format conversion for Seedream (uses 'x' instead of '*')
-      if (requestBody.size) {
-        const sizeStr = requestBody.size.replace('*', 'x');
-        const [width, height] = sizeStr.split('x').map(Number);
-        const totalPixels = width * height;
-        
-        // Seedream requires min 3,686,400 pixels (about 1920x1920)
-        if (totalPixels < 3686400) {
-          const scale = Math.ceil(Math.sqrt(3686400 / totalPixels));
-          const newWidth = width * scale;
-          const newHeight = height * scale;
-          requestBody.size = `${newWidth}x${newHeight}`;
-          console.log(`[AdminImageTest] Seedream size scaled: ${width}x${height} -> ${newWidth}x${newHeight}`);
-        } else {
-          requestBody.size = sizeStr;
-        }
+      const size = params.size || config.defaultParams.size || '2048x2048';
+      const sizeStr = size.replace('*', 'x');
+      const [width, height] = sizeStr.split('x').map(Number);
+      const totalPixels = width * height;
+      
+      // Seedream requires min 3,686,400 pixels (about 1920x1920)
+      if (totalPixels < 3686400) {
+        const scale = Math.ceil(Math.sqrt(3686400 / totalPixels));
+        const newWidth = width * scale;
+        const newHeight = height * scale;
+        requestBody.size = `${newWidth}x${newHeight}`;
+        console.log(`[AdminImageTest] Seedream size scaled: ${width}x${height} -> ${newWidth}x${newHeight}`);
+      } else {
+        requestBody.size = sizeStr;
       }
       
-      // Add img2img params if image is provided
+      // Add img2img params if image is provided - use 'image' as array format per API docs
       if (params.image || params.image_base64) {
-        requestBody.image = params.image || params.image_base64;
-        
-        // Map editStrength to strength value for Seedream
-        if (params.editStrength) {
-          if (params.editStrength === 'low') requestBody.strength = 0.3;
-          else if (params.editStrength === 'medium') requestBody.strength = 0.6;
-          else if (params.editStrength === 'high') requestBody.strength = 0.85;
-        }
+        const inputImage = params.image || params.image_base64;
+        requestBody.image = [inputImage]; // API requires array format for Seedream
+        console.log(`[AdminImageTest] Seedream img2img mode - image array with 1 item`);
       }
       
-      // Remove non-supported params
-      Object.keys(requestBody).forEach(key => {
-        if (!config.supportedParams.includes(key) && key !== 'prompt') {
-          delete requestBody[key];
-        }
-      });
+      // Add watermark setting
+      requestBody.watermark = params.watermark !== undefined ? params.watermark : false;
+      
+      // Add sequential_image_generation setting
+      requestBody.sequential_image_generation = params.sequential_image_generation || 'disabled';
     }
     // Standard format for other models
     else {

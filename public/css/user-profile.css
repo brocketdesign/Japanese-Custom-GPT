@@ -163,6 +163,32 @@ body:has(.profile-container) {
     margin: 15px 0 10px;
     text-shadow: 0 3px 8px rgba(0,0,0,0.4);
     letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Creator Badge Icon */
+.creator-badge-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #8240FF 0%, #6a30d9 100%);
+    color: #fff;
+    font-size: 0.55em;
+    padding: 4px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(130, 64, 255, 0.4);
+}
+
+/* Verified Badge Icon */
+.verified-badge-icon {
+    display: inline-flex;
+    align-items: center;
+    color: #1DA1F2;
+    font-size: 0.6em;
 }
 
 .profile-intro {
@@ -284,6 +310,69 @@ body:has(.profile-container) {
     color: white;
     border-color: transparent;
     box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
+}
+
+/* Premium action button */
+.action-btn-premium {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: #1a1a2e;
+    font-weight: 700;
+}
+
+.action-btn-premium:hover {
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+    transform: translateY(-2px);
+    color: #1a1a2e;
+}
+
+/* Success action button (Earnings) */
+.action-btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    font-weight: 600;
+}
+
+.action-btn-success:hover {
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    transform: translateY(-2px);
+    color: white;
+}
+
+/* Info action button (Analytics) */
+.action-btn-info {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    font-weight: 600;
+}
+
+.action-btn-info:hover {
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    transform: translateY(-2px);
+    color: white;
+}
+
+/* Creator quick actions container */
+.creator-quick-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.creator-quick-actions .action-btn {
+    min-width: auto;
+    padding: 12px 16px;
+}
+
+@media (max-width: 768px) {
+    .creator-quick-actions {
+        gap: 8px;
+    }
+    
+    .creator-quick-actions .action-btn {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+    }
 }
 
 /* ====================================

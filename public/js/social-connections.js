@@ -419,7 +419,8 @@
                        value="profile"
                        style="display: none;">
                 <button type="button" class="sns-platform-btn" 
-                        data-checkbox-id="platform_profile">
+                        data-checkbox-id="platform_profile"
+                        data-platform="profile">
                     <i class="bi bi-person-circle"></i>
                     <span>${getTranslation('post_to_profile', 'My Profile')}</span>
                 </button>

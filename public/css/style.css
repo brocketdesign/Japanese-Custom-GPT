@@ -5964,3 +5964,76 @@ color: #fff !important;
 .search-image-preview:hover::after {
     background: rgba(0, 0, 0, 0.1);
 }
+
+/* ============================================================================
+   SNS PLATFORM BUTTONS - CHAT POST MODAL
+   ============================================================================ */
+
+/* Base SNS Platform Button */
+.sns-platform-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: rgba(30, 30, 30, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    outline: none;
+}
+
+.sns-platform-btn:hover {
+    background: rgba(40, 40, 40, 0.9);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.sns-platform-btn.active {
+    background: linear-gradient(135deg, rgba(138, 43, 226, 0.3) 0%, rgba(75, 0, 130, 0.3) 100%);
+    border-color: #8A2BE2;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(138, 43, 226, 0.4), inset 0 0 20px rgba(138, 43, 226, 0.1);
+    transform: translateY(-1px);
+}
+
+.sns-platform-btn.active:hover {
+    background: linear-gradient(135deg, rgba(138, 43, 226, 0.4) 0%, rgba(75, 0, 130, 0.4) 100%);
+    box-shadow: 0 0 20px rgba(138, 43, 226, 0.5), inset 0 0 25px rgba(138, 43, 226, 0.15);
+}
+
+.sns-platform-btn i {
+    font-size: 16px;
+}
+
+/* My Profile Button - Special Blue Styling */
+.sns-platform-btn[data-platform="profile"] {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.2) 100%);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.sns-platform-btn[data-platform="profile"]:hover {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(37, 99, 235, 0.3) 100%);
+    border-color: rgba(59, 130, 246, 0.5);
+}
+
+.sns-platform-btn[data-platform="profile"].active {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.4) 0%, rgba(37, 99, 235, 0.4) 100%);
+    border-color: #3B82F6;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.4), inset 0 0 20px rgba(59, 130, 246, 0.1);
+}
+
+.sns-platform-btn[data-platform="profile"].active:hover {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.5) 0%, rgba(37, 99, 235, 0.5) 100%);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5), inset 0 0 25px rgba(59, 130, 246, 0.15);
+}
+
+.sns-platform-btn[data-platform="profile"] i {
+    color: #3B82F6;
+}
+
+.sns-platform-btn[data-platform="profile"].active i {
+    color: #fff;
+}

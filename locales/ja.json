@@ -2106,6 +2106,20 @@
     "searchTags": "タグを検索...",
     "lastUpdated": "最終更新日"
   },
+  "error_page": {
+    "title": "ページが見つかりません",
+    "description": "申し訳ございません。お探しのページは存在しないか、移動された可能性があります。",
+    "back_home": "ホームに戻る",
+    "explore_title": "プラットフォームを探索",
+    "explore_subtitle": "こちらのリンクから目的の場所へお進みください",
+    "characters_desc": "利用可能なすべてのAIキャラクターを閲覧してチャットを開始",
+    "search_desc": "お探しのものを見つけましょう",
+    "tags_desc": "カテゴリーやタグでキャラクターを探索",
+    "features_desc": "私たちが提供する素晴らしい機能をすべて発見",
+    "blog_desc": "最新のニュースと更新情報をお読みください",
+    "support_title": "サポート",
+    "support_desc": "お困りですか？サポートチームにお問い合わせください"
+  },
   "system_prompt": {
     "title": "システムプロンプト管理",
     "list_title": "システムプロンプト一覧",

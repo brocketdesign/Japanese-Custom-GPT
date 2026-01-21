@@ -2051,6 +2051,20 @@
     "searchTags": "Rechercher des tags...",
     "lastUpdated": "Dernière mise à jour"
   },
+  "error_page": {
+    "title": "Page non trouvée",
+    "description": "Oups ! La page que vous recherchez n'existe pas ou a été déplacée.",
+    "back_home": "Retour à l'accueil",
+    "explore_title": "Explorez notre plateforme",
+    "explore_subtitle": "Voici quelques liens utiles pour vous remettre sur la bonne voie",
+    "characters_desc": "Parcourez tous les personnages IA disponibles et commencez à discuter",
+    "search_desc": "Trouvez exactement ce que vous cherchez",
+    "tags_desc": "Explorez les personnages par catégories et tags",
+    "features_desc": "Découvrez toutes les fonctionnalités incroyables que nous offrons",
+    "blog_desc": "Lisez nos dernières nouvelles et mises à jour",
+    "support_title": "Support",
+    "support_desc": "Besoin d'aide ? Contactez notre équipe de support"
+  },
   "requestFailed": "Échec de la requête",
   "image_leaderboard_title": "Classement des images",
   "chat_goal_completed": "Objectif de chat terminé, vous avez reçu {{points}} points !",

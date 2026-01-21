@@ -2172,6 +2172,20 @@
     "searchTags": "Search tags...",
     "lastUpdated": "Last updated"
   },
+  "error_page": {
+    "title": "Page Not Found",
+    "description": "Oops! The page you're looking for doesn't exist or has been moved.",
+    "back_home": "Back to Home",
+    "explore_title": "Explore Our Platform",
+    "explore_subtitle": "Here are some helpful links to get you back on track",
+    "characters_desc": "Browse all available AI characters and start chatting",
+    "search_desc": "Find exactly what you're looking for",
+    "tags_desc": "Explore characters by categories and tags",
+    "features_desc": "Discover all the amazing features we offer",
+    "blog_desc": "Read our latest news and updates",
+    "support_title": "Support",
+    "support_desc": "Need help? Contact our support team"
+  },
   "image_tools": {
     "edit": "Edit",
     "like": "Like",

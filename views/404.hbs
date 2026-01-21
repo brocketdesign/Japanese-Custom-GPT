@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="{{translations.lang}}">
+{{> dashboard-header}}
+<body>
+    {{> dashboard-nav}}
+
+<section>
+    <style>
+    #error-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background-size: cover;
+        background-position: center;
+        min-height: 400px;
+        display: flex;
+        align-items: center;
+        color: white;
+        text-align: center;
+        padding-bottom: 4rem;
+    }
+    #error-hero h1 {
+        font-size: 8rem;
+        font-weight: 700;
+        margin-bottom: 0;
+        text-shadow: 2px 4px 8px rgba(0,0,0,0.3);
+    }
+    #error-hero h2 {
+        font-size: 2rem;
+        font-weight: 500;
+        margin-bottom: 1rem;
+        opacity: 0.95;
+    }
+    #error-hero p {
+        font-size: 1.15rem;
+        margin-bottom: 2rem;
+        opacity: 0.85;
+    }
+    .error-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+    .link-card {
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        height: 100%;
+        border-radius: 16px;
+        overflow: hidden;
+        text-decoration: none;
+        display: block;
+        background: #ffffff !important;
+    }
+    .link-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 24px rgba(102, 126, 234, 0.25);
+        text-decoration: none;
+        background: #ffffff !important;
+    }
+    .link-card .card-body {
+        padding: 2rem 1.5rem;
+        background: #ffffff !important;
+    }
+    .link-card-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .link-card h5 {
+        color: #1a1a2e;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+    }
+    .link-card p {
+        color: #555;
+        font-size: 0.9rem;
+        margin-bottom: 0;
+    }
+    .link-card .arrow-icon {
+        color: #667eea;
+        transition: transform 0.3s ease;
+    }
+    .link-card:hover .arrow-icon {
+        transform: translateX(5px);
+    }
+    .back-home-btn {
+        display: inline-block;
+        background: white;
+        color: #667eea;
+        padding: 1rem 2.5rem;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .back-home-btn:hover {
+        transform: scale(1.05);
+        color: #764ba2;
+        text-decoration: none;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    #footer-toolbar {
+        display: none;
+    }
+    .sticky-bottom {
+        display: none;
+    }
+    footer {
+        display: inline !important;
+    }
+    @media (max-width: 768px) {
+        #error-hero h1 {
+            font-size: 5rem;
+        }
+        #error-hero h2 {
+            font-size: 1.5rem;
+        }
+        #error-hero p {
+            font-size: 1rem;
+        }
+        .link-card .card-body {
+            padding: 1.5rem 1rem;
+        }
+        .link-card-icon {
+            font-size: 2rem;
+        }
+    }
+    </style>
+    
+    <div id="error-hero" class="shadow-0">
+        <div class="container">
+            <div class="row align-items-center h-100">
+                <div class="col-12">
+                    <div class="error-icon">
+                        <i class="bi bi-emoji-dizzy"></i>
+                    </div>
+                    <h1 class="animate__animated" data-animate="animate__fadeInDown">404</h1>
+                    <h2 class="animate__animated" data-animate="animate__fadeInUp">
+                        {{#if translations.error_page.title}}
+                            {{translations.error_page.title}}
+                        {{else}}
+                            Page Not Found
+                        {{/if}}
+                    </h2>
+                    <p class="animate__animated" data-animate="animate__fadeInUp">
+                        {{#if translations.error_page.description}}
+                            {{translations.error_page.description}}
+                        {{else}}
+                            Oops! The page you're looking for doesn't exist or has been moved.
+                        {{/if}}
+                    </p>
+                    <a href="/" class="back-home-btn">
+                        <i class="bi bi-house-door me-2"></i>
+                        {{#if translations.error_page.back_home}}
+                            {{translations.error_page.back_home}}
+                        {{else}}
+                            Back to Home
+                        {{/if}}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Links Section -->
+<section class="py-5" style="background: #f8f9fa !important;">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h3 class="fw-bold u-color-grad mb-3" style="color: #667eea !important;">
+                {{#if translations.error_page.explore_title}}
+                    {{translations.error_page.explore_title}}
+                {{else}}
+                    Explore Our Platform
+                {{/if}}
+            </h3>
+            <p class="text-muted" style="color: #6c757d !important;">
+                {{#if translations.error_page.explore_subtitle}}
+                    {{translations.error_page.explore_subtitle}}
+                {{else}}
+                    Here are some helpful links to get you back on track
+                {{/if}}
+            </p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Characters Card -->
+            <div class="col-md-6 col-lg-4">
+                <a href="/character" class="link-card card h-100">
+                    <div class="card-body text-center">
+                        <div class="link-card-icon">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <h5>{{translations.characters}}</h5>
+                        <p>
+                            {{#if translations.error_page.characters_desc}}
+                                {{translations.error_page.characters_desc}}
+                            {{else}}
+                                Browse all available AI characters and start chatting
+                            {{/if}}
+                        </p>
+                        <div class="mt-3">
+                            <i class="bi bi-arrow-right arrow-icon"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Search Card -->
+            <div class="col-md-6 col-lg-4">
+                <a href="/search" class="link-card card h-100">
+                    <div class="card-body text-center">
+                        <div class="link-card-icon">
+                            <i class="bi bi-search"></i>
+                        </div>
+                        <h5>{{translations.search}}</h5>
+                        <p>
+                            {{#if translations.error_page.search_desc}}
+                                {{translations.error_page.search_desc}}
+                            {{else}}
+                                Find exactly what you're looking for
+                            {{/if}}
+                        </p>
+                        <div class="mt-3">
+                            <i class="bi bi-arrow-right arrow-icon"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Tags Card -->
+            <div class="col-md-6 col-lg-4">
+                <a href="/tags" class="link-card card h-100">
+                    <div class="card-body text-center">
+                        <div class="link-card-icon">
+                            <i class="bi bi-tags-fill"></i>
+                        </div>
+                        <h5>{{translations.tags}}</h5>
+                        <p>
+                            {{#if translations.error_page.tags_desc}}
+                                {{translations.error_page.tags_desc}}
+                            {{else}}
+                                Explore characters by categories and tags
+                            {{/if}}
+                        </p>
+                        <div class="mt-3">
+                            <i class="bi bi-arrow-right arrow-icon"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Features Card -->
+            <div class="col-md-6 col-lg-4">
+                <a href="/features" class="link-card card h-100">
+                    <div class="card-body text-center">
+                        <div class="link-card-icon">
+                            <i class="bi bi-stars"></i>
+                        </div>
+                        <h5>{{translations.feature}}</h5>
+                        <p>
+                            {{#if translations.error_page.features_desc}}
+                                {{translations.error_page.features_desc}}
+                            {{else}}
+                                Discover all the amazing features we offer
+                            {{/if}}
+                        </p>
+                        <div class="mt-3">
+                            <i class="bi bi-arrow-right arrow-icon"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Blog Card -->
+            <div class="col-md-6 col-lg-4">
+                <a href="https://chatlamix.com/" target="_blank" class="link-card card h-100">
+                    <div class="card-body text-center">
+                        <div class="link-card-icon">
+                            <i class="bi bi-journal-richtext"></i>
+                        </div>
+                        <h5>{{translations.blog}}</h5>
+                        <p>
+                            {{#if translations.error_page.blog_desc}}
+                                {{translations.error_page.blog_desc}}
+                            {{else}}
+                                Read our latest news and updates
+                            {{/if}}
+                        </p>
+                        <div class="mt-3">
+                            <i class="bi bi-arrow-right arrow-icon"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Support Card -->
+            <div class="col-md-6 col-lg-4">
+                <a href="https://x.com/3goH4EQPR994998" target="_blank" class="link-card card h-100">
+                    <div class="card-body text-center">
+                        <div class="link-card-icon">
+                            <i class="bi bi-headset"></i>
+                        </div>
+                        <h5>
+                            {{#if translations.error_page.support_title}}
+                                {{translations.error_page.support_title}}
+                            {{else}}
+                                Support
+                            {{/if}}
+                        </h5>
+                        <p>
+                            {{#if translations.error_page.support_desc}}
+                                {{translations.error_page.support_desc}}
+                            {{else}}
+                                Need help? Contact our support team
+                            {{/if}}
+                        </p>
+                        <div class="mt-3">
+                            <i class="bi bi-arrow-right arrow-icon"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Legal Links Section -->
+<section class="py-4" style="background: #ffffff !important;">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="d-flex flex-wrap justify-content-center gap-4">
+                    <a href="/terms" class="text-muted text-decoration-none d-flex align-items-center">
+                        <i class="bi bi-file-text me-2"></i>{{translations.termsOfUse}}
+                    </a>
+                    <a href="/privacy" class="text-muted text-decoration-none d-flex align-items-center">
+                        <i class="bi bi-shield-lock me-2"></i>{{translations.privacyPolicy}}
+                    </a>
+                    <a href="/sitemap" class="text-muted text-decoration-none d-flex align-items-center">
+                        <i class="bi bi-diagram-3 me-2"></i>{{translations.sitemap.title}}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{{> dashboard-footer}}
+
+<script>
+    // Smooth scroll animations
+    document.addEventListener('DOMContentLoaded', function() {
+        const elements = document.querySelectorAll('[data-animate]');
+        elements.forEach(el => {
+            const animationClass = el.getAttribute('data-animate');
+            el.classList.add(animationClass);
+        });
+    });
+</script>
+</body>
+</html>

@@ -1568,6 +1568,31 @@ fastify.get('/legal/privacy', renderPrivacyPage);
 fastify.get('/terms', renderTermsPage);
 fastify.get('/privacy', renderPrivacyPage);
 
+// 404 Not Found Handler - Custom error page
+fastify.setNotFoundHandler(async (request, reply) => {
+  try {
+    const { translations, lang } = request;
+    
+    return reply.status(404).renderWithGtm('404.hbs', {
+      title: `404 - ${translations.error_page?.title || 'Page Not Found'} | ${translations.seo?.title || 'Chatlamix'}`,
+      seo: [
+        { name: 'description', content: translations.error_page?.description || 'The page you are looking for could not be found.' },
+        { name: 'robots', content: 'noindex, nofollow' },
+        { property: 'og:title', content: `404 - ${translations.error_page?.title || 'Page Not Found'}` },
+        { property: 'og:description', content: translations.error_page?.description || 'The page you are looking for could not be found.' },
+        { property: 'og:image', content: '/img/share.png' },
+      ],
+      translations,
+      lang,
+      user: request.user,
+      mode: process.env.MODE,
+    });
+  } catch (error) {
+    console.error('[404 Handler] Error:', error);
+    return reply.status(404).send({ error: 'Page not found' });
+  }
+});
+
 const start = async () => {
   try {
     const port = process.env.PORT || 3000;

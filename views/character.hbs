@@ -55,6 +55,27 @@
                 {{/unless}}
             </div>
 
+            {{#if isAdmin}}
+            <!-- Admin Controls -->
+            <div class="admin-controls" style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 8px;">
+                <div class="d-flex justify-content-center gap-2 flex-wrap">
+                    <button class="btn btn-sm btn-info set-sfw-thumbnail-btn" 
+                            data-id="{{chat._id}}" 
+                            onclick="setSFWThumbnail(this);" 
+                            title="Set SFW Thumbnail">
+                        <i class="bi bi-image me-1"></i>Set SFW Thumbnail
+                    </button>
+                    <button class="btn btn-sm chat-nsfw-toggle {{#if chat.nsfw}}nsfw{{else}}sfw{{/if}}" 
+                            data-id="{{chat._id}}" 
+                            onclick="toggleChatNSFW(this);"
+                            title="Toggle NSFW">
+                        <i class="bi {{#if chat.nsfw}}bi-eye-slash{{else}}bi-eye{{/if}} me-1"></i>
+                        {{#if chat.nsfw}}NSFW{{else}}SFW{{/if}}
+                    </button>
+                </div>
+            </div>
+            {{/if}}
+
             <!-- Stats Section -->
             <div class="profile-stats">
                 <div class="stat-item">

@@ -66,7 +66,16 @@ $(document).ready(function() {
 
   // Function to update NSFW preference
   function updateNSFWPreference(showNSFW) {
-    const currentUserId = $('#profile #profileSection').data('user-id');
+    // Use user._id from window.user, fallback to data attribute
+    const currentUserId = (window.user && window.user._id) || $('#profile #profileSection').data('user-id');
+    
+    if (!currentUserId) {
+      console.error('Error updating NSFW preference: User ID not available');
+      nsfwToggle.prop('checked', !showNSFW);
+      showNotification(translations.errorOccurred || 'Error occurred', 'error');
+      return;
+    }
+    
     $.ajax({
       url: '/user/update-nsfw-preference/' + currentUserId,
       method: 'POST',
@@ -76,10 +85,10 @@ $(document).ready(function() {
         user.showNSFW = showNSFW;
       },
       error: function(jqXHR) {
-        console.error('Error updating NSFW preference:', jqXHR.responseJSON.error);
+        console.error('Error updating NSFW preference:', jqXHR.responseJSON?.error || 'Unknown error');
         // Optionally, revert the toggle state in case of an error
         nsfwToggle.prop('checked', !showNSFW);
-        showNotification(translations.errorOccurred, 'error');
+        showNotification(translations.errorOccurred || 'Error occurred', 'error');
       }
     });
   }

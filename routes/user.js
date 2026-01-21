@@ -288,18 +288,31 @@ async function routes(fastify, options) {
       }
 
       const usersCollection = fastify.mongo.db.collection('users');
+      
+      // Build query - check if userId is a valid ObjectId, otherwise try clerkId
+      let query;
+      if (ObjectId.isValid(userId) && String(new ObjectId(userId)) === userId) {
+        query = { _id: new ObjectId(userId) };
+      } else {
+        // userId might be a clerkId (starts with "user_" from Clerk)
+        query = { clerkId: userId };
+      }
+
       const updateResult = await usersCollection.updateOne(
-        { _id: new fastify.mongo.ObjectId(userId) },
+        query,
         { $set: { showNSFW: showNSFW } }
       );
 
       if (updateResult.modifiedCount === 0) {
-        const findUser = await usersCollection.findOne({ _id: new fastify.mongo.ObjectId(userId) });
-        if(findUser.showNSFW === showNSFW) {
+        const findUser = await usersCollection.findOne(query);
+        if (!findUser) {
+          return reply.status(404).send({ error: 'User not found' });
+        }
+        if (findUser.showNSFW === showNSFW) {
           console.log('User already has the requested NSFW preference');
           return reply.send({ status: 'NSFW preference already set' });
         }
-        return reply.status(404).send({ error: 'User not found or NSFW preference not updated' });
+        return reply.status(404).send({ error: 'NSFW preference not updated' });
       }
 
       return reply.send({ status: 'NSFW preference updated successfully' });

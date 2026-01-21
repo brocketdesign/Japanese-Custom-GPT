@@ -2232,6 +2232,10 @@ window.displayChats = function (chatData, searchId = null, modal = false) {
                             <i class="bi ${finalNsfwResult ? 'bi-eye-slash' : 'bi-eye'}"></i>
                             </button>
                             
+                            <button class="btn btn-sm btn-info border-0 ms-1 set-sfw-thumbnail-btn" data-id="${chat.chatId || chat._id}" onclick="setSFWThumbnail(this); event.stopPropagation();" title="Set SFW Thumbnail" style="padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
+                            <i class="bi bi-image"></i>
+                            </button>
+                            
                             <button class="btn btn-sm btn-danger border-0 ms-1" data-id="${chat._id}" onclick="deleteChat(this); event.stopPropagation();" title="Delete Chat" style="padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
                             <i class="bi bi-trash"></i>
                             </button>`
@@ -2283,6 +2287,76 @@ window.deleteChat = function(el) {
     }
   });
 }
+
+// Set SFW thumbnail for a character - finds a non-NSFW image from gallery and sets it as the chatImageUrl
+window.setSFWThumbnail = function(el) {
+  event.stopPropagation();
+  const $btn = $(el);
+  const chatId = $btn.data('id');
+  
+  if (!chatId) {
+    showNotification('No chat ID found', 'error');
+    return;
+  }
+  
+  // Show loading state
+  const originalHtml = $btn.html();
+  $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span>');
+  
+  $.ajax({
+    url: `/api/admin/character/${chatId}/set-sfw-thumbnail`,
+    method: 'POST',
+    xhrFields: {
+      withCredentials: true
+    },
+    success: function(response) {
+      if (response.success && response.newImageUrl) {
+        // Update the thumbnail image in the UI in real time
+        const $card = $btn.closest('.gallery-card, .card');
+        const $cardImg = $card.find('.card-img-top, .rounded-avatar');
+        
+        if ($cardImg.length) {
+          // If it's a background-image style
+          if ($cardImg.css('background-image') !== 'none') {
+            $cardImg.css('background-image', `url(${response.newImageUrl})`);
+          } else {
+            // If it's an img src
+            $cardImg.attr('src', response.newImageUrl);
+          }
+        }
+        
+        // Also update any other images with the same chat ID on the page
+        $(`.gallery-card[data-id="${chatId}"] .card-img-top`).attr('src', response.newImageUrl);
+        $(`.gallery-card[data-id="${chatId}"] .rounded-avatar`).css('background-image', `url(${response.newImageUrl})`);
+        
+        // Update the character profile avatar if on character page
+        const $profileAvatar = $('.profile-avatar, #mainProfileImage');
+        if ($profileAvatar.length) {
+          $profileAvatar.attr('src', response.newImageUrl);
+        }
+        
+        // Update profile cover background if it exists
+        const $profileCover = $('.profile-cover');
+        if ($profileCover.length && $profileCover.css('background-image') !== 'none') {
+          $profileCover.css('background-image', `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url(${response.newImageUrl})`);
+        }
+        
+        showNotification('Thumbnail updated to SFW image!', 'success');
+      } else {
+        showNotification(response.error || 'Failed to update thumbnail', 'error');
+      }
+    },
+    error: function(xhr) {
+      const errorMsg = xhr.responseJSON?.error || 'Failed to set SFW thumbnail';
+      showNotification(errorMsg, 'error');
+    },
+    complete: function() {
+      // Restore button state
+      $btn.prop('disabled', false).html(originalHtml);
+    }
+  });
+}
+
 window.toggleChatNSFW = function(el) {
   //Avoid propagation
   event.stopPropagation();
@@ -2625,6 +2699,9 @@ window.loadAllChatImages = function (page = 1, reload = false) {
                      </a>
                      <button class="btn btn-light image-nsfw-toggle ${!isAdmin ? 'd-none' : ''} ${item?.nsfw ? 'nsfw' : 'sfw'}" data-id="${item._id}">
                        <i class="bi ${item.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
+                     </button>
+                     <button class="btn btn-sm btn-info set-sfw-thumbnail-btn ${!isAdmin ? 'd-none' : ''}" data-id="${item.chatId}" onclick="setSFWThumbnail(this); event.stopPropagation();" title="Set SFW Thumbnail">
+                       <i class="bi bi-image"></i>
                      </button>
                      <span 
                      class="btn btn-light float-end image-fav ${isLiked ? 'liked' : ''}" 
@@ -3372,9 +3449,9 @@ $(document).ready(function () {
         
         let tagsHtml = '';
         
-        // Add "All" tag first
+        // Add "All" tag first (not active by default - "Recent" is now the default)
         tagsHtml += `
-            <div class="query-tag query-tag-all badge badge-sm btn-outline-primary ${currentActiveQuery === '' ? 'active' : ''}" 
+            <div class="query-tag query-tag-all badge badge-sm btn-outline-primary" 
                 style="line-height: 1.5;"
                 data-query="" 
                 onclick="loadPopularChats(1, true); setActiveQuery(''); loadStyleFilteredChats('');">
@@ -3382,9 +3459,9 @@ $(document).ready(function () {
             </div>
         `;
         
-        // Add "Recent" and "Recent Videos" buttons
+        // Add "Recent" and "Recent Videos" buttons - "Recent" is active by default
         tagsHtml += `
-            <div id="reload-latest-chats" class="query-tag badge badge-sm btn-outline-primary" 
+            <div id="reload-latest-chats" class="query-tag badge badge-sm btn-primary active" 
             style="line-height: 1.5;">
                 <i class="bi bi-arrow-clockwise me-1"></i>${translations.recent || 'Recent'}
             </div>

@@ -86,7 +86,12 @@ window.loadLatestChats = async (page = 1, reload = false) => {
     latestChatsLoading = false;
 };
 
-$(document).on('click', '#reload-latest-chats', () => window.loadLatestChats(1, true));
+$(document).on('click', '#reload-latest-chats', () => {
+    window.loadLatestChats(1, true);
+    // Update active state for query tags
+    $('.query-tag').removeClass('active btn-primary').addClass('btn-outline-primary');
+    $('#reload-latest-chats').addClass('active btn-primary').removeClass('btn-outline-primary');
+});
 
 $(document).on('click', '#reload-latest-video-chats', () => {
     if (typeof window.loadLatestVideoChats === 'function') {
@@ -95,4 +100,7 @@ $(document).on('click', '#reload-latest-video-chats', () => {
     if (typeof window.emptyAllGalleriesExcept === 'function') {
         window.emptyAllGalleriesExcept('latest-video-chats-gallery');
     }
+    // Update active state for query tags
+    $('.query-tag').removeClass('active btn-primary').addClass('btn-outline-primary');
+    $('#reload-latest-video-chats').addClass('active btn-primary').removeClass('btn-outline-primary');
 });

@@ -1172,6 +1172,77 @@ async function routes(fastify, options) {
       console.log(error)
     }
   });
+
+  // Admin API: Set SFW image as character thumbnail
+  // This finds a non-NSFW image from the character's gallery and sets it as the chatImageUrl
+  fastify.post('/api/admin/character/:chatId/set-sfw-thumbnail', async (request, reply) => {
+    try {
+      const user = request.user;
+      const isAdmin = await checkUserAdmin(fastify, user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+
+      const { chatId } = request.params;
+      
+      if (!ObjectId.isValid(chatId)) {
+        return reply.status(400).send({ error: 'Invalid chat ID' });
+      }
+
+      const db = fastify.mongo.db;
+      const chatsCollection = db.collection('chats');
+      const galleryCollection = db.collection('gallery');
+
+      // Check if chat exists
+      const chat = await chatsCollection.findOne({ _id: new ObjectId(chatId) });
+      if (!chat) {
+        return reply.status(404).send({ error: 'Character not found' });
+      }
+
+      // Find a SFW (non-NSFW) image from the character's gallery
+      const galleryDoc = await galleryCollection.findOne({ chatId: new ObjectId(chatId) });
+      
+      if (!galleryDoc || !galleryDoc.images || galleryDoc.images.length === 0) {
+        return reply.status(404).send({ error: 'No images found in character gallery' });
+      }
+
+      // Find the first SFW image (nsfw is false or undefined)
+      const sfwImage = galleryDoc.images.find(img => 
+        img.imageUrl && (img.nsfw === false || img.nsfw === undefined || img.nsfw === null)
+      );
+
+      if (!sfwImage) {
+        return reply.status(404).send({ error: 'No SFW images found in character gallery' });
+      }
+
+      // Update the character's chatImageUrl with the SFW image
+      const updateResult = await chatsCollection.updateOne(
+        { _id: new ObjectId(chatId) },
+        { 
+          $set: { 
+            chatImageUrl: sfwImage.imageUrl,
+            updatedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' })
+          } 
+        }
+      );
+
+      if (updateResult.matchedCount === 0) {
+        return reply.status(500).send({ error: 'Failed to update character thumbnail' });
+      }
+
+      console.log(`[Admin] Set SFW thumbnail for character ${chatId}: ${sfwImage.imageUrl}`);
+
+      return reply.send({
+        success: true,
+        message: 'Character thumbnail updated to SFW image',
+        newImageUrl: sfwImage.imageUrl
+      });
+
+    } catch (error) {
+      console.error('[Admin] Error setting SFW thumbnail:', error);
+      return reply.status(500).send({ error: 'Internal server error' });
+    }
+  });
 }
 
 module.exports = routes;

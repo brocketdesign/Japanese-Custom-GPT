@@ -757,14 +757,15 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
     console.time(`character-slug-${slug}`);
 
     // Parallel query execution for independent data
-    const [chat, currentUserData] = await Promise.all([
+    const [chat, currentUserData, isAdmin] = await Promise.all([
       db.collection('chats').findOne({ 
         slug,
         chatImageUrl: { $exists: true, $ne: null },
       }),
       !user.isTemporary && currentUserId ? 
         db.collection('users').findOne({ _id: new fastify.mongo.ObjectId(currentUserId) }) : 
-        Promise.resolve(user)
+        Promise.resolve(user),
+      checkUserAdmin(fastify, currentUserId)
     ]);
 
     if (!chat) {
@@ -929,6 +930,7 @@ fastify.get('/character/slug/:slug', async (request, reply) => {
       image,
       chatId: chatIdParam,
       isBlur,
+      isAdmin,
       similarChats: [], // Will be populated via websocket
       user: currentUserData,
       canonicalUrl,

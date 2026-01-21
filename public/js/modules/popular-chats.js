@@ -179,5 +179,17 @@ $(document).on('click', '#reset-popular-chat-cache', () => {
     });
 }); 
 
-// Initial load
-$(document).ready(() => window.loadPopularChats(1, true));
+// Initial load - Load recent characters first instead of popular chats
+$(document).ready(() => {
+    // Load recent characters gallery first when the page loads
+    if (typeof window.loadLatestChats === 'function') {
+        window.loadLatestChats(1, true);
+        // Mark the "Recent" button as active
+        setTimeout(() => {
+            $('#reload-latest-chats').addClass('active btn-primary').removeClass('btn-outline-primary');
+        }, 100);
+    } else {
+        // Fallback to popular chats if loadLatestChats is not available
+        window.loadPopularChats(1, true);
+    }
+});

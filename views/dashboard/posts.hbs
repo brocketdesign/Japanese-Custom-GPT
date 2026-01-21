@@ -170,18 +170,18 @@
             <div class="modal-content bg-dark text-white border-secondary">
                 <div class="modal-header border-secondary">
                     <h5 class="modal-title">
-                        <i class="bi bi-calendar-plus me-2"></i>{{translations.dashboard.schedulePost}}
+                        <i class="bi bi-send me-2"></i>{{translations.dashboard.publishPost}}
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="schedulePostId">
-                    <div class="mb-3">
-                        <label class="form-label">{{translations.dashboard.scheduleDateTime}}</label>
-                        <input type="datetime-local" class="form-control bg-secondary text-white border-secondary" id="scheduleDateTime">
-                    </div>
+                    
+                    <!-- Destination Selection -->
                     <div class="mb-4">
-                        <label class="form-label">{{translations.dashboard.socialPlatforms}}</label>
+                        <label class="form-label d-flex align-items-center">
+                            <i class="bi bi-broadcast me-2"></i>{{translations.dashboard.selectDestinations}}
+                        </label>
                         <div id="connectedPlatformsContainer" class="d-flex flex-wrap gap-2">
                             <!-- Connected platforms will be loaded dynamically -->
                             <div class="text-muted small">Loading connected accounts...</div>
@@ -191,14 +191,28 @@
                             No connected accounts. Connect in Settings to publish to social media.
                         </div>
                     </div>
+                    
+                    <!-- Schedule Options -->
+                    <div class="schedule-section">
+                        <label class="form-label d-flex align-items-center">
+                            <i class="bi bi-calendar-event me-2"></i>{{translations.dashboard.scheduleDateTime}}
+                        </label>
+                        <input type="datetime-local" class="form-control bg-secondary text-white border-secondary" id="scheduleDateTime">
+                        <small class="text-muted mt-1 d-block">Optional: Leave empty to publish immediately to My Profile only</small>
+                    </div>
                 </div>
-                <div class="modal-footer border-secondary">
+                <div class="modal-footer border-secondary d-flex justify-content-between">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         {{translations.dashboard.cancel}}
                     </button>
-                    <button type="button" class="btn btn-primary" onclick="postsDashboard.confirmSchedule()">
-                        <i class="bi bi-calendar-check me-1"></i>{{translations.dashboard.schedule}}
-                    </button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-success" id="publishNowBtn" onclick="postsDashboard.publishToProfileNow()" style="display: none;">
+                            <i class="bi bi-send-fill me-1"></i>{{translations.dashboard.publishNow}}
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="postsDashboard.confirmSchedule()">
+                            <i class="bi bi-calendar-check me-1"></i>{{translations.dashboard.schedule}}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

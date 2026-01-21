@@ -2372,6 +2372,8 @@
     "schedules": "Schedules",
     "scheduleDateTime": "Schedule Date & Time",
     "socialPlatforms": "Publish to Social Media",
+    "selectDestinations": "Select Destinations",
+    "publishNow": "Publish Now",
     "caption": "Caption",
     "enterCaption": "Enter your caption...",
     "generateCaption": "Generate with AI",

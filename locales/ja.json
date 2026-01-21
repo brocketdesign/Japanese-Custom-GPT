@@ -2375,6 +2375,8 @@
     "schedules": "スケジュール",
     "scheduleDateTime": "予約日時",
     "socialPlatforms": "SNSに投稿",
+    "selectDestinations": "投稿先を選択",
+    "publishNow": "今すぐ投稿",
     "caption": "キャプション",
     "enterCaption": "キャプションを入力...",
     "generateCaption": "AIで生成",

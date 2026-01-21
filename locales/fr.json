@@ -2347,6 +2347,8 @@
     "schedules": "Planifications",
     "scheduleDateTime": "Date et heure de planification",
     "socialPlatforms": "Publier sur les réseaux sociaux",
+    "selectDestinations": "Sélectionner les destinations",
+    "publishNow": "Publier maintenant",
     "caption": "Légende",
     "enterCaption": "Entrez votre légende...",
     "generateCaption": "Générer avec l'IA",

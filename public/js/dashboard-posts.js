@@ -205,12 +205,7 @@ class PostsDashboard {
     
     if (!container) return;
     
-    if (!this.connectedAccounts || this.connectedAccounts.length === 0) {
-      container.innerHTML = '';
-      if (noAccountsMsg) noAccountsMsg.style.display = 'block';
-      return;
-    }
-    
+    // Always hide the no platforms message since we always show My Profile
     if (noAccountsMsg) noAccountsMsg.style.display = 'none';
     
     const platformIcons = {
@@ -223,30 +218,61 @@ class PostsDashboard {
       twitter: '#000'
     };
     
-    container.innerHTML = this.connectedAccounts.map(account => `
+    // Always show My Profile first
+    let html = `
       <button type="button" 
               class="sns-platform-btn" 
-              data-platform="${account.platform}"
-              data-account-id="${account.id}">
-        <i class="bi ${platformIcons[account.platform] || 'bi-share'}"></i>
-        <span>@${account.username}</span>
+              data-platform="profile"
+              data-account-id="profile">
+        <i class="bi bi-person-circle"></i>
+        <span>My Profile</span>
       </button>
-    `).join('');
+    `;
+    
+    // Add connected SNS accounts
+    if (this.connectedAccounts && this.connectedAccounts.length > 0) {
+      html += this.connectedAccounts.map(account => `
+        <button type="button" 
+                class="sns-platform-btn" 
+                data-platform="${account.platform}"
+                data-account-id="${account.id}">
+          <i class="bi ${platformIcons[account.platform] || 'bi-share'}"></i>
+          <span>@${account.username}</span>
+        </button>
+      `).join('');
+    }
+    
+    container.innerHTML = html;
     
     // Add click handlers
     container.querySelectorAll('.sns-platform-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         btn.classList.toggle('active');
+        this.updatePublishButtons();
       });
     });
   }
   
+  updatePublishButtons() {
+    const hasProfileSelected = document.querySelector('.sns-platform-btn[data-platform="profile"].active');
+    const publishNowBtn = document.getElementById('publishNowBtn');
+    
+    if (publishNowBtn) {
+      publishNowBtn.style.display = hasProfileSelected ? 'inline-flex' : 'none';
+    }
+  }
+  
   getSelectedPlatforms() {
     const container = document.getElementById('connectedPlatformsContainer');
-    if (!container) return [];
+    if (!container) return { profile: false, platforms: [] };
     
     const selectedButtons = container.querySelectorAll('.sns-platform-btn.active');
-    return Array.from(selectedButtons).map(btn => btn.dataset.platform);
+    const platforms = Array.from(selectedButtons).map(btn => btn.dataset.platform);
+    
+    return {
+      profile: platforms.includes('profile'),
+      platforms: platforms.filter(p => p !== 'profile')
+    };
   }
 
   setupEventListeners() {
@@ -696,15 +722,59 @@ class PostsDashboard {
       });
     }
     
+    // Reset publish now button visibility
+    this.updatePublishButtons();
+    
     this.postModal?.hide();
     this.scheduleModal?.show();
+  }
+
+  async publishToProfileNow() {
+    const postId = document.getElementById('schedulePostId').value;
+    const selection = this.getSelectedPlatforms();
+    
+    if (!selection.profile) {
+      this.showNotification('Please select My Profile to publish', 'warning');
+      return;
+    }
+
+    try {
+      // Update the post to be a profile post and publish it
+      const response = await fetch(`/api/posts/${postId}/profile-status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isProfilePost: true })
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to publish to profile');
+      }
+
+      // Update post status to published
+      await fetch(`/api/posts/${postId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'published' })
+      });
+
+      this.showNotification('Post published to your profile!', 'success');
+      this.scheduleModal?.hide();
+      this.loadPosts();
+      this.loadStats();
+
+    } catch (error) {
+      console.error('Error publishing to profile:', error);
+      this.showNotification('Failed to publish to profile', 'error');
+    }
   }
 
   async confirmSchedule() {
     const postId = document.getElementById('schedulePostId').value;
     const scheduledFor = document.getElementById('scheduleDateTime').value;
     
-    const platforms = this.getSelectedPlatforms();
+    const selection = this.getSelectedPlatforms();
 
     if (!scheduledFor) {
       this.showNotification('Please select a date and time', 'warning');
@@ -712,13 +782,22 @@ class PostsDashboard {
     }
 
     try {
-      // Update post with platforms
-      if (platforms.length > 0) {
+      // If profile is selected, mark post for profile
+      if (selection.profile) {
+        await fetch(`/api/posts/${postId}/profile-status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isProfilePost: true })
+        });
+      }
+
+      // Update post with SNS platforms if any selected
+      if (selection.platforms.length > 0) {
         await fetch(`/api/posts/${postId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            socialPlatforms: platforms,
+            socialPlatforms: selection.platforms,
             autoPublish: true
           })
         });

@@ -168,17 +168,249 @@
   box-shadow: 0 0 0 0.2rem rgba(130, 64, 255, 0.15) !important;
 }
 
+/* ====== FORM CHECK (CHECKBOX) - Native App Style ====== */
+.form-check {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  padding-left: 0 !important;
+  min-height: auto !important;
+  margin-bottom: 0.5rem !important;
+}
+
 .form-check-input {
-  border-radius: 50% !important;
-  border: var(--form-border-width) solid var(--primary-color) !important;
-  transition: var(--transition-ease) !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  border-radius: 6px !important;
+  border: 2px solid rgba(255, 255, 255, 0.25) !important;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  cursor: pointer !important;
+  position: relative !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  margin: 0 !important;
+  float: none !important;
+  flex-shrink: 0 !important;
+}
+
+.form-check-input:hover {
+  border-color: rgba(130, 64, 255, 0.5) !important;
+  background-color: rgba(130, 64, 255, 0.1) !important;
+}
+
+.form-check-input:focus {
+  outline: none !important;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 3px rgba(130, 64, 255, 0.2) !important;
 }
 
 .form-check-input:checked {
   background-color: var(--primary-color) !important;
   border-color: var(--primary-color) !important;
-  transform: scale(1.1) !important;
+  transform: none !important;
 }
+
+.form-check-input:checked::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 5px !important;
+  height: 9px !important;
+  border: solid white !important;
+  border-width: 0 2px 2px 0 !important;
+  transform: translate(-50%, -60%) rotate(45deg) !important;
+}
+
+.form-check-input:active {
+  transform: scale(0.95) !important;
+}
+
+.form-check-label {
+  cursor: pointer !important;
+  font-size: 0.9375rem !important;
+  font-weight: 500 !important;
+  color: var(--text-primary) !important;
+  user-select: none !important;
+  line-height: 1.4 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.form-check-label:hover {
+  color: var(--text-primary) !important;
+}
+
+/* ====== FORM SWITCH - iOS/Native App Style ====== */
+.form-switch {
+  padding-left: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+}
+
+.form-switch .form-check-input {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  width: 46px !important;
+  height: 26px !important;
+  min-width: 46px !important;
+  border-radius: 26px !important;
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  border: none !important;
+  cursor: pointer !important;
+  position: relative !important;
+  transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  margin: 0 !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+.form-switch .form-check-input::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 3px !important;
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 50% !important;
+  background-color: #ffffff !important;
+  transform: translateY(-50%) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+}
+
+.form-switch .form-check-input::after {
+  display: none !important;
+}
+
+.form-switch .form-check-input:hover {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.form-switch .form-check-input:focus {
+  outline: none !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 0 3px rgba(130, 64, 255, 0.25) !important;
+}
+
+.form-switch .form-check-input:checked {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.form-switch .form-check-input:checked::before {
+  left: calc(100% - 23px) !important;
+  background-color: white !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+.form-switch .form-check-input:checked:hover {
+  background: linear-gradient(135deg, var(--primary-light), var(--primary-color)) !important;
+}
+
+.form-switch .form-check-input:active::before {
+  width: 24px !important;
+}
+
+.form-switch .form-check-input:checked:active::before {
+  left: calc(100% - 27px) !important;
+}
+
+/* Disabled states */
+.form-check-input:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.form-check-input:disabled + .form-check-label {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* ====== RADIO BUTTONS - Native App Style ====== */
+.form-check-input[type="radio"] {
+  border-radius: 50% !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.form-check-input[type="radio"]:checked {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+.form-check-input[type="radio"]:checked::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background-color: white !important;
+  transform: translate(-50%, -50%) !important;
+  border: none !important;
+}
+
+/* ====== FORM CHECK INLINE ====== */
+.form-check-inline {
+  display: inline-flex !important;
+  align-items: center !important;
+  margin-right: 1rem !important;
+}
+
+/* ====== FORM CHECK SIZING VARIANTS ====== */
+.form-check-sm .form-check-input {
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+}
+
+.form-check-sm .form-check-label {
+  font-size: 0.8125rem !important;
+}
+
+.form-check-lg .form-check-input {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+}
+
+.form-check-lg .form-check-label {
+  font-size: 1rem !important;
+}
+
+.form-switch.form-check-sm .form-check-input {
+  width: 38px !important;
+  height: 22px !important;
+  min-width: 38px !important;
+}
+
+.form-switch.form-check-sm .form-check-input::before {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.form-switch.form-check-sm .form-check-input:checked::before {
+  left: calc(100% - 19px) !important;
+}
+
+.form-switch.form-check-lg .form-check-input {
+  width: 54px !important;
+  height: 30px !important;
+  min-width: 54px !important;
+}
+
+.form-switch.form-check-lg .form-check-input::before {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.form-switch.form-check-lg .form-check-input:checked::before {
+  left: calc(100% - 27px) !important;
+}
+
 /* ====== IMAGE INFO MODAL ====== */
 
   .bg-gradient-purple {

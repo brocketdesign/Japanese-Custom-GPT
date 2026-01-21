@@ -174,13 +174,14 @@ async function getMilestoneGoalsData(db, userId, chatId) {
         const milestoneProgress = await getUserMilestoneProgress(db, userId, chatId);
         
         // Get reward points for next milestones (character-specific rewards)
+        // These values must match the rewards in user-points-utils.js
         const getRewardPoints = (type, actualNextMilestone) => {
             const rewards = {
                 images: {
-                    5: 25, 10: 35, 25: 60, 50: 100, 100: 200
+                    5: 250, 10: 350, 25: 600, 50: 1000, 100: 2000
                 },
                 videos: {
-                    3: 50, 5: 75, 10: 100, 20: 200, 50: 400
+                    3: 500, 5: 750, 10: 1000, 20: 2000, 50: 4000
                 },
                 messages: {
                     10: 25, 25: 35, 50: 60, 100: 100, 

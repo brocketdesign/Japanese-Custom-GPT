@@ -489,9 +489,40 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, subscripti
     // Always keep full imageUrl for preview/modal (stored in data-full-url)
     const fullUrl = item.imageUrl;
     
+    // Character info for user favorites gallery
+    const characterThumbnail = item.thumbnail || '/img/default-thumbnail.png';
+    const characterName = item.chatName || 'Unknown';
+    
+    // Character footer overlay for user favorites type
+    const characterFooterOverlay = type === 'user' && !isBlur ? `
+        <div class="character-footer-overlay position-absolute bottom-0 start-0 end-0" 
+             style="background: linear-gradient(transparent, rgba(0,0,0,0.85)); padding: 8px; z-index: 4; border-radius: 0 0 0.375rem 0.375rem;">
+            <div class="d-flex align-items-center gap-2 character-info-link" 
+                 onclick="event.stopPropagation(); openCharacterIntroModal('${chatId}')" 
+                 style="cursor: pointer;">
+                <img src="${characterThumbnail}" 
+                     alt="${characterName}" 
+                     class="rounded-circle" 
+                     style="width: 28px; height: 28px; object-fit: cover; border: 2px solid rgba(255,255,255,0.3);"
+                     onerror="this.src='/img/default-thumbnail.png'">
+                <span class="text-white text-truncate" style="font-size: 12px; font-weight: 500; max-width: 100px;">
+                    ${characterName}
+                </span>
+            </div>
+        </div>` : '';
+    
+    // Different click handlers for user favorites vs other galleries
+    const imageClickHandler = type === 'user' && !isBlur 
+        ? `onclick="event.stopPropagation(); openUserFavoriteImagePreview(this, ${loadedIndex})"` 
+        : `onclick="toggleImageFavorite(this)"`;
+    
+    const imageContainerClass = type === 'user' 
+        ? 'image-container user-favorite-image' 
+        : 'image-container image-fav-double-click';
+    
     return `
         <div class="image-card col-6 col-md-3 col-lg-2 mb-2 px-1" data-image-id="${item._id}" data-full-url="${fullUrl}">
-            <div class="card shadow-0 position-relative">
+            <div class="card shadow-0 position-relative" style="overflow: hidden;">
                 ${!isBlur ? `${addToChatButton}` : ''}
                 ${isBlur ? 
                     `<div class="position-relative">
@@ -500,16 +531,17 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, subscripti
                         </div>
                     </div>` :
                     `<div href="${linkUrl}" data-index="${loadedIndex}" 
-                        class="image-container image-fav-double-click"
-                        data-id="${item._id}" data-chat-id="${chatId}" onclick="toggleImageFavorite(this)">
-                        <img data-src="${displayUrl}" data-full-url="${fullUrl}" src="/img/logo.webp" alt="${item.prompt}" class="card-img-top lazy-image" style="object-fit: cover;" loading="lazy">
+                        class="${imageContainerClass}"
+                        data-id="${item._id}" data-chat-id="${chatId}" ${imageClickHandler}>
+                        <img data-src="${displayUrl}" data-full-url="${fullUrl}" src="/img/logo.webp" alt="${item.prompt || ''}" class="card-img-top lazy-image" style="object-fit: cover;" loading="lazy">
                     </div>`
                 }
+                ${characterFooterOverlay}
                 ${isTemporary || (!subscriptionStatus && isBlur) ? '':
                     `
-                    <div class="position-absolute top-0 start-0 m-1" style="z-index:3;">
+                    <div class="position-absolute top-0 start-0 m-1" style="z-index:5;">
                         <span class="btn badge-sm btn-light image-fav ${isLiked ? 'liked' : ''}" 
-                            data-id="${item._id}" data-chat-id="${chatId}" onclick="toggleImageFavorite(this)">
+                            data-id="${item._id}" data-chat-id="${chatId}" onclick="event.stopPropagation(); toggleImageFavorite(this)">
                             <i class="bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}" style="cursor: pointer;"></i>
                         </span>
                     </div>
@@ -1150,3 +1182,195 @@ window.handleUnlockVideo = function(button, isTemporary) {
         }
     }
 };
+
+/**
+ * Open image preview modal for user favorite images gallery
+ * @param {HTMLElement} el - The clicked element
+ * @param {number} clickedIndex - The index of the clicked image in loadedImages
+ */
+window.openUserFavoriteImagePreview = function(el, clickedIndex) {
+    // Create preview modal if it doesn't exist
+    if (typeof createPreviewModalIfNeeded === 'function') {
+        createPreviewModalIfNeeded();
+    } else {
+        // Fallback: create basic modal structure
+        if (!$('#imagePreviewModal').length) {
+            const modalHTML = `
+                <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-fullscreen m-0">
+                        <div class="modal-content mx-auto w-100" style="background: #000;">
+                            <div class="modal-header border-0 position-fixed w-100" style="top: 0; right: 0; z-index: 10000; background: transparent; justify-content: flex-end; padding: 1rem;">
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="background-color: rgba(0,0,0,0.5); border-radius: 50%; padding: 12px; opacity: 0.9;"></button>
+                            </div>
+                            <div class="modal-body p-0" style="height: 100vh; overflow-y: auto; overflow-x: hidden; padding-top: 0 !important;">
+                                <div class="swiper-container image-preview-swiper" style="min-height: 100%; width: 100%; padding-top: 0; padding-bottom: 100px;">
+                                    <div class="swiper-wrapper"></div>
+                                    <div class="swiper-button-next" style="color: white; opacity: 0.8; right: 20px;"></div>
+                                    <div class="swiper-button-prev" style="color: white; opacity: 0.8; left: 20px;"></div>
+                                    <div class="swiper-pagination" style="bottom: 80px;"></div>
+                                    <div class="image-like-overlay position-absolute" style="top: 20px; left: 20px; z-index: 1000;">
+                                        <button class="btn btn-light rounded-circle image-like-btn d-flex justify-content-center align-items-center" style="width: 50px; height: 50px; opacity: 0.9; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.2);">
+                                            <i class="bi bi-heart fs-4"></i>
+                                        </button>
+                                    </div>
+                                    <div class="image-info-overlay position-absolute w-100" style="bottom: 20px; left: 0; right: 0; z-index: 1000;">
+                                        <div class="container text-center">
+                                            <div class="d-none image-info-container mx-auto" style="max-width: 600px; padding: 15px; border-radius: 12px; backdrop-filter: blur(10px);">
+                                                <div class="image-title text-white fw-bold mb-2" style="font-size: 18px;"></div>
+                                                <div class="image-prompt-container d-none" style="max-height: 100px; overflow-y: auto; scrollbar-width: thin;">
+                                                    <div class="image-prompt text-white-50" style="font-size: 14px; line-height: 1.4;"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('body').append(modalHTML);
+        }
+    }
+    
+    // Get all loaded images for the user favorites gallery
+    const images = window.loadedImages || [];
+    
+    if (images.length === 0) {
+        console.warn('[openUserFavoriteImagePreview] No images loaded');
+        return;
+    }
+    
+    // Build slides for the swiper
+    const wrapper = $('#imagePreviewModal .swiper-wrapper');
+    wrapper.empty();
+    
+    // Create image data for preview with character info
+    const previewItems = images.map(img => ({
+        type: 'image',
+        url: img.imageUrl || img.thumbnailUrl,
+        id: img._id,
+        title: img.chatName || 'Image',
+        prompt: img.prompt || '',
+        chatId: img.chatId,
+        chatName: img.chatName,
+        thumbnail: img.thumbnail,
+        isLiked: img.isLiked
+    }));
+    
+    // Build slides with character info overlay
+    previewItems.forEach(item => {
+        const characterInfo = item.chatId ? `
+            <div class="position-absolute bottom-0 start-0 end-0 p-3" style="background: linear-gradient(transparent, rgba(0,0,0,0.8)); z-index: 10;">
+                <div class="d-flex align-items-center gap-2 character-preview-link" 
+                     onclick="event.stopPropagation(); $('#imagePreviewModal').modal('hide'); setTimeout(() => openCharacterIntroModal('${item.chatId}'), 300);" 
+                     style="cursor: pointer;">
+                    <img src="${item.thumbnail || '/img/default-thumbnail.png'}" 
+                         alt="${item.chatName || 'Character'}" 
+                         class="rounded-circle" 
+                         style="width: 40px; height: 40px; object-fit: cover; border: 2px solid rgba(255,255,255,0.5);"
+                         onerror="this.src='/img/default-thumbnail.png'">
+                    <span class="text-white" style="font-size: 14px; font-weight: 500;">
+                        ${item.chatName || 'Unknown Character'}
+                    </span>
+                    <i class="bi bi-chevron-right text-white-50"></i>
+                </div>
+            </div>
+        ` : '';
+        
+        wrapper.append(`
+            <div class="swiper-slide d-flex align-items-center justify-content-center position-relative">
+                <div class="swiper-zoom-container">
+                    <img src="${item.url}" 
+                         class="img-fluid" 
+                         style="max-height: 100vh; max-width: 100vw; object-fit: contain;" 
+                         data-image-id="${item.id}" 
+                         data-image-title="${item.title || ''}" 
+                         data-image-prompt="${item.prompt || ''}"
+                         data-chat-id="${item.chatId || ''}">
+                </div>
+                ${characterInfo}
+            </div>
+        `);
+    });
+    
+    // Store preview data for like button and other interactions
+    window.previewImages = previewItems;
+    window.initialSlideIndex = Math.max(0, Math.min(clickedIndex, previewItems.length - 1));
+    
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+    modal.show();
+    
+    // Initialize swiper after modal is shown
+    $('#imagePreviewModal').off('shown.bs.modal.userFavorites').on('shown.bs.modal.userFavorites', function() {
+        if (window.imageSwiper) {
+            window.imageSwiper.destroy(true, true);
+        }
+        
+        window.imageSwiper = new Swiper('.image-preview-swiper', {
+            loop: false,
+            initialSlide: window.initialSlideIndex || 0,
+            zoom: { maxRatio: 5, minRatio: 1, toggle: false, containerClass: 'swiper-zoom-container' },
+            navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
+            pagination: { el: '.swiper-pagination', clickable: true, dynamicBullets: true },
+            touchRatio: 1,
+            touchAngle: 45,
+            grabCursor: true,
+            keyboard: { enabled: true, onlyInViewport: false },
+            mousewheel: { invert: false },
+            lazy: { loadPrevNext: true, loadPrevNextAmount: 2 },
+            watchSlidesProgress: true,
+            watchSlidesVisibility: true,
+            on: {
+                slideChange: function() {
+                    const realIndex = this.realIndex || this.activeIndex;
+                    updateUserFavoritePreviewInfo(realIndex);
+                },
+                init: function() {
+                    setTimeout(() => {
+                        const startIndex = window.initialSlideIndex || 0;
+                        this.slideTo(startIndex, 0);
+                        updateUserFavoritePreviewInfo(startIndex);
+                    }, 100);
+                }
+            }
+        });
+        
+        $('.swiper-slide').show();
+    });
+};
+
+/**
+ * Update the like button and info for user favorite image preview
+ */
+function updateUserFavoritePreviewInfo(activeIndex) {
+    const cur = window.previewImages && window.previewImages[activeIndex];
+    if (!cur) return;
+    
+    // Update like button
+    const $likeBtn = $('.image-like-btn');
+    const $likeIcon = $likeBtn.find('i');
+    
+    if (cur.id) {
+        $likeBtn.attr('data-id', cur.id);
+        
+        // Check if image is liked from the DOM
+        const isLiked = $(`.image-fav[data-id="${cur.id}"] i`).hasClass('bi-heart-fill');
+        
+        if (isLiked) {
+            $likeIcon.removeClass('bi-heart').addClass('bi-heart-fill text-danger');
+        } else {
+            $likeIcon.removeClass('bi-heart-fill text-danger').addClass('bi-heart');
+        }
+    }
+    
+    // Update title if info container exists
+    $('.image-title').text(cur.title || cur.chatName || 'Image');
+    if (cur.prompt) {
+        $('.image-prompt').text(cur.prompt);
+        $('.image-prompt-container').removeClass('d-none');
+    } else {
+        $('.image-prompt-container').addClass('d-none');
+    }
+}

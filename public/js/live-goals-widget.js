@@ -6,9 +6,9 @@ class LiveGoalsWidget {
     constructor() {
         this.isExpanded = false; // Start collapsed
         this.currentGoals = {
-            messages: { current: 0, next: 10, milestone: 10 },
-            images: { current: 0, next: 5, milestone: 5 },
-            videos: { current: 0, next: 3, milestone: 3 }
+            messages: { current: 0, next: 10, milestone: 10, reward: 25 },
+            images: { current: 0, next: 5, milestone: 5, reward: 250 },
+            videos: { current: 0, next: 3, milestone: 3, reward: 500 }
         };
         this.bindEvents();
         
@@ -344,9 +344,9 @@ class LiveGoalsWidget {
         
         // Reset current goals data
         this.currentGoals = {
-            messages: { current: 0, next: 10, milestone: 10 },
-            images: { current: 0, next: 5, milestone: 5 },
-            videos: { current: 0, next: 3, milestone: 3 }
+            messages: { current: 0, next: 10, milestone: 10, reward: 25 },
+            images: { current: 0, next: 5, milestone: 5, reward: 250 },
+            videos: { current: 0, next: 3, milestone: 3, reward: 500 }
         };
         
         // Collapse panel if expanded
@@ -364,7 +364,7 @@ class LiveGoalsWidget {
         
         // Reset toggle button summary
         $('.goals-total-progress').text('0/18');
-        $('.goals-next-reward').text('+25');
+        $('.goals-next-reward').text('+500');
         
         // Load fresh data for the new chat after a short delay
         setTimeout(() => {

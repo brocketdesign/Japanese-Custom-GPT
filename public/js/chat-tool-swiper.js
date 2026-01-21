@@ -5,17 +5,17 @@ function createPreviewModalIfNeeded() {
     const modalHTML = `
         <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-fullscreen m-0">
-                <div class="modal-content mx-auto w-100">
-                    <div class="modal-header border-0 position-fixed w-100" style="top: 0; right: 0; z-index: 10000; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(10px); justify-content: flex-end; padding: 1rem;">
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-content mx-auto w-100" style="background: #000;">
+                    <div class="modal-header border-0 position-fixed w-100" style="top: 0; right: 0; z-index: 10000; background: transparent; justify-content: flex-end; padding: 1rem;">
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="background-color: rgba(0,0,0,0.5); border-radius: 50%; padding: 12px; opacity: 0.9;"></button>
                     </div>
-                    <div class="modal-body p-0" style="height: 100vh; overflow-y: auto; overflow-x: hidden; padding-top: 80px !important;">
-                        <div class="swiper-container image-preview-swiper" style="min-height: 100%; width: 100%; padding-top: 20px; padding-bottom: 200px;">
+                    <div class="modal-body p-0" style="height: 100vh; overflow-y: auto; overflow-x: hidden; padding-top: 0 !important;">
+                        <div class="swiper-container image-preview-swiper" style="min-height: 100%; width: 100%; padding-top: 0; padding-bottom: 100px;">
                             <div class="swiper-wrapper"></div>
                             <div class="swiper-button-next" style="color: white; opacity: 0.8; right: 20px;"></div>
                             <div class="swiper-button-prev" style="color: white; opacity: 0.8; left: 20px;"></div>
-                            <div class="swiper-pagination" style="bottom: 140px;"></div>
-                            <div class="image-like-overlay position-absolute" style="top: 80px; left: 20px; z-index: 1000;">
+                            <div class="swiper-pagination" style="bottom: 80px;"></div>
+                            <div class="image-like-overlay position-absolute" style="top: 20px; left: 20px; z-index: 1000;">
                                 <button class="btn btn-light rounded-circle image-like-btn d-flex justify-content-center align-items-center" style="width: 50px; height: 50px; opacity: 0.9; backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.2);">
                                     <i class="bi bi-heart fs-4"></i>
                                 </button>

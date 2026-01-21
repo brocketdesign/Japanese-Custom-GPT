@@ -2663,11 +2663,15 @@ opacity: 0.8;
   z-index: 10000;
 }
 
+#imagePreviewModal .modal-content {
+  background: #000 !important;
+}
+
 /* Make image preview modal scrollable */
 #imagePreviewModal .modal-body {
   overflow-y: auto !important;
   overflow-x: hidden !important;
-  padding-top: 80px !important;
+  padding-top: 0 !important;
   -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
   scroll-behavior: smooth;
 }
@@ -2675,22 +2679,36 @@ opacity: 0.8;
 #imagePreviewModal .image-preview-swiper {
   min-height: 100% !important;
   height: auto !important;
-  padding-top: 20px !important;
-  padding-bottom: 200px !important;
+  padding-top: 0 !important;
+  padding-bottom: 100px !important;
 }
 
 #imagePreviewModal .modal-header {
   position: fixed !important;
-  background: rgba(0, 0, 0, 0.7) !important;
-  backdrop-filter: blur(10px) !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
   width: 100% !important;
   justify-content: flex-end !important;
   padding: 1rem !important;
+  pointer-events: none;
 }
 
-/* Adjust like button position to account for fixed header */
+#imagePreviewModal .modal-header .btn-close {
+  pointer-events: auto;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  padding: 12px;
+  opacity: 0.9;
+}
+
+#imagePreviewModal .modal-header .btn-close:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* Adjust like button position for full-screen view */
 #imagePreviewModal .image-like-overlay {
-  top: 80px !important;
+  top: 20px !important;
 }
 
 /* Gallery card styles moved to character-cards.css */
@@ -5782,4 +5800,91 @@ color: #fff !important;
     height: 6px;
     border-radius: 50%;
     background: #8b5cf6;
+}
+
+/* ============================================================================
+   USER FAVORITES GALLERY - CHARACTER FOOTER OVERLAY
+   ============================================================================ */
+
+/* Character footer overlay on favorite images */
+.character-footer-overlay {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.image-card:hover .character-footer-overlay {
+    opacity: 1;
+}
+
+/* Always show on touch devices */
+@media (hover: none) {
+    .character-footer-overlay {
+        opacity: 1;
+    }
+}
+
+/* Character info link hover effect */
+.character-info-link {
+    transition: transform 0.2s ease;
+}
+
+.character-info-link:hover {
+    transform: translateX(4px);
+}
+
+.character-info-link img {
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.character-info-link:hover img {
+    transform: scale(1.1);
+    border-color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* User favorite image container styles */
+.user-favorite-image {
+    cursor: pointer;
+    position: relative;
+}
+
+.user-favorite-image::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0);
+    transition: background 0.2s ease;
+    pointer-events: none;
+}
+
+.user-favorite-image:hover::after {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* Preview modal character link styles */
+.character-preview-link {
+    transition: background 0.2s ease;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin: -8px -12px;
+}
+
+.character-preview-link:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.character-preview-link img {
+    transition: transform 0.2s ease;
+}
+
+.character-preview-link:hover img {
+    transform: scale(1.1);
+}
+
+/* Ensure image cards have proper overflow for footer */
+#user-images-gallery .image-card .card {
+    overflow: hidden;
+    border-radius: var(--radius-xs);
 }

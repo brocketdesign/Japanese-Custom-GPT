@@ -240,12 +240,64 @@
                     <div class="mb-3">
                         <label class="form-label">{{translations.dashboard.model}}</label>
                         <select id="actionModel" class="form-select bg-secondary text-white border-secondary">
-                            <option value="flux-schnell">Flux Schnell</option>
-                            <option value="flux-dev">Flux Dev</option>
-                            <option value="flux-2-flex">Flux 2 Flex</option>
-                            <option value="seedream">Seedream 4.5</option>
-                            <option value="sd-txt2img">Stable Diffusion</option>
+                            <optgroup label="Text to Image Models">
+                                {{#each scheduleModels}}
+                                <option value="{{this.id}}" {{#if (eq this.id "flux-2-flex")}}selected{{/if}}>
+                                    {{this.name}}
+                                    {{#if this.async}}(Async){{else}}(Sync){{/if}}
+                                </option>
+                                {{/each}}
+                            </optgroup>
+                            {{#if activeSDModels.length}}
+                            <optgroup label="Custom SD Models">
+                                {{#each activeSDModels}}
+                                <option value="sd-{{this.modelId}}">{{this.name}} (SD)</option>
+                                {{/each}}
+                            </optgroup>
+                            {{/if}}
                         </select>
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>Same models available as in the Image Dashboard
+                        </small>
+                    </div>
+
+                    <!-- Test Run Preview Section -->
+                    <div class="mb-3" id="testRunSection">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label mb-0">{{translations.dashboard.testRun}}</label>
+                            <button type="button" class="btn btn-sm btn-outline-warning" id="testRunBtn" onclick="schedulesDashboard.runTestGeneration()">
+                                <i class="bi bi-play-circle me-1"></i>Test Run
+                            </button>
+                        </div>
+                        <div id="testRunPreview" class="test-run-preview" style="display: none;">
+                            <div id="testRunLoading" class="text-center py-4" style="display: none;">
+                                <div class="spinner-border text-warning" role="status">
+                                    <span class="visually-hidden">Generating...</span>
+                                </div>
+                                <p class="text-muted mt-2 mb-0">Generating test image...</p>
+                            </div>
+                            <div id="testRunResult" style="display: none;">
+                                <div class="position-relative">
+                                    <img id="testRunImage" src="" alt="Test Result" class="img-fluid rounded mb-2" style="max-height: 300px; width: 100%; object-fit: contain;">
+                                    <button type="button" class="btn btn-sm btn-outline-info position-absolute top-0 end-0 m-2" onclick="schedulesDashboard.expandTestImage()">
+                                        <i class="bi bi-arrows-fullscreen"></i>
+                                    </button>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted" id="testRunInfo"></small>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="schedulesDashboard.clearTestRun()">
+                                        <i class="bi bi-x me-1"></i>Clear
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="testRunError" class="alert alert-danger mb-0" style="display: none;">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                <span id="testRunErrorMsg"></span>
+                            </div>
+                        </div>
+                        <small class="text-muted d-block mt-1">
+                            <i class="bi bi-lightbulb me-1"></i>Run a test to preview what will be generated. Generated images are saved to your Posts.
+                        </small>
                     </div>
 
                     <!-- Social Platforms -->

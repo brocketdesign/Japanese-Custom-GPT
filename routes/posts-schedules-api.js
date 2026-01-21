@@ -731,6 +731,160 @@ Return ONLY the caption text with hashtags, nothing else.`;
     }
   });
 
+  /**
+   * POST /api/schedules/test-run
+   * Execute a test run of schedule settings without creating a schedule
+   * Generates one image with the given parameters and saves it to posts
+   */
+  fastify.post('/api/schedules/test-run', async (request, reply) => {
+    try {
+      const user = request.user;
+      if (!user || user.isTemporary) {
+        return reply.code(401).send({ error: 'Authentication required' });
+      }
+
+      const { prompt, model, actionType } = request.body;
+
+      if (!prompt || !model) {
+        return reply.code(400).send({ error: 'Prompt and model are required' });
+      }
+
+      // Only support image generation for now
+      if (actionType && actionType !== 'generate_image') {
+        return reply.code(400).send({ error: 'Only image generation is supported for test runs' });
+      }
+
+      console.log(`[Schedules API] Test run for user ${user._id}: model=${model}, prompt=${prompt.substring(0, 50)}...`);
+
+      // Import image generation utilities
+      const { initializeModelTest, checkTaskResult, MODEL_CONFIGS } = require('../models/admin-image-test-utils');
+      const { createPostFromImage } = require('../models/unified-post-utils');
+      const { removeUserPoints, getUserPoints } = require('../models/user-points-utils');
+      const { PRICING_CONFIG, getImageGenerationCost } = require('../config/pricing');
+
+      // Check user has enough points
+      const userPoints = await getUserPoints(db, user._id);
+      const cost = getImageGenerationCost(1);
+      
+      if (userPoints < cost) {
+        return reply.code(402).send({ 
+          error: 'Insufficient points',
+          required: cost,
+          available: userPoints
+        });
+      }
+
+      // Determine if this is an SD model
+      const isSDModel = model.startsWith('sd-');
+      let modelName = null;
+      let effectiveModelId = model;
+
+      if (isSDModel) {
+        // Get the SD model name from database
+        const modelId = model.replace('sd-', '');
+        const sdModel = await db.collection('myModels').findOne({ modelId: modelId });
+        if (!sdModel) {
+          return reply.code(400).send({ error: 'SD model not found' });
+        }
+        modelName = sdModel.model;
+        effectiveModelId = 'sd-txt2img';
+      }
+
+      // Get model config
+      const modelConfig = MODEL_CONFIGS[effectiveModelId];
+      if (!modelConfig) {
+        return reply.code(400).send({ error: 'Invalid model' });
+      }
+
+      // Prepare parameters
+      const params = {
+        prompt,
+        size: '1024*1024',
+        imagesPerModel: 1
+      };
+
+      if (modelName) {
+        params.model_name = modelName;
+      }
+
+      // Initialize the test
+      const taskInfo = await initializeModelTest(effectiveModelId, params);
+
+      if (!taskInfo || !taskInfo.taskId) {
+        return reply.code(500).send({ error: 'Failed to start image generation' });
+      }
+
+      // For async models, poll for result
+      let result;
+      if (modelConfig.async) {
+        // Poll for result (max 60 seconds)
+        const maxWaitTime = 60000;
+        const pollInterval = 2000;
+        const startTime = Date.now();
+
+        while (Date.now() - startTime < maxWaitTime) {
+          result = await checkTaskResult(effectiveModelId, taskInfo.taskId);
+          
+          if (result && result.status === 'completed') {
+            break;
+          }
+          
+          if (result && result.status === 'failed') {
+            return reply.code(500).send({ error: result.error || 'Image generation failed' });
+          }
+
+          // Wait before polling again
+          await new Promise(resolve => setTimeout(resolve, pollInterval));
+        }
+
+        if (!result || result.status !== 'completed') {
+          return reply.code(504).send({ error: 'Image generation timed out' });
+        }
+      } else {
+        // Synchronous model - result is already available
+        result = taskInfo;
+      }
+
+      // Get the image URL
+      const imageUrl = result.images?.[0] || result.imageUrl;
+      
+      if (!imageUrl) {
+        return reply.code(500).send({ error: 'No image generated' });
+      }
+
+      // Deduct points
+      await removeUserPoints(db, user._id, cost, 'schedule_test_run');
+
+      // Create a unified post for the generated image
+      const post = await createPostFromImage({
+        userId: user._id.toString(),
+        imageUrl,
+        prompt,
+        model: model,
+        parameters: params,
+        nsfw: false, // Could add NSFW detection here
+        visibility: 'private',
+        source: 'schedule_test'
+      }, db);
+
+      const generationTime = Date.now() - (taskInfo.startTime || Date.now());
+
+      return reply.send({
+        success: true,
+        imageUrl,
+        postId: post._id,
+        model,
+        generationTimeMs: generationTime,
+        pointsUsed: cost,
+        pointsRemaining: userPoints - cost
+      });
+
+    } catch (error) {
+      console.error('[Schedules API] Test run error:', error);
+      return reply.code(500).send({ error: error.message || 'Failed to run test' });
+    }
+  });
+
   // ============================================
   // Phase 1: Public Posts & Profile Posts APIs
   // ============================================

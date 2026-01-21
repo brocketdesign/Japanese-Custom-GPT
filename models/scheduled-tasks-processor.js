@@ -104,23 +104,36 @@ async function executeImageGeneration(schedule, fastify) {
     }
   }
   
-  // Import image generation utilities
-  const { generateImage } = require('./admin-image-test-utils');
-  
-  // Generate image
-  const generationResult = await generateImage({
+  // Use central image generator in imagen.js
+  const { generateImg } = require('./imagen');
+
+  // Generate image using the main generator. Pass fastify so it has access to DB and services.
+  const generationResultRaw = await generateImg({
     prompt,
     negativePrompt: actionData.negativePrompt,
-    model: actionData.model,
-    parameters: actionData.parameters,
-    userId: schedule.userId.toString()
-  }, db);
-  
+    modelId: actionData.model,
+    parameters: actionData.parameters || {},
+    userId: schedule.userId.toString(),
+    chatId: null,
+    imageType: 'schedule',
+    fastify
+  });
+
+  // Normalize various possible return shapes to get an image URL
+  let imageUrl = null;
+  if (generationResultRaw) {
+    imageUrl = generationResultRaw.imageUrl || generationResultRaw.image_url || generationResultRaw.images?.[0]?.imageUrl || generationResultRaw.images?.[0]?.image_url || generationResultRaw.images?.[0];
+  }
+
+  if (!imageUrl) {
+    throw new Error('Image generation did not return an image URL');
+  }
+
   // Create unified post
   const post = await createPostFromImage({
     userId: schedule.userId.toString(),
-    testId: generationResult._id,
-    imageUrl: generationResult.imageUrl,
+    testId: generationResultRaw._id || null,
+    imageUrl,
     prompt,
     negativePrompt: actionData.negativePrompt,
     model: actionData.model,

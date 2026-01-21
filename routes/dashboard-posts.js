@@ -3,6 +3,8 @@
  * User profile section for viewing and managing posts
  */
 
+const { MODEL_CONFIGS } = require('../models/admin-image-test-utils');
+
 async function routes(fastify, options) {
   const db = fastify.mongo.db;
 
@@ -50,13 +52,29 @@ async function routes(fastify, options) {
       const lang = request.lang || 'en';
       const translations = request.translations;
 
+      // Prepare models list from MODEL_CONFIGS for scheduling
+      const scheduleModels = Object.entries(MODEL_CONFIGS)
+        .filter(([id, config]) => config.category === 'txt2img' && !config.requiresModel)
+        .map(([id, config]) => ({
+          id,
+          name: config.name,
+          description: config.description,
+          async: config.async,
+          category: config.category
+        }));
+
+      // Get active SD models from database for additional options
+      const activeSDModels = await db.collection('myModels').find({}).toArray();
+
       return reply.view('dashboard/schedules', {
         user,
         translations,
         lang,
         title: translations.dashboard?.mySchedules || translations.mySchedules || 'My Schedules',
         pageType: 'dashboard',
-        canonical: `${request.protocol}://${request.hostname}/dashboard/schedules`
+        canonical: `${request.protocol}://${request.hostname}/dashboard/schedules`,
+        scheduleModels,
+        activeSDModels
       });
     } catch (error) {
       console.error('[Dashboard Schedules] Error loading page:', error);

@@ -144,3 +144,54 @@
 #viewScheduleModal p {
   margin-bottom: 0.5rem;
 }
+/* Test Run Preview Section */
+.test-run-preview {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 0.5rem;
+}
+
+.test-run-preview img {
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+#testRunSection .btn-outline-warning {
+  border-color: rgba(255, 193, 7, 0.5);
+}
+
+#testRunSection .btn-outline-warning:hover {
+  background-color: rgba(255, 193, 7, 0.2);
+  border-color: #ffc107;
+}
+
+#testRunLoading {
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#testRunResult img {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+#testRunResult img:hover {
+  transform: scale(1.02);
+}
+
+/* Model select optgroups */
+#actionModel optgroup {
+  color: #adb5bd;
+  font-style: normal;
+  font-weight: 600;
+}
+
+#actionModel option {
+  color: #fff;
+  font-weight: normal;
+}

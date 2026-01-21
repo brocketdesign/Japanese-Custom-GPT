@@ -14,6 +14,8 @@ class SchedulesDashboard {
     };
     this.scheduleModal = null;
     this.viewScheduleModal = null;
+    this.testRunInProgress = false;
+    this.lastTestRunImage = null;
     
     this.init();
   }
@@ -263,7 +265,7 @@ class SchedulesDashboard {
     document.getElementById('scheduleDescription').value = '';
     document.getElementById('actionType').value = 'generate_image';
     document.getElementById('actionPrompt').value = '';
-    document.getElementById('actionModel').value = 'flux-schnell';
+    document.getElementById('actionModel').value = 'flux-2-flex';
     document.getElementById('publishInstagram').checked = false;
     document.getElementById('publishTwitter').checked = false;
     
@@ -278,6 +280,9 @@ class SchedulesDashboard {
     document.getElementById('maxExecutions').value = '';
     document.getElementById('endDate').value = '';
     document.getElementById('mutationEnabled').checked = false;
+    
+    // Clear test run preview
+    this.clearTestRun();
     
     // Set type
     document.getElementById(`type${type === 'single' ? 'Single' : 'Recurring'}`).checked = true;
@@ -307,7 +312,7 @@ class SchedulesDashboard {
       document.getElementById('scheduleDescription').value = schedule.description || '';
       document.getElementById('actionType').value = schedule.actionType;
       document.getElementById('actionPrompt').value = schedule.actionData?.prompt || '';
-      document.getElementById('actionModel').value = schedule.actionData?.model || 'flux-schnell';
+      document.getElementById('actionModel').value = schedule.actionData?.model || 'flux-2-flex';
       
       // Set type
       const isRecurring = schedule.type === 'recurring';
@@ -323,6 +328,9 @@ class SchedulesDashboard {
         document.getElementById('scheduledFor').value = schedule.scheduledFor ? 
           new Date(schedule.scheduledFor).toISOString().slice(0, 16) : '';
       }
+      
+      // Clear test run preview
+      this.clearTestRun();
       
       // Update modal title
       document.getElementById('scheduleModalTitle').innerHTML = `
@@ -759,6 +767,151 @@ class SchedulesDashboard {
     bsToast.show();
     
     toast.addEventListener('hidden.bs.toast', () => toast.remove());
+  }
+
+  /**
+   * Run a test generation with current form settings
+   */
+  async runTestGeneration() {
+    if (this.testRunInProgress) {
+      this.showNotification('Test already in progress', 'warning');
+      return;
+    }
+
+    const prompt = document.getElementById('actionPrompt').value.trim();
+    const model = document.getElementById('actionModel').value;
+    const actionType = document.getElementById('actionType').value;
+
+    if (!prompt) {
+      this.showNotification('Please enter a prompt first', 'warning');
+      return;
+    }
+
+    if (actionType !== 'generate_image') {
+      this.showNotification('Test run only supports image generation', 'info');
+      return;
+    }
+
+    // Show loading state
+    this.testRunInProgress = true;
+    const testRunBtn = document.getElementById('testRunBtn');
+    const testRunPreview = document.getElementById('testRunPreview');
+    const testRunLoading = document.getElementById('testRunLoading');
+    const testRunResult = document.getElementById('testRunResult');
+    const testRunError = document.getElementById('testRunError');
+
+    testRunBtn.disabled = true;
+    testRunBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Running...';
+    testRunPreview.style.display = 'block';
+    testRunLoading.style.display = 'block';
+    testRunResult.style.display = 'none';
+    testRunError.style.display = 'none';
+
+    try {
+      const response = await fetch('/api/schedules/test-run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt,
+          model,
+          actionType
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Test run failed');
+      }
+
+      // Show result
+      testRunLoading.style.display = 'none';
+      testRunResult.style.display = 'block';
+      
+      const testRunImage = document.getElementById('testRunImage');
+      testRunImage.src = data.imageUrl;
+      this.lastTestRunImage = data.imageUrl;
+
+      const testRunInfo = document.getElementById('testRunInfo');
+      const seconds = (data.generationTimeMs / 1000).toFixed(1);
+      testRunInfo.innerHTML = `
+        <i class="bi bi-clock me-1"></i>${seconds}s · 
+        <i class="bi bi-coin me-1"></i>${data.pointsUsed} pts · 
+        <span class="text-success">Saved to Posts</span>
+      `;
+
+      this.showNotification('Test image generated successfully!', 'success');
+
+    } catch (error) {
+      console.error('Test run error:', error);
+      testRunLoading.style.display = 'none';
+      testRunError.style.display = 'block';
+      document.getElementById('testRunErrorMsg').textContent = error.message;
+      this.showNotification('Test run failed: ' + error.message, 'error');
+    } finally {
+      this.testRunInProgress = false;
+      testRunBtn.disabled = false;
+      testRunBtn.innerHTML = '<i class="bi bi-play-circle me-1"></i>Test Run';
+    }
+  }
+
+  /**
+   * Clear the test run preview
+   */
+  clearTestRun() {
+    const testRunPreview = document.getElementById('testRunPreview');
+    const testRunLoading = document.getElementById('testRunLoading');
+    const testRunResult = document.getElementById('testRunResult');
+    const testRunError = document.getElementById('testRunError');
+
+    testRunPreview.style.display = 'none';
+    testRunLoading.style.display = 'none';
+    testRunResult.style.display = 'none';
+    testRunError.style.display = 'none';
+    this.lastTestRunImage = null;
+  }
+
+  /**
+   * Expand test image in a larger modal
+   */
+  expandTestImage() {
+    if (!this.lastTestRunImage) return;
+
+    // Create a fullscreen modal for the image
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content bg-dark border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title text-white">
+              <i class="bi bi-image me-2"></i>Test Run Result
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body text-center p-2">
+            <img src="${this.lastTestRunImage}" alt="Test Result" class="img-fluid" style="max-height: 70vh;">
+          </div>
+          <div class="modal-footer border-secondary">
+            <a href="${this.lastTestRunImage}" target="_blank" class="btn btn-outline-info">
+              <i class="bi bi-box-arrow-up-right me-1"></i>Open Full Size
+            </a>
+            <a href="/dashboard/posts" class="btn btn-outline-primary">
+              <i class="bi bi-collection me-1"></i>View in Posts
+            </a>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+
+    modal.addEventListener('hidden.bs.modal', () => {
+      modal.remove();
+    });
   }
 }
 

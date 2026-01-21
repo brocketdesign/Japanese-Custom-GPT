@@ -2408,6 +2408,8 @@
     "model": "Model",
     "autoPublishTo": "Auto-publish to",
     "scheduleDetails": "Schedule Details",
+    "testRun": "Test Run",
+    "testRunDescription": "Run a test to preview what will be generated",
     "newTemplate": "New Template",
     "mutatePrompt": "Mutate Prompt",
     "quickPromptMutation": "Quick Prompt Mutation",

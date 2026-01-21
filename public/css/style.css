@@ -3406,8 +3406,6 @@ opacity: 0.8;
 
 #settingsModal #settings-container {
     padding: 20px;
-    max-height: calc(calc(var(--vh, 1vh) * 90) - 140px);
-    max-height: calc(90dvh - 140px);
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: rgba(110, 32, 244, 0.3) transparent;

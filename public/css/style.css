@@ -529,11 +529,19 @@ body::after {
   }
   }
 
+.loading-spinner-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .loading-circle {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 0;
+  left: 0;
   width: 120px;
   height: 120px;
   border-radius: 50%;
@@ -546,10 +554,15 @@ body::after {
     #D2B8FF 360deg
   );
   animation: loadingRotate 2s linear infinite;
+  z-index: 1;
+}
+
+.loading-center-content {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1;
 }
 
 .loading-circle + img.logo {
@@ -559,10 +572,10 @@ body::after {
 
 @keyframes loadingRotate {
   0% {
-    transform: translate(-50%, -50%) rotate(0deg);
+    transform: rotate(0deg);
   }
   100% {
-    transform: translate(-50%, -50%) rotate(360deg);
+    transform: rotate(360deg);
   }
 }
 .video-generation-loader {

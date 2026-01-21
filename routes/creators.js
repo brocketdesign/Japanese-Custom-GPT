@@ -42,6 +42,9 @@ async function routes(fastify, options) {
 
       const categories = getCreatorCategories();
 
+      // Check if user has premium subscription
+      const isPremium = currentUser?.subscriptionStatus === 'active';
+
       return reply.renderWithGtm('/creators/index.hbs', {
         title: translations?.creators?.pageTitle || 'Discover Creators',
         translations,
@@ -52,7 +55,8 @@ async function routes(fastify, options) {
         trendingCreators: trendingResult.success ? trendingResult.creators : [],
         creators: creatorsResult.success ? creatorsResult.creators : [],
         pagination: creatorsResult.success ? creatorsResult.pagination : { page: 1, totalPages: 1 },
-        categories
+        categories,
+        isPremium
       });
     } catch (error) {
       console.error('Error rendering creators page:', error);
@@ -82,6 +86,9 @@ async function routes(fastify, options) {
         return reply.redirect(`/user/${currentUser._id}`);
       }
 
+      // Check if user has premium subscription
+      const isPremium = user?.subscriptionStatus === 'active';
+
       const categories = getCreatorCategories();
 
       return reply.renderWithGtm('/creators/apply.hbs', {
@@ -90,7 +97,8 @@ async function routes(fastify, options) {
         mode: process.env.MODE,
         apiurl: getApiUrl(request),
         user: currentUser,
-        categories
+        categories,
+        isPremium
       });
     } catch (error) {
       console.error('Error rendering creator application page:', error);

@@ -124,7 +124,7 @@ async function routes(fastify, options) {
 
       const translations = request.translations;
       const { getApiUrl } = require('../models/tool');
-      const { isCreator } = require('../models/creator-utils');
+      const { isCreator } = require('../models/earnings-utils');
       const db = fastify.mongo.db;
 
       // Check if user is a creator

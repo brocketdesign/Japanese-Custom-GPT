@@ -557,6 +557,9 @@ async function routes(fastify, options) {
       const onboardingTranslations = request.translations.onboarding || {};
       const categories = getCreatorCategories();
 
+      // Check if user has premium subscription
+      const isPremium = currentUser?.subscriptionStatus === 'active';
+
       return reply.renderWithGtm('/user-profile.hbs', {
         title: translations.userProfileTitle.replace('{nickname}', userData.nickname),
         translations,
@@ -569,7 +572,8 @@ async function routes(fastify, options) {
         userData,
         creatorData,
         isCreator: userData.isCreator || false,
-        categories
+        categories,
+        isPremium
       });
     } catch (error) {
       console.log(error);

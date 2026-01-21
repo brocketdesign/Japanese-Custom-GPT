@@ -17,6 +17,14 @@ const { ObjectId } = require('mongodb');
         tags:z.array(z.string()),
         first_message: z.string(),
  });
+
+// Schema for AI-generated character customization options
+const characterCustomizationSchema = z.object({
+    personality: z.enum(['submissive', 'dominant', 'shy', 'confident', 'playful', 'serious', 'romantic', 'adventurous', 'caring', 'mysterious']),
+    relationship: z.enum(['stranger', 'friend', 'girlfriend', 'wife', 'crush', 'colleague', 'neighbor', 'ex', 'first_date', 'roommate']),
+    occupation: z.enum(['student', 'teacher', 'nurse', 'model', 'artist', 'athlete', 'businesswoman', 'influencer', 'scientist', 'musician']),
+    preferences: z.enum(['vanilla', 'daddy_dom', 'roleplay', 'bdsm', 'exhibitionism', 'feet', 'lingerie', 'outdoor', 'toys'])
+});
 const details_description = z.object({
     // Physical Appearance - Core Features
     appearance: z.object({
@@ -254,6 +262,87 @@ function extractDetailsFromPrompt(prompt, chatPurpose = '', gender ='female') {
     ];
 }
 
+// Function to create payload for AI-generated character customization options
+function createCustomizationPayload(prompt, chatPurpose, extractedDetails, gender) {
+    const personalityTraits = extractedDetails?.personality?.personality || '';
+    const occupation = extractedDetails?.personality?.occupation || '';
+    const background = extractedDetails?.personality?.background || '';
+    
+    return [
+        {
+            role: "system",
+            content: `You are an expert at analyzing character descriptions and selecting the most fitting options from predefined lists.
+            
+Based on the character description, personality traits, occupation, and background provided, select the BEST matching option from each category.
+
+AVAILABLE OPTIONS:
+
+Personality Types (choose one that best matches the character's demeanor):
+- submissive: Obedient, compliant, eager to please
+- dominant: Assertive, commanding, takes control
+- shy: Reserved, timid, introverted
+- confident: Self-assured, bold, outgoing
+- playful: Fun-loving, teasing, lighthearted
+- serious: Focused, mature, thoughtful
+- romantic: Loving, affectionate, passionate
+- adventurous: Bold, risk-taking, curious
+- caring: Nurturing, supportive, empathetic
+- mysterious: Enigmatic, secretive, intriguing
+
+Relationship Types (choose one that fits the character's likely dynamic):
+- stranger: Just met, unfamiliar
+- friend: Platonic friendship, casual bond
+- girlfriend: Romantic partner
+- wife: Married, committed relationship
+- crush: Mutual attraction, flirting
+- colleague: Professional relationship
+- neighbor: Casual acquaintance, proximity-based
+- ex: Former romantic partner
+- first_date: Getting to know each other
+- roommate: Living together, friendly
+
+Occupation Types (choose one closest to the character's job/role):
+- student: Learning, young adult
+- teacher: Educator, mentor
+- nurse: Healthcare, caring profession
+- model: Fashion, appearance-focused
+- artist: Creative, expressive
+- athlete: Sports, fitness
+- businesswoman: Corporate, professional
+- influencer: Social media, content creator
+- scientist: Research, intellectual
+- musician: Music, performer
+
+Preference Types (choose one that fits the character's personality):
+- vanilla: Traditional, gentle, romantic
+- daddy_dom: Protective dominance, nurturing control
+- roleplay: Acting out scenarios, creative
+- bdsm: Power dynamics, intense
+- exhibitionism: Public display, showing off
+- feet: Foot-focused interests
+- lingerie: Clothing-focused, fashion
+- outdoor: Nature, public settings
+- toys: Playful, experimental
+
+IMPORTANT: You MUST choose exactly ONE option from each category. The options must match exactly as written above (lowercase, with underscores where shown).`
+        },
+        {
+            role: "user",
+            content: `Analyze this character and select the best matching options:
+
+Character Description: ${prompt}
+${chatPurpose ? `Character Background/Purpose: ${chatPurpose}` : ''}
+Gender: ${gender}
+${personalityTraits ? `Personality Traits from analysis: ${personalityTraits}` : ''}
+${occupation ? `Occupation from analysis: ${occupation}` : ''}
+${background ? `Background: ${background}` : ''}
+
+Based on this information, select the most appropriate option for each category.
+Return a JSON object with: personality, relationship, occupation, preferences`
+        }
+    ];
+}
+
 async function routes(fastify, options) {
     fastify.post('/api/generate-character-comprehensive', async (request, reply) => {
         const startTime = Date.now();
@@ -382,6 +471,41 @@ async function routes(fastify, options) {
                     message: request.translations.newCharacter.character_analysis_error, 
                     icon: 'error' 
                 });
+            }
+
+            // Step 1.5: Generate character customization options if not provided by frontend
+            let generatedCustomization = null;
+            const needsCustomizationGeneration = !personality || !relationship || !occupation || !kinks;
+            
+            if (needsCustomizationGeneration && extractedDetails) {
+                console.log('\x1b[34m🎭 Step 1.5: Generating Character Customization Options\x1b[0m');
+                try {
+                    const customizationPayload = createCustomizationPayload(prompt, chatPurpose, extractedDetails, gender);
+                    const customizationResponse = await openai.chat.completions.create({
+                        model: "gpt-4o-mini",
+                        messages: customizationPayload,
+                        response_format: zodResponseFormat(characterCustomizationSchema, "character_customization"),
+                    });
+                    
+                    generatedCustomization = JSON.parse(customizationResponse.choices[0].message.content);
+                    console.log('\x1b[32m✅ Customization options generated:\x1b[0m', generatedCustomization);
+                    
+                    // Log what was generated vs what was provided
+                    console.log('\x1b[33m📋 Options status:\x1b[0m');
+                    console.log(`   - personality: ${personality ? 'provided' : 'generated'} → ${personality || generatedCustomization.personality}`);
+                    console.log(`   - relationship: ${relationship ? 'provided' : 'generated'} → ${relationship || generatedCustomization.relationship}`);
+                    console.log(`   - occupation: ${occupation ? 'provided' : 'generated'} → ${occupation || generatedCustomization.occupation}`);
+                    console.log(`   - preferences: ${kinks ? 'provided' : 'generated'} → ${kinks || generatedCustomization.preferences}`);
+                } catch (customizationError) {
+                    console.error('\x1b[31m⚠️ Customization generation failed, using defaults\x1b[0m', customizationError.message);
+                    // Set defaults if generation fails
+                    generatedCustomization = {
+                        personality: 'playful',
+                        relationship: 'stranger',
+                        occupation: 'student',
+                        preferences: 'vanilla'
+                    };
+                }
             }
 
             // Step 2: Generate enhanced prompt
@@ -555,11 +679,23 @@ async function routes(fastify, options) {
             chatData.thumbIsPortrait = true;
             
             // Save character creation personality data for system prompt
-            if (relationship) chatData.relationship = relationship;
-            if (personality) chatData.characterPersonality = personality;
-            if (occupation) chatData.characterOccupation = occupation;
-            if (kinks) chatData.characterPreferences = kinks;
+            // Use provided values, or fall back to AI-generated values
+            const finalRelationship = relationship || generatedCustomization?.relationship || 'stranger';
+            const finalPersonality = personality || generatedCustomization?.personality || 'playful';
+            const finalOccupation = occupation || generatedCustomization?.occupation || 'student';
+            const finalPreferences = kinks || generatedCustomization?.preferences || 'vanilla';
+            
+            chatData.relationship = finalRelationship;
+            chatData.characterPersonality = finalPersonality;
+            chatData.characterOccupation = finalOccupation;
+            chatData.characterPreferences = finalPreferences;
             if (chatPurpose) chatData.chatPurpose = chatPurpose;
+            
+            console.log('\x1b[32m✅ Character customization saved:\x1b[0m');
+            console.log(`   - relationship: ${finalRelationship}`);
+            console.log(`   - personality: ${finalPersonality}`);
+            console.log(`   - occupation: ${finalOccupation}`);
+            console.log(`   - preferences: ${finalPreferences}`);
             
             // Save base face URL for auto-merge during chats
             if (baseFaceUrl) {

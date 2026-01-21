@@ -823,7 +823,7 @@ Return ONLY the caption text with hashtags, nothing else.`;
         const startTime = Date.now();
 
         while (Date.now() - startTime < maxWaitTime) {
-          result = await checkTaskResult(effectiveModelId, taskInfo.taskId);
+          result = await checkTaskResult(taskInfo.taskId);
           
           if (result && result.status === 'completed') {
             break;

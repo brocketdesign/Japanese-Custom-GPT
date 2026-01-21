@@ -747,15 +747,18 @@
                                 <tr {{#if this.images.length}}data-has-image="true" data-image-url="{{this.images.[0].imageUrl}}" data-model-name="{{this.modelName}}" data-generation-time="{{this.generationTime}}" data-test-id="{{this._id}}" data-prompt="{{this.prompt}}" style="cursor: pointer;"{{/if}}>
                                     <td>
                                         {{#if this.images.length}}
-                                        <img src="{{this.images.[0].imageUrl}}" 
-                                             alt="Generated" 
-                                             class="history-thumbnail cursor-pointer"
-                                             data-image-url="{{this.images.[0].imageUrl}}"
-                                             data-model-name="{{this.modelName}}"
-                                             data-generation-time="{{this.generationTime}}"
-                                             data-test-id="{{this._id}}"
-                                             data-prompt="{{this.prompt}}"
-                                             onerror="this.src='/img/placeholder.png'">
+                                        <div class="position-relative d-inline-block">
+                                            <img src="{{this.images.[0].imageUrl}}" 
+                                                 alt="Generated" 
+                                                 class="history-thumbnail cursor-pointer"
+                                                 data-image-url="{{this.images.[0].imageUrl}}"
+                                                 data-model-name="{{this.modelName}}"
+                                                 data-generation-time="{{this.generationTime}}"
+                                                 data-test-id="{{this._id}}"
+                                                 data-prompt="{{this.prompt}}"
+                                                 data-is-nsfw="{{this.isNSFW}}"
+                                                 onerror="this.src='/img/placeholder.png'">
+                                        </div>
                                         {{else}}
                                         <span class="text-muted">--</span>
                                         {{/if}}

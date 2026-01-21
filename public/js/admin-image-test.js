@@ -551,16 +551,88 @@ function clearTargetImageUpload() {
  * Initialize history preview buttons for server-rendered items
  */
 function initializeHistoryPreviewButtons() {
-    // Handle thumbnail clicks
+    // Handle thumbnail clicks and NSFW blur for server-rendered items
     document.querySelectorAll('#historyTableBody .history-thumbnail').forEach(thumbnail => {
+        const imageUrl = thumbnail.dataset.imageUrl;
+        const prompt = thumbnail.dataset.prompt || '';
+        const row = thumbnail.closest('tr');
+        
+        // Check if content is NSFW
+        const isNSFW = thumbnail.dataset.isNsfw === 'true' || isNSFWPrompt(prompt);
+        const shouldBlur = shouldBlurContent(isNSFW);
+        
+        // Store NSFW status on row
+        if (row && isNSFW) {
+            row.dataset.isNsfw = 'true';
+        }
+        
+        // If NSFW and should blur, fetch blurred image via API
+        if (shouldBlur && imageUrl) {
+            // Set placeholder while loading blurred version
+            thumbnail.src = '/img/placeholder.png';
+            thumbnail.classList.add('nsfw-blurred');
+            
+            // Add lock icon overlay
+            const wrapper = thumbnail.parentElement;
+            if (wrapper && !wrapper.classList.contains('position-relative')) {
+                wrapper.classList.add('position-relative', 'd-inline-block');
+            }
+            
+            // Add lock icon if not already present
+            if (wrapper && !wrapper.querySelector('.bi-lock-fill')) {
+                const lockSpan = document.createElement('span');
+                lockSpan.className = 'position-absolute top-50 start-50 translate-middle';
+                lockSpan.innerHTML = '<i class="bi bi-lock-fill text-white" style="font-size: 0.9rem; text-shadow: 0 0 4px rgba(0,0,0,0.7);"></i>';
+                wrapper.appendChild(lockSpan);
+                
+                // Add NSFW badge
+                const badge = document.createElement('span');
+                badge.className = 'position-absolute top-0 end-0 badge bg-danger';
+                badge.style.fontSize = '0.5rem';
+                badge.textContent = 'NSFW';
+                wrapper.appendChild(badge);
+            }
+            
+            // Fetch blurred version
+            fetchBlurredImage(imageUrl, function(blobUrl) {
+                thumbnail.src = blobUrl;
+            });
+            
+            // Store original URL for authorized reveal
+            wrapper.dataset.originalUrl = imageUrl;
+        }
+        
         thumbnail.addEventListener('click', function(e) {
             e.stopPropagation();
-            const imageUrl = this.dataset.imageUrl;
+            const imgUrl = this.dataset.imageUrl;
             const modelName = this.dataset.modelName || 'Unknown Model';
             const generationTime = parseInt(this.dataset.generationTime) || 0;
             const testId = this.dataset.testId || '';
-            const prompt = this.dataset.prompt || '';
-            previewHistoryImage(imageUrl, modelName, generationTime, testId, prompt);
+            const promptText = this.dataset.prompt || '';
+            const contentIsNSFW = isNSFWPrompt(promptText);
+            const contentShouldBlur = shouldBlurContent(contentIsNSFW);
+            
+            if (contentShouldBlur) {
+                // Show appropriate action for blurred content
+                if (state.isTemporary) {
+                    if (typeof openLoginForm === 'function') {
+                        openLoginForm();
+                    } else {
+                        window.location.href = '/login';
+                    }
+                } else if (!state.isSubscribed) {
+                    if (typeof loadPlanPage === 'function') {
+                        loadPlanPage();
+                    } else {
+                        window.location.href = '/plan';
+                    }
+                } else {
+                    // Subscribed user - show preview
+                    previewHistoryImage(imgUrl, modelName, generationTime, testId, promptText, contentIsNSFW);
+                }
+            } else {
+                previewHistoryImage(imgUrl, modelName, generationTime, testId, promptText, contentIsNSFW);
+            }
         });
     });
     
@@ -578,9 +650,31 @@ function initializeHistoryPreviewButtons() {
             const generationTime = parseInt(this.dataset.generationTime) || 0;
             const testId = this.dataset.testId || '';
             const prompt = this.dataset.prompt || '';
+            const isNSFW = this.dataset.isNsfw === 'true' || isNSFWPrompt(prompt);
+            const shouldBlurRow = shouldBlurContent(isNSFW);
             
             if (imageUrl) {
-                previewHistoryImage(imageUrl, modelName, generationTime, testId, prompt);
+                if (shouldBlurRow) {
+                    // Show appropriate action for blurred content
+                    if (state.isTemporary) {
+                        if (typeof openLoginForm === 'function') {
+                            openLoginForm();
+                        } else {
+                            window.location.href = '/login';
+                        }
+                    } else if (!state.isSubscribed) {
+                        if (typeof loadPlanPage === 'function') {
+                            loadPlanPage();
+                        } else {
+                            window.location.href = '/plan';
+                        }
+                    } else {
+                        // Subscribed user - show preview
+                        previewHistoryImage(imageUrl, modelName, generationTime, testId, prompt, isNSFW);
+                    }
+                } else {
+                    previewHistoryImage(imageUrl, modelName, generationTime, testId, prompt, isNSFW);
+                }
             }
         });
     });
@@ -1239,13 +1333,19 @@ function displayImages(modelId, images, time) {
         imgElement.onerror = function() { this.src = '/img/placeholder.png'; };
         
         if (shouldBlur) {
-            // Apply blur effect for NSFW content
-            imgElement.style.filter = 'blur(15px)';
-            imgElement.style.transform = 'scale(1.1)';
-            imgElement.src = imgUrl;
+            // Use blur API to fetch blurred blob - never expose the real URL
+            imgElement.src = '/img/placeholder.png'; // Placeholder while loading blurred image
+            
+            // Fetch blurred image from API
+            fetchBlurredImage(imgUrl, function(blobUrl) {
+                imgElement.src = blobUrl;
+            });
+            
+            // Store original URL in data attribute for overlay click (subscribers only)
+            wrapper.dataset.originalUrl = imgUrl;
             
             // Create overlay based on user status
-            const overlay = createNSFWOverlay(imgUrl, escapedUrl, actualModelId, time, testId);
+            const overlay = createNSFWOverlay(imgUrl, escapedUrl, actualModelId, time, testId, wrapper);
             wrapper.appendChild(imgElement);
             wrapper.appendChild(overlay);
         } else {
@@ -1275,15 +1375,38 @@ function displayImages(modelId, images, time) {
 }
 
 /**
+ * Fetch blurred image from API and return blob URL
+ * @param {string} imageUrl - Original image URL
+ * @param {function} callback - Callback function that receives the blob URL
+ */
+function fetchBlurredImage(imageUrl, callback) {
+    $.ajax({
+        url: '/blur-image?url=' + encodeURIComponent(imageUrl),
+        method: 'GET',
+        xhrFields: { responseType: 'blob' },
+        success: function(blob) {
+            const blobUrl = URL.createObjectURL(blob);
+            callback(blobUrl);
+        },
+        error: function() {
+            console.error("Failed to load blurred image.");
+            // Use a placeholder on error
+            callback('/img/placeholder.png');
+        }
+    });
+}
+
+/**
  * Create NSFW overlay for blurred images
  * @param {string} imgUrl - Original image URL
  * @param {string} escapedUrl - Escaped image URL for onclick
  * @param {string} modelId - Model ID
  * @param {number} time - Generation time
  * @param {string} testId - Test ID
+ * @param {HTMLElement} wrapper - Parent wrapper element containing data-original-url
  * @returns {HTMLElement} - Overlay element
  */
-function createNSFWOverlay(imgUrl, escapedUrl, modelId, time, testId) {
+function createNSFWOverlay(imgUrl, escapedUrl, modelId, time, testId, wrapper) {
     const overlay = document.createElement('div');
     overlay.className = 'gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center';
     overlay.style.background = 'rgba(0, 0, 0, 0.25)';
@@ -1327,11 +1450,12 @@ function createNSFWOverlay(imgUrl, escapedUrl, modelId, time, testId) {
         overlay.style.cursor = 'pointer';
         overlay.onclick = function(e) {
             e.stopPropagation();
-            // Remove blur and overlay
+            // Get the original URL from wrapper and load the actual image
             const imgElement = this.previousElementSibling;
+            const originalUrl = wrapper ? wrapper.dataset.originalUrl : imgUrl;
             if (imgElement && imgElement.tagName === 'IMG') {
-                imgElement.style.filter = 'none';
-                imgElement.style.transform = 'none';
+                // Load the actual unblurred image
+                imgElement.src = originalUrl;
                 imgElement.onclick = function() {
                     previewImage(escapedUrl, modelId, time, testId);
                 };
@@ -1746,18 +1870,23 @@ async function loadHistory() {
                 const isNSFW = test.isNSFW || isNSFWPrompt(test.prompt || '');
                 const shouldBlur = shouldBlurContent(isNSFW);
                 
+                // Generate a unique ID for this history item's image
+                const historyImgId = `history-img-${test._id || Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                
                 if (imgUrl) {
                     const escapedUrl = imgUrl.replace(/'/g, "\\'");
                     
                     if (shouldBlur) {
-                        // Blurred thumbnail for NSFW content
+                        // Blurred thumbnail for NSFW content - use placeholder initially, fetch blur via API
                         imageCell = `
-                            <div class="position-relative d-inline-block">
-                                <img src="${imgUrl}" 
+                            <div class="position-relative d-inline-block history-img-wrapper" data-original-url="${imgUrl}">
+                                <img src="/img/placeholder.png" 
                                      alt="Generated" 
-                                     class="history-thumbnail ${shouldBlur ? 'nsfw-blurred' : ''}"
-                                     style="filter: blur(8px); transform: scale(1.05);"
+                                     id="${historyImgId}"
+                                     class="history-thumbnail nsfw-blurred"
                                      data-test-id="${test._id || ''}"
+                                     data-needs-blur="true"
+                                     data-blur-url="${imgUrl}"
                                      onerror="this.src='/img/placeholder.png'">
                                 <span class="position-absolute top-50 start-50 translate-middle">
                                     <i class="bi bi-lock-fill text-white" style="font-size: 0.9rem; text-shadow: 0 0 4px rgba(0,0,0,0.7);"></i>
@@ -1893,6 +2022,15 @@ async function loadHistory() {
                         }
                     });
                 }
+                
+                // Load blurred image for NSFW thumbnail via API
+                const blurImg = row.querySelector('[data-needs-blur="true"]');
+                if (blurImg && blurImg.dataset.blurUrl) {
+                    fetchBlurredImage(blurImg.dataset.blurUrl, function(blobUrl) {
+                        blurImg.src = blobUrl;
+                        blurImg.removeAttribute('data-needs-blur');
+                    });
+                }
             });
         } else {
             tbody.innerHTML = `
@@ -1992,10 +2130,13 @@ function previewHistoryImage(imageUrl, modelName, generationTime, testId = null,
     const shouldBlur = shouldBlurContent(contentIsNSFW);
     
     if (shouldBlur && !state.isSubscribed) {
-        // For non-subscribed users, show blurred image with overlay
-        previewImage.src = imageUrl;
-        previewImage.style.filter = 'blur(20px)';
-        previewImage.style.transform = 'scale(1.05)';
+        // For non-subscribed users, fetch blurred image via API - never expose real URL
+        previewImage.src = '/img/placeholder.png'; // Placeholder while loading
+        
+        // Fetch blurred version via API
+        fetchBlurredImage(imageUrl, function(blobUrl) {
+            previewImage.src = blobUrl;
+        });
         
         // Create preview overlay
         const overlay = document.createElement('div');

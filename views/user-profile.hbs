@@ -128,7 +128,7 @@
                         </span>
                     </a>
                     {{else}}
-                    <a href="/pricing" class="action-btn action-btn-premium become-creator-btn">
+                    <button type="button" class="action-btn action-btn-premium become-creator-btn" onclick="loadPlanPage()">
                         <i class="bi bi-gem"></i>
                         <span class="fw-bold">
                             {{#if translations.creators.upgradeToPremium}}
@@ -137,7 +137,7 @@
                                 Upgrade to Premium
                             {{/if}}
                         </span>
-                    </a>
+                    </button>
                     {{/if}}
                 {{else}}
                 {{!-- Creator Quick Actions --}}

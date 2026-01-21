@@ -21,6 +21,23 @@
             </div>
         </section>
 
+        {{#unless isPremium}}
+        <!-- Premium Required Alert -->
+        <section class="premium-required-section">
+            <div class="premium-required-card">
+                <div class="premium-icon">
+                    <i class="bi bi-gem"></i>
+                </div>
+                <h3>{{creatorTranslations.premiumRequiredTitle}}</h3>
+                <p>{{creatorTranslations.premiumRequiredDesc}}</p>
+                <a href="/pricing" class="upgrade-btn">
+                    <i class="bi bi-star-fill me-2"></i>
+                    {{creatorTranslations.upgradeToPremium}}
+                </a>
+            </div>
+        </section>
+        {{/unless}}
+
         <!-- Benefits Section -->
         <section class="benefits-section">
             <div class="benefits-grid">
@@ -56,6 +73,7 @@
         </section>
 
         <!-- Application Form -->
+        {{#if isPremium}}
         <section class="application-section">
             <div class="form-container">
                 <h2 class="form-title">
@@ -210,8 +228,7 @@
                     </div>
                 </form>
             </div>
-        </section>
-
+        </section>        {{/if}}
         <!-- FAQ Section -->
         <section class="faq-section">
             <h2 class="faq-title">

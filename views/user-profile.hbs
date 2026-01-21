@@ -59,8 +59,13 @@
                     {{#if isCreator}}
                     <h1 class="profile-name">
                         {{default creatorData.displayName userData.nickname}}
+                        <span class="creator-badge-icon" title="{{translations.profile.creatorBadgeTitle}}">
+                            <i class="bi bi-brush-fill"></i>
+                        </span>
                         {{#if creatorData.verified}}
-                        <i class="bi bi-patch-check-fill text-primary ms-2" style="font-size: 0.7em;"></i>
+                        <span class="verified-badge-icon" title="{{translations.profile.verifiedCreator}}">
+                            <i class="bi bi-patch-check-fill"></i>
+                        </span>
                         {{/if}}
                     </h1>
                     <span class="creator-category-badge">
@@ -111,27 +116,63 @@
             {{#if isMyProfile}}
                 {{!-- My Profile Actions --}}
                 {{#unless userData.isCreator}}
-                <a href="/creators/apply" class="action-btn action-btn-gradient become-creator-btn">
-                    <i class="bi bi-rocket-takeoff"></i>
-                    <span class="fw-bold">
-                        {{#if translations.profile.becomeCreator}}
-                            {{translations.profile.becomeCreator}}
-                        {{else}}
-                            Become a Creator
-                        {{/if}}
-                    </span>
-                </a>
+                    {{#if isPremium}}
+                    <a href="/creators/apply" class="action-btn action-btn-gradient become-creator-btn">
+                        <i class="bi bi-rocket-takeoff"></i>
+                        <span class="fw-bold">
+                            {{#if translations.profile.becomeCreator}}
+                                {{translations.profile.becomeCreator}}
+                            {{else}}
+                                Become a Creator
+                            {{/if}}
+                        </span>
+                    </a>
+                    {{else}}
+                    <a href="/pricing" class="action-btn action-btn-premium become-creator-btn">
+                        <i class="bi bi-gem"></i>
+                        <span class="fw-bold">
+                            {{#if translations.creators.upgradeToPremium}}
+                                {{translations.creators.upgradeToPremium}}
+                            {{else}}
+                                Upgrade to Premium
+                            {{/if}}
+                        </span>
+                    </a>
+                    {{/if}}
                 {{else}}
-                <a href="/dashboard/posts" class="action-btn action-btn-secondary">
-                    <i class="bi bi-grid"></i>
-                    <span class="fw-bold">
-                        {{#if translations.profile.manageContent}}
-                            {{translations.profile.manageContent}}
-                        {{else}}
-                            Manage Content
-                        {{/if}}
-                    </span>
-                </a>
+                {{!-- Creator Quick Actions --}}
+                <div class="creator-quick-actions">
+                    <a href="/dashboard/earnings" class="action-btn action-btn-success" title="{{translations.avatar.earnings}}">
+                        <i class="bi bi-wallet2"></i>
+                        <span class="fw-bold d-none d-md-inline">
+                            {{#if translations.avatar.earnings}}
+                                {{translations.avatar.earnings}}
+                            {{else}}
+                                Earnings
+                            {{/if}}
+                        </span>
+                    </a>
+                    <a href="/dashboard/analytics" class="action-btn action-btn-info" title="{{translations.avatar.analytics}}">
+                        <i class="bi bi-graph-up"></i>
+                        <span class="fw-bold d-none d-md-inline">
+                            {{#if translations.avatar.analytics}}
+                                {{translations.avatar.analytics}}
+                            {{else}}
+                                Analytics
+                            {{/if}}
+                        </span>
+                    </a>
+                    <a href="/dashboard/posts" class="action-btn action-btn-secondary" title="{{translations.profile.manageContent}}">
+                        <i class="bi bi-grid"></i>
+                        <span class="fw-bold d-none d-md-inline">
+                            {{#if translations.profile.manageContent}}
+                                {{translations.profile.manageContent}}
+                            {{else}}
+                                Manage Content
+                            {{/if}}
+                        </span>
+                    </a>
+                </div>
                 {{/unless}}
             {{else}}
                 {{!-- Other User's Profile Actions --}}

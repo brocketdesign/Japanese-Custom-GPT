@@ -42,15 +42,48 @@
         <section class="become-creator-cta">
             <div class="cta-content">
                 <div class="cta-icon">
+                    {{#if isPremium}}
                     <i class="bi bi-rocket-takeoff"></i>
+                    {{else}}
+                    <i class="bi bi-gem"></i>
+                    {{/if}}
                 </div>
                 <div class="cta-text">
+                    {{#if isPremium}}
                     <h3>{{creatorTranslations.becomeCreatorTitle}}</h3>
                     <p>{{creatorTranslations.becomeCreatorDesc}}</p>
+                    {{else}}
+                    <h3>{{creatorTranslations.premiumRequiredTitle}}</h3>
+                    <p>{{creatorTranslations.premiumRequiredDesc}}</p>
+                    {{/if}}
                 </div>
+                {{#if isPremium}}
                 <a href="/creators/apply" class="cta-btn">
                     <i class="bi bi-plus-circle me-2"></i>
                     {{creatorTranslations.becomeCreator}}
+                </a>
+                {{else}}
+                <a href="/pricing" class="cta-btn cta-btn-premium">
+                    <i class="bi bi-star-fill me-2"></i>
+                    {{creatorTranslations.upgradeToPremium}}
+                </a>
+                {{/if}}
+            </div>
+        </section>
+        {{else}}
+        <!-- Creator Badge Section -->
+        <section class="creator-badge-section">
+            <div class="badge-content">
+                <div class="badge-icon">
+                    <i class="bi bi-brush-fill"></i>
+                </div>
+                <div class="badge-text">
+                    <h3>{{creatorTranslations.youAreCreator}}</h3>
+                    <p>{{creatorTranslations.youAreCreatorDesc}}</p>
+                </div>
+                <a href="/user/{{user._id}}" class="badge-btn">
+                    <i class="bi bi-person-circle me-2"></i>
+                    {{creatorTranslations.viewProfile}}
                 </a>
             </div>
         </section>

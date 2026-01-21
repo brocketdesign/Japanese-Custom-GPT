@@ -1434,6 +1434,7 @@
     "mySchedules": "マイスケジュール",
     "promptTemplates": "プロンプトテンプレート",
     "earnings": "収益",
+    "analytics": "アナリティクス",
     "tiers": "サブスクリプションティア",
     "subscribers": "会員",
     "mySubscriptions": "マイサブスクリプション",
@@ -2596,6 +2597,30 @@
     "categoryRealistic": "リアル",
     "categoryFantasy": "ファンタジー",
     "categoryMixed": "ミックス",
-    "categoryOther": "その他"
+    "categoryOther": "その他",
+    
+    "premiumRequiredTitle": "プレミアム会員限定",
+    "premiumRequiredDesc": "Lamix Premiumにアップグレードして、クリエイタープログラムを解放し、AI作品の収益化を始めましょう。",
+    "upgradeToPremium": "プレミアムにアップグレード",
+    "youAreCreator": "あなたはクリエイターです！",
+    "youAreCreatorDesc": "クリエイターコミュニティの一員としてご参加いただきありがとうございます。素晴らしいコンテンツを作り続けてください！",
+    "viewProfile": "プロフィールを見る",
+    
+    "creatorBenefits": {
+      "title": "クリエイターとして解放される特典",
+      "monetization": "投げ銭やサブスクリプションでAI作品を収益化",
+      "analytics": "コンテンツに関する詳細な分析とインサイトにアクセス",
+      "priority": "優先サポートと新機能への早期アクセス",
+      "visibility": "検索と発見での露出度アップ",
+      "badge": "プロフィールに表示される限定クリエイターバッジ",
+      "tools": "高度なクリエイターツールとコンテンツ管理へのアクセス"
+    }
+  },
+  
+  "profile": {
+    "creatorBadgeTitle": "クリエイター",
+    "verifiedCreator": "認証済みクリエイター",
+    "becomeCreator": "クリエイターになる",
+    "manageContent": "コンテンツ管理"
   }
 }

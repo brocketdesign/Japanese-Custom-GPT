@@ -1379,6 +1379,7 @@
     "mySchedules": "Mes planifications",
     "promptTemplates": "Modèles de prompts",
     "earnings": "Revenus",
+    "analytics": "Statistiques",
     "tiers": "Niveaux d'abonnement",
     "subscribers": "Abonnés",
     "mySubscriptions": "Mes Abonnements",
@@ -2582,6 +2583,30 @@
     "categoryRealistic": "Réaliste",
     "categoryFantasy": "Fantaisie",
     "categoryMixed": "Mixte",
-    "categoryOther": "Autre"
+    "categoryOther": "Autre",
+    
+    "premiumRequiredTitle": "Premium Requis",
+    "premiumRequiredDesc": "Passez à Lamix Premium pour débloquer le Programme Créateur et commencer à monétiser vos créations IA.",
+    "upgradeToPremium": "Passer à Premium",
+    "youAreCreator": "Vous êtes Créateur !",
+    "youAreCreatorDesc": "Merci de faire partie de notre communauté de créateurs. Continuez à créer du contenu incroyable !",
+    "viewProfile": "Voir Mon Profil",
+    
+    "creatorBenefits": {
+      "title": "Ce que Vous Débloquez en tant que Créateur",
+      "monetization": "Monétisez vos créations IA grâce aux pourboires et abonnements",
+      "analytics": "Accédez à des analyses détaillées sur votre contenu",
+      "priority": "Support prioritaire et accès anticipé aux nouvelles fonctionnalités",
+      "visibility": "Visibilité accrue dans la recherche et la découverte",
+      "badge": "Badge créateur exclusif affiché sur votre profil",
+      "tools": "Accès aux outils créateur avancés et à la gestion de contenu"
+    }
+  },
+  
+  "profile": {
+    "creatorBadgeTitle": "Créateur",
+    "verifiedCreator": "Créateur Vérifié",
+    "becomeCreator": "Devenir Créateur",
+    "manageContent": "Gérer le Contenu"
   }
 }

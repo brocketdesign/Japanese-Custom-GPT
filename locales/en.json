@@ -1449,6 +1449,7 @@
     "mySchedules": "My Schedules",
     "promptTemplates": "Prompt Templates",
     "earnings": "Earnings",
+    "analytics": "Analytics",
     "tiers": "Subscription Tiers",
     "subscribers": "Subscribers",
     "mySubscriptions": "My Subscriptions",
@@ -2699,6 +2700,30 @@
     "categoryRealistic": "Realistic",
     "categoryFantasy": "Fantasy",
     "categoryMixed": "Mixed",
-    "categoryOther": "Other"
+    "categoryOther": "Other",
+    
+    "premiumRequiredTitle": "Premium Required",
+    "premiumRequiredDesc": "Upgrade to Lamix Premium to unlock the Creator Program and start monetizing your AI creations.",
+    "upgradeToPremium": "Upgrade to Premium",
+    "youAreCreator": "You're a Creator!",
+    "youAreCreatorDesc": "Thank you for being part of our creator community. Keep creating amazing content!",
+    "viewProfile": "View My Profile",
+    
+    "creatorBenefits": {
+      "title": "What You Unlock as a Creator",
+      "monetization": "Monetize your AI creations through tips and subscriptions",
+      "analytics": "Access detailed analytics and insights about your content",
+      "priority": "Get priority support and early access to new features",
+      "visibility": "Increased visibility in search and discovery",
+      "badge": "Exclusive creator badge displayed on your profile",
+      "tools": "Access to advanced creator tools and content management"
+    }
+  },
+  
+  "profile": {
+    "creatorBadgeTitle": "Creator",
+    "verifiedCreator": "Verified Creator",
+    "becomeCreator": "Become a Creator",
+    "manageContent": "Manage Content"
   }
 }

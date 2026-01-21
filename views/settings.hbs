@@ -110,60 +110,74 @@
             </div>
           </div>
           <div class="card-body">
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="nickname" class="form-label">
-                  <i class="bi bi-person me-1"></i>{{translations.setting.nickname}}
-                </label>
-                <input type="text" id="nickname" class="form-control" placeholder="{{translations.setting.nickname}}" />
-              </div>
-
-              <div class="form-group">
-                <label for="inputEmail4" class="form-label">
-                  <i class="bi bi-envelope me-1"></i>{{translations.setting.email}}
-                </label>
-                <input type="email" class="form-control" id="inputEmail4" placeholder="{{translations.setting.email}}" />
-              </div>
-
-              <div class="form-group" id="ageRangeSection" style="display: none;">
-                <label class="form-label">
-                  <i class="bi bi-calendar-range me-1"></i>{{translations.setting.ageRange}}
-                </label>
-                <div class="form-control-static">
-                  <span id="userAgeRange" class="fw-semibold"></span>
+            <div class="personal-info-form">
+              <div class="info-field">
+                <div class="info-field-icon">
+                  <i class="bi bi-person"></i>
+                </div>
+                <div class="info-field-content">
+                  <label for="nickname" class="info-field-label">{{translations.setting.nickname}}</label>
+                  <input type="text" id="nickname" class="info-field-input" placeholder="{{translations.setting.enterNickname}}" />
                 </div>
               </div>
 
-              <div class="form-group">
-                <label for="gender" class="form-label">
-                  <i class="bi bi-gender-ambiguous me-1"></i>{{translations.setting.gender}}
-                </label>
-                <select class="form-control" id="gender" name="gender">
-                  <option value="female">{{translations.setting.female}}</option>
-                  <option value="male">{{translations.setting.male}}</option>
-                </select>
+              <div class="info-field">
+                <div class="info-field-icon">
+                  <i class="bi bi-envelope"></i>
+                </div>
+                <div class="info-field-content">
+                  <label for="inputEmail4" class="info-field-label">{{translations.setting.email}}</label>
+                  <input type="email" class="info-field-input" id="inputEmail4" placeholder="{{translations.setting.enterEmail}}" />
+                </div>
               </div>
 
-              <div class="form-group">
-                <label class="form-label">
-                  <i class="bi bi-globe2 me-1"></i>{{translations.setting.language}}
-                </label>
-                <div class="dropdown w-100">
-                  <button data-user-lang="{{user.lang}}" class="form-control dropdown-toggle text-start" type="button" id="languageDropdownMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-globe2 me-2"></i>
-                    <span class="language-text">{{translations.setting.selectLanguage}}</span>
-                  </button>
-                  <ul class="dropdown-menu w-100" aria-labelledby="languageDropdownMenu">
-                    <li><a class="dropdown-item language-select" href="#" data-lang="ja">
-                      <i class="bi bi-flag me-2"></i>{{translations.setting.japanese}}
-                    </a></li>
-                    <li><a class="dropdown-item language-select" href="#" data-lang="en">
-                      <i class="bi bi-flag me-2"></i>{{translations.setting.english}}
-                    </a></li>
-                    <li><a class="dropdown-item language-select" href="#" data-lang="fr">
-                      <i class="bi bi-flag me-2"></i>{{translations.setting.french}}
-                    </a></li>
-                  </ul>
+              <div class="info-field" id="ageRangeSection" style="display: none;">
+                <div class="info-field-icon">
+                  <i class="bi bi-calendar-range"></i>
+                </div>
+                <div class="info-field-content">
+                  <label class="info-field-label">{{translations.setting.ageRange}}</label>
+                  <div class="info-field-value">
+                    <span id="userAgeRange"></span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="info-field">
+                <div class="info-field-icon">
+                  <i class="bi bi-gender-ambiguous"></i>
+                </div>
+                <div class="info-field-content">
+                  <label for="gender" class="info-field-label">{{translations.setting.gender}}</label>
+                  <select class="info-field-input" id="gender" name="gender">
+                    <option value="female">{{translations.setting.female}}</option>
+                    <option value="male">{{translations.setting.male}}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="info-field">
+                <div class="info-field-icon">
+                  <i class="bi bi-globe2"></i>
+                </div>
+                <div class="info-field-content">
+                  <label class="info-field-label">{{translations.setting.language}}</label>
+                  <div class="dropdown w-100">
+                    <button data-user-lang="{{user.lang}}" class="info-field-input dropdown-toggle" type="button" id="languageDropdownMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                      <span class="language-text">{{translations.setting.selectLanguage}}</span>
+                    </button>
+                    <ul class="dropdown-menu w-100" aria-labelledby="languageDropdownMenu">
+                      <li><a class="dropdown-item language-select" href="#" data-lang="ja">
+                        <span class="flag-emoji">🇯🇵</span>{{translations.setting.japanese}}
+                      </a></li>
+                      <li><a class="dropdown-item language-select" href="#" data-lang="en">
+                        <span class="flag-emoji">🇺🇸</span>{{translations.setting.english}}
+                      </a></li>
+                      <li><a class="dropdown-item language-select" href="#" data-lang="fr">
+                        <span class="flag-emoji">🇫🇷</span>{{translations.setting.french}}
+                      </a></li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
@@ -830,6 +844,128 @@
 
 .form-group {
   margin-bottom: 0;
+}
+
+/* Personal Information Form - Redesigned */
+.personal-info-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.info-field {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.info-field:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.info-field:first-child {
+  padding-top: 0;
+}
+
+.info-field-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 10px;
+  flex-shrink: 0;
+  font-size: 18px;
+  color: #A78BFA;
+}
+
+.info-field-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.info-field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-field-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 15px;
+  transition: all 0.2s ease;
+}
+
+.info-field-input:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #8B5CF6;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+}
+
+.info-field-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+select.info-field-input {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23a78bfa' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+  padding-right: 40px;
+}
+
+select.info-field-input option {
+  background: #1a1a1a;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.info-field-value {
+  padding: 10px 0;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+button.info-field-input {
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+button.info-field-input::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23a78bfa' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-size: contain;
+  flex-shrink: 0;
+}
+
+button.info-field-input.dropdown-toggle::after {
+  border: none;
+}
+
+.flag-emoji {
+  margin-right: 10px;
+  font-size: 18px;
 }
 
 .form-label {
@@ -1611,6 +1747,22 @@ textarea.form-control {
 }
 
 @media (max-width: 768px) {
+  .info-field {
+    gap: 12px;
+    padding: 14px 0;
+  }
+  
+  .info-field-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+  
+  .info-field-input {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+  
   .section-title {
     font-size: 20px;
   }

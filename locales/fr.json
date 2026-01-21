@@ -920,6 +920,8 @@
     "nsfw_video_generator_description": "Créez des vidéos pour adultes avec notre technologie avancée de génération vidéo. Réservé aux adultes uniquement.",
     "landing_page_title": "Bienvenue",
     "landing_page_description": "Découvrez tout ce que ChatLamix a à offrir. Apprenez-en plus sur notre plateforme, nos fonctionnalités et comment commencer.",
+    "become_creator_title": "Devenir Créateur",
+    "become_creator_description": "Monétisez votre contenu en devenant créateur. Créez des niveaux d'abonnement, gagnez de l'argent grâce à vos fans et développez votre audience avec nos outils créateur.",
     "explore_button": "Explorer",
     "learn_more": "En savoir plus",
     "cta_heading": "Prêt à commencer ?",
@@ -1296,7 +1298,10 @@
     "changePassword": "Changer le mot de passe",
     "manageSubscription": "Gérer l'abonnement",
     "cancelSubscription": "Annuler l'abonnement",
-    "connections": "Connexions"
+    "connections": "Connexions",
+    "api_premium_required_title": "Premium requis",
+    "api_premium_required_desc": "L'accès à l'API est réservé aux abonnés premium. Passez à premium pour débloquer les clés API et intégrer des services externes.",
+    "upgrade_to_premium": "Passer à Premium"
   },
   "sns": {
     "share_to_social": "Partager sur les réseaux sociaux",

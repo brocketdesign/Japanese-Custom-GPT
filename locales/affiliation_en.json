@@ -124,5 +124,8 @@
   "ssl_encrypted": "SSL Encrypted",
   "or_try_first": "Or try first",
   "try_before_commit": "Try Before You Commit",
-  "try_before_commit_desc": "Experience premium features with a day pass"
+  "try_before_commit_desc": "Experience premium features with a day pass",
+  "premiumRequiredTitle": "Premium Required",
+  "premiumRequiredDesc": "You need a premium subscription to create affiliate links and earn money from referrals.",
+  "upgradeToPremium": "Upgrade to Premium"
 }

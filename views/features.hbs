@@ -27,29 +27,37 @@
     }
     .feature-card {
         transition: all 0.3s ease;
-        border: none;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         height: 100%;
+        background: linear-gradient(145deg, rgba(40, 40, 50, 0.95), rgba(30, 30, 40, 0.98));
+        border-radius: 16px;
     }
     .feature-card:hover {
         transform: translateY(-8px);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        box-shadow: 0 12px 30px rgba(102, 126, 234, 0.25);
+        border-color: rgba(102, 126, 234, 0.4);
     }
     .feature-icon {
         font-size: 3rem;
         margin-bottom: 1rem;
-        background: none;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
     .feature-card h4 {
-        color: #333;
-        font-weight: 600;
+        color: #ffffff;
+        font-weight: 700;
         margin-bottom: 1rem;
+        font-size: 1.3rem;
     }
     .feature-card p {
-        color: #666;
+        color: rgba(255, 255, 255, 0.85);
         font-size: 0.95rem;
         margin-bottom: 1.5rem;
         flex-grow: 1;
+        line-height: 1.6;
     }
     .feature-link {
         display: inline-block;
@@ -58,13 +66,32 @@
         padding: 0.75rem 1.5rem;
         border-radius: 50px;
         text-decoration: none;
-        font-weight: 500;
+        font-weight: 600;
         transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
     }
     .feature-link:hover {
         transform: scale(1.05);
         color: white;
         text-decoration: none;
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+    
+    /* Section backgrounds for dark mode */
+    section.py-5 {
+        background: transparent;
+    }
+    section.bg-light {
+        background: rgba(30, 30, 40, 0.5) !important;
+    }
+    .lead {
+        color: rgba(255, 255, 255, 0.8);
+    }
+    section .text-muted {
+        color: rgba(255, 255, 255, 0.7) !important;
+    }
+    section h5.fw-bold {
+        color: #ffffff;
     }
     #footer-toolbar {
         display: none;

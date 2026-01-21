@@ -36,6 +36,17 @@ $(document).ready(function() {
     $('#nsfw-premium-indicator').hide();
   }
 
+  // API section premium restriction
+  if (subscriptionStatus) {
+    // Premium users: show API content
+    $('#api-premium-content').show();
+    $('#api-premium-required').hide();
+  } else {
+    // Non-premium users: show premium required card
+    $('#api-premium-content').hide();
+    $('#api-premium-required').show();
+  }
+
   // Save toggle state to session storage on change (only for premium users)
   nsfwToggle.on('change', function() {
     if (!subscriptionStatus && this.checked) {

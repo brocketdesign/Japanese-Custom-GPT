@@ -1019,6 +1019,7 @@ async function routes(fastify, options) {
       }
 
       const translations = request.translations;
+      const isPremium = request.user?.subscriptionStatus === 'active';
       
       return reply.renderWithGtm('/affiliation/dashboard.hbs', {
         title: 'Affiliate Program - Earn Money with Referrals',
@@ -1026,6 +1027,7 @@ async function routes(fastify, options) {
         mode: process.env.MODE,
         apiurl: getApiUrl(request),
         user: request.user,
+        isPremium
       });
     } catch (error) {
       console.error('Error rendering affiliate page:', error);

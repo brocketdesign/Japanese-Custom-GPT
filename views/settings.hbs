@@ -492,8 +492,25 @@
         <p class="section-description">Manage your API keys and integrations</p>
       </div>
 
-      <!-- API Keys Card -->
-      <div class="settings-card">
+      <!-- Premium Required Card for API -->
+      <div id="api-premium-required" class="settings-card premium-required-card" style="display: none;">
+        <div class="card-body text-center py-5">
+          <div class="premium-icon-large mb-4">
+            <i class="bi bi-gem"></i>
+          </div>
+          <h3 class="premium-title">{{translations.setting.api_premium_required_title}}</h3>
+          <p class="premium-description">{{translations.setting.api_premium_required_desc}}</p>
+          <button type="button" class="btn btn-premium-upgrade mt-3" onclick="loadPlanPage()">
+            <i class="bi bi-star-fill me-2"></i>
+            {{translations.setting.upgrade_to_premium}}
+          </button>
+        </div>
+      </div>
+
+      <!-- API Content (shown only for premium users) -->
+      <div id="api-premium-content" style="display: none;">
+        <!-- API Keys Card -->
+        <div class="settings-card">
         <div class="card-header">
           <div class="card-icon">
             <i class="bi bi-key"></i>
@@ -559,6 +576,7 @@
           </div>
         </div>
       </div>
+      </div><!-- End api-premium-content -->
     </div>
 
     <!-- Password Section -->
@@ -612,7 +630,8 @@
   display: flex;
   gap: 0;
   height: calc(100vh - 120px);
-  max-height: 600px;
+  max-height: 85vh;
+  min-height: 500px;
   overflow: hidden;
 }
 
@@ -1299,6 +1318,55 @@ textarea.form-control {
   color: #6E20F4;
   font-variant-numeric: tabular-nums;
   letter-spacing: 2px;
+}
+
+/* Premium Required Card */
+.premium-required-card {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.08) 0%, rgba(255, 165, 0, 0.05) 100%);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.premium-icon-large {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  border-radius: 50%;
+  font-size: 2rem;
+  color: white;
+}
+
+.premium-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 8px;
+}
+
+.premium-description {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.6);
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.btn-premium-upgrade {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: #1a1a1a;
+  font-weight: 600;
+  padding: 12px 28px;
+  border-radius: 50px;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-premium-upgrade:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+  color: #1a1a1a;
 }
 
 /* API Keys */

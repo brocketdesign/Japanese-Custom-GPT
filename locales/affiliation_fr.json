@@ -124,5 +124,8 @@
   "ssl_encrypted": "Chiffré SSL",
   "or_try_first": "Ou essayez d'abord",
   "try_before_commit": "Essayez avant de vous engager",
-  "try_before_commit_desc": "Découvrez les fonctionnalités premium avec un pass journalier"
+  "try_before_commit_desc": "Découvrez les fonctionnalités premium avec un pass journalier",
+  "premiumRequiredTitle": "Premium requis",
+  "premiumRequiredDesc": "Vous devez avoir un abonnement premium pour créer des liens d'affiliation et gagner de l'argent grâce aux références.",
+  "upgradeToPremium": "Passer à Premium"
 }

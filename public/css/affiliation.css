@@ -197,3 +197,111 @@
 .referrals-container::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
 }
+
+/* ====================================
+   PREMIUM REQUIRED CTA
+   ==================================== */
+.premium-required-cta {
+    padding: 0 0;
+}
+
+.premium-required-cta .cta-content {
+    max-width: 100%;
+    margin: 0 auto;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 165, 0, 0.1) 100%);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 20px;
+    padding: 30px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    backdrop-filter: blur(10px);
+}
+
+.premium-required-cta .cta-icon {
+    flex-shrink: 0;
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: white;
+}
+
+.premium-required-cta .cta-text {
+    flex: 1;
+}
+
+.premium-required-cta .cta-text h3 {
+    color: var(--bs-body-color, #212529);
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0 0 8px;
+}
+
+.premium-required-cta .cta-text p {
+    color: var(--bs-secondary-color, #6c757d);
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.premium-required-cta .cta-btn {
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 14px 28px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.premium-required-cta .cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.premium-required-cta .cta-btn-premium {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+}
+
+.premium-required-cta .cta-btn-premium:hover {
+    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+}
+
+/* Responsive adjustments for premium CTA */
+@media (max-width: 768px) {
+    .premium-required-cta .cta-content {
+        flex-direction: column;
+        text-align: center;
+        padding: 24px;
+        gap: 16px;
+    }
+    
+    .premium-required-cta .cta-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+    
+    .premium-required-cta .cta-text h3 {
+        font-size: 1.1rem;
+    }
+    
+    .premium-required-cta .cta-text p {
+        font-size: 0.9rem;
+    }
+    
+    .premium-required-cta .cta-btn {
+        padding: 12px 24px;
+        width: 100%;
+        justify-content: center;
+    }
+}

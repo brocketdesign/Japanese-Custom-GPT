@@ -124,5 +124,8 @@
   "ssl_encrypted": "SSL暗号化",
   "or_try_first": "または最初に試す",
   "try_before_commit": "コミット前に試す",
-  "try_before_commit_desc": "デイパスでプレミアム機能を体験"
+  "try_before_commit_desc": "デイパスでプレミアム機能を体験",
+  "premiumRequiredTitle": "プレミアム登録が必要です",
+  "premiumRequiredDesc": "アフィリエイトリンクを作成して紹介報酬を獲得するには、プレミアム登録が必要です。",
+  "upgradeToPremium": "プレミアムにアップグレード"
 }

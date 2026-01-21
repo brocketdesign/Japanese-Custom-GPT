@@ -976,6 +976,8 @@
     "nsfw_video_generator_description": "高度なビデオ生成技術で成人向けビデオを作成します。成人のみを対象としています。",
     "landing_page_title": "ようこそ",
     "landing_page_description": "ChatLamixが提供するすべてをご覧ください。プラットフォーム、機能、始め方について詳しく学びましょう。",
+    "become_creator_title": "クリエイターになる",
+    "become_creator_description": "クリエイターになってコンテンツを収益化しましょう。サブスクリプションティアを設定し、ファンから収益を得て、クリエイターツールでオーディエンスを構築しましょう。",
     "explore_button": "探索",
     "learn_more": "詳しく見る",
     "cta_heading": "始める準備はできていますか？",
@@ -1351,7 +1353,10 @@
     "changePassword": "パスワードを変更",
     "manageSubscription": "サブスクリプションを管理する",
     "cancelSubscription": "サブスクリプションをキャンセルする",
-    "connections": "連携"
+    "connections": "連携",
+    "api_premium_required_title": "プレミアム登録が必要です",
+    "api_premium_required_desc": "APIアクセスはプレミアム会員限定です。プレミアムにアップグレードしてAPIキーを取得し、外部サービスと連携しましょう。",
+    "upgrade_to_premium": "プレミアムにアップグレード"
   },
   "sns": {
     "share_to_social": "SNSでシェア",

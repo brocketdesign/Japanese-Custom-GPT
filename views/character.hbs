@@ -1,27 +1,311 @@
 <!DOCTYPE html>
 <html lang="{{lang}}">
 {{> dashboard-header}}
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/css/character.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+</head>
 <body class="explore-page">
     {{> dashboard-nav}}
 
-<div class="explore-container" id="characterGalleryPage">
+<div class="profile-container" id="characterProfilePage" data-chat-id="{{#if chat}}{{chat._id}}{{/if}}" data-chat-personality="{{#if chat}}{{json chat.base_personality}}{{/if}}">
+    {{#if chat}}
+        <!-- Instagram-style Profile Header -->
+        <div class="ig-profile-header">
+            <!-- Profile Info Section -->
+            <div class="ig-profile-info">
+                <div class="ig-avatar-section">
+                    <div class="ig-avatar-ring">
+                        {{#if image}}
+                            {{#unless isBlur}}
+                                <img class="ig-avatar" src="{{image.imageUrl}}" alt="{{chat.name}}" id="mainProfileImage">
+                            {{else}}
+                                <img class="ig-avatar img-blur" src="{{image.imageUrl}}" alt="{{chat.name}}" onclick="{{#if user.isTemporary}}openLoginForm(){{else}}loadPlanPage(){{/if}}">
+                            {{/unless}}
+                        {{else}}
+                            <img class="ig-avatar" src="{{default chat.chatImageUrl '/img/avatar.png'}}" alt="{{chat.name}}">
+                        {{/if}}
+                    </div>
+                </div>
+                
+                <div class="ig-stats-row">
+                    <div class="ig-stat">
+                        <span class="ig-stat-number" id="imagesCount">0</span>
+                        <span class="ig-stat-label">{{translations.images}}</span>
+                    </div>
+                    <div class="ig-stat">
+                        <span class="ig-stat-number" id="videosCount">0</span>
+                        <span class="ig-stat-label">{{translations.videos.title}}</span>
+                    </div>
+                    <div class="ig-stat">
+                        <span class="ig-stat-number" id="messagesCount">0</span>
+                        <span class="ig-stat-label">{{translations.profile_messages}}</span>
+                    </div>
+                </div>
+            </div>
 
-    <!-- Stories-style Horizontal Chat Menu -->
-    {{#unless user.isTemporary}}
-    <section id="horizontal-chat-menu" class="d-none stories-bar">
-        <div id="horizontal-chat-list" class="stories-list">
-            <!-- Chat thumbnails will be loaded dynamically -->
-            <div id="horizontal-chat-loading" class="stories-loading">
-                <div class="spinner-border spinner-border-sm" role="status">
-                    <span class="visually-hidden">Loading...</span>
+            <!-- Bio Section -->
+            <div class="ig-bio-section">
+                <h1 class="ig-display-name">{{chat.name}}</h1>
+                {{#if chat.short_intro}}
+                    <p class="ig-bio">{{chat.short_intro}}</p>
+                {{else}}
+                    <p class="ig-bio">{{chat.description}}</p>
+                {{/if}}
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="ig-action-row">
+                <a href="{{#if user.isTemporary}}#{{else}}/chat/{{chat._id}}{{/if}}" 
+                   onclick="{{#if user.isTemporary}}openLoginForm(); return false;{{/if}}" 
+                   class="ig-chat-btn">
+                    <i class="bi bi-chat-heart-fill"></i>
+                    <span>{{translations.startChattingNow}}</span>
+                </a>
+                {{#unless user.isTemporary}}
+                    <button class="ig-secondary-btn share-btn">
+                        <i class="bi bi-send"></i>
+                    </button>
+                {{/unless}}
+            </div>
+
+            {{#if isAdmin}}
+            <!-- Admin Controls -->
+            <div class="ig-admin-controls">
+                <button class="ig-admin-btn set-sfw-thumbnail-btn" 
+                        data-id="{{chat._id}}" 
+                        onclick="setSFWThumbnail(this);">
+                    <i class="bi bi-image"></i>
+                </button>
+                <button class="ig-admin-btn chat-nsfw-toggle {{#if chat.nsfw}}nsfw{{else}}sfw{{/if}}" 
+                        data-id="{{chat._id}}" 
+                        onclick="toggleChatNSFW(this);">
+                    <i class="bi {{#if chat.nsfw}}bi-eye-slash{{else}}bi-eye{{/if}}"></i>
+                </button>
+            </div>
+            {{/if}}
+        </div>
+
+        <!-- Instagram-style Tab Navigation -->
+        <div class="ig-tab-nav">
+            <button class="ig-tab active" data-tab="images" title="{{translations.images}}">
+                <i class="bi bi-grid-3x3"></i>
+            </button>
+            <button class="ig-tab" data-tab="videos" title="{{translations.videos.title}}">
+                <i class="bi bi-play-btn"></i>
+            </button>
+            <button class="ig-tab" data-tab="about" title="{{translations.about}}">
+                <i class="bi bi-person-badge"></i>
+            </button>
+        </div>
+
+        <!-- Content Areas -->
+        <div class="tab-content">
+            <!-- Images Tab -->
+            <div id="images-tab" class="tab-pane active">
+                <div class="media-grid" id="imagesGrid">
+                    <!-- Loading state -->
+                    <div class="loading-grid">
+                        <div class="loading-item"></div>
+                        <div class="loading-item"></div>
+                        <div class="loading-item"></div>
+                        <div class="loading-item"></div>
+                        <div class="loading-item"></div>
+                        <div class="loading-item"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Videos Tab -->
+            <div id="videos-tab" class="tab-pane" style="display: none;">
+                <div class="media-grid" id="videosGrid">
+                    <!-- Videos will be loaded here -->
+                </div>
+            </div>
+
+            <!-- About Tab -->
+            <div id="about-tab" class="tab-pane" style="display: none;">
+                <div class="ig-about-container">
+                    <!-- Character Attributes Grid -->
+                    <div class="ig-attributes-grid">
+                        <!-- Style Card -->
+                        <div class="ig-attribute-card">
+                            <div class="ig-attribute-icon" style="background: linear-gradient(135deg, #8b5cf6, #a855f7);">
+                                <i class="bi bi-palette-fill"></i>
+                            </div>
+                            <div class="ig-attribute-content">
+                                <span class="ig-attribute-label">{{translations.profile_style}}</span>
+                                <span class="ig-attribute-value">{{default chat.imageStyle 'Not specified'}}</span>
+                            </div>
+                        </div>
+
+                        <!-- Gender Card -->
+                        <div class="ig-attribute-card">
+                            <div class="ig-attribute-icon" style="background: linear-gradient(135deg, #ec4899, #f472b6);">
+                                <i class="bi bi-gender-ambiguous"></i>
+                            </div>
+                            <div class="ig-attribute-content">
+                                <span class="ig-attribute-label">{{translations.profile_gender}}</span>
+                                <span class="ig-attribute-value">{{default chat.gender 'Not specified'}}</span>
+                            </div>
+                        </div>
+
+                        <!-- Content Rating Card -->
+                        {{#if chat.nsfw}}
+                        <div class="ig-attribute-card">
+                            <div class="ig-attribute-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
+                                <i class="bi bi-exclamation-triangle"></i>
+                            </div>
+                            <div class="ig-attribute-content">
+                                <span class="ig-attribute-label">{{translations.profile_content_rating}}</span>
+                                <span class="ig-attribute-value ig-nsfw-badge">18+</span>
+                            </div>
+                        </div>
+                        {{/if}}
+                    </div>
+
+                    <!-- Character Rules Section -->
+                    {{#if chat.rule}}
+                    <div class="ig-section-card">
+                        <div class="ig-section-header">
+                            <i class="bi bi-bookmark-fill"></i>
+                            <span>{{translations.character_rules_heading}}</span>
+                        </div>
+                        <p class="ig-section-text">{{chat.rule}}</p>
+                    </div>
+                    {{/if}}
+
+                    <!-- Personality Section -->
+                    <div id="characterPersonality"></div>
+
+                    <!-- Tags Section -->
+                    {{#if chat.tags}}
+                    <div class="ig-tags-section">
+                        <h5 class="ig-tags-title">{{translations.tags}}</h5>
+                        <div class="ig-tags-list">
+                            {{#each chat.tags}}
+                                <a href="/search?q={{this}}" class="ig-tag">
+                                    <i class="bi bi-hash"></i>{{this}}
+                                </a>
+                            {{/each}}
+                        </div>
+                    </div>
+                    {{/if}}
                 </div>
             </div>
         </div>
-    </section>
-    {{/unless}}
 
-    <!-- Compact Filter Bar -->
-    <section class="filter-bar">
+        <!-- Similar Characters Section -->
+        <div class="similar-section">
+            <h5>{{translations.similar_characters_title}}</h5>
+            <p class="text-muted small">{{translations.similar_characters_description}}</p>
+            <div class="similar-grid" id="similarCharactersGrid">
+                <!-- Similar characters will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Character Profile Scripts (only loaded when chat exists) -->
+        <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+        <script src="/js/character-profile-loader.js"></script>
+        <script src="/js/character-profile-ui.js"></script>
+        <script src="/js/character-profile-interactions.js"></script>
+        <script src="/js/character-infos.js"></script>
+        <script src="/js/character.js"></script>
+
+        <script>
+        // Initialize profile when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            const profilePage = document.querySelector('#characterProfilePage');
+            const chatId = profilePage?.dataset?.chatId || null;
+            
+            // === DEBUG: Log all template data ===
+            console.log('=== CHARACTER PROFILE DEBUG ===');
+            console.log('chatId from data attribute:', chatId);
+            console.log('CHAT DATA:', {{{json chat}}});
+            console.log('Chat _id:', '{{chat._id}}');
+            console.log('Chat Name:', '{{chat.name}}');
+            console.log('Chat Image URL:', '{{chat.chatImageUrl}}');
+            console.log('Chat NSFW:', {{#if chat.nsfw}}true{{else}}false{{/if}});
+            console.log('Chat Tags:', {{{json chat.tags}}});
+            console.log('Chat Gender:', '{{chat.gender}}');
+            console.log('Chat Style:', '{{chat.imageStyle}}');
+            
+            {{#if image}}
+            console.log('IMAGE DATA:', {{{json image}}});
+            console.log('Image URL:', '{{image.imageUrl}}');
+            console.log('Image isBlur:', {{#if isBlur}}true{{else}}false{{/if}});
+            {{else}}
+            console.log('NO IMAGE DATA');
+            {{/if}}
+            
+            console.log('USER:', {
+                _id: '{{user._id}}',
+                isTemporary: {{#if user.isTemporary}}true{{else}}false{{/if}},
+                subscriptionStatus: '{{user.subscriptionStatus}}'
+            });
+            console.log('isAdmin:', {{#if isAdmin}}true{{else}}false{{/if}});
+            console.log('=== END DEBUG ===');
+            
+            if (chatId) {
+                // Initialize Instagram-style profile
+                window.characterProfile = {
+                    totalImages: 0,
+                    totalVideos: 0,
+                    currentChatId: chatId,
+                    imagesLoading: false,
+                    videosLoading: false,
+                    videosLoaded: false
+                };
+                
+                console.log('[CharacterProfile] Initializing profile for chatId:', chatId);
+                
+                // Initialize tabs and load data
+                if (typeof initializeTabs === 'function') {
+                    console.log('[CharacterProfile] Calling initializeTabs()');
+                    initializeTabs();
+                } else {
+                    console.error('[CharacterProfile] initializeTabs function not found!');
+                }
+                
+                if (typeof loadCharacterData === 'function') {
+                    console.log('[CharacterProfile] Calling loadCharacterData()');
+                    loadCharacterData(chatId);
+                } else {
+                    console.error('[CharacterProfile] loadCharacterData function not found!');
+                }
+                
+                if (typeof initializeSharing === 'function') {
+                    initializeSharing();
+                }
+                
+                if (typeof showDashboardFooter === 'function') {
+                    showDashboardFooter();
+                }
+            }
+        });
+        </script>
+
+    {{else}}
+    <!-- Current Gallery Layout (when no chat is available) -->
+    <div class="explore-container" id="characterGalleryPage">
+        <!-- Stories-style Horizontal Chat Menu -->
+        {{#unless user.isTemporary}}
+        <section id="horizontal-chat-menu" class="d-none stories-bar">
+            <div id="horizontal-chat-list" class="stories-list">
+                <!-- Chat thumbnails will be loaded dynamically -->
+                <div id="horizontal-chat-loading" class="stories-loading">
+                    <div class="spinner-border spinner-border-sm" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+        {{/unless}}
+
+        <!-- Compact Filter Bar -->
+        <section class="filter-bar">
         <!-- Query Tags Pills -->
         <div class="tags-scroll" id="query-tags-list">
             <div class="tags-loading">
@@ -531,126 +815,6 @@
 <!-- Character Gallery Scripts -->
 <script src="/js/modules/ui-helpers.js"></script>
 
-<!-- Define displayChats if not already available (required for gallery modules) -->
-<script>
-// Global displayChats function for rendering character cards in galleries
-if (typeof window.displayChats !== 'function') {
-    window.displayChats = function (chatData, targetGalleryId = 'chat-gallery', modal = false) {
-        const currentUser = window.user || {};
-        const currentUserId = currentUser._id;
-        const subscriptionStatus = currentUser.subscriptionStatus === 'active';
-        const isTemporaryUser = !!currentUser.isTemporary;
-        
-        let htmlContent = '';
-        
-        if (!Array.isArray(chatData)) {
-            console.warn('[displayChats] chatData is not an array:', chatData);
-            return;
-        }
-        
-        chatData.forEach(chat => {
-            if (!chat || (!chat.name && !chat.chatName)) return;
-            
-            // Normalize nsfw to boolean
-            const nsfw = chat?.nsfw === true || chat?.nsfw === 'true';
-            const moderationFlagged = Array.isArray(chat?.moderation?.results) && 
-                chat.moderation.results.length > 0 && !!chat.moderation.results[0].flagged;
-            const finalNsfwResult = nsfw || moderationFlagged;
-            const isOwner = chat.userId === currentUserId;
-            
-            // Sample image selection logic
-            let sampleImages = [];
-            if (Array.isArray(chat.sampleImages) && chat.sampleImages.length > 0) {
-                sampleImages = chat.sampleImages.filter(img => img && img.imageUrl).map(img => img.imageUrl);
-            }
-            if (Array.isArray(chat.images) && chat.images.length > 0) {
-                sampleImages = sampleImages.concat(chat.images.filter(img => img && img.imageUrl).map(img => img.imageUrl));
-            }
-            if (chat.chatImageUrl) {
-                sampleImages.unshift(chat.chatImageUrl);
-            }
-            sampleImages = [...new Set(sampleImages.filter(Boolean))];
-            if (sampleImages.length === 0) {
-                sampleImages = ['/img/logo.webp'];
-            }
-            
-            const primaryImage = sampleImages[0];
-            const secondaryImage = sampleImages.find((img) => img !== primaryImage) || primaryImage;
-            const chatId = chat.chatId || chat._id;
-            const chatName = chat.name || chat.chatName || 'Unknown';
-            const genderClass = chat.gender ? `chat-gender-${chat.gender.toLowerCase()}` : '';
-            const styleClass = chat.imageStyle ? `chat-style-${chat.imageStyle.toLowerCase()}` : '';
-            
-            htmlContent += `
-                <div class="gallery-card ${finalNsfwResult ? 'nsfw-content' : ''} ${chat.premium ? 'premium-chat' : ''} ${genderClass} ${styleClass}" data-id="${chat._id}">
-                    <div class="card gallery-hover"
-                        onclick="${chat.premium && !subscriptionStatus ? `loadPlanPage()` : `redirectToChat('${chatId}','${primaryImage}')`}">
-                        <!-- Primary Image -->
-                        <img 
-                            src="${primaryImage}" 
-                            alt="${chatName}" 
-                            class="gallery-img gallery-img-primary"
-                            loading="lazy"
-                        >
-                        <!-- Secondary Image for hover -->
-                        <img 
-                            src="${secondaryImage}" 
-                            alt="${chatName}"
-                            class="gallery-img gallery-img-secondary"
-                            style="position: absolute; inset: 0; opacity: 0;"
-                            loading="lazy"
-                        >
-                        
-                        <!-- Multi-image indicator -->
-                        ${sampleImages.length > 1 ? `
-                            <i class="bi bi-images multi-indicator"></i>
-                        ` : ''}
-                        
-                        <!-- Top badges -->
-                        <div class="position-absolute top-0 end-0 m-1 d-flex flex-column gap-1" style="z-index: 10;">
-                            ${finalNsfwResult ? `<span class="badge bg-danger">18+</span>` : ''}
-                            ${chat.premium ? `<span class="badge" style="background: var(--explore-accent);"><i class="bi bi-gem"></i></span>` : ''}
-                        </div>
-                        
-                        <!-- Hover overlay content -->
-                        <div class="hover-overlay position-absolute inset-0 d-flex align-items-center justify-content-center" 
-                             style="background: rgba(0,0,0,0.4); opacity: 0; transition: opacity 0.2s ease; inset: 0; position: absolute;">
-                            <div class="text-white text-center px-2">
-                                <div class="fw-bold text-truncate" style="font-size: 13px; max-width: 120px;">${chatName}</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Loading spinner -->
-                        <div id="spinner-${chatId}" class="position-absolute d-none justify-content-center align-items-center" style="background: rgba(0,0,0,0.7); z-index: 20; inset: 0;">
-                            <div class="spinner-border spinner-border-sm" role="status"></div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        
-        // Append to target gallery
-        const $target = $(`#${targetGalleryId}`);
-        if ($target.length > 0) {
-            $target.append(htmlContent);
-        } else {
-            $('#chat-gallery').append(htmlContent);
-        }
-        
-        // Apply hover effects
-        $('.gallery-card .card').off('mouseenter mouseleave').on('mouseenter', function() {
-            $(this).find('.gallery-img-primary').css('opacity', '0');
-            $(this).find('.gallery-img-secondary').css('opacity', '1');
-            $(this).find('.hover-overlay').css('opacity', '1');
-        }).on('mouseleave', function() {
-            $(this).find('.gallery-img-primary').css('opacity', '1');
-            $(this).find('.gallery-img-secondary').css('opacity', '0');
-            $(this).find('.hover-overlay').css('opacity', '0');
-        });
-    };
-}
-</script>
-
 <script src="/js/modules/popular-chats.js"></script>
 <script src="/js/modules/latest-chats.js"></script>
 <script src="/js/modules/chat-filters.js"></script>
@@ -715,6 +879,12 @@ window.translations.loadingMoreVideos = '{{translations.loadingMoreVideos}}';
 window.translations.recentChats = '{{translations.recentChats}}';
 window.translations.loading = '{{translations.loading}}';
 </script>
+
+        </div>
+    {{/if}}
+</div>
+
+{{> dashboard-footer}}
 
 </body>
 </html>

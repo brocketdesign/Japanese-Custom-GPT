@@ -162,7 +162,7 @@ function createCharacterImageOverlay(imgElement, imageUrl) {
     }
 
     $(imgElement)
-        .wrap('<div style="position: relative; display: inline-block;"></div>')
+        .wrap('<div style="position: relative;"></div>')
         .after(overlay);
 }
 

@@ -1398,7 +1398,7 @@ window.createOverlay = function(img, imageUrl) {
   }
 
   $(img)
-    .wrap('<div style="position: relative; display: inline-block;"></div>')
+    .wrap('<div style="position: relative;"></div>')
     .after(overlay);
 }
 async function checkIfAdmin(userId) {

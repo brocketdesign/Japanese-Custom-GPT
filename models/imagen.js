@@ -725,7 +725,8 @@ async function generateImg({
         updatedAt: new Date(),
         shouldAutoMerge,
         enableMergeFace: enableMergeFace || false,
-        isHunyuan: hunyuan || false
+        isHunyuan: hunyuan || false,
+        translations: translations || null  // Store translations for webhook/polling handlers
     };
     
     // For Hunyuan with multiple images, store all task IDs
@@ -780,7 +781,8 @@ async function generateImg({
                 enableMergeFace: enableMergeFace || false,
                 isHunyuan: true,
                 hunyuanParentTaskId: novitaTaskId, // Link to the primary task
-                hunyuanImageIndex: i + 1
+                hunyuanImageIndex: i + 1,
+                translations: translations || null  // Store translations for webhook/polling handlers
             };
             
             // Store original request data for character creation tasks with merge face enabled
@@ -797,6 +799,26 @@ async function generateImg({
 
     if(chatCreation){
       fastify.sendNotificationToUser(userId, 'showNotification', { message:translations.character_image_generation_started , icon:'success' });
+      
+      // Start fallback polling for Hunyuan character creation tasks
+      // This runs in the background and ensures images are processed even if webhooks fail
+      if (hunyuan) {
+        const allTaskIds = hunyuanTaskIds.length > 0 ? hunyuanTaskIds : [novitaTaskId];
+        console.log(`[generateImg] Starting fallback polling for ${allTaskIds.length} Hunyuan character creation tasks`);
+        
+        // Don't await - let it run in background
+        pollHunyuanTasksWithFallback(novitaTaskId, allTaskIds, fastify, {
+          chatCreation: true,
+          translations,
+          userId,
+          chatId,
+          placeholderId
+        }).then(success => {
+          console.log(`[generateImg] Hunyuan fallback polling completed: ${success ? 'success' : 'partial/failed'}`);
+        }).catch(error => {
+          console.error(`[generateImg] Hunyuan fallback polling error:`, error.message);
+        });
+      }
     }
 
     return { taskId: novitaTaskId, hunyuanTaskIds: hunyuan && hunyuanTaskIds.length > 1 ? hunyuanTaskIds : undefined };
@@ -1956,13 +1978,16 @@ async function fetchNovitaResult(task_id) {
 
     if (taskStatus === 'TASK_STATUS_SUCCEED') {
         const images = response.data.images;
-        if (images.length === 0) {
+        if (!images || images.length === 0) {
         throw new Error('No images returned from Novita API');
         }
 
+        // Safely get seed from extra (may not exist for Hunyuan)
+        const seed = response.data.extra?.seed || 0;
+
         const s3Urls = await Promise.all(images.map(async (image, index) => {
           const imageUrl = image.image_url;
-          const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+          const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer', timeout: 60000 });
           const buffer = Buffer.from(imageResponse.data, 'binary');
           const hash = createHash('md5').update(buffer).digest('hex');
           const uploadedUrl = await uploadToS3(buffer, hash, 'novita_result_image.png');
@@ -1970,8 +1995,8 @@ async function fetchNovitaResult(task_id) {
           return { 
             imageId: hash, 
             imageUrl: uploadedUrl, 
-            nsfw_detection_result: image.nsfw_detection_result, 
-            seed: response.data.extra.seed,
+            nsfw_detection_result: image.nsfw_detection_result || null, 
+            seed: seed,
             index
           };
           }));
@@ -2599,6 +2624,174 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
   }
 }
 
+/**
+ * Poll for Hunyuan task completion as a fallback when webhooks don't arrive
+ * This runs server-side and ensures images are processed even if Novita doesn't send webhooks
+ * @param {string} taskId - Primary task ID
+ * @param {string[]} allTaskIds - All Hunyuan task IDs to poll
+ * @param {Object} fastify - Fastify instance
+ * @param {Object} options - Additional options
+ */
+async function pollHunyuanTasksWithFallback(taskId, allTaskIds, fastify, options = {}) {
+  const { chatCreation, translations, userId, chatId, placeholderId } = options;
+  const db = fastify.mongo.db;
+  const tasksCollection = db.collection('tasks');
+  
+  const maxAttempts = 60; // 5 minutes max (60 * 5 seconds)
+  const pollInterval = 5000; // 5 seconds
+  const taskIds = allTaskIds && allTaskIds.length > 0 ? allTaskIds : [taskId];
+  
+  console.log(`[pollHunyuanTasks] Starting fallback polling for ${taskIds.length} tasks`);
+  
+  let attempts = 0;
+  const completedTasks = new Map(); // Track completed tasks and their images
+  
+  const pollOnce = async () => {
+    attempts++;
+    console.log(`[pollHunyuanTasks] Poll attempt ${attempts}/${maxAttempts} for ${taskIds.length} tasks`);
+    
+    let allComplete = true;
+    
+    for (const tid of taskIds) {
+      // Skip if already completed
+      if (completedTasks.has(tid)) {
+        continue;
+      }
+      
+      // Check if webhook already processed this task
+      const taskDoc = await tasksCollection.findOne({ taskId: tid });
+      if (taskDoc && (taskDoc.status === 'completed' || taskDoc.webhookProcessed)) {
+        console.log(`[pollHunyuanTasks] Task ${tid} already processed (webhook arrived)`);
+        completedTasks.set(tid, taskDoc.result?.images || []);
+        continue;
+      }
+      
+      // Poll Novita for status
+      try {
+        const result = await fetchNovitaResult(tid);
+        
+        if (result && result.status === 'processing') {
+          console.log(`[pollHunyuanTasks] Task ${tid} still processing (${result.progress || 0}%)`);
+          allComplete = false;
+          continue;
+        }
+        
+        if (result && result.error) {
+          console.error(`[pollHunyuanTasks] Task ${tid} failed: ${result.error}`);
+          await tasksCollection.updateOne(
+            { taskId: tid },
+            { $set: { status: 'failed', result: { error: result.error }, updatedAt: new Date() } }
+          );
+          completedTasks.set(tid, []);
+          continue;
+        }
+        
+        // Task completed - process it
+        if (result) {
+          console.log(`[pollHunyuanTasks] Task ${tid} completed, processing images`);
+          
+          // Convert result to array format
+          const images = Array.isArray(result) ? result : [result];
+          
+          // Update task as webhook processed (so checkTaskStatus uses these images)
+          await tasksCollection.updateOne(
+            { taskId: tid },
+            { 
+              $set: { 
+                'result.images': images.map(img => ({
+                  imageUrl: img.imageUrl,
+                  seed: img.seed || 0,
+                  nsfw_detection_result: img.nsfw_detection_result,
+                  imageId: img.imageId
+                })),
+                'webhookProcessed': true,
+                updatedAt: new Date() 
+              } 
+            }
+          );
+          
+          // Process using checkTaskStatus (handles merge face, saving, etc.)
+          const taskStatus = await checkTaskStatus(tid, fastify);
+          
+          if (taskStatus && taskStatus.status === 'completed' && taskStatus.images && taskStatus.images.length > 0) {
+            completedTasks.set(tid, taskStatus.images);
+            
+            // Get the task document for options
+            const taskDocAfter = await tasksCollection.findOne({ taskId: tid });
+            
+            // Call handleTaskCompletion to send notifications
+            if (taskDocAfter) {
+              await handleTaskCompletion(taskStatus, fastify, {
+                chatCreation: taskDocAfter.chatCreation || false,
+                translations: taskDocAfter.translations || translations,
+                userId: taskStatus.userId?.toString() || taskDocAfter.userId?.toString(),
+                chatId: taskDocAfter.chatId?.toString(),
+                placeholderId: taskDocAfter.placeholderId
+              });
+            }
+          } else {
+            completedTasks.set(tid, []);
+          }
+        }
+      } catch (error) {
+        console.error(`[pollHunyuanTasks] Error polling task ${tid}:`, error.message);
+        allComplete = false;
+      }
+    }
+    
+    // Check if all tasks are complete
+    if (completedTasks.size === taskIds.length) {
+      console.log(`[pollHunyuanTasks] All ${taskIds.length} tasks completed`);
+      return true;
+    }
+    
+    // Continue polling if not all complete and not at max attempts
+    if (attempts < maxAttempts && !allComplete) {
+      return new Promise(resolve => {
+        setTimeout(async () => {
+          resolve(await pollOnce());
+        }, pollInterval);
+      });
+    }
+    
+    // Timeout - some tasks didn't complete
+    if (attempts >= maxAttempts) {
+      console.warn(`[pollHunyuanTasks] Timeout: ${completedTasks.size}/${taskIds.length} tasks completed after ${maxAttempts} attempts`);
+      
+      // Send notification about timeout if this is character creation
+      if (chatCreation && typeof fastify.sendNotificationToUser === 'function') {
+        fastify.sendNotificationToUser(userId, 'showNotification', {
+          message: translations?.newCharacter?.image_generation_timeout || 'Image generation timed out. Please try again.',
+          icon: 'error'
+        });
+      }
+    }
+    
+    return completedTasks.size > 0;
+  };
+  
+  // Start polling after a short delay to give webhooks a chance
+  console.log(`[pollHunyuanTasks] Waiting 10 seconds before starting fallback polling...`);
+  await new Promise(resolve => setTimeout(resolve, 10000));
+  
+  // Check if webhook already completed all tasks
+  let allAlreadyComplete = true;
+  for (const tid of taskIds) {
+    const taskDoc = await tasksCollection.findOne({ taskId: tid });
+    if (!taskDoc || (taskDoc.status !== 'completed' && !taskDoc.webhookProcessed)) {
+      allAlreadyComplete = false;
+      break;
+    }
+  }
+  
+  if (allAlreadyComplete) {
+    console.log(`[pollHunyuanTasks] All tasks already completed via webhook, skipping fallback polling`);
+    return true;
+  }
+  
+  return await pollOnce();
+}
+
 module.exports = {
   generateImg,
   getPromptById,
@@ -2619,5 +2812,6 @@ module.exports = {
   fetchNovitaMagic,
   fetchNovitaResult,
   fetchOriginalTaskData,
-  getTitleString
+  getTitleString,
+  pollHunyuanTasksWithFallback
 };

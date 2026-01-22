@@ -958,7 +958,7 @@ async function startGeneration() {
     
     // For face tools like Merge Face, prompt may not be required
     const needsPrompt = state.generationMode !== 'face' || 
-        selectedModels.some(m => m.id !== 'merge-face');
+        selectedModels.some(m => m.id !== 'merge-face' && m.id !== 'merge-face-segmind');
     
     if (needsPrompt && !basePrompt) {
         showNotification('Please enter a prompt', 'warning');
@@ -972,8 +972,8 @@ async function startGeneration() {
     }
     
     if (state.generationMode === 'face') {
-        const hasMergeFace = selectedModels.some(m => m.id === 'merge-face');
-        const hasOtherFaceTools = selectedModels.some(m => m.id !== 'merge-face');
+        const hasMergeFace = selectedModels.some(m => m.id === 'merge-face' || m.id === 'merge-face-segmind');
+        const hasOtherFaceTools = selectedModels.some(m => m.id !== 'merge-face' && m.id !== 'merge-face-segmind');
         
         if (hasMergeFace && (!state.faceImageDataUrl || !state.targetImageDataUrl)) {
             showNotification('Please upload both face and target images for Merge Face', 'warning');

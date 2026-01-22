@@ -231,20 +231,9 @@ const MODEL_CONFIGS = {
     supportedParams: ['image_file', 'extra'],
     description: 'Generate creative variations of a single image without prompts'
   },
-  'merge-face': {
-    name: 'Merge Face (Novita)',
-    endpoint: 'https://api.novita.ai/v3/merge-face',
-    async: false, // Synchronous API
-    category: 'face',
-    supportsImg2Img: false, // Not a standard img2img model - this is a face merging tool
-    requiresImage: true,
-    requiresTwoImages: true,
-    defaultParams: {},
-    supportedParams: ['face_image_file', 'image_file', 'extra'],
-    description: 'Combine features from two faces into one image (Novita AI)'
-  },
   'merge-face-segmind': {
-    name: 'Merge Face (Segmind)',
+    name: 'Merge Face',
+    alias: 'merge-face', // Alias for backward compatibility
     endpoint: 'https://api.segmind.com/v1/faceswap-v5',
     async: false, // Synchronous API
     category: 'face',
@@ -412,20 +401,8 @@ async function initializeModelTest(modelId, params) {
         response_image_type: 'png'
       };
     }
-    // Handle Merge Face (requires two images)
-    else if (modelId === 'merge-face') {
-      requestBody = {
-        face_image_file: params.face_image_file,
-        image_file: params.image_file
-      };
-      
-      // Add extra params if needed
-      if (params.extra) {
-        requestBody.extra = params.extra;
-      }
-    }
     // Handle Merge Face Segmind (requires two images)
-    else if (modelId === 'merge-face-segmind') {
+    else if (modelId === 'merge-face-segmind' || modelId === 'merge-face') {
       // Segmind API requires image URLs, not base64 data
       // We need to upload the images to S3 first
       let sourceImage = params.face_image_file;
@@ -667,37 +644,26 @@ async function initializeModelTest(modelId, params) {
       let images = [];
       
       // Segmind Merge Face returns image as arraybuffer
-      if (modelId === 'merge-face-segmind') {
+      if (modelId === 'merge-face-segmind' || modelId === 'merge-face') {
         console.log(`[AdminImageTest] 🔍 Segmind Merge Face - processing arraybuffer response`);
         if (response.data && response.data.byteLength > 0) {
           const imageBuffer = Buffer.from(response.data);
           const base64Image = imageBuffer.toString('base64');
-          const dataUrl = `data:image/png;base64,${base64Image}`;
-          images = [dataUrl];
+          
+          // Upload to S3 immediately so the URL persists
+          console.log(`[AdminImageTest] 📤 Uploading merge face result to S3...`);
+          try {
+            const s3Url = await uploadTestImageToS3(`data:image/png;base64,${base64Image}`, 'merge_face');
+            images = [s3Url];
+            console.log(`[AdminImageTest] ✅ Merge face image uploaded to S3: ${s3Url.substring(0, 60)}...`);
+          } catch (uploadError) {
+            console.error(`[AdminImageTest] ⚠️ S3 upload failed, using base64:`, uploadError.message);
+            const dataUrl = `data:image/png;base64,${base64Image}`;
+            images = [dataUrl];
+          }
           console.log(`[AdminImageTest] ✅ Segmind image processed (${imageBuffer.length} bytes)`);
         } else {
           console.log(`[AdminImageTest] ⚠️ No image data in Segmind response`);
-        }
-      }
-      // Novita Merge Face returns image_file (raw base64) and image_type
-      else if (modelId === 'merge-face') {
-        console.log(`[AdminImageTest] 🔍 Merge Face response keys:`, Object.keys(response.data));
-        if (response.data.image_file) {
-          // Convert raw base64 to data URL format
-          const imageType = response.data.image_type || 'png';
-          const base64Length = response.data.image_file.length;
-          console.log(`[AdminImageTest] ✅ Found image_file (${base64Length} chars), type: ${imageType}`);
-          const dataUrl = `data:image/${imageType};base64,${response.data.image_file}`;
-          images = [dataUrl];
-          console.log(`[AdminImageTest] 📦 Created data URL (${dataUrl.length} chars)`);
-        } else if (response.data.merged_image) {
-          console.log(`[AdminImageTest] ✅ Found merged_image`);
-          images = [response.data.merged_image];
-        } else if (response.data.image) {
-          console.log(`[AdminImageTest] ✅ Found image`);
-          images = [response.data.image];
-        } else {
-          console.log(`[AdminImageTest] ⚠️ No image field found in merge-face response`);
         }
       }
       // Novita Reimagine returns image_file (raw base64) and image_type

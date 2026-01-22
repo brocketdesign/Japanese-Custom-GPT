@@ -12,6 +12,7 @@
 const { ObjectId } = require('mongodb');
 const { generateCompletion } = require('../models/openai');
 const { generateUniqueSlug } = require('../models/slug-utils');
+const { uploadTestImageToS3 } = require('../models/admin-image-test-utils');
 const OpenAI = require("openai");
 const { z } = require("zod");
 const { zodResponseFormat } = require("openai/helpers/zod");
@@ -233,6 +234,19 @@ async function routes(fastify, options) {
                 return reply.status(400).send({ error: 'Image URL and prompt are required' });
             }
 
+            // If imageUrl is a base64 data URL, upload to S3 first
+            let finalImageUrl = imageUrl;
+            if (imageUrl.startsWith('data:')) {
+                console.log(`[DashboardIntegration] Base64 image detected, uploading to S3...`);
+                try {
+                    finalImageUrl = await uploadTestImageToS3(imageUrl, 'character');
+                    console.log(`[DashboardIntegration] Image uploaded to S3: ${finalImageUrl.substring(0, 80)}...`);
+                } catch (uploadError) {
+                    console.error(`[DashboardIntegration] Failed to upload image to S3:`, uploadError);
+                    return reply.status(500).send({ error: 'Failed to upload image. Please try again.' });
+                }
+            }
+
             console.log(`[DashboardIntegration] Creating character from image for user ${userId}`);
             console.log(`[DashboardIntegration] Image prompt: ${imagePrompt.substring(0, 100)}...`);
             console.log(`[DashboardIntegration] Use image as base face: ${useImageAsBaseFace}`);
@@ -280,8 +294,8 @@ async function routes(fastify, options) {
             
             // If useImageAsBaseFace is true, set the image as baseFaceUrl for auto-merge
             if (useImageAsBaseFace) {
-                chatDocument.baseFaceUrl = imageUrl;
-                console.log(`[DashboardIntegration] Setting baseFaceUrl for auto-merge: ${imageUrl.substring(0, 50)}...`);
+                chatDocument.baseFaceUrl = finalImageUrl;
+                console.log(`[DashboardIntegration] Setting baseFaceUrl for auto-merge: ${finalImageUrl.substring(0, 50)}...`);
             }
 
             const insertResult = await collectionChats.insertOne(chatDocument);
@@ -308,7 +322,7 @@ async function routes(fastify, options) {
             const galleryCollection = db.collection('gallery');
             const imageDoc = {
                 _id: new ObjectId(),
-                imageUrl: imageUrl,
+                imageUrl: finalImageUrl,
                 prompt: imagePrompt,
                 nsfw: nsfw,
                 createdAt: now,

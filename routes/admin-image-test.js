@@ -159,7 +159,7 @@ async function routes(fastify, options) {
 
       // For face tools like merge-face, prompt may not be required
       const requiresPrompt = generationMode !== 'face' || 
-        (models && models.some(m => m !== 'merge-face'));
+        (models && models.some(m => m !== 'merge-face' && m !== 'merge-face-segmind'));
       
       if (requiresPrompt && (!prompt || prompt.trim() === '')) {
         return reply.status(400).send({ error: 'Prompt is required' });
@@ -249,7 +249,8 @@ async function routes(fastify, options) {
             
             // Add face tool parameters
             if (generationMode === 'face') {
-              if (modelId === 'merge-face' || modelId === 'merge-face-segmind') {
+              if (modelId === 'merge-face-segmind' || modelId === 'merge-face') {
+                // Normalize merge-face to merge-face-segmind
                 baseParams.face_image_file = face_image_file;
                 baseParams.image_file = image_file;
               } else {
@@ -420,13 +421,18 @@ async function routes(fastify, options) {
       if (result.images && Array.isArray(result.images)) {
         for (let i = 0; i < result.images.length; i++) {
           const img = result.images[i];
-          if (img.imageUrl && !img.s3Url) {
+          // Only upload if imageUrl is a base64 data URL and no s3Url exists
+          // Skip if imageUrl is already an S3 URL (https://)
+          if (img.imageUrl && !img.s3Url && img.imageUrl.startsWith('data:')) {
             try {
               const s3Url = await uploadTestImageToS3(img.imageUrl, result.modelId);
               result.images[i].s3Url = s3Url;
             } catch (err) {
               console.error(`[ImageDashboard] Failed to upload to S3:`, err.message);
             }
+          } else if (img.imageUrl && img.imageUrl.startsWith('https://')) {
+            // imageUrl is already an S3 URL, use it as s3Url
+            result.images[i].s3Url = img.imageUrl;
           }
         }
       }

@@ -1062,11 +1062,16 @@ function handleChatListItemClick(el) {
     // Update global chatId variable before calling fetchChatData
     window.chatId = selectChatId;
     
-    fetchChatData(selectChatId, window.userId, null, function() {
-        $el.removeClass('loading');
-        // Update current chat after successful fetch
-        updateCurrentChat(selectChatId, window.userId);
-    });
+    if (typeof window.fetchChatData === 'function') {
+        window.fetchChatData(selectChatId, window.userId, null, function() {
+            $el.removeClass('loading');
+            // Update current chat after successful fetch
+            updateCurrentChat(selectChatId, window.userId);
+        });
+    } else {
+        // Redirect to chat page if fetchChatData is not available
+        window.location.href = `/chat/${selectChatId}`;
+    }
 };
 
 // Show chat history modal (fixed with proper modal management)
@@ -1393,9 +1398,14 @@ function handleChatThumbClick(el) {
     window.chatId = selectChatId;
 
     // Always fetch using the signed-in user so we reopen the latest session instead of resetting.
-    fetchChatData(selectChatId, activeUserId, null, function() {
-        $el.prependTo($el.parent());
-    });
+    if (typeof window.fetchChatData === 'function') {
+        window.fetchChatData(selectChatId, activeUserId, null, function() {
+            $el.prependTo($el.parent());
+        });
+    } else {
+        // Redirect to chat page if fetchChatData is not available (e.g., on /character page)
+        window.location.href = `/chat/${selectChatId}`;
+    }
 }
 
 // Update horizontal chat menu when current chat changes

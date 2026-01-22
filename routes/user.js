@@ -157,8 +157,8 @@ async function routes(fastify, options) {
   
       // Set the cookie and redirect
       reply.setCookie('token', token, { path: '/', httpOnly: true });
-      console.log('Redirect to /chat/')
-      return reply.send({ redirectUrl: '/chat/' });
+      console.log('Redirect to /dashboard')
+      return reply.send({ redirectUrl: '/dashboard' });
   
     } catch (err) {
       console.log(`Error in /user/clerk-auth: ${err.message}`, err);

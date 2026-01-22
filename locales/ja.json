@@ -1120,6 +1120,14 @@
   "create": "作成",
   "library": "ライブラリー",
   "explore": "探索",
+  "home": "ホーム",
+  "chats": "チャット",
+  "guest": "ゲスト",
+  "noChats": "チャットがありません",
+  "startChatting": "AIキャラクターとチャットを始めましょう",
+  "startNow": "今すぐ始める",
+  "justNow": "たった今",
+  "refreshing": "更新中...",
   "chatList": "チャット一覧",
   "totalChats": "{{chats.length}}",
   "startChat": "チャットを始める",
@@ -2329,6 +2337,7 @@
   "loading_leaderboard": "リーダーボードを読み込み中...",
   "analytics_refreshed": "分析データが正常に更新されました",
   
+  "manage": "管理",
   "dashboard": {
     "myPosts": "マイ投稿",
     "myPostsDescription": "生成したコンテンツを表示・管理",

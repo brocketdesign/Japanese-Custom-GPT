@@ -2430,6 +2430,60 @@ opacity: 0.8;
   }
   }
 
+  /* Native App Style Navigation Icon Button */
+  .nav-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.15rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+  }
+
+  .nav-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #fff;
+    transform: scale(1.05);
+  }
+
+  .nav-icon-btn:active {
+    transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.28);
+  }
+
+  .nav-icon-btn i {
+    line-height: 1;
+  }
+
+  /* Dark mode / light background variant */
+  @media (prefers-color-scheme: light) {
+    .nav-icon-btn {
+      background: rgba(0, 0, 0, 0.06);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      color: rgba(0, 0, 0, 0.75);
+    }
+
+    .nav-icon-btn:hover {
+      background: rgba(0, 0, 0, 0.1);
+      border-color: rgba(0, 0, 0, 0.15);
+      color: rgba(0, 0, 0, 0.9);
+    }
+
+    .nav-icon-btn:active {
+      background: rgba(0, 0, 0, 0.15);
+    }
+  }
+
   .character-create-card {
     background: var(--bg-secondary);
     border: 1px solid var(--glass-border);

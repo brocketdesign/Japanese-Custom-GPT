@@ -20,6 +20,9 @@
     background: var(--explore-bg);
     overflow: hidden;
     -webkit-overflow-scrolling: touch;
+    /* Prevent pull-to-refresh on mobile browsers */
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
 }
 
 .explore-container {
@@ -33,6 +36,9 @@
     flex-direction: column;
     z-index: 100;
     padding-top: var(--explore-safe-area-top);
+    /* Prevent pull-to-refresh and overscroll bouncing */
+    overscroll-behavior: contain;
+    touch-action: pan-x pan-y;
 }
 
 /* ===== Sticky Header ===== */
@@ -58,7 +64,167 @@
     max-width: 100%;
 }
 
-/* Back/Home Button */
+/* Logo Link */
+.explore-logo-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    text-decoration: none;
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+    border-radius: 12px;
+}
+
+.explore-logo-icon {
+    font-size: 24px;
+    color: #ffffff;
+    transition: transform 0.2s ease;
+}
+
+.explore-logo-link:hover .explore-logo-icon {
+    transform: scale(1.1);
+}
+
+.explore-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
+/* Spacer to push buttons right */
+.explore-nav-spacer {
+    flex: 1;
+}
+
+/* Right-aligned navigation actions */
+.explore-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* Generic action button style */
+.explore-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--explore-text);
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.explore-action-btn i {
+    font-size: 18px;
+}
+
+.explore-action-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.explore-action-btn:active {
+    transform: scale(0.95);
+}
+
+.explore-action-btn.active {
+    background: var(--explore-accent);
+}
+
+/* Search Toggle Button (keeping for backward compatibility) */
+.explore-search-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--explore-text);
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.explore-search-toggle i {
+    font-size: 18px;
+}
+
+.explore-search-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.explore-search-toggle:active {
+    transform: scale(0.95);
+}
+
+/* Auth/Login Button */
+.explore-auth-btn {
+    flex-shrink: 0;
+}
+
+.auth-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--explore-text);
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.auth-icon-btn i {
+    font-size: 22px;
+}
+
+.auth-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--explore-text);
+}
+
+.auth-icon-btn:active {
+    transform: scale(0.95);
+}
+
+.auth-profile-img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Expanded Search Section (below navbar) */
+.explore-search-expanded {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    padding: 0 0;
+}
+
+.explore-search-expanded.expanded {
+    max-height: 70px;
+    padding: 12px 0 0;
+}
+
+.explore-search-expanded .explore-search-form {
+    width: 100%;
+}
+
+/* Back/Home Button (keeping for backward compatibility) */
 .explore-back-btn {
     display: flex;
     align-items: center;
@@ -89,6 +255,23 @@
 .explore-search-form {
     flex: 1;
     min-width: 0;
+    transition: all 0.3s ease;
+}
+
+/* Collapsible search form (keeping for backward compatibility) */
+.explore-search-form.collapsed {
+    flex: 0;
+    width: 0;
+    min-width: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.explore-search-form:not(.collapsed) {
+    flex: 1;
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .search-input-group {
@@ -203,10 +386,8 @@
 .explore-vertical-swiper {
     width: 100%;
     height: 100%;
-}
-
-.explore-vertical-swiper .swiper-wrapper {
-    flex-direction: column;
+    /* Prevent overscroll at swiper boundaries */
+    overscroll-behavior: contain;
 }
 
 /* ===== Character Slide ===== */
@@ -225,7 +406,13 @@
     position: relative;
 }
 
+.character-images-swiper .swiper-wrapper {
+    height: 100%;
+}
+
 .character-images-swiper .swiper-slide {
+    width: 100%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -244,11 +431,10 @@
 }
 
 .explore-image {
-    max-width: 100%;
-    max-height: 100%;
-    width: auto;
-    height: auto;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
+    object-position: center;
     transition: transform 0.3s ease;
     user-select: none;
     -webkit-user-drag: none;
@@ -380,11 +566,11 @@
 }
 
 .action-btn.primary {
-    background: var(--explore-accent);
+    background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
 }
 
 .action-btn.primary:hover {
-    background: var(--explore-accent-light);
+    background: linear-gradient(135deg, #8b5cf6 0%, #818cf8 100%);
 }
 
 /* Image pagination dots */
@@ -439,6 +625,10 @@
 .loading-spinner {
     width: 48px;
     height: 48px;
+    min-width: 48px;
+    min-height: 48px;
+    flex-shrink: 0;
+    aspect-ratio: 1 / 1;
     border: 3px solid rgba(255, 255, 255, 0.1);
     border-top-color: var(--explore-accent);
     border-radius: 50%;

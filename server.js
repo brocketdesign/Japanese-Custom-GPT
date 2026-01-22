@@ -262,55 +262,25 @@ fastify.get('/landing', async (request, reply) => {
   });
 });
 
-// Top page now renders the chat template (same as /chat page)
+// Top page now redirects to dashboard
 fastify.get('/', async (request, reply) => {
-  const db = fastify.mongo.db;
+  // Check for any special query params that need to be preserved
+  const queryParams = new URLSearchParams();
   
-  let { translations, lang, user } = request;
-  const userId = user._id;
-
-  const collectionChat = db.collection('chats');
-  const collectionUser = db.collection('users');
-  const userData = await getUserData(userId, collectionUser, collectionChat, user);
-
-  const signIn = request.query.signIn == 'true' || false;
-  const signOut = request.query.signOut == 'true' || false;
-
-  const isAdmin = await checkUserAdmin(fastify, userId);
-  const imageType = request.query.type || false;
-  const newSubscription = request.query.newSubscription || false;
-
-  const promptData = await db.collection('prompts').find({}).sort({order: 1}).toArray();
-  const giftData = await db.collection('gifts').find({}).sort({order: 1}).toArray();
-
-  const seoMetadata = generateSeoMetadata(request, '/', lang);
-  return reply.view('chat.hbs', {
-    title: translations.seo.title,
-    canonicalUrl: seoMetadata.canonicalUrl,
-    alternates: seoMetadata.alternates,
-    isAdmin,
-    imageType,
-    user,
-    newSubscription,
-    userId,
-    chatId: null,
-    userData,
-    promptData,
-    giftData,
-    isTemporaryOrGuest: !user || user.isTemporary,
-    seo: [
-      { name: 'description', content: translations.seo.description },
-      { name: 'keywords', content: translations.seo.keywords },
-      { property: 'og:title', content: translations.seo.title },
-      { property: 'og:description', content: translations.seo.description },
-      { property: 'og:image', content: '/img/share.png' },
-      { property: 'og:url', content: seoMetadata.canonicalUrl },
-      { property: 'og:locale', content: lang },
-      { property: 'og:locale:alternate', content: 'en' },
-      { property: 'og:locale:alternate', content: 'fr' },
-      { property: 'og:locale:alternate', content: 'ja' },
-    ],
-  });
+  if (request.query.signIn === 'true') {
+    queryParams.set('signIn', 'true');
+  }
+  if (request.query.signOut === 'true') {
+    queryParams.set('signOut', 'true');
+  }
+  if (request.query.newSubscription) {
+    queryParams.set('newSubscription', request.query.newSubscription);
+  }
+  
+  const queryString = queryParams.toString();
+  const redirectUrl = queryString ? `/dashboard?${queryString}` : '/dashboard';
+  
+  return reply.redirect(redirectUrl);
 });
 
 fastify.get('/signin-redirection', async (request, reply) => {
@@ -431,6 +401,11 @@ fastify.get('/chat', async (request, reply) => {
   let { translations, lang, user } = request;
   const userId = user._id;
 
+  // Redirect non-logged-in (temporary) users to search page
+  if (user.isTemporary) {
+    return reply.redirect('/search');
+  }
+
   const collectionChat = db.collection('chats');
   const collectionUser = db.collection('users');
   const userData = await getUserData(userId, collectionUser, collectionChat, user);
@@ -490,6 +465,11 @@ fastify.get('/chat/:chatId', async (request, reply) => {
   let { translations, lang, user } = request;
   const userId = user._id;
 
+  // Redirect non-logged-in (temporary) users to search page
+  if (user.isTemporary) {
+    return reply.redirect('/search');
+  }
+
   const collectionChat = db.collection('chats');
   const collectionUser = db.collection('users');
   const userData = await getUserData(userId, collectionUser, collectionChat, user);
@@ -497,7 +477,7 @@ fastify.get('/chat/:chatId', async (request, reply) => {
   const signIn = request.query.signIn == 'true' || false;
   const signOut = request.query.signOut == 'true' || false;
 
-  if (!signIn && (signOut || user.isTemporary || !userData)) {
+  if (!signIn && (signOut || !userData)) {
     //return reply.redirect('/');
   }
 
@@ -1403,15 +1383,148 @@ fastify.get('/generate/:userid', (request, reply) => {
 fastify.get('/dashboard', async (request, reply) => {
   try {
     const db = fastify.mongo.db;
-    const userId = new fastify.mongo.ObjectId(request.user._id);
-    const chatsCollection = db.collection('chats');
-    const chats = await chatsCollection.distinct('chatImageUrl', { userId });
-    if(chats.length === 0){
-      return reply.redirect('/chat/edit/');
+    let { translations, lang, user } = request;
+    const userId = user._id;
+
+    // Redirect non-logged-in (temporary) users to search page
+    if (user.isTemporary) {
+      return reply.redirect('/search');
     }
-    return reply.redirect('/chat/');
+
+    const collectionChat = db.collection('chats');
+    const collectionUser = db.collection('users');
+    const { getUserData } = require('./models/tool');
+    const userData = await getUserData(userId, collectionUser, collectionChat, user);
+
+    const isAdmin = await checkUserAdmin(fastify, userId);
+    const promptData = await db.collection('prompts').find({}).sort({order: 1}).toArray();
+    const giftData = await db.collection('gifts').find({}).sort({order: 1}).toArray();
+
+    const seoMetadata = generateSeoMetadata(request, '/dashboard', lang);
+    return reply.view('dashboard.hbs', {
+      title: translations.dashboard?.title || 'Dashboard',
+      canonicalUrl: seoMetadata.canonicalUrl,
+      alternates: seoMetadata.alternates,
+      isAdmin,
+      user,
+      userId,
+      userData,
+      promptData,
+      giftData,
+      isTemporaryOrGuest: !user || user.isTemporary,
+      seo: [
+        { name: 'description', content: translations.seo.description },
+        { name: 'keywords', content: translations.seo.keywords },
+        { property: 'og:title', content: translations.dashboard?.title || 'Dashboard' },
+        { property: 'og:description', content: translations.seo.description },
+        { property: 'og:image', content: '/img/share.png' },
+        { property: 'og:url', content: seoMetadata.canonicalUrl },
+        { property: 'og:locale', content: lang },
+      ],
+    });
   } catch (err) {
+    console.error('Dashboard error:', err);
     return reply.status(500).send({ error: 'Unable to render the dashboard' });
+  }
+});
+
+// Dashboard Stats API
+fastify.get('/api/dashboard/stats', async (request, reply) => {
+  try {
+    const db = fastify.mongo.db;
+    const user = request.user;
+    
+    if (!user || !user._id) {
+      return reply.code(401).send({ error: 'Unauthorized' });
+    }
+    
+    const userId = new fastify.mongo.ObjectId(user._id);
+    
+    // Count characters created by user
+    const charactersCount = await db.collection('chats').countDocuments({ userId });
+    
+    // Count user's chat conversations
+    const chatsCount = await db.collection('userChat').countDocuments({ userId });
+    
+    // Count images generated by user - aggregate across all gallery documents for user's chats
+    const userChats = await db.collection('chats').find({ userId }, { projection: { _id: 1 } }).toArray();
+    const userChatIds = userChats.map(c => c._id);
+    
+    let imagesCount = 0;
+    if (userChatIds.length > 0) {
+      const imageAggregation = await db.collection('gallery').aggregate([
+        { $match: { chatId: { $in: userChatIds } } },
+        { $project: { imageCount: { $size: { $ifNull: ['$images', []] } } } },
+        { $group: { _id: null, total: { $sum: '$imageCount' } } }
+      ]).toArray();
+      imagesCount = imageAggregation[0]?.total || 0;
+    }
+    
+    // Count videos generated by user
+    const videosCount = await db.collection('videos').countDocuments({ userId });
+    
+    return reply.send({
+      characters: charactersCount,
+      chats: chatsCount,
+      images: imagesCount,
+      videos: videosCount
+    });
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    return reply.code(500).send({ error: 'Internal Server Error' });
+  }
+});
+
+// Recent Chats API
+fastify.get('/api/recent-chats', async (request, reply) => {
+  try {
+    const db = fastify.mongo.db;
+    const user = request.user;
+    
+    if (!user || !user._id) {
+      return reply.code(401).send({ error: 'Unauthorized' });
+    }
+    
+    const userId = new fastify.mongo.ObjectId(user._id);
+    const limit = parseInt(request.query.limit) || 10;
+    
+    // Get user's recent chats with chat details
+    const userChats = await db.collection('userChat')
+      .find({ userId })
+      .sort({ updatedAt: -1, createdAt: -1 })
+      .limit(limit)
+      .toArray();
+    
+    // Get chat details for each userChat
+    const chatIds = [...new Set(userChats.map(uc => uc.chatId))];
+    const chats = await db.collection('chats')
+      .find({ _id: { $in: chatIds.map(id => new fastify.mongo.ObjectId(id)) } })
+      .toArray();
+    
+    const chatMap = {};
+    chats.forEach(chat => {
+      chatMap[chat._id.toString()] = chat;
+    });
+    
+    // Combine data
+    const recentChats = userChats.map(uc => {
+      const chat = chatMap[uc.chatId?.toString()] || {};
+      return {
+        _id: chat._id || uc.chatId,
+        name: chat.name || 'Unknown',
+        chatImageUrl: chat.chatImageUrl || '/img/default-avatar.webp',
+        description: chat.characterPrompt || chat.description || '',
+        lastMessage: uc.messages?.[uc.messages.length - 1]?.content || '',
+        updatedAt: uc.updatedAt || uc.createdAt,
+        createdAt: uc.createdAt,
+        userChatId: uc._id
+      };
+    }).filter(c => c._id);
+    
+    return reply.send({ chats: recentChats });
+  } catch (error) {
+    console.error('Error fetching recent chats:', error);
+    return reply.code(500).send({ error: 'Internal Server Error' });
   }
 });
 

@@ -340,40 +340,22 @@ class ExploreGallery {
         slide.dataset.characterId = character.chatId;
         
         const imagesHtml = character.images.map((img, idx) => {
-            const thumb = (img.thumbnailUrl && img.thumbnailUrl.length) ? img.thumbnailUrl : '/img/placeholder.png';
-            const full = img.imageUrl || thumb;
+            // Use imageUrl as primary source, fallback to thumbnailUrl, then placeholder
+            const imageUrl = img.imageUrl || img.thumbnailUrl || '/img/placeholder.png';
+            const thumbUrl = img.thumbnailUrl || img.imageUrl || '/img/placeholder.png';
             const isNsfw = img.nsfw && (!this.showNSFW || !this.isPremium);
 
-            // Eager-load first two images for snappy UX, lazy-load the rest using Swiper's lazy module
-            if (idx < 2) {
-                return `
-                    <div class="swiper-slide">
-                        <div class="explore-image-card ${isNsfw ? 'nsfw-content' : ''}">
-                            <img 
-                                src="${full}" 
-                                alt="${this.escapeHtml(character.chatName)}"
-                                class="explore-image"
-                                loading="eager"
-                                onerror="this.src='/img/placeholder.png'"
-                            >
-                            ${isNsfw ? this.createNSFWOverlay() : ''}
-                        </div>
-                    </div>
-                `;
-            }
-
+            // All images use the full imageUrl for display
             return `
                 <div class="swiper-slide">
                     <div class="explore-image-card ${isNsfw ? 'nsfw-content' : ''}">
                         <img 
-                            src="${thumb}" 
-                            data-src="${full}"
+                            src="${imageUrl}" 
                             alt="${this.escapeHtml(character.chatName)}"
-                            class="explore-image swiper-lazy"
-                            loading="lazy"
-                            onerror="this.src='/img/placeholder.png'"
+                            class="explore-image"
+                            loading="${idx < 2 ? 'eager' : 'lazy'}"
+                            onerror="this.onerror=null; this.src='/img/placeholder.png';"
                         >
-                        <div class="swiper-lazy-preloader"></div>
                         ${isNsfw ? this.createNSFWOverlay() : ''}
                     </div>
                 </div>
@@ -410,7 +392,7 @@ class ExploreGallery {
                         <button class="action-btn" onclick="event.stopPropagation(); window.location.href='/character/slug/${character.chatSlug}'" title="View Profile">
                             <i class="bi bi-person"></i>
                         </button>
-                        <button class="action-btn primary" onclick="event.stopPropagation(); window.location.href='/chat/${character.chatId}'" title="Open Chat">
+                        <button class="action-btn primary" onclick="event.stopPropagation(); window.exploreGallery.handleChatClick('${character.chatId}')" title="Open Chat">
                             <i class="bi bi-chat-dots"></i>
                         </button>
                     </div>
@@ -420,6 +402,23 @@ class ExploreGallery {
         `;
         
         return slide;
+    }
+    
+    /**
+     * Handle chat button click - redirects to chat or opens login modal
+     */
+    handleChatClick(chatId) {
+        if (this.isTemporary) {
+            // Open login modal for non-logged-in users
+            if (typeof openLoginForm === 'function') {
+                openLoginForm();
+            } else {
+                window.location.href = '/login';
+            }
+        } else {
+            // Go to chat for logged-in users
+            window.location.href = `/chat/${chatId}`;
+        }
     }
     
     escapeHtml(text) {
@@ -512,11 +511,6 @@ class ExploreGallery {
                 threshold: 20,
                 resistanceRatio: 0.85,
                 speed: 300,
-                preloadImages: false,
-                lazy: {
-                    loadPrevNext: true,
-                    loadPrevNextAmount: 2
-                },
                 observer: true,
                 observeParents: true,
                 watchSlidesProgress: true,

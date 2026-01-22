@@ -1,14 +1,14 @@
 {{#if user}}
     {{#if user.isTemporary}}
         <li class="nav-item dropdown clerk-button">
-            <a class="btn btn-secondary custom-gradient-bg shadow-0" style="border-radius: 50px;" href="#" onclick="openLoginForm()">
-                {{translations.login}}
+            <a class="btn shadow-0 nav-icon-btn" href="#" onclick="openLoginForm()" title="{{translations.login}}">
+                <i class="bi bi-box-arrow-in-right"></i>
             </a>
         </li>
         <li class="nav-item mx-2">
             <!-- Language Dropdown -->
             <div class="dropdown">
-                <button data-user-lang="{{user.lang}}" class="btn btn-light dropdown-toggle" type="button" id="languageDropdownMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                <button data-user-lang="{{user.lang}}" class="btn btn-light dropdown-toggle shadow-0" type="button" id="languageDropdownMenu" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi bi-globe2"></i>
                 </button>
                 <ul class="dropdown-menu position-absolute dropdown-menu-end" aria-labelledby="languageDropdownMenu">
@@ -22,8 +22,8 @@
    {{/if}}
 {{else}}
         <li class="nav-item dropdown">
-        <a class="btn btn-secondary custom-gradient-bg shadow-0 " style="border-radius: 50px;" href="/authenticate">
-            {{translations.login}}
+        <a class="btn shadow-0 nav-icon-btn" href="/authenticate" title="{{translations.login}}">
+            <i class="bi bi-box-arrow-in-right"></i>
         </a>
     </li>
 {{/if}}

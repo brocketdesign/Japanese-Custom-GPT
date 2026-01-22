@@ -57,19 +57,26 @@ const updateGenderDropdownDisplay = (gender) => {
     }
 };
 
+// Helper: Update NSFW blur state on gallery
+const updateNsfwBlurState = () => {
+    // If nsfwChatsHidden is true, add blur-nsfw class to blur images
+    // If nsfwChatsHidden is false (user wants to see NSFW), remove blur
+    $('.explore-gallery, .popular-chats-gallery, #chat-gallery, #latest-chats-gallery, #all-chats-images-gallery').toggleClass('blur-nsfw', nsfwChatsHidden);
+    $('body').toggleClass('blur-nsfw', nsfwChatsHidden);
+};
+
 // On page load – restore state
 $(function () {
     const t = window.translations?.sort || {};
 
-    // Premium button text
-    $('#popular-chats-premium').text(
-        premiumChatsHidden ? (t.showPremium || 'Show Premium') : (t.hidePremium || 'Hide Premium')
-    );
+    // Update premium button active state (icon only)
+    $('#popular-chats-premium').toggleClass('active', !premiumChatsHidden);
 
-    // NSFW button text
-    $('#popular-chats-nsfw').text(
-        nsfwChatsHidden ? (t.showNSFW || 'Show NSFW') : (t.hideNSFW || 'Hide NSFW')
-    );
+    // Update NSFW button active state (icon only)
+    $('#popular-chats-nsfw').toggleClass('active', !nsfwChatsHidden);
+    
+    // Apply initial NSFW blur state based on user preference
+    updateNsfwBlurState();
 
     // Restore gender dropdown appearance
     updateGenderDropdownDisplay(currentGenderFilter);
@@ -82,8 +89,7 @@ $(function () {
 $(document).on('click', '#popular-chats-premium', function () {
     premiumChatsHidden = !premiumChatsHidden;
     Cookies.set('premiumChatsHidden', premiumChatsHidden, { expires: 7 });
-    const t = window.translations?.sort || {};
-    $(this).text(premiumChatsHidden ? (t.showPremium || 'Show Premium') : (t.hidePremium || 'Hide Premium'));
+    $(this).toggleClass('active', !premiumChatsHidden);
     logFilters('premium toggle');
     updateChatFilters();
 });
@@ -92,8 +98,9 @@ $(document).on('click', '#popular-chats-premium', function () {
 $(document).on('click', '#popular-chats-nsfw', function () {
     nsfwChatsHidden = !nsfwChatsHidden;
     Cookies.set('nsfwChatsHidden', nsfwChatsHidden, { expires: 7 });
-    const t = window.translations?.sort || {};
-    $(this).text(nsfwChatsHidden ? (t.showNSFW || 'Show NSFW') : (t.hideNSFW || 'Hide NSFW'));
+    $(this).toggleClass('active', !nsfwChatsHidden);
+    // Update blur state based on new setting
+    updateNsfwBlurState();
     logFilters('nsfw toggle');
     updateChatFilters();
 });

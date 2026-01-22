@@ -55,7 +55,7 @@ function initializeCache() {
 }
 
 initializeCache();
-displayChatList(true, userId);
+displayChatList(true, window.userId);
 
 // Reset cache
 function resetCache() {
@@ -107,7 +107,7 @@ function switchChatTab(tabName) {
         $('#tab-latest').addClass('active');
         $('#tab-favorites').removeClass('active');
 
-        displayChatList(false, userId);
+        displayChatList(false, window.userId);
     }
 }
 
@@ -363,7 +363,7 @@ $(document).on('click','#toggle-chat-list',function(){
     
     // Reset to latest tab and load chats
     currentChatTab = 'latest';
-    displayChatList(null, userId);
+    displayChatList(null, window.userId);
     
     // Update favorite count badge
     updateFavoriteCountBadge();
@@ -378,7 +378,7 @@ $(document).on('click','#close-chat-list-btn',function(){
     hideNavbarChatActions();
     if ($('#horizontal-chat-menu').length) {
         $('#horizontal-chat-menu').removeClass('d-none');
-        displayHorizontalChatList(userId);
+        displayHorizontalChatList(window.userId);
     }
 });
 // if the  url is like '/chat/?list=true'
@@ -397,7 +397,7 @@ function deleteChatHandler(chatId) {
         type: 'DELETE',
         data: { chatId },
         success: function(response) {
-            renderChatList(userId);
+            renderChatList(window.userId);
             showNotification(translations.deleteSuccess, 'success');
         },
         error: function(xhr, status, error) {
@@ -559,7 +559,7 @@ function displayChatList(reset, userId) {
             }
         });
         
-        updateCurrentChat(chatId, userId);
+        updateCurrentChat(chatId, window.userId);
         updateChatCount(pagination.total);
         checkShowMoreButton(pagination);
     }
@@ -642,7 +642,7 @@ function openChatActionsModal() {
     $('#chatActionsAvatar').attr('src', chat.chatImageUrl || '/img/logo.webp');
     $('#chatActionsName').text(chat.name || 'Chat');
     
-    const isOwner = chat.userId === userId;
+    const isOwner = chat.userId === window.userId;
     
     // Check if chat is favorited and build modal content
     Favorites.checkFavorite(chat._id, function(isFavorited) {
@@ -802,7 +802,7 @@ function updateChatListDisplay(currentChat) {
 
 // Enhanced function to construct chat item HTML with ultra-compact design for 260px sidebar
 function constructChatItemHtml(chat, isActive) {
-    const isOwner = chat.userId === userId;
+    const isOwner = chat.userId === window.userId;
     const lang = window.lang
     let lastMessageTime
     switch (lang) {
@@ -1037,7 +1037,7 @@ function handleUserChatHistoryClick(el) {
     }
     chatId = $(el).data('id');
     userChatId = $(el).data('chat');
-    postChatData(chatId, userId, userChatId, false, null);
+    postChatData(chatId, window.userId, userChatId, false, null);
 };
 
 //.chat-list.item.user-chat .user-chat-content
@@ -1062,10 +1062,10 @@ function handleChatListItemClick(el) {
     // Update global chatId variable before calling fetchChatData
     window.chatId = selectChatId;
     
-    fetchChatData(selectChatId, userId, null, function() {
+    fetchChatData(selectChatId, window.userId, null, function() {
         $el.removeClass('loading');
         // Update current chat after successful fetch
-        updateCurrentChat(selectChatId, userId);
+        updateCurrentChat(selectChatId, window.userId);
     });
 };
 
@@ -1131,10 +1131,7 @@ function showChatHistory(chatId) {
 
 // Initialize horizontal chat menu on index page
 $(document).ready(function() {
-    // Only initialize on /chat page
-    if (window.location.pathname.includes('/chat')) {
-        initializeHorizontalChatMenu();
-    }
+    initializeHorizontalChatMenu();
 });
 
 // Initialize horizontal chat menu
@@ -1150,7 +1147,7 @@ function initializeHorizontalChatMenu() {
     $('#horizontal-chat-menu').removeClass('d-none');
     
     // Load latest chats for horizontal display
-    displayHorizontalChatList(userId);
+    displayHorizontalChatList(window.userId);
 }
 
 // Display chats in horizontal menu (similar to displayImageThumb)
@@ -1386,7 +1383,7 @@ function handleChatThumbClick(el) {
     const $el = $(el);
     const selectChatId = $el.data('id');
     const chatOwnerId = $el.data('user-id');
-    const activeUserId = typeof userId !== 'undefined' ? userId : chatOwnerId;
+    const activeUserId = typeof window.userId !== 'undefined' ? window.userId : chatOwnerId;
 
     if (!selectChatId) {
         console.error('No chat ID found in clicked thumbnail');
@@ -1700,7 +1697,7 @@ window.debugHideLoadingState = function() {
     latestList.empty();
     
     // Reload actual chat list
-    displayChatList(false, userId);
+    displayChatList(false, window.userId);
     
     console.log('✓ Chat list restored.');
 };

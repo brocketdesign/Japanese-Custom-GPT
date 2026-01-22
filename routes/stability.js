@@ -12,7 +12,10 @@ const { getImageGenerationCost, getImageUpscaleCost, getCustomPromptCost, getGif
 async function routes(fastify, options) {
 
   // Endpoint to initiate generate-img for selected image type
-  fastify.post('/novita/generate-img', async (request, reply) => {
+  fastify.post('/novita/generate-img', {
+    // Increase body limit to 10MB to handle base64 image uploads
+    bodyLimit: 10 * 1024 * 1024
+  }, async (request, reply) => {
     const { title, prompt, aspectRatio, userId, chatId, userChatId, placeholderId, promptId, giftId, customPrompt, image_base64, chatCreation, modelId, regenerate, enableMergeFace, description, editStrength } = request.body;
     let imageType = request.body.imageType
     const db = fastify.mongo.db;
@@ -147,7 +150,10 @@ async function routes(fastify, options) {
     }
   });
 
-    fastify.post('/novita/upscale-img', async (request, reply) => {
+    fastify.post('/novita/upscale-img', {
+        // Increase body limit to 10MB to handle base64 image uploads
+        bodyLimit: 10 * 1024 * 1024
+    }, async (request, reply) => {
         try {
             const { userId, chatId, userChatId, originalImageId, image_base64, originalImageUrl, placeholderId, scale_factor, model_name } = request.body;
             

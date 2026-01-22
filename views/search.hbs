@@ -15,11 +15,46 @@
         <!-- Sticky Search & Filter Bar -->
         <div class="explore-sticky-header">
             <div class="explore-search-bar">
-                <!-- Back/Home Button -->
-                <a href="/" class="explore-back-btn" title="Home">
-                    <i class="bi bi-house-fill"></i>
+                <!-- Logo on Left -->
+                <a href="/" class="explore-logo-link" title="Home">
+                    <i class="bi bi-chat-heart-fill explore-logo-icon"></i>
                 </a>
                 
+                <!-- Spacer to push buttons right -->
+                <div class="explore-nav-spacer"></div>
+                
+                <!-- Right-aligned buttons -->
+                <div class="explore-nav-actions">
+                    <!-- Search Toggle Button -->
+                    <button type="button" class="explore-action-btn" id="searchToggleBtn" title="{{translations.searchPlaceholder}}">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    
+                    <!-- NSFW Toggle -->
+                    <button type="button" id="nsfwToggleBtn" class="nsfw-btn" data-nsfw="{{#if showNSFW}}true{{else}}false{{/if}}">
+                        <i class="bi bi-shield-check"></i>
+                        <span class="nsfw-label">SFW</span>
+                    </button>
+                    
+                    <!-- Login/Profile Button -->
+                    {{#if user.isTemporary}}
+                    <button type="button" class="auth-icon-btn" id="loginBtn" title="{{translations.login}}">
+                        <i class="bi bi-person-circle"></i>
+                    </button>
+                    {{else}}
+                    <a href="/user/{{user._id}}" class="auth-icon-btn" title="{{translations.profile}}">
+                        {{#if user.profileImageUrl}}
+                        <img src="{{user.profileImageUrl}}" alt="Profile" class="auth-profile-img">
+                        {{else}}
+                        <i class="bi bi-person-circle"></i>
+                        {{/if}}
+                    </a>
+                    {{/if}}
+                </div>
+            </div>
+            
+            <!-- Expandable Search Bar (below nav) -->
+            <div class="explore-search-expanded" id="searchExpanded">
                 <form id="search-form" action="/search" method="GET" class="explore-search-form">
                     <div class="search-input-group">
                         <i class="bi bi-search"></i>
@@ -31,21 +66,11 @@
                             value="{{query}}"
                             autocomplete="off"
                         >
-                        {{#if query}}
                         <button type="button" class="search-clear-btn" id="clearSearch">
                             <i class="bi bi-x-lg"></i>
                         </button>
-                        {{/if}}
                     </div>
                 </form>
-                
-                <!-- NSFW Toggle -->
-                <div class="nsfw-filter-toggle">
-                    <button type="button" id="nsfwToggleBtn" class="nsfw-btn" data-nsfw="{{#if showNSFW}}true{{else}}false{{/if}}">
-                        <i class="bi bi-shield-check"></i>
-                        <span class="nsfw-label">SFW</span>
-                    </button>
-                </div>
             </div>
         </div>
 
@@ -113,6 +138,58 @@
             no_results_found: '{{translations.no_results_found_for}}',
             try_different_search: '{{translations.start_searching}}'
         };
+        
+        // Search toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchToggleBtn = document.getElementById('searchToggleBtn');
+            const searchExpanded = document.getElementById('searchExpanded');
+            const searchInput = document.getElementById('search-input');
+            const clearSearchBtn = document.getElementById('clearSearch');
+            const loginBtn = document.getElementById('loginBtn');
+            
+            // Toggle search expanded section
+            if (searchToggleBtn && searchExpanded) {
+                searchToggleBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    searchExpanded.classList.toggle('expanded');
+                    searchToggleBtn.classList.toggle('active');
+                    if (searchExpanded.classList.contains('expanded')) {
+                        searchInput.focus();
+                    }
+                });
+            }
+            
+            // Clear search
+            if (clearSearchBtn) {
+                clearSearchBtn.addEventListener('click', function() {
+                    searchInput.value = '';
+                    searchInput.focus();
+                });
+            }
+            
+            // Close search when clicking outside
+            document.addEventListener('click', function(e) {
+                if (searchExpanded && searchExpanded.classList.contains('expanded')) {
+                    const isClickInsideSearch = searchExpanded.contains(e.target);
+                    const isClickOnToggle = searchToggleBtn.contains(e.target);
+                    if (!isClickInsideSearch && !isClickOnToggle) {
+                        searchExpanded.classList.remove('expanded');
+                        searchToggleBtn.classList.remove('active');
+                    }
+                }
+            });
+            
+            // Login button opens clerk modal
+            if (loginBtn) {
+                loginBtn.addEventListener('click', function() {
+                    if (typeof openLoginForm === 'function') {
+                        openLoginForm();
+                    } else {
+                        window.location.href = '/login';
+                    }
+                });
+            }
+        });
     </script>
     <script src="/js/explore-gallery.js"></script>
 </body>

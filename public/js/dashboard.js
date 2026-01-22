@@ -289,7 +289,7 @@ window.displayLatestVideoChats = function(videoChatsData, targetGalleryId) {
  * Uses videoId to retrieve the associated image and blur it
  * Does NOT expose the video URL - only uses videoId
  */
-window.fetchBlurredVideoPreviewForGallery = function(imgElement, videoId) {
+window.fetchBlurredVideoPreview = function(imgElement, videoId) {
     $.ajax({
         url: '/blur-video-preview?videoId=' + encodeURIComponent(videoId),
         method: 'GET',
@@ -1505,7 +1505,7 @@ function generateUserPagination(currentPage, totalPages) {
   });
 
   if (currentPage >= totalPages) {
-    console.log('All Users: No more pages to load.')
+    console.log('All Users: No more pages to load')
     return;
   }
 
@@ -1998,275 +1998,173 @@ window.displaySimilarChats = function (chatData, targetGalleryIdParam) {
   
   chatData.forEach(chat => {
     const isOwner = chat.userId === currentUserId;
-    const isPremiumChat = false //chat.premium || false;
-    const isNSFW = false //chat.nsfw || false;
+    const isPremiumChat = false;
+    const isNSFW = chat.nsfw || false;
     const genderClass = chat.gender ? `chat-gender-${chat.gender.toLowerCase()}` : '';
     const styleClass = chat.imageStyle ? `chat-style-${chat.imageStyle.toLowerCase()}` : '';
-    let nsfwVisible = $.cookie('nsfw') === 'true';
+    const isBlur = shouldBlurNSFW(chat, subscriptionStatus);
 
     // Using col-md-4 col-lg-3 for potentially 3-4 cards per row
-    let cardClass = `gallery-card col-6 col-sm-4 col-md-3 col-lg-3 col-xl-2 p-1 animate__animated animate__fadeIn ${genderClass} ${styleClass}`;
+    let cardClass = `chat-card-mobile col-6 col-sm-4 col-md-3 col-lg-3 col-xl-2 p-1 ${genderClass} ${styleClass}`;
     if (isPremiumChat) cardClass += ' premium-chat';
     if (isNSFW) cardClass += ' nsfw-content';
 
-    let imageSrc = chat.chatImageUrl || chat.thumbnailUrl || '/img/logo.webp';
-    let nsfwOverlay = '';
+    const primaryImage = chat.chatImageUrl || chat.thumbnailUrl || '/img/logo.webp';
+    const chatId = chat._id;
+    const chatName = chat.name || chat.chatName || 'Unknown';
+    const firstMessage = chat.first_message || chat.description || '';
+    const tags = (chat.tags || chat.chatTags || []).slice(0, 3);
 
-    // NSFW Overlay Logic
-    if (isNSFW && !nsfwVisible) {
-        if (!isOwner && ((isTemporaryUser || !subscriptionStatus))) {
-             nsfwOverlay = `<div class="gallery-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background: rgba(0,0,0,0.55); z-index: 2; backdrop-filter: blur(5px);">
-                                <span class="badge bg-danger mb-2" style="font-size: 0.9rem;"><i class="bi bi-exclamation-triangle"></i> NSFW</span>
-                                <button class="btn btn-sm btn-outline-light mt-2" onclick="event.stopPropagation(); handleClickRegisterOrPay(event,${isTemporaryUser})" style="font-size: 12px; border-radius: 50px;">
-                                    ${isTemporaryUser ? (window.translations?.register || 'Register to View') : (window.translations?.subscribe || 'Subscribe to View')}
-                                </button>
-                            </div>`;
-        }
-    }
-
-    
     htmlContent += `
-        <div class="${cardClass}" data-id="${chat._id}" style="cursor:pointer;">
-            <div 
-            class="card gallery-hover shadow-sm border-0 h-100 position-relative overflow-hidden"
-            onclick="redirectToCharacter('${chat._id}', '${chat.slug}'); event.stopPropagation();">
-                <div class="gallery-image-wrapper" style="aspect-ratio: 4/5; background: #f8f9fa; position: relative;">
-                    <img src="${imageSrc}" class="card-img-top gallery-img" alt="${chat.name}" style="height: 100%; width: 100%; object-fit: cover;">
-                    ${nsfwOverlay}
-                </div>
-                <div class="card-body p-2 d-flex flex-column">
-                    <h6 class="card-title small fw-bold mb-1 text-truncate text-dark" style="font-size: 0.85rem;">${chat.name}</h6>
-                </div>
-                <div class="position-absolute top-0 start-0 m-1 d-flex flex-column align-items-start" style="z-index:3;">
-                    ${isOwner ? `
-                    <span class="btn btn-light text-secondary shadow" style="font-size: 0.6rem !important; padding: 0.2em 0.4em !important;opacity:0.8;">
-                        <i class="bi bi-person-fill"></i>
-                    </span>
-                    ` : ''}
-                    ${isPremiumChat ? `<span class="custom-gradient-bg badge bg-gradient-primary mb-1"> ${translations.premium}</span>` : ''}
-                    ${(isAdmin) ? `
-                    <button 
-                    class="btn btn-sm btn-outline-secondary border-0 ${chat.nsfw ? 'nsfw' : ''}" 
-                    onclick="toggleChatNSFW(this); event.stopPropagation();" 
-                    data-id="${chat._id}" 
-                    style="background: #00000050;color: white;padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
-                        ${chat.nsfw ? '<i class="bi bi-eye-slash-fill"></i>' : '<i class="bi bi-eye-fill"></i>'}
-                    </button>
-                    <button class="btn btn-sm btn-danger border-0 ms-1" data-id="${chat._id}" onclick="deleteChat(this); event.stopPropagation();" title="Delete Chat" style="padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
-                      <i class="bi bi-trash"></i>
-                    </button>
-                    ` : ''}
-                </div>
-
-                <div id="spinner-${chat._id}" class="loading-overlay position-absolute top-0 start-0 w-100 h-100 justify-content-center align-items-center" style="background: rgba(255,255,255,0.8); z-index: 1; display: none;">
-                    <div class="spinner-border text-purple" role="status">
-                      <span class="visually-hidden">Loading...</span>
-                    </div>
-                </div>
+      <div class="${cardClass}" data-id="${chat._id}">
+        <div class="card border-0 rounded-4 overflow-hidden position-relative" 
+             style="aspect-ratio: 3/4; background: #1a1a1a;">
+          
+          <!-- Full-bleed Image -->
+          <img 
+            src="${primaryImage}" 
+            alt="${chatName}" 
+            class="position-absolute w-100 h-100 ${isBlur ? 'blurred-image-none' : ''}"
+            style="object-fit: cover; inset: 0;"
+            loading="lazy"
+          >
+          
+          <!-- Gradient Overlay -->
+          <div class="position-absolute w-100 h-100" 
+               style="background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.85) 100%); inset: 0;">
+          </div>
+          
+          <!-- Top Badges -->
+          <div class="position-absolute top-0 start-0 end-0 p-2 d-flex justify-content-between align-items-start" style="z-index: 3;">
+            <div class="d-flex gap-1 flex-wrap">
+              ${isNSFW ? `
+                <span class="badge rounded-pill px-2 py-1" 
+                      style="background: rgba(220,53,69,0.9); font-size: 0.65rem; font-weight: 600;">
+                  18+
+                </span>
+              ` : ''}
+              ${isOwner ? `
+                <span class="badge rounded-pill px-2 py-1" 
+                      style="background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); font-size: 0.65rem;">
+                  <i class="bi bi-person-fill"></i>
+                </span>
+              ` : ''}
+            </div
+            
+            <!-- Profile Quick Link -->
+            <button class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center"
+                    onclick="event.stopPropagation(); redirectToCharacter('${chatId}', '${chat.slug || ''}')"
+                    style="width: 32px; height: 32px; background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); border: none;">
+              <i class="bi bi-info-circle text-white" style="font-size: 0.9rem;"></i>
+            </button>
+          </div>
+          
+          <!-- Bottom Content -->
+          <div class="position-absolute bottom-0 start-0 end-0 p-3" style="z-index: 3;">
+            
+            <!-- Character Name -->
+            <h6 class="text-white fw-bold mb-1 text-truncate" 
+                style="font-size: 1rem; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">
+              ${chatName}
+            </h6>
+            
+            <!-- Short Description -->
+            ${firstMessage ? `
+              <p class="text-white-50 mb-2" 
+                 style="font-size: 0.7rem; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                ${firstMessage.substring(0, 80)}${firstMessage.length > 80 ? '...' : ''}
+              </p>
+            ` : ''}
+            
+            <!-- Tags -->
+            ${tags.length > 0 ? `
+              <div class="d-flex gap-1 mb-2 flex-wrap">
+                ${tags.map(tag => `
+                  <span class="badge rounded-pill px-2 py-1" 
+                        onclick="event.stopPropagation(); handleCategoryClick('${tag}')"
+                        style="background: rgba(255,255,255,0.15); backdrop-filter: blur(4px); font-size: 0.6rem; cursor: pointer;">
+                    #${tag}
+                  </span>
+                `).join('')}
+              </div>
+            ` : ''}
+            
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2">
+              <button class="btn flex-grow-1 rounded-pill py-2 d-flex align-items-center justify-content-center gap-1"
+                      onclick="event.stopPropagation(); redirectToChat('${chatId}', '${primaryImage}')"
+                      style="background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%); border: none; color: white; font-size: 0.8rem; font-weight: 600;">
+                <i class="bi bi-chat-dots-fill"></i>
+                <span>${window.translations?.startChat || 'Chat'}</span>
+              </button>
+              <button class="btn rounded-pill py-2 d-flex align-items-center justify-content-center"
+                      onclick="event.stopPropagation(); openCharacterIntroModal('${chatId}')"
+                      style="background: rgba(255,255,255,0.15); backdrop-filter: blur(4px); border: none; color: white; font-size: 0.8rem; min-width: 44px;">
+                <i class="bi bi-three-dots"></i>
+              </button>
             </div>
+          </div>
+          
+          <!-- NSFW Blur Overlay -->
+          ${isBlur ? `
+            <div class="position-absolute w-100 h-100 d-flex flex-column align-items-center justify-content-center" 
+                 style="inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(20px); z-index: 4;">
+              <i class="bi bi-lock-fill text-white mb-2" style="font-size: 1.5rem;"></i>
+              <span class="text-white-50 mb-3" style="font-size: 0.75rem;">${window.translations?.nsfwContent || 'Adult Content'}</span>
+              <button class="btn btn-sm rounded-pill px-4 py-2"
+                      onclick="event.stopPropagation(); handleClickRegisterOrPay(event, ${isTemporaryUser})"
+                      style="background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%); border: none; color: white; font-size: 0.8rem; font-weight: 600;">
+                <i class="bi bi-unlock-fill me-1"></i>
+                ${isTemporaryUser ? (window.translations?.login || 'Login') : (window.translations?.unlock || 'Unlock')}
+              </button>
+            </div>
+          ` : ''}
+          
+          <!-- Loading Spinner -->
+          <div id="spinner-${chatId}" 
+               class="position-absolute w-100 h-100 d-none align-items-center justify-content-center" 
+               style="inset: 0; background: rgba(255,255,255,0.9); z-index: 5;">
+            <div class="spinner-border text-purple" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+          
+          <!-- Admin Controls -->
+          ${window.isAdmin ? `
+            <div class="position-absolute top-0 end-0 m-1 d-flex flex-column gap-1" style="z-index: 10; margin-top: 40px !important;">
+              <button class="btn btn-sm rounded-circle chat-nsfw-toggle ${isNSFW ? 'nsfw' : 'sfw'}" 
+                      data-id="${chatId}" 
+                      onclick="event.stopPropagation(); toggleChatNSFW(this)"
+                      style="width: 28px; height: 28px; background: rgba(0,0,0,0.7); border: none; color: white; font-size: 0.7rem;">
+                <i class="bi ${isNSFW ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
+              </button>
+              <button class="btn btn-sm rounded-circle set-sfw-thumbnail-btn" 
+                      data-id="${chatId}" 
+                      onclick="event.stopPropagation(); setSFWThumbnail(this)"
+                      style="width: 28px; height: 28px; background: rgba(0,0,0,0.7); border: none; color: white; font-size: 0.7rem;">
+                <i class="bi bi-image"></i>
+              </button>
+              <button class="btn btn-sm rounded-circle" 
+                      data-id="${chat._id}" 
+                      onclick="event.stopPropagation(); deleteChat(this)"
+                      style="width: 28px; height: 28px; background: rgba(220,53,69,0.9); border: none; color: white; font-size: 0.7rem;">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          ` : ''}
         </div>
+      </div>
     `;
   });
 
-  loader.removeClass('d-flex').hide(); // Hide the loader if it exists
   const galleryElement = $(document).find(`#${targetGalleryId}`);
   if (galleryElement.length) {
     galleryElement.append(htmlContent);
   } else {
     console.warn(`Target gallery with ID #${targetGalleryId} not found.`);
-    galleryElement.append(`
-      <div class="alert alert-warning text-center" role="alert">
-        ${window.translations?.similarChatsNotFound || 'No similar chats found.'}
-      </div>
-    `);
   }
 };
-
-window.displayLatestChats = function (chatData, targetGalleryId, modal = false) {
-  let htmlContent = '';
-  const currentUser = user; 
-  const currentUserId = currentUser._id;
-  const subscriptionStatus = currentUser.subscriptionStatus === 'active';
-  const isTemporaryUser = !!currentUser?.isTemporary;
-  displayChats(chatData, targetGalleryId, modal);
-};
-window.displayChats = function (chatData, searchId = null, modal = false) {
-
-  let htmlContent = '';
-  chatData.forEach(chat => {
-      if (chat.name || chat.chatName) {
-
-        // Normalize nsfw to boolean (handles string "true"/"false" and boolean)
-            const nsfw = chat?.nsfw === true || chat?.nsfw === 'true';
-            const moderationFlagged = Array.isArray(chat?.moderation?.results) && chat.moderation.results.length > 0
-            ? !!chat.moderation.results[0].flagged
-            : false;
-            const finalNsfwResult = nsfw || moderationFlagged;
-            chat.premium = false //(chat.premium || finalNsfwResult);
-            const isOwner = chat.userId === user._id;
-            chat.nsfw = finalNsfwResult
-            const isBlur = shouldBlurNSFW(chat, subscriptionStatus);
-          // --- Begin: Sample image selection logic ---
-          let sampleImages = [];
-          // Prefer chat.sampleImages if present (from backend cache), fallback to empty array
-          if (Array.isArray(chat.sampleImages) && chat.sampleImages.length > 0) {
-            sampleImages = chat.sampleImages
-              .filter(img => img && img.imageUrl)
-              .map(img => img.imageUrl);
-          }
-          if (Array.isArray(chat.images) && chat.images.length > 0) {
-            sampleImages = sampleImages.concat(
-              chat.images
-                .filter(img => img && img.imageUrl)
-                .map(img => img.imageUrl)
-            );
-          }
-          // Always include chatImageUrl if present
-          if (chat.chatImageUrl) {
-            sampleImages.unshift(chat.chatImageUrl);
-          }
-          // Remove duplicates and falsy values
-          sampleImages = [...new Set(sampleImages.filter(Boolean))];
-          // Ensure we have at least one image
-          if (sampleImages.length === 0) {
-            sampleImages = ['/img/logo.webp'];
-          }
-
-          const primaryImage = sampleImages[0];
-          const secondaryImage = sampleImages.find((img) => img !== primaryImage) || primaryImage;
-
-          //const conditionFunc = `${finalNsfwResult ? `(${subscriptionStatus} ? redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}') : loadPlanPage())` : `redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')`}`;
-          const conditionFunc = `openCharacterIntroModal('${chat.chatId || chat._id}')`
-
-          // --- End: Sample image selection logic ---
-          htmlContent += `
-                  <div class="gallery-card col-6 col-sm-4 col-lg-3 mb-0 px-1 ${finalNsfwResult ? "nsfw-content":''} ${chat.premium ? "premium-chat":''} ${chat.gender ? 'chat-gender-'+chat.gender:''} ${chat.imageStyle ? 'chat-style-'+chat.imageStyle : ''} nsfw-${finalNsfwResult}" data-id="${chat._id}" style="cursor:pointer;">
-                    <div class="card shadow border-0 h-100 position-relative gallery-hover" style="overflow: hidden;">
-                      <!-- Clickable image area -->
-                      <div class="gallery-image-wrapper position-relative chat-card-clickable-area" style="aspect-ratio: 4/5; background: #f8f9fa; cursor: pointer;"
-                        onclick="${conditionFunc}; event.stopPropagation();">
-                        <img 
-                          data-src="${primaryImage}" 
-                          src="/img/logo.webp" 
-                          alt="${chat.name || chat.chatName}" 
-                          class="card-img-top gallery-img gallery-img-primary transition rounded-top ${isBlur ? 'blurred-image-none lazy-image' : 'lazy-image'}"
-                          style="object-fit: cover; width: 100%; height: 100%; min-height: 220px;"
-                          loading="lazy"
-                        >
-                        <img 
-                          data-src="${secondaryImage}" 
-                          src="/img/logo.webp" 
-                          alt="${chat.name || chat.chatName} preview"
-                          class="card-img-top gallery-img gallery-img-secondary transition rounded-top ${isBlur ? 'blurred-image-none lazy-image' : 'lazy-image'}"
-                          style="object-fit: cover; width: 100%; height: 100%; min-height: 220px;"
-                          loading="lazy"
-                          aria-hidden="true"
-                        >
-                        <!-- Chat info on top left -->
-                        <div class="position-absolute top-0 start-0 m-2 d-flex flex-row align-items-center gap-1" style="z-index: 3;">
-                          <a href="/character/${chat._id}" class="text-decoration-none user-link text-white" onclick="event.stopPropagation();" style="font-size: 21px;">
-                            <i class="bi bi-person-circle me-1"></i>
-                          </a>
-                          ${chat.nsfw ? `
-                            <span class="badge badge-sm bg-opacity-85 text-white border text-decoration-none" style="backdrop-filter: blur(4px); font-size: 0.75rem;">
-                              <i class="bi bi-exclamation-triangle-fill me-1"></i>NSFW
-                            </span>
-                          ` : ''}
-                        </div>
-                        <!-- Chat icon on top right -->
-                        <div class="position-absolute top-0 end-0 m-2 d-flex flex-column align-items-end gap-1 start-chat-icon" style="z-index: 3;" onclick="event.stopPropagation();redirectToChat('${chat.chatId || chat._id}','${chat.chatImageUrl || '/img/logo.webp'}')">
-                          ${chat.hasUserChatted === false ? `
-                            <span class="badge bg-warning bg-opacity-85 text-dark border text-decoration-none" style="backdrop-filter: blur(4px); font-size: 0.75rem;">
-                              <i class="bi bi-star-fill me-1"></i>New
-                            </span>
-                          ` : ''}
-                          <span class="badge bg-light bg-opacity-75 text-dark border text-decoration-none" style="backdrop-filter: blur(4px);">
-                            <i class="bi bi-chat-dots-fill"></i>
-                          </span>
-                        </div>
-                        
-                        <!-- Content container positioned at bottom -->
-                        <div class="position-absolute bottom-0 start-0 w-100 p-3" style="z-index: 2;">
-
-                          <!-- Character name -->
-                          <span class="text-decoration-none" onclick="event.stopPropagation();">
-                            <div class="d-flex align-items-center justify-content-start mb-1">
-                              <h5 class="card-title mb-0 text-truncate text-white" title="${chat.name || chat.chatName}" style="text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${chat.name || chat.chatName}</h5>
-                            </div>
-                          </span>
-
-                          <!-- Tags on single line with horizontal scroll -->
-                          ${(chat.tags || chat.chatTags || []).length ? `
-                          <div class="tags-container">
-                              ${(chat.tags || chat.chatTags).slice(0, 4).map(tag => `<span onclick="event.stopPropagation(); handleCategoryClick('${tag}')" class="badge">${tag}</span>`).join('')}
-                          </div>
-                          ` : ''}
-
-                          <!-- First message with smaller text -->
-                          <div class="text-white-50 small" style="font-size: 0.75rem; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 0 1px 2px rgba(0,0,0,0.7);">
-                            ${chat.first_message || ''}
-                          </div>
-                        </div>
-
-                        <div id="spinner-${chat.chatId || chat._id}" class="loading-overlay position-absolute top-0 start-0 w-100 h-100 justify-content-center align-items-center" style="background: rgba(255,255,255,0.8); z-index: 3; display: none;">
-                        <div class="spinner-border text-purple" role="status">
-                          <span class="visually-hidden">Loading...</span>
-                        </div>
-                        </div>
-                      </div>
-                      
-                      <!-- Card body (clickable for navigation) -->
-                      <div class="${searchId == 'top-free' ? 'd-none' : ''}  ${window.isAdmin ? 'admin' : 'd-none'} card-body py-3 px-3 d-flex flex-column justify-content-between">
-
-                        <!-- Non-clickable button controls -->
-                        <div class="d-flex justify-content-between align-items-center mt-auto">
-                          <button class="btn btn-outline-primary btn-sm persona ${chat.premium ? 'border-warning' : ''}" data-id="${chat.chatId || chat._id}" title="Add to Persona">
-                            <i class="far fa-user-circle"></i>
-                          </button>
-                          ${
-                          window.isAdmin
-                            ? `<button 
-                            class="btn btn-light ms-2 chat-nsfw-toggle ${finalNsfwResult ? 'nsfw' : 'sfw'}" 
-                            data-id="${chat.chatId || chat._id}" 
-                            onclick="toggleChatNSFW(this)">
-                            <i class="bi ${finalNsfwResult ? 'bi-eye-slash' : 'bi-eye'}"></i>
-                            </button>
-                            
-                            <button class="btn btn-sm btn-info border-0 ms-1 set-sfw-thumbnail-btn" data-id="${chat.chatId || chat._id}" onclick="setSFWThumbnail(this); event.stopPropagation();" title="Set SFW Thumbnail" style="padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
-                            <i class="bi bi-image"></i>
-                            </button>
-                            
-                            <button class="btn btn-sm btn-danger border-0 ms-1" data-id="${chat._id}" onclick="deleteChat(this); event.stopPropagation();" title="Delete Chat" style="padding: 1px 5px;font-size: 12px; border-radius: 0.2rem;">
-                            <i class="bi bi-trash"></i>
-                            </button>`
-                            
-                            : ''
-                          }
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                `;
-      }
-  });
-  // Prevent username links from triggering card click navigation
-  $(document).on('click', '.user-link', function(e) {
-      e.stopPropagation();
-  });
-  if(searchId == 'top-free'){
-    $('#top-free-chats-gallery').append(htmlContent);
-    applyNSFWBlurEffect();
-    return;
-  }
-  if($(`#${searchId}`).length > 0){ 
-    $(`#${searchId}`).append(htmlContent);
-    applyNSFWBlurEffect();
-    return;
-  }
-  // Append the generated HTML to the gallery
-  $(document).find('#chat-gallery').append(htmlContent);
-  applyNSFWBlurEffect();
-};
+    
 // Call /api/delete-chat/:chatId to delete a chat
 window.deleteChat = function(el) {
 
@@ -2312,7 +2210,7 @@ window.setSFWThumbnail = function(el) {
     success: function(response) {
       if (response.success && response.newImageUrl) {
         // Update the thumbnail image in the UI in real time
-        const $card = $btn.closest('.gallery-card, .card');
+        const $card = $btn.closest('.gallery-card');
         const $cardImg = $card.find('.card-img-top, .rounded-avatar');
         
         if ($cardImg.length) {
@@ -2452,7 +2350,7 @@ window.loadAllUserPosts = async function (page = 1) {
                                 <button 
                                 class="btn btn-light post-nsfw-toggle ${!isAdmin?'d-none':''}" 
                                 data-id="${item.post.postId}"
-                                onclick="togglePostNSFW(this)">
+                                onclick="togglePostNSFW(this)"> 
                                     <i class="bi ${item?.post?.nsfw ? 'bi-eye-slash':'bi-eye'} me-2" style="cursor: pointer;"></i>
                                 </button>
                                 <button 
@@ -2527,20 +2425,25 @@ window.resultImageSearch = async function (page = 1,query,style = 'anime', callb
                         <a href="/character/slug/${item.chatSlug}?imageSlug=${item.slug}" class="text-muted text-decoration-none">
                             <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
                         </a>
-                        <div class="d-none card-body p-2 d-flex align-items-center justify-content-between">
-                            <a href="/chat/${item.chatId}" class="btn btn-outline-secondary"> <i class="bi bi-chat-dots me-2"></i> ${translations.startChat}</a>
-                            <button class="btn btn-light image-nsfw-toggle ${!isAdmin?'d-none':''} ${item?.nsfw ? 'nsfw':'sfw'}" data-id="${item._id}">
-                                <i class="bi ${item?.nsfw ? 'bi-eye-slash-fill':'bi-eye-fill'}"></i> 
+                        <div class="${!isAdmin ? 'd-none' : ''} card-body p-2 d-flex align-items-center justify-content-between">
+                            <a href="/chat/${item.chatId}" class="btn btn-outline-secondary col-12">
+                              <i class="bi bi-chat-dots me-2"></i> ${translations.startChat}
+                            </a>
+                            <button class="btn btn-light image-nsfw-toggle ${!isAdmin ? 'd-none' : ''} ${item?.nsfw ? 'nsfw' : 'sfw'}" data-id="${item._id}">
+                              <i class="bi ${item.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
+                            </button>
+                            <button class="btn btn-sm btn-info set-sfw-thumbnail-btn ${!isAdmin ? 'd-none' : ''}" data-id="${item.chatId}" onclick="setSFWThumbnail(this); event.stopPropagation();" title="Set SFW Thumbnail">
+                              <i class="bi bi-image"></i>
                             </button>
                             <span 
-                            class="btn btn-light float-end image-fav ${isLiked ? 'liked':''}" 
+                            class="btn btn-light float-end image-fav ${isLiked ? 'liked' : ''}" 
                             data-id="${item._id}" 
-                            onclick="toggleImageFavorite(this)"
+                            onclick="toggleImageFavorite(this)" 
                             >
-                                <i class="bi ${isLiked ? 'bi-heart-fill':'bi-heart'}" style="cursor: pointer;"></i>
+                              <i class="bi ${isLiked ? 'bi-heart-fill':'bi-heart'}" style="cursor: pointer;"></i>
                             </span>
-                        </div>
-                        `}
+                        </div>`
+                        }
                     </div>
                 </div>
             `;
@@ -2569,9 +2472,16 @@ window.loadAllChatImages = function (page = 1, reload = false) {
   
     // Return a Promise for sync with infinite scroll
     return new Promise(async (resolve, reject) => {
-      // Check admin once here
-      const isAdmin = await checkIfAdmin(currentUserId)
-  
+      // Check admin rights (optional async call)
+      let isAdmin = false;
+      if (currentUserId) {
+        checkIfAdmin(currentUserId)
+          .then(result => {
+            isAdmin = result;
+          })
+          .catch(err => console.error('Failed to check admin status:', err));
+      }
+
       // Retrieve or init cache
       let cacheData = JSON.parse(localStorage.getItem(cacheKey) || '{}')
       if (!cacheData.pages) cacheData.pages = {}
@@ -2634,11 +2544,11 @@ window.loadAllChatImages = function (page = 1, reload = false) {
     const eventName = 'scroll.allChatsImagePagination';
     $(window).off(eventName).on(eventName, () => {
       if($('#all-chats-images-pagination-controls').length === 0) return;
-      const scrollTresold = $('#all-chats-images-pagination-controls').offset().top  - 1000;
+      const scrollTresold = $('#all-chats-images-pagination-controls').offset().top - 1000;
       if (
         !allChatsLoadingState &&
         allChatsCurrentPage < totalPages &&
-        scrollTresold < $(window).scrollTop()
+        scrollTresold < $(window).scrollTop() 
       ) {
         allChatsLoadingState = true
         loadAllChatImages(allChatsCurrentPage + 1, false)
@@ -2673,7 +2583,6 @@ window.loadAllChatImages = function (page = 1, reload = false) {
   // Append images to #all-chats-images-gallery
   function appendAllChatsImages(images, subscriptionStatus, isAdmin) {
     const currentUserId = user._id
-    const isTemporary = !!user.isTemporary
     let chatGalleryHtml = ''
   
     images.forEach((item) => {
@@ -2688,8 +2597,8 @@ window.loadAllChatImages = function (page = 1, reload = false) {
             ${
               isBlur
                 ? `<div type="button" onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary})">
-                        <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;">
-                   </div>`
+                        <img data-src="${item.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
+                    </div>`
                 : `<a href="/character/slug/${item.chatSlug}?imageSlug=${item.slug}" class="text-muted text-decoration-none">
                      <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
                    </a>
@@ -2739,7 +2648,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
             let isBlur = item?.image?.nsfw && !subscriptionStatus 
             const isLiked = item?.likedBy?.some(id => id.toString() === currentUserId.toString());
             galleryHtml += `
-                <div class="col-12 col-md-6 col-lg-4 mb-2">
+                <div class="col-12 col-md-3 col-lg-2 mb-2">
                 <div class="card">
                     <div class="d-flex align-items-center p-2">
                         <a href="/user/${item.userId}">
@@ -2750,7 +2659,7 @@ window.loadUserPosts = async function (userId, page = 1, like = false) {
                         </a>
                     </div>
                     ${isBlur ? `
-                    <div type="button" onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary})">
+                    <div type="button" onclick=${isTemporary?`openLoginForm()`:`loadPlanPage()`}>
                         <img data-src="${item.image.imageUrl}" class="card-img-top img-blur" style="object-fit: cover;" >
                     </div>
                     ` : `
@@ -2839,8 +2748,8 @@ window.showPremiumPopup = async function() {
             <h6 style="color: #856404; font-weight: bold; text-align: center;">今なら登録するだけで<br><strong>1,000コイン</strong>をプレゼント！</h6>
         </div>
         <p style="font-size: 12px; text-align: center;">無制限の機能とエクスクルーシブな特典をお楽しみいただけます。<br>今すぐプレミアムプランに登録して、すべての機能を最大限に活用しましょう。</p>
-        <ul class="premium-features" style="list-style-type: none; padding-left: 0; margin-bottom: 15px;">
-            ${features.map(feature => `<li style="font-size: 14px; margin-bottom: 5px;"><span style="color: #f39c12;">🔥</span> ${feature}</li>`).join('')}
+        <ul class="list-group list-group-flush">
+            ${features.map(feature => `<li class="list-group-item px-0"><span class="me-2">🔥</span>${feature}</li>`).join('')}
         </ul>
         <p style="font-size: 12px; text-align: center;">いつでもキャンセル可能、質問なしで対応いたします。<br>また、お支払いは <strong>最も安全なStripe</strong> で行われます。</p>
     `;
@@ -2848,9 +2757,9 @@ window.showPremiumPopup = async function() {
     // Display the first premium promotion popup using Swal.fire
     Swal.fire({
         //imageUrl: '/img/premium-promo.png', // Replace with your image URL
-        imageWidth: '80%',
+        imageWidth: '100%',
         imageHeight: 'auto',
-        position: 'center',
+        position: 'bottom',
         html: `
             <div class="container-0">
                 <div class="row justify-content-center">
@@ -3284,6 +3193,7 @@ $(document).ready(function () {
           hideLoadingSpinner();
           isFetchingChats = false;
           
+                   
           // Show error message or back to top on error
           $('#all-chats-container').append(`
             <div class="text-center my-4 text-danger">
@@ -3552,7 +3462,7 @@ $(document).ready(function () {
     };
     // Load query tags if we're on the character exploration page
     if ($('#query-tags-list').length > 0) {
-        loadQueryTags();
+      loadQueryTags();
     }
 });
   
@@ -3932,6 +3842,7 @@ function loadCharacterCreationPage(chatId) {
                                 characterCreationScript.src = '/js/character-creation.js';
                                 characterCreationScript.onload = function() {
                                     modalStatus.isCharacterCreationLoading = false;
+                                    // Optionally, you can initialize something here
                                 };
                                 characterCreationScript.onerror = function() {
                                     console.error('Failed to load character-creation.js script.');
@@ -3942,17 +3853,17 @@ function loadCharacterCreationPage(chatId) {
                         };
                         
                         imageUploaderScript.onerror = function() {
-                            console.error('Failed to load image-uploader.js script.');
-                            modalStatus.isCharacterCreationLoading = false;
+                          console.error('Failed to load image-uploader.js script.');
+                          modalStatus.isCharacterCreationLoading = false;
                         };
 
                         const civitaiModelSearchScript = document.createElement('script');
                         civitaiModelSearchScript.src = '/js/civitai-model-search.js';
                         civitaiModelSearchScript.onload = function() {
-                            // Additional logic if needed after civitai-model-search.js loads
+                          // Additional logic if needed after civitai-model-search.js loads
                         };
                         civitaiModelSearchScript.onerror = function() {
-                            console.error('Failed to load civitai-model-search.js script.');
+                          console.error('Failed to load civitai-model-search.js script.');
                         };
                         document.body.appendChild(civitaiModelSearchScript);
                         

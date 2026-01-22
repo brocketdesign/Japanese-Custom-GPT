@@ -606,21 +606,26 @@ function initializeSharing() {
 
 /**
  * Initialize tab switching functionality
+ * Supports both legacy .tab-btn and new Instagram-style .ig-tab classes
  */
 function initializeTabs() {
-    const tabBtns = document.querySelectorAll('.tab-btn');
+    // Support both old and new tab button classes
+    const tabBtns = document.querySelectorAll('.tab-btn, .ig-tab');
     const tabPanes = document.querySelectorAll('.tab-pane');
 
     tabBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             const tabId = this.dataset.tab;
             
-            // Update active states
+            // Update active states for all tab button types
             tabBtns.forEach(b => b.classList.remove('active'));
             tabPanes.forEach(p => p.style.display = 'none');
             
             this.classList.add('active');
-            document.getElementById(tabId + '-tab').style.display = 'block';
+            const tabPane = document.getElementById(tabId + '-tab');
+            if (tabPane) {
+                tabPane.style.display = 'block';
+            }
             
             // Load content if needed
             if (tabId === 'videos' && !window.characterProfile.videosLoaded) {
@@ -636,8 +641,11 @@ function initializeTabs() {
 function loadCharacterGallery() {
     const profilePage = document.querySelector('#characterProfilePage');
     const chatId = profilePage?.dataset?.chatId;
-    if (typeof window.displayLatestChats === 'function' & chatId ) {
+    if (chatId && typeof window.displayLatestChats === 'function') {
         window.displayLatestChats();
+    } else if (typeof window.loadPopularChats === 'function') {
+        // No specific character - load popular chats gallery
+        window.loadPopularChats(1, true);
     }
 }
 

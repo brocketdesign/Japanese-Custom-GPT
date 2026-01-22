@@ -1,0 +1,143 @@
+/* Mobile-First Chat Cards - Native App Feel */
+
+.chat-card-mobile {
+  transition: transform 0.2s ease;
+}
+
+.chat-card-mobile .card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: box-shadow 0.2s ease;
+}
+
+/* Active state for touch feedback */
+.chat-card-mobile:active .card {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Button touch states */
+.chat-card-mobile .btn:active {
+  transform: scale(0.95);
+  opacity: 0.9;
+}
+
+/* Smooth image loading */
+.chat-card-mobile img {
+  transition: opacity 0.3s ease;
+}
+
+.chat-card-mobile img.lazy-image {
+  opacity: 0;
+}
+
+.chat-card-mobile img.lazy-image.loaded {
+  opacity: 1;
+}
+
+/* Badge animations */
+.chat-card-mobile .badge {
+  transition: transform 0.2s ease;
+}
+
+.chat-card-mobile .badge:active {
+  transform: scale(0.95);
+}
+
+/* Gradient text shadow for readability */
+.chat-card-mobile h6 {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Responsive adjustments */
+@media (max-width: 575.98px) {
+  .chat-card-mobile {
+    padding: 0.25rem !important;
+  }
+  
+  .chat-card-mobile .card {
+    border-radius: 12px !important;
+  }
+  
+  .chat-card-mobile .btn {
+    padding: 0.5rem !important;
+  }
+  
+  .chat-card-mobile h6 {
+    font-size: 0.9rem !important;
+  }
+  
+  .chat-card-mobile p {
+    font-size: 0.65rem !important;
+  }
+}
+
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .chat-card-mobile .card {
+    border-radius: 14px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .chat-card-mobile .card {
+    border-radius: 16px !important;
+  }
+  
+  /* Subtle hover effect for non-touch devices */
+  @media (hover: hover) {
+    .chat-card-mobile:hover .card {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+  }
+}
+
+/* Safe area padding for notched devices */
+@supports (padding: max(0px)) {
+  .chat-card-mobile:first-child {
+    padding-left: max(0.25rem, env(safe-area-inset-left)) !important;
+  }
+  
+  .chat-card-mobile:last-child {
+    padding-right: max(0.25rem, env(safe-area-inset-right)) !important;
+  }
+}
+
+/* Blur effect for NSFW content */
+.chat-card-mobile .blurred-image-none {
+  filter: blur(20px);
+  transform: scale(1.1);
+}
+
+/* Loading spinner positioning */
+.chat-card-mobile #spinner-* {
+  border-radius: inherit;
+}
+
+/* Action button gradient */
+.chat-card-mobile .btn[style*="linear-gradient"] {
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+/* Glass morphism effect for secondary buttons */
+.chat-card-mobile .btn[style*="backdrop-filter"] {
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Prevent text selection on cards */
+.chat-card-mobile {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Smooth scrolling for card galleries */
+#chat-gallery,
+#all-chats-container,
+.chat-gallery {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Pull-to-refresh friendly */
+.chat-card-mobile {
+  overscroll-behavior: contain;
+}

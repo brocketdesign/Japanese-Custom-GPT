@@ -134,7 +134,10 @@ async function routes(fastify, options) {
    * POST /dashboard/image/generate
    * Start image generation test for selected models
    */
-  fastify.post('/dashboard/image/generate', async (request, reply) => {
+  fastify.post('/dashboard/image/generate', {
+    // Increase body limit to 10MB to handle base64 image uploads
+    bodyLimit: 10 * 1024 * 1024
+  }, async (request, reply) => {
     try {
       const user = request.user;
       

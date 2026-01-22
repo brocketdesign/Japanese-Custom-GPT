@@ -1,121 +1,1245 @@
 <!DOCTYPE html>
 <html lang="{{lang}}">
-    {{> dashboard-header}}
+{{> dashboard-header}}
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #b58afe 0%, #6c5ce7 100%);
+        --secondary-gradient: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+        --success-gradient: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+        --warning-gradient: linear-gradient(135deg, #fdcb6e 0%, #f39c12 100%);
+        --danger-gradient: linear-gradient(135deg, #e17055 0%, #d63031 100%);
+        --dark-bg: #0f0f1a;
+        --card-bg: rgba(255, 255, 255, 0.05);
+        --card-border: rgba(255, 255, 255, 0.1);
+        --text-primary: #ffffff;
+        --text-secondary: rgba(255, 255, 255, 0.7);
+        --text-muted: rgba(255, 255, 255, 0.5);
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        background: var(--dark-bg);
+        background-image: 
+            radial-gradient(ellipse at top left, rgba(181, 138, 254, 0.15) 0%, transparent 50%),
+            radial-gradient(ellipse at bottom right, rgba(108, 92, 231, 0.15) 0%, transparent 50%);
+        min-height: 100vh;
+        color: var(--text-primary);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    }
+
+    .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px 16px 100px;
+    }
+
+    /* Welcome Section */
+    .welcome-section {
+        padding: 30px 0;
+        text-align: center;
+    }
+
+    .welcome-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid rgba(181, 138, 254, 0.5);
+        box-shadow: 0 8px 32px rgba(181, 138, 254, 0.3);
+        margin-bottom: 16px;
+    }
+
+    .welcome-text {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .welcome-subtext {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    @media (min-width: 768px) {
+        .stats-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+    }
+
+    .stat-card {
+        background: var(--card-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--card-border);
+        border-radius: 20px;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        border-radius: 20px 20px 0 0;
+    }
+
+    .stat-card.purple::before { background: var(--primary-gradient); }
+    .stat-card.blue::before { background: var(--secondary-gradient); }
+    .stat-card.green::before { background: var(--success-gradient); }
+    .stat-card.orange::before { background: var(--warning-gradient); }
+
+    .stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        margin-bottom: 12px;
+    }
+
+    .stat-card.purple .stat-icon { background: rgba(181, 138, 254, 0.2); color: #b58afe; }
+    .stat-card.blue .stat-icon { background: rgba(116, 185, 255, 0.2); color: #74b9ff; }
+    .stat-card.green .stat-icon { background: rgba(0, 184, 148, 0.2); color: #00b894; }
+    .stat-card.orange .stat-icon { background: rgba(253, 203, 110, 0.2); color: #fdcb6e; }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    /* Quick Actions - Modern App Grid */
+    .quick-actions-section {
+        margin-bottom: 24px;
+    }
+
+    .quick-actions-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .quick-actions-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    @media (max-width: 480px) {
+        .quick-actions {
+            gap: 8px;
+        }
+    }
+
+    .quick-action-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 16px 8px;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .quick-action-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, transparent 0%, rgba(181, 138, 254, 0.05) 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .quick-action-btn:hover::before {
+        opacity: 1;
+    }
+
+    .quick-action-btn:hover {
+        background: rgba(181, 138, 254, 0.15);
+        border-color: rgba(181, 138, 254, 0.3);
+        color: var(--text-primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(181, 138, 254, 0.2);
+    }
+
+    .quick-action-btn:active {
+        transform: translateY(0) scale(0.98);
+    }
+
+    .quick-action-btn i {
+        font-size: 1.4rem;
+        margin-bottom: 6px;
+        color: #b58afe;
+        position: relative;
+        z-index: 1;
+    }
+
+    .quick-action-btn span {
+        font-size: 0.7rem;
+        text-align: center;
+        color: var(--text-secondary);
+        font-weight: 500;
+        position: relative;
+        z-index: 1;
+        line-height: 1.2;
+    }
+
+    /* Featured Action Button */
+    .quick-action-btn.featured {
+        background: linear-gradient(135deg, rgba(181, 138, 254, 0.2) 0%, rgba(108, 92, 231, 0.2) 100%);
+        border-color: rgba(181, 138, 254, 0.4);
+    }
+
+    .quick-action-btn.featured i {
+        color: #fff;
+    }
+
+    .quick-action-btn.featured:hover {
+        background: linear-gradient(135deg, rgba(181, 138, 254, 0.3) 0%, rgba(108, 92, 231, 0.3) 100%);
+    }
+
+    /* Color Variants */
+    .quick-action-btn.blue i { color: #74b9ff; }
+    .quick-action-btn.green i { color: #00b894; }
+    .quick-action-btn.orange i { color: #fdcb6e; }
+    .quick-action-btn.pink i { color: #fd79a8; }
+    .quick-action-btn.cyan i { color: #00cec9; }
+
+    .quick-action-btn.blue:hover { border-color: rgba(116, 185, 255, 0.4); }
+    .quick-action-btn.green:hover { border-color: rgba(0, 184, 148, 0.4); }
+    .quick-action-btn.orange:hover { border-color: rgba(253, 203, 110, 0.4); }
+    .quick-action-btn.pink:hover { border-color: rgba(253, 121, 168, 0.4); }
+    .quick-action-btn.cyan:hover { border-color: rgba(0, 206, 201, 0.4); }
+
+    /* Section Headers */
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .section-title {
+        font-size: 1.15rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .section-title i {
+        color: #b58afe;
+    }
+
+    .section-link {
+        font-size: 0.85rem;
+        color: #b58afe;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* Chat Lists */
+    .chats-section {
+        margin-bottom: 24px;
+    }
+
+    .chat-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+        background: var(--card-bg);
+        padding: 4px;
+        border-radius: 12px;
+        border: 1px solid var(--card-border);
+    }
+
+    .chat-tab {
+        flex: 1;
+        padding: 12px 16px;
+        background: transparent;
+        border: none;
+        border-radius: 10px;
+        color: var(--text-secondary);
+        font-weight: 500;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .chat-tab.active {
+        background: var(--primary-gradient);
+        color: white;
+    }
+
+    .chat-tab:not(.active):hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .chat-tab-badge {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.75rem;
+    }
+
+    .chat-list-container {
+        display: none;
+    }
+
+    .chat-list-container.active {
+        display: block;
+    }
+
+    .chat-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .chat-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .chat-item:hover {
+        background: rgba(181, 138, 254, 0.1);
+        border-color: rgba(181, 138, 254, 0.3);
+        transform: translateX(4px);
+    }
+
+    .chat-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        object-fit: cover;
+        flex-shrink: 0;
+        border: 2px solid rgba(181, 138, 254, 0.3);
+    }
+
+    .chat-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .chat-name {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .chat-preview {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .chat-meta {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+    }
+
+    .chat-time {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .chat-badge {
+        background: var(--primary-gradient);
+        color: white;
+        font-size: 0.7rem;
+        padding: 2px 8px;
+        border-radius: 10px;
+    }
+
+    .favorite-btn {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+
+    .favorite-btn:hover,
+    .favorite-btn.active {
+        color: #fdcb6e;
+        background: rgba(253, 203, 110, 0.1);
+    }
+
+    .favorite-btn.active i {
+        animation: heartBeat 0.5s ease;
+    }
+
+    @keyframes heartBeat {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+    }
+
+    /* Empty States */
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 20px;
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        color: var(--text-muted);
+        margin-bottom: 16px;
+    }
+
+    .empty-state-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .empty-state-text {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+    }
+
+    .empty-state-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .empty-state-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 24px rgba(181, 138, 254, 0.4);
+        color: white;
+    }
+
+    /* Loading States */
+    .loading-skeleton {
+        background: linear-gradient(90deg, 
+            rgba(255, 255, 255, 0.05) 25%, 
+            rgba(255, 255, 255, 0.1) 50%, 
+            rgba(255, 255, 255, 0.05) 75%
+        );
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 8px;
+    }
+
+    @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+
+    .chat-skeleton {
+        height: 84px;
+        border-radius: 16px;
+    }
+
+    .stat-skeleton {
+        height: 120px;
+        border-radius: 20px;
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(15, 15, 26, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-top: 1px solid var(--card-border);
+        padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+        z-index: 1000;
+    }
+
+    .bottom-nav-inner {
+        display: flex;
+        justify-content: space-around;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 8px 16px;
+        color: var(--text-muted);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border-radius: 12px;
+    }
+
+    .nav-item:hover,
+    .nav-item.active {
+        color: #b58afe;
+    }
+
+    .nav-item i {
+        font-size: 1.4rem;
+        margin-bottom: 4px;
+    }
+
+    .nav-item span {
+        font-size: 0.7rem;
+        font-weight: 500;
+    }
+
+    .nav-item-create {
+        background: var(--primary-gradient);
+        color: white;
+        border-radius: 50%;
+        width: 52px;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: -20px;
+        box-shadow: 0 4px 20px rgba(181, 138, 254, 0.4);
+    }
+
+    .nav-item-create:hover {
+        transform: scale(1.1);
+        color: white;
+    }
+
+    .nav-item-create i {
+        font-size: 1.6rem;
+        margin: 0;
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: rgba(181, 138, 254, 0.3);
+        border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(181, 138, 254, 0.5);
+    }
+
+    /* Pull to Refresh Indicator */
+    .refresh-indicator {
+        text-align: center;
+        padding: 20px;
+        color: var(--text-secondary);
+        display: none;
+    }
+
+    .refresh-indicator.visible {
+        display: block;
+    }
+
+    .refresh-indicator i {
+        font-size: 1.5rem;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Toast notifications */
+    .toast-container {
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 2000;
+    }
+
+    .custom-toast {
+        background: rgba(0, 0, 0, 0.9);
+        backdrop-filter: blur(10px);
+        padding: 12px 24px;
+        border-radius: 12px;
+        color: white;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
 <body>
-    {{> dashboard-nav}}
+    {{> onboarding-modals}}
+    
+    <div class="dashboard-container">
+        <!-- Welcome Section -->
+        <section class="welcome-section">
+            {{#if user.picture}}
+            <img src="{{user.picture}}" alt="Profile" class="welcome-avatar" onerror="this.src='/img/default-avatar.webp'">
+            {{else}}
+            <div class="welcome-avatar" style="background: var(--primary-gradient); display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-person-fill" style="font-size: 2rem;"></i>
+            </div>
+            {{/if}}
+            <h1 class="welcome-text">{{translations.welcome}}, {{#if user.nickname}}{{user.nickname}}{{else if userData.nickname}}{{userData.nickname}}{{else}}{{translations.guest}}{{/if}}!</h1>
+            <p class="welcome-subtext">{{translations.welcomeMessage}}</p>
+        </section>
 
-<div class="container-fluid bg-light" style="min-height: 90vh;padding-bottom:50px">
-    <div class="row mt-4">
-        <div class="col-md-3">
-            <div class="list-group">
-                <a href="#" class="list-group-item list-group-item-action active" aria-current="true">
-                    ダッシュボード
+        <!-- Stats Grid -->
+        <section class="stats-grid" id="stats-grid">
+            <div class="stat-card purple">
+                <div class="stat-icon"><i class="bi bi-people"></i></div>
+                <div class="stat-value" id="stat-characters">-</div>
+                <div class="stat-label">{{translations.characters}}</div>
+            </div>
+            <div class="stat-card blue">
+                <div class="stat-icon"><i class="bi bi-chat-dots"></i></div>
+                <div class="stat-value" id="stat-chats">-</div>
+                <div class="stat-label">{{translations.chats}}</div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-icon"><i class="bi bi-image"></i></div>
+                <div class="stat-value" id="stat-images">-</div>
+                <div class="stat-label">{{translations.images}}</div>
+            </div>
+            <div class="stat-card orange">
+                <div class="stat-icon"><i class="bi bi-film"></i></div>
+                <div class="stat-value" id="stat-videos">-</div>
+                <div class="stat-label">{{translations.videos.title}}</div>
+            </div>
+        </section>
+
+        <!-- Quick Actions - Create Section -->
+        <section class="quick-actions-section">
+            <div class="quick-actions-header">
+                <span class="quick-actions-title">{{translations.create}}</span>
+            </div>
+            <div class="quick-actions">
+                <a href="/dashboard/image" class="quick-action-btn featured">
+                    <i class="bi bi-card-image"></i>
+                    <span>{{translations.avatar.imageDashboard}}</span>
                 </a>
-                <a href="#" class="list-group-item list-group-item-action">チャットボット一覧</a>
-                <a href="#" class="list-group-item list-group-item-action">新規チャットボット作成</a>
-                <a href="#" class="list-group-item list-group-item-action">ユーザー管理</a>
-                <a href="#" class="list-group-item list-group-item-action">設定</a>
+                <a href="/dashboard/video" class="quick-action-btn blue">
+                    <i class="bi bi-film"></i>
+                    <span>{{translations.avatar.videoDashboard}}</span>
+                </a>
+                <a href="#" class="quick-action-btn green" onclick="loadCharacterCreationPage(); return false;">
+                    <i class="bi bi-person-plus"></i>
+                    <span>{{translations.avatar.createCharacter}}</span>
+                </a>
+                <a href="/dashboard/templates" class="quick-action-btn orange">
+                    <i class="bi bi-file-text"></i>
+                    <span>{{translations.avatar.promptTemplates}}</span>
+                </a>
             </div>
-        </div>
-        <div class="col-md-9">
-            <div class="card">
-                <div class="card-header">
-                    <h4>ダッシュボード</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="card text-white bg-primary mb-3">
-                                <div class="card-body">
-                                    <h5 class="card-title">総チャットボット</h5>
-                                    <p class="card-text" id="totalChatbots">10</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card text-white bg-success mb-3">
-                                <div class="card-body">
-                                    <h5 class="card-title">アクティブチャットボット</h5>
-                                    <p class="card-text" id="activeChatbots">5</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card text-white bg-danger mb-3">
-                                <div class="card-body">
-                                    <h5 class="card-title">エラーチャットボット</h5>
-                                    <p class="card-text" id="errorChatbots">2</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        </section>
 
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <h5>チャットボット一覧</h5>
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>名前</th>
-                                        <th>ステータス</th>
-                                        <th>作成日</th>
-                                        <th>操作</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="chatbotList">
-                                    <tr>
-                                        <td>ボット1</td>
-                                        <td><span class="badge bg-success">アクティブ</span></td>
-                                        <td>2024/06/14</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-info"><i class="fas fa-edit"></i> 編集</button>
-                                            <button class="btn btn-sm btn-danger"><i class="fas fa-trash-alt"></i> 削除</button>
-                                        </td>
-                                    </tr>
-                                    <!-- 他のチャットボットもここにリストされます -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+        <!-- Quick Actions - Manage Section -->
+        <section class="quick-actions-section">
+            <div class="quick-actions-header">
+                <span class="quick-actions-title">{{translations.manage}}</span>
+            </div>
+            <div class="quick-actions">
+                <a href="/dashboard/posts" class="quick-action-btn pink">
+                    <i class="bi bi-images"></i>
+                    <span>{{translations.avatar.myPosts}}</span>
+                </a>
+                <a href="/dashboard/schedules" class="quick-action-btn cyan">
+                    <i class="bi bi-calendar-event"></i>
+                    <span>{{translations.avatar.mySchedules}}</span>
+                </a>
+                <a href="/subscriptions" class="quick-action-btn">
+                    <i class="bi bi-heart"></i>
+                    <span>{{translations.avatar.mySubscriptions}}</span>
+                </a>
+                <a href="/affiliation" class="quick-action-btn blue">
+                    <i class="bi bi-link"></i>
+                    <span>{{translations.avatar.affiliation}}</span>
+                </a>
+            </div>
+        </section>
 
-                    <div class="row mt-4">
-                        <div class="col-12 text-end">
-                            <button class="btn btn-primary"><i class="fas fa-plus"></i> 新規チャットボット作成</button>
-                        </div>
-                    </div>
+        <!-- Quick Actions - Discover Section -->
+        <section class="quick-actions-section">
+            <div class="quick-actions-header">
+                <span class="quick-actions-title">{{translations.explore}}</span>
+            </div>
+            <div class="quick-actions">
+                <a href="/character" class="quick-action-btn">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                    <span>{{translations.explore}}</span>
+                </a>
+                <a href="/search" class="quick-action-btn green">
+                    <i class="bi bi-search"></i>
+                    <span>{{translations.search}}</span>
+                </a>
+                {{#if user._id}}
+                <a href="/user/{{user._id}}" class="quick-action-btn pink">
+                    <i class="bi bi-person-circle"></i>
+                    <span>{{translations.avatar.profile}}</span>
+                </a>
+                {{/if}}
+                <a href="#" class="quick-action-btn orange" onclick="loadSettingsPage(); return false;">
+                    <i class="bi bi-gear"></i>
+                    <span>{{translations.avatar.settings}}</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Chats Section -->
+        <section class="chats-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="bi bi-chat-left-heart"></i>
+                    {{translations.chatList}}
+                </h2>
+                <a href="/chat" class="section-link">
+                    {{translations.view_all_character}} <i class="bi bi-chevron-right"></i>
+                </a>
+            </div>
+
+            <!-- Tabs -->
+            <div class="chat-tabs">
+                <button class="chat-tab active" data-tab="recent" onclick="switchDashboardTab('recent')">
+                    <i class="bi bi-clock-history"></i>
+                    {{translations.recent}}
+                    <span class="chat-tab-badge" id="recent-count">0</span>
+                </button>
+                <button class="chat-tab" data-tab="favorites" onclick="switchDashboardTab('favorites')">
+                    <i class="bi bi-star"></i>
+                    {{translations.favorite.favorites}}
+                    <span class="chat-tab-badge" id="favorites-count">0</span>
+                </button>
+            </div>
+
+            <!-- Recent Chats List -->
+            <div class="chat-list-container active" id="recent-chats-container">
+                <div class="chat-list" id="recent-chats-list">
+                    <!-- Loading skeletons -->
+                    <div class="loading-skeleton chat-skeleton"></div>
+                    <div class="loading-skeleton chat-skeleton"></div>
+                    <div class="loading-skeleton chat-skeleton"></div>
                 </div>
             </div>
-        </div>
+
+            <!-- Favorites Chats List -->
+            <div class="chat-list-container" id="favorites-chats-container">
+                <div class="chat-list" id="favorites-chats-list">
+                    <!-- Loading skeletons -->
+                    <div class="loading-skeleton chat-skeleton"></div>
+                    <div class="loading-skeleton chat-skeleton"></div>
+                </div>
+            </div>
+        </section>
     </div>
-</div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <div class="bottom-nav-inner">
+            <a href="/dashboard" class="nav-item active">
+                <i class="bi bi-house"></i>
+                <span>{{translations.home}}</span>
+            </a>
+            <a href="/chat" class="nav-item">
+                <i class="bi bi-chat-dots"></i>
+                <span>{{translations.chats}}</span>
+            </a>
+            <a href="/dashboard/image" class="nav-item nav-item-create">
+                <i class="bi bi-plus-lg"></i>
+            </a>
+            <a href="/character" class="nav-item">
+                <i class="bi bi-grid-3x3-gap"></i>
+                <span>{{translations.explore}}</span>
+            </a>
+            {{#if user.isTemporary}}
+            <a href="#" class="nav-item" onclick="openLoginForm(); return false;">
+                <i class="bi bi-person-circle"></i>
+                <span>{{translations.signIn}}</span>
+            </a>
+            {{else}}
+            <a href="/user/{{user._id}}" class="nav-item">
+                <i class="bi bi-person-circle"></i>
+                <span>{{translations.avatar.profile}}</span>
+            </a>
+            {{/if}}
+        </div>
+    </nav>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+{{> dashboard-footer}}
+
 <script>
-    $(document).ready(function() {
-        $('#logout.nav-link').on('click', function(event) {
-            event.preventDefault();
-            $.ajax({
-                url: '/user/logout',
-                type: 'POST',
-                success: function(response) {
-                    Swal.fire({
-                        title: '成功',
-                        text: response.status,
-                        icon: 'success'
-                    }).then(() => {
-                        window.location.href = '/authenticate';
-                    });
-                },
-                error: function() {
-                    Swal.fire({
-                        title: 'エラー',
-                        text: 'ログアウトに失敗しました',
-                        icon: 'error'
-                    });
-                }
-            });
-        });
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize dashboard
+    initDashboard();
+});
+
+// Global dashboard state
+const dashboardState = {
+    recentChats: [],
+    favoriteChats: [],
+    stats: {
+        characters: 0,
+        chats: 0,
+        images: 0,
+        videos: 0
+    },
+    isLoading: false
+};
+
+// Initialize dashboard
+async function initDashboard() {
+    await Promise.all([
+        loadDashboardStats(),
+        loadRecentChats(),
+        loadFavoriteChats()
+    ]);
+}
+
+// Load dashboard stats
+async function loadDashboardStats() {
+    try {
+        const response = await fetch('/api/dashboard/stats');
+        if (!response.ok) throw new Error('Failed to load stats');
+        
+        const data = await response.json();
+        
+        // Animate stat counters
+        animateCounter('stat-characters', data.characters || 0);
+        animateCounter('stat-chats', data.chats || 0);
+        animateCounter('stat-images', data.images || 0);
+        animateCounter('stat-videos', data.videos || 0);
+        
+        dashboardState.stats = data;
+    } catch (error) {
+        console.error('Error loading stats:', error);
+        // Set default values on error
+        document.getElementById('stat-characters').textContent = '0';
+        document.getElementById('stat-chats').textContent = '0';
+        document.getElementById('stat-images').textContent = '0';
+        document.getElementById('stat-videos').textContent = '0';
+    }
+}
+
+// Animate counter
+function animateCounter(elementId, targetValue) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    const duration = 1000;
+    const startTime = Date.now();
+    const startValue = 0;
+    
+    function update() {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Ease out cubic
+        const easeProgress = 1 - Math.pow(1 - progress, 3);
+        const currentValue = Math.round(startValue + (targetValue - startValue) * easeProgress);
+        
+        element.textContent = formatNumber(currentValue);
+        
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        }
+    }
+    
+    update();
+}
+
+// Format large numbers
+function formatNumber(num) {
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
+}
+
+// Load recent chats
+async function loadRecentChats() {
+    const container = document.getElementById('recent-chats-list');
+    
+    try {
+        const response = await fetch('/api/recent-chats?limit=10');
+        if (!response.ok) throw new Error('Failed to load chats');
+        
+        const data = await response.json();
+        dashboardState.recentChats = data.chats || [];
+        
+        document.getElementById('recent-count').textContent = dashboardState.recentChats.length;
+        
+        if (dashboardState.recentChats.length === 0) {
+            container.innerHTML = renderEmptyState('recent');
+        } else {
+            container.innerHTML = dashboardState.recentChats.map(chat => renderChatItem(chat)).join('');
+        }
+    } catch (error) {
+        console.error('Error loading recent chats:', error);
+        container.innerHTML = renderEmptyState('recent');
+    }
+}
+
+// Load favorite chats
+async function loadFavoriteChats() {
+    const container = document.getElementById('favorites-chats-list');
+    
+    try {
+        const response = await fetch('/api/favorites');
+        if (!response.ok) throw new Error('Failed to load favorites');
+        
+        const data = await response.json();
+        dashboardState.favoriteChats = data.favorites || data || [];
+        
+        document.getElementById('favorites-count').textContent = dashboardState.favoriteChats.length;
+        
+        if (dashboardState.favoriteChats.length === 0) {
+            container.innerHTML = renderEmptyState('favorites');
+        } else {
+            container.innerHTML = dashboardState.favoriteChats.map(fav => {
+                const chat = fav.chat || fav;
+                return renderChatItem(chat, true);
+            }).join('');
+        }
+    } catch (error) {
+        console.error('Error loading favorites:', error);
+        container.innerHTML = renderEmptyState('favorites');
+    }
+}
+
+// Render chat item
+function renderChatItem(chat, isFavorite = false) {
+    const chatId = chat._id || chat.chatId;
+    const name = chat.name || chat.chatName || 'Unknown Character';
+    const imageUrl = chat.chatImageUrl || chat.imageUrl || '/img/default-avatar.webp';
+    const lastMessage = chat.lastMessage || chat.description || '';
+    const updatedAt = chat.updatedAt || chat.createdAt || new Date();
+    const timeAgo = formatTimeAgo(new Date(updatedAt));
+    const isFavorited = isFavorite || (chat.isFavorite === true);
+    
+    return `
+        <div class="chat-item" onclick="openChat('${chatId}')" data-chat-id="${chatId}">
+            <img src="${imageUrl}" alt="${escapeHtml(name)}" class="chat-avatar" onerror="this.src='/img/default-avatar.webp'" loading="lazy">
+            <div class="chat-info">
+                <div class="chat-name">${escapeHtml(name)}</div>
+                <div class="chat-preview">${escapeHtml(truncateText(lastMessage, 50))}</div>
+            </div>
+            <div class="chat-meta">
+                <span class="chat-time">${timeAgo}</span>
+                <button class="favorite-btn ${isFavorited ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorite('${chatId}', this)">
+                    <i class="bi bi-star${isFavorited ? '-fill' : ''}"></i>
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// Render empty state
+function renderEmptyState(type) {
+    if (type === 'favorites') {
+        return `
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="bi bi-star"></i></div>
+                <div class="empty-state-title">${translations.favorite?.emptyFavorites || 'No favorites yet'}</div>
+                <div class="empty-state-text">${translations.favorite?.emptyFavoritesDescription || 'Star your favorite chats to find them here'}</div>
+                <a href="/character" class="empty-state-btn">
+                    <i class="bi bi-compass"></i>
+                    ${translations.explore || 'Explore Characters'}
+                </a>
+            </div>
+        `;
+    }
+    
+    return `
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="bi bi-chat-left-heart"></i></div>
+            <div class="empty-state-title">${translations.noChats || 'No chats yet'}</div>
+            <div class="empty-state-text">${translations.startChatting || 'Start chatting with AI characters'}</div>
+            <a href="/character" class="empty-state-btn">
+                <i class="bi bi-plus-circle"></i>
+                ${translations.startNow || 'Start Now'}
+            </a>
+        </div>
+    `;
+}
+
+// Switch dashboard tab
+function switchDashboardTab(tab) {
+    // Update tab buttons
+    document.querySelectorAll('.chat-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
     });
+    
+    // Update containers
+    document.getElementById('recent-chats-container').classList.toggle('active', tab === 'recent');
+    document.getElementById('favorites-chats-container').classList.toggle('active', tab === 'favorites');
+}
+
+// Open chat
+function openChat(chatId) {
+    if (!chatId) return;
+    
+    // Store chat ID for navigation
+    sessionStorage.setItem('pendingChatId', chatId);
+    
+    // Navigate to chat page
+    window.location.href = `/chat/${chatId}`;
+}
+
+// Toggle favorite
+async function toggleFavorite(chatId, buttonEl) {
+    if (!chatId) return;
+    
+    const icon = buttonEl.querySelector('i');
+    const isCurrentlyFavorite = buttonEl.classList.contains('active');
+    
+    try {
+        // Use the existing toggle endpoint
+        const response = await fetch('/favorites/toggle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ chatId })
+        });
+        
+        if (!response.ok) throw new Error('Failed to toggle favorite');
+        
+        const result = await response.json();
+        
+        // Update UI based on response
+        if (result.isFavorited) {
+            buttonEl.classList.add('active');
+            icon.classList.remove('bi-star');
+            icon.classList.add('bi-star-fill');
+        } else {
+            buttonEl.classList.remove('active');
+            icon.classList.remove('bi-star-fill');
+            icon.classList.add('bi-star');
+        }
+        
+        // Show toast
+        showToast(result.isFavorited 
+            ? (translations.favorite?.added || 'Added to favorites')
+            : (translations.favorite?.removed || 'Removed from favorites')
+        );
+        
+        // Refresh favorites count
+        loadFavoriteChats();
+        
+    } catch (error) {
+        console.error('Error toggling favorite:', error);
+        showToast(translations.error || 'Something went wrong', 'error');
+    }
+}
+
+// Show toast notification
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'custom-toast';
+    
+    const icon = type === 'success' ? 'bi-check-circle' : 'bi-exclamation-circle';
+    toast.innerHTML = `<i class="bi ${icon}"></i> ${escapeHtml(message)}`;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideUp 0.3s ease reverse';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Helper: Format time ago
+function formatTimeAgo(date) {
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+    
+    if (seconds < 60) return translations.justNow || 'Just now';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d`;
+    
+    return date.toLocaleDateString();
+}
+
+// Helper: Truncate text
+function truncateText(text, maxLength) {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+}
+
+// Helper: Escape HTML
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Load character creation page (if function doesn't exist)
+if (typeof loadCharacterCreationPage === 'undefined') {
+    window.loadCharacterCreationPage = function(chatId) {
+        if (window.user && window.user.isTemporary) {
+            if (typeof openLoginForm === 'function') {
+                openLoginForm();
+            } else {
+                window.location.href = '/signin-redirection';
+            }
+            return;
+        }
+        
+        if (chatId) {
+            window.location.href = `/chat/edit/${chatId}`;
+        } else {
+            window.location.href = '/chat/edit/';
+        }
+    };
+}
+
+// Load settings page (if function doesn't exist)
+if (typeof loadSettingsPage === 'undefined') {
+    window.loadSettingsPage = function() {
+        if (window.user && window.user.isTemporary) {
+            if (typeof openLoginForm === 'function') {
+                openLoginForm();
+            } else {
+                window.location.href = '/signin-redirection';
+            }
+            return;
+        }
+        window.location.href = '/settings';
+    };
+}
+
+// Pull to refresh functionality
+let touchStartY = 0;
+let touchEndY = 0;
+
+document.addEventListener('touchstart', (e) => {
+    touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener('touchmove', (e) => {
+    touchEndY = e.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener('touchend', () => {
+    const swipeDistance = touchEndY - touchStartY;
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    
+    if (swipeDistance > 100 && scrollTop === 0) {
+        // Pull to refresh
+        initDashboard();
+        showToast(translations.refreshing || 'Refreshing...');
+    }
+});
 </script>
-
 </body>
-
 </html>

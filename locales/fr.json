@@ -1064,6 +1064,14 @@
   "create": "Créer",
   "library": "Bibliothèque",
   "explore": "Explorer",
+  "home": "Accueil",
+  "chats": "Discussions",
+  "guest": "Invité",
+  "noChats": "Aucune discussion",
+  "startChatting": "Commencez à discuter avec des personnages IA",
+  "startNow": "Commencer",
+  "justNow": "À l'instant",
+  "refreshing": "Actualisation...",
   "chatList": "Discussions",
   "totalChats": "{{chats.length}}",
   "startChat": "Commencer une discussion",
@@ -2301,6 +2309,7 @@
   "loading_leaderboard": "Chargement du classement...",
   "analytics_refreshed": "Analyse actualisée avec succès",
   
+  "manage": "Gérer",
   "dashboard": {
     "myPosts": "Mes Publications",
     "myPostsDescription": "Voir et gérer tout votre contenu généré",

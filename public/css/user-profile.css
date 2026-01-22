@@ -564,6 +564,7 @@ body:has(.profile-container) {
     height: 100%;
     object-fit: cover;
     object-position: center;
+    aspect-ratio: 1;
 }
 
 .empty-state {

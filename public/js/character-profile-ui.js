@@ -90,178 +90,75 @@ function createCharacterImageOverlay(imgElement, imageUrl) {
     }
     
     if (isTemporary) {
-        // Temporary user - show login overlay with modern design
+        // Temporary user - show small lock overlay
         overlay = $('<div></div>')
-            .addClass('character-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')
+            .addClass('character-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center animate__animated animate__fadeIn')
             .css({
-                background: 'rgba(0, 0, 0, 0.25)',
+                background: 'rgba(0, 0, 0, 0.2)',
                 zIndex: 10,
-                cursor: 'pointer'
+                cursor: 'pointer',
+                borderRadius: '0'
             })
             .on('click', function() {
                 openLoginForm();
             });
 
         const lockIcon = $('<i></i>').addClass('bi bi-lock-fill').css({ 
-            'font-size': '2rem', 
+            'font-size': '1.25rem', 
             'color': '#fff', 
-            'opacity': '0.9', 
-            'margin-bottom': '0.75rem' 
+            'opacity': '0.85'
         });
-        
-        const loginButton = $('<button></button>')
-            .addClass('btn btn-sm')
-            .css({
-                'background': 'linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%)',
-                'color': 'white',
-                'border': 'none',
-                'border-radius': '8px',
-                'font-weight': '600',
-                'padding': '0.5rem 1rem',
-                'font-size': '0.85rem',
-                'cursor': 'pointer',
-                'transition': 'all 0.2s ease'
-            })
-            .html('<i class="bi bi-unlock-fill me-2"></i>Unlock')
-            .on('click', function(e) {
-                e.stopPropagation();
-                openLoginForm();
-            });
 
-        overlay.append(lockIcon, loginButton);
+        overlay.append(lockIcon);
 
     } else if (subscriptionStatus) {
-        // Subscribed user with showNSFW disabled - show blurry overlay on top of visible image
+        // Subscribed user with showNSFW disabled - show small lock overlay
         overlay = $('<div></div>')
-            .addClass('character-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')
+            .addClass('character-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center animate__animated animate__fadeIn')
             .css({
-                background: 'rgba(0, 0, 0, 0.25)',
+                background: 'rgba(0, 0, 0, 0.2)',
                 zIndex: 10,
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
-                cursor: 'pointer'
-            });
-
-        let buttonElement = $('<button></button>')
-            .addClass('btn btn-sm')
-            .css({
-                'background': 'linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%)',
-                'color': 'white',
-                'border': 'none',
-                'border-radius': '8px',
-                'font-weight': '600',
-                'padding': '0.5rem 1rem',
-                'font-size': '0.85rem',
-                'cursor': 'pointer',
-                'transition': 'all 0.2s ease',
-                'margin-top': '0.75rem'
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                cursor: 'pointer',
+                borderRadius: '0'
             })
-            .text(window.translations?.showContent || 'Show Content')
-            .on('click', function (e) {
-                e.stopPropagation();
-                
+            .on('click', function() {
                 // Hide the overlay to reveal the image
-                overlay.fadeOut(300, function() {
-                    overlay.remove();
-                });
-                
-                // Get the image data from the media-item element to open swiper
-                // Try multiple ways to find the media-item and image data
-                let mediaItem = $(imgElement).closest('.media-item');
-                let imageData = null;
-                
-                if (mediaItem && mediaItem.length) {
-                    const imageDataStr = mediaItem.data('image');
-                    if (imageDataStr) {
-                        try {
-                            imageData = typeof imageDataStr === 'string' ? JSON.parse(imageDataStr) : imageDataStr;
-                        } catch (err) {
-                            console.error('Failed to parse image data from media-item:', err);
-                        }
-                    }
-                }
-                
-                // Fallback: if we couldn't find it, create minimal image data from the URL
-                if (!imageData) {
-                    imageData = {
-                        imageUrl: imageUrl,
-                        _id: $(imgElement).data('image-id') || 'unknown-' + Date.now(),
-                        title: $(imgElement).data('image-title') || 'Image',
-                        prompt: $(imgElement).data('image-prompt') || '',
-                        nsfw: true
-                    };
-                }
-            })
-            .on('mouseenter', function() {
-                $(this).css({ 
-                    'transform': 'translateY(-2px)', 
-                    'box-shadow': '0 8px 16px rgba(130, 64, 255, 0.3)' 
-                });
-            })
-            .on('mouseleave', function() {
-                $(this).css({ 
-                    'transform': 'translateY(0)', 
-                    'box-shadow': 'none' 
+                $(this).fadeOut(200, function() {
+                    $(this).remove();
                 });
             });
 
-        overlay.append(buttonElement);
-        
-        // Add click handler to overlay background to also trigger image reveal
-        overlay.on('click', function(e) {
-            // Only trigger if clicking on overlay itself, not the button
-            if (e.target === this) {
-                buttonElement.click();
-            }
+        const lockIcon = $('<i></i>').addClass('bi bi-lock-fill').css({ 
+            'font-size': '1.25rem', 
+            'color': '#fff', 
+            'opacity': '0.85'
         });
 
+        overlay.append(lockIcon);
 
     } else {
-        // Non-subscribed user - show unlock overlay with modern design
+        // Non-subscribed user - show small lock overlay
         overlay = $('<div></div>')
-            .addClass('character-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center animate__animated animate__fadeIn')
+            .addClass('character-nsfw-overlay position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center animate__animated animate__fadeIn')
             .css({
-                background: 'rgba(0, 0, 0, 0.25)',
+                background: 'rgba(0, 0, 0, 0.2)',
                 zIndex: 10,
-                cursor: 'pointer'
+                cursor: 'pointer',
+                borderRadius: '0'
             })
             .on('click', function() {
                 loadPlanPage();
             });
 
-        let buttonElement = $('<button></button>')
-            .addClass('btn btn-sm')
-            .css({
-                'background': 'linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%)',
-                'color': 'white',
-                'border': 'none',
-                'border-radius': '8px',
-                'font-weight': '600',
-                'padding': '0.5rem 1rem',
-                'font-size': '0.85rem',
-                'cursor': 'pointer',
-                'transition': 'all 0.2s ease',
-                'margin-top': '0.75rem'
-            })
-            .html('<i class="bi bi-lock-fill me-2"></i>' + (window.translations?.blurButton || 'Unlock Content'))
-            .on('click', function (e) {
-                e.stopPropagation();
-                loadPlanPage();
-            })
-            .on('mouseenter', function() {
-                $(this).css({ 
-                    'transform': 'translateY(-2px)', 
-                    'box-shadow': '0 8px 16px rgba(130, 64, 255, 0.3)' 
-                });
-            })
-            .on('mouseleave', function() {
-                $(this).css({ 
-                    'transform': 'translateY(0)', 
-                    'box-shadow': 'none' 
-                });
-            });
+        const lockIcon = $('<i></i>').addClass('bi bi-lock-fill').css({ 
+            'font-size': '1.25rem', 
+            'color': '#fff', 
+            'opacity': '0.85'
+        });
 
-        overlay.append(buttonElement);
+        overlay.append(lockIcon);
     }
 
     $(imgElement)
@@ -607,7 +504,7 @@ function displayImagesInGrid(images = [], chatId = null) {
         } else if (shouldBlur) {
             // Non-premium user or temporary - show placeholder and load blurred image via API
             item.innerHTML = `
-                <div style="position: relative; cursor: pointer; overflow: hidden; border-radius: 8px; background: #f0f0f0;">
+                <div style="position: relative; cursor: pointer; overflow: hidden; background: #f0f0f0;">
                     <img alt="Image ${index + 1}" loading="lazy" 
                          class="blur-image-character" 
                          data-src="${imgSrc}"
@@ -840,7 +737,7 @@ function displayMoreImagesInGrid(images = [], chatId = null) {
         } else if (shouldBlur) {
             // Non-premium user or temporary - show placeholder and load blurred image via API
             item.innerHTML = `
-                <div style="position: relative; cursor: pointer; overflow: hidden; border-radius: 8px; background: #f0f0f0;">
+                <div style="position: relative; cursor: pointer; overflow: hidden; background: #f0f0f0;">
                     <img alt="Image" loading="lazy" 
                          class="blur-image-character" 
                          data-src="${imgSrc}"
@@ -1085,7 +982,7 @@ function displayVideosInGrid() {
             // Non-premium user or temporary - show placeholder image and load blurred preview via API
             // DO NOT expose videoUrl in DOM for security - use videoId to fetch blurred preview
             item.innerHTML = `
-                <div style="position: relative; cursor: pointer; overflow: hidden; border-radius: 8px; background: #f0f0f0;">
+                <div style="position: relative; cursor: pointer; overflow: hidden; background: #f0f0f0;">
                     <img alt="Video ${index + 1}" loading="lazy" 
                          class="blur-video-preview" 
                          data-video-id="${video._id}"

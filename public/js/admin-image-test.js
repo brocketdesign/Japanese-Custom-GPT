@@ -3,6 +3,9 @@
  * Handles multi-model testing, timing, and statistics
  */
 
+// Model categories that cannot be used for text-to-image generation
+const INCOMPATIBLE_TEXT_TO_IMAGE_CATEGORIES = ['face', 'img2img'];
+
 // Global state
 const state = {
     activeTasks: new Map(),
@@ -3255,6 +3258,14 @@ function openCreateCharacterModal() {
         imageStyle: imageStyle
     };
     
+    // Determine if we need to show the model selector
+    // Get the selected models to check their category
+    const currentModelCategory = getSelectedModels().find(m => m.id === modelId)?.category;
+    
+    // Show model selector if the current model is not suitable for text-to-image
+    const needsModelSelection = currentModelCategory && INCOMPATIBLE_TEXT_TO_IMAGE_CATEGORIES.includes(currentModelCategory);
+    currentCharacterImageData.needsModelSelection = needsModelSelection;
+    
     // Update modal content
     document.getElementById('characterPreviewImage').src = imageUrl;
     document.getElementById('characterPromptPreview').textContent = currentCharacterImageData.prompt.length > 200 
@@ -3264,6 +3275,42 @@ function openCreateCharacterModal() {
     document.getElementById('characterPersonalityInput').value = '';
     document.getElementById('characterNsfwCheck').checked = false;
     document.getElementById('useImageAsBaseFaceCheck').checked = false;
+    
+    // Populate the text-to-image model selector if needed
+    const modelSection = document.getElementById('characterImageModelSection');
+    const modelSelect = document.getElementById('characterImageModelSelect');
+    
+    if (needsModelSelection && modelSection && modelSelect) {
+        // Show the model selection section
+        modelSection.style.display = 'block';
+        
+        // Get all txt2img models from the checkboxes
+        const txt2imgCheckboxes = document.querySelectorAll('.txt2img-model-checkbox');
+        const txt2imgModels = Array.from(txt2imgCheckboxes).map(checkbox => ({
+            id: checkbox.value,
+            name: checkbox.dataset.modelName
+        }));
+        
+        // Store model data for later use in confirmCreateCharacter
+        currentCharacterImageData.txt2imgModels = txt2imgModels;
+        
+        // Clear existing options and populate safely using DOM methods
+        modelSelect.innerHTML = '';
+        txt2imgModels.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model.id;
+            option.textContent = model.name;
+            modelSelect.appendChild(option);
+        });
+        
+        // Select the first model by default
+        if (txt2imgModels.length > 0) {
+            modelSelect.value = txt2imgModels[0].id;
+        }
+    } else if (modelSection) {
+        // Hide the section if not needed
+        modelSection.style.display = 'none';
+    }
     
     // Reset the create button to its original state
     const createBtn = document.getElementById('confirmCreateCharacterBtn');
@@ -3306,6 +3353,24 @@ async function confirmCreateCharacter() {
     const nsfw = document.getElementById('characterNsfwCheck').checked;
     const useImageAsBaseFace = document.getElementById('useImageAsBaseFaceCheck').checked;
     
+    // Get the selected text-to-image model if the section is visible
+    let finalModelId = currentCharacterImageData.modelId;
+    let finalModelName = currentCharacterImageData.modelName;
+    
+    if (currentCharacterImageData.needsModelSelection) {
+        const modelSelect = document.getElementById('characterImageModelSelect');
+        if (modelSelect && modelSelect.value) {
+            const selectedModelId = modelSelect.value;
+            // Use cached model data to find the selected model
+            const txt2imgModels = currentCharacterImageData.txt2imgModels || [];
+            const selectedModel = txt2imgModels.find(m => m.id === selectedModelId);
+            if (selectedModel) {
+                finalModelId = selectedModel.id;
+                finalModelName = selectedModel.name;
+            }
+        }
+    }
+    
     // Show loading state
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Creating Character...';
@@ -3323,8 +3388,8 @@ async function confirmCreateCharacter() {
                 nsfw: nsfw,
                 useImageAsBaseFace: useImageAsBaseFace,
                 // Include model information for consistent image generation in chat
-                modelId: currentCharacterImageData.modelId,
-                modelName: currentCharacterImageData.modelName,
+                modelId: finalModelId,
+                modelName: finalModelName,
                 imageModel: currentCharacterImageData.imageModel,
                 imageVersion: currentCharacterImageData.imageVersion,
                 imageStyle: currentCharacterImageData.imageStyle

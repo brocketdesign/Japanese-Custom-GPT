@@ -1,5 +1,11 @@
 const { ObjectId } = require('mongodb');
 const { getLanguageName } = require('./tool');
+const { 
+  sequenceCharacters, 
+  rotateCharacterImages,
+  getColdStartPool 
+} = require('./content-sequencing-utils');
+const { getUserInteractionState } = require('./user-interaction-utils');
 
 /**
  * Build search pipeline for images
@@ -502,17 +508,31 @@ async function searchVideos(db, user, queryStr, page = 1, limit = 24) {
 /**
  * Search images grouped by character for explore gallery
  * Returns characters with their images for swipe navigation
+ * Now with TikTok-style sequencing: weighted randomness + personalization
  */
-async function searchImagesGroupedByCharacter(db, user, queryStr = '', page = 1, limit = 20, showNSFW = false) {
+async function searchImagesGroupedByCharacter(db, user, queryStr = '', page = 1, limit = 20, showNSFW = false, userState = null) {
   const language = getLanguageName(user?.lang);
   const requestLang = user?.lang || 'en';
-  const skip = (page - 1) * limit;
   const chatsGalleryCollection = db.collection('gallery');
   const chatsCollection = db.collection('chats');
 
   // Prepare search words
   const queryWords = queryStr.split(' ').filter(word => word.replace(/[^\w\s]/gi, '').trim() !== '');
   const hasQuery = queryWords.length > 0;
+  
+  // Get user interaction state for personalization
+  let interactionState = userState;
+  if (!interactionState && user && !user.isTemporary) {
+    interactionState = await getUserInteractionState(db, user._id);
+  }
+
+  // For page 1 with no query, use smart sequencing
+  // For pages > 1 or with query, use traditional pagination
+  const useSmartSequencing = page === 1 && !hasQuery;
+  
+  // Fetch MORE characters than needed if using smart sequencing (for better selection pool)
+  const fetchLimit = useSmartSequencing ? limit * 3 : limit;
+  const skip = useSmartSequencing ? 0 : (page - 1) * limit;
 
   // Build the aggregation pipeline to group images by character
   const pipeline = [
@@ -634,7 +654,7 @@ async function searchImagesGroupedByCharacter(db, user, queryStr = '', page = 1,
 
   // Pagination
   pipeline.push({ $skip: skip });
-  pipeline.push({ $limit: limit });
+  pipeline.push({ $limit: fetchLimit });
 
   // Limit images per character for performance (max 20 images per character)
   pipeline.push({
@@ -647,7 +667,8 @@ async function searchImagesGroupedByCharacter(db, user, queryStr = '', page = 1,
       chatTags: { $ifNull: ['$chatTags', []] },
       description: 1,
       imageCount: 1,
-      images: { $slice: ['$images', 20] }
+      images: { $slice: ['$images', 20] },
+      latestImage: 1
     }
   });
 
@@ -687,10 +708,21 @@ async function searchImagesGroupedByCharacter(db, user, queryStr = '', page = 1,
     ]);
 
     const totalCharacters = countResult.length ? countResult[0].total : 0;
-    const hasMore = skip + characters.length < totalCharacters;
+    
+    // Apply smart sequencing for page 1 without query
+    let finalCharacters = characters;
+    if (useSmartSequencing && characters.length > 0) {
+      // Apply weighted randomness and personalization
+      finalCharacters = await sequenceCharacters(characters, interactionState, {
+        limit,
+        excludeRecent: true
+      });
+    }
+    
+    const hasMore = (page * limit) < totalCharacters;
 
     return {
-      characters,
+      characters: finalCharacters,
       page,
       totalCharacters,
       hasMore

@@ -57,6 +57,31 @@ html, body {
   margin: 0 auto;
 }
 
+/* Logo Button - Links to Dashboard */
+.gen-logo-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background: var(--primary-gradient, linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%));
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(130, 64, 255, 0.3);
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(130, 64, 255, 0.3);
+}
+
+.gen-logo-btn:hover {
+  background: var(--primary-gradient, linear-gradient(90.9deg, #E5CFFF 2.74%, #9D53FF 102.92%));
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(130, 64, 255, 0.5);
+  transform: scale(1.05);
+}
+
 /* Mode Selector - Pill style */
 .gen-mode-selector {
   display: flex;
@@ -69,8 +94,10 @@ html, body {
 .gen-mode-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 8px 16px;
+  width: 36px;
+  height: 36px;
   border: none;
   background: transparent;
   color: var(--text-secondary, #aeb0b4);
@@ -82,8 +109,12 @@ html, body {
   white-space: nowrap;
 }
 
+.gen-mode-btn span {
+  display: none;
+}
+
 .gen-mode-btn i {
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .gen-mode-btn.active {

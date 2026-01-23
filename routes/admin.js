@@ -49,6 +49,11 @@ async function routes(fastify, options) {
       } 
       const usersCollection = fastify.mongo.db.collection('users');
       const chatsCollection = fastify.mongo.db.collection('userChat');
+      
+      // Pagination parameters
+      const page = Math.max(1, parseInt(request.query.page) || 1);
+      const limit = Math.min(50, Math.max(1, parseInt(request.query.limit) || 10)); // Max 50 per page
+      const skip = (page - 1) * limit;
          
       const getUniqueUsers = async () => {
         try {
@@ -63,26 +68,46 @@ async function routes(fastify, options) {
           today.toLocaleDateString('ja-JP');
           yesterday.toLocaleDateString('ja-JP');                    
   
-          // Query the users collection to get the user details for the unique userIds
+          // Count total users
+          const totalUsers = await usersCollection.countDocuments({
+            _id: { $in: userIds },
+            createdAt: { $gte: yesterday, $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000) }
+          });
+
+          // Query the users collection to get the user details for the unique userIds with pagination
           const users = await usersCollection.find({
             _id: { $in: userIds },
             createdAt: { $gte: yesterday, $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000) }
-          }).toArray();
+          })
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .toArray();
   
-          return users;
+          return { users, totalUsers };
         } catch (error) {
           console.error('Error fetching unique users:', error);
           throw error;
         }
       };
             
-      const users = await getUniqueUsers();
+      const { users, totalUsers } = await getUniqueUsers();
+      const totalPages = Math.ceil(totalUsers / limit);
       const translations = request.translations;
+      
       return reply.view('/admin/users',{
         user: request.user,
         users,
         title: translations.admin_user.recent_users, 
-        translations
+        translations,
+        pagination: {
+          page,
+          limit,
+          totalUsers,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1
+        }
       });
     } catch (error) {
       return reply.status(500).send({ error: error.message });
@@ -160,19 +185,35 @@ async function routes(fastify, options) {
         return reply.status(403).send({ error: 'Access denied' });
       }
 
+      // Pagination parameters
+      const page = Math.max(1, parseInt(request.query.page) || 1);
+      const limit = Math.min(50, Math.max(1, parseInt(request.query.limit) || 10)); // Max 50 per page
+      const skip = (page - 1) * limit;
+
       const usersCollection = fastify.mongo.db.collection('users');        
       
+      // Count total users
+      const totalUsers = await usersCollection.countDocuments({
+        email: { $exists: true }
+      });
+
+      // Get paginated users
       const users = await usersCollection.find({
         email: { $exists: true }
-      }).sort({createdAt:-1}).toArray();
+      })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .toArray();
       
-      const totalUsers = users.length;
       const femaleCount = users.filter(user => user.gender === 'female').length;
       const maleCount = users.filter(user => user.gender === 'male').length;
       
-      const femalePercentage = parseInt((femaleCount / totalUsers) * 100);
-      const malePercentage = parseInt((maleCount / totalUsers) * 100);
+      const femalePercentage = totalUsers > 0 ? parseInt((femaleCount / totalUsers) * 100) : 0;
+      const malePercentage = totalUsers > 0 ? parseInt((maleCount / totalUsers) * 100) : 0;
       const translations = request.translations;
+      
+      const totalPages = Math.ceil(totalUsers / limit);
 
       return reply.view('/admin/users',{
         user: request.user,
@@ -184,7 +225,15 @@ async function routes(fastify, options) {
         femalePercentage, 
         maleCount,
         malePercentage,
-        title: translations.admin_user.registered_users
+        title: translations.admin_user.registered_users,
+        pagination: {
+          page,
+          limit,
+          totalUsers,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1
+        }
       });
     } catch (error) {
       return reply.status(500).send({ error: error.message });
@@ -1240,6 +1289,62 @@ async function routes(fastify, options) {
 
     } catch (error) {
       console.error('[Admin] Error setting SFW thumbnail:', error);
+      return reply.status(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // API endpoint for fetching paginated users data
+  fastify.get('/api/admin/users/paginated', async (request, reply) => {
+    try {
+      const isAdmin = await checkUserAdmin(fastify, request.user._id);
+      if (!isAdmin) {
+        return reply.status(403).send({ error: 'Access denied' });
+      }
+
+      const page = Math.max(1, parseInt(request.query.page) || 1);
+      const limit = Math.min(50, Math.max(1, parseInt(request.query.limit) || 10));
+      const skip = (page - 1) * limit;
+      const userType = request.query.userType || 'registered'; // 'registered' or 'recent'
+
+      const usersCollection = fastify.mongo.db.collection('users');
+
+      let query = {};
+      if (userType === 'registered') {
+        query = { email: { $exists: true } };
+      } else if (userType === 'recent') {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+        query = {
+          createdAt: { $gte: yesterday, $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000) }
+        };
+      }
+
+      const totalUsers = await usersCollection.countDocuments(query);
+      const users = await usersCollection
+        .find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray();
+
+      const totalPages = Math.ceil(totalUsers / limit);
+
+      return reply.send({
+        success: true,
+        data: users,
+        pagination: {
+          page,
+          limit,
+          totalUsers,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching paginated users:', error);
       return reply.status(500).send({ error: 'Internal server error' });
     }
   });

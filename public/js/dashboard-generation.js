@@ -355,6 +355,7 @@ class GenerationDashboard {
       this.updateModelDisplay();
       this.updateToolButtonsForModel(); // Update tool buttons based on model requirements
       this.updateCostDisplay(); // Update cost as different models may have different costs
+      this.updateSubmitButtonState(); // Update submit button state for face merge models
       this.closeAllOverlays();
       console.log('[GenerationDashboard] Model selected:', model.name, model);
     }
@@ -448,7 +449,8 @@ class GenerationDashboard {
   
   updateSubmitButtonState() {
     const hasPrompt = this.elements.promptInput?.value.trim().length > 0;
-    const canGenerate = hasPrompt && !this.state.isGenerating && this.hasEnoughPoints();
+    const isFaceMerge = this.state.selectedModel?.category === 'face';
+    const canGenerate = (hasPrompt || isFaceMerge) && !this.state.isGenerating && this.hasEnoughPoints();
     
     if (this.elements.submitBtn) {
       this.elements.submitBtn.disabled = !canGenerate;
@@ -461,13 +463,17 @@ class GenerationDashboard {
   
   async handleGenerate() {
     const prompt = this.elements.promptInput?.value.trim();
+    const model = this.state.selectedModel;
     
-    if (!prompt || this.state.isGenerating) return;
+    // For face merge models, prompt is optional; for others, it's required
+    const isFaceMerge = model?.category === 'face';
+    if ((!prompt && !isFaceMerge) || this.state.isGenerating) return;
+    
     if (!this.hasEnoughPoints()) {
       this.showNotification('Insufficient points for generation', 'error');
       return;
     }
-    if (!this.state.selectedModel) {
+    if (!model) {
       this.showNotification('Please select a model', 'error');
       return;
     }
@@ -495,15 +501,49 @@ class GenerationDashboard {
       
       const data = await response.json();
       
+      console.log('[GenerationDashboard] API Response:', JSON.stringify(data, null, 2));
+      
       if (!data.success && !data.tasks) {
         throw new Error(data.error || 'Generation failed');
       }
       
-      // Handle async tasks
+      // Handle tasks
       if (data.tasks && data.tasks.length > 0) {
         const task = data.tasks[0];
-        pendingResult.taskId = task.taskId || task.task_id;
-        this.startPollingTask(pendingResult);
+        console.log('[GenerationDashboard] Task received:', {
+          taskId: task.taskId || task.task_id,
+          status: task.status,
+          async: task.async,
+          imagesCount: task.images?.length || 0
+        });
+        
+        // Check if task is already completed (sync models like merge-face-segmind)
+        if (task.status === 'completed' && task.images && task.images.length > 0) {
+          console.log('[GenerationDashboard] Sync task already completed with images:', task.images);
+          const imageUrl = task.images[0]?.imageUrl || task.images[0]?.image_url || task.images[0]?.url || task.images[0];
+          console.log('[GenerationDashboard] Extracted imageUrl:', imageUrl);
+          if (imageUrl) {
+            this.updateResultWithData(pendingResult.id, {
+              status: 'completed',
+              imageUrl: imageUrl
+            });
+          } else {
+            console.error('[GenerationDashboard] Sync task completed but no imageUrl found in:', task.images[0]);
+            this.updateResultWithData(pendingResult.id, { status: 'failed' });
+          }
+        } else if (task.status === 'completed') {
+          // Task completed but no images - might be an error
+          console.log('[GenerationDashboard] Task completed but no images:', task);
+          this.updateResultWithData(pendingResult.id, { status: 'failed' });
+        } else if (task.status === 'failed') {
+          // Task failed on backend
+          console.log('[GenerationDashboard] Task failed:', task.error || 'Unknown error');
+          this.updateResultWithData(pendingResult.id, { status: 'failed' });
+        } else {
+          // Async task - need to poll for result
+          pendingResult.taskId = task.taskId || task.task_id;
+          this.startPollingTask(pendingResult);
+        }
       } else if (data.result) {
         // Immediate result
         this.updateResultWithData(pendingResult.id, data.result);
@@ -531,9 +571,13 @@ class GenerationDashboard {
   buildGenerationPayload(prompt) {
     const model = this.state.selectedModel;
     const payload = {
-      prompt,
       models: [model.id]
     };
+    
+    // Prompt is optional for face merge models
+    if (prompt || model.category !== 'face') {
+      payload.prompt = prompt || '';
+    }
     
     if (this.state.mode === 'image') {
       // Get size format based on model (some models use 'x' instead of '*')
@@ -736,7 +780,18 @@ class GenerationDashboard {
   
   startPollingTask(result) {
     const taskId = result.taskId;
-    if (!taskId) return;
+    if (!taskId) {
+      console.log('[GenerationDashboard] startPollingTask: No taskId provided');
+      return;
+    }
+    
+    // Skip polling for sync tasks (they already have results)
+    if (taskId.startsWith('sync-')) {
+      console.log('[GenerationDashboard] Skipping poll for sync task:', taskId);
+      return;
+    }
+    
+    console.log('[GenerationDashboard] Starting poll for task:', taskId);
     
     const pollEndpoint = this.state.mode === 'image'
       ? '/dashboard/image/status'
@@ -746,6 +801,8 @@ class GenerationDashboard {
       try {
         const response = await fetch(`${pollEndpoint}/${taskId}`);
         const data = await response.json();
+        
+        console.log('[GenerationDashboard] Poll response for', taskId, ':', data);
         
         if (data.status === 'completed' || data.status === 'TASK_STATUS_SUCCEED') {
           clearInterval(interval);
@@ -1435,9 +1492,13 @@ class GenerationDashboard {
       // Set up the modal
       const mediaPreview = modal.querySelector('.post-media-preview');
       if (mediaPreview) {
-        mediaPreview.innerHTML = result.mode === 'image'
-          ? `<img src="${result.mediaUrl}" alt="Post image">`
-          : `<video src="${result.mediaUrl}" controls></video>`;
+        if (result.mode === 'image') {
+          mediaPreview.innerHTML = `<img src="${result.mediaUrl}" alt="Post image" 
+                                        style="max-height: 250px; max-width: 100%; border-radius: 8px; object-fit: contain;">`;
+        } else {
+          mediaPreview.innerHTML = `<video src="${result.mediaUrl}" controls 
+                                          style="max-height: 250px; max-width: 100%; border-radius: 8px; object-fit: contain;"></video>`;
+        }
       }
       
       const captionInput = modal.querySelector('#postCaption');
@@ -1463,6 +1524,118 @@ class GenerationDashboard {
       });
       window.location.href = `/dashboard/posts?${params.toString()}`;
     }
+  }
+
+  /**
+   * Generate caption for draft post using AI
+   */
+  async generateDraftCaption() {
+    const captionInput = document.getElementById('postCaption');
+    const btn = document.getElementById('generatePostCaptionBtn');
+    
+    if (!this._currentPostData?.prompt) {
+      this.showNotification('No prompt available for caption generation', 'warning');
+      return;
+    }
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Generating...';
+    captionInput.disabled = true;
+    
+    try {
+      const response = await fetch('/api/posts/generate-caption', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: this._currentPostData.prompt,
+          platform: 'general',
+          style: 'engaging',
+          mediaType: this._currentPostData.mediaType
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success && data.caption) {
+        captionInput.value = data.caption;
+        this.showNotification('Caption generated!', 'success');
+      } else {
+        throw new Error(data.error || 'Failed to generate caption');
+      }
+    } catch (error) {
+      console.error('[GenerationDashboard] Error generating caption:', error);
+      this.showNotification('Failed to generate caption', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-magic me-1"></i>Generate Caption with AI';
+      captionInput.disabled = false;
+    }
+  }
+
+  /**
+   * Confirm and save draft post
+   */
+  async confirmCreatePost() {
+    if (!this._currentPostData) {
+      this.showNotification('No post data available', 'error');
+      return;
+    }
+    
+    const caption = document.getElementById('postCaption').value;
+    const btn = document.getElementById('confirmCreatePostBtn');
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+    
+    try {
+      const response = await fetch('/api/posts/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl: this._currentPostData.mediaUrl,
+          videoUrl: this._currentPostData.mediaType === 'video' ? this._currentPostData.mediaUrl : undefined,
+          prompt: this._currentPostData.prompt,
+          model: 'generation-dashboard',
+          generateCaption: !caption, // Generate caption if not provided
+          caption: caption || undefined,
+          mediaType: this._currentPostData.mediaType
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        this.showNotification('Draft post saved!', 'success');
+        
+        // Update button to "Go to My Posts"
+        btn.textContent = '';
+        btn.innerHTML = '<i class="bi bi-file-earmark-check me-1"></i>Go to My Posts';
+        btn.disabled = false;
+        btn.onclick = () => this.goToMyPosts();
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-success');
+        
+        // Disable caption input and generate button
+        document.getElementById('postCaption').disabled = true;
+        document.getElementById('generatePostCaptionBtn').disabled = true;
+      } else {
+        throw new Error(data.error || 'Failed to save draft');
+      }
+    } catch (error) {
+      console.error('[GenerationDashboard] Error saving draft:', error);
+      this.showNotification('Failed to save draft: ' + error.message, 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-check me-1"></i>Save as Draft';
+    }
+  }
+
+  /**
+   * Navigate to My Posts page
+   */
+  goToMyPosts() {
+    window.location.href = '/dashboard/posts';
   }
   
   /**

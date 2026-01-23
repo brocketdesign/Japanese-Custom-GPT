@@ -2039,6 +2039,14 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             const similarityMatrixCollection = db.collection('similarityMatrix');
             const chatIdParam = request.params.chatId;
             const language = request.lang || 'en'; // Get language from request
+            
+            // Pagination parameters with validation
+            const requestedPage = parseInt(request.query.page);
+            const requestedLimit = parseInt(request.query.limit);
+            const page = Math.max(1, Math.min(isNaN(requestedPage) ? 1 : requestedPage, 100)); // Limit to 1-100
+            const limit = Math.max(1, Math.min(isNaN(requestedLimit) ? 10 : requestedLimit, 50)); // Limit to 1-50
+            const skip = (page - 1) * limit;
+            
             let chatIdObjectId;
 
             try {
@@ -2058,11 +2066,25 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             });
 
             if (cachedResult && cachedResult.similarChats && cachedResult.similarChats.length > 0) {
-                console.log(`[API/SimilarChats] Using cached results for ${chatIdParam} (language: ${language})`);
+                console.log(`[API/SimilarChats] Using cached results for ${chatIdParam} (language: ${language}), page: ${page}`);
                 // Filter cached results by language to ensure consistency
                 const filteredResults = cachedResult.similarChats.filter(chat => chat.language === language);
                 if (filteredResults.length > 0) {
-                    return reply.send(filteredResults);
+                    // Apply pagination to cached results
+                    const paginatedResults = filteredResults.slice(skip, skip + limit);
+                    const totalResults = filteredResults.length;
+                    const totalPages = Math.ceil(totalResults / limit);
+                    
+                    return reply.send({
+                        similarChats: paginatedResults,
+                        pagination: {
+                            currentPage: page,
+                            totalPages: totalPages,
+                            totalResults: totalResults,
+                            limit: limit,
+                            hasMore: page < totalPages
+                        }
+                    });
                 }
             }
 
@@ -2242,7 +2264,7 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
                             $set: {
                                 sourceChatId: chatIdObjectId,
                                 language: language,
-                                similarities: freshScoredChats.slice(0, 20), // Store top 20
+                                similarities: freshScoredChats.slice(0, 50), // Store top 50 for pagination support
                                 updatedAt: new Date(),
                                 expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
                             }
@@ -2251,19 +2273,13 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
                     );
                 }
 
-                // Improve diversity: select characters with varying similarity scores
-                // Instead of just top 6, we'll pick from different score ranges for more variety
+                // Get top results for pagination (up to 50)
                 const diverseChatIds = [];
                 if (freshScoredChats.length > 0) {
-                    // Group by score ranges for diversity
-                    const highScore = freshScoredChats.filter(c => c.score >= 0.15).slice(0, 2);
-                    const midScore = freshScoredChats.filter(c => c.score >= 0.10 && c.score < 0.15).slice(0, 2);
-                    const lowScore = freshScoredChats.filter(c => c.score >= 0.08 && c.score < 0.10).slice(0, 2);
-                    
-                    // Combine and deduplicate
-                    const allSelected = [...highScore, ...midScore, ...lowScore];
-                    const uniqueChatIds = [...new Set(allSelected.map(c => c.targetChatId.toString()))];
-                    diverseChatIds.push(...uniqueChatIds.slice(0, 6).map(id => new fastify.mongo.ObjectId(id)));
+                    // Take top scored chats, up to 50 for pagination support
+                    const topScored = freshScoredChats.slice(0, 50);
+                    const uniqueChatIds = [...new Set(topScored.map(c => c.targetChatId.toString()))];
+                    diverseChatIds.push(...uniqueChatIds.map(id => new fastify.mongo.ObjectId(id)));
                 }
                 
                 if (diverseChatIds.length > 0) {
@@ -2286,27 +2302,8 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
                     ).filter(Boolean);
                 }
             } else {
-                // Use matrix results with diversity improvement
-                // Select from different score ranges for more variety
-                const diverseResults = [];
-                if (scoredChats.length > 0) {
-                    const highScore = scoredChats.filter(s => s.score >= 0.15).slice(0, 2);
-                    const midScore = scoredChats.filter(s => s.score >= 0.10 && s.score < 0.15).slice(0, 2);
-                    const lowScore = scoredChats.filter(s => s.score >= 0.08 && s.score < 0.10).slice(0, 2);
-                    
-                    const allSelected = [...highScore, ...midScore, ...lowScore];
-                    // Deduplicate and limit to 6
-                    const seen = new Set();
-                    for (const item of allSelected) {
-                        if (seen.size >= 6) break;
-                        const chatId = item.chatDoc._id.toString();
-                        if (!seen.has(chatId) && item.chatDoc.language === language) {
-                            seen.add(chatId);
-                            diverseResults.push(item.chatDoc);
-                        }
-                    }
-                }
-                similarChats = diverseResults.length > 0 ? diverseResults : scoredChats.slice(0, 6).map(s => s.chatDoc).filter(c => c.language === language);
+                // Use matrix results (up to 50 for pagination support)
+                similarChats = scoredChats.slice(0, 50).map(s => s.chatDoc).filter(c => c && c.language === language);
             }
 
             } else {
@@ -2335,8 +2332,21 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             { upsert: true }
             );
 
+            // Apply pagination to final results
+            const totalResults = similarChats.length;
+            const totalPages = Math.ceil(totalResults / limit);
+            const paginatedResults = similarChats.slice(skip, skip + limit);
              
-            reply.send(similarChats);
+            reply.send({
+                similarChats: paginatedResults,
+                pagination: {
+                    currentPage: page,
+                    totalPages: totalPages,
+                    totalResults: totalResults,
+                    limit: limit,
+                    hasMore: page < totalPages
+                }
+            });
 
         } catch (err) {
             console.error(`[API/SimilarChats] Error in /api/similar-chats/:chatId route for ${request.params.chatId}:`, err);

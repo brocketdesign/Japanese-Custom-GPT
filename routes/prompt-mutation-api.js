@@ -12,6 +12,11 @@ const {
   getMutationHistory
 } = require('../models/prompt-mutation-utils');
 
+const {
+  enhanceCustomPromptDescription,
+  generatePromptFromStyleTag
+} = require('../models/openai');
+
 async function routes(fastify, options) {
   const db = fastify.mongo.db;
 
@@ -268,6 +273,116 @@ async function routes(fastify, options) {
     } catch (error) {
       console.error('[Prompt Templates] Delete error:', error);
       return reply.code(500).send({ error: 'Failed to delete template' });
+    }
+  });
+
+  /**
+   * POST /api/custom-prompt/enhance
+   * Enhance a custom prompt description with AI
+   */
+  fastify.post('/api/custom-prompt/enhance', async (request, reply) => {
+    try {
+      const user = request.user;
+      if (!user || user.isTemporary) {
+        return reply.code(401).send({ error: 'Authentication required' });
+      }
+
+      const { description, chatId } = request.body;
+
+      if (!description || !description.trim()) {
+        return reply.code(400).send({ error: 'Description is required' });
+      }
+
+      // Fetch character context if chatId is provided
+      let characterContext = {};
+      if (chatId) {
+        try {
+          const chat = await db.collection('chats').findOne({
+            _id: new fastify.mongo.ObjectId(chatId)
+          });
+          
+          if (chat) {
+            characterContext = {
+              name: chat.name,
+              personality: chat.characterPersonality,
+              occupation: chat.characterOccupation,
+              relationship: chat.relationship
+            };
+          }
+        } catch (error) {
+          console.warn('[Custom Prompt Enhance] Error fetching character context:', error);
+        }
+      }
+
+      const enhancedDescription = await enhanceCustomPromptDescription(
+        description.trim(),
+        characterContext,
+        user.lang || 'en'
+      );
+
+      return reply.send({
+        success: true,
+        original: description.trim(),
+        enhanced: enhancedDescription
+      });
+    } catch (error) {
+      console.error('[Custom Prompt Enhance] Error:', error);
+      return reply.code(500).send({ error: error.message || 'Failed to enhance prompt' });
+    }
+  });
+
+  /**
+   * POST /api/custom-prompt/generate-from-tag
+   * Generate a prompt from a style tag
+   */
+  fastify.post('/api/custom-prompt/generate-from-tag', async (request, reply) => {
+    try {
+      const user = request.user;
+      if (!user || user.isTemporary) {
+        return reply.code(401).send({ error: 'Authentication required' });
+      }
+
+      const { styleTag, chatId } = request.body;
+
+      if (!styleTag) {
+        return reply.code(400).send({ error: 'Style tag is required' });
+      }
+
+      // Fetch character context if chatId is provided
+      let characterContext = {};
+      if (chatId) {
+        try {
+          const chat = await db.collection('chats').findOne({
+            _id: new fastify.mongo.ObjectId(chatId)
+          });
+          
+          if (chat) {
+            characterContext = {
+              name: chat.name,
+              personality: chat.characterPersonality,
+              occupation: chat.characterOccupation,
+              relationship: chat.relationship
+            };
+          }
+        } catch (error) {
+          console.warn('[Custom Prompt Generate] Error fetching character context:', error);
+        }
+      }
+
+      const generatedPrompt = await generatePromptFromStyleTag(
+        styleTag,
+        characterContext,
+        user.lang || 'en'
+      );
+
+      return reply.send({
+        success: true,
+        styleTag,
+        prompt: generatedPrompt
+      });
+    } catch (error) {
+      console.error('[Custom Prompt Generate] Error:', error);
+      return reply.code(500).send({ error: error.message || 'Failed to generate prompt' });
     }
   });
 }

@@ -357,6 +357,18 @@ async function routes(fastify, options) {
         }
       }
 
+      // Log the response being sent to frontend
+      console.log(`[AdminImageTest] 📤 Sending response with ${tasks.length} tasks:`);
+      tasks.forEach((task, idx) => {
+        console.log(`[AdminImageTest] 📤 Task ${idx + 1}: ${task.modelId}, status: ${task.status}, async: ${task.async}, images: ${task.images?.length || 0}`);
+        if (task.images && task.images.length > 0) {
+          task.images.forEach((img, imgIdx) => {
+            const url = img.imageUrl || img.url || img;
+            console.log(`[AdminImageTest] 📤   Image ${imgIdx + 1}: ${typeof url === 'string' ? url.substring(0, 80) + '...' : 'N/A'}`);
+          });
+        }
+      });
+      
       return reply.send({
         success: true,
         tasks

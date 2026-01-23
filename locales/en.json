@@ -23,7 +23,9 @@
     "label": "Description (optional)",
     "placeholder": "e.g., in a futuristic setting, with dramatic lighting...",
     "generateButton": "Generate Image",
-    "cancelButton": "Cancel"
+    "cancelButton": "Cancel",
+    "enhanceButton": "✨ Enhance with AI",
+    "styleTags": "Quick Style Tags:"
   },
   "customPromptSettings": {
     "tabTitle": "Custom Prompts",
@@ -1458,7 +1460,7 @@
     "logout_processing": "Processing logout...",
     "notifications": "Notifications",
     "connections": "Connections",
-    "imageDashboard": "Image Dashboard",
+    "generationDashboard": "Generation Dashboard",
     "videoDashboard": "Video Dashboard",
     "myPosts": "My Posts",
     "mySchedules": "My Schedules",
@@ -2363,7 +2365,7 @@
     "paused": "Paused",
     "completed": "Completed",
     "failed": "Failed",
-    "imageDashboard": "Image Dashboard",
+    "generationDashboard": "Generation Dashboard",
     "videoDashboard": "Video Dashboard",
     "cronJob": "Automated",
     "chatPosts": "Chat Posts",

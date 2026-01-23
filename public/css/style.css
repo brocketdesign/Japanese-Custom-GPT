@@ -5395,7 +5395,7 @@ opacity: 0.8;
 .heart-badge {
     transform: translateX(-50%);
     pointer-events: none;
-    bottom: -14px;
+    top: 37px;
     width: 26px;
     height: 26px;
 
@@ -6158,4 +6158,330 @@ color: #fff !important;
     .image-slider-container {
         max-width: 250px !important;
     }
+
+/* ============================================================================
+   CUSTOM PROMPT MODAL - Enhanced Dark Theme Design
+   ============================================================================ */
+#customPromptModal .modal-dialog {
+    max-width: 560px;
+}
+
+#customPromptModal .modal-content {
+    border-radius: 20px;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    background: var(--bg-secondary, #2d2d2d);
+    overflow: hidden;
+}
+
+/* Dark Header - Matching App Style */
+#customPromptModal .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: var(--bg-primary, #1a1a1a);
+    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 20px 20px 0 0;
+}
+
+#customPromptModal .modal-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-primary, #ffffff);
+    margin: 0;
+    order: 1;
+}
+
+#customPromptModal .modal-title i {
+    color: var(--primary-color, #8240FF);
+    font-size: 1.1rem;
+}
+
+#customPromptModal .btn-close {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    border-radius: 10px;
+    opacity: 1;
+    padding: 0;
+    margin: 0;
+    order: 0;
+    filter: brightness(0) invert(1);
+    transition: all 0.2s ease;
+}
+
+#customPromptModal .btn-close:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
+}
+
+/* Modal Body */
+#customPromptModal .modal-body {
+    padding: 20px;
+    background: var(--bg-secondary, #2d2d2d);
+}
+
+#customPromptModal .form-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary, #ffffff);
+    margin-bottom: 6px;
+}
+
+#customPromptModal .form-text {
+    font-size: 0.8rem;
+    color: var(--text-muted, #8d8b8b);
+    line-height: 1.4;
+}
+
+/* Textarea Styling */
+#customPromptTextarea {
+    background: var(--bg-primary, #1a1a1a);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 12px;
+    padding: 14px 16px;
+    padding-top: 50px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-primary, #ffffff);
+    transition: all 0.2s ease;
+    resize: vertical;
+    min-height: 120px;
+}
+
+#customPromptTextarea::placeholder {
+    color: var(--text-muted, #8d8b8b);
+    font-style: italic;
+}
+
+#customPromptTextarea:focus {
+    border-color: var(--primary-color, #8240FF);
+    box-shadow: 0 0 0 3px rgba(130, 64, 255, 0.15);
+    outline: none;
+}
+
+/* Enhance Button - Inside Textarea */
+#enhancePromptBtn {
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 8px 14px;
+    transition: all 0.2s ease;
+    background: var(--primary-gradient, linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%));
+    border: none;
+    color: #ffffff;
+    top: 12px !important;
+    right: 12px !important;
+    box-shadow: 0 2px 8px rgba(130, 64, 255, 0.3);
+}
+
+#enhancePromptBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(130, 64, 255, 0.4);
+    background: var(--primary-gradient-hover, linear-gradient(90.9deg, #E0CBFF 2.74%, #9E5CFF 102.92%));
+}
+
+#enhancePromptBtn:active {
+    transform: translateY(0);
+}
+
+/* Character Counter */
+#customPromptModal .form-text.d-flex {
+    padding: 8px 4px;
+    font-size: 0.8rem;
+    color: var(--text-muted, #8d8b8b);
+}
+
+#customCharCount {
+    color: var(--primary-light, #D2B8FF);
+    font-weight: 600;
+}
+
+#enhanceStatus {
+    min-height: 18px;
+    font-weight: 500;
+    font-size: 0.8rem;
+}
+
+/* Style Tags Section */
+#customPromptModal .mb-3:last-of-type .form-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary, #aeb0b4);
+}
+
+#customPromptModal .mb-3:last-of-type .form-label i {
+    color: var(--primary-light, #D2B8FF);
+    font-size: 0.9rem;
+}
+
+#styleTagsContainer {
+    padding: 12px;
+    background: var(--bg-primary, #1a1a1a);
+    border-radius: 12px;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+}
+
+#styleTagsContainer::-webkit-scrollbar {
+    width: 6px;
+}
+
+#styleTagsContainer::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#styleTagsContainer::-webkit-scrollbar-thumb {
+    background: var(--border-color, rgba(255, 255, 255, 0.15));
+    border-radius: 3px;
+}
+
+#styleTagsContainer::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* Style Tag Buttons */
+.style-tag-btn {
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    background: var(--bg-secondary, #2d2d2d);
+    color: var(--text-secondary, #aeb0b4);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.style-tag-btn i {
+    font-size: 0.85rem;
+    color: var(--primary-light, #D2B8FF);
+    transition: color 0.2s ease;
+}
+
+.style-tag-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(130, 64, 255, 0.2);
+    border-color: var(--primary-color, #8240FF);
+    background: var(--primary-gradient, linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%));
+    color: #ffffff;
+}
+
+.style-tag-btn:hover i {
+    color: #ffffff;
+}
+
+.style-tag-btn:active {
+    transform: translateY(0);
+}
+
+/* Modal Footer */
+#customPromptModal .modal-footer {
+    border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    padding: 16px 20px;
+    background: var(--bg-secondary, #2d2d2d);
+    gap: 12px;
+}
+
+#customPromptModal .modal-footer .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2));
+    color: var(--text-secondary, #aeb0b4);
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+#customPromptModal .modal-footer .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary, #ffffff);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+#generateCustomPromptBtn {
+    background: var(--primary-gradient, linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%));
+    border: none;
+    border-radius: 10px;
+    padding: 10px 24px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #ffffff;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 14px rgba(130, 64, 255, 0.3);
+}
+
+#generateCustomPromptBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(130, 64, 255, 0.45);
+    background: var(--primary-gradient-hover, linear-gradient(90.9deg, #E0CBFF 2.74%, #9E5CFF 102.92%));
+}
+
+#generateCustomPromptBtn:active {
+    transform: translateY(0);
+}
+
+/* Mobile Responsive */
+@media (max-width: 576px) {
+    #customPromptModal .modal-dialog {
+        margin: 10px;
+        max-width: calc(100% - 20px);
+    }
+    
+    #customPromptModal .modal-content {
+        border-radius: 16px;
+    }
+    
+    #customPromptModal .modal-header {
+        padding: 14px 16px;
+        border-radius: 16px 16px 0 0;
+    }
+    
+    #customPromptModal .modal-body {
+        padding: 16px;
+    }
+    
+    #customPromptModal .modal-footer {
+        padding: 14px 16px;
+        flex-direction: column;
+    }
+    
+    #customPromptModal .modal-footer .btn {
+        width: 100%;
+    }
+    
+    .style-tag-btn {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+    }
+    
+    #enhancePromptBtn {
+        font-size: 0.7rem;
+        padding: 6px 10px;
+    }
+}
+
+/* Animation for spinner */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
 }

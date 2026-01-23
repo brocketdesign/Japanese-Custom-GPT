@@ -92,15 +92,17 @@ class PromptManager {
             const placeholderText = translations.customPromptModal?.placeholder || "e.g., in a futuristic setting, with dramatic lighting...";
             const generateButtonText = translations.customPromptModal?.generateButton || "Generate Image";
             const cancelButtonText = translations.customPromptModal?.cancelButton || "Cancel";
+            const enhanceButtonText = translations.customPromptModal?.enhanceButton || "✨ Enhance with AI";
+            const styleTags = translations.customPromptModal?.styleTags || "Quick Style Tags:";
 
             const modalHtml = `
                 <div class="modal fade" id="customPromptModal" tabindex="-1" aria-labelledby="customPromptModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content mx-auto" style="height: auto;">
-                            <div class="modal-header d-flex justify-content-between align-items-center">
+                            <div class="modal-header">
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                <h5 class="modal-title mb-0" id="customPromptModalLabel">
-                                    <i class="bi bi-image me-2"></i>
+                                <h5 class="modal-title" id="customPromptModalLabel">
+                                    <i class="bi bi-image"></i>
                                     ${modalTitle}
                                 </h5>
                             </div>
@@ -109,19 +111,69 @@ class PromptManager {
                                     <label for="customPromptTextarea" class="form-label">
                                         ${labelText}
                                     </label>
-                                    <div class="form-text text-muted mb-2">
+                                    <p class="form-text">
                                         ${modalSubtitle}
+                                    </p>
+                                    <div class="position-relative">
+                                        <textarea 
+                                            class="form-control" 
+                                            id="customPromptTextarea" 
+                                            rows="6" 
+                                            maxlength="500" 
+                                            placeholder="${placeholderText}"
+                                        ></textarea>
+                                        <button 
+                                            type="button" 
+                                            class="btn btn-sm position-absolute" 
+                                            id="enhancePromptBtn"
+                                            title="Enhance your description with AI"
+                                        >
+                                            ${enhanceButtonText}
+                                        </button>
                                     </div>
-                                    <textarea 
-                                        class="form-control" 
-                                        style="min-height: 90px;"
-                                        id="customPromptTextarea" 
-                                        rows="8" 
-                                        maxlength="500" 
-                                        placeholder="${placeholderText}"
-                                    ></textarea>
-                                    <div class="form-text">
-                                        <span id="customCharCount">0</span>/500 characters
+                                    <div class="form-text d-flex justify-content-between align-items-center">
+                                        <span><span id="customCharCount">0</span>/500 characters</span>
+                                        <span id="enhanceStatus"></span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Style Tags Section -->
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        <i class="bi bi-tags"></i>
+                                        ${styleTags}
+                                    </label>
+                                    <div id="styleTagsContainer" class="d-flex flex-wrap gap-2">
+                                        <button type="button" class="btn btn-sm style-tag-btn" data-style="cinematic">
+                                            <i class="bi bi-film"></i>Cinematic
+                                        </button>
+                                        <button type="button" class="btn btn-sm style-tag-btn" data-style="anime">
+                                            <i class="bi bi-palette"></i>Anime
+                                        </button>
+                                        <button type="button" class="btn btn-sm style-tag-btn" data-style="portrait">
+                                            <i class="bi bi-person-circle"></i>Portrait
+                                        </button>
+                                        <button type="button" class="btn btn-sm style-tag-btn" data-style="photorealistic">
+                                            <i class="bi bi-camera"></i>Photorealistic
+                                        </button>
+                                        <button type="button" class="btn btn-sm style-tag-btn" data-style="artistic">
+                                            <i class="bi bi-brush"></i>Artistic
+                                        </button>
+                                        <button type="button" class="btn btn-sm style-tag-btn" data-style="dramatic">
+                                            <i class="bi bi-lightning"></i>Dramatic
+                                        </button>
+                                        <button type="button" class="btn btn-sm style-tag-btn" data-style="casual">
+                                            <i class="bi bi-sunglasses"></i>Casual
+                                        </button>
+                                        <button type="button" class="btn btn-sm style-tag-btn" data-style="elegant">
+                                            <i class="bi bi-gem"></i>Elegant
+                                        </button>
+                                        <button type="button" class="btn btn-sm style-tag-btn" data-style="action">
+                                            <i class="bi bi-activity"></i>Action
+                                        </button>
+                                        <button type="button" class="btn btn-sm style-tag-btn" data-style="romantic">
+                                            <i class="bi bi-heart"></i>Romantic
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -130,7 +182,7 @@ class PromptManager {
                                     ${cancelButtonText}
                                 </button>
                                 <button type="button" class="btn btn-primary" id="generateCustomPromptBtn">
-                                    <i class="bi bi-image me-2"></i>
+                                    <i class="bi bi-image"></i>
                                     ${generateButtonText}
                                 </button>
                             </div>
@@ -149,6 +201,8 @@ class PromptManager {
             const textarea = $('#customPromptTextarea');
             const charCount = $('#customCharCount');
             const generateBtn = $('#generateCustomPromptBtn');
+            const enhanceBtn = $('#enhancePromptBtn');
+            const enhanceStatus = $('#enhanceStatus');
 
             // Save and restore last prompt using localStorage
             const lastPromptKey = 'custom_prompt_last_prompt';
@@ -174,9 +228,106 @@ class PromptManager {
                     charCount.removeClass('text-danger');
                 }
 
-                textarea.on('input', function() {
-                    localStorage.setItem(lastPromptKey, $(this).val());
-                });
+                localStorage.setItem(lastPromptKey, $(this).val());
+            });
+
+            // Enhance button click
+            enhanceBtn.on('click', async function() {
+                const description = textarea.val().trim();
+                
+                if (!description) {
+                    enhanceStatus.text('Please enter a description first').addClass('text-warning');
+                    setTimeout(() => enhanceStatus.text('').removeClass('text-warning'), 3000);
+                    return;
+                }
+
+                // Show loading state
+                enhanceBtn.prop('disabled', true);
+                enhanceStatus.text('Enhancing...').removeClass('text-warning text-success').addClass('text-info');
+                const originalBtnText = enhanceBtn.html();
+                enhanceBtn.html('<span class="spinner-border spinner-border-sm me-1"></span>Enhancing...');
+
+                try {
+                    const chatId = sessionStorage.getItem('chatId') || window.chatId;
+                    const response = await fetch('/api/custom-prompt/enhance', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ description, chatId })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ error: 'Enhancement failed' }));
+                        throw new Error(errorData.error || 'Enhancement failed');
+                    }
+
+                    const data = await response.json();
+                    
+                    if (data.success && data.enhanced) {
+                        // Truncate if exceeds limit
+                        const enhanced = data.enhanced.length > 500 ? data.enhanced.substring(0, 500) : data.enhanced;
+                        textarea.val(enhanced);
+                        charCount.text(enhanced.length);
+                        localStorage.setItem(lastPromptKey, enhanced);
+                        enhanceStatus.text('Enhanced! ✨').removeClass('text-info').addClass('text-success');
+                        setTimeout(() => enhanceStatus.text('').removeClass('text-success'), 3000);
+                    } else {
+                        throw new Error(data.error || 'Enhancement failed');
+                    }
+                } catch (error) {
+                    console.error('Error enhancing prompt:', error);
+                    enhanceStatus.text('Enhancement failed').removeClass('text-info').addClass('text-warning');
+                    setTimeout(() => enhanceStatus.text('').removeClass('text-warning'), 3000);
+                } finally {
+                    enhanceBtn.prop('disabled', false);
+                    enhanceBtn.html(originalBtnText);
+                }
+            });
+
+            // Style tag buttons click
+            $('.style-tag-btn').on('click', async function() {
+                const styleTag = $(this).data('style');
+                const $btn = $(this);
+                
+                // Show loading state
+                $btn.prop('disabled', true);
+                const originalBtnHtml = $btn.html();
+                $btn.html('<span class="spinner-border spinner-border-sm"></span>');
+                enhanceStatus.text('Generating...').removeClass('text-warning text-success').addClass('text-info');
+
+                try {
+                    const chatId = sessionStorage.getItem('chatId') || window.chatId;
+                    const response = await fetch('/api/custom-prompt/generate-from-tag', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ styleTag, chatId })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ error: 'Generation failed' }));
+                        throw new Error(errorData.error || 'Generation failed');
+                    }
+
+                    const data = await response.json();
+                    
+                    if (data.success && data.prompt) {
+                        // Truncate if exceeds limit
+                        const prompt = data.prompt.length > 500 ? data.prompt.substring(0, 500) : data.prompt;
+                        textarea.val(prompt);
+                        charCount.text(prompt.length);
+                        localStorage.setItem(lastPromptKey, prompt);
+                        enhanceStatus.text('Generated! 🎨').removeClass('text-info').addClass('text-success');
+                        setTimeout(() => enhanceStatus.text('').removeClass('text-success'), 3000);
+                    } else {
+                        throw new Error(data.error || 'Generation failed');
+                    }
+                } catch (error) {
+                    console.error('Error generating prompt from tag:', error);
+                    enhanceStatus.text('Generation failed').removeClass('text-info').addClass('text-warning');
+                    setTimeout(() => enhanceStatus.text('').removeClass('text-warning'), 3000);
+                } finally {
+                    $btn.prop('disabled', false);
+                    $btn.html(originalBtnHtml);
+                }
             });
 
             // Generate button click

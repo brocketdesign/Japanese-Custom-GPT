@@ -9,6 +9,18 @@ const LATEST_CHATS_CACHE_KEY = 'latestChatsCache';
 const LATEST_CHATS_CACHE_TIME_KEY = 'latestChatsCacheTime';
 const LATEST_CHATS_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
+// Helper function to generate loading spinner HTML
+const getLoadingSpinnerHTML = () => {
+    return `
+        <div id="latest-chats-loading-spinner" class="text-center my-4">
+            <div class="spinner-border text-purple" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="mt-2 text-muted">${window.translations.loadingMoreCharacters || 'Loading more characters...'}</div>
+        </div>  
+    `;
+};
+
 const getLatestChatsCache = () => {
     const cache = sessionStorage.getItem(LATEST_CHATS_CACHE_KEY);
     const ts = sessionStorage.getItem(LATEST_CHATS_CACHE_TIME_KEY);
@@ -36,6 +48,10 @@ window.loadLatestChats = async (page = 1, reload = false) => {
     if (latestChatsLoading && !reload) return;
     latestChatsLoading = true;
 
+    // Show loading spinner
+    $('#latest-chats-pagination-controls').css('opacity', '1').show();
+    $('#latest-chats-pagination-controls').html(getLoadingSpinnerHTML());
+
     if (reload) {
         latestChatsPage = 1;
         $('#latest-chats-gallery').empty();
@@ -51,9 +67,7 @@ window.loadLatestChats = async (page = 1, reload = false) => {
             window.displayChats(data.chats, 'latest-chats-gallery', false);
         }
         latestChatsTotalPages = data.totalPages || 1;
-        if (page >= latestChatsTotalPages) {
-            $('#latest-chats-pagination-controls').html('');
-        }
+        updateLatestChatsPagination(page);
         latestChatsLoading = false;
         return;
     }
@@ -76,9 +90,7 @@ window.loadLatestChats = async (page = 1, reload = false) => {
         }
         latestChatsTotalPages = data.totalPages || 1;
 
-        if (page >= latestChatsTotalPages) {
-            $('#latest-chats-pagination-controls').html('');
-        }
+        updateLatestChatsPagination(page);
     } catch (e) {
         console.error('[LatestChats] Error loading chats:', e);
         $('#latest-chats-pagination-controls').html('<div class="text-center text-danger my-3">Error loading chats.</div>');
@@ -103,4 +115,34 @@ $(document).on('click', '#reload-latest-video-chats', () => {
     // Update active state for query tags
     $('.query-tag').removeClass('active btn-primary').addClass('btn-outline-primary');
     $('#reload-latest-video-chats').addClass('active btn-primary').removeClass('btn-outline-primary');
+});
+
+// Helper function to update pagination controls
+const updateLatestChatsPagination = (page) => {
+    if (page >= latestChatsTotalPages) {
+        $('#latest-chats-pagination-controls').html('');
+    } else {
+        $('#latest-chats-pagination-controls').html(getLoadingSpinnerHTML());
+    }
+};
+
+// Infinite scroll for latest chats
+$(window).off('scroll.latestChats').on('scroll.latestChats', () => {
+    // Only trigger if the latest chats gallery and controls are both visible
+    const $gallery = $('#latest-chats-gallery');
+    const $controls = $('#latest-chats-pagination-controls');
+    if (!$gallery.is(':visible') || $gallery.css('opacity') === '0') return;
+    if (!$controls.is(':visible') || $controls.css('opacity') === '0') return;
+    if ($controls.length === 0) return;
+    
+    const scrollThreshold = $controls.offset().top - 1000;
+    
+    if (
+        !latestChatsLoading &&
+        latestChatsPage < latestChatsTotalPages &&
+        scrollThreshold < $(window).scrollTop()
+    ) {
+        latestChatsPage++;
+        window.loadLatestChats(latestChatsPage);
+    }
 });

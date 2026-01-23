@@ -148,3 +148,25 @@ handlebars.registerHelper('divide', function(a, b) {
   }
   return (a / b).toFixed(1);
 });
+
+// Pagination helpers
+handlebars.registerHelper('lte', function(a, b) {
+  return a <= b;
+});
+
+handlebars.registerHelper('gte', function(a, b) {
+  return a >= b;
+});
+
+handlebars.registerHelper('and', function(...args) {
+  for (let i = 0; i < args.length - 1; i++) {
+    if (!args[i]) {
+      return false;
+    }
+  }
+  return true;
+});
+
+handlebars.registerHelper('multiply', function(a, b) {
+  return a * b;
+});

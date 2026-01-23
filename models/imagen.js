@@ -832,11 +832,15 @@ async function generateImg({
     if(chatCreation){
       fastify.sendNotificationToUser(userId, 'showNotification', { message:translations.character_image_generation_started , icon:'success' });
       
-      // Start fallback polling for Hunyuan character creation tasks
+      // Start fallback polling for async character creation tasks
       // This runs in the background and ensures images are processed even if webhooks fail
-      if (hunyuan) {
-        const allTaskIds = hunyuanTaskIds.length > 0 ? hunyuanTaskIds : [novitaTaskId];
-        console.log(`[generateImg] Starting fallback polling for ${allTaskIds.length} Hunyuan character creation tasks`);
+      // We need this for all async models: Hunyuan, z-image-turbo, flux-2-flex, flux-2-dev, etc.
+      const isAsyncBuiltInModel = isBuiltInModel && MODEL_CONFIGS[imageModel] && MODEL_CONFIGS[imageModel].async;
+      
+      if (hunyuan || isAsyncBuiltInModel) {
+        const allTaskIds = hunyuan ? (hunyuanTaskIds.length > 0 ? hunyuanTaskIds : [novitaTaskId]) : [novitaTaskId];
+        const modelName = hunyuan ? 'Hunyuan' : (imageModel || 'async built-in');
+        console.log(`[generateImg] Starting fallback polling for ${allTaskIds.length} ${modelName} character creation task(s)`);
         
         // Don't await - let it run in background
         pollHunyuanTasksWithFallback(novitaTaskId, allTaskIds, fastify, {
@@ -846,9 +850,9 @@ async function generateImg({
           chatId,
           placeholderId
         }).then(success => {
-          console.log(`[generateImg] Hunyuan fallback polling completed: ${success ? 'success' : 'partial/failed'}`);
+          console.log(`[generateImg] ${modelName} fallback polling completed: ${success ? 'success' : 'partial/failed'}`);
         }).catch(error => {
-          console.error(`[generateImg] Hunyuan fallback polling error:`, error.message);
+          console.error(`[generateImg] ${modelName} fallback polling error:`, error.message);
         });
       }
     }

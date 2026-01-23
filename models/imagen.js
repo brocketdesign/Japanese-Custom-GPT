@@ -1733,35 +1733,12 @@ async function checkTaskStatus(taskId, fastify) {
       uniqueSlug = `${task.slug}-${arrayIndex + 1}`;
     }
 
-    // CRITICAL FIX: For merged images, save the ORIGINAL image first to establish a message in chat
-    if (task.shouldAutoMerge && imageData.isMerged && imageData.originalImageUrl) {
-      
-      try {
-        await saveImageToDB({
-          taskId: task.taskId,
-          userId: task.userId,
-          chatId: task.chatId,
-          userChatId: task.userChatId,
-          prompt: task.prompt,
-          title: task.title,
-          slug: `${uniqueSlug}-original`,
-          imageUrl: imageData.originalImageUrl, // Save original URL first
-          aspectRatio: task.aspectRatio,
-          seed: imageData.seed,
-          blurredImageUrl: imageData.blurredImageUrl,
-          nsfw: nsfw,
-          fastify,
-          isMerged: false, // Original is not merged
-          originalImageUrl: null,
-          mergeId: null,
-          shouldAutoMerge: false
-        });
-      } catch (error) {
-        console.error(`[checkTaskStatus] Error saving original image:`, error);
-      }
-    }
+    // NOTE: When auto-merge succeeds, we only save the merged image (not the original).
+    // The original image URL is preserved in the merged image's `originalImageUrl` field.
+    // This prevents duplicate images from appearing in the chat after page refresh.
+    // If merge fails, the original image is saved as a fallback (handled in the merge error catches above).
 
-    // Now save the merged/processed image
+    // Save the merged/processed image (or original if merge failed)
     const imageResult = await saveImageToDB({
       taskId: task.taskId,
       userId: task.userId,
@@ -2521,6 +2498,25 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
 
       const wasUpdated = await updateOriginalMessageWithMerge(userDataCollection, taskId, userId, userChatId, mergeMessage);
       console.log(`updateOriginalMessageWithMerge returned: ${wasUpdated}`);
+      
+      // If no original message was found to update, create a new message for the merged image
+      // This happens when the auto-merge was successful and we only saved the merged image (not the original)
+      if (!wasUpdated) {
+        console.log(`💾 No original message to update, adding merged image as new message for userChatId: ${userChatId}`);
+        await addImageMessageToChatHelper(
+          userDataCollection,
+          userId, 
+          userChatId, 
+          imageUrl, 
+          imageId, 
+          prompt, 
+          title,
+          nsfw,
+          true,  // isMerged
+          mergeId,
+          originalImageUrl
+        );
+      }
    
     } else if (userChatId) {
       console.log(`💾 Adding image (non merged) message to chat for userChatId: ${userChatId}`)

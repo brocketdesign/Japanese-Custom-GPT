@@ -434,6 +434,20 @@
 <link rel="stylesheet" href="/css/dashboard-avatar.css">
 
 <script>
+// Global function to open User Connections Modal
+window.openUserConnectionsModal = function() {
+    const connectionsModal = document.getElementById('userConnectionsModal');
+    if (connectionsModal) {
+        const modal = new bootstrap.Modal(connectionsModal, {
+            backdrop: false,
+            keyboard: true
+        });
+        modal.show();
+    } else {
+        console.error('User Connections Modal not found');
+    }
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     const avatarMenuContainer = document.getElementById('avatarMenuContainer');
     const avatarBtn = document.getElementById('avatarMenuBtn');

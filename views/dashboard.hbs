@@ -749,9 +749,9 @@
                     <i class="bi bi-heart"></i>
                     <span>{{translations.avatar.mySubscriptions}}</span>
                 </a>
-                <a href="/affiliation" class="quick-action-btn blue">
-                    <i class="bi bi-link"></i>
-                    <span>{{translations.avatar.affiliation}}</span>
+                <a href="#" class="quick-action-btn blue" onclick="openUserConnectionsModal(); return false;">
+                    <i class="bi bi-share-fill"></i>
+                    <span>{{translations.avatar.connections}}</span>
                 </a>
             </div>
         </section>
@@ -865,6 +865,7 @@
     <!-- Toast Container -->
     <div class="toast-container" id="toast-container"></div>
 
+{{> dashboard-avatar}}
 {{> dashboard-footer}}
 
 <script>

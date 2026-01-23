@@ -32,15 +32,18 @@
              ================================================================ -->
         <header class="gen-top-bar">
             <div class="gen-top-bar-content">
+                <!-- Logo Button - Links to Dashboard -->
+                <a href="/dashboard" class="gen-logo-btn" title="Go to Dashboard">
+                    <i class="bi bi-chat-heart-fill"></i>
+                </a>
+                
                 <!-- Mode Selector (Image / Video) -->
                 <div class="gen-mode-selector">
-                    <button class="gen-mode-btn active" data-mode="image">
+                    <button class="gen-mode-btn active" data-mode="image" title="{{#if translations.generation}}{{translations.generation.image}}{{else}}Image{{/if}}">
                         <i class="bi bi-images"></i>
-                        <span>{{#if translations.generation}}{{translations.generation.image}}{{else}}Image{{/if}}</span>
                     </button>
-                    <button class="gen-mode-btn" data-mode="video">
+                    <button class="gen-mode-btn" data-mode="video" title="{{#if translations.generation}}{{translations.generation.video}}{{else}}Video{{/if}}">
                         <i class="bi bi-film"></i>
-                        <span>{{#if translations.generation}}{{translations.generation.video}}{{else}}Video{{/if}}</span>
                     </button>
                 </div>
                 

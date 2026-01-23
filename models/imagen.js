@@ -837,35 +837,33 @@ async function generateImg({
         }
     }
 
-    if(chatCreation){
-      fastify.sendNotificationToUser(userId, 'showNotification', { message:translations.character_image_generation_started , icon:'success' });
+    // Start fallback polling for async models (regardless of context)
+    // This ensures images are processed even if webhooks fail
+    // Works for: character creation, in-chat generation, any async model
+    const isAsyncBuiltInModel = isBuiltInModel && MODEL_CONFIGS[imageModel] && MODEL_CONFIGS[imageModel].async;
+    const shouldStartPolling = hunyuan || isAsyncBuiltInModel;
+    
+    console.log(`[generateImg] 🔍 Polling check: hunyuan=${hunyuan}, isAsyncBuiltInModel=${isAsyncBuiltInModel}, shouldStartPolling=${shouldStartPolling}`);
+    
+    if (shouldStartPolling) {
+      const allTaskIds = hunyuan ? (hunyuanTaskIds.length > 0 ? hunyuanTaskIds : [novitaTaskId]) : [novitaTaskId];
+      const modelName = hunyuan ? 'Hunyuan' : (imageModel || 'async built-in');
+      console.log(`[generateImg] 🚀 Starting fallback polling for ${allTaskIds.length} ${modelName} task(s): ${allTaskIds.join(', ')} (chatCreation=${chatCreation})`);
       
-      // Start fallback polling for async character creation tasks
-      // This runs in the background and ensures images are processed even if webhooks fail
-      // We need this for all async models: Hunyuan, z-image-turbo, flux-2-flex, flux-2-dev, etc.
-      const isAsyncBuiltInModel = isBuiltInModel && MODEL_CONFIGS[imageModel] && MODEL_CONFIGS[imageModel].async;
-      console.log(`[generateImg] 🔍 Polling check: chatCreation=${chatCreation}, hunyuan=${hunyuan}, isAsyncBuiltInModel=${isAsyncBuiltInModel}, isBuiltInModel=${isBuiltInModel}, imageModel=${imageModel}`);
-      
-      if (hunyuan || isAsyncBuiltInModel) {
-        const allTaskIds = hunyuan ? (hunyuanTaskIds.length > 0 ? hunyuanTaskIds : [novitaTaskId]) : [novitaTaskId];
-        const modelName = hunyuan ? 'Hunyuan' : (imageModel || 'async built-in');
-        console.log(`[generateImg] 🚀 Starting fallback polling for ${allTaskIds.length} ${modelName} character creation task(s): ${allTaskIds.join(', ')}`);
-        
-        // Don't await - let it run in background
-        pollHunyuanTasksWithFallback(novitaTaskId, allTaskIds, fastify, {
-          chatCreation: true,
-          translations,
-          userId,
-          chatId,
-          placeholderId
-        }).then(success => {
-          console.log(`[generateImg] ✅ ${modelName} fallback polling completed: ${success ? 'success' : 'partial/failed'}`);
-        }).catch(error => {
-          console.error(`[generateImg] ❌ ${modelName} fallback polling error:`, error.message);
-        });
-      } else {
-        console.log(`[generateImg] ⏭️ Skipping fallback polling: hunyuan=${hunyuan}, isAsyncBuiltInModel=${isAsyncBuiltInModel}`);
-      }
+      // Don't await - let it run in background
+      pollHunyuanTasksWithFallback(novitaTaskId, allTaskIds, fastify, {
+        chatCreation: chatCreation,  // Pass actual value, not hardcoded
+        translations,
+        userId,
+        chatId,
+        placeholderId
+      }).then(success => {
+        console.log(`[generateImg] ✅ ${modelName} fallback polling completed: ${success ? 'success' : 'partial/failed'}`);
+      }).catch(error => {
+        console.error(`[generateImg] ❌ ${modelName} fallback polling error:`, error.message);
+      });
+    } else {
+      console.log(`[generateImg] ⏭️ Skipping fallback polling: no async models detected`);
     }
 
     console.log(`[generateImg] 🎉 Returning taskId: ${novitaTaskId}`);

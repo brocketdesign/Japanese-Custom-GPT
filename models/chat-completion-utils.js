@@ -289,7 +289,6 @@ async function handleImageGeneration(db, currentUserMessage, lastUserMessage, ge
                     const aspectRatio = null;
                     
                     // Use the same generateImg pattern but with auto-generation metadata
-                    // Enable polling by setting chatCreation: true for async models
                     const result = await generateImg({
                         prompt, 
                         aspectRatio, 
@@ -298,7 +297,7 @@ async function handleImageGeneration(db, currentUserMessage, lastUserMessage, ge
                         userChatId, 
                         imageType, 
                         image_num, 
-                        chatCreation: true,  // Enable fallback polling for async models
+                        chatCreation: false, 
                         placeholderId: placeholderId, 
                         translations, 
                         fastify,

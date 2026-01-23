@@ -2028,9 +2028,9 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             const chatIdParam = request.params.chatId;
             const language = request.lang || 'en'; // Get language from request
             
-            // Pagination parameters
-            const page = parseInt(request.query.page) || 1;
-            const limit = parseInt(request.query.limit) || 10;
+            // Pagination parameters with validation
+            const page = Math.max(1, Math.min(parseInt(request.query.page) || 1, 100)); // Limit to 1-100
+            const limit = Math.max(1, Math.min(parseInt(request.query.limit) || 10, 50)); // Limit to 1-50
             const skip = (page - 1) * limit;
             
             let chatIdObjectId;

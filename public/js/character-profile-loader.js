@@ -344,16 +344,32 @@ function loadCharacterStats(chatId) {
 
 /**
  * Load similar characters with pagination support
+ * Initializes the first page of similar characters and sets up infinite scroll
+ * 
+ * @param {string} chatId - The ID of the current character
  */
 function loadSimilarCharacters(chatId) {
+    // Ensure characterProfile exists
+    if (!window.characterProfile) {
+        window.characterProfile = {};
+    }
+    
     // Initialize pagination state
+    // State structure:
+    // - currentPage: Current page number (1-indexed to match backend)
+    // - totalPages: Total number of pages available
+    // - hasMore: Whether there are more pages to load
+    // - loading: Flag to prevent multiple simultaneous requests
+    // - chatId: ID of the character for which we're loading similar characters
+    // - scrollListener: Reference to scroll event handler for cleanup
     if (!window.characterProfile.similarCharacters) {
         window.characterProfile.similarCharacters = {
-            currentPage: 0,
-            totalPages: 0,
+            currentPage: 1,  // Start from page 1 to match backend pagination
+            totalPages: 1,
             hasMore: true,
             loading: false,
-            chatId: chatId
+            chatId: chatId,
+            scrollListener: null
         };
     }
     
@@ -423,20 +439,22 @@ function loadMoreSimilarCharacters(chatId) {
 
 /**
  * Initialize scroll listener for similar characters infinite scroll
+ * Detects when user scrolls near the end of the horizontal scroll and loads more characters
  */
 function initializeSimilarCharactersScroll(chatId) {
     const grid = document.getElementById('similarCharactersGrid');
     if (!grid) return;
     
+    // Store listener reference in characterProfile state for proper cleanup
+    const state = window.characterProfile.similarCharacters;
+    
     // Remove existing listener if any
-    if (grid._scrollListener) {
-        grid.removeEventListener('scroll', grid._scrollListener);
+    if (state.scrollListener) {
+        grid.removeEventListener('scroll', state.scrollListener);
     }
     
     // Create new scroll listener
-    grid._scrollListener = function() {
-        const state = window.characterProfile.similarCharacters;
-        
+    state.scrollListener = function() {
         // Check if we're near the end (within 200px of the right edge)
         const scrollLeft = grid.scrollLeft;
         const scrollWidth = grid.scrollWidth;
@@ -449,7 +467,7 @@ function initializeSimilarCharactersScroll(chatId) {
         }
     };
     
-    grid.addEventListener('scroll', grid._scrollListener);
+    grid.addEventListener('scroll', state.scrollListener);
 }
 
 /**

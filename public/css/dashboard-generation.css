@@ -474,6 +474,20 @@ html, body {
   color: #4ade80;
 }
 
+.gen-tool-btn.gen-disabled,
+.gen-tool-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.gen-tool-btn.gen-disabled:hover,
+.gen-tool-btn:disabled:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary, #aeb0b4);
+}
+
 /* Prompt Input Area */
 .gen-prompt-area {
   display: flex;

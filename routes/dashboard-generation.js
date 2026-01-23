@@ -34,7 +34,7 @@ async function routes(fastify, options) {
       // Get user's current points
       const userPoints = await getUserPoints(db, user._id);
 
-      // Prepare image models list
+      // Prepare image models list with complete configuration
       const imageModels = Object.entries(IMAGE_MODEL_CONFIGS)
         .filter(([id, config]) => !config.requiresModel)
         .map(([id, config]) => ({
@@ -45,17 +45,24 @@ async function routes(fastify, options) {
           category: config.category || 'txt2img',
           supportsImg2Img: config.supportsImg2Img || false,
           requiresImage: config.requiresImage || false,
-          requiresTwoImages: config.requiresTwoImages || false
+          requiresTwoImages: config.requiresTwoImages || false,
+          supportedParams: config.supportedParams || [],
+          defaultParams: config.defaultParams || {},
+          sizeFormat: config.sizeFormat || '*' // 'x' for Seedream, '*' for others
         }));
 
-      // Prepare video models list
+      // Prepare video models list with complete configuration
       const videoModels = Object.entries(VIDEO_MODEL_CONFIGS).map(([id, config]) => ({
         id,
         name: config.name,
         description: config.description || '',
         async: config.async || false,
         category: config.category || 'i2v',
-        supportedParams: config.supportedParams || []
+        supportedParams: config.supportedParams || [],
+        defaultParams: config.defaultParams || {},
+        provider: config.provider || 'novita', // novita or segmind
+        requiresImage: config.category === 'i2v' || config.category === 'face',
+        requiresFaceImage: config.category === 'face'
       }));
 
       return reply.view('/dashboard/generation', {

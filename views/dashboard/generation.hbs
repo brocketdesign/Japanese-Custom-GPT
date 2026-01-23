@@ -107,6 +107,12 @@
                         <span>1:1</span>
                     </button>
                     
+                    <!-- Image Count (Image mode) -->
+                    <button class="gen-tool-btn" data-tool="image-count" title="Number of images">
+                        <i class="bi bi-grid-3x3"></i>
+                        <span>1x</span>
+                    </button>
+                    
                     <!-- Duration (Video mode) -->
                     <button class="gen-tool-btn gen-hidden" data-tool="duration" title="Video duration">
                         <i class="bi bi-clock"></i>
@@ -180,14 +186,66 @@
                 <!-- Preview media will be inserted here -->
             </div>
             <div class="gen-preview-footer">
-                <button class="gen-preview-action" onclick="genDashboard.downloadResult(genDashboard._currentPreviewId)">
-                    <i class="bi bi-download"></i>
-                    <span>{{#if translations.generation}}{{translations.generation.download}}{{else}}Download{{/if}}</span>
-                </button>
-                <button class="gen-preview-action" onclick="genDashboard.reusePrompt(genDashboard._currentPreviewId); genDashboard.closePreview();">
-                    <i class="bi bi-arrow-repeat"></i>
-                    <span>{{#if translations.generation}}{{translations.generation.reuse}}{{else}}Reuse{{/if}}</span>
-                </button>
+                <!-- Footer will be dynamically populated -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Create Character Modal -->
+    <div class="modal fade" id="createCharacterModal" tabindex="-1" aria-labelledby="createCharacterModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1);">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-white" id="createCharacterModalLabel">
+                        <i class="bi bi-person-plus me-2"></i>Create Character
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <img id="characterPreviewImage" src="" alt="Character Preview" 
+                             style="max-height: 200px; border-radius: 12px; object-fit: cover;">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-white">Prompt Used</label>
+                        <p id="characterPromptPreview" class="text-muted small" style="max-height: 80px; overflow: auto;"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label for="characterNameInput" class="form-label text-white">Character Name (optional)</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" id="characterNameInput" 
+                               placeholder="Leave empty to auto-generate">
+                    </div>
+                    <div class="mb-3">
+                        <label for="characterPersonalityInput" class="form-label text-white">Personality Description (optional)</label>
+                        <textarea class="form-control bg-dark text-white border-secondary" id="characterPersonalityInput" rows="2"
+                                  placeholder="Describe the character's personality..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="characterLanguageSelect" class="form-label text-white">Language</label>
+                        <select class="form-select bg-dark text-white border-secondary" id="characterLanguageSelect">
+                            <option value="english">English</option>
+                            <option value="japanese">Japanese</option>
+                        </select>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="characterNsfwCheck">
+                        <label class="form-check-label text-white" for="characterNsfwCheck">
+                            Mark as NSFW
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="useImageAsBaseFaceCheck">
+                        <label class="form-check-label text-white" for="useImageAsBaseFaceCheck">
+                            Use this image as base face for generation
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="confirmCreateCharacterBtn" onclick="genDashboard.confirmCreateCharacter()">
+                        <i class="bi bi-person-plus me-1"></i>Create Character
+                    </button>
+                </div>
             </div>
         </div>
     </div>

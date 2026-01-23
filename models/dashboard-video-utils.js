@@ -599,11 +599,11 @@ async function initializeVideoTest(modelId, params) {
           requestBody.negative_prompt = params.negative_prompt;
         }
         
-        // Add seed if provided
+        // Add seed - use provided value or default from config
         if (params.seed !== undefined && params.seed !== null) {
           requestBody.seed = params.seed;
-        } else {
-          requestBody.seed = config.defaultParams.seed || 1234567890;
+        } else if (config.defaultParams.seed !== undefined) {
+          requestBody.seed = config.defaultParams.seed;
         }
         
       } else {

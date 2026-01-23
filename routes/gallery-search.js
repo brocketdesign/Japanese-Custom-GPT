@@ -35,18 +35,23 @@ async function routes(fastify, options) {
       
       // Get user interaction state
       // For logged-in users: from database
-      // For temporary users: accept from request body/header
+      // For temporary users: accept from request body/header (with size limit)
       let userState = null;
       
       if (!user.isTemporary) {
         // Logged-in user - get from database
         userState = await getUserInteractionState(db, user._id);
       } else {
-        // Temporary user - get from client (localStorage)
+        // Temporary user - get from client (localStorage) with validation
         const clientState = request.headers['x-user-state'];
         if (clientState) {
           try {
-            userState = parseUserState(clientState);
+            // Limit size to prevent abuse (100KB max)
+            if (clientState.length > 102400) {
+              console.warn('[gallery-search] User state too large, ignoring');
+            } else {
+              userState = parseUserState(clientState);
+            }
           } catch (error) {
             console.error('[gallery-search] Error parsing client user state:', error);
           }

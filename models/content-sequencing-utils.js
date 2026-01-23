@@ -148,7 +148,7 @@ function selectTopCharacters(scoredCharacters, count) {
   const remaining = [...candidatePool];
   
   for (let i = 0; i < count && remaining.length > 0; i++) {
-    // Calculate total score for normalization
+    // Calculate total score once per iteration
     const totalScore = remaining.reduce((sum, char) => sum + char.score, 0);
     
     // Random weighted selection
@@ -340,11 +340,12 @@ function updateSeenState(userState, characterId, imageIds = []) {
     const chatIdStr = characterId.toString();
     if (!state.seenImages[chatIdStr]) state.seenImages[chatIdStr] = [];
     
+    // Use Set for faster lookups
+    const seenSet = new Set(state.seenImages[chatIdStr]);
     imageIds.forEach(imageId => {
-      if (!state.seenImages[chatIdStr].includes(imageId)) {
-        state.seenImages[chatIdStr].push(imageId);
-      }
+      seenSet.add(imageId.toString());
     });
+    state.seenImages[chatIdStr] = Array.from(seenSet);
     
     // Limit stored images per character to prevent bloat (keep last 50)
     if (state.seenImages[chatIdStr].length > 50) {

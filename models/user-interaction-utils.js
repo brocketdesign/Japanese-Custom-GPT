@@ -92,12 +92,13 @@ async function recordCharacterView(db, userId, characterId, imageIds = [], tags 
     if (!state.seenImages) state.seenImages = {};
     if (!state.seenImages[charIdStr]) state.seenImages[charIdStr] = [];
     
+    // Use Set for faster lookups
+    const seenSet = new Set(state.seenImages[charIdStr]);
     imageIds.forEach(imageId => {
       const imgIdStr = imageId.toString();
-      if (!state.seenImages[charIdStr].includes(imgIdStr)) {
-        state.seenImages[charIdStr].push(imgIdStr);
-      }
+      seenSet.add(imgIdStr);
     });
+    state.seenImages[charIdStr] = Array.from(seenSet);
     
     // Limit to last 50 images per character
     if (state.seenImages[charIdStr].length > 50) {

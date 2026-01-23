@@ -109,12 +109,13 @@
         if (!this.state.seenImages) this.state.seenImages = {};
         if (!this.state.seenImages[charIdStr]) this.state.seenImages[charIdStr] = [];
 
+        // Use Set for faster lookups
+        const seenSet = new Set(this.state.seenImages[charIdStr]);
         imageIds.forEach(imageId => {
           const imgIdStr = String(imageId);
-          if (!this.state.seenImages[charIdStr].includes(imgIdStr)) {
-            this.state.seenImages[charIdStr].push(imgIdStr);
-          }
+          seenSet.add(imgIdStr);
         });
+        this.state.seenImages[charIdStr] = Array.from(seenSet);
 
         // Limit to last 50 images per character
         if (this.state.seenImages[charIdStr].length > 50) {
@@ -301,8 +302,12 @@
     // Add user state header for API calls
     if (url.includes('/api/gallery/')) {
       if (!options.headers) options.headers = {};
-      if (!options.headers['x-user-state']) {
-        options.headers['x-user-state'] = tracker.getStateHeader();
+      // Use case-insensitive header check
+      const hasStateHeader = Object.keys(options.headers).some(
+        key => key.toLowerCase() === 'x-user-state'
+      );
+      if (!hasStateHeader) {
+        options.headers['X-User-State'] = tracker.getStateHeader();
       }
     }
 

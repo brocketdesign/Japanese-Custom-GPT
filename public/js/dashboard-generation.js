@@ -1354,12 +1354,46 @@ class GenerationDashboard {
       if (nameInput) nameInput.value = '';
       if (personalityInput) personalityInput.value = '';
       
+      // Get the current model info
+      const currentModel = this.state.selectedModel;
+      const currentModelCategory = currentModel?.category;
+      
+      // Determine if we need to show the model selector
+      // Show it if the current model is not suitable for text-to-image (e.g., face tools)
+      const needsModelSelection = currentModelCategory && currentModelCategory !== 'txt2img';
+      
+      // Populate the text-to-image model selector if needed
+      const modelSection = document.getElementById('characterImageModelSection');
+      const modelSelect = document.getElementById('characterImageModelSelect');
+      
+      if (needsModelSelection && modelSection && modelSelect) {
+        // Show the model selection section
+        modelSection.style.display = 'block';
+        
+        // Get all text-to-image models from config
+        const txt2imgModels = (this.config.imageModels || []).filter(m => m.category === 'txt2img');
+        
+        // Populate the dropdown
+        modelSelect.innerHTML = txt2imgModels.map(model => 
+          `<option value="${model.id}">${model.name}</option>`
+        ).join('');
+        
+        // Select the first model by default
+        if (txt2imgModels.length > 0) {
+          modelSelect.value = txt2imgModels[0].id;
+        }
+      } else if (modelSection) {
+        // Hide the section if not needed
+        modelSection.style.display = 'none';
+      }
+      
       // Store result data for character creation as instance property
       this._currentCharacterImageData = {
         imageUrl: result.mediaUrl,
         prompt: result.prompt,
-        modelId: result.modelId || this.state.selectedModel?.id,
-        modelName: result.model
+        modelId: result.modelId || currentModel?.id,
+        modelName: result.model || currentModel?.name,
+        needsModelSelection: needsModelSelection
       };
       
       // Show the modal
@@ -1475,6 +1509,22 @@ class GenerationDashboard {
     const nsfw = document.getElementById('characterNsfwCheck')?.checked || false;
     const useImageAsBaseFace = document.getElementById('useImageAsBaseFaceCheck')?.checked || false;
     
+    // Get the selected text-to-image model if the section is visible
+    let finalModelId = imageData.modelId;
+    let finalModelName = imageData.modelName;
+    
+    if (imageData.needsModelSelection) {
+      const modelSelect = document.getElementById('characterImageModelSelect');
+      if (modelSelect && modelSelect.value) {
+        const selectedModelId = modelSelect.value;
+        const selectedModel = (this.config.imageModels || []).find(m => m.id === selectedModelId);
+        if (selectedModel) {
+          finalModelId = selectedModel.id;
+          finalModelName = selectedModel.name;
+        }
+      }
+    }
+    
     // Show loading state
     if (btn) {
       btn.disabled = true;
@@ -1493,8 +1543,8 @@ class GenerationDashboard {
           language: language,
           nsfw: nsfw,
           useImageAsBaseFace: useImageAsBaseFace,
-          modelId: imageData.modelId,
-          modelName: imageData.modelName
+          modelId: finalModelId,
+          modelName: finalModelName
         })
       });
       

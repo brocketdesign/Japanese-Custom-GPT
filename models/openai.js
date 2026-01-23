@@ -1212,6 +1212,7 @@ Respond in ${language}`;
  */
 async function enhanceCustomPromptDescription(description, characterContext = {}, language = 'en') {
   try {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const { name, personality, occupation, relationship } = characterContext;
     
     const systemPrompt = `You are an expert at enhancing image generation prompts. Your task is to take a user's simple description and enhance it with vivid, detailed descriptions while keeping it concise (under 200 words).
@@ -1262,6 +1263,7 @@ Do NOT add NSFW content unless the original description clearly implies it.`;
  */
 async function generatePromptFromStyleTag(styleTag, characterContext = {}, language = 'en') {
   try {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const { name, personality, occupation, relationship } = characterContext;
     
     const styleDescriptions = {

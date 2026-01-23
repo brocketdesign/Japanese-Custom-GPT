@@ -1373,10 +1373,14 @@ class GenerationDashboard {
         // Get all text-to-image models from config
         const txt2imgModels = (this.config.imageModels || []).filter(m => m.category === 'txt2img');
         
-        // Populate the dropdown
-        modelSelect.innerHTML = txt2imgModels.map(model => 
-          `<option value="${model.id}">${model.name}</option>`
-        ).join('');
+        // Populate the dropdown safely using DOM methods
+        modelSelect.innerHTML = ''; // Clear existing options
+        txt2imgModels.forEach(model => {
+          const option = document.createElement('option');
+          option.value = model.id;
+          option.textContent = model.name;
+          modelSelect.appendChild(option);
+        });
         
         // Select the first model by default
         if (txt2imgModels.length > 0) {

@@ -231,11 +231,32 @@ const MODEL_CONFIGS = {
     supportedParams: ['image_file', 'extra'],
     description: 'Generate creative variations of a single image without prompts'
   },
+  'qwen-image-2512': {
+    name: 'Qwen Image 2512',
+    endpoint: 'https://api.segmind.com/v1/qwen-image-2512',
+    async: false, // Synchronous API - returns binary image directly
+    provider: 'segmind', // Use Segmind API authentication
+    category: 'txt2img',
+    supportsImg2Img: false,
+    requiresImage: false,
+    defaultParams: {
+      steps: 6,
+      seed: -1,
+      height: 1024,
+      width: 1024,
+      image_format: 'webp',
+      quality: 90,
+      base_64: false
+    },
+    supportedParams: ['prompt', 'steps', 'seed', 'height', 'width', 'image_format', 'quality', 'base_64'],
+    description: 'Qwen-Image-2512 generates highly realistic images from text descriptions, excelling in human depiction and environmental detail'
+  },
   'merge-face-segmind': {
     name: 'Merge Face',
     alias: 'merge-face', // Alias for backward compatibility
     endpoint: 'https://api.segmind.com/v1/faceswap-v5',
     async: false, // Synchronous API
+    provider: 'segmind', // Use Segmind API authentication
     category: 'face',
     supportsImg2Img: false,
     requiresImage: true,
@@ -399,6 +420,19 @@ async function initializeModelTest(modelId, params) {
       // Add extra params for response image type
       requestBody.extra = {
         response_image_type: 'png'
+      };
+    }
+    // Handle Qwen Image 2512 (Segmind text-to-image)
+    else if (modelId === 'qwen-image-2512') {
+      requestBody = {
+        prompt: params.prompt,
+        steps: params.steps !== undefined ? params.steps : config.defaultParams.steps,
+        seed: params.seed !== undefined ? params.seed : config.defaultParams.seed,
+        height: params.height || config.defaultParams.height,
+        width: params.width || config.defaultParams.width,
+        image_format: params.image_format || config.defaultParams.image_format,
+        quality: params.quality || config.defaultParams.quality,
+        base_64: params.base_64 !== undefined ? params.base_64 : config.defaultParams.base_64
       };
     }
     // Handle Merge Face Segmind (requires two images)
@@ -582,7 +616,8 @@ async function initializeModelTest(modelId, params) {
     
     // Determine headers based on model provider
     let headers;
-    if (modelId === 'merge-face-segmind') {
+    const isSegmindModel = config.provider === 'segmind';
+    if (isSegmindModel) {
       headers = {
         'x-api-key': process.env.SEGMIND_API_KEY,
         'Content-Type': 'application/json'
@@ -600,7 +635,8 @@ async function initializeModelTest(modelId, params) {
       timeout
     };
     
-    if (modelId === 'merge-face-segmind') {
+    // Segmind models return binary data
+    if (isSegmindModel) {
       responseConfig.responseType = 'arraybuffer';
     }
     
@@ -609,7 +645,7 @@ async function initializeModelTest(modelId, params) {
     console.log(`[AdminImageTest] Response status: ${response.status}`);
     
     // Don't log arraybuffer data
-    if (modelId !== 'merge-face-segmind') {
+    if (!isSegmindModel) {
       console.log(`[AdminImageTest] Response data:`, JSON.stringify(response.data, null, 2));
     }
 
@@ -643,27 +679,33 @@ async function initializeModelTest(modelId, params) {
       // Handle different response formats for different sync APIs
       let images = [];
       
-      // Segmind Merge Face returns image as arraybuffer
-      if (modelId === 'merge-face-segmind' || modelId === 'merge-face') {
-        console.log(`[AdminImageTest] 🔍 Segmind Merge Face - processing arraybuffer response`);
+      // Segmind models return image as arraybuffer
+      if (isSegmindModel) {
+        console.log(`[AdminImageTest] 🔍 ${config.name} - processing arraybuffer response`);
         if (response.data && response.data.byteLength > 0) {
           const imageBuffer = Buffer.from(response.data);
           const base64Image = imageBuffer.toString('base64');
           
+          // Determine image format from params, config defaults, or fallback
+          const imageFormat = params.image_format || config.defaultParams?.image_format || 'png';
+          
+          // Determine prefix for S3 filename based on model
+          const s3Prefix = modelId.replace(/-/g, '_');
+          
           // Upload to S3 immediately so the URL persists
-          console.log(`[AdminImageTest] 📤 Uploading merge face result to S3...`);
+          console.log(`[AdminImageTest] 📤 Uploading ${config.name} result to S3...`);
           try {
-            const s3Url = await uploadTestImageToS3(`data:image/png;base64,${base64Image}`, 'merge_face');
+            const s3Url = await uploadTestImageToS3(`data:image/${imageFormat};base64,${base64Image}`, s3Prefix);
             images = [s3Url];
-            console.log(`[AdminImageTest] ✅ Merge face image uploaded to S3: ${s3Url.substring(0, 60)}...`);
+            console.log(`[AdminImageTest] ✅ ${config.name} image uploaded to S3: ${s3Url.substring(0, 60)}...`);
           } catch (uploadError) {
             console.error(`[AdminImageTest] ⚠️ S3 upload failed, using base64:`, uploadError.message);
-            const dataUrl = `data:image/png;base64,${base64Image}`;
+            const dataUrl = `data:image/${imageFormat};base64,${base64Image}`;
             images = [dataUrl];
           }
-          console.log(`[AdminImageTest] ✅ Segmind image processed (${imageBuffer.length} bytes)`);
+          console.log(`[AdminImageTest] ✅ ${config.name} image processed (${imageBuffer.length} bytes)`);
         } else {
-          console.log(`[AdminImageTest] ⚠️ No image data in Segmind response`);
+          console.log(`[AdminImageTest] ⚠️ No image data in ${config.name} response`);
         }
       }
       // Novita Reimagine returns image_file (raw base64) and image_type

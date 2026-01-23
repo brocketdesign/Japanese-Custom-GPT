@@ -3,6 +3,11 @@
  * Handles loading and initialization of character profile data
  */
 
+// Constants for similar characters pagination
+const SIMILAR_CHARACTERS_INITIAL_PAGE = 1;
+const SIMILAR_CHARACTERS_LIMIT = 10;
+const SIMILAR_CHARACTERS_SCROLL_THRESHOLD = 200; // px from right edge to trigger load
+
 /**
  * Load all character data (images, stats, similar characters, etc.)
  */
@@ -343,22 +348,131 @@ function loadCharacterStats(chatId) {
 }
 
 /**
- * Load similar characters
+ * Load similar characters with pagination support
+ * Initializes the first page of similar characters and sets up infinite scroll
+ * 
+ * @param {string} chatId - The ID of the current character
  */
 function loadSimilarCharacters(chatId) {
+    // Ensure characterProfile exists
+    if (!window.characterProfile) {
+        window.characterProfile = {};
+    }
+    
+    // Initialize pagination state
+    // State structure:
+    // - currentPage: Current page number (1-indexed to match backend)
+    // - totalPages: Total number of pages available
+    // - hasMore: Whether there are more pages to load
+    // - loading: Flag to prevent multiple simultaneous requests
+    // - chatId: ID of the character for which we're loading similar characters
+    // - scrollListener: Reference to scroll event handler for cleanup
+    if (!window.characterProfile.similarCharacters) {
+        window.characterProfile.similarCharacters = {
+            currentPage: SIMILAR_CHARACTERS_INITIAL_PAGE,  // Start from page 1 to match backend pagination
+            totalPages: 1,
+            hasMore: true,
+            loading: false,
+            chatId: chatId,
+            scrollListener: null
+        };
+    }
+    
     // Show loading spinner
     showSimilarCharactersLoader();
     
     if (typeof fetchSimilarChats === 'function') {
-        fetchSimilarChats(chatId).then(characters => {
-            displaySimilarCharacters(characters);
+        fetchSimilarChats(chatId, SIMILAR_CHARACTERS_INITIAL_PAGE, SIMILAR_CHARACTERS_LIMIT).then(response => {
+            // Handle new paginated response format
+            const characters = response.similarChats || response;
+            const pagination = response.pagination || {};
+            
+            // Update pagination state
+            window.characterProfile.similarCharacters.currentPage = pagination.currentPage || SIMILAR_CHARACTERS_INITIAL_PAGE;
+            window.characterProfile.similarCharacters.totalPages = pagination.totalPages || 1;
+            window.characterProfile.similarCharacters.hasMore = pagination.hasMore || false;
+            
+            displaySimilarCharacters(characters, false); // false = don't append, replace
             // Hide loading spinner
             hideSimilarCharactersLoader();
+            
+            // Initialize scroll listener for infinite scroll
+            initializeSimilarCharactersScroll(chatId);
         }).catch(error => {
             // Hide loading spinner on error
             hideSimilarCharactersLoader();
         });
     }
+}
+
+/**
+ * Load more similar characters (for infinite scroll)
+ */
+function loadMoreSimilarCharacters(chatId) {
+    const state = window.characterProfile.similarCharacters;
+    
+    // Don't load if already loading or no more pages
+    if (state.loading || !state.hasMore) {
+        return;
+    }
+    
+    const nextPage = state.currentPage + 1;
+    
+    // Set loading state
+    state.loading = true;
+    
+    if (typeof fetchSimilarChats === 'function') {
+        fetchSimilarChats(chatId, nextPage, SIMILAR_CHARACTERS_LIMIT).then(response => {
+            // Handle new paginated response format
+            const characters = response.similarChats || response;
+            const pagination = response.pagination || {};
+            
+            // Update pagination state
+            state.currentPage = pagination.currentPage || nextPage;
+            state.totalPages = pagination.totalPages || state.totalPages;
+            state.hasMore = pagination.hasMore || false;
+            state.loading = false;
+            
+            // Append new characters to existing grid
+            displaySimilarCharacters(characters, true); // true = append
+        }).catch(error => {
+            state.loading = false;
+            console.error('Failed to load more similar characters:', error);
+        });
+    }
+}
+
+/**
+ * Initialize scroll listener for similar characters infinite scroll
+ * Detects when user scrolls near the end of the horizontal scroll and loads more characters
+ */
+function initializeSimilarCharactersScroll(chatId) {
+    const grid = document.getElementById('similarCharactersGrid');
+    if (!grid) return;
+    
+    // Store listener reference in characterProfile state for proper cleanup
+    const state = window.characterProfile.similarCharacters;
+    
+    // Remove existing listener if any
+    if (state.scrollListener) {
+        grid.removeEventListener('scroll', state.scrollListener);
+    }
+    
+    // Create new scroll listener
+    state.scrollListener = function() {
+        // Check if we're near the end (within threshold of the right edge)
+        const scrollLeft = grid.scrollLeft;
+        const scrollWidth = grid.scrollWidth;
+        const clientWidth = grid.clientWidth;
+        const distanceFromEnd = scrollWidth - (scrollLeft + clientWidth);
+        
+        if (distanceFromEnd < SIMILAR_CHARACTERS_SCROLL_THRESHOLD && state.hasMore && !state.loading) {
+            console.log('[SimilarCharacters] Near end of scroll, loading more...');
+            loadMoreSimilarCharacters(chatId);
+        }
+    };
+    
+    grid.addEventListener('scroll', state.scrollListener);
 }
 
 /**
@@ -429,18 +543,18 @@ function hideCountLoadingState() {
 }
 
 /**
- * Fetch similar chats
+ * Fetch similar chats with pagination
  */
-async function fetchSimilarChats(chatId) {
+async function fetchSimilarChats(chatId, page = 1, limit = 10) {
     try {
-        const response = await fetch(`/api/similar-chats/${chatId}`);
+        const response = await fetch(`/api/similar-chats/${chatId}?page=${page}&limit=${limit}`);
         if (response.ok) {
             return await response.json();
         }
     } catch (error) {
         // ignore fetch errors
     }
-    return [];
+    return { similarChats: [], pagination: { hasMore: false } };
 }
 
 /**
@@ -495,19 +609,4 @@ function hideLoadMoreButton(type) {
     if (button) {
         button.style.display = 'none';
     }
-}
-
-/**
- * Fetch similar chats
- */
-async function fetchSimilarChats(chatId) {
-    try {
-        const response = await fetch(`/api/similar-chats/${chatId}`);
-        if (response.ok) {
-            return await response.json();
-        }
-    } catch (error) {
-        // ignore fetch errors
-    }
-    return [];
 }

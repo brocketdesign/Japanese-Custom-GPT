@@ -1125,13 +1125,15 @@ function displayVideosInGrid() {
 }
 
 /**
- * Display similar characters
+ * Display similar characters with pagination support
+ * @param {Array} characters - Array of character objects
+ * @param {Boolean} append - Whether to append to existing characters or replace
  */
-function displaySimilarCharacters(characters) {
+function displaySimilarCharacters(characters, append = false) {
     const grid = document.getElementById('similarCharactersGrid');
     
     if (!characters || characters.length === 0) {
-        if (grid) {
+        if (grid && !append) {
             grid.innerHTML = '';
         }
         return;
@@ -1139,8 +1141,13 @@ function displaySimilarCharacters(characters) {
     
     if (!grid) return;
     
-    grid.innerHTML = '';
-    characters.slice(0, 6).forEach(char => {
+    // Clear grid if not appending
+    if (!append) {
+        grid.innerHTML = '';
+    }
+    
+    // Display all characters (no limit since pagination is handled by backend)
+    characters.forEach(char => {
         const card = document.createElement('a');
         card.className = 'similar-card';
         card.href = `/character/${char._id}`;

@@ -1890,6 +1890,118 @@ function setupChatInterface(chat, character, userChat, isNew) {
             }
         } 
 
+        else if (messageClass === 'bot-image-slider' && Array.isArray(message)) {
+            // Handle batched images - display in a slider
+            const images = message;
+            const sliderId = `slider-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            const subscriptionStatus = user.subscriptionStatus === 'active';
+            
+            // Build slider slides HTML
+            let slidesHtml = '';
+            let firstImageNsfw = false;
+            let shouldBlurSlider = false;
+            
+            images.forEach((imgData, index) => {
+                const { imageId, imageUrl, titleText, imagePrompt, imageNsfw, isUpscaled, isMergeFace } = imgData;
+                
+                // Check NSFW status for first image
+                if (index === 0) {
+                    firstImageNsfw = imageNsfw;
+                    const item = { nsfw: imageNsfw };
+                    shouldBlurSlider = shouldBlurNSFW(item, subscriptionStatus);
+                }
+                
+                slidesHtml += `
+                    <div class="swiper-slide">
+                        <div class="position-relative">
+                            <div onclick="showImagePreview(this)" 
+                                 class="text-start assistant-image-box transition-none ${shouldBlurSlider ? 'isBlurred' : ''}" 
+                                 data-id="${imageId}" 
+                                 data-src="${imageUrl}">
+                                <img src="${imageUrl}" 
+                                     alt="${titleText}" 
+                                     data-prompt="${imagePrompt || ''}" 
+                                     class="m-auto slider-image" 
+                                     data-id="${imageId}" 
+                                     data-nsfw="${imageNsfw || false}"
+                                     data-isUpscaled="${!!isUpscaled}"
+                                     data-isMergeFace="${!!isMergeFace}"
+                                     style="max-width: 100%; border-radius: 12px;">
+                            </div>
+                            ${!isUpscaled ? getImageTools({chatId, userChatId, imageId, isLiked:false, title: titleText, prompt: imagePrompt, nsfw: imageNsfw, imageUrl, isMergeFace}) : ''}
+                        </div>
+                    </div>
+                `;
+                
+                // Add to thumbnail gallery
+                displayImageThumb(imageId, imageUrl, origineUserChatId, shouldBlurSlider);
+            });
+            
+            // Create message element with inline Swiper slider
+            messageElement = $(`
+                <div class="d-flex flex-row justify-content-start mb-4 message-container bot-image-slider ${animationClass}">
+                    <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position:top;" onclick="openCharacterInfoModal('${chatId}', event)">
+                    <div class="ms-3 position-relative image-slider-container" style="max-width: 300px; width: 100%;">
+                        <div class="swiper chat-image-swiper" id="${sliderId}" style="border-radius: 12px; overflow: hidden;">
+                            <div class="swiper-wrapper">
+                                ${slidesHtml}
+                            </div>
+                            <div class="swiper-pagination"></div>
+                            <div class="swiper-button-prev" style="color: white; opacity: 0.8; transform: scale(0.6);"></div>
+                            <div class="swiper-button-next" style="color: white; opacity: 0.8; transform: scale(0.6);"></div>
+                        </div>
+                        <div class="slider-counter text-center text-muted mt-1" style="font-size: 12px;">
+                            <span class="current-slide">1</span> / <span class="total-slides">${images.length}</span>
+                        </div>
+                    </div>
+                </div>      
+            `).hide();
+
+            messageContainer.append(messageElement);
+            messageElement.addClass(animationClass).fadeIn();
+            
+            // Initialize Swiper for this slider
+            setTimeout(() => {
+                const swiperElement = document.getElementById(sliderId);
+                if (swiperElement && typeof Swiper !== 'undefined') {
+                    const chatSwiper = new Swiper(`#${sliderId}`, {
+                        loop: false,
+                        slidesPerView: 1,
+                        spaceBetween: 10,
+                        pagination: {
+                            el: `#${sliderId} .swiper-pagination`,
+                            clickable: true,
+                            dynamicBullets: true
+                        },
+                        navigation: {
+                            nextEl: `#${sliderId} .swiper-button-next`,
+                            prevEl: `#${sliderId} .swiper-button-prev`
+                        },
+                        on: {
+                            slideChange: function() {
+                                const counter = $(`#${sliderId}`).closest('.image-slider-container').find('.current-slide');
+                                counter.text(this.activeIndex + 1);
+                            }
+                        }
+                    });
+                }
+                
+                // Apply blur if needed
+                if (shouldBlurSlider) {
+                    $(`#${sliderId} .isBlurred img`).each(function() {
+                        blurImage(this);
+                    });
+                }
+                
+                // Generate video icons for all images
+                images.forEach(imgData => {
+                    generateVideoIcon(imgData.imageId, chatId, userChatId);
+                });
+            }, 100);
+            
+            $('#chatContainer').animate({ scrollTop: $('#chatContainer')[0].scrollHeight }, 500);
+        }
+
         else if (messageClass.startsWith('new-image-') && message instanceof HTMLElement) {
             const imageId = message.getAttribute('data-id');
             const imageNsfw = message.getAttribute('data-nsfw');

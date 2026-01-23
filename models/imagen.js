@@ -2635,7 +2635,11 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
           nsfw,
           isMergeFace: isMerged || false,
           isAutoMerge: isMerged || false,
-          url: imageUrl
+          url: imageUrl,
+          // Batch info for grouping multiple images into a slider
+          batchId: placeholderId || taskStatus.taskId,
+          batchIndex: index,
+          batchSize: images.length
         };
 
         fastify.sendNotificationToUser(userId, 'imageGenerated', notificationData);

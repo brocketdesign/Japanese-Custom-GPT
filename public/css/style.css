@@ -6091,3 +6091,71 @@ color: #fff !important;
 .sns-platform-btn[data-platform="profile"].active i {
     color: #fff;
 }
+/* ===================================
+   Chat Image Slider Styles
+   =================================== */
+.chat-image-swiper {
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.chat-image-swiper .swiper-slide {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-image-swiper .swiper-slide img.slider-image {
+    width: 100%;
+    height: auto;
+    max-height: 400px;
+    object-fit: contain;
+    border-radius: 12px;
+}
+
+.chat-image-swiper .swiper-button-prev,
+.chat-image-swiper .swiper-button-next {
+    width: 30px;
+    height: 30px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+}
+
+.chat-image-swiper .swiper-button-prev::after,
+.chat-image-swiper .swiper-button-next::after {
+    font-size: 14px;
+}
+
+.chat-image-swiper .swiper-pagination-bullet {
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 1;
+}
+
+.chat-image-swiper .swiper-pagination-bullet-active {
+    background: #8240FF;
+}
+
+.image-slider-container {
+    position: relative;
+}
+
+.image-slider-container .slider-counter {
+    opacity: 0.7;
+}
+
+/* Ensure slider images don't have hover transform */
+.chat-image-swiper .assistant-image-box:hover {
+    transform: none !important;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 576px) {
+    .chat-image-swiper .swiper-slide img.slider-image {
+        max-height: 300px;
+    }
+    
+    .image-slider-container {
+        max-width: 250px !important;
+    }
+}

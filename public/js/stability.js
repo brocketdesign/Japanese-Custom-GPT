@@ -238,12 +238,20 @@ window.updateImageCount = function(chatId, count) {
 // Example usage: debugUpdateImageCount(5); // This will update the image count badge for the last chat session
 const sentImageIds = new Set();
 const trasckedImageTitles = new Set();
+
+// Batch tracking for multi-image slider display
+const imageBatches = new Map();
+const BATCH_TIMEOUT = 30000; // 30 seconds timeout to wait for batch images
+
 window.generateImage = async function(data, disableCompletion = false) {
     console.log('[generateImage] Called with data:', JSON.stringify({
         imageId: data?.imageId || data?.id,
         userChatId: data?.userChatId,
         isMergeFace: data?.isMergeFace,
-        hasImageUrl: !!(data?.imageUrl || data?.url)
+        hasImageUrl: !!(data?.imageUrl || data?.url),
+        batchId: data?.batchId,
+        batchIndex: data?.batchIndex,
+        batchSize: data?.batchSize
     }, null, 2));
     
     // Validate essential data
@@ -275,7 +283,10 @@ window.generateImage = async function(data, disableCompletion = false) {
         nsfw: imageNsfw = data.nsfw, 
         prompt: imagePrompt = data.prompt, 
         isUpscaled = data.isUpscaled, 
-        isMergeFace = data.isMergeFace || data.isMerged 
+        isMergeFace = data.isMergeFace || data.isMerged,
+        batchId = null,
+        batchIndex = 0,
+        batchSize = 1
     } = data;
     
     const clientLang = window.lang || (window.user && window.user.lang) || 'en';
@@ -288,6 +299,61 @@ window.generateImage = async function(data, disableCompletion = false) {
     
     sentImageIds.add(imageId);
 
+    // Create image data object
+    const imageData = {
+        imageId,
+        imageUrl,
+        titleText,
+        imagePrompt,
+        imageNsfw,
+        isUpscaled,
+        isMergeFace,
+        userChatId: data.userChatId,
+        batchIndex
+    };
+
+    // Handle batched images for slider display
+    if (batchId && batchSize > 1) {
+        console.log(`[generateImage] Batched image ${batchIndex + 1}/${batchSize} for batch ${batchId}`);
+        
+        if (!imageBatches.has(batchId)) {
+            // Initialize batch tracker
+            imageBatches.set(batchId, {
+                images: [],
+                expectedSize: batchSize,
+                userChatId: data.userChatId,
+                timeout: setTimeout(() => {
+                    // Timeout handler: display whatever we have
+                    const batch = imageBatches.get(batchId);
+                    if (batch && batch.images.length > 0) {
+                        console.log(`[generateImage] Batch ${batchId} timeout - displaying ${batch.images.length}/${batch.expectedSize} images`);
+                        displayBatchedImages(batch);
+                        imageBatches.delete(batchId);
+                    }
+                }, BATCH_TIMEOUT)
+            });
+        }
+        
+        const batch = imageBatches.get(batchId);
+        batch.images.push(imageData);
+        
+        // Check if batch is complete
+        if (batch.images.length >= batch.expectedSize) {
+            console.log(`[generateImage] Batch ${batchId} complete - displaying ${batch.images.length} images in slider`);
+            clearTimeout(batch.timeout);
+            displayBatchedImages(batch);
+            imageBatches.delete(batchId);
+        }
+    } else {
+        // Single image - display immediately using existing logic
+        displaySingleImage(imageData, disableCompletion);
+    }
+};
+
+// Display a single image (original behavior)
+function displaySingleImage(imageData, disableCompletion = false) {
+    const { imageId, imageUrl, titleText, imagePrompt, imageNsfw, isUpscaled, isMergeFace, userChatId } = imageData;
+    
     const img = document.createElement('img');
     img.setAttribute('src', imageUrl);
     img.setAttribute('alt', titleText);
@@ -298,13 +364,13 @@ window.generateImage = async function(data, disableCompletion = false) {
     img.setAttribute('data-isUpscaled', !!isUpscaled);
     img.setAttribute('data-isMergeFace', !!isMergeFace);
 
-    displayMessage('bot-image', img, data.userChatId);
+    displayMessage('bot-image', img, userChatId);
 
     // Check if the image has been added successfully
     setTimeout(() => {
         const addedImage = $(`img[data-id='${imageId}']`);
         if (!addedImage.length) {
-            console.warn(`[generateImage] Failed to add image with ID ${imageId} to chat ${data.userChatId}`);
+            console.warn(`[generateImage] Failed to add image with ID ${imageId} to chat ${userChatId}`);
         }
     }, 1000);
 
@@ -314,4 +380,26 @@ window.generateImage = async function(data, disableCompletion = false) {
             generateChatCompletion(null, false, true);
         }
     }
-};
+}
+
+// Display batched images in a slider
+function displayBatchedImages(batch) {
+    const { images, userChatId } = batch;
+    
+    if (images.length === 0) return;
+    
+    // Sort images by their batch index
+    images.sort((a, b) => a.batchIndex - b.batchIndex);
+    
+    // Use first image for the main message context
+    const firstImage = images[0];
+    
+    // Create the slider container
+    displayMessage('bot-image-slider', images, userChatId);
+    
+    // Trigger chat completion only once for the batch
+    if (!trasckedImageTitles.has(firstImage.titleText)) {
+        trasckedImageTitles.add(firstImage.titleText);
+        generateChatCompletion(null, false, true);
+    }
+}

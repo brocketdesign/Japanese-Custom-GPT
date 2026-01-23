@@ -1021,7 +1021,98 @@ function setupChatInterface(chat, character, userChat, isNew) {
             window.ChatScenarioModule.removeSelectedScenarioDisplay();
         }
 
-        const userChatMessages = userChat.messages || [];
+        let userChatMessages = userChat.messages || [];
+        console.log(`[displayChat] Retrieved ${userChatMessages.length} messages from database:`, userChatMessages);
+
+        // ===== NEW: Group batched images into slider messages =====
+        // Reconstruct bot-image-slider messages from individual batched image messages
+        const processedMessages = [];
+        const batchedGroups = new Map(); // Track batches by batchId
+        const processedIndices = new Set(); // Track which messages we've already processed
+        
+        // First pass: identify all batches and group messages
+        for (let i = 0; i < userChatMessages.length; i++) {
+            const msg = userChatMessages[i];
+            
+            // Check if this message is part of a batch (has batchId, batchIndex, batchSize)
+            if (msg.batchId && msg.batchIndex !== undefined && msg.batchSize !== undefined && msg.batchSize > 1) {
+                console.log(`[displayChat] Found batched image: batchId=${msg.batchId}, index=${msg.batchIndex}/${msg.batchSize}`);
+                // This is a batched image - group it
+                if (!batchedGroups.has(msg.batchId)) {
+                    batchedGroups.set(msg.batchId, {
+                        batchId: msg.batchId,
+                        batchSize: msg.batchSize,
+                        images: [],
+                        seenImageIds: new Set(),  // Track unique imageIds to prevent duplicates
+                        firstMessageIndex: i  // Position in original array
+                    });
+                }
+                
+                // Add this image to the batch, but skip duplicates by imageId
+                const batch = batchedGroups.get(msg.batchId);
+                if (msg.imageId && batch.seenImageIds.has(msg.imageId)) {
+                    console.log(`[displayChat] Skipping duplicate imageId ${msg.imageId} at batchIndex ${msg.batchIndex}`);
+                } else {
+                    if (msg.imageId) batch.seenImageIds.add(msg.imageId);
+                    // Use batchIndex as position, but fall back to pushing if index already occupied
+                    if (batch.images[msg.batchIndex] === undefined) {
+                        batch.images[msg.batchIndex] = msg;
+                    } else {
+                        // Index collision - find next available slot
+                        batch.images.push(msg);
+                        console.log(`[displayChat] Index collision at ${msg.batchIndex}, appended to end`);
+                    }
+                }
+                processedIndices.add(i);
+            }
+        }
+        
+        console.log(`[displayChat] Found ${batchedGroups.size} batches to reconstruct`);
+        if (batchedGroups.size > 0) {
+            console.log("[displayChat] Batch details:", Array.from(batchedGroups.entries()).map(([id, batch]) => ({
+                batchId: id,
+                imageCount: batch.images.filter(img => img !== undefined).length,
+                expectedSize: batch.batchSize
+            })));
+        }
+        
+        // Second pass: rebuild messages with batches converted to slider messages
+        userChatMessages = [];
+        const batchesAdded = new Set(); // Track which batches we've already added
+        
+        for (let i = 0; i < userChat.messages.length; i++) {
+            const msg = userChat.messages[i];
+            
+            // Skip if this message was part of a batch we've already processed
+            if (processedIndices.has(i)) {
+                // Create slider when we first encounter ANY message from a batch (not just index 0)
+                // This handles cases where index 0 might be missing
+                if (msg.batchId && !batchesAdded.has(msg.batchId)) {
+                    const batch = batchedGroups.get(msg.batchId);
+                    if (batch) {
+                        // Add the entire batch as a single slider message
+                        const sliderMessage = {
+                            role: "assistant",
+                            type: "bot-image-slider",
+                            sliderImages: batch.images.filter(img => img !== undefined), // Filter out any undefined entries
+                            batchId: batch.batchId,
+                            batchSize: batch.batchSize,
+                            createdAt: msg.createdAt,
+                            _id: `slider-${msg.batchId}` // Unique ID for the slider message
+                        };
+                        userChatMessages.push(sliderMessage);
+                        batchesAdded.add(msg.batchId);
+                        console.log(`[displayChat] Reconstructed slider for batchId ${msg.batchId} with ${sliderMessage.sliderImages.length} images (expected ${batch.batchSize})`);
+                    }
+                }
+                // Skip adding individual batched messages
+                continue;
+            }
+            
+            // Add non-batched messages as-is
+            userChatMessages.push(msg);
+        }
+
         const userChatLength = userChatMessages.length;
 
         for (let i = 0; i < userChatLength; i++) {
@@ -1069,10 +1160,11 @@ function setupChatInterface(chat, character, userChat, isNew) {
                 }
             } else if (chatMessage.role === "assistant") {
 
-                const isNarratorMessage = chatMessage.content.startsWith("[Narrator]");
-                const isImage = !!chatMessage?.imageId || chatMessage.content.startsWith("[Image]") || chatMessage.content.startsWith("[image]");
-                const isVideo = !!chatMessage?.videoId || chatMessage.content.startsWith("[Video]") || chatMessage.content.startsWith("[video]");
-                const isMergeFace = !!chatMessage?.mergeId || chatMessage.content.startsWith("[MergeFace]");
+                const isNarratorMessage = chatMessage.content?.startsWith("[Narrator]");
+                const isImageSlider = chatMessage.type === 'bot-image-slider' && Array.isArray(chatMessage.sliderImages);
+                const isImage = !!chatMessage?.imageId || chatMessage.content?.startsWith("[Image]") || chatMessage.content?.startsWith("[image]");
+                const isVideo = !!chatMessage?.videoId || chatMessage.content?.startsWith("[Video]") || chatMessage.content?.startsWith("[video]");
+                const isMergeFace = !!chatMessage?.mergeId || chatMessage.content?.startsWith("[MergeFace]");
             
                 if (isNarratorMessage) {
                     const narrationContent = chatMessage.content.replace("[Narrator]", "").trim();
@@ -1084,6 +1176,112 @@ function setupChatInterface(chat, character, userChat, isNew) {
                         </div>
                     `;
                     displayedMessageIds.add(messageId);
+                } else if (isImageSlider) {
+                    // Handle slider message reconstructed from batched images
+                    const sliderImages = chatMessage.sliderImages || [];
+                    console.log(`[displayChat] Rendering slider with ${sliderImages.length} images:`, sliderImages.map(img => ({ imageId: img?.imageId, imageUrl: img?.imageUrl?.substring(0, 60) })));
+                    
+                    if (sliderImages.length > 0) {
+                        const sliderId = `slider-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                        const subscriptionStatus = user.subscriptionStatus === 'active';
+                        
+                        // Build slider slides HTML from stored image data
+                        let slidesHtml = '';
+                        let firstImageNsfw = false;
+                        const imageDataArray = [];
+                        
+                        sliderImages.forEach((imgData, index) => {
+                            if (!imgData) return;
+                            
+                            const imageNsfw = imgData.nsfw || false;
+                            if (index === 0) firstImageNsfw = imageNsfw;
+                            
+                            const shouldBlur = imageNsfw && !subscriptionStatus;
+                            const displayMode = imageNsfw ? (subscriptionStatus ? 'show' : 'blur') : 'show';
+                            
+                            const imageUrl = imgData.imageUrl;
+                            const titleText = imgData.title || imgData.prompt || 'Image';
+                            const imagePrompt = imgData.prompt || '';
+                            const isUpscaled = imgData.isUpscaled || false;
+                            const isMergeFace = imgData.isMerged || false;
+                            
+                            imageDataArray.push({
+                                imageUrl,
+                                imageId: imgData.imageId,
+                                title: titleText,
+                                prompt: imagePrompt,
+                                nsfw: imageNsfw,
+                                isUpscaled,
+                                isMergeFace
+                            });
+                            
+                            // Only add img-blur class if the image should actually be blurred
+                            const imgClass = shouldBlur ? 'img-blur slider-image' : 'slider-image';
+                            
+                            slidesHtml += `
+                                <div class="swiper-slide" style="display: flex; flex-direction: column; align-items: center;">
+                                    <div style="display: flex; justify-content: center; align-items: center; border-radius: 12px; overflow: hidden; width: 100%; min-height: 200px;">
+                                        <img src="${imageUrl}" 
+                                             data-id="${imgData.imageId}"
+                                             data-nsfw="${imageNsfw || false}"
+                                             data-isUpscaled="${!!isUpscaled}"
+                                             data-isMergeFace="${!!isMergeFace}"
+                                             class="${imgClass}"
+                                             style="max-width: 100%; max-height: 400px; width: auto; height: auto; border-radius: 12px; object-fit: contain;"
+                                             onerror="console.error('Failed to load slider image:', '${imageUrl}')">
+                                    </div>
+                                    ${!isUpscaled ? `<div style="padding: 10px; text-align: center; font-size: 12px; color: #999;">${getImageTools({chatId, userChatId, imageId: imgData.imageId, isLiked:false, title: titleText, prompt: imagePrompt, nsfw: imageNsfw, imageUrl})}</div>` : ''}
+                                </div>
+                            `;
+                        });
+                        
+                        messageHtml = `
+                            <div class="d-flex flex-row justify-content-start mb-4 message-container bot-image-slider animate__animated animate__fadeIn">
+                                <img src="${thumbnail || '/img/logo.webp'}" alt="avatar" class="rounded-circle chatbot-image-chat" data-id="${chatId}" style="min-width: 45px; width: 45px; height: 45px; border-radius: 15%; object-fit: cover; object-position: top;" onclick="openCharacterInfoModal('${chatId}', event)">
+                                <div class="ms-3 position-relative image-slider-container" style="max-width: 300px; width: 100%;">
+                                    <div class="swiper chat-image-swiper" id="${sliderId}" style="border-radius: 12px; overflow: hidden; min-height: 200px;">
+                                        <div class="swiper-wrapper">
+                                            ${slidesHtml}
+                                        </div>
+                                        <div class="swiper-button-prev" style="color: white; opacity: 0.8; transform: scale(0.6);"></div>
+                                        <div class="swiper-button-next" style="color: white; opacity: 0.8; transform: scale(0.6);"></div>
+                                    </div>
+                                </div>
+                            </div>      
+                        `;
+                        
+                        messageHtml = `${messageHtml}`; // Wrap HTML
+                        
+                        // Initialize Swiper after appending (deferred)
+                        displayedMessageIds.add(messageId);
+                        displayedImageIds.add(`slider-${chatMessage.batchId}`);
+                        
+                        // Schedule Swiper initialization
+                        setTimeout(() => {
+                            const swiperElement = document.getElementById(sliderId);
+                            if (swiperElement && typeof Swiper !== 'undefined') {
+                                const chatSwiper = new Swiper(`#${sliderId}`, {
+                                    loop: false,
+                                    slidesPerView: 1,
+                                    spaceBetween: 10,
+                                    navigation: {
+                                        nextEl: `#${sliderId} .swiper-button-next`,
+                                        prevEl: `#${sliderId} .swiper-button-prev`
+                                    }
+                                });
+                            }
+                            
+                            // Apply blur only to images that should be blurred
+                            $(`#${sliderId} .img-blur`).each(function() {
+                                blurImage(this);
+                            });
+                            
+                            // Generate video icons for all images
+                            imageDataArray.forEach(imgData => {
+                                generateVideoIcon(imgData.imageId, chatId, userChatId);
+                            });
+                        }, 100);
+                    }
                 } else if (isMergeFace) {
                     const mergeId = chatMessage?.mergeId || chatMessage.content.replace("[MergeFace]", "").replace("[mergeface]", "").trim();
                     // Skip if this specific merge face instance has already been displayed
@@ -1946,12 +2144,8 @@ function setupChatInterface(chat, character, userChat, isNew) {
                             <div class="swiper-wrapper">
                                 ${slidesHtml}
                             </div>
-                            <div class="swiper-pagination"></div>
                             <div class="swiper-button-prev" style="color: white; opacity: 0.8; transform: scale(0.6);"></div>
                             <div class="swiper-button-next" style="color: white; opacity: 0.8; transform: scale(0.6);"></div>
-                        </div>
-                        <div class="slider-counter text-center text-muted mt-1" style="font-size: 12px;">
-                            <span class="current-slide">1</span> / <span class="total-slides">${images.length}</span>
                         </div>
                     </div>
                 </div>      
@@ -1968,20 +2162,9 @@ function setupChatInterface(chat, character, userChat, isNew) {
                         loop: false,
                         slidesPerView: 1,
                         spaceBetween: 10,
-                        pagination: {
-                            el: `#${sliderId} .swiper-pagination`,
-                            clickable: true,
-                            dynamicBullets: true
-                        },
                         navigation: {
                             nextEl: `#${sliderId} .swiper-button-next`,
                             prevEl: `#${sliderId} .swiper-button-prev`
-                        },
-                        on: {
-                            slideChange: function() {
-                                const counter = $(`#${sliderId}`).closest('.image-slider-container').find('.current-slide');
-                                counter.text(this.activeIndex + 1);
-                            }
                         }
                     });
                 }

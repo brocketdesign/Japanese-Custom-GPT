@@ -446,9 +446,19 @@ async function updateUserChat(db, userId, userChatId, newMessages, updatedAt) {
     let newMessageCount = 0;
 
     for (const newMsg of newMessages) {
-        const index = combinedMessages.findIndex(
-            (msg) => msg.content === newMsg.content
-        );
+        // CRITICAL FIX: Never match/replace image messages by content
+        // Image messages have imageId or batchId - these should always be unique
+        // Only match text messages (no imageId, no batchId) by content
+        const isNewMsgImage = newMsg.imageId || newMsg.batchId || newMsg.type === 'image' || newMsg.type === 'mergeFace';
+        
+        let index = -1;
+        if (!isNewMsgImage) {
+            // For non-image messages, find by content match (but skip image messages in existing)
+            index = combinedMessages.findIndex(
+                (msg) => msg.content === newMsg.content && !msg.imageId && !msg.batchId && msg.type !== 'image' && msg.type !== 'mergeFace'
+            );
+        }
+        
         if (index !== -1) {
             combinedMessages[index] = newMsg;
         } else {

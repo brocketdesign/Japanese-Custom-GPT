@@ -93,11 +93,29 @@ function showPreview(type, el) {
     // Collect items depending on type. Support 'image', 'video' and 'mixed'
     let items = [];
     if (type === 'image' || type === 'mixed') {
+        // Collect images from <img> tags
         const imageItems = $('.assistant-image-box img')
             .map((_, img) => ({ type: 'image', url: $(img).attr('src') || $(img).attr('data-src'), id: $(img).attr('data-id'), title: $(img).attr('alt') || $(img).attr('data-title'), prompt: $(img).attr('data-prompt') }))
             .get()
             .filter(i => i.url && !i.url.includes('placeholder'));
         items = items.concat(imageItems);
+        
+        // Also collect images from thumbnail gallery boxes that use data-src (no img child)
+        const thumbItems = $('.assistant-image-box[data-src][data-id]')
+            .filter((_, box) => !$(box).find('img').length) // Only boxes without img children
+            .map((_, box) => {
+                const $box = $(box);
+                return {
+                    type: 'image',
+                    url: $box.attr('data-src'),
+                    id: $box.attr('data-id'),
+                    title: $box.attr('data-title') || '',
+                    prompt: $box.attr('data-prompt') || ''
+                };
+            })
+            .get()
+            .filter(i => i.url && !i.url.includes('placeholder'));
+        items = items.concat(thumbItems);
     }
     if (type === 'video' || type === 'mixed') {
         const videoItems = $('.assistant-image-box')
@@ -113,6 +131,15 @@ function showPreview(type, el) {
             .filter(i => i.url && !i.url.includes('placeholder'));
         items = items.concat(videoItems);
     }
+
+    // Deduplicate by id (same image might appear from both img tag and thumbnail box)
+    const seenIds = new Set();
+    items = items.filter(item => {
+        if (!item.id) return true; // Keep items without id
+        if (seenIds.has(item.id)) return false; // Skip duplicates
+        seenIds.add(item.id);
+        return true;
+    });
 
     const clickedUrl = $(el).find('img').attr('src') || $(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-video-src') || $(el).data('video-src') || ($(el).find('video').attr('src') || $(el).find('video source').attr('src'));
     const clickedId = $(el).find('img').attr('data-id') || $(el).attr('data-id') || $(el).attr('data-video-id') || $(el).data('video-id') || ($(el).find('video').attr('data-id') || $(el).find('video source').attr('data-id'));

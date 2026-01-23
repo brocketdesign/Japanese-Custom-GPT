@@ -343,22 +343,113 @@ function loadCharacterStats(chatId) {
 }
 
 /**
- * Load similar characters
+ * Load similar characters with pagination support
  */
 function loadSimilarCharacters(chatId) {
+    // Initialize pagination state
+    if (!window.characterProfile.similarCharacters) {
+        window.characterProfile.similarCharacters = {
+            currentPage: 0,
+            totalPages: 0,
+            hasMore: true,
+            loading: false,
+            chatId: chatId
+        };
+    }
+    
     // Show loading spinner
     showSimilarCharactersLoader();
     
     if (typeof fetchSimilarChats === 'function') {
-        fetchSimilarChats(chatId).then(characters => {
-            displaySimilarCharacters(characters);
+        fetchSimilarChats(chatId, 1).then(response => {
+            // Handle new paginated response format
+            const characters = response.similarChats || response;
+            const pagination = response.pagination || {};
+            
+            // Update pagination state
+            window.characterProfile.similarCharacters.currentPage = pagination.currentPage || 1;
+            window.characterProfile.similarCharacters.totalPages = pagination.totalPages || 1;
+            window.characterProfile.similarCharacters.hasMore = pagination.hasMore || false;
+            
+            displaySimilarCharacters(characters, false); // false = don't append, replace
             // Hide loading spinner
             hideSimilarCharactersLoader();
+            
+            // Initialize scroll listener for infinite scroll
+            initializeSimilarCharactersScroll(chatId);
         }).catch(error => {
             // Hide loading spinner on error
             hideSimilarCharactersLoader();
         });
     }
+}
+
+/**
+ * Load more similar characters (for infinite scroll)
+ */
+function loadMoreSimilarCharacters(chatId) {
+    const state = window.characterProfile.similarCharacters;
+    
+    // Don't load if already loading or no more pages
+    if (state.loading || !state.hasMore) {
+        return;
+    }
+    
+    const nextPage = state.currentPage + 1;
+    
+    // Set loading state
+    state.loading = true;
+    
+    if (typeof fetchSimilarChats === 'function') {
+        fetchSimilarChats(chatId, nextPage).then(response => {
+            // Handle new paginated response format
+            const characters = response.similarChats || response;
+            const pagination = response.pagination || {};
+            
+            // Update pagination state
+            state.currentPage = pagination.currentPage || nextPage;
+            state.totalPages = pagination.totalPages || state.totalPages;
+            state.hasMore = pagination.hasMore || false;
+            state.loading = false;
+            
+            // Append new characters to existing grid
+            displaySimilarCharacters(characters, true); // true = append
+        }).catch(error => {
+            state.loading = false;
+            console.error('Failed to load more similar characters:', error);
+        });
+    }
+}
+
+/**
+ * Initialize scroll listener for similar characters infinite scroll
+ */
+function initializeSimilarCharactersScroll(chatId) {
+    const grid = document.getElementById('similarCharactersGrid');
+    if (!grid) return;
+    
+    // Remove existing listener if any
+    if (grid._scrollListener) {
+        grid.removeEventListener('scroll', grid._scrollListener);
+    }
+    
+    // Create new scroll listener
+    grid._scrollListener = function() {
+        const state = window.characterProfile.similarCharacters;
+        
+        // Check if we're near the end (within 200px of the right edge)
+        const scrollLeft = grid.scrollLeft;
+        const scrollWidth = grid.scrollWidth;
+        const clientWidth = grid.clientWidth;
+        const distanceFromEnd = scrollWidth - (scrollLeft + clientWidth);
+        
+        if (distanceFromEnd < 200 && state.hasMore && !state.loading) {
+            console.log('[SimilarCharacters] Near end of scroll, loading more...');
+            loadMoreSimilarCharacters(chatId);
+        }
+    };
+    
+    grid.addEventListener('scroll', grid._scrollListener);
 }
 
 /**
@@ -429,18 +520,18 @@ function hideCountLoadingState() {
 }
 
 /**
- * Fetch similar chats
+ * Fetch similar chats with pagination
  */
-async function fetchSimilarChats(chatId) {
+async function fetchSimilarChats(chatId, page = 1, limit = 10) {
     try {
-        const response = await fetch(`/api/similar-chats/${chatId}`);
+        const response = await fetch(`/api/similar-chats/${chatId}?page=${page}&limit=${limit}`);
         if (response.ok) {
             return await response.json();
         }
     } catch (error) {
         // ignore fetch errors
     }
-    return [];
+    return { similarChats: [], pagination: { hasMore: false } };
 }
 
 /**
@@ -495,19 +586,4 @@ function hideLoadMoreButton(type) {
     if (button) {
         button.style.display = 'none';
     }
-}
-
-/**
- * Fetch similar chats
- */
-async function fetchSimilarChats(chatId) {
-    try {
-        const response = await fetch(`/api/similar-chats/${chatId}`);
-        if (response.ok) {
-            return await response.json();
-        }
-    } catch (error) {
-        // ignore fetch errors
-    }
-    return [];
 }

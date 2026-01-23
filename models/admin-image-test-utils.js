@@ -256,6 +256,7 @@ const MODEL_CONFIGS = {
     alias: 'merge-face', // Alias for backward compatibility
     endpoint: 'https://api.segmind.com/v1/faceswap-v5',
     async: false, // Synchronous API
+    provider: 'segmind', // Use Segmind API authentication
     category: 'face',
     supportsImg2Img: false,
     requiresImage: true,
@@ -615,7 +616,7 @@ async function initializeModelTest(modelId, params) {
     
     // Determine headers based on model provider
     let headers;
-    const isSegmindModel = config.provider === 'segmind' || modelId === 'merge-face-segmind' || modelId === 'qwen-image-2512';
+    const isSegmindModel = config.provider === 'segmind';
     if (isSegmindModel) {
       headers = {
         'x-api-key': process.env.SEGMIND_API_KEY,
@@ -678,53 +679,33 @@ async function initializeModelTest(modelId, params) {
       // Handle different response formats for different sync APIs
       let images = [];
       
-      // Segmind Merge Face returns image as arraybuffer
-      if (modelId === 'merge-face-segmind' || modelId === 'merge-face') {
-        console.log(`[AdminImageTest] 🔍 Segmind Merge Face - processing arraybuffer response`);
+      // Segmind models return image as arraybuffer
+      if (isSegmindModel) {
+        console.log(`[AdminImageTest] 🔍 ${config.name} - processing arraybuffer response`);
         if (response.data && response.data.byteLength > 0) {
           const imageBuffer = Buffer.from(response.data);
           const base64Image = imageBuffer.toString('base64');
           
-          // Upload to S3 immediately so the URL persists
-          console.log(`[AdminImageTest] 📤 Uploading merge face result to S3...`);
-          try {
-            const s3Url = await uploadTestImageToS3(`data:image/png;base64,${base64Image}`, 'merge_face');
-            images = [s3Url];
-            console.log(`[AdminImageTest] ✅ Merge face image uploaded to S3: ${s3Url.substring(0, 60)}...`);
-          } catch (uploadError) {
-            console.error(`[AdminImageTest] ⚠️ S3 upload failed, using base64:`, uploadError.message);
-            const dataUrl = `data:image/png;base64,${base64Image}`;
-            images = [dataUrl];
-          }
-          console.log(`[AdminImageTest] ✅ Segmind image processed (${imageBuffer.length} bytes)`);
-        } else {
-          console.log(`[AdminImageTest] ⚠️ No image data in Segmind response`);
-        }
-      }
-      // Qwen Image 2512 (Segmind) returns image as arraybuffer
-      else if (modelId === 'qwen-image-2512') {
-        console.log(`[AdminImageTest] 🔍 Qwen Image 2512 - processing arraybuffer response`);
-        if (response.data && response.data.byteLength > 0) {
-          const imageBuffer = Buffer.from(response.data);
-          const base64Image = imageBuffer.toString('base64');
+          // Determine image format from params, config defaults, or fallback
+          const imageFormat = params.image_format || config.defaultParams?.image_format || 'png';
           
-          // Determine image format from params or default to webp
-          const imageFormat = params.image_format || config.defaultParams.image_format || 'webp';
+          // Determine prefix for S3 filename based on model
+          const s3Prefix = modelId.replace(/-/g, '_');
           
           // Upload to S3 immediately so the URL persists
-          console.log(`[AdminImageTest] 📤 Uploading Qwen image result to S3...`);
+          console.log(`[AdminImageTest] 📤 Uploading ${config.name} result to S3...`);
           try {
-            const s3Url = await uploadTestImageToS3(`data:image/${imageFormat};base64,${base64Image}`, 'qwen_image');
+            const s3Url = await uploadTestImageToS3(`data:image/${imageFormat};base64,${base64Image}`, s3Prefix);
             images = [s3Url];
-            console.log(`[AdminImageTest] ✅ Qwen image uploaded to S3: ${s3Url.substring(0, 60)}...`);
+            console.log(`[AdminImageTest] ✅ ${config.name} image uploaded to S3: ${s3Url.substring(0, 60)}...`);
           } catch (uploadError) {
             console.error(`[AdminImageTest] ⚠️ S3 upload failed, using base64:`, uploadError.message);
             const dataUrl = `data:image/${imageFormat};base64,${base64Image}`;
             images = [dataUrl];
           }
-          console.log(`[AdminImageTest] ✅ Qwen image processed (${imageBuffer.length} bytes)`);
+          console.log(`[AdminImageTest] ✅ ${config.name} image processed (${imageBuffer.length} bytes)`);
         } else {
-          console.log(`[AdminImageTest] ⚠️ No image data in Qwen response`);
+          console.log(`[AdminImageTest] ⚠️ No image data in ${config.name} response`);
         }
       }
       // Novita Reimagine returns image_file (raw base64) and image_type

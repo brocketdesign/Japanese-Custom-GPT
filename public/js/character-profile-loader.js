@@ -3,6 +3,11 @@
  * Handles loading and initialization of character profile data
  */
 
+// Constants for similar characters pagination
+const SIMILAR_CHARACTERS_INITIAL_PAGE = 1;
+const SIMILAR_CHARACTERS_LIMIT = 10;
+const SIMILAR_CHARACTERS_SCROLL_THRESHOLD = 200; // px from right edge to trigger load
+
 /**
  * Load all character data (images, stats, similar characters, etc.)
  */
@@ -364,7 +369,7 @@ function loadSimilarCharacters(chatId) {
     // - scrollListener: Reference to scroll event handler for cleanup
     if (!window.characterProfile.similarCharacters) {
         window.characterProfile.similarCharacters = {
-            currentPage: 1,  // Start from page 1 to match backend pagination
+            currentPage: SIMILAR_CHARACTERS_INITIAL_PAGE,  // Start from page 1 to match backend pagination
             totalPages: 1,
             hasMore: true,
             loading: false,
@@ -377,13 +382,13 @@ function loadSimilarCharacters(chatId) {
     showSimilarCharactersLoader();
     
     if (typeof fetchSimilarChats === 'function') {
-        fetchSimilarChats(chatId, 1).then(response => {
+        fetchSimilarChats(chatId, SIMILAR_CHARACTERS_INITIAL_PAGE, SIMILAR_CHARACTERS_LIMIT).then(response => {
             // Handle new paginated response format
             const characters = response.similarChats || response;
             const pagination = response.pagination || {};
             
             // Update pagination state
-            window.characterProfile.similarCharacters.currentPage = pagination.currentPage || 1;
+            window.characterProfile.similarCharacters.currentPage = pagination.currentPage || SIMILAR_CHARACTERS_INITIAL_PAGE;
             window.characterProfile.similarCharacters.totalPages = pagination.totalPages || 1;
             window.characterProfile.similarCharacters.hasMore = pagination.hasMore || false;
             
@@ -417,7 +422,7 @@ function loadMoreSimilarCharacters(chatId) {
     state.loading = true;
     
     if (typeof fetchSimilarChats === 'function') {
-        fetchSimilarChats(chatId, nextPage).then(response => {
+        fetchSimilarChats(chatId, nextPage, SIMILAR_CHARACTERS_LIMIT).then(response => {
             // Handle new paginated response format
             const characters = response.similarChats || response;
             const pagination = response.pagination || {};
@@ -455,13 +460,13 @@ function initializeSimilarCharactersScroll(chatId) {
     
     // Create new scroll listener
     state.scrollListener = function() {
-        // Check if we're near the end (within 200px of the right edge)
+        // Check if we're near the end (within threshold of the right edge)
         const scrollLeft = grid.scrollLeft;
         const scrollWidth = grid.scrollWidth;
         const clientWidth = grid.clientWidth;
         const distanceFromEnd = scrollWidth - (scrollLeft + clientWidth);
         
-        if (distanceFromEnd < 200 && state.hasMore && !state.loading) {
+        if (distanceFromEnd < SIMILAR_CHARACTERS_SCROLL_THRESHOLD && state.hasMore && !state.loading) {
             console.log('[SimilarCharacters] Near end of scroll, loading more...');
             loadMoreSimilarCharacters(chatId);
         }

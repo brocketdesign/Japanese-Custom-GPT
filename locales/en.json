@@ -23,7 +23,9 @@
     "label": "Description (optional)",
     "placeholder": "e.g., in a futuristic setting, with dramatic lighting...",
     "generateButton": "Generate Image",
-    "cancelButton": "Cancel"
+    "cancelButton": "Cancel",
+    "enhanceButton": "✨ Enhance with AI",
+    "styleTags": "Quick Style Tags:"
   },
   "customPromptSettings": {
     "tabTitle": "Custom Prompts",

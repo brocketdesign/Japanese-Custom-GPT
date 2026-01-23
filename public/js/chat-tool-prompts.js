@@ -92,6 +92,8 @@ class PromptManager {
             const placeholderText = translations.customPromptModal?.placeholder || "e.g., in a futuristic setting, with dramatic lighting...";
             const generateButtonText = translations.customPromptModal?.generateButton || "Generate Image";
             const cancelButtonText = translations.customPromptModal?.cancelButton || "Cancel";
+            const enhanceButtonText = translations.customPromptModal?.enhanceButton || "✨ Enhance with AI";
+            const styleTags = translations.customPromptModal?.styleTags || "Quick Style Tags:";
 
             const modalHtml = `
                 <div class="modal fade" id="customPromptModal" tabindex="-1" aria-labelledby="customPromptModalLabel" aria-hidden="true">
@@ -112,16 +114,68 @@ class PromptManager {
                                     <div class="form-text text-muted mb-2">
                                         ${modalSubtitle}
                                     </div>
-                                    <textarea 
-                                        class="form-control" 
-                                        style="min-height: 90px;"
-                                        id="customPromptTextarea" 
-                                        rows="8" 
-                                        maxlength="500" 
-                                        placeholder="${placeholderText}"
-                                    ></textarea>
-                                    <div class="form-text">
+                                    <div class="position-relative">
+                                        <textarea 
+                                            class="form-control" 
+                                            style="min-height: 90px;"
+                                            id="customPromptTextarea" 
+                                            rows="8" 
+                                            maxlength="500" 
+                                            placeholder="${placeholderText}"
+                                        ></textarea>
+                                        <button 
+                                            type="button" 
+                                            class="btn btn-sm btn-outline-primary position-absolute" 
+                                            id="enhancePromptBtn"
+                                            style="top: 8px; right: 8px; z-index: 10; font-size: 0.75rem; padding: 0.25rem 0.5rem;"
+                                            title="Enhance your description with AI"
+                                        >
+                                            ${enhanceButtonText}
+                                        </button>
+                                    </div>
+                                    <div class="form-text d-flex justify-content-between align-items-center">
                                         <span id="customCharCount">0</span>/500 characters
+                                        <span id="enhanceStatus" class="text-muted small"></span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Style Tags Section -->
+                                <div class="mb-3">
+                                    <label class="form-label small text-muted mb-2">
+                                        <i class="bi bi-tags me-1"></i>
+                                        ${styleTags}
+                                    </label>
+                                    <div id="styleTagsContainer" class="d-flex flex-wrap gap-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary style-tag-btn" data-style="cinematic">
+                                            <i class="bi bi-film me-1"></i>Cinematic
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary style-tag-btn" data-style="anime">
+                                            <i class="bi bi-palette me-1"></i>Anime
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary style-tag-btn" data-style="portrait">
+                                            <i class="bi bi-person-circle me-1"></i>Portrait
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary style-tag-btn" data-style="photorealistic">
+                                            <i class="bi bi-camera me-1"></i>Photorealistic
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary style-tag-btn" data-style="artistic">
+                                            <i class="bi bi-brush me-1"></i>Artistic
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary style-tag-btn" data-style="dramatic">
+                                            <i class="bi bi-lightning me-1"></i>Dramatic
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary style-tag-btn" data-style="casual">
+                                            <i class="bi bi-sunglasses me-1"></i>Casual
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary style-tag-btn" data-style="elegant">
+                                            <i class="bi bi-gem me-1"></i>Elegant
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary style-tag-btn" data-style="action">
+                                            <i class="bi bi-activity me-1"></i>Action
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary style-tag-btn" data-style="romantic">
+                                            <i class="bi bi-heart me-1"></i>Romantic
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -149,6 +203,8 @@ class PromptManager {
             const textarea = $('#customPromptTextarea');
             const charCount = $('#customCharCount');
             const generateBtn = $('#generateCustomPromptBtn');
+            const enhanceBtn = $('#enhancePromptBtn');
+            const enhanceStatus = $('#enhanceStatus');
 
             // Save and restore last prompt using localStorage
             const lastPromptKey = 'custom_prompt_last_prompt';
@@ -174,9 +230,92 @@ class PromptManager {
                     charCount.removeClass('text-danger');
                 }
 
-                textarea.on('input', function() {
-                    localStorage.setItem(lastPromptKey, $(this).val());
-                });
+                localStorage.setItem(lastPromptKey, $(this).val());
+            });
+
+            // Enhance button click
+            enhanceBtn.on('click', async function() {
+                const description = textarea.val().trim();
+                
+                if (!description) {
+                    enhanceStatus.text('Please enter a description first').addClass('text-warning');
+                    setTimeout(() => enhanceStatus.text('').removeClass('text-warning'), 3000);
+                    return;
+                }
+
+                // Show loading state
+                enhanceBtn.prop('disabled', true);
+                enhanceStatus.text('Enhancing...').removeClass('text-warning text-success').addClass('text-info');
+                const originalBtnText = enhanceBtn.html();
+                enhanceBtn.html('<span class="spinner-border spinner-border-sm me-1"></span>Enhancing...');
+
+                try {
+                    const chatId = sessionStorage.getItem('chatId') || window.chatId;
+                    const response = await fetch('/api/custom-prompt/enhance', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ description, chatId })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.success && data.enhanced) {
+                        textarea.val(data.enhanced);
+                        charCount.text(data.enhanced.length);
+                        localStorage.setItem(lastPromptKey, data.enhanced);
+                        enhanceStatus.text('Enhanced! ✨').removeClass('text-info').addClass('text-success');
+                        setTimeout(() => enhanceStatus.text('').removeClass('text-success'), 3000);
+                    } else {
+                        throw new Error(data.error || 'Enhancement failed');
+                    }
+                } catch (error) {
+                    console.error('Error enhancing prompt:', error);
+                    enhanceStatus.text('Enhancement failed').removeClass('text-info').addClass('text-warning');
+                    setTimeout(() => enhanceStatus.text('').removeClass('text-warning'), 3000);
+                } finally {
+                    enhanceBtn.prop('disabled', false);
+                    enhanceBtn.html(originalBtnText);
+                }
+            });
+
+            // Style tag buttons click
+            $('.style-tag-btn').on('click', async function() {
+                const styleTag = $(this).data('style');
+                const $btn = $(this);
+                
+                // Show loading state
+                $btn.prop('disabled', true);
+                const originalBtnHtml = $btn.html();
+                $btn.html('<span class="spinner-border spinner-border-sm"></span>');
+                enhanceStatus.text('Generating...').removeClass('text-warning text-success').addClass('text-info');
+
+                try {
+                    const chatId = sessionStorage.getItem('chatId') || window.chatId;
+                    const response = await fetch('/api/custom-prompt/generate-from-tag', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ styleTag, chatId })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.success && data.prompt) {
+                        textarea.val(data.prompt);
+                        charCount.text(data.prompt.length);
+                        localStorage.setItem(lastPromptKey, data.prompt);
+                        enhanceStatus.text('Generated! 🎨').removeClass('text-info').addClass('text-success');
+                        setTimeout(() => enhanceStatus.text('').removeClass('text-success'), 3000);
+                    } else {
+                        throw new Error(data.error || 'Generation failed');
+                    }
+                } catch (error) {
+                    console.error('Error generating prompt from tag:', error);
+                    enhanceStatus.text('Generation failed').removeClass('text-info').addClass('text-warning');
+                    setTimeout(() => enhanceStatus.text('').removeClass('text-warning'), 3000);
+                } finally {
+                    $btn.prop('disabled', false);
+                    $btn.html(originalBtnHtml);
+                }
             });
 
             // Generate button click

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="{{lang}}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    {{#if lang}}
+    <meta http-equiv="content-language" content="{{lang}}">
+    {{/if}}
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1a1a1a">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/img/logo.webp" type="image/webp">
+    <title>{{#if seoTitle}}{{seoTitle}}{{else}}AI Generation Dashboard{{/if}}</title>
+    
+    <!-- Core CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/dashboard-generation.css" rel="stylesheet">
+</head>
+<body>
+    <!-- ====================================================================
+         UNIFIED GENERATION DASHBOARD
+         Mobile-first, chat-style interface for image and video generation
+         ==================================================================== -->
+    <div class="gen-dashboard">
+        
+        <!-- ================================================================
+             TOP CONTROL BAR - Fixed
+             ================================================================ -->
+        <header class="gen-top-bar">
+            <div class="gen-top-bar-content">
+                <!-- Mode Selector (Image / Video) -->
+                <div class="gen-mode-selector">
+                    <button class="gen-mode-btn active" data-mode="image">
+                        <i class="bi bi-images"></i>
+                        <span>{{#if translations.generation}}{{translations.generation.image}}{{else}}Image{{/if}}</span>
+                    </button>
+                    <button class="gen-mode-btn" data-mode="video">
+                        <i class="bi bi-film"></i>
+                        <span>{{#if translations.generation}}{{translations.generation.video}}{{else}}Video{{/if}}</span>
+                    </button>
+                </div>
+                
+                <!-- Model Selector Button -->
+                <button class="gen-model-selector" type="button">
+                    <div class="model-icon">
+                        <i class="bi bi-cpu"></i>
+                    </div>
+                    <span class="model-name">Select Model</span>
+                    <i class="bi bi-chevron-down model-chevron"></i>
+                </button>
+            </div>
+        </header>
+        
+        <!-- ================================================================
+             MAIN CONTENT AREA - Scrollable Feed
+             ================================================================ -->
+        <main class="gen-main-content">
+            <div class="gen-content-inner">
+                <!-- Empty State -->
+                <div class="gen-empty-state">
+                    <div class="empty-icon">
+                        <i class="bi bi-images"></i>
+                    </div>
+                    <h3>{{#if translations.generation}}{{translations.generation.readyToCreate}}{{else}}Ready to create{{/if}}</h3>
+                    <p>{{#if translations.generation}}{{translations.generation.enterPromptHint}}{{else}}Enter a prompt below to generate your first creation{{/if}}</p>
+                </div>
+                
+                <!-- Results will be dynamically inserted here -->
+            </div>
+        </main>
+        
+        <!-- ================================================================
+             BOTTOM PROMPT BAR - Fixed, Chat Input Style
+             ================================================================ -->
+        <footer class="gen-bottom-bar">
+            <div class="gen-bottom-bar-content">
+                <!-- Cost Display -->
+                <div class="gen-cost-display">
+                    <span class="cost-label">{{#if translations.generation}}{{translations.generation.generationCost}}{{else}}Generation Cost{{/if}}</span>
+                    <span class="cost-value">
+                        <i class="bi bi-coin"></i>
+                        <span id="costAmount">{{imageCostPerUnit}}</span> points
+                    </span>
+                </div>
+                
+                <!-- Tool Icons Row -->
+                <div class="gen-tools-row">
+                    <!-- Image Upload (for img2img / i2v) -->
+                    <button class="gen-tool-btn" data-tool="upload-base" title="Upload base image">
+                        <i class="bi bi-image"></i>
+                        <span>{{#if translations.generation}}{{translations.generation.baseImage}}{{else}}Base Image{{/if}}</span>
+                    </button>
+                    
+                    <!-- Face Upload (for face merge) -->
+                    <button class="gen-tool-btn" data-tool="upload-face" title="Upload face image">
+                        <i class="bi bi-person-bounding-box"></i>
+                        <span>{{#if translations.generation}}{{translations.generation.face}}{{else}}Face{{/if}}</span>
+                    </button>
+                    
+                    <!-- Aspect Ratio (Image mode) -->
+                    <button class="gen-tool-btn" data-tool="aspect-ratio" title="Aspect ratio">
+                        <i class="bi bi-aspect-ratio"></i>
+                        <span>1:1</span>
+                    </button>
+                    
+                    <!-- Duration (Video mode) -->
+                    <button class="gen-tool-btn gen-hidden" data-tool="duration" title="Video duration">
+                        <i class="bi bi-clock"></i>
+                        <span>5s</span>
+                    </button>
+                    
+                    <!-- Video Upload (for video face merge) -->
+                    <button class="gen-tool-btn gen-hidden" data-tool="upload-video" title="Upload video">
+                        <i class="bi bi-camera-video"></i>
+                        <span>{{#if translations.generation}}{{translations.generation.sourceVideo}}{{else}}Video{{/if}}</span>
+                    </button>
+                    
+                    <!-- Advanced Settings -->
+                    <button class="gen-tool-btn" data-tool="settings" title="Settings">
+                        <i class="bi bi-sliders"></i>
+                    </button>
+                </div>
+                
+                <!-- Prompt Input Area -->
+                <div class="gen-prompt-area">
+                    <textarea class="gen-prompt-input" 
+                              placeholder="{{#if translations.generation}}{{translations.generation.promptPlaceholder}}{{else}}Describe what you want to create...{{/if}}"
+                              rows="1"></textarea>
+                    <button class="gen-submit-btn" type="button" disabled>
+                        <i class="bi bi-arrow-up"></i>
+                    </button>
+                </div>
+            </div>
+        </footer>
+        
+        <!-- ================================================================
+             OVERLAYS
+             ================================================================ -->
+        
+        <!-- Overlay Backdrop -->
+        <div class="gen-overlay-backdrop"></div>
+        
+        <!-- Model Selection Bottom Sheet -->
+        <div class="gen-bottom-sheet" id="modelSheet">
+            <div class="gen-bottom-sheet-handle"></div>
+            <div class="gen-bottom-sheet-header">
+                <h3>{{#if translations.generation}}{{translations.generation.selectModel}}{{else}}Select Model{{/if}}</h3>
+                <p>{{#if translations.generation}}{{translations.generation.selectModelDesc}}{{else}}Choose an AI model for generation{{/if}}</p>
+            </div>
+            <div class="gen-bottom-sheet-body">
+                <!-- Models will be rendered here dynamically -->
+            </div>
+        </div>
+        
+        <!-- Settings Bottom Sheet -->
+        <div class="gen-bottom-sheet" id="settingsSheet">
+            <div class="gen-bottom-sheet-handle"></div>
+            <div class="gen-bottom-sheet-header">
+                <h3>{{#if translations.generation}}{{translations.generation.settings}}{{else}}Settings{{/if}}</h3>
+                <p>{{#if translations.generation}}{{translations.generation.settingsDesc}}{{else}}Configure generation parameters{{/if}}</p>
+            </div>
+            <div class="gen-bottom-sheet-body">
+                <!-- Settings will be rendered here dynamically -->
+            </div>
+        </div>
+        
+        <!-- Full Screen Preview Overlay -->
+        <div class="gen-preview-overlay">
+            <div class="gen-preview-header">
+                <button class="gen-preview-close" type="button">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+                <div></div>
+            </div>
+            <div class="gen-preview-content">
+                <!-- Preview media will be inserted here -->
+            </div>
+            <div class="gen-preview-footer">
+                <button class="gen-preview-action" onclick="genDashboard.downloadResult(genDashboard._currentPreviewId)">
+                    <i class="bi bi-download"></i>
+                    <span>{{#if translations.generation}}{{translations.generation.download}}{{else}}Download{{/if}}</span>
+                </button>
+                <button class="gen-preview-action" onclick="genDashboard.reusePrompt(genDashboard._currentPreviewId); genDashboard.closePreview();">
+                    <i class="bi bi-arrow-repeat"></i>
+                    <span>{{#if translations.generation}}{{translations.generation.reuse}}{{else}}Reuse{{/if}}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hidden File Inputs -->
+    <input type="file" id="baseImageInput" accept="image/*" style="display: none;">
+    <input type="file" id="faceImageInput" accept="image/*" style="display: none;">
+    <input type="file" id="targetImageInput" accept="image/*" style="display: none;">
+    <input type="file" id="baseVideoInput" accept="video/*" style="display: none;">
+    
+    <!-- Configuration Script -->
+    <script>
+        // Pass server-side configuration to JavaScript
+        window.GEN_DASHBOARD_CONFIG = {
+            userPoints: {{userPoints}},
+            imageCostPerUnit: {{imageCostPerUnit}},
+            videoCostPerUnit: {{videoCostPerUnit}},
+            faceMergeCost: {{faceMergeCost}},
+            imageModels: {{{json imageModels}}},
+            videoModels: {{{json videoModels}}}
+        };
+    </script>
+    
+    <!-- Core Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/dashboard-generation.js"></script>
+</body>
+</html>

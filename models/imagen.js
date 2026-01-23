@@ -1924,6 +1924,40 @@ async function fetchNovitaMagic(data, flux = false, hunyuan = false, builtInMode
           }
         }
       };
+    } else if (builtInModelId && MODEL_CONFIGS[builtInModelId]) {
+      // Built-in model (z-image-turbo, etc.) - use flat request structure
+      // Only include supported parameters from MODEL_CONFIGS
+      const modelConfig = MODEL_CONFIGS[builtInModelId];
+      const supportedParams = modelConfig.supportedParams || [];
+      
+      requestBody.data = {
+        prompt: data.prompt
+      };
+      
+      // Add only supported parameters
+      if (supportedParams.includes('size') && data.size) {
+        requestBody.data.size = data.size;
+      }
+      if (supportedParams.includes('seed') && data.seed !== undefined) {
+        requestBody.data.seed = data.seed;
+      }
+      if (supportedParams.includes('enable_base64_output') && data.enable_base64_output !== undefined) {
+        requestBody.data.enable_base64_output = data.enable_base64_output;
+      }
+      if (supportedParams.includes('negative_prompt') && data.negative_prompt) {
+        requestBody.data.negative_prompt = data.negative_prompt;
+      }
+      
+      // Add webhook to extra if supported
+      if (webhookUrl) {
+        requestBody.data.extra = {
+          webhook: {
+            url: webhookUrl
+          }
+        };
+      }
+      
+      console.log(`[fetchNovitaMagic] Built-in model request body:`, JSON.stringify(requestBody.data, null, 2));
     } else {
       requestBody.data = {
         extra: {

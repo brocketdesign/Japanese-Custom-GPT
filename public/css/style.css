@@ -6091,3 +6091,194 @@ color: #fff !important;
 .sns-platform-btn[data-platform="profile"].active i {
     color: #fff;
 }
+/* Custom Prompt Modal Enhancements */
+#customPromptModal .modal-dialog {
+    max-width: 600px;
+}
+
+#customPromptModal .modal-content {
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+#customPromptModal .modal-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 16px 16px 0 0;
+}
+
+#customPromptModal .modal-title {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+#customPromptModal .btn-close {
+    filter: brightness(0) invert(1);
+    opacity: 0.8;
+}
+
+#customPromptModal .btn-close:hover {
+    opacity: 1;
+}
+
+#customPromptModal .modal-body {
+    padding: 1.5rem;
+}
+
+#customPromptTextarea {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+    resize: vertical;
+}
+
+#customPromptTextarea:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    outline: none;
+}
+
+#enhancePromptBtn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+#enhancePromptBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    background: rgba(102, 126, 234, 0.1);
+    border-color: #667eea;
+}
+
+#enhancePromptBtn:active {
+    transform: translateY(0);
+}
+
+.style-tag-btn {
+    border-radius: 20px;
+    padding: 0.4rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 2px solid #e2e8f0;
+    background: white;
+    color: #4a5568;
+}
+
+.style-tag-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #667eea;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.style-tag-btn:active {
+    transform: translateY(0);
+}
+
+.style-tag-btn i {
+    font-size: 1rem;
+}
+
+#styleTagsContainer {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 0.5rem;
+    background: #f7fafc;
+    border-radius: 12px;
+}
+
+#styleTagsContainer::-webkit-scrollbar {
+    width: 6px;
+}
+
+#styleTagsContainer::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#styleTagsContainer::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 3px;
+}
+
+#styleTagsContainer::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
+#enhanceStatus {
+    min-height: 18px;
+    font-weight: 500;
+}
+
+#customPromptModal .modal-footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 1rem 1.5rem;
+}
+
+#generateCustomPromptBtn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 0.6rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+#generateCustomPromptBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+#generateCustomPromptBtn:active {
+    transform: translateY(0);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    #customPromptModal .modal-content {
+        background: #1a202c;
+        color: #e2e8f0;
+    }
+    
+    #customPromptTextarea {
+        background: #2d3748;
+        color: #e2e8f0;
+        border-color: #4a5568;
+    }
+    
+    .style-tag-btn {
+        background: #2d3748;
+        color: #e2e8f0;
+        border-color: #4a5568;
+    }
+    
+    #styleTagsContainer {
+        background: #2d3748;
+    }
+    
+    #enhancePromptBtn {
+        background: rgba(45, 55, 72, 0.95);
+        color: #e2e8f0;
+    }
+}
+
+/* Animation for spinner */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+}

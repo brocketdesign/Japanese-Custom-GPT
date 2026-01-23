@@ -1203,6 +1203,128 @@ Respond in ${language}`;
     return { completed: false, confidence: 0, reason: 'Error checking completion' };
   }
 };
+/**
+ * Enhance a custom prompt description with AI
+ * @param {string} description - User's original description
+ * @param {Object} characterContext - Character information for context
+ * @param {string} language - User's language preference
+ * @returns {string} Enhanced prompt description
+ */
+async function enhanceCustomPromptDescription(description, characterContext = {}, language = 'en') {
+  try {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const { name, personality, occupation, relationship } = characterContext;
+    
+    const systemPrompt = `You are an expert at enhancing image generation prompts. Your task is to take a user's simple description and enhance it with vivid, detailed descriptions while keeping it concise (under 200 words).
+
+Focus on:
+- Visual details (appearance, clothing, setting, lighting)
+- Mood and atmosphere
+- Artistic style hints
+- Keep the original intent intact
+- Make it suitable for image generation AI
+
+Do NOT add NSFW content unless the original description clearly implies it.`;
+
+    let userPrompt = `Enhance this image generation prompt: "${description}"`;
+    
+    if (name) {
+      userPrompt += `\n\nContext: The character's name is ${name}`;
+      if (personality) userPrompt += `, personality: ${personality}`;
+      if (occupation) userPrompt += `, occupation: ${occupation}`;
+      if (relationship) userPrompt += `, relationship: ${relationship}`;
+    }
+    
+    userPrompt += `\n\nProvide only the enhanced prompt text, no explanations or additional commentary.`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      max_tokens: 300,
+      temperature: 0.8,
+    });
+
+    if (!response.choices || !response.choices[0] || !response.choices[0].message) {
+      throw new Error('Invalid response from OpenAI');
+    }
+
+    return response.choices[0].message.content.trim();
+  } catch (error) {
+    console.error('[enhanceCustomPromptDescription] Error:', error);
+    throw new Error('Failed to enhance prompt');
+  }
+}
+
+/**
+ * Generate a custom prompt from a style tag and character context
+ * @param {string} styleTag - Style tag name (e.g., "cinematic", "anime", "portrait")
+ * @param {Object} characterContext - Character information for context
+ * @param {string} language - User's language preference
+ * @returns {string} Generated prompt description
+ */
+async function generatePromptFromStyleTag(styleTag, characterContext = {}, language = 'en') {
+  try {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const { name, personality, occupation, relationship } = characterContext;
+    
+    const styleDescriptions = {
+      cinematic: 'cinematic movie scene with dramatic lighting, film grain, depth of field, epic composition',
+      anime: 'anime style illustration with vibrant colors, expressive features, cel-shaded aesthetic',
+      portrait: 'professional portrait photography with soft lighting, detailed facial features, shallow depth of field',
+      photorealistic: 'ultra realistic photograph with natural lighting, high detail, DSLR quality',
+      artistic: 'artistic digital painting with creative composition, vibrant colors, fantasy elements',
+      dramatic: 'dramatic scene with high contrast lighting, intense mood, dynamic composition',
+      casual: 'casual everyday scene with natural poses, relaxed atmosphere, soft lighting',
+      elegant: 'elegant and sophisticated scene with refined aesthetics, graceful poses, luxurious setting',
+      action: 'dynamic action scene with motion blur, intense energy, dramatic angles',
+      romantic: 'romantic atmosphere with warm lighting, intimate mood, soft focus'
+    };
+
+    const styleDesc = styleDescriptions[styleTag] || 'beautiful scene with good composition';
+    
+    const systemPrompt = `You are an expert at creating image generation prompts. Create a vivid, detailed prompt (under 150 words) that incorporates the requested style and character context.
+
+Focus on:
+- Visual details specific to the style
+- Character integration
+- Atmosphere and mood
+- Artistic direction
+
+Provide only the prompt text, no explanations.`;
+
+    let userPrompt = `Create an image generation prompt with "${styleTag}" style: ${styleDesc}`;
+    
+    if (name) {
+      userPrompt += `\n\nCharacter context: ${name}`;
+      if (personality) userPrompt += ` (${personality})`;
+      if (occupation) userPrompt += `, ${occupation}`;
+      if (relationship) userPrompt += `, ${relationship} with the viewer`;
+    }
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      max_tokens: 250,
+      temperature: 0.9,
+    });
+
+    if (!response.choices || !response.choices[0] || !response.choices[0].message) {
+      throw new Error('Invalid response from OpenAI');
+    }
+
+    return response.choices[0].message.content.trim();
+  } catch (error) {
+    console.error('[generatePromptFromStyleTag] Error:', error);
+    throw new Error('Failed to generate prompt from style tag');
+  }
+}
+
 module.exports = {
     generateCompletion,
     generateEditPrompt,
@@ -1220,4 +1342,6 @@ module.exports = {
     getAllAvailableModels,
     getAvailableModels,
     getModelConfig,
+    enhanceCustomPromptDescription,
+    generatePromptFromStyleTag,
 }

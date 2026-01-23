@@ -34,6 +34,7 @@ async function registerRoutes(fastify) {
   fastify.register(require('../routes/admin-models'));
   fastify.register(require('../routes/admin-image-test'));
   fastify.register(require('../routes/dashboard-video'));
+  fastify.register(require('../routes/dashboard-generation'));
   fastify.register(require('../routes/dashboard-integration-api'));
   fastify.register(require('../routes/api-keys-api'));
   fastify.register(require('../routes/chat-suggestions-api'));

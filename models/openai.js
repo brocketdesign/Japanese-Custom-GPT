@@ -1247,6 +1247,10 @@ Do NOT add NSFW content unless the original description clearly implies it.`;
       temperature: 0.8,
     });
 
+    if (!response.choices || !response.choices[0] || !response.choices[0].message) {
+      throw new Error('Invalid response from OpenAI');
+    }
+
     return response.choices[0].message.content.trim();
   } catch (error) {
     console.error('[enhanceCustomPromptDescription] Error:', error);
@@ -1309,6 +1313,10 @@ Provide only the prompt text, no explanations.`;
       max_tokens: 250,
       temperature: 0.9,
     });
+
+    if (!response.choices || !response.choices[0] || !response.choices[0].message) {
+      throw new Error('Invalid response from OpenAI');
+    }
 
     return response.choices[0].message.content.trim();
   } catch (error) {

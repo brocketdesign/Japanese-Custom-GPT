@@ -257,12 +257,19 @@ class PromptManager {
                         body: JSON.stringify({ description, chatId })
                     });
 
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ error: 'Enhancement failed' }));
+                        throw new Error(errorData.error || 'Enhancement failed');
+                    }
+
                     const data = await response.json();
                     
                     if (data.success && data.enhanced) {
-                        textarea.val(data.enhanced);
-                        charCount.text(data.enhanced.length);
-                        localStorage.setItem(lastPromptKey, data.enhanced);
+                        // Truncate if exceeds limit
+                        const enhanced = data.enhanced.length > 500 ? data.enhanced.substring(0, 500) : data.enhanced;
+                        textarea.val(enhanced);
+                        charCount.text(enhanced.length);
+                        localStorage.setItem(lastPromptKey, enhanced);
                         enhanceStatus.text('Enhanced! ✨').removeClass('text-info').addClass('text-success');
                         setTimeout(() => enhanceStatus.text('').removeClass('text-success'), 3000);
                     } else {
@@ -297,12 +304,19 @@ class PromptManager {
                         body: JSON.stringify({ styleTag, chatId })
                     });
 
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ error: 'Generation failed' }));
+                        throw new Error(errorData.error || 'Generation failed');
+                    }
+
                     const data = await response.json();
                     
                     if (data.success && data.prompt) {
-                        textarea.val(data.prompt);
-                        charCount.text(data.prompt.length);
-                        localStorage.setItem(lastPromptKey, data.prompt);
+                        // Truncate if exceeds limit
+                        const prompt = data.prompt.length > 500 ? data.prompt.substring(0, 500) : data.prompt;
+                        textarea.val(prompt);
+                        charCount.text(prompt.length);
+                        localStorage.setItem(lastPromptKey, prompt);
                         enhanceStatus.text('Generated! 🎨').removeClass('text-info').addClass('text-success');
                         setTimeout(() => enhanceStatus.text('').removeClass('text-success'), 3000);
                     } else {

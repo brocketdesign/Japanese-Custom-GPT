@@ -10,6 +10,7 @@ const slugify = require('slugify');
 const { generateImageSlug } = require('./slug-utils');
 const sharp = require('sharp');
 const { time } = require('console');
+const { MODEL_CONFIGS } = require('./admin-image-test-utils');
 
 
 const default_prompt = {
@@ -396,6 +397,7 @@ async function generateImg({
     let effectiveModelId = modelId || chat?.modelId || null;
     let imageModel = chat?.imageModel || 'prefectPonyXL_v50_1128833';
     let modelData = null;
+    let isBuiltInModel = false; // Flag to indicate if using built-in model type
     
     console.log(`\x1b[33m[generateImg] Effective modelId: ${effectiveModelId || 'NONE - using default'}\x1b[0m`);
     console.log(`\x1b[33m[generateImg] Initial imageModel: ${imageModel}\x1b[0m`);
@@ -403,15 +405,25 @@ async function generateImg({
     // For FLUX, use default flux settings instead of fetching model data
     if (!flux) {
         try {
-          // First try to find by modelId
-          if (effectiveModelId) {
-            modelData = await db.collection('myModels').findOne({ modelId: effectiveModelId.toString() });
-            console.log(`\x1b[33m[generateImg] Found model by modelId: ${modelData ? modelData.model : 'NOT FOUND'}\x1b[0m`);
-          }
-          // If not found by modelId, try by model name
-          if (!modelData && imageModel) {
-            modelData = await db.collection('myModels').findOne({ model: imageModel });
-            console.log(`\x1b[33m[generateImg] Found model by name: ${modelData ? modelData.model : 'NOT FOUND'}\x1b[0m`);
+          // Check if effectiveModelId is a built-in model type (from MODEL_CONFIGS)
+          if (effectiveModelId && MODEL_CONFIGS[effectiveModelId]) {
+            console.log(`\x1b[32m[generateImg] ✓ Found built-in model: ${effectiveModelId}\x1b[0m`);
+            // For built-in models, we don't need to look up imageModel in database
+            // The effectiveModelId itself is the model type
+            isBuiltInModel = true;
+            imageModel = effectiveModelId;
+            modelData = { model: effectiveModelId, isBuiltIn: true };
+          } else {
+            // First try to find by modelId in database
+            if (effectiveModelId) {
+              modelData = await db.collection('myModels').findOne({ modelId: effectiveModelId.toString() });
+              console.log(`\x1b[33m[generateImg] Found model by modelId: ${modelData ? modelData.model : 'NOT FOUND'}\x1b[0m`);
+            }
+            // If not found by modelId, try by model name
+            if (!modelData && imageModel) {
+              modelData = await db.collection('myModels').findOne({ model: imageModel });
+              console.log(`\x1b[33m[generateImg] Found model by name: ${modelData ? modelData.model : 'NOT FOUND'}\x1b[0m`);
+            }
           }
         } catch (error) {
           console.error('[generateImg] Error fetching modelData:', error);
@@ -454,7 +466,7 @@ async function generateImg({
     }
 
     // Prepare task based on imageType and model
-    console.log(`\x1b[36m[generateImg] Preparing image generation request for user ${userId} (Type: ${imageType.toUpperCase()}, FLUX: ${flux})\x1b[0m`);
+    console.log(`\x1b[36m[generateImg] Preparing image generation request for user ${userId} (Type: ${imageType.toUpperCase()}, FLUX: ${flux}, BuiltInModel: ${isBuiltInModel})\x1b[0m`);
     let image_request;
     if (flux) {
         // FLUX-specific request structure
@@ -470,8 +482,25 @@ async function generateImg({
             blur: false, // FLUX doesn't support blurring
             ...(typeof seed === 'number' && seed >= 0 ? { seed } : {}),
         };
+    } else if (isBuiltInModel) {
+        // Built-in model (z-image-turbo, etc.) - use simpler request structure
+        const modelConfig = MODEL_CONFIGS[imageModel];
+        const defaultSize = modelConfig?.defaultParams?.size || '1024*1024';
+        const sizeFormat = modelConfig?.sizeFormat || '*'; // 'x' for Seedream, '*' for others
+        
+        image_request = {
+            type: imageType,
+            prompt: prompt.replace(/^\s+/gm, '').trim(),
+            negative_prompt: negativePrompt || '',
+            size: defaultSize, // Use model's default size
+            seed: imageSeed || modelConfig?.defaultParams?.seed || -1,
+            enable_base64_output: modelConfig?.defaultParams?.enable_base64_output || false,
+            blur: false
+        };
+        
+        console.log(`\x1b[33m[generateImg] Built-in model request for ${imageModel}:`, JSON.stringify(image_request, null, 2));
     } else {
-        // Regular model request structure
+        // Regular model request structure (Stable Diffusion custom models)
         let modelNegativePrompt = modelData?.negativePrompt || '';
         let finalNegativePrompt = imageType === 'sfw' ? modelNegativePrompt +','+ selectedStyle.sfw.negative_prompt : modelNegativePrompt +','+ selectedStyle.nsfw.negative_prompt;
         finalNegativePrompt = ((negativePrompt || finalNegativePrompt) ? (negativePrompt || finalNegativePrompt)  + ',' : '') + genderNegativePrompt;
@@ -528,7 +557,7 @@ async function generateImg({
         }
     }
 
-    if(image_base64){
+    if(image_base64 && !isBuiltInModel){
       // Get target dimensions from the selected style
       const targetWidth = image_request.width;
       const targetHeight = image_request.height;
@@ -545,6 +574,9 @@ async function generateImg({
       else if (editStrength === 'high') guidance_scale = 12;
       image_request.guidance_scale = guidance_scale;
       // End [TEST]
+    } else if(image_base64 && isBuiltInModel) {
+      // For built-in models, just pass the base64 directly
+      image_request.image_base64 = image_base64;
     }
     // Prepare params
     // Validate and ensure prompt length is within API limits (1-1024 characters)
@@ -644,7 +676,7 @@ async function generateImg({
         // Use different seeds for each image to get variety
         const seedForCall = requestData.seed === -1 ? -1 : (requestData.seed || 0) + i;
         const callData = { ...requestData, seed: seedForCall };
-        const taskId = await fetchNovitaMagic(callData, flux, hunyuan);
+        const taskId = await fetchNovitaMagic(callData, flux, hunyuan, isBuiltInModel ? imageModel : null);
         if (taskId) {
           hunyuanTaskIds.push(taskId);
           console.log(`[generateImg] Hunyuan image ${i + 1}/${hunyuanImageCount} task started: ${taskId}`);
@@ -664,7 +696,7 @@ async function generateImg({
       // Use the first task ID as the primary result
       novitaResult = hunyuanTaskIds[0];
     } else {
-      novitaResult = await fetchNovitaMagic(requestData, flux, hunyuan);
+      novitaResult = await fetchNovitaMagic(requestData, flux, hunyuan, isBuiltInModel ? imageModel : null);
     }
 
     if (!novitaResult) {
@@ -1828,7 +1860,7 @@ function getWebhookUrl() {
 }
 
 // Function to trigger the Novita API for text-to-image generation
-async function fetchNovitaMagic(data, flux = false, hunyuan = false) {
+async function fetchNovitaMagic(data, flux = false, hunyuan = false, builtInModelId = null) {
   try {
     // Validate prompt before sending to API (must be 1-1024 characters)
     if (!data.prompt || typeof data.prompt !== 'string') {
@@ -1856,6 +1888,12 @@ async function fetchNovitaMagic(data, flux = false, hunyuan = false) {
     if (hunyuan) {
       apiUrl = 'https://api.novita.ai/v3/async/hunyuan-image-3';
       console.log('[fetchNovitaMagic] Using Hunyuan Image 3 for photorealistic generation');
+    }
+    // Check if using a built-in model type (z-image-turbo, etc.)
+    if (builtInModelId && MODEL_CONFIGS[builtInModelId]) {
+      const modelConfig = MODEL_CONFIGS[builtInModelId];
+      apiUrl = modelConfig.endpoint;
+      console.log(`[fetchNovitaMagic] Using built-in model: ${builtInModelId}, endpoint: ${apiUrl}`);
     }
     
     // Get webhook URL

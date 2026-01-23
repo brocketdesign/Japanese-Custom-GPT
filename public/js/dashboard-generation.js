@@ -622,6 +622,21 @@ class GenerationDashboard {
   // FILE UPLOADS
   // ============================================================================
   
+  /**
+   * Get the tool button selector from a state type
+   * @param {string} type - State type like 'baseImage', 'faceImage', 'baseVideo'
+   * @returns {string} - Tool button data-tool value
+   */
+  getToolButtonSelector(type) {
+    const typeToToolMap = {
+      'baseImage': 'upload-base',
+      'faceImage': 'upload-face',
+      'targetImage': 'upload-target',
+      'baseVideo': 'upload-video'
+    };
+    return typeToToolMap[type] || null;
+  }
+  
   handleToolClick(e) {
     const btn = e.currentTarget;
     const tool = btn.dataset.tool;
@@ -661,9 +676,12 @@ class GenerationDashboard {
       this.state.tools[type] = dataUrl;
       
       // Update tool button to show it has content
-      const toolBtn = document.querySelector(`[data-tool="upload-${type.replace('Image', '').replace('Video', '')}"]`);
-      if (toolBtn) {
-        toolBtn.classList.add('has-content');
+      const toolSelector = this.getToolButtonSelector(type);
+      if (toolSelector) {
+        const toolBtn = document.querySelector(`[data-tool="${toolSelector}"]`);
+        if (toolBtn) {
+          toolBtn.classList.add('has-content');
+        }
       }
       
       this.showNotification(`${type} uploaded successfully`, 'success');
@@ -685,9 +703,12 @@ class GenerationDashboard {
   clearUpload(type) {
     this.state.tools[type] = null;
     
-    const toolBtn = document.querySelector(`[data-tool="upload-${type.replace('Image', '').replace('Video', '')}"]`);
-    if (toolBtn) {
-      toolBtn.classList.remove('has-content');
+    const toolSelector = this.getToolButtonSelector(type);
+    if (toolSelector) {
+      const toolBtn = document.querySelector(`[data-tool="${toolSelector}"]`);
+      if (toolBtn) {
+        toolBtn.classList.remove('has-content');
+      }
     }
   }
   
@@ -788,6 +809,9 @@ class GenerationDashboard {
     
     const content = overlay.querySelector('.gen-preview-content');
     if (!content) return;
+    
+    // Store current preview ID for action buttons in template
+    this._currentPreviewId = resultId;
     
     const isImage = result.mode === 'image';
     content.innerHTML = isImage

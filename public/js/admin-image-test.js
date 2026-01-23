@@ -3,6 +3,9 @@
  * Handles multi-model testing, timing, and statistics
  */
 
+// Model categories that cannot be used for text-to-image generation
+const INCOMPATIBLE_TEXT_TO_IMAGE_CATEGORIES = ['face', 'img2img'];
+
 // Global state
 const state = {
     activeTasks: new Map(),
@@ -3260,8 +3263,7 @@ function openCreateCharacterModal() {
     const currentModelCategory = getSelectedModels().find(m => m.id === modelId)?.category;
     
     // Show model selector if the current model is not suitable for text-to-image
-    const INCOMPATIBLE_CATEGORIES = ['face', 'img2img'];
-    const needsModelSelection = currentModelCategory && INCOMPATIBLE_CATEGORIES.includes(currentModelCategory);
+    const needsModelSelection = currentModelCategory && INCOMPATIBLE_TEXT_TO_IMAGE_CATEGORIES.includes(currentModelCategory);
     currentCharacterImageData.needsModelSelection = needsModelSelection;
     
     // Update modal content
@@ -3282,12 +3284,15 @@ function openCreateCharacterModal() {
         // Show the model selection section
         modelSection.style.display = 'block';
         
-        // Get all txt2img models from the checkboxes
+        // Get all txt2img models from the checkboxes (store for reuse)
         const txt2imgCheckboxes = document.querySelectorAll('.txt2img-model-checkbox');
         const txt2imgModels = Array.from(txt2imgCheckboxes).map(checkbox => ({
             id: checkbox.value,
             name: checkbox.dataset.modelName
         }));
+        
+        // Store checkboxes reference for later use in confirmCreateCharacter
+        currentCharacterImageData.txt2imgCheckboxes = txt2imgCheckboxes;
         
         // Clear existing options and populate safely using DOM methods
         modelSelect.innerHTML = '';
@@ -3356,8 +3361,8 @@ async function confirmCreateCharacter() {
         const modelSelect = document.getElementById('characterImageModelSelect');
         if (modelSelect && modelSelect.value) {
             const selectedModelId = modelSelect.value;
-            // Get the model name from the checkbox - iterate through all checkboxes to avoid CSS selector injection
-            const txt2imgCheckboxes = document.querySelectorAll('.txt2img-model-checkbox');
+            // Use cached checkboxes if available, otherwise query again
+            const txt2imgCheckboxes = currentCharacterImageData.txt2imgCheckboxes || document.querySelectorAll('.txt2img-model-checkbox');
             const checkbox = Array.from(txt2imgCheckboxes).find(cb => cb.value === selectedModelId);
             if (checkbox) {
                 finalModelId = selectedModelId;

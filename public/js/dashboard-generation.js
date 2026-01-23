@@ -3,6 +3,9 @@
  * Mobile-first state management for image and video generation
  */
 
+// Model categories that cannot be used for text-to-image generation
+const INCOMPATIBLE_TEXT_TO_IMAGE_CATEGORIES = ['face', 'img2img'];
+
 class GenerationDashboard {
   constructor(config = {}) {
     // Core state
@@ -1360,8 +1363,7 @@ class GenerationDashboard {
       
       // Determine if we need to show the model selector
       // Show it if the current model is not suitable for text-to-image (e.g., face tools, img2img)
-      const INCOMPATIBLE_CATEGORIES = ['face', 'img2img'];
-      const needsModelSelection = currentModelCategory && INCOMPATIBLE_CATEGORIES.includes(currentModelCategory);
+      const needsModelSelection = currentModelCategory && INCOMPATIBLE_TEXT_TO_IMAGE_CATEGORIES.includes(currentModelCategory);
       
       // Populate the text-to-image model selector if needed
       const modelSection = document.getElementById('characterImageModelSection');
@@ -1371,8 +1373,8 @@ class GenerationDashboard {
         // Show the model selection section
         modelSection.style.display = 'block';
         
-        // Get all text-to-image models from config
-        const txt2imgModels = (this.config.imageModels || []).filter(m => m.category === 'txt2img');
+        // Get all text-to-image models from instance property
+        const txt2imgModels = this.imageModels.filter(m => m.category === 'txt2img');
         
         // Clear existing options and populate safely using DOM methods
         modelSelect.innerHTML = '';
@@ -1522,7 +1524,7 @@ class GenerationDashboard {
       const modelSelect = document.getElementById('characterImageModelSelect');
       if (modelSelect && modelSelect.value) {
         const selectedModelId = modelSelect.value;
-        const selectedModel = (this.config.imageModels || []).find(m => m.id === selectedModelId);
+        const selectedModel = this.imageModels.find(m => m.id === selectedModelId);
         if (selectedModel) {
           finalModelId = selectedModel.id;
           finalModelName = selectedModel.name;

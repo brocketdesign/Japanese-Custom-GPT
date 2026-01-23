@@ -3,9 +3,6 @@
  * Mobile-first state management for image and video generation
  */
 
-// Model categories that cannot be used for text-to-image generation
-const INCOMPATIBLE_TEXT_TO_IMAGE_CATEGORIES = ['face', 'img2img'];
-
 class GenerationDashboard {
   constructor(config = {}) {
     // Core state
@@ -448,7 +445,8 @@ class GenerationDashboard {
   
   updateSubmitButtonState() {
     const hasPrompt = this.elements.promptInput?.value.trim().length > 0;
-    const canGenerate = hasPrompt && !this.state.isGenerating && this.hasEnoughPoints();
+    const isFaceMerge = this.state.selectedModel?.category === 'face';
+    const canGenerate = (hasPrompt || isFaceMerge) && !this.state.isGenerating && this.hasEnoughPoints();
     
     if (this.elements.submitBtn) {
       this.elements.submitBtn.disabled = !canGenerate;
@@ -461,13 +459,17 @@ class GenerationDashboard {
   
   async handleGenerate() {
     const prompt = this.elements.promptInput?.value.trim();
+    const model = this.state.selectedModel;
     
-    if (!prompt || this.state.isGenerating) return;
+    // For face merge models, prompt is optional; for others, it's required
+    const isFaceMerge = model?.category === 'face';
+    if ((!prompt && !isFaceMerge) || this.state.isGenerating) return;
+    
     if (!this.hasEnoughPoints()) {
       this.showNotification('Insufficient points for generation', 'error');
       return;
     }
-    if (!this.state.selectedModel) {
+    if (!model) {
       this.showNotification('Please select a model', 'error');
       return;
     }
@@ -531,9 +533,13 @@ class GenerationDashboard {
   buildGenerationPayload(prompt) {
     const model = this.state.selectedModel;
     const payload = {
-      prompt,
       models: [model.id]
     };
+    
+    // Prompt is optional for face merge models
+    if (prompt || model.category !== 'face') {
+      payload.prompt = prompt || '';
+    }
     
     if (this.state.mode === 'image') {
       // Get size format based on model (some models use 'x' instead of '*')
@@ -1357,51 +1363,12 @@ class GenerationDashboard {
       if (nameInput) nameInput.value = '';
       if (personalityInput) personalityInput.value = '';
       
-      // Get the current model info
-      const currentModel = this.state.selectedModel;
-      const currentModelCategory = currentModel?.category;
-      
-      // Determine if we need to show the model selector
-      // Show it if the current model is not suitable for text-to-image (e.g., face tools, img2img)
-      const needsModelSelection = currentModelCategory && INCOMPATIBLE_TEXT_TO_IMAGE_CATEGORIES.includes(currentModelCategory);
-      
-      // Populate the text-to-image model selector if needed
-      const modelSection = document.getElementById('characterImageModelSection');
-      const modelSelect = document.getElementById('characterImageModelSelect');
-      
-      if (needsModelSelection && modelSection && modelSelect) {
-        // Show the model selection section
-        modelSection.style.display = 'block';
-        
-        // Get all text-to-image models from instance property
-        const txt2imgModels = this.imageModels.filter(m => m.category === 'txt2img');
-        
-        // Clear existing options and populate safely using DOM methods
-        modelSelect.innerHTML = '';
-        txt2imgModels.forEach(model => {
-          const option = document.createElement('option');
-          option.value = model.id;
-          option.textContent = model.name;
-          modelSelect.appendChild(option);
-        });
-        
-        // Select the first model by default
-        if (txt2imgModels.length > 0) {
-          modelSelect.value = txt2imgModels[0].id;
-        }
-      } else if (modelSection) {
-        // Hide the section if not needed
-        modelSection.style.display = 'none';
-      }
-      
       // Store result data for character creation as instance property
       this._currentCharacterImageData = {
         imageUrl: result.mediaUrl,
         prompt: result.prompt,
-        modelId: result.modelId || currentModel?.id,
-        // result.model contains the model name string when available
-        modelName: result.model || currentModel?.name,
-        needsModelSelection: needsModelSelection
+        modelId: result.modelId || this.state.selectedModel?.id,
+        modelName: result.model
       };
       
       // Show the modal
@@ -1517,22 +1484,6 @@ class GenerationDashboard {
     const nsfw = document.getElementById('characterNsfwCheck')?.checked || false;
     const useImageAsBaseFace = document.getElementById('useImageAsBaseFaceCheck')?.checked || false;
     
-    // Get the selected text-to-image model if the section is visible
-    let finalModelId = imageData.modelId;
-    let finalModelName = imageData.modelName;
-    
-    if (imageData.needsModelSelection) {
-      const modelSelect = document.getElementById('characterImageModelSelect');
-      if (modelSelect && modelSelect.value) {
-        const selectedModelId = modelSelect.value;
-        const selectedModel = this.imageModels.find(m => m.id === selectedModelId);
-        if (selectedModel) {
-          finalModelId = selectedModel.id;
-          finalModelName = selectedModel.name;
-        }
-      }
-    }
-    
     // Show loading state
     if (btn) {
       btn.disabled = true;
@@ -1551,8 +1502,8 @@ class GenerationDashboard {
           language: language,
           nsfw: nsfw,
           useImageAsBaseFace: useImageAsBaseFace,
-          modelId: finalModelId,
-          modelName: finalModelName
+          modelId: imageData.modelId,
+          modelName: imageData.modelName
         })
       });
       

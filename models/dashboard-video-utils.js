@@ -366,6 +366,24 @@ const VIDEO_MODEL_CONFIGS = {
     supportedParams: ['prompt', 'model', 'resolution', 'duration', 'aspect_ratio', 'loop'],
     description: 'Luma Dream Machine for cinematic text-to-video generation'
   },
+  'ltx-2-19b-t2v': {
+    name: 'LTX-2 19B T2V (Segmind)',
+    endpoint: 'https://api.segmind.com/v1/ltx-2-19b-t2v',
+    async: false, // Segmind returns video directly (synchronous)
+    provider: 'segmind', // Custom provider flag to differentiate from Novita
+    category: 't2v',
+    defaultParams: {
+      width: 1024,
+      height: 768,
+      num_frames: 161,
+      fps: 24,
+      seed: 1234567890,
+      guidance_scale: 4
+    },
+    // LTX-2 19B T2V parameters based on Segmind API documentation
+    supportedParams: ['prompt', 'negative_prompt', 'width', 'height', 'num_frames', 'fps', 'seed', 'guidance_scale'],
+    description: 'LTX-2 via Segmind - generates synchronized video from text prompts (up to 400 frames, 24fps)'
+  },
   
   // =============== VIDEO MERGE FACE ===============
   'video-merge-face': {
@@ -563,6 +581,29 @@ async function initializeVideoTest(modelId, params) {
         if (modelId === 'wan2.6-t2v') {
           if (params.shot_type) requestBody.parameters.shot_type = params.shot_type;
           if (params.watermark !== undefined) requestBody.parameters.watermark = params.watermark;
+        }
+        
+      } else if (modelId === 'ltx-2-19b-t2v') {
+        // LTX-2 19B T2V via Segmind API - flat structure
+        requestBody = {
+          prompt: validatedPrompt,
+          width: params.width || config.defaultParams.width || 1024,
+          height: params.height || config.defaultParams.height || 768,
+          num_frames: params.num_frames || config.defaultParams.num_frames || 161,
+          fps: params.fps || config.defaultParams.fps || 24,
+          guidance_scale: params.guidance_scale !== undefined ? params.guidance_scale : (config.defaultParams.guidance_scale || 4)
+        };
+        
+        // Add negative prompt if provided
+        if (params.negative_prompt) {
+          requestBody.negative_prompt = params.negative_prompt;
+        }
+        
+        // Add seed if provided
+        if (params.seed !== undefined && params.seed !== null) {
+          requestBody.seed = params.seed;
+        } else {
+          requestBody.seed = config.defaultParams.seed || 1234567890;
         }
         
       } else {

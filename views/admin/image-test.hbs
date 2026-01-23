@@ -971,6 +971,17 @@
                                     <option value="japanese">日本語</option>
                                 </select>
                             </div>
+                            <div class="mb-3" id="characterImageModelSection" style="display: none;">
+                                <label for="characterImageModelSelect" class="form-label">
+                                    <i class="bi bi-palette me-1"></i>Text-to-Image Model
+                                </label>
+                                <select class="form-select bg-secondary text-white border-secondary" id="characterImageModelSelect">
+                                    <!-- Options will be populated dynamically -->
+                                </select>
+                                <small class="form-text text-muted d-block mt-1">
+                                    Select a model for generating images in character chat
+                                </small>
+                            </div>
                             <div class="form-check mb-3">
                                 <input class="form-check-input" type="checkbox" id="characterNsfwCheck">
                                 <label class="form-check-label" for="characterNsfwCheck">

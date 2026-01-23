@@ -268,7 +268,9 @@ class ExploreGallery {
                 nsfw: this.showNSFW ? 'include' : 'exclude'
             });
             
-            const response = await fetch(`/api/gallery/explore?${params}`);
+            // Use fetchWithState if available (includes user state for personalization)
+            const fetchFn = window.fetchWithState || fetch;
+            const response = await fetchFn(`/api/gallery/explore?${params}`);
             
             if (!response.ok) {
                 throw new Error(`HTTP error: ${response.status}`);
@@ -530,6 +532,9 @@ class ExploreGallery {
         this.currentCharacterIndex = this.verticalSwiper.activeIndex;
         this.updateCurrentCharacter();
         
+        // Track character view
+        this.trackCharacterView();
+        
         // Initialize horizontal swiper for new slides
         this.initHorizontalSwipers();
         
@@ -582,6 +587,50 @@ class ExploreGallery {
         const char = this.characters[this.currentCharacterIndex];
         if (char) {
             this.currentCharacter = char;
+        }
+    }
+    
+    /**
+     * Track character view for personalization
+     */
+    trackCharacterView() {
+        if (!this.currentCharacter) return;
+        
+        // Gather data to track
+        const characterId = this.currentCharacter.chatId;
+        const imageIds = (this.currentCharacter.images || []).map(img => img._id || img.imageUrl);
+        const tags = this.currentCharacter.chatTags || [];
+        
+        // Use ContentDiscovery tracker if available
+        if (window.ContentDiscovery) {
+            window.ContentDiscovery.trackCharacterView(characterId, imageIds.slice(0, 5), tags);
+        }
+        
+        // For logged-in users, also send to server (async, don't wait)
+        if (!this.isTemporary) {
+            this.sendTrackingToServer(characterId, imageIds.slice(0, 5), tags);
+        }
+    }
+    
+    /**
+     * Send tracking data to server (for logged-in users)
+     */
+    async sendTrackingToServer(characterId, imageIds, tags) {
+        try {
+            await fetch('/api/gallery/track/character-view', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    characterId,
+                    imageIds,
+                    tags
+                })
+            });
+        } catch (error) {
+            // Silent fail - tracking is not critical
+            console.debug('[ExploreGallery] Failed to send tracking:', error);
         }
     }
     

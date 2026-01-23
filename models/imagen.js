@@ -837,34 +837,25 @@ async function generateImg({
         }
     }
 
-    // Start fallback polling for async models (regardless of context)
+    // Start fallback polling for all models (regardless of context)
     // This ensures images are processed even if webhooks fail
-    // Works for: character creation, in-chat generation, any async model
-    const isAsyncBuiltInModel = isBuiltInModel && MODEL_CONFIGS[imageModel] && MODEL_CONFIGS[imageModel].async;
-    const shouldStartPolling = hunyuan || isAsyncBuiltInModel;
+    // Works for: character creation, in-chat generation, any model
+    const allTaskIds = hunyuan ? (hunyuanTaskIds.length > 0 ? hunyuanTaskIds : [novitaTaskId]) : [novitaTaskId];
+    const modelName = hunyuan ? 'Hunyuan' : (imageModel || 'built-in');
+    console.log(`[generateImg] 🚀 Starting fallback polling for ${allTaskIds.length} ${modelName} task(s): ${allTaskIds.join(', ')} (chatCreation=${chatCreation})`);
     
-    console.log(`[generateImg] 🔍 Polling check: hunyuan=${hunyuan}, isAsyncBuiltInModel=${isAsyncBuiltInModel}, shouldStartPolling=${shouldStartPolling}`);
-    
-    if (shouldStartPolling) {
-      const allTaskIds = hunyuan ? (hunyuanTaskIds.length > 0 ? hunyuanTaskIds : [novitaTaskId]) : [novitaTaskId];
-      const modelName = hunyuan ? 'Hunyuan' : (imageModel || 'async built-in');
-      console.log(`[generateImg] 🚀 Starting fallback polling for ${allTaskIds.length} ${modelName} task(s): ${allTaskIds.join(', ')} (chatCreation=${chatCreation})`);
-      
-      // Don't await - let it run in background
-      pollHunyuanTasksWithFallback(novitaTaskId, allTaskIds, fastify, {
-        chatCreation: chatCreation,  // Pass actual value, not hardcoded
-        translations,
-        userId,
-        chatId,
-        placeholderId
-      }).then(success => {
-        console.log(`[generateImg] ✅ ${modelName} fallback polling completed: ${success ? 'success' : 'partial/failed'}`);
-      }).catch(error => {
-        console.error(`[generateImg] ❌ ${modelName} fallback polling error:`, error.message);
-      });
-    } else {
-      console.log(`[generateImg] ⏭️ Skipping fallback polling: no async models detected`);
-    }
+    // Don't await - let it run in background
+    pollHunyuanTasksWithFallback(novitaTaskId, allTaskIds, fastify, {
+      chatCreation: chatCreation,  // Pass actual value, not hardcoded
+      translations,
+      userId,
+      chatId,
+      placeholderId
+    }).then(success => {
+      console.log(`[generateImg] ✅ ${modelName} fallback polling completed: ${success ? 'success' : 'partial/failed'}`);
+    }).catch(error => {
+      console.error(`[generateImg] ❌ ${modelName} fallback polling error:`, error.message);
+    });
 
     console.log(`[generateImg] 🎉 Returning taskId: ${novitaTaskId}`);
     return { taskId: novitaTaskId, hunyuanTaskIds: hunyuan && hunyuanTaskIds.length > 1 ? hunyuanTaskIds : undefined };
@@ -1318,22 +1309,12 @@ function getTitleString(title) {
 }
 
 // Add this helper function before saveImageToDB
-async function addImageMessageToChatHelper(userDataCollection, userId, userChatId, imageUrl, imageId, prompt, title, nsfw, isMerged, mergeId, originalImageUrl) {
+async function addImageMessageToChatHelper(userDataCollection, userId, userChatId, imageUrl, imageId, prompt, title, nsfw, isMerged, mergeId, originalImageUrl, batchId = null, batchIndex = null, batchSize = null) {
   try {
     const titleString = getTitleString(title);
     const imageIdStr = imageId.toString();
     
-    // CRITICAL FIX: Check if message with this imageId already exists to prevent duplicates
-    const existingMessage = await userDataCollection.findOne({
-      userId: new ObjectId(userId),
-      _id: new ObjectId(userChatId),
-      'messages.imageId': imageIdStr
-    });
-    
-    if (existingMessage) {
-      console.log(`💾 [addImageMessageToChatHelper] Message with imageId ${imageIdStr} already exists, skipping duplicate`);
-      return true;
-    }
+    console.log(`📝 [addImageMessageToChatHelper] START: imageId=${imageIdStr}, batchIndex=${batchIndex}/${batchSize}, batchId=${batchId}`);
     
     const imageMessage = {
       role: "assistant",
@@ -1350,19 +1331,69 @@ async function addImageMessageToChatHelper(userDataCollection, userId, userChatI
       timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }),
     };
 
+    // Store batch metadata for slider reconstruction
+    if (batchId !== null && batchIndex !== null && batchSize !== null) {
+      imageMessage.batchId = batchId;
+      imageMessage.batchIndex = batchIndex;
+      imageMessage.batchSize = batchSize;
+      console.log(`📦 [addImageMessageToChatHelper] Adding batch metadata: batchId=${batchId}, batchIndex=${batchIndex}, batchSize=${batchSize}`);
+    }
+
     if (isMerged) {
       imageMessage.mergeId = mergeId;
       imageMessage.originalImageUrl = originalImageUrl;
     }
-    await userDataCollection.updateOne(
+    
+    // For batched images, check if THIS SPECIFIC batchIndex already exists
+    // This allows the same imageId to appear multiple times in different batch slots
+    let duplicateCheckQuery;
+    if (batchId && batchIndex !== null) {
+      duplicateCheckQuery = {
+        userId: new ObjectId(userId), 
+        _id: new ObjectId(userChatId),
+        'messages.batchId': batchId,
+        'messages.batchIndex': batchIndex
+      };
+    } else {
+      duplicateCheckQuery = {
+        userId: new ObjectId(userId), 
+        _id: new ObjectId(userChatId),
+        'messages.imageId': imageIdStr
+      };
+    }
+    
+    // Check if this specific message already exists
+    const existingDoc = await userDataCollection.findOne(duplicateCheckQuery);
+    if (existingDoc) {
+      console.log(`💾 [addImageMessageToChatHelper] Message already exists for ${batchId ? `batchIndex=${batchIndex}` : `imageId=${imageIdStr}`}, skipping duplicate`);
+      return true;
+    }
+    
+    // Add the message
+    const result = await userDataCollection.updateOne(
       { userId: new ObjectId(userId), _id: new ObjectId(userChatId) },
       { $push: { messages: imageMessage } }
     );
 
-    console.log(`💾 [addImageMessageToChatHelper] Successfully added message for imageId: ${imageIdStr}`);
+    if (result.modifiedCount === 0) {
+      console.error(`❌ [addImageMessageToChatHelper] Failed to add message - document not found for userChatId: ${userChatId}`);
+      return false;
+    }
+
+    // DEBUG: Log all batch messages currently in the database after this save
+    const afterSave = await userDataCollection.findOne({ userId: new ObjectId(userId), _id: new ObjectId(userChatId) });
+    if (afterSave && afterSave.messages) {
+      const batchMessages = afterSave.messages.filter(m => m.batchId === batchId);
+      console.log(`📊 [addImageMessageToChatHelper] After save - batch messages in DB for batchId=${batchId}:`);
+      batchMessages.forEach((m, idx) => {
+        console.log(`   [${idx}] imageId=${m.imageId}, batchIndex=${m.batchIndex}`);
+      });
+    }
+
+    console.log(`💾 [addImageMessageToChatHelper] Successfully added message for imageId: ${imageIdStr}, batchIndex=${batchIndex}/${batchSize}`);
     return true;
   } catch (error) {
-    console.error('Error adding image message to chat:', error.message);
+    console.error(`❌ [addImageMessageToChatHelper] Error adding image message (batchIndex=${batchIndex}):`, error.message);
     return false;
   }
 }
@@ -1679,6 +1710,7 @@ async function checkTaskStatus(taskId, fastify) {
       } else {
         console.log(`[imagen] Using ${chat.baseFaceUrl ? 'baseFaceUrl' : 'chatImageUrl'} for auto merge`);
         processedImages = await Promise.all(images.map(async (imageData, arrayIndex) => {
+          console.log(`🧬 [checkTaskStatus] Starting auto-merge for arrayIndex=${arrayIndex}, originalUrl=${imageData.imageUrl?.substring(0, 60)}...`);
           try {
             const mergedResult = await performAutoMergeFace(
               { 
@@ -1692,17 +1724,20 @@ async function checkTaskStatus(taskId, fastify) {
             );
             
             if (mergedResult && mergedResult.imageUrl) {
+              console.log(`✅ [checkTaskStatus] Merge SUCCESS for arrayIndex=${arrayIndex}, mergedUrl=${mergedResult.imageUrl?.substring(0, 60)}...`);
               return {
                 ...imageData, // Preserve original data
                 ...mergedResult, // Apply merge updates
-                isMerged: true
+                isMerged: true,
+                _originalArrayIndex: arrayIndex  // Track original position
               };
             } else {
-              return { ...imageData, isMerged: false };
+              console.log(`⚠️ [checkTaskStatus] Merge returned null for arrayIndex=${arrayIndex}, using original`);
+              return { ...imageData, isMerged: false, _originalArrayIndex: arrayIndex };
             }
           } catch (error) {
-            console.error(`Auto merge error:`, error.message);
-            return { ...imageData, isMerged: false };
+            console.error(`❌ [checkTaskStatus] Auto merge error for arrayIndex=${arrayIndex}:`, error.message);
+            return { ...imageData, isMerged: false, _originalArrayIndex: arrayIndex };
           }
         }));
       }
@@ -1714,8 +1749,10 @@ async function checkTaskStatus(taskId, fastify) {
 
   // Save processed images to database with timeout to prevent overlapping
   const savedImages = [];
+  console.log(`🔄 [checkTaskStatus] Starting to save ${processedImages.length} processed images for taskId=${task.taskId}`);
   for (let arrayIndex = 0; arrayIndex < processedImages.length; arrayIndex++) {
     const imageData = processedImages[arrayIndex];
+    console.log(`🖼️  [checkTaskStatus] Processing arrayIndex=${arrayIndex}/${processedImages.length}, imageUrl=${imageData.imageUrl?.substring(0, 60)}..., mergeId=${imageData.mergeId}`);
     
     let nsfw = task.type === 'nsfw';
     
@@ -1766,7 +1803,11 @@ async function checkTaskStatus(taskId, fastify) {
       isMerged: imageData.isMerged,
       originalImageUrl: imageData.originalImageUrl,
       mergeId: imageData.mergeId,
-      shouldAutoMerge: task.shouldAutoMerge
+      shouldAutoMerge: task.shouldAutoMerge,
+      // Pass batch metadata for slider reconstruction on refresh
+      batchId: task.placeholderId || task.taskId,
+      batchIndex: arrayIndex,
+      batchSize: processedImages.length
     });
 
     // When saving auto-merged results, make sure to create the relationship
@@ -1797,6 +1838,23 @@ async function checkTaskStatus(taskId, fastify) {
     if (arrayIndex < processedImages.length - 1) {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
+  }
+
+  // CRITICAL DEBUG: Verify all messages were saved correctly BEFORE returning
+  const verifyDb = fastify.mongo.db;
+  const verifyCollection = verifyDb.collection('userChat');
+  const verifyDoc = await verifyCollection.findOne({ 
+    userId: new ObjectId(task.userId), 
+    _id: new ObjectId(task.userChatId) 
+  });
+  if (verifyDoc && verifyDoc.messages) {
+    const batchId = task.placeholderId || task.taskId;
+    const batchMessages = verifyDoc.messages.filter(m => m.batchId === batchId);
+    console.log(`🔍 [checkTaskStatus] FINAL VERIFICATION after all saves - batchId=${batchId}:`);
+    batchMessages.forEach((m, idx) => {
+      console.log(`   [${idx}] imageId=${m.imageId}, batchIndex=${m.batchIndex}`);
+    });
+    console.log(`🔍 [checkTaskStatus] Total batch messages: ${batchMessages.length} (expected ${processedImages.length})`);
   }
 
   // Update task status to completed with proper merge information
@@ -2261,7 +2319,9 @@ async function getImageSeed(db, imageId) {
     }
   }
 }
-async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title, slug, imageUrl, aspectRatio, seed, blurredImageUrl = null, nsfw = false, fastify, isMerged = false, originalImageUrl = null, mergeId = null, shouldAutoMerge = false, thumbnailUrl = null}) {
+async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title, slug, imageUrl, aspectRatio, seed, blurredImageUrl = null, nsfw = false, fastify, isMerged = false, originalImageUrl = null, mergeId = null, shouldAutoMerge = false, thumbnailUrl = null, batchId = null, batchIndex = null, batchSize = null}) {
+  
+  console.log(`🖼️ [saveImageToDB] START: batchIndex=${batchIndex}/${batchSize}, batchId=${batchId}, taskId=${taskId}, imageUrl=${imageUrl?.substring(0, 60)}...`);
   
   const db = fastify.mongo.db;
   const { generateThumbnailFromUrl } = require('../models/tool');
@@ -2272,6 +2332,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
     let existingImage;
     
     if (isMerged && mergeId) {
+      console.log(`🔍 [saveImageToDB] Checking for existing merged image with mergeId=${mergeId}, batchIndex=${batchIndex}`);
       existingImage = await chatsGalleryCollection.findOne({
         userId: new ObjectId(userId),
         chatId: new ObjectId(chatId),
@@ -2282,22 +2343,48 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       if (existingImage) {
         const image = existingImage.images.find(img => img.mergeId === mergeId);
         if (image) {
-          // CRITICAL FIX: Even if image exists in gallery, ensure chat message exists
+          console.log(`⚠️  [saveImageToDB] Found existing merged image in gallery for mergeId=${mergeId}, imageId=${image._id}, will add message with batchIndex=${batchIndex}`);
+          // CRITICAL FIX: Even if image exists in gallery, ensure chat message exists WITH batch metadata
           if (userChatId && ObjectId.isValid(userChatId)) {
             const userDataCollection = db.collection('userChat');
-            const existingMessage = await userDataCollection.findOne({
-              userId: new ObjectId(userId),
-              _id: new ObjectId(userChatId),
-              'messages.mergeId': mergeId
-            });
+            
+            // For batched images, check for this specific batchIndex, not just mergeId
+            // This allows the same merged image to appear in multiple batch slots
+            let existingMessage;
+            if (batchId && batchIndex !== null) {
+              existingMessage = await userDataCollection.findOne({
+                userId: new ObjectId(userId),
+                _id: new ObjectId(userChatId),
+                'messages.batchId': batchId,
+                'messages.batchIndex': batchIndex
+              });
+            } else {
+              existingMessage = await userDataCollection.findOne({
+                userId: new ObjectId(userId),
+                _id: new ObjectId(userChatId),
+                'messages.mergeId': mergeId
+              });
+            }
+            
             if (!existingMessage) {
-              console.log(`💾 [saveImageToDB] Image exists in gallery but message missing - adding message for mergeId: ${mergeId}`);
-              const mergeMessage = {
-                imageUrl: image.imageUrl,
-                mergeId: mergeId,
-                originalImageUrl: originalImageUrl
-              };
-              await updateOriginalMessageWithMerge(userDataCollection, taskId, userId, userChatId, mergeMessage);
+              console.log(`💾 [saveImageToDB] Adding message for mergeId: ${mergeId}, batchIndex=${batchIndex}`);
+              // Add the merged message with batch metadata
+              await addImageMessageToChatHelper(
+                userDataCollection,
+                userId,
+                userChatId,
+                image.imageUrl,
+                image._id,
+                image.prompt,
+                image.title,
+                image.nsfw,
+                true,  // isMerged
+                mergeId,
+                image.originalImageUrl,
+                batchId,
+                batchIndex,
+                batchSize
+              );
             }
           }
           return { 
@@ -2327,13 +2414,26 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
           // CRITICAL FIX: Even if image exists in gallery, ensure chat message exists
           if (userChatId && ObjectId.isValid(userChatId)) {
             const userDataCollection = db.collection('userChat');
-            const existingMessage = await userDataCollection.findOne({
-              userId: new ObjectId(userId),
-              _id: new ObjectId(userChatId),
-              'messages.imageId': image._id.toString()
-            });
+            
+            // For batched images, check for this specific batchIndex
+            let existingMessage;
+            if (batchId && batchIndex !== null) {
+              existingMessage = await userDataCollection.findOne({
+                userId: new ObjectId(userId),
+                _id: new ObjectId(userChatId),
+                'messages.batchId': batchId,
+                'messages.batchIndex': batchIndex
+              });
+            } else {
+              existingMessage = await userDataCollection.findOne({
+                userId: new ObjectId(userId),
+                _id: new ObjectId(userChatId),
+                'messages.imageId': image._id.toString()
+              });
+            }
+            
             if (!existingMessage) {
-              console.log(`💾 [saveImageToDB] Image exists in gallery but message missing - adding message for imageId: ${image._id}`);
+              console.log(`💾 [saveImageToDB] Image exists in gallery but message missing - adding message for imageId: ${image._id}, batchIndex=${batchIndex}`);
               await addImageMessageToChatHelper(
                 userDataCollection,
                 userId, 
@@ -2345,7 +2445,10 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
                 image.nsfw,
                 false,
                 null,
-                null
+                null,
+                batchId,
+                batchIndex,
+                batchSize
               );
             }
           }
@@ -2490,7 +2593,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
     }
     
     if (!userChatId || !ObjectId.isValid(userChatId)) {
-      console.log(`[saveImageToDB] Invalid or missing userChatId: ${userChatId}`);
+      console.log(`[saveImageToDB] Invalid or missing userChatId: ${userChatId}, skipping message save`);
       return { 
         imageId, 
         imageUrl,
@@ -2515,8 +2618,8 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
 
     const titleString = getTitleString(title);
 
-    if (userChatId && isMerged) {
-      
+    // ALWAYS ensure message is added with batch metadata
+    if (isMerged && mergeId) {
       const mergeMessage = {
         imageUrl,
         mergeId: mergeId,
@@ -2527,7 +2630,6 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       console.log(`updateOriginalMessageWithMerge returned: ${wasUpdated}`);
       
       // If no original message was found to update, create a new message for the merged image
-      // This happens when the auto-merge was successful and we only saved the merged image (not the original)
       if (!wasUpdated) {
         console.log(`💾 No original message to update, adding merged image as new message for userChatId: ${userChatId}`);
         await addImageMessageToChatHelper(
@@ -2541,7 +2643,10 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
           nsfw,
           true,  // isMerged
           mergeId,
-          originalImageUrl
+          originalImageUrl,
+          batchId,
+          batchIndex,
+          batchSize
         );
       }
    
@@ -2558,7 +2663,10 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
         nsfw,
         false,
         null,
-        null
+        null,
+        batchId,
+        batchIndex,
+        batchSize
       );
       
     }
@@ -2635,7 +2743,11 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
           nsfw,
           isMergeFace: isMerged || false,
           isAutoMerge: isMerged || false,
-          url: imageUrl
+          url: imageUrl,
+          // Batch info for grouping multiple images into a slider
+          batchId: placeholderId || taskStatus.taskId,
+          batchIndex: index,
+          batchSize: images.length
         };
 
         fastify.sendNotificationToUser(userId, 'imageGenerated', notificationData);
@@ -2646,41 +2758,6 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
         const userChatCollection = fastify.mongo.db.collection('userChat');
         try {
           const userChatData = await userChatCollection.findOne({ userId: new ObjectId(userId), _id: new ObjectId(userChatId) });
-          if (false && userChatData) {
-            console.log('\n==============================');
-            console.log(`== User Chat Message (${userChatId}) Image Debug ==`);
-            console.log('==============================');
-            const imageMessage = userChatData.messages.find(msg => msg.imageId && msg.imageId.toString() === imageId?.toString());
-            console.log(`🖼️ imageMessage for imageId ${imageId}:`, imageMessage);
-            const testMergeId = imageId
-            const mergeMessage = userChatData.messages.find(msg => msg.mergeId && msg.mergeId === testMergeId);
-            console.log(`🔗 mergeMessage for mergeId ${testMergeId}:`, mergeMessage);
-            // Check for imageUrl again originalImageUrl in case of merge
-            const imageUrlMessage = userChatData.messages.find(msg => msg.imageUrl === imageUrl || msg.imageUrl === image.originalImageUrl);
-            console.log(`🌐 imageUrlMessage for imageUrl ${imageUrl} or originalImageUrl ${image.originalImageUrl}:`, imageUrlMessage);
-            
-            console.log('\n==============================');
-            console.log(`== Log Image in chat (${userChatId}) ==`);
-            console.log('==============================');
-            userChatData.messages.forEach(msg => {
-          if (msg.imageId || msg.mergeId) {
-              console.log(
-            '🕒 createdAt:', msg.createdAt, '\n' +
-            '⚙️ type:', msg.type || 'N/A', '\n' +
-            '🖼️ imageId:', msg.imageId || '', '\n' +
-            '🔗 mergeId:', msg.mergeId || '', '\n' +
-            '🌐 imageUrl:', msg.imageUrl || '', '\n' +
-            '🏷️ originalImageUrl:', msg.originalImageUrl || ''
-              );
-              console.log('------------------------------');
-          }
-            });
-            console.log(`==============================\n`);
-            console.log(`== End Log ==`);
-            console.log(`==============================\n`);
-          } else {
-            console.log(`⚠️ No UserChat data found for userId ${userId} and userChatId ${userChatId}`);
-          }
         } catch (error) {
           console.error(`[handleTaskCompletion] Error fetching UserChat data for logging:`, error);
         }
@@ -2720,6 +2797,20 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
     addNotification(fastify, userId, notification).then(() => {
       fastify.sendNotificationToUser(userId, 'updateNotificationCountOnLoad', { userId });
     });
+  }
+
+  // DEBUG: Final check of messages in database after handleTaskCompletion
+  const { userChatId } = taskStatus;
+  if (userChatId && placeholderId) {
+    const debugCollection = fastify.mongo.db.collection('userChat');
+    const debugDoc = await debugCollection.findOne({ _id: new ObjectId(userChatId) });
+    if (debugDoc && debugDoc.messages) {
+      const batchMessages = debugDoc.messages.filter(m => m.batchId === placeholderId);
+      console.log(`🔍 [handleTaskCompletion] END - batch messages for batchId=${placeholderId}:`);
+      batchMessages.forEach((m, idx) => {
+        console.log(`   [${idx}] imageId=${m.imageId}, batchIndex=${m.batchIndex}`);
+      });
+    }
   }
 }
 

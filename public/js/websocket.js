@@ -163,8 +163,8 @@ function initializeWebSocket(onConnectionResult = null) {
             break;
           }
           case 'imageGenerated': {
-            const { userChatId, imageId, imageUrl, title, prompt, nsfw, isUpscaled, isMergeFace } = data.notification;
-            console.log(`[WebSocket] imageGenerated received - imageId: ${imageId}, isMergeFace: ${isMergeFace}, userChatId: ${userChatId}`);
+            const { userChatId, imageId, imageUrl, title, prompt, nsfw, isUpscaled, isMergeFace, batchId, batchIndex, batchSize } = data.notification;
+            console.log(`[WebSocket] imageGenerated received - imageId: ${imageId}, isMergeFace: ${isMergeFace}, userChatId: ${userChatId}, batch: ${batchIndex + 1}/${batchSize}`);
             generateImage({
               userChatId,
               url: imageUrl,
@@ -174,7 +174,10 @@ function initializeWebSocket(onConnectionResult = null) {
               imageId, 
               nsfw, 
               isUpscaled,
-              isMergeFace
+              isMergeFace,
+              batchId,
+              batchIndex,
+              batchSize
             });
             break;
           }

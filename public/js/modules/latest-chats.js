@@ -9,6 +9,18 @@ const LATEST_CHATS_CACHE_KEY = 'latestChatsCache';
 const LATEST_CHATS_CACHE_TIME_KEY = 'latestChatsCacheTime';
 const LATEST_CHATS_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
+// Helper function to generate loading spinner HTML
+const getLoadingSpinnerHTML = () => {
+    return `
+        <div id="latest-chats-loading-spinner" class="text-center my-4">
+            <div class="spinner-border text-purple" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="mt-2 text-muted">${window.translations.loadingMoreCharacters || 'Loading more characters...'}</div>
+        </div>  
+    `;
+};
+
 const getLatestChatsCache = () => {
     const cache = sessionStorage.getItem(LATEST_CHATS_CACHE_KEY);
     const ts = sessionStorage.getItem(LATEST_CHATS_CACHE_TIME_KEY);
@@ -38,16 +50,7 @@ window.loadLatestChats = async (page = 1, reload = false) => {
 
     // Show loading spinner
     $('#latest-chats-pagination-controls').css('opacity', '1').show();
-    $('#latest-chats-pagination-controls').html(
-        `
-        <div id="latest-chats-loading-spinner" class="text-center my-4">
-            <div class="spinner-border text-purple" role="status" style="width: 3rem; height: 3rem;">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <div class="mt-2 text-muted">${window.translations.loadingMoreCharacters || 'Loading more characters...'}</div>
-        </div>  
-        `
-    );
+    $('#latest-chats-pagination-controls').html(getLoadingSpinnerHTML());
 
     if (reload) {
         latestChatsPage = 1;
@@ -119,16 +122,7 @@ const updateLatestChatsPagination = (page) => {
     if (page >= latestChatsTotalPages) {
         $('#latest-chats-pagination-controls').html('');
     } else {
-        $('#latest-chats-pagination-controls').html(
-            `
-            <div id="latest-chats-loading-spinner" class="text-center my-4">
-                <div class="spinner-border text-purple" role="status" style="width: 3rem; height: 3rem;">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <div class="mt-2 text-muted">${window.translations.loadingMoreCharacters || 'Loading more characters...'}</div>
-            </div>  
-            `
-        );
+        $('#latest-chats-pagination-controls').html(getLoadingSpinnerHTML());
     }
 };
 

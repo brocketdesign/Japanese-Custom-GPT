@@ -3284,15 +3284,15 @@ function openCreateCharacterModal() {
         // Show the model selection section
         modelSection.style.display = 'block';
         
-        // Get all txt2img models from the checkboxes (store for reuse)
+        // Get all txt2img models from the checkboxes
         const txt2imgCheckboxes = document.querySelectorAll('.txt2img-model-checkbox');
         const txt2imgModels = Array.from(txt2imgCheckboxes).map(checkbox => ({
             id: checkbox.value,
             name: checkbox.dataset.modelName
         }));
         
-        // Store checkboxes reference for later use in confirmCreateCharacter
-        currentCharacterImageData.txt2imgCheckboxes = txt2imgCheckboxes;
+        // Store model data for later use in confirmCreateCharacter
+        currentCharacterImageData.txt2imgModels = txt2imgModels;
         
         // Clear existing options and populate safely using DOM methods
         modelSelect.innerHTML = '';
@@ -3361,12 +3361,12 @@ async function confirmCreateCharacter() {
         const modelSelect = document.getElementById('characterImageModelSelect');
         if (modelSelect && modelSelect.value) {
             const selectedModelId = modelSelect.value;
-            // Use cached checkboxes if available, otherwise query again
-            const txt2imgCheckboxes = currentCharacterImageData.txt2imgCheckboxes || document.querySelectorAll('.txt2img-model-checkbox');
-            const checkbox = Array.from(txt2imgCheckboxes).find(cb => cb.value === selectedModelId);
-            if (checkbox) {
-                finalModelId = selectedModelId;
-                finalModelName = checkbox.dataset.modelName;
+            // Use cached model data to find the selected model
+            const txt2imgModels = currentCharacterImageData.txt2imgModels || [];
+            const selectedModel = txt2imgModels.find(m => m.id === selectedModelId);
+            if (selectedModel) {
+                finalModelId = selectedModel.id;
+                finalModelName = selectedModel.name;
             }
         }
     }

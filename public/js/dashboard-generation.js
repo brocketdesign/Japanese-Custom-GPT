@@ -729,12 +729,12 @@ class GenerationDashboard {
     if (!taskId) return;
     
     const pollEndpoint = this.state.mode === 'image'
-      ? '/dashboard/image/check'
-      : '/dashboard/video/check';
+      ? '/dashboard/image/status'
+      : '/dashboard/video/status';
     
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`${pollEndpoint}?taskId=${taskId}`);
+        const response = await fetch(`${pollEndpoint}/${taskId}`);
         const data = await response.json();
         
         if (data.status === 'completed' || data.status === 'TASK_STATUS_SUCCEED') {

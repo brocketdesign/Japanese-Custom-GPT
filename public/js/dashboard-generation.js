@@ -1398,8 +1398,8 @@ class GenerationDashboard {
       this._currentCharacterImageData = {
         imageUrl: result.mediaUrl,
         prompt: result.prompt,
-        // result.model contains the model name string
         modelId: result.modelId || currentModel?.id,
+        // result.model contains the model name string when available
         modelName: result.model || currentModel?.name,
         needsModelSelection: needsModelSelection
       };

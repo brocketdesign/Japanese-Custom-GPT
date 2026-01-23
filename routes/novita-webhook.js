@@ -19,12 +19,13 @@ async function routes(fastify, options) {
     try {
       const event = request.body;
 
-      // Log the incoming webhook event
-      console.log(`[NovitaWebhook] Received event: ${event.event_type || 'unknown'}`);
+      // Log the incoming webhook event with full details
+      console.log(`[NovitaWebhook] 🔔 Received event type: ${event.event_type || 'unknown'}`);
+      console.log(`[NovitaWebhook] 📋 Full event:`, JSON.stringify(event, null, 2));
 
       // Only process ASYNC_TASK_RESULT events
       if (event.event_type !== 'ASYNC_TASK_RESULT') {
-        console.log(`[NovitaWebhook] Ignoring event type: ${event.event_type}`);
+        console.log(`[NovitaWebhook] ⏭️ Ignoring non-ASYNC_TASK_RESULT event type: ${event.event_type}`);
         return reply.send({ received: true });
       }
 
@@ -32,13 +33,14 @@ async function routes(fastify, options) {
       const task = payload.task || {};
       const taskId = task.task_id;
       const taskType = task.task_type;
+      const taskStatus = task.status;
 
       if (!taskId) {
-        console.error('[NovitaWebhook] No task_id in webhook event');
+        console.error('[NovitaWebhook] ❌ No task_id in webhook event');
         return reply.status(400).send({ error: 'Missing task_id' });
       }
 
-      console.log(`[NovitaWebhook] Processing task ${taskId} (type: ${taskType})`);
+      console.log(`[NovitaWebhook] 📊 Processing task ${taskId} (type: ${taskType}, status: ${taskStatus})`);
 
       const db = fastify.mongo.db;
       const tasksCollection = db.collection('tasks');
@@ -47,13 +49,21 @@ async function routes(fastify, options) {
       const taskDoc = await tasksCollection.findOne({ taskId });
       
       if (!taskDoc) {
-        console.warn(`[NovitaWebhook] Task ${taskId} not found in database`);
+        console.warn(`[NovitaWebhook] ⚠️ Task ${taskId} not found in database - webhook arrived before task was stored`);
         return reply.send({ received: true }); // Return success to avoid retries
       }
 
+      console.log(`[NovitaWebhook] ✅ Found task in database:`, {
+        taskId,
+        status: taskDoc.status,
+        isBuiltInModel: taskDoc.isBuiltInModel,
+        imageModelId: taskDoc.imageModelId,
+        chatCreation: taskDoc.chatCreation
+      });
+
       // Check if already processed
       if (taskDoc.status === 'completed' || taskDoc.completionNotificationSent) {
-        console.log(`[NovitaWebhook] Task ${taskId} already processed`);
+        console.log(`[NovitaWebhook] ⏭️ Task ${taskId} already processed (status=${taskDoc.status})`);
         return reply.send({ received: true });
       }
 
@@ -61,24 +71,27 @@ async function routes(fastify, options) {
       // We'll store webhook data and let the existing handler process it
 
       // Process based on task type
-      // Image task types: TXT_TO_IMG, IMG_TO_IMG, HUNYUAN_IMAGE_3, FLUX_2_FLEX, FLUX_2_DEV, etc.
-      const imageTaskTypes = ['TXT_TO_IMG', 'IMG_TO_IMG', 'HUNYUAN_IMAGE_3', 'FLUX_2_FLEX', 'FLUX_2_DEV', 'FLUX_1_KONTEXT_DEV', 'FLUX_1_KONTEXT_PRO', 'FLUX_1_KONTEXT_MAX'];
+      // Image task types: TXT_TO_IMG, IMG_TO_IMG, HUNYUAN_IMAGE_3, FLUX_2_FLEX, FLUX_2_DEV, Z_IMAGE_TURBO, etc.
+      const imageTaskTypes = ['TXT_TO_IMG', 'IMG_TO_IMG', 'HUNYUAN_IMAGE_3', 'FLUX_2_FLEX', 'FLUX_2_DEV', 'FLUX_1_KONTEXT_DEV', 'FLUX_1_KONTEXT_PRO', 'FLUX_1_KONTEXT_MAX', 'Z_IMAGE_TURBO'];
       const videoTaskTypes = ['IMG_TO_VIDEO', 'WAN_2_2_I2V', 'WAN_2_5_I2V_PREVIEW', 'MINIMAX_VIDEO_01', 'WAN_2_2_T2V', 'WAN_2_5_T2V_PREVIEW', 'HUNYUAN_VIDEO_FAST'];
       
       if (imageTaskTypes.includes(taskType)) {
         // Handle image generation tasks
+        console.log(`[NovitaWebhook] 🖼️ Handling as image task type: ${taskType}`);
         await handleImageWebhook(taskId, task, payload, taskDoc, fastify, db);
       } else if (videoTaskTypes.includes(taskType) || taskId.startsWith('img2video-')) {
         // Handle video generation tasks
+        console.log(`[NovitaWebhook] 🎬 Handling as video task type: ${taskType}`);
         await handleVideoWebhook(taskId, task, payload, taskDoc, fastify, db);
       } else {
-        console.warn(`[NovitaWebhook] Unknown task type: ${taskType} for task ${taskId}`);
+        console.warn(`[NovitaWebhook] ⚠️ Unknown task type: ${taskType} for task ${taskId}`);
       }
 
       // Always return success quickly to prevent retries
       return reply.send({ received: true });
     } catch (error) {
-      console.error('[NovitaWebhook] Error processing webhook:', error);
+      console.error('[NovitaWebhook] ❌ Error processing webhook:', error.message);
+      console.error('[NovitaWebhook] Stack:', error.stack);
       // Return success to prevent retries on our end (we'll log and handle gracefully)
       return reply.send({ received: true });
     }
@@ -92,9 +105,11 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
   const tasksCollection = db.collection('tasks');
 
   try {
+    console.log(`[NovitaWebhook] 🖼️ Processing image webhook for task ${taskId}`);
+    
     if (task.status !== 'TASK_STATUS_SUCCEED') {
       if (task.status === 'TASK_STATUS_FAILED') {
-        console.error(`[NovitaWebhook] Task ${taskId} failed: ${task.reason || 'Unknown error'}`);
+        console.error(`[NovitaWebhook] ❌ Task ${taskId} failed: ${task.reason || 'Unknown error'}`);
         await tasksCollection.updateOne(
           { taskId },
           { 
@@ -105,13 +120,19 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
             } 
           }
         );
+      } else {
+        console.warn(`[NovitaWebhook] ⏳ Task ${taskId} status is ${task.status} (not completed yet)`);
       }
       return;
     }
 
+    console.log(`[NovitaWebhook] ✅ Task ${taskId} succeeded`);
+    
     const images = payload.images || [];
+    console.log(`[NovitaWebhook] 📸 Found ${images.length} image(s) in response`);
+    
     if (images.length === 0) {
-      console.error(`[NovitaWebhook] Task ${taskId} completed but no images in response`);
+      console.error(`[NovitaWebhook] ❌ Task ${taskId} completed but no images in response`);
       await tasksCollection.updateOne(
         { taskId },
         { 
@@ -129,19 +150,22 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
     const processedImages = await Promise.all(images.map(async (image, index) => {
       const imageUrl = image.image_url || image.imageUrl;
       if (!imageUrl) {
-        console.error(`[NovitaWebhook] No image_url for image ${index} in task ${taskId}`);
+        console.error(`[NovitaWebhook] ❌ No image_url for image ${index} in task ${taskId}`);
         return null;
       }
 
       try {
+        console.log(`[NovitaWebhook] 📥 Downloading image ${index + 1}/${images.length} for task ${taskId}`);
         const imageResponse = await axios.get(imageUrl, { 
           responseType: 'arraybuffer',
           timeout: 120000
         });
         const buffer = Buffer.from(imageResponse.data, 'binary');
         const hash = createHash('md5').update(buffer).digest('hex');
+        console.log(`[NovitaWebhook] 📤 Uploading image ${index + 1} to S3 (hash: ${hash})`);
         const uploadedUrl = await uploadToS3(buffer, hash, 'novita_result_image.png');
         
+        console.log(`[NovitaWebhook] ✅ Image ${index + 1} uploaded successfully`);
         return {
           imageId: hash,
           imageUrl: uploadedUrl,
@@ -150,7 +174,7 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
           index
         };
       } catch (error) {
-        console.error(`[NovitaWebhook] Error processing image ${index} for task ${taskId}:`, error);
+        console.error(`[NovitaWebhook] ❌ Error processing image ${index} for task ${taskId}:`, error.message);
         // Fallback to original URL
         return {
           imageId: createHash('md5').update(imageUrl).digest('hex'),
@@ -163,9 +187,10 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
     }));
 
     const validImages = processedImages.filter(img => img !== null);
+    console.log(`[NovitaWebhook] 📋 Processed ${validImages.length}/${processedImages.length} images successfully`);
     
     if (validImages.length === 0) {
-      console.error(`[NovitaWebhook] No valid images processed for task ${taskId}`);
+      console.error(`[NovitaWebhook] ❌ No valid images processed for task ${taskId}`);
       await tasksCollection.updateOne(
         { taskId },
         { 
@@ -181,6 +206,7 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
 
     // Store processed images with webhookProcessed flag
     // checkTaskStatus will use these images instead of polling Novita
+    console.log(`[NovitaWebhook] 💾 Storing ${validImages.length} processed images in database for task ${taskId}`);
     await tasksCollection.updateOne(
       { taskId },
       { 

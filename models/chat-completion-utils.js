@@ -289,6 +289,7 @@ async function handleImageGeneration(db, currentUserMessage, lastUserMessage, ge
                     const aspectRatio = null;
                     
                     // Use the same generateImg pattern but with auto-generation metadata
+                    // Enable polling by setting chatCreation: true for async models
                     const result = await generateImg({
                         prompt, 
                         aspectRatio, 
@@ -297,7 +298,7 @@ async function handleImageGeneration(db, currentUserMessage, lastUserMessage, ge
                         userChatId, 
                         imageType, 
                         image_num, 
-                        chatCreation: false, 
+                        chatCreation: true,  // Enable fallback polling for async models
                         placeholderId: placeholderId, 
                         translations, 
                         fastify,
@@ -306,16 +307,19 @@ async function handleImageGeneration(db, currentUserMessage, lastUserMessage, ge
                     
                     // Store the generation metadata for frontend polling
                     if (result && result.taskId) {
+                        console.log(`[handleImageGeneration] ✅ Image generation started with taskId: ${result.taskId}`);
                         fastify.sendNotificationToUser(userId, 'registerAutoGeneration', {
                             taskId: result.taskId,
                             placeholderId: placeholderId,
                             userChatId: userChatId,
                             startTime: Date.now()
                         });
+                    } else {
+                        console.warn(`[handleImageGeneration] ⚠️ No taskId returned from generateImg`);
                     }
                 })
                 .catch((error) => {
-                    console.log('Auto generation error:', error);
+                    console.error(`[handleImageGeneration] ❌ Auto generation error:`, error);
                     fastify.sendNotificationToUser(userId, 'handleLoader', { imageId: placeholderId, action: 'remove' });
                 });
             

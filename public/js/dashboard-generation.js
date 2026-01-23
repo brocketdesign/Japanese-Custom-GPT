@@ -498,15 +498,49 @@ class GenerationDashboard {
       
       const data = await response.json();
       
+      console.log('[GenerationDashboard] API Response:', JSON.stringify(data, null, 2));
+      
       if (!data.success && !data.tasks) {
         throw new Error(data.error || 'Generation failed');
       }
       
-      // Handle async tasks
+      // Handle tasks
       if (data.tasks && data.tasks.length > 0) {
         const task = data.tasks[0];
-        pendingResult.taskId = task.taskId || task.task_id;
-        this.startPollingTask(pendingResult);
+        console.log('[GenerationDashboard] Task received:', {
+          taskId: task.taskId || task.task_id,
+          status: task.status,
+          async: task.async,
+          imagesCount: task.images?.length || 0
+        });
+        
+        // Check if task is already completed (sync models like merge-face-segmind)
+        if (task.status === 'completed' && task.images && task.images.length > 0) {
+          console.log('[GenerationDashboard] Sync task already completed with images:', task.images);
+          const imageUrl = task.images[0]?.imageUrl || task.images[0]?.image_url || task.images[0]?.url || task.images[0];
+          console.log('[GenerationDashboard] Extracted imageUrl:', imageUrl);
+          if (imageUrl) {
+            this.updateResultWithData(pendingResult.id, {
+              status: 'completed',
+              imageUrl: imageUrl
+            });
+          } else {
+            console.error('[GenerationDashboard] Sync task completed but no imageUrl found in:', task.images[0]);
+            this.updateResultWithData(pendingResult.id, { status: 'failed' });
+          }
+        } else if (task.status === 'completed') {
+          // Task completed but no images - might be an error
+          console.log('[GenerationDashboard] Task completed but no images:', task);
+          this.updateResultWithData(pendingResult.id, { status: 'failed' });
+        } else if (task.status === 'failed') {
+          // Task failed on backend
+          console.log('[GenerationDashboard] Task failed:', task.error || 'Unknown error');
+          this.updateResultWithData(pendingResult.id, { status: 'failed' });
+        } else {
+          // Async task - need to poll for result
+          pendingResult.taskId = task.taskId || task.task_id;
+          this.startPollingTask(pendingResult);
+        }
       } else if (data.result) {
         // Immediate result
         this.updateResultWithData(pendingResult.id, data.result);
@@ -743,7 +777,18 @@ class GenerationDashboard {
   
   startPollingTask(result) {
     const taskId = result.taskId;
-    if (!taskId) return;
+    if (!taskId) {
+      console.log('[GenerationDashboard] startPollingTask: No taskId provided');
+      return;
+    }
+    
+    // Skip polling for sync tasks (they already have results)
+    if (taskId.startsWith('sync-')) {
+      console.log('[GenerationDashboard] Skipping poll for sync task:', taskId);
+      return;
+    }
+    
+    console.log('[GenerationDashboard] Starting poll for task:', taskId);
     
     const pollEndpoint = this.state.mode === 'image'
       ? '/dashboard/image/status'
@@ -753,6 +798,8 @@ class GenerationDashboard {
       try {
         const response = await fetch(`${pollEndpoint}/${taskId}`);
         const data = await response.json();
+        
+        console.log('[GenerationDashboard] Poll response for', taskId, ':', data);
         
         if (data.status === 'completed' || data.status === 'TASK_STATUS_SUCCEED') {
           clearInterval(interval);

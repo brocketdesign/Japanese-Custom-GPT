@@ -99,10 +99,10 @@ class PromptManager {
                 <div class="modal fade" id="customPromptModal" tabindex="-1" aria-labelledby="customPromptModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content mx-auto" style="height: auto;">
-                            <div class="modal-header d-flex justify-content-between align-items-center">
+                            <div class="modal-header">
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                <h5 class="modal-title mb-0" id="customPromptModalLabel">
-                                    <i class="bi bi-image me-2"></i>
+                                <h5 class="modal-title" id="customPromptModalLabel">
+                                    <i class="bi bi-image"></i>
                                     ${modalTitle}
                                 </h5>
                             </div>
@@ -111,70 +111,68 @@ class PromptManager {
                                     <label for="customPromptTextarea" class="form-label">
                                         ${labelText}
                                     </label>
-                                    <div class="form-text text-muted mb-2">
+                                    <p class="form-text">
                                         ${modalSubtitle}
-                                    </div>
+                                    </p>
                                     <div class="position-relative">
                                         <textarea 
                                             class="form-control" 
-                                            style="min-height: 90px;"
                                             id="customPromptTextarea" 
-                                            rows="8" 
+                                            rows="6" 
                                             maxlength="500" 
                                             placeholder="${placeholderText}"
                                         ></textarea>
                                         <button 
                                             type="button" 
-                                            class="btn btn-sm btn-outline-primary position-absolute" 
+                                            class="btn btn-sm position-absolute" 
                                             id="enhancePromptBtn"
-                                            style="top: 8px; right: 8px; z-index: 10; font-size: 0.75rem; padding: 0.25rem 0.5rem;"
                                             title="Enhance your description with AI"
                                         >
                                             ${enhanceButtonText}
                                         </button>
                                     </div>
                                     <div class="form-text d-flex justify-content-between align-items-center">
-                                        <span id="customCharCount">0</span>/500 characters
-                                        <span id="enhanceStatus" class="text-muted small"></span>
+                                        <span><span id="customCharCount">0</span>/500 characters</span>
+                                        <span id="enhanceStatus"></span>
                                     </div>
                                 </div>
                                 
                                 <!-- Style Tags Section -->
                                 <div class="mb-3">
-                                    <label class="form-label small text-muted mb-2">
-                                        <i class="bi bi-tags me-1"></i>
+                                    <label class="form-label">
+                                        <i class="bi bi-tags"></i>
                                         ${styleTags}
                                     </label>
                                     <div id="styleTagsContainer" class="d-flex flex-wrap gap-2">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary style-tag-btn" data-style="cinematic">
-                                            <i class="bi bi-film me-1"></i>Cinematic
+                                        <button type="button" class="btn btn-sm style-tag-btn" data-style="cinematic">
+                                            <i class="bi bi-film"></i>Cinematic
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary style-tag-btn" data-style="anime">
-                                            <i class="bi bi-palette me-1"></i>Anime
+                                        <button type="button" class="btn btn-sm style-tag-btn" data-style="anime">
+                                            <i class="bi bi-palette"></i>Anime
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary style-tag-btn" data-style="portrait">
-                                            <i class="bi bi-person-circle me-1"></i>Portrait
+                                        <button type="button" class="btn btn-sm style-tag-btn" data-style="portrait">
+                                            <i class="bi bi-person-circle"></i>Portrait
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary style-tag-btn" data-style="photorealistic">
-                                            <i class="bi bi-camera me-1"></i>Photorealistic
+                                        <button type="button" class="btn btn-sm style-tag-btn" data-style="photorealistic">
+                                            <i class="bi bi-camera"></i>Photorealistic
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary style-tag-btn" data-style="artistic">
-                                            <i class="bi bi-brush me-1"></i>Artistic
+                                        <button type="button" class="btn btn-sm style-tag-btn" data-style="artistic">
+                                            <i class="bi bi-brush"></i>Artistic
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary style-tag-btn" data-style="dramatic">
-                                            <i class="bi bi-lightning me-1"></i>Dramatic
+                                        <button type="button" class="btn btn-sm style-tag-btn" data-style="dramatic">
+                                            <i class="bi bi-lightning"></i>Dramatic
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary style-tag-btn" data-style="casual">
-                                            <i class="bi bi-sunglasses me-1"></i>Casual
+                                        <button type="button" class="btn btn-sm style-tag-btn" data-style="casual">
+                                            <i class="bi bi-sunglasses"></i>Casual
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary style-tag-btn" data-style="elegant">
-                                            <i class="bi bi-gem me-1"></i>Elegant
+                                        <button type="button" class="btn btn-sm style-tag-btn" data-style="elegant">
+                                            <i class="bi bi-gem"></i>Elegant
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary style-tag-btn" data-style="action">
-                                            <i class="bi bi-activity me-1"></i>Action
+                                        <button type="button" class="btn btn-sm style-tag-btn" data-style="action">
+                                            <i class="bi bi-activity"></i>Action
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary style-tag-btn" data-style="romantic">
-                                            <i class="bi bi-heart me-1"></i>Romantic
+                                        <button type="button" class="btn btn-sm style-tag-btn" data-style="romantic">
+                                            <i class="bi bi-heart"></i>Romantic
                                         </button>
                                     </div>
                                 </div>
@@ -184,7 +182,7 @@ class PromptManager {
                                     ${cancelButtonText}
                                 </button>
                                 <button type="button" class="btn btn-primary" id="generateCustomPromptBtn">
-                                    <i class="bi bi-image me-2"></i>
+                                    <i class="bi bi-image"></i>
                                     ${generateButtonText}
                                 </button>
                             </div>

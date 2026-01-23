@@ -1492,9 +1492,13 @@ class GenerationDashboard {
       // Set up the modal
       const mediaPreview = modal.querySelector('.post-media-preview');
       if (mediaPreview) {
-        mediaPreview.innerHTML = result.mode === 'image'
-          ? `<img src="${result.mediaUrl}" alt="Post image">`
-          : `<video src="${result.mediaUrl}" controls></video>`;
+        if (result.mode === 'image') {
+          mediaPreview.innerHTML = `<img src="${result.mediaUrl}" alt="Post image" 
+                                        style="max-height: 250px; max-width: 100%; border-radius: 8px; object-fit: contain;">`;
+        } else {
+          mediaPreview.innerHTML = `<video src="${result.mediaUrl}" controls 
+                                          style="max-height: 250px; max-width: 100%; border-radius: 8px; object-fit: contain;"></video>`;
+        }
       }
       
       const captionInput = modal.querySelector('#postCaption');
@@ -1520,6 +1524,118 @@ class GenerationDashboard {
       });
       window.location.href = `/dashboard/posts?${params.toString()}`;
     }
+  }
+
+  /**
+   * Generate caption for draft post using AI
+   */
+  async generateDraftCaption() {
+    const captionInput = document.getElementById('postCaption');
+    const btn = document.getElementById('generatePostCaptionBtn');
+    
+    if (!this._currentPostData?.prompt) {
+      this.showNotification('No prompt available for caption generation', 'warning');
+      return;
+    }
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Generating...';
+    captionInput.disabled = true;
+    
+    try {
+      const response = await fetch('/api/posts/generate-caption', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: this._currentPostData.prompt,
+          platform: 'general',
+          style: 'engaging',
+          mediaType: this._currentPostData.mediaType
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success && data.caption) {
+        captionInput.value = data.caption;
+        this.showNotification('Caption generated!', 'success');
+      } else {
+        throw new Error(data.error || 'Failed to generate caption');
+      }
+    } catch (error) {
+      console.error('[GenerationDashboard] Error generating caption:', error);
+      this.showNotification('Failed to generate caption', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-magic me-1"></i>Generate Caption with AI';
+      captionInput.disabled = false;
+    }
+  }
+
+  /**
+   * Confirm and save draft post
+   */
+  async confirmCreatePost() {
+    if (!this._currentPostData) {
+      this.showNotification('No post data available', 'error');
+      return;
+    }
+    
+    const caption = document.getElementById('postCaption').value;
+    const btn = document.getElementById('confirmCreatePostBtn');
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+    
+    try {
+      const response = await fetch('/api/posts/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl: this._currentPostData.mediaUrl,
+          videoUrl: this._currentPostData.mediaType === 'video' ? this._currentPostData.mediaUrl : undefined,
+          prompt: this._currentPostData.prompt,
+          model: 'generation-dashboard',
+          generateCaption: !caption, // Generate caption if not provided
+          caption: caption || undefined,
+          mediaType: this._currentPostData.mediaType
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        this.showNotification('Draft post saved!', 'success');
+        
+        // Update button to "Go to My Posts"
+        btn.textContent = '';
+        btn.innerHTML = '<i class="bi bi-file-earmark-check me-1"></i>Go to My Posts';
+        btn.disabled = false;
+        btn.onclick = () => this.goToMyPosts();
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-success');
+        
+        // Disable caption input and generate button
+        document.getElementById('postCaption').disabled = true;
+        document.getElementById('generatePostCaptionBtn').disabled = true;
+      } else {
+        throw new Error(data.error || 'Failed to save draft');
+      }
+    } catch (error) {
+      console.error('[GenerationDashboard] Error saving draft:', error);
+      this.showNotification('Failed to save draft: ' + error.message, 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-check me-1"></i>Save as Draft';
+    }
+  }
+
+  /**
+   * Navigate to My Posts page
+   */
+  goToMyPosts() {
+    window.location.href = '/dashboard/posts';
   }
   
   /**

@@ -887,6 +887,97 @@ const dashboardState = {
     isLoading: false
 };
 
+// Helpers for chat state management
+const getChatId = (chat = {}) => {
+    const id = chat._id || chat.chatId || chat.id;
+    return id && typeof id.toString === 'function' ? id.toString() : id;
+};
+
+function normalizeChatData(chat = {}, isFavorite = false) {
+    const base = chat.chat || chat;
+    const id = getChatId(base);
+    if (!id) return null;
+
+    return {
+        ...base,
+        _id: base._id || id,
+        chatId: base.chatId || id,
+        name: base.name || base.chatName || 'Unknown Character',
+        chatImageUrl: base.chatImageUrl || base.imageUrl || '/img/default-avatar.webp',
+        lastMessage: chat.lastMessage || base.lastMessage || base.description || '',
+        updatedAt: base.updatedAt || base.createdAt || new Date(),
+        createdAt: base.createdAt,
+        isFavorite: isFavorite || base.isFavorite === true
+    };
+}
+
+function syncFavoriteFlagsOnRecent() {
+    const favoriteIds = new Set(dashboardState.favoriteChats.map(chat => getChatId(chat)));
+    dashboardState.recentChats = dashboardState.recentChats.map(chat => ({
+        ...chat,
+        isFavorite: favoriteIds.has(getChatId(chat))
+    }));
+}
+
+function renderRecentChatList() {
+    const container = document.getElementById('recent-chats-list');
+    if (!container) return;
+
+    document.getElementById('recent-count').textContent = dashboardState.recentChats.length;
+
+    if (dashboardState.recentChats.length === 0) {
+        container.innerHTML = renderEmptyState('recent');
+        return;
+    }
+
+    container.innerHTML = dashboardState.recentChats
+        .map(chat => renderChatItem(chat, chat.isFavorite))
+        .join('');
+}
+
+function renderFavoriteChatList() {
+    const container = document.getElementById('favorites-chats-list');
+    if (!container) return;
+
+    document.getElementById('favorites-count').textContent = dashboardState.favoriteChats.length;
+
+    if (dashboardState.favoriteChats.length === 0) {
+        container.innerHTML = renderEmptyState('favorites');
+        return;
+    }
+
+    container.innerHTML = dashboardState.favoriteChats
+        .map(chat => renderChatItem(chat, true))
+        .join('');
+}
+
+function findChatById(chatId) {
+    return dashboardState.recentChats.find(chat => getChatId(chat) === chatId)
+        || dashboardState.favoriteChats.find(chat => getChatId(chat) === chatId);
+}
+
+function applyFavoriteToggle(chatId, isFavorited, chatData) {
+    const normalizedChat = normalizeChatData(chatData || { _id: chatId }, true);
+
+    // Update recent list flag
+    dashboardState.recentChats = dashboardState.recentChats.map(chat =>
+        getChatId(chat) === chatId ? { ...chat, isFavorite: isFavorited } : chat
+    );
+
+    if (isFavorited) {
+        const alreadyInFavorites = dashboardState.favoriteChats.some(chat => getChatId(chat) === chatId);
+        if (!alreadyInFavorites && normalizedChat) {
+            dashboardState.favoriteChats.unshift({ ...normalizedChat, isFavorite: true });
+        }
+    } else {
+        dashboardState.favoriteChats = dashboardState.favoriteChats.filter(chat => getChatId(chat) !== chatId);
+    }
+
+    syncFavoriteFlagsOnRecent();
+    renderFavoriteChatList();
+    renderRecentChatList();
+}
+
 // Initialize dashboard
 async function initDashboard() {
     await Promise.all([
@@ -960,52 +1051,51 @@ function formatNumber(num) {
 
 // Load recent chats
 async function loadRecentChats() {
-    const container = document.getElementById('recent-chats-list');
-    
     try {
         const response = await fetch('/api/recent-chats?limit=10');
         if (!response.ok) throw new Error('Failed to load chats');
         
         const data = await response.json();
-        dashboardState.recentChats = data.chats || [];
-        
-        document.getElementById('recent-count').textContent = dashboardState.recentChats.length;
-        
-        if (dashboardState.recentChats.length === 0) {
-            container.innerHTML = renderEmptyState('recent');
-        } else {
-            container.innerHTML = dashboardState.recentChats.map(chat => renderChatItem(chat)).join('');
-        }
+        const chats = Array.isArray(data?.chats) ? data.chats : [];
+        dashboardState.recentChats = chats
+            .map(chat => normalizeChatData(chat, false))
+            .filter(Boolean);
+
+        syncFavoriteFlagsOnRecent();
+        renderRecentChatList();
     } catch (error) {
         console.error('Error loading recent chats:', error);
-        container.innerHTML = renderEmptyState('recent');
+        dashboardState.recentChats = [];
+        renderRecentChatList();
     }
 }
 
 // Load favorite chats
 async function loadFavoriteChats() {
-    const container = document.getElementById('favorites-chats-list');
-    
     try {
-        const response = await fetch('/api/favorites');
+        const response = await fetch('/favorites?page=1&limit=10');
         if (!response.ok) throw new Error('Failed to load favorites');
         
         const data = await response.json();
-        dashboardState.favoriteChats = data.favorites || data || [];
-        
-        document.getElementById('favorites-count').textContent = dashboardState.favoriteChats.length;
-        
-        if (dashboardState.favoriteChats.length === 0) {
-            container.innerHTML = renderEmptyState('favorites');
-        } else {
-            container.innerHTML = dashboardState.favoriteChats.map(fav => {
-                const chat = fav.chat || fav;
-                return renderChatItem(chat, true);
-            }).join('');
-        }
+        const favorites = Array.isArray(data?.data)
+            ? data.data
+            : Array.isArray(data?.favorites)
+                ? data.favorites
+                : Array.isArray(data)
+                    ? data
+                    : [];
+
+        dashboardState.favoriteChats = favorites
+            .map(fav => normalizeChatData(fav, true))
+            .filter(Boolean);
+
+        syncFavoriteFlagsOnRecent();
+        renderFavoriteChatList();
+        renderRecentChatList();
     } catch (error) {
         console.error('Error loading favorites:', error);
-        container.innerHTML = renderEmptyState('favorites');
+        dashboardState.favoriteChats = [];
+        renderFavoriteChatList();
     }
 }
 
@@ -1093,7 +1183,7 @@ async function toggleFavorite(chatId, buttonEl) {
     if (!chatId) return;
     
     const icon = buttonEl.querySelector('i');
-    const isCurrentlyFavorite = buttonEl.classList.contains('active');
+    const chatData = findChatById(chatId);
     
     try {
         // Use the existing toggle endpoint
@@ -1126,8 +1216,8 @@ async function toggleFavorite(chatId, buttonEl) {
             : (translations.favorite?.removed || 'Removed from favorites')
         );
         
-        // Refresh favorites count
-        loadFavoriteChats();
+        // Update in-memory lists for immediate UI changes
+        applyFavoriteToggle(chatId, result.isFavorited, chatData);
         
     } catch (error) {
         console.error('Error toggling favorite:', error);

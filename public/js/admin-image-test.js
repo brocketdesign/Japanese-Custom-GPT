@@ -3260,7 +3260,8 @@ function openCreateCharacterModal() {
     const currentModelCategory = getSelectedModels().find(m => m.id === modelId)?.category;
     
     // Show model selector if the current model is not suitable for text-to-image
-    const needsModelSelection = currentModelCategory && currentModelCategory !== 'txt2img';
+    const INCOMPATIBLE_CATEGORIES = ['face', 'img2img'];
+    const needsModelSelection = currentModelCategory && INCOMPATIBLE_CATEGORIES.includes(currentModelCategory);
     currentCharacterImageData.needsModelSelection = needsModelSelection;
     
     // Update modal content
@@ -3288,8 +3289,8 @@ function openCreateCharacterModal() {
             name: checkbox.dataset.modelName
         }));
         
-        // Populate the dropdown safely using DOM methods
-        modelSelect.innerHTML = ''; // Clear existing options
+        // Clear existing options and populate safely using DOM methods
+        modelSelect.innerHTML = '';
         txt2imgModels.forEach(model => {
             const option = document.createElement('option');
             option.value = model.id;
@@ -3355,8 +3356,9 @@ async function confirmCreateCharacter() {
         const modelSelect = document.getElementById('characterImageModelSelect');
         if (modelSelect && modelSelect.value) {
             const selectedModelId = modelSelect.value;
-            // Get the model name from the checkbox
-            const checkbox = document.querySelector(`.txt2img-model-checkbox[value="${selectedModelId}"]`);
+            // Get the model name from the checkbox - iterate through all checkboxes to avoid CSS selector injection
+            const txt2imgCheckboxes = document.querySelectorAll('.txt2img-model-checkbox');
+            const checkbox = Array.from(txt2imgCheckboxes).find(cb => cb.value === selectedModelId);
             if (checkbox) {
                 finalModelId = selectedModelId;
                 finalModelName = checkbox.dataset.modelName;

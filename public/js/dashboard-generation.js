@@ -1359,8 +1359,9 @@ class GenerationDashboard {
       const currentModelCategory = currentModel?.category;
       
       // Determine if we need to show the model selector
-      // Show it if the current model is not suitable for text-to-image (e.g., face tools)
-      const needsModelSelection = currentModelCategory && currentModelCategory !== 'txt2img';
+      // Show it if the current model is not suitable for text-to-image (e.g., face tools, img2img)
+      const INCOMPATIBLE_CATEGORIES = ['face', 'img2img'];
+      const needsModelSelection = currentModelCategory && INCOMPATIBLE_CATEGORIES.includes(currentModelCategory);
       
       // Populate the text-to-image model selector if needed
       const modelSection = document.getElementById('characterImageModelSection');
@@ -1373,8 +1374,8 @@ class GenerationDashboard {
         // Get all text-to-image models from config
         const txt2imgModels = (this.config.imageModels || []).filter(m => m.category === 'txt2img');
         
-        // Populate the dropdown safely using DOM methods
-        modelSelect.innerHTML = ''; // Clear existing options
+        // Clear existing options and populate safely using DOM methods
+        modelSelect.innerHTML = '';
         txt2imgModels.forEach(model => {
           const option = document.createElement('option');
           option.value = model.id;
@@ -1396,7 +1397,7 @@ class GenerationDashboard {
         imageUrl: result.mediaUrl,
         prompt: result.prompt,
         modelId: result.modelId || currentModel?.id,
-        modelName: result.model || currentModel?.name,
+        modelName: result.modelName || result.model || currentModel?.name,
         needsModelSelection: needsModelSelection
       };
       

@@ -352,6 +352,7 @@ class GenerationDashboard {
       this.updateModelDisplay();
       this.updateToolButtonsForModel(); // Update tool buttons based on model requirements
       this.updateCostDisplay(); // Update cost as different models may have different costs
+      this.updateSubmitButtonState(); // Update submit button state for face merge models
       this.closeAllOverlays();
       console.log('[GenerationDashboard] Model selected:', model.name, model);
     }

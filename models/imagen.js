@@ -696,10 +696,13 @@ async function generateImg({
       // Use the first task ID as the primary result
       novitaResult = hunyuanTaskIds[0];
     } else {
+      console.log(`[generateImg] 📤 Calling fetchNovitaMagic with isBuiltInModel=${isBuiltInModel}, imageModel=${imageModel}`);
       novitaResult = await fetchNovitaMagic(requestData, flux, hunyuan, isBuiltInModel ? imageModel : null);
+      console.log(`[generateImg] 📥 fetchNovitaMagic result:`, novitaResult);
     }
 
     if (!novitaResult) {
+        console.error(`[generateImg] ❌ novitaResult is falsy - API call failed`);
         fastify.sendNotificationToUser(userId, 'showNotification', {
             message: 'Failed to initiate image generation',
             icon: 'error'
@@ -735,6 +738,7 @@ async function generateImg({
 
     // For non-FLUX, continue with regular polling
     const novitaTaskId = typeof novitaResult === 'string' ? novitaResult : novitaResult.taskId;
+    console.log(`[generateImg] 📋 Extracted taskId: ${novitaTaskId} (isBuiltInModel=${isBuiltInModel}, imageModel=${imageModel})`);
     
     // Store task details in DB with title and slug
     const taskData = {
@@ -758,6 +762,8 @@ async function generateImg({
         shouldAutoMerge,
         enableMergeFace: enableMergeFace || false,
         isHunyuan: hunyuan || false,
+        isBuiltInModel: isBuiltInModel || false,  // Store model type flag
+        imageModelId: imageModel || null,  // Store the model ID for reference
         translations: translations || null  // Store translations for webhook/polling handlers
     };
     
@@ -785,7 +791,9 @@ async function generateImg({
         taskData.customGiftId = customGiftId;
     }
 
+    console.log(`[generateImg] 💾 Storing task in database: taskId=${novitaTaskId}, chatCreation=${chatCreation}, isBuiltInModel=${isBuiltInModel}`);
     await db.collection('tasks').insertOne(taskData);
+    console.log(`[generateImg] ✅ Task stored in database successfully`);
     
     // For Hunyuan with multiple images, also create task records for additional task IDs
     // so the webhook handler can process them individually
@@ -836,11 +844,12 @@ async function generateImg({
       // This runs in the background and ensures images are processed even if webhooks fail
       // We need this for all async models: Hunyuan, z-image-turbo, flux-2-flex, flux-2-dev, etc.
       const isAsyncBuiltInModel = isBuiltInModel && MODEL_CONFIGS[imageModel] && MODEL_CONFIGS[imageModel].async;
+      console.log(`[generateImg] 🔍 Polling check: chatCreation=${chatCreation}, hunyuan=${hunyuan}, isAsyncBuiltInModel=${isAsyncBuiltInModel}, isBuiltInModel=${isBuiltInModel}, imageModel=${imageModel}`);
       
       if (hunyuan || isAsyncBuiltInModel) {
         const allTaskIds = hunyuan ? (hunyuanTaskIds.length > 0 ? hunyuanTaskIds : [novitaTaskId]) : [novitaTaskId];
         const modelName = hunyuan ? 'Hunyuan' : (imageModel || 'async built-in');
-        console.log(`[generateImg] Starting fallback polling for ${allTaskIds.length} ${modelName} character creation task(s)`);
+        console.log(`[generateImg] 🚀 Starting fallback polling for ${allTaskIds.length} ${modelName} character creation task(s): ${allTaskIds.join(', ')}`);
         
         // Don't await - let it run in background
         pollHunyuanTasksWithFallback(novitaTaskId, allTaskIds, fastify, {
@@ -850,13 +859,16 @@ async function generateImg({
           chatId,
           placeholderId
         }).then(success => {
-          console.log(`[generateImg] ${modelName} fallback polling completed: ${success ? 'success' : 'partial/failed'}`);
+          console.log(`[generateImg] ✅ ${modelName} fallback polling completed: ${success ? 'success' : 'partial/failed'}`);
         }).catch(error => {
-          console.error(`[generateImg] ${modelName} fallback polling error:`, error.message);
+          console.error(`[generateImg] ❌ ${modelName} fallback polling error:`, error.message);
         });
+      } else {
+        console.log(`[generateImg] ⏭️ Skipping fallback polling: hunyuan=${hunyuan}, isAsyncBuiltInModel=${isAsyncBuiltInModel}`);
       }
     }
 
+    console.log(`[generateImg] 🎉 Returning taskId: ${novitaTaskId}`);
     return { taskId: novitaTaskId, hunyuanTaskIds: hunyuan && hunyuanTaskIds.length > 1 ? hunyuanTaskIds : undefined };
 }
 
@@ -1976,19 +1988,36 @@ async function fetchNovitaMagic(data, flux = false, hunyuan = false, builtInMode
       }
     }
 
+    console.log(`[fetchNovitaMagic] 📤 Sending request to: ${apiUrl}`);
+    
     const response = await axios.post(apiUrl, requestBody.data, {
       headers: requestBody.headers,
     });
     
+    console.log(`[fetchNovitaMagic] 📥 Response status: ${response.status}`);
+    console.log(`[fetchNovitaMagic] 📥 Response data:`, JSON.stringify(response.data, null, 2));
+    
     if (response.status !== 200) {
-      console.log(`Error - ${response.data.reason}`);
+      console.error(`[fetchNovitaMagic] ❌ Error - ${response.data.reason || response.data.message || 'Unknown error'}`);
       return false;
+    }
+    
+    // For built-in async models (z-image-turbo, flux-2-flex, etc.), extract task_id
+    if (builtInModelId && MODEL_CONFIGS[builtInModelId] && MODEL_CONFIGS[builtInModelId].async) {
+      // Task ID can be in multiple locations depending on API version
+      const taskId = response.data.task_id || response.data.data?.task_id || response.data.id;
+      if (!taskId) {
+        console.error(`[fetchNovitaMagic] ❌ No task_id found in response for ${builtInModelId}:`, JSON.stringify(response.data, null, 2));
+        return false;
+      }
+      console.log(`[fetchNovitaMagic] ✅ Built-in model ${builtInModelId} task created with ID: ${taskId}`);
+      return taskId;
     }
     
     // For Hunyuan Image 3, return task_id for polling
     if (hunyuan) {
       const taskId = response.data.task_id;
-      console.log(`[fetchNovitaMagic] Hunyuan Image 3 task started with ID: ${taskId}`);
+      console.log(`[fetchNovitaMagic] ✅ Hunyuan Image 3 task started with ID: ${taskId}`);
       return taskId;
     }
         

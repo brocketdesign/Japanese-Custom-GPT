@@ -778,6 +778,12 @@ async function checkTaskResult(taskId) {
       
       console.log(`[AdminImageTest] ✅ Task ${taskId} completed with ${images.length} image(s)`);
       
+      // Log the actual image URLs for debugging
+      images.forEach((img, idx) => {
+        const imageUrl = img.image_url || img.url;
+        console.log(`[AdminImageTest] 🖼️ Image ${idx + 1} URL: ${imageUrl}`);
+      });
+      
       return {
         status: 'completed',
         progress: 100,

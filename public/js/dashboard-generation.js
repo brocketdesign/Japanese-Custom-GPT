@@ -709,6 +709,13 @@ class GenerationDashboard {
     result.status = data.status || 'completed';
     result.mediaUrl = data.imageUrl || data.videoUrl || data.url;
     
+    console.log('[GenerationDashboard] updateResultWithData:', {
+      resultId,
+      status: result.status,
+      mediaUrl: result.mediaUrl,
+      dataReceived: data
+    });
+    
     // Update card in DOM
     const card = document.getElementById(`result-${resultId}`);
     if (card) {
@@ -740,10 +747,18 @@ class GenerationDashboard {
         if (data.status === 'completed' || data.status === 'TASK_STATUS_SUCCEED') {
           clearInterval(interval);
           this.pollIntervals.delete(taskId);
+          
+          // Extract image URL - backend returns images array with imageUrl property
+          const imageUrl = data.imageUrl || data.images?.[0]?.imageUrl || data.images?.[0]?.image_url || data.images?.[0]?.url;
+          const videoUrl = data.videoUrl || data.videos?.[0]?.videoUrl || data.videos?.[0]?.url;
+          
+          console.log('[GenerationDashboard] Task completed, imageUrl:', imageUrl);
+          console.log('[GenerationDashboard] Raw images data:', data.images);
+          
           this.updateResultWithData(result.id, {
             status: 'completed',
-            imageUrl: data.imageUrl || data.images?.[0]?.url,
-            videoUrl: data.videoUrl || data.videos?.[0]?.url
+            imageUrl: imageUrl,
+            videoUrl: videoUrl
           });
         } else if (data.status === 'failed' || data.status === 'TASK_STATUS_FAILED') {
           clearInterval(interval);

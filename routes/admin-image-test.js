@@ -387,6 +387,17 @@ async function routes(fastify, options) {
 
       const result = await checkTaskResult(taskId);
       
+      // Log the status result being sent to frontend
+      if (result.status === 'completed') {
+        console.log(`[ImageDashboard] 📤 Sending completed result for task ${taskId}:`);
+        console.log(`[ImageDashboard] 📤 Images count: ${result.images?.length || 0}`);
+        if (result.images && result.images.length > 0) {
+          result.images.forEach((img, idx) => {
+            console.log(`[ImageDashboard] 📤 Image ${idx + 1} URL: ${img.imageUrl}`);
+          });
+        }
+      }
+      
       return reply.send(result);
     } catch (error) {
       console.error('[ImageDashboard] Error checking status:', error);

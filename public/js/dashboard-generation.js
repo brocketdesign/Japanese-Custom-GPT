@@ -553,6 +553,8 @@ class GenerationDashboard {
       if (this.state.tools.negativePrompt) payload.negativePrompt = this.state.tools.negativePrompt;
       
       // Handle image uploads based on model requirements
+      // Note: Both image_base64 and image_file are provided for compatibility with different models
+      // Some models use image_base64, others use image_file - the backend handles this
       if (this.state.tools.baseImage) {
         payload.image_base64 = this.state.tools.baseImage;
         payload.image_file = this.state.tools.baseImage;
@@ -1337,8 +1339,8 @@ class GenerationDashboard {
       if (nameInput) nameInput.value = '';
       if (personalityInput) personalityInput.value = '';
       
-      // Store result data for character creation
-      window._currentCharacterImageData = {
+      // Store result data for character creation as instance property
+      this._currentCharacterImageData = {
         imageUrl: result.mediaUrl,
         prompt: result.prompt,
         modelId: result.modelId || this.state.selectedModel?.id,
@@ -1385,7 +1387,8 @@ class GenerationDashboard {
       if (captionInput) captionInput.value = result.prompt;
       
       // Store result data for posting
-      window._currentPostData = {
+      // Store result data for posting as instance property
+      this._currentPostData = {
         mediaUrl: result.mediaUrl,
         mediaType: result.mode,
         prompt: result.prompt
@@ -1444,7 +1447,7 @@ class GenerationDashboard {
    * Confirm and create character from the modal
    */
   async confirmCreateCharacter() {
-    const imageData = window._currentCharacterImageData;
+    const imageData = this._currentCharacterImageData;
     if (!imageData || !imageData.imageUrl) {
       this.showNotification('No image data available', 'error');
       return;

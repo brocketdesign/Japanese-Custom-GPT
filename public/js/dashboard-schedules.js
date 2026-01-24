@@ -190,13 +190,24 @@ class SchedulesDashboard {
       card.className = 'custom-prompt-card';
       card.dataset.promptId = prompt.id;
       
-      card.innerHTML = `
-        <img src="${prompt.imagePreview || '/images/placeholder.png'}" alt="${prompt.description}">
-        <div class="prompt-overlay">${this.truncateText(prompt.description, 50)}</div>
-        <div class="selected-badge">
-          <i class="bi bi-check"></i>
-        </div>
-      `;
+      // Create image element
+      const img = document.createElement('img');
+      img.src = prompt.imagePreview || '/images/placeholder.png';
+      img.alt = ''; // Don't use user content in alt
+      
+      // Create overlay with escaped text
+      const overlay = document.createElement('div');
+      overlay.className = 'prompt-overlay';
+      overlay.textContent = this.truncateText(prompt.description, 50);
+      
+      // Create badge
+      const badge = document.createElement('div');
+      badge.className = 'selected-badge';
+      badge.innerHTML = '<i class="bi bi-check"></i>';
+      
+      card.appendChild(img);
+      card.appendChild(overlay);
+      card.appendChild(badge);
       
       card.addEventListener('click', () => {
         this.toggleCustomPromptSelection(prompt.id, card);

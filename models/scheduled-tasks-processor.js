@@ -3,6 +3,8 @@
  * Executes scheduled single tasks and recurring cron jobs
  */
 
+const { ObjectId } = require('mongodb');
+
 const {
   getPendingSingleSchedules,
   getActiveRecurringSchedules,
@@ -77,10 +79,9 @@ async function executeScheduledAction(schedule, fastify) {
 async function executeImageGeneration(schedule, fastify) {
   const db = fastify.mongo.db;
   const { actionData } = schedule;
-  const { ObjectId } = require('mongodb');
   
   // Handle custom prompts if selected
-  let prompt = actionData.prompt;
+  let basePrompt = actionData.prompt || '';
   let customPromptId = null;
   let characterData = null;
   
@@ -93,8 +94,8 @@ async function executeImageGeneration(schedule, fastify) {
     const customPrompt = await db.collection('prompts').findOne({ _id: new ObjectId(customPromptId) });
     if (customPrompt) {
       // Use custom prompt description if user prompt is not provided
-      if (!prompt || prompt.trim() === '') {
-        prompt = customPrompt.prompt || '';
+      if (!basePrompt || basePrompt.trim() === '') {
+        basePrompt = customPrompt.prompt || '';
       }
     }
   }
@@ -110,13 +111,14 @@ async function executeImageGeneration(schedule, fastify) {
   }
   
   // Apply prompt mutation if enabled
+  let finalPrompt = basePrompt;
   let mutationData = null;
   
   if (schedule.mutationEnabled || actionData.mutationEnabled) {
     if (actionData.templateId) {
       // Apply template
       const templateResult = await applyTemplate(actionData.templateId, db, actionData.mutationOptions || {});
-      prompt = templateResult.mutatedPrompt;
+      finalPrompt = templateResult.mutatedPrompt;
       mutationData = {
         templateId: actionData.templateId,
         templateName: templateResult.templateName,
@@ -125,8 +127,8 @@ async function executeImageGeneration(schedule, fastify) {
       };
     } else {
       // Direct mutation
-      const mutationResult = mutatePrompt(prompt, actionData.mutationOptions || {});
-      prompt = mutationResult.mutatedPrompt;
+      const mutationResult = mutatePrompt(basePrompt, actionData.mutationOptions || {});
+      finalPrompt = mutationResult.mutatedPrompt;
       mutationData = {
         mutations: mutationResult.mutations,
         seed: mutationResult.seed
@@ -139,7 +141,7 @@ async function executeImageGeneration(schedule, fastify) {
 
   // Prepare generation options
   const generationOptions = {
-    prompt,
+    prompt: finalPrompt,
     negativePrompt: actionData.negativePrompt,
     modelId: actionData.model,
     parameters: actionData.parameters || {},
@@ -168,7 +170,7 @@ async function executeImageGeneration(schedule, fastify) {
     userId: schedule.userId.toString(),
     testId: generationResultRaw._id || null,
     imageUrl,
-    prompt,
+    prompt: finalPrompt,
     negativePrompt: actionData.negativePrompt,
     model: actionData.model,
     parameters: actionData.parameters,

@@ -1210,7 +1210,8 @@ Return ONLY the caption text with hashtags, nothing else.`;
         return reply.code(401).send({ error: 'Authentication required' });
       }
 
-      // Fetch all custom prompts from prompts collection
+      // Fetch custom prompts with a reasonable limit
+      const limit = parseInt(request.query.limit) || 100;
       const customPrompts = await db.collection('prompts')
         .find({})
         .project({
@@ -1222,6 +1223,7 @@ Return ONLY the caption text with hashtags, nothing else.`;
           nsfw: 1
         })
         .sort({ order: 1 })
+        .limit(Math.min(limit, 200)) // Cap at 200 to prevent excessive queries
         .toArray();
 
       return reply.send({

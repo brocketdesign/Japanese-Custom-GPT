@@ -190,9 +190,13 @@ class ExploreGallery {
         this.showNSFW = !this.showNSFW;
         window.showNSFW = this.showNSFW;
         
-        // Save to sessionStorage and localStorage
-        sessionStorage.setItem('showNSFW', this.showNSFW.toString());
-        localStorage.setItem('showNSFW', this.showNSFW.toString());
+        // Save to sessionStorage and localStorage (with error handling)
+        try {
+            sessionStorage.setItem('showNSFW', this.showNSFW.toString());
+            localStorage.setItem('showNSFW', this.showNSFW.toString());
+        } catch (err) {
+            console.error('[ExploreGallery] Failed to save to storage:', err);
+        }
         
         // Update button state
         this.updateNSFWButton();
@@ -254,13 +258,24 @@ class ExploreGallery {
                 if (this.isPremium && !this.isTemporary) {
                     const overlay = document.createElement('div');
                     overlay.className = 'nsfw-blur-overlay';
-                    overlay.innerHTML = `
-                        <div class="nsfw-blur-content">
-                            <i class="bi bi-eye-slash-fill"></i>
-                            <p>NSFW Content</p>
-                            <small>Click to show all NSFW content</small>
-                        </div>
-                    `;
+                    
+                    const content = document.createElement('div');
+                    content.className = 'nsfw-blur-content';
+                    
+                    const icon = document.createElement('i');
+                    icon.className = 'bi bi-eye-slash-fill';
+                    
+                    const text = document.createElement('p');
+                    text.textContent = 'NSFW Content';
+                    
+                    const small = document.createElement('small');
+                    small.textContent = 'Click to show all NSFW content';
+                    
+                    content.appendChild(icon);
+                    content.appendChild(text);
+                    content.appendChild(small);
+                    overlay.appendChild(content);
+                    
                     // Clicking overlay toggles NSFW mode globally
                     overlay.addEventListener('click', (e) => {
                         e.stopPropagation();

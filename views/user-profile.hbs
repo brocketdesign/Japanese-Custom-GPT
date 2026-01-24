@@ -24,212 +24,186 @@
     <link rel="stylesheet" href="/css/subscriptions.css">
     {{/if}}
 </head>
-<body>
+<body class="user-profile-page">
     {{> dashboard-nav}}
 
-    <div id="swup" class="profile-container {{#if isCreator}}creator-profile{{/if}}">
-        <!-- Profile Header -->
-        <div class="profile-header {{#if isCreator}}creator-header{{/if}}">
-            {{#if isCreator}}
-            <!-- Creator Cover Image -->
-            <div class="profile-cover creator-cover" 
-                 style="{{#if creatorData.coverImage}}background-image: url('{{creatorData.coverImage}}');{{/if}}">
-                {{#if (or isMyProfile isAdmin)}}
-                <button class="cover-edit-btn" id="editCoverBtn" title="Change cover image">
-                    <i class="bi bi-camera"></i>
-                </button>
-                {{/if}}
-                <div class="cover-gradient-overlay"></div>
-            {{else}}
-            <div class="profile-cover">
-            {{/if}}
-                <div class="profile-avatar-container">
-                    <img id="profileImage" src="{{default userData.profileUrl '/img/avatar.png'}}" alt="{{userData.nickname}}" class="profile-avatar">
-                    {{#if (or isMyProfile isAdmin)}}
-                        <div class="profile-avatar-overlay d-none" id="editProfileImageBtn">
-                            <i class="bi bi-pencil"></i>
+    <div id="swup" class="profile-container {{#if isCreator}}creator-profile{{/if}}" 
+         id="userProfilePage" 
+         data-user-id="{{userData._id}}"
+         data-user-data="{{json userData}}">
+        
+        <!-- Instagram-style Profile Header -->
+        <div class="ig-profile-header">
+            <!-- Profile Info Section -->
+            <div class="ig-profile-info">
+                <div class="ig-avatar-section">
+                    <div class="ig-avatar-ring {{#if isCreator}}creator-ring{{/if}}">
+                        <img id="profileImage" 
+                             class="ig-avatar" 
+                             src="{{default userData.profileUrl '/img/avatar.png'}}" 
+                             alt="{{userData.nickname}}">
+                        {{#if (or isMyProfile isAdmin)}}
+                        <div class="ig-avatar-edit" id="editProfileImageBtn" title="Change profile picture">
+                            <i class="bi bi-camera-fill"></i>
                         </div>
-                    {{/if}}
+                        {{/if}}
+                    </div>
                     {{#if creatorData.verified}}
-                    <div class="creator-verified-badge" title="Verified Creator">
+                    <div class="ig-verified-badge" title="Verified Creator">
                         <i class="bi bi-patch-check-fill"></i>
                     </div>
                     {{/if}}
                 </div>
                 
-                <div class="profile-info">
+                <div class="ig-stats-row">
+                    <div class="ig-stat likes-tab" style="cursor: pointer;">
+                        <span class="ig-stat-number">{{default userData.imageLikeCount 0}}</span>
+                        <span class="ig-stat-label">{{translations.profile.likes}}</span>
+                    </div>
+                    <div class="ig-stat characters-tab" style="cursor: pointer;">
+                        <span class="ig-stat-number">{{default userData.chatCount 0}}</span>
+                        <span class="ig-stat-label">{{translations.profile.characters}}</span>
+                    </div>
+                    <div class="ig-stat" data-bs-toggle="modal" data-bs-target="#followingModal" style="cursor: pointer;">
+                        <span class="ig-stat-number">{{default userData.followCount 0}}</span>
+                        <span class="ig-stat-label">{{translations.profile.following}}</span>
+                    </div>
+                    <div class="ig-stat" data-bs-toggle="modal" data-bs-target="#followersModal" style="cursor: pointer;">
+                        <span class="ig-stat-number">{{default userData.followerCount 0}}</span>
+                        <span class="ig-stat-label">{{translations.followers.followers}}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bio Section -->
+            <div class="ig-bio-section">
+                <h1 class="ig-display-name">
                     {{#if isCreator}}
-                    <h1 class="profile-name">
                         {{default creatorData.displayName userData.nickname}}
-                        <span class="creator-badge-icon" title="{{translations.profile.creatorBadgeTitle}}">
+                        <span class="ig-creator-badge" title="{{translations.profile.creatorBadgeTitle}}">
                             <i class="bi bi-brush-fill"></i>
                         </span>
                         {{#if creatorData.verified}}
-                        <span class="verified-badge-icon" title="{{translations.profile.verifiedCreator}}">
+                        <span class="ig-verified-icon" title="{{translations.profile.verifiedCreator}}">
                             <i class="bi bi-patch-check-fill"></i>
                         </span>
                         {{/if}}
-                    </h1>
-                    <span class="creator-category-badge">
-                        <i class="bi bi-tag-fill me-1"></i>{{creatorData.categoryLabel}}
-                    </span>
                     {{else}}
-                    <h1 class="profile-name">{{userData.nickname}}</h1>
+                        {{userData.nickname}}
                     {{/if}}
-                    {{#if userData.bio}}
-                        <p class="profile-intro">{{userData.bio}}</p>
-                    {{else if creatorData.bio}}
-                        <p class="profile-intro">{{creatorData.bio}}</p>
+                    {{#if userData.username}}
+                    <span class="ig-username">@{{userData.username}}</span>
                     {{/if}}
-                    
-                    {{!-- Creator Social Links --}}
-                    {{#if isCreator}}
-                    {{#if creatorData.socialLinks}}
-                    <div class="creator-social-links">
-                        {{#if creatorData.socialLinks.instagram}}
-                        <a href="{{creatorData.socialLinks.instagram}}" target="_blank" class="social-link" title="Instagram">
-                            <i class="bi bi-instagram"></i>
-                        </a>
-                        {{/if}}
-                        {{#if creatorData.socialLinks.twitter}}
-                        <a href="{{creatorData.socialLinks.twitter}}" target="_blank" class="social-link" title="Twitter">
-                            <i class="bi bi-twitter-x"></i>
-                        </a>
-                        {{/if}}
-                        {{#if creatorData.socialLinks.youtube}}
-                        <a href="{{creatorData.socialLinks.youtube}}" target="_blank" class="social-link" title="YouTube">
-                            <i class="bi bi-youtube"></i>
-                        </a>
-                        {{/if}}
-                        {{#if creatorData.socialLinks.website}}
-                        <a href="{{creatorData.socialLinks.website}}" target="_blank" class="social-link" title="Website">
-                            <i class="bi bi-globe"></i>
-                        </a>
-                        {{/if}}
-                    </div>
-                    {{/if}}
+                </h1>
+                
+                {{#if isCreator}}
+                <span class="ig-category-badge">
+                    <i class="bi bi-tag-fill"></i> {{creatorData.categoryLabel}}
+                </span>
+                {{/if}}
+                
+                {{#if userData.bio}}
+                    <p class="ig-bio">{{userData.bio}}</p>
+                {{else if creatorData.bio}}
+                    <p class="ig-bio">{{creatorData.bio}}</p>
+                {{/if}}
+                
+                {{!-- Subscription Status Badge --}}
+                {{#if isMyProfile}}
+                <div class="ig-membership-badge {{#if isPremium}}premium{{else}}free{{/if}}">
+                    {{#if isPremium}}
+                    <i class="bi bi-gem"></i> Premium Member
+                    {{else}}
+                    <i class="bi bi-person"></i> Free Member
                     {{/if}}
                 </div>
-            </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="profile-actions {{#if isMyProfile}}{{#unless isCreator}}my-profile-actions{{/unless}}{{/if}}">
-            {{#if isMyProfile}}
-                {{!-- My Profile Actions --}}
-                {{#unless userData.isCreator}}
-                    {{#if isPremium}}
-                    <a href="/creators/apply" class="action-btn action-btn-gradient become-creator-btn">
-                        <i class="bi bi-rocket-takeoff"></i>
-                        <span class="fw-bold">
-                            {{#if translations.profile.becomeCreator}}
-                                {{translations.profile.becomeCreator}}
-                            {{else}}
-                                Become a Creator
-                            {{/if}}
-                        </span>
+                {{/if}}
+                
+                {{!-- Creator Social Links --}}
+                {{#if isCreator}}
+                {{#if creatorData.socialLinks}}
+                <div class="ig-social-links">
+                    {{#if creatorData.socialLinks.instagram}}
+                    <a href="{{creatorData.socialLinks.instagram}}" target="_blank" class="ig-social-link" title="Instagram">
+                        <i class="bi bi-instagram"></i>
                     </a>
+                    {{/if}}
+                    {{#if creatorData.socialLinks.twitter}}
+                    <a href="{{creatorData.socialLinks.twitter}}" target="_blank" class="ig-social-link" title="Twitter">
+                        <i class="bi bi-twitter-x"></i>
+                    </a>
+                    {{/if}}
+                    {{#if creatorData.socialLinks.youtube}}
+                    <a href="{{creatorData.socialLinks.youtube}}" target="_blank" class="ig-social-link" title="YouTube">
+                        <i class="bi bi-youtube"></i>
+                    </a>
+                    {{/if}}
+                    {{#if creatorData.socialLinks.website}}
+                    <a href="{{creatorData.socialLinks.website}}" target="_blank" class="ig-social-link" title="Website">
+                        <i class="bi bi-globe"></i>
+                    </a>
+                    {{/if}}
+                </div>
+                {{/if}}
+                {{/if}}
+            </div>
+
+            <!-- Action Buttons Row -->
+            <div class="ig-action-row">
+                {{#if isMyProfile}}
+                    {{!-- My Profile Actions --}}
+                    {{#unless userData.isCreator}}
+                        {{#if isPremium}}
+                        <a href="/creators/apply" class="ig-chat-btn">
+                            <i class="bi bi-rocket-takeoff"></i>
+                            <span>{{#if translations.profile.becomeCreator}}{{translations.profile.becomeCreator}}{{else}}Become a Creator{{/if}}</span>
+                        </a>
+                        {{else}}
+                        <button type="button" class="ig-chat-btn ig-premium-btn" onclick="loadPlanPage()">
+                            <i class="bi bi-gem"></i>
+                            <span>{{#if translations.creators.upgradeToPremium}}{{translations.creators.upgradeToPremium}}{{else}}Upgrade to Premium{{/if}}</span>
+                        </button>
+                        {{/if}}
                     {{else}}
-                    <button type="button" class="action-btn action-btn-premium become-creator-btn" onclick="loadPlanPage()">
-                        <i class="bi bi-gem"></i>
-                        <span class="fw-bold">
-                            {{#if translations.creators.upgradeToPremium}}
-                                {{translations.creators.upgradeToPremium}}
+                        {{!-- Creator Quick Actions --}}
+                        <a href="/dashboard/earnings" class="ig-secondary-btn ig-success-btn" title="{{translations.avatar.earnings}}">
+                            <i class="bi bi-wallet2"></i>
+                        </a>
+                        <a href="/dashboard/analytics" class="ig-secondary-btn ig-info-btn" title="{{translations.avatar.analytics}}">
+                            <i class="bi bi-graph-up"></i>
+                        </a>
+                        <a href="/dashboard/posts" class="ig-secondary-btn" title="{{translations.profile.manageContent}}">
+                            <i class="bi bi-grid"></i>
+                        </a>
+                    {{/unless}}
+                    <a href="#" onclick="loadSettingsPage()" class="ig-secondary-btn" title="Settings">
+                        <i class="bi bi-gear"></i>
+                    </a>
+                {{else}}
+                    {{!-- Other User's Profile Actions --}}
+                    <button class="ig-chat-btn ig-follow-btn {{#if userData.follow}}following{{/if}}" 
+                            data-user-id="{{userData._id}}"
+                            onclick="toggleFollow(this)">
+                        <i class="bi {{#if userData.follow}}bi-person-check-fill{{else}}bi-person-plus-fill{{/if}}"></i>
+                        <span class="user-follow">
+                            {{#if userData.follow}}
+                                {{translations.profile.following}}
                             {{else}}
-                                Upgrade to Premium
+                                {{translations.profile.follow}}
                             {{/if}}
                         </span>
                     </button>
+                    
+                    {{!-- Subscribe Button for Creator Profiles --}}
+                    {{#if isCreator}}
+                    <button class="ig-secondary-btn ig-subscribe-btn" 
+                            data-creator-id="{{userData._id}}"
+                            onclick="handleSubscribe(this)"
+                            title="{{#if translations.profile.subscribe}}{{translations.profile.subscribe}}{{else}}Subscribe{{/if}}">
+                        <i class="bi bi-star-fill"></i>
+                    </button>
                     {{/if}}
-                {{else}}
-                {{!-- Creator Quick Actions --}}
-                <div class="creator-quick-actions">
-                    <a href="/dashboard/earnings" class="action-btn action-btn-success" title="{{translations.avatar.earnings}}">
-                        <i class="bi bi-wallet2"></i>
-                        <span class="fw-bold d-none d-md-inline">
-                            {{#if translations.avatar.earnings}}
-                                {{translations.avatar.earnings}}
-                            {{else}}
-                                Earnings
-                            {{/if}}
-                        </span>
-                    </a>
-                    <a href="/dashboard/analytics" class="action-btn action-btn-info" title="{{translations.avatar.analytics}}">
-                        <i class="bi bi-graph-up"></i>
-                        <span class="fw-bold d-none d-md-inline">
-                            {{#if translations.avatar.analytics}}
-                                {{translations.avatar.analytics}}
-                            {{else}}
-                                Analytics
-                            {{/if}}
-                        </span>
-                    </a>
-                    <a href="/dashboard/posts" class="action-btn action-btn-secondary" title="{{translations.profile.manageContent}}">
-                        <i class="bi bi-grid"></i>
-                        <span class="fw-bold d-none d-md-inline">
-                            {{#if translations.profile.manageContent}}
-                                {{translations.profile.manageContent}}
-                            {{else}}
-                                Manage Content
-                            {{/if}}
-                        </span>
-                    </a>
-                </div>
-                {{/unless}}
-            {{else}}
-                {{!-- Other User's Profile Actions --}}
-                <button class="action-btn action-btn-primary follow-button {{#if userData.follow}}following{{/if}}" 
-                        data-user-id="{{userData._id}}"
-                        onclick="toggleFollow(this)">
-                    <i class="bi bi-person-check-fill"></i>
-                    <span class="user-follow fw-bold">
-                        {{#if userData.follow}}
-                            {{translations.profile.following}}
-                        {{else}}
-                            {{translations.profile.follow}}
-                        {{/if}}
-                    </span>
-                </button>
-                
-                {{!-- Subscribe Button for Creator Profiles (Placeholder for Phase 3) --}}
-                {{#if isCreator}}
-                <button class="action-btn action-btn-gradient subscribe-btn" 
-                        data-creator-id="{{userData._id}}"
-                        onclick="handleSubscribe(this)">
-                    <i class="bi bi-star-fill"></i>
-                    <span class="fw-bold">
-                        {{#if translations.profile.subscribe}}
-                            {{translations.profile.subscribe}}
-                        {{else}}
-                            Subscribe
-                        {{/if}}
-                    </span>
-                </button>
                 {{/if}}
-            {{/if}}
-        </div>
-
-        <!-- Stats Section -->
-        <div class="profile-stats">
-            <div class="stat-item likes-tab" type="button">
-                <span class="stat-number">{{default userData.imageLikeCount 0}}</span>
-                <div class="stat-label"><i class="bi bi-heart-fill"></i></div>
-            </div>
-            <div class="stat-item characters-tab" type="button">
-                <span class="stat-number">{{default userData.chatCount 0}}</span>
-                <div class="stat-label"><i class="bi bi-chat-dots-fill"></i> </div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label p-0" data-bs-toggle="modal" data-bs-target="#followingModal" style="color: inherit; text-decoration: none;cursor: pointer;">
-                    <span class="stat-number">{{default userData.followCount 0}}</span>
-                    <div class="stat-label"><i class="bi bi-person-check-fill"></i></div>
-                </div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label p-0" data-bs-toggle="modal" data-bs-target="#followersModal" style="color: inherit; text-decoration: none;cursor: pointer;">
-                    <span class="stat-number">{{default userData.followerCount 0}}</span>
-                    <div class="stat-label"><i class="bi bi-people-fill"></i></div>
-                </div>
             </div>
         </div>
 
@@ -239,61 +213,72 @@
             {{translations.setting.imageModerationFlagged}}
         </div>
 
-        <!-- Content Tabs -->
-        <div class="content-tabs">
-            <div class="tab-nav">
-                <button class="tab-btn active" data-tab="images">
-                    <i class="bi bi-heart-fill"></i>
-                    {{translations.profile.likes}}
-                </button>
-                <button class="tab-btn" data-tab="characters">
-                    <i class="bi bi-chat-dots-fill"></i>
-                    {{translations.profile.characters}}
-                </button>
-                <!-- Posts tab visible to everyone (Phase 1) -->
-                <button class="tab-btn" data-tab="posts">
-                    <i class="bi bi-images"></i>
-                    {{translations.profile.posts}}
-                </button>
-            </div>
+        <!-- Instagram-style Tab Navigation -->
+        <div class="ig-tab-nav">
+            <button class="ig-tab active" data-tab="images" title="{{translations.profile.likes}}">
+                <i class="bi bi-heart"></i>
+            </button>
+            <button class="ig-tab" data-tab="characters" title="{{translations.profile.characters}}">
+                <i class="bi bi-chat-square-dots"></i>
+            </button>
+            <button class="ig-tab" data-tab="posts" title="{{translations.profile.posts}}">
+                <i class="bi bi-grid-3x3"></i>
+            </button>
+            <button class="ig-tab" data-tab="about" title="{{translations.about}}">
+                <i class="bi bi-person-badge"></i>
+            </button>
         </div>
 
         <!-- Content Areas -->
         <div class="tab-content">
             <!-- Likes Tab -->
             <div id="images-tab" class="tab-pane active">
-                <div class="row" id="user-images-gallery">
-                    <!-- Images will be loaded here -->
+                <div class="media-grid" id="user-images-gallery">
+                    <!-- Loading state -->
+                    <div class="loading-grid">
+                        <div class="loading-item"></div>
+                        <div class="loading-item"></div>
+                        <div class="loading-item"></div>
+                        <div class="loading-item"></div>
+                        <div class="loading-item"></div>
+                        <div class="loading-item"></div>
+                    </div>
                 </div>
                 <div id="images-pagination-controls" class="load-more-area"></div>
             </div>
 
             <!-- Characters Tab -->
             <div id="characters-tab" class="tab-pane" style="display: none;">
-                <div class="explore-grid" id="user-chat-gallery">
-                    <!-- Characters will be loaded here -->
+                <div class="media-grid characters-grid" id="user-chat-gallery">
+                    <!-- Loading state -->
+                    <div class="loading-grid">
+                        <div class="loading-item"></div>
+                        <div class="loading-item"></div>
+                        <div class="loading-item"></div>
+                    </div>
                 </div>
                 <div id="user-chat-pagination-controls" class="load-more-area"></div>
             </div>
 
             <!-- Posts Tab (Public Profile Posts - Phase 1) -->
-            <div id="posts-tab" class="tab-pane p-3" style="display: none;">
+            <div id="posts-tab" class="tab-pane" style="display: none;">
                 <!-- Post Controls (Owner Only) -->
                 {{#if isMyProfile}}
-                <div class="posts-controls mb-4">
+                <div class="ig-post-controls">
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-2">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="showNsfwPosts">
-                                <label class="form-check-label" for="showNsfwPosts">Show NSFW</label>
-                            </div>
+                            <label class="ig-toggle">
+                                <input type="checkbox" id="showNsfwPosts">
+                                <span class="ig-toggle-slider"></span>
+                                <span class="ig-toggle-label">Show NSFW</span>
+                            </label>
                         </div>
                         <div class="d-flex gap-2">
-                            <a href="/dashboard/posts" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-grid me-1"></i>{{translations.profile.viewAll}}
+                            <a href="/dashboard/posts" class="ig-secondary-btn ig-small-btn">
+                                <i class="bi bi-grid"></i>
                             </a>
-                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createPostModal">
-                                <i class="bi bi-plus-lg me-1"></i>{{translations.profile.createPost}}
+                            <button class="ig-secondary-btn ig-small-btn" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                                <i class="bi bi-plus-lg"></i>
                             </button>
                         </div>
                     </div>
@@ -302,10 +287,11 @@
 
                 <!-- Profile Posts Grid -->
                 <div class="profile-posts-section">
-                    <div id="profile-posts-grid" class="posts-grid">
-                        <div class="text-center p-4 text-muted">
-                            <i class="bi bi-hourglass-split fs-4 mb-2"></i>
-                            <p class="mb-0">{{translations.profile.loadingPosts}}</p>
+                    <div id="profile-posts-grid" class="media-grid">
+                        <div class="loading-grid">
+                            <div class="loading-item"></div>
+                            <div class="loading-item"></div>
+                            <div class="loading-item"></div>
                         </div>
                     </div>
                     <div id="posts-pagination-controls" class="d-flex justify-content-center my-3"></div>
@@ -313,23 +299,178 @@
 
                 {{#if isMyProfile}}
                 <!-- Scheduled Posts Section (Owner Only) -->
-                <div class="schedules-section mt-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="mb-0">
-                            <i class="bi bi-calendar-event me-2 text-warning"></i>{{translations.profile.scheduledPosts}}
-                        </h6>
-                        <a href="/dashboard/schedules" class="btn btn-sm btn-outline-warning">
-                            <i class="bi bi-calendar-plus me-1"></i>{{translations.profile.manageSchedules}}
+                <div class="ig-section-card" style="margin: 16px;">
+                    <div class="ig-section-header">
+                        <i class="bi bi-calendar-event" style="color: #fbbf24;"></i>
+                        <span>{{translations.profile.scheduledPosts}}</span>
+                        <a href="/dashboard/schedules" class="ig-section-link">
+                            <i class="bi bi-arrow-right"></i>
                         </a>
                     </div>
-                    <div id="user-schedules" class="schedules-list">
-                        <div class="text-center p-4 text-muted">
-                            <i class="bi bi-hourglass-split fs-4 mb-2"></i>
-                            <p class="mb-0">{{translations.profile.loadingSchedules}}</p>
+                    <div id="user-schedules" class="ig-schedules-list">
+                        <div class="ig-empty-state small">
+                            <i class="bi bi-hourglass-split"></i>
+                            <p>{{translations.profile.loadingSchedules}}</p>
                         </div>
                     </div>
                 </div>
                 {{/if}}
+            </div>
+
+            <!-- About Tab -->
+            <div id="about-tab" class="tab-pane" style="display: none;">
+                <div class="ig-about-container">
+                    <!-- User Attributes Grid -->
+                    <div class="ig-attributes-grid">
+                        <!-- Member Since Card -->
+                        <div class="ig-attribute-card">
+                            <div class="ig-attribute-icon" style="background: linear-gradient(135deg, #8b5cf6, #a855f7);">
+                                <i class="bi bi-calendar-heart"></i>
+                            </div>
+                            <div class="ig-attribute-content">
+                                <span class="ig-attribute-label">Member Since</span>
+                                <span class="ig-attribute-value" id="memberSince">{{userData.createdAt}}</span>
+                            </div>
+                        </div>
+
+                        <!-- Subscription Status Card -->
+                        <div class="ig-attribute-card">
+                            <div class="ig-attribute-icon" style="background: linear-gradient(135deg, {{#if isPremium}}#fbbf24, #f59e0b{{else}}#6b7280, #4b5563{{/if}});">
+                                <i class="bi bi-{{#if isPremium}}gem{{else}}person{{/if}}"></i>
+                            </div>
+                            <div class="ig-attribute-content">
+                                <span class="ig-attribute-label">Membership</span>
+                                <span class="ig-attribute-value {{#if isPremium}}ig-premium-badge{{/if}}">
+                                    {{#if isPremium}}Premium{{else}}Free{{/if}}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Preferred Style Card -->
+                        {{#if userData.preferredImageStyle}}
+                        <div class="ig-attribute-card">
+                            <div class="ig-attribute-icon" style="background: linear-gradient(135deg, #ec4899, #f472b6);">
+                                <i class="bi bi-palette-fill"></i>
+                            </div>
+                            <div class="ig-attribute-content">
+                                <span class="ig-attribute-label">Preferred Style</span>
+                                <span class="ig-attribute-value" style="text-transform: capitalize;">{{userData.preferredImageStyle}}</span>
+                            </div>
+                        </div>
+                        {{/if}}
+
+                        <!-- Images Created Card -->
+                        <div class="ig-attribute-card">
+                            <div class="ig-attribute-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">
+                                <i class="bi bi-images"></i>
+                            </div>
+                            <div class="ig-attribute-content">
+                                <span class="ig-attribute-label">Images Created</span>
+                                <span class="ig-attribute-value">{{default userData.imageCount 0}}</span>
+                            </div>
+                        </div>
+
+                        <!-- Videos Created Card -->
+                        {{#if userData.videoCount}}
+                        <div class="ig-attribute-card">
+                            <div class="ig-attribute-icon" style="background: linear-gradient(135deg, #3b82f6, #60a5fa);">
+                                <i class="bi bi-film"></i>
+                            </div>
+                            <div class="ig-attribute-content">
+                                <span class="ig-attribute-label">Videos Created</span>
+                                <span class="ig-attribute-value">{{userData.videoCount}}</span>
+                            </div>
+                        </div>
+                        {{/if}}
+
+                        <!-- Points Card (Only for own profile) -->
+                        {{#if isMyProfile}}
+                        <div class="ig-attribute-card">
+                            <div class="ig-attribute-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
+                                <i class="bi bi-coin"></i>
+                            </div>
+                            <div class="ig-attribute-content">
+                                <span class="ig-attribute-label">Points</span>
+                                <span class="ig-attribute-value">{{default userData.points 0}}</span>
+                            </div>
+                        </div>
+                        {{/if}}
+
+                        <!-- Login Streak Card (Only for own profile) -->
+                        {{#if isMyProfile}}
+                        {{#if userData.loginStreak}}
+                        <div class="ig-attribute-card">
+                            <div class="ig-attribute-icon" style="background: linear-gradient(135deg, #ef4444, #f87171);">
+                                <i class="bi bi-fire"></i>
+                            </div>
+                            <div class="ig-attribute-content">
+                                <span class="ig-attribute-label">Login Streak</span>
+                                <span class="ig-attribute-value">{{userData.loginStreak}} days</span>
+                            </div>
+                        </div>
+                        {{/if}}
+                        {{/if}}
+                    </div>
+
+                    <!-- Bio Section -->
+                    {{#if userData.bio}}
+                    <div class="ig-section-card">
+                        <div class="ig-section-header">
+                            <i class="bi bi-chat-quote"></i>
+                            <span>About Me</span>
+                        </div>
+                        <p class="ig-section-text">{{userData.bio}}</p>
+                    </div>
+                    {{/if}}
+
+                    <!-- Preferences Section (Only for own profile) -->
+                    {{#if isMyProfile}}
+                    <div class="ig-section-card">
+                        <div class="ig-section-header">
+                            <i class="bi bi-sliders"></i>
+                            <span>Preferences</span>
+                        </div>
+                        <div class="ig-preferences-list">
+                            {{#if userData.preferredCharacterGender}}
+                            <div class="ig-preference-item">
+                                <span class="ig-preference-label">Preferred Character</span>
+                                <span class="ig-preference-value" style="text-transform: capitalize;">{{userData.preferredCharacterGender}}</span>
+                            </div>
+                            {{/if}}
+                            {{#if userData.lang}}
+                            <div class="ig-preference-item">
+                                <span class="ig-preference-label">Language</span>
+                                <span class="ig-preference-value" style="text-transform: uppercase;">{{userData.lang}}</span>
+                            </div>
+                            {{/if}}
+                            {{#if userData.showNSFW}}
+                            <div class="ig-preference-item">
+                                <span class="ig-preference-label">NSFW Content</span>
+                                <span class="ig-preference-value">{{#ifEquals userData.showNSFW "true"}}Enabled{{else}}Disabled{{/ifEquals}}</span>
+                            </div>
+                            {{/if}}
+                        </div>
+                    </div>
+                    {{/if}}
+
+                    <!-- Quick Actions (for own profile) -->
+                    {{#if isMyProfile}}
+                    <div class="ig-quick-links">
+                        <a href="#" onclick="loadSettingsPage()" class="ig-quick-link">
+                            <i class="bi bi-gear"></i>
+                            <span>Settings</span>
+                        </a>
+                        <a href="/favorites" class="ig-quick-link">
+                            <i class="bi bi-star"></i>
+                            <span>Favorites</span>
+                        </a>
+                        <a href="/dashboard" class="ig-quick-link">
+                            <i class="bi bi-speedometer2"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </div>
+                    {{/if}}
+                </div>
             </div>
         </div>
 
@@ -381,6 +522,19 @@
             const isAdmin = `{{isAdmin}}` == 'true'
             const userId = '{{userData._id}}';
             
+            // Format member since date
+            const memberSinceEl = document.getElementById('memberSince');
+            if (memberSinceEl) {
+                const date = new Date(memberSinceEl.textContent);
+                if (!isNaN(date)) {
+                    memberSinceEl.textContent = date.toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric' 
+                    });
+                }
+            }
+            
             if(isMyProfile || isAdmin) {
                 // Handle profile image editing
                 $('#editProfileImageBtn').on('click', function() {
@@ -428,12 +582,12 @@
                 });
             }
 
-            // Tab switching functionality
-            $('.tab-btn').on('click', function() {
+            // Instagram-style Tab switching functionality
+            $('.ig-tab').on('click', function() {
                 const tabName = $(this).data('tab');
                 
                 // Update active tab button
-                $('.tab-btn').removeClass('active');
+                $('.ig-tab').removeClass('active');
                 $(this).addClass('active');
                 
                 // Hide all tab panes
@@ -453,7 +607,18 @@
                     if (isMyProfile) {
                         loadUserSchedules();
                     }
+                } else if (tabName === 'about') {
+                    $('#about-tab').show();
                 }
+            });
+            
+            // Handle stat clicks to switch tabs
+            $('.ig-stat.likes-tab').on('click', function() {
+                $('.ig-tab[data-tab="images"]').click();
+            });
+            
+            $('.ig-stat.characters-tab').on('click', function() {
+                $('.ig-tab[data-tab="characters"]').click();
             });
 
             // Current posts page state
@@ -678,15 +843,6 @@
 
             // Load initial data
             loadUserImages(userId, 1, true);
-
-            // Handle stat tab clicks
-            $('.likes-tab').on('click', function() {
-                $('.tab-btn[data-tab="images"]').click();
-            });
-
-            $('.characters-tab').on('click', function() {
-                $('.tab-btn[data-tab="characters"]').click();
-            });
         });
     </script>
 

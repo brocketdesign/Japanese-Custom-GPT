@@ -1500,7 +1500,12 @@
     "loadingPosts": "Loading posts...",
     "scheduledPosts": "Scheduled Posts & Automation",
     "manageSchedules": "Manage",
-    "loadingSchedules": "Loading schedules..."
+    "loadingSchedules": "Loading schedules...",
+    "creatorBadgeTitle": "Creator",
+    "verifiedCreator": "Verified Creator",
+    "becomeCreator": "Become a Creator",
+    "manageContent": "Manage Content",
+    "subscribe": "Subscribe"
   },
   "followers": {
     "pageTitleFollowers": "'s Followers - Lamix AI Companions",
@@ -1522,6 +1527,7 @@
     "step3StartConversation": "<strong>3. Start a Conversation:</strong> Begin with an opening line and enjoy uncensored interactions.",
     "followersListTitleFollowers": "'s Followers",
     "followersListTitleFollowing": " is Following",
+    "followingListTitle": "Following",
     "followingButton": "フォロー中",
     "followButton": "フォロー",
     "followedByTextSuffix": "にフォローされています"
@@ -2762,12 +2768,5 @@
       "badge": "Exclusive creator badge displayed on your profile",
       "tools": "Access to advanced creator tools and content management"
     }
-  },
-  
-  "profile": {
-    "creatorBadgeTitle": "Creator",
-    "verifiedCreator": "Verified Creator",
-    "becomeCreator": "Become a Creator",
-    "manageContent": "Manage Content"
   }
 }

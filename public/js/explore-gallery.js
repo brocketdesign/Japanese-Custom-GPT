@@ -190,8 +190,15 @@ class ExploreGallery {
         this.showNSFW = !this.showNSFW;
         window.showNSFW = this.showNSFW;
         
+        // Save to sessionStorage and localStorage
+        sessionStorage.setItem('showNSFW', this.showNSFW.toString());
+        localStorage.setItem('showNSFW', this.showNSFW.toString());
+        
         // Update button state
         this.updateNSFWButton();
+        
+        // Apply or remove blur based on new state
+        this.updateImageBlurStates();
         
         // Save preference to server
         try {
@@ -203,9 +210,6 @@ class ExploreGallery {
         } catch (err) {
             console.error('[ExploreGallery] Failed to save NSFW preference:', err);
         }
-        
-        // Reload gallery with new filter
-        this.resetAndReload();
     }
     
     updateNSFWButton() {
@@ -223,6 +227,57 @@ class ExploreGallery {
             label.textContent = 'SFW';
             icon.className = 'bi bi-shield-check';
         }
+    }
+    
+    updateImageBlurStates() {
+        // Get all images in the gallery
+        const allImages = document.querySelectorAll('.explore-image[data-sfw]');
+        
+        allImages.forEach(img => {
+            const isSfw = img.getAttribute('data-sfw') === 'true';
+            const imageCard = img.closest('.explore-image-card');
+            
+            if (!imageCard) return;
+            
+            // Remove existing overlay if any
+            const existingOverlay = imageCard.querySelector('.nsfw-blur-overlay');
+            if (existingOverlay) {
+                existingOverlay.remove();
+            }
+            
+            // If image is NSFW and we're in SFW mode, apply blur
+            if (!isSfw && !this.showNSFW) {
+                // Add blur class
+                imageCard.classList.add('nsfw-content');
+                
+                // Apply blur effect using CSS filter
+                img.style.filter = 'blur(15px)';
+                img.style.transform = 'scale(1.1)';
+                
+                // Add clickable overlay for premium users
+                if (this.isPremium && !this.isTemporary) {
+                    const overlay = document.createElement('div');
+                    overlay.className = 'nsfw-blur-overlay';
+                    overlay.innerHTML = `
+                        <div class="nsfw-blur-content">
+                            <i class="bi bi-eye-slash-fill"></i>
+                            <p>NSFW Content</p>
+                            <small>Click to toggle visibility</small>
+                        </div>
+                    `;
+                    overlay.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.toggleNSFW();
+                    });
+                    imageCard.appendChild(overlay);
+                }
+            } else {
+                // Remove blur
+                imageCard.classList.remove('nsfw-content');
+                img.style.filter = '';
+                img.style.transform = '';
+            }
+        });
     }
     
     async resetAndReload() {
@@ -359,6 +414,7 @@ class ExploreGallery {
                             src="${imageUrl}" 
                             alt="${this.escapeHtml(character.chatName)}"
                             class="explore-image"
+                            data-sfw="${!img.nsfw}"
                             loading="${idx < 2 ? 'eager' : 'lazy'}"
                             onerror="this.onerror=null; this.src='/img/placeholder.png';"
                         >

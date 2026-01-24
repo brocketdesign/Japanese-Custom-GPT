@@ -357,13 +357,7 @@
     color: #ef4444;
 }
 
-.nsfw-btn[data-nsfw="true"] .nsfw-label::before {
-    content: 'N';
-}
 
-.nsfw-btn[data-nsfw="false"] .nsfw-label::before {
-    content: '';
-}
 
 .nsfw-btn:hover {
     transform: scale(1.02);

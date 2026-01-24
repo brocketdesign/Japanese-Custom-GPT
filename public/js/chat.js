@@ -1215,13 +1215,20 @@ function setupChatInterface(chat, character, userChat, isNew) {
                                 isMergeFace
                             });
                             
+                            // Add to thumbnail gallery (FIX: was missing on page reload)
+                            displayImageThumb(imgData.imageId, imageUrl, userChatId, shouldBlur);
+                            
                             // Only add img-blur class if the image should actually be blurred
                             const imgClass = shouldBlur ? 'img-blur slider-image' : 'slider-image';
+                            
+                            // For NSFW images, use data-src instead of src to avoid exposing URL in console
+                            const imgSrc = shouldBlur ? '/img/image-placeholder.gif' : imageUrl;
                             
                             slidesHtml += `
                                 <div class="swiper-slide" style="display: flex; flex-direction: column; align-items: center;">
                                     <div style="display: flex; justify-content: center; align-items: center; border-radius: 12px; overflow: hidden; width: 100%; min-height: 200px;">
-                                        <img src="${imageUrl}" 
+                                        <img src="${imgSrc}" 
+                                             data-src="${imageUrl}"
                                              data-id="${imgData.imageId}"
                                              data-nsfw="${imageNsfw || false}"
                                              data-isUpscaled="${!!isUpscaled}"
@@ -2109,6 +2116,10 @@ function setupChatInterface(chat, character, userChat, isNew) {
                     shouldBlurSlider = shouldBlurNSFW(item, subscriptionStatus);
                 }
                 
+                // For NSFW images, use data-src instead of src to avoid exposing URL in console
+                const imgSrc = shouldBlurSlider ? '/img/image-placeholder.gif' : imageUrl;
+                const imgClass = shouldBlurSlider ? 'm-auto slider-image img-blur' : 'm-auto slider-image';
+                
                 slidesHtml += `
                     <div class="swiper-slide">
                         <div class="position-relative">
@@ -2116,10 +2127,11 @@ function setupChatInterface(chat, character, userChat, isNew) {
                                  class="text-start assistant-image-box transition-none ${shouldBlurSlider ? 'isBlurred' : ''}" 
                                  data-id="${imageId}" 
                                  data-src="${imageUrl}">
-                                <img src="${imageUrl}" 
+                                <img src="${imgSrc}" 
+                                     data-src="${imageUrl}"
                                      alt="${titleText}" 
                                      data-prompt="${imagePrompt || ''}" 
-                                     class="m-auto slider-image" 
+                                     class="${imgClass}" 
                                      data-id="${imageId}" 
                                      data-nsfw="${imageNsfw || false}"
                                      data-isUpscaled="${!!isUpscaled}"

@@ -17,6 +17,8 @@
     <link rel="stylesheet" href="/css/chat-scenario.css">
     <link rel="stylesheet" href="/css/chat-goals-widget.css">
     <link rel="stylesheet" href="/css/chat-history-sidebar.css">
+    <!-- Character Specific CSS -->
+    <link rel="stylesheet" href="/css/character-gallery.css">
     {{#if isCreator}}
     <link rel="stylesheet" href="/css/creators.css">
     <link rel="stylesheet" href="/css/subscriptions.css">
@@ -259,19 +261,19 @@
         <!-- Content Areas -->
         <div class="tab-content">
             <!-- Likes Tab -->
-            <div id="images-tab" class="tab-pane p-3 active">
+            <div id="images-tab" class="tab-pane active">
                 <div class="row" id="user-images-gallery">
                     <!-- Images will be loaded here -->
                 </div>
-                <div id="images-pagination-controls" class="d-flex justify-content-center my-3"></div>
+                <div id="images-pagination-controls" class="load-more-area"></div>
             </div>
 
             <!-- Characters Tab -->
-            <div id="characters-tab" class="tab-pane p-3" style="display: none;">
-                <div class="row" id="user-chat-gallery">
+            <div id="characters-tab" class="tab-pane" style="display: none;">
+                <div class="explore-grid" id="user-chat-gallery">
                     <!-- Characters will be loaded here -->
                 </div>
-                <div id="user-chat-pagination-controls" class="d-flex justify-content-center my-3"></div>
+                <div id="user-chat-pagination-controls" class="load-more-area"></div>
             </div>
 
             <!-- Posts Tab (Public Profile Posts - Phase 1) -->

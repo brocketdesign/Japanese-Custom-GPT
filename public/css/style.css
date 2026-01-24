@@ -735,6 +735,7 @@ opacity: 0.8;
   textarea.form-control {
     background-color: var(--bg-tertiary);
     color: var(--text-primary);
+    min-height: 100px;
   }
 
   /* ============================================================================
@@ -6158,7 +6159,7 @@ color: #fff !important;
     .image-slider-container {
         max-width: 250px !important;
     }
-
+}
 /* ============================================================================
    CUSTOM PROMPT MODAL - Enhanced Dark Theme Design
    ============================================================================ */

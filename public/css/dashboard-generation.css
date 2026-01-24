@@ -1196,3 +1196,30 @@ html, body {
     min-width: 44px;
   }
 }
+
+/* ============================================================================
+   CUSTOM MODEL BADGE
+   ============================================================================ */
+
+.gen-model-badge.custom {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Custom model item styling */
+.gen-model-item .model-icon img {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Add custom model button */
+.add-custom-model-item {
+  opacity: 0.8;
+  transition: all 0.2s ease;
+}
+
+.add-custom-model-item:hover {
+  opacity: 1;
+  border-color: rgba(130, 64, 255, 0.5) !important;
+  background: rgba(130, 64, 255, 0.05);
+}

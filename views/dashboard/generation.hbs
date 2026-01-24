@@ -19,6 +19,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <link href="/css/style.css" rel="stylesheet">
     <link href="/css/dashboard-generation.css" rel="stylesheet">
+    <link href="/css/civitai-model-search.css" rel="stylesheet">
 </head>
 <body>
     <!-- ====================================================================
@@ -322,6 +323,55 @@
     <input type="file" id="targetImageInput" accept="image/*" style="display: none;">
     <input type="file" id="baseVideoInput" accept="video/*" style="display: none;">
     
+    <!-- Civitai Model Search Modal -->
+    <div class="modal fade" id="civitaiSearchModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content" style="background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1);">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-white">
+                        <i class="bi bi-search me-2"></i>Search Custom Models
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" id="closeImageModelSearchModal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <input type="text" 
+                                class="form-control bg-dark text-white border-secondary" 
+                                id="civitaiModalSearch" 
+                                placeholder="Search for Stable Diffusion models..."
+                                autocomplete="off">
+                            <button class="btn btn-primary" type="button" id="civitaiModalSearchBtn">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">Search for text-to-image models from Civitai</small>
+                    </div>
+                    
+                    <!-- Search Results -->
+                    <div id="civitaiSearchResults">
+                        <div class="text-center text-muted py-4" id="civitaiSearchPlaceholder">
+                            <i class="bi bi-box-seam fs-1 d-block mb-2"></i>
+                            <p>Enter a search term to find custom models</p>
+                        </div>
+                        <div class="text-center py-4 d-none" id="civitaiSearchLoading">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Searching for models...</p>
+                        </div>
+                        <div id="civitaiSearchResultsList"></div>
+                        <div class="text-center py-4 d-none" id="civitaiNoResults">
+                            <i class="bi bi-emoji-frown fs-1 d-block mb-2 text-muted"></i>
+                            <p class="text-muted">No models found</p>
+                            <small class="text-muted">Try a different search term</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Configuration Script -->
     <script>
         // Pass server-side configuration to JavaScript
@@ -333,10 +383,16 @@
             imageModels: {{{json imageModels}}},
             videoModels: {{{json videoModels}}}
         };
+        
+        // User data for custom model search
+        window.user = {{{json user}}};
+        window.translations = {{{json translations}}};
     </script>
     
     <!-- Core Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="/js/civitai-model-search.js"></script>
     <script src="/js/dashboard-generation.js"></script>
 </body>
 </html>

@@ -6,6 +6,9 @@
 // Model categories that cannot be used for text-to-image generation
 const INCOMPATIBLE_TEXT_TO_IMAGE_CATEGORIES = ['face', 'img2img'];
 
+// Custom model ID prefix
+const CUSTOM_MODEL_PREFIX = 'custom-';
+
 class GenerationDashboard {
   constructor(config = {}) {
     // Core state
@@ -37,6 +40,9 @@ class GenerationDashboard {
     this.imageModels = config.imageModels || [];
     this.videoModels = config.videoModels || [];
     
+    // User's custom models
+    this.userModels = [];
+    
     // UI elements cache
     this.elements = {};
     
@@ -55,6 +61,7 @@ class GenerationDashboard {
     this.bindEvents();
     this.setInitialState();
     this.loadStoredResults();
+    this.loadUserModels(); // Load user's custom models
     this.updateUI();
     
     console.log('[GenerationDashboard] Initialized with mode:', this.state.mode);
@@ -280,6 +287,45 @@ class GenerationDashboard {
     
     let html = '';
     
+    // Add custom models section for image mode only
+    if (this.state.mode === 'image' && this.userModels.length > 0) {
+      html += `
+        <div class="gen-model-category">
+          <div class="gen-model-category-title">
+            <i class="bi bi-person-badge"></i>
+            Custom Models
+            <span class="badge bg-primary ms-2">${this.userModels.length}</span>
+          </div>
+          <div class="gen-model-list">
+            ${this.userModels.map(model => this.renderCustomModelItem(model)).join('')}
+          </div>
+        </div>
+      `;
+    }
+    
+    // Add "Add Custom Model" button for premium users in image mode
+    if (this.state.mode === 'image') {
+      const isPremium = window.user?.subscriptionStatus === 'active';
+      html += `
+        <div class="gen-model-category">
+          <div class="gen-model-list">
+            <div class="gen-model-item add-custom-model-item" id="addCustomModelBtn" style="cursor: pointer; border: 2px dashed rgba(255,255,255,0.2);">
+              <div class="model-icon">
+                <i class="bi bi-plus-circle"></i>
+              </div>
+              <div class="model-info">
+                <div class="model-name">${isPremium ? 'Add Custom Model' : 'Add Custom Model (Premium)'}</div>
+                <div class="model-desc">${isPremium ? 'Search and add Stable Diffusion models' : 'Upgrade to add custom models'}</div>
+              </div>
+              <div class="check-icon">
+                ${isPremium ? '<i class="bi bi-search"></i>' : '<i class="bi bi-gem"></i>'}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
     Object.entries(categories).forEach(([category, categoryModels]) => {
       const categoryLabels = {
         'txt2img': 'Text to Image',
@@ -305,13 +351,43 @@ class GenerationDashboard {
     
     container.innerHTML = html;
     
-    // Bind click events
-    container.querySelectorAll('.gen-model-item').forEach(item => {
+    // Bind click events for system models
+    container.querySelectorAll('.gen-model-item:not(.add-custom-model-item)').forEach(item => {
       item.addEventListener('click', () => {
         const modelId = item.dataset.modelId;
         this.selectModel(modelId);
       });
     });
+    
+    // Bind click event for add custom model button
+    const addBtn = container.querySelector('#addCustomModelBtn');
+    if (addBtn) {
+      addBtn.addEventListener('click', () => this.openCivitaiSearch());
+    }
+  }
+  
+  renderCustomModelItem(model) {
+    // For custom models, the model.modelId already includes the prefix
+    const isSelected = this.state.selectedModel?.id === model.modelId;
+    
+    return `
+      <div class="gen-model-item ${isSelected ? 'selected' : ''}" data-model-id="${model.modelId}" data-is-custom="true">
+        <div class="model-icon">
+          ${model.image ? `<img src="${model.image}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;" alt="${model.name}">` : '<i class="bi bi-image"></i>'}
+        </div>
+        <div class="model-info">
+          <div class="model-name">${model.name}</div>
+          <div class="model-desc">${model.style || ''} - ${model.baseModel || 'SD'}</div>
+          <div class="model-badges">
+            <span class="gen-model-badge custom">Custom</span>
+            <span class="gen-model-badge async">Async</span>
+          </div>
+        </div>
+        <div class="check-icon">
+          <i class="bi bi-check"></i>
+        </div>
+      </div>
+    `;
   }
   
   renderModelItem(model) {
@@ -347,17 +423,30 @@ class GenerationDashboard {
   }
   
   selectModel(modelId) {
-    const models = this.state.mode === 'image' ? this.imageModels : this.videoModels;
-    const model = models.find(m => m.id === modelId);
+    // Check if it's a custom model using the prefix constant
+    let model = null;
+    
+    if (modelId.startsWith(CUSTOM_MODEL_PREFIX)) {
+      // Search in user models
+      model = this.userModels.find(m => m.modelId === modelId);
+    } else {
+      // Search in system models
+      const models = this.state.mode === 'image' ? this.imageModels : this.videoModels;
+      model = models.find(m => m.id === modelId);
+    }
     
     if (model) {
-      this.state.selectedModel = model;
+      // Store model with proper id field for consistency
+      this.state.selectedModel = {
+        ...model,
+        id: model.modelId || model.id
+      };
       this.updateModelDisplay();
       this.updateToolButtonsForModel(); // Update tool buttons based on model requirements
       this.updateCostDisplay(); // Update cost as different models may have different costs
       this.updateSubmitButtonState(); // Update submit button state for face merge models
       this.closeAllOverlays();
-      console.log('[GenerationDashboard] Model selected:', model.name, model);
+      console.log('[GenerationDashboard] Model selected:', this.state.selectedModel.name, this.state.selectedModel);
     }
   }
   
@@ -420,6 +509,80 @@ class GenerationDashboard {
         faceImageBtn.title = requiresFaceImage ? 'Upload face image' : 'Not supported by this model';
       }
     }
+  }
+  
+  /**
+   * Get the model name for SD models, handling multiple possible field names
+   * @param {Object} model - Model object
+   * @returns {string} Model name
+   */
+  getSDModelName(model) {
+    return model.sdName || model.modelName || model.model || 'Unknown Model';
+  }
+  
+  /**
+   * Load user's custom models from the API
+   */
+  async loadUserModels() {
+    try {
+      const response = await fetch('/api/user/models');
+      const data = await response.json();
+      
+      if (data.success && data.models) {
+        // Convert user models to the format expected by the dashboard
+        this.userModels = data.models.map(model => ({
+          modelId: `${CUSTOM_MODEL_PREFIX}${model.modelId}`,
+          name: model.name,
+          sdName: model.model,
+          model: model.model,
+          image: model.image,
+          style: model.style,
+          baseModel: model.baseModel,
+          category: 'txt2img',
+          async: true,
+          isCustom: true,
+          isSDModel: true,
+          requiresModel: true,
+          modelName: model.model,
+          description: `Custom ${model.style || ''} model`,
+          supportedParams: ['model_name', 'prompt', 'negative_prompt', 'width', 'height', 'image_num', 'steps', 'guidance_scale', 'sampler_name', 'seed', 'loras', 'sd_vae'],
+          defaultParams: {
+            width: 1024,
+            height: 1024,
+            image_num: 1,
+            steps: 30,
+            guidance_scale: 7.5,
+            sampler_name: 'Euler a',
+            seed: -1
+          }
+        }));
+        
+        console.log('[GenerationDashboard] Loaded custom models:', this.userModels.length);
+      }
+    } catch (error) {
+      console.error('[GenerationDashboard] Error loading user models:', error);
+    }
+  }
+  
+  /**
+   * Open Civitai model search modal
+   */
+  openCivitaiSearch() {
+    const isPremium = window.user?.subscriptionStatus === 'active';
+    
+    if (!isPremium) {
+      this.showNotification('Custom models are a premium feature. Please upgrade your plan.', 'warning');
+      // Redirect to plan page
+      window.location.href = '/plan';
+      return;
+    }
+    
+    // Open the Civitai search modal
+    const modal = new bootstrap.Modal(document.getElementById('civitaiSearchModal'));
+    modal.show();
+    
+    // Close model sheet
+    this.closeAllOverlays();
   }
   
   // ============================================================================
@@ -598,9 +761,23 @@ class GenerationDashboard {
   
   buildGenerationPayload(prompt) {
     const model = this.state.selectedModel;
-    const payload = {
-      models: [model.id]
-    };
+    const payload = {};
+    
+    // Check if this is a custom SD model
+    if (model.isCustom || model.isSDModel) {
+      // For SD models, use selectedSDModels array
+      const modelName = this.getSDModelName(model);
+      payload.selectedSDModels = [{
+        model: modelName,
+        model_name: modelName,
+        name: model.name
+      }];
+      payload.models = []; // Empty array for standard models
+    } else {
+      // For standard models
+      payload.models = [model.id];
+      payload.selectedSDModels = []; // Empty array for SD models
+    }
     
     // Prompt is optional for face merge models
     if (prompt || model.category !== 'face') {
@@ -1805,6 +1982,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Get configuration from page
   const config = window.GEN_DASHBOARD_CONFIG || {};
   genDashboard = new GenerationDashboard(config);
+  
+  // Expose to window for other scripts (e.g., civitai-model-search.js)
+  window.genDashboard = genDashboard;
 });
 
 // Export for use in other scripts

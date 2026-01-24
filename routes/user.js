@@ -1307,6 +1307,7 @@ async function routes(fastify, options) {
           $project: {
             _id: '$images._id',
             imageUrl: { $ifNull: ['$images.imageUrl', '$images.url'] },
+            thumbnailUrl: '$images.thumbnailUrl',
             url: '$images.url',
             prompt: '$images.prompt',
             title: '$images.title',

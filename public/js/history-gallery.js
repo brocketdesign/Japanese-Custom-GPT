@@ -375,11 +375,14 @@
         // Check if recent (last 24 hours)
         const isRecent = isContentRecent(item.createdAt);
         
-        // Image or video thumbnail
-        const imageUrl = item.contentType === 'video' ? item.imageUrl : item.imageUrl || item.url;
+        // Use thumbnailUrl (compressed) for gallery grid, fallback to imageUrl
+        // For videos, use imageUrl as thumbnail
+        const thumbnailUrl = item.contentType === 'video' 
+            ? item.imageUrl 
+            : (item.thumbnailUrl || item.imageUrl || item.url);
         
         div.innerHTML = `
-            <img src="${imageUrl}" alt="${item.prompt || 'Generated content'}" loading="lazy">
+            <img src="${thumbnailUrl}" alt="${item.prompt || 'Generated content'}" loading="lazy">
             ${item.contentType === 'video' ? '<div class="video-overlay"><i class="bi bi-play-fill"></i></div>' : ''}
             ${isRecent ? '<span class="content-badge badge-recent"><i class="bi bi-star-fill"></i> New</span>' : ''}
         `;

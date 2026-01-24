@@ -9,6 +9,10 @@
  */
 
 // Store total counts for the character
+// Note: This is the initial structure. The inline script in character.hbs
+// will re-initialize with more complete state (contentType, pagination, etc.)
+// and call loadCharacterData. Do NOT call loadCharacterData here to avoid
+// duplicate API calls and race conditions.
 window.characterProfile = {
     totalImages: 0,
     totalVideos: 0,
@@ -18,21 +22,7 @@ window.characterProfile = {
     videosLoaded: false
 };
 
-/**
- * Initialize the character profile page
- */
-document.addEventListener('DOMContentLoaded', function() {
-    const profilePage = document.querySelector('#characterProfilePage');
-    const chatId = profilePage?.dataset?.chatId || null;
-    
-    if (chatId) {
-        window.characterProfile.currentChatId = chatId;
-        initializeTabs();
-        loadCharacterData(chatId);
-        initializeSharing();
-        initializeBackToTop();
-        showDashboardFooter();
-    } else {
-        loadCharacterGallery();
-    }
-});
+// Note: Character profile initialization is handled by the inline script
+// in character.hbs to ensure proper sequencing with the more complete
+// window.characterProfile state (including contentType and pagination).
+// This file only provides the initial structure and helper functions.

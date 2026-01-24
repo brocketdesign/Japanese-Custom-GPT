@@ -123,7 +123,10 @@ function createCharacterImageOverlay(imgElement, imageUrl) {
                 cursor: 'pointer',
                 borderRadius: '0'
             })
-            .on('click', function() {
+            .on('click', function(e) {
+                // Stop propagation so the modal doesn't open on first click
+                e.stopPropagation();
+                e.preventDefault();
                 // Hide the overlay to reveal the image
                 $(this).fadeOut(200, function() {
                     $(this).remove();
@@ -586,6 +589,18 @@ function displayImagesInGrid(images = [], chatId = null) {
             // Check if click was on a button (like button or subscribe button) - if so, don't open modal
             const clickedButton = e.target.closest('button');
             if (clickedButton) {
+                return;
+            }
+            
+            // Check if click was on NSFW overlay - don't open modal, let overlay handle it
+            const clickedOverlay = e.target.closest('.character-nsfw-overlay');
+            if (clickedOverlay) {
+                return;
+            }
+            
+            // Check if the media-item still has an NSFW overlay - don't open modal
+            const hasNsfwOverlay = mediaItem.querySelector('.character-nsfw-overlay');
+            if (hasNsfwOverlay) {
                 return;
             }
             
@@ -1276,7 +1291,8 @@ function addLoadMoreButton(type) {
     
     btn.addEventListener('click', function() {
         if (type === 'images') {
-            loadMoreCharacterImages(window.characterProfile.currentChatId);
+            const contentType = window.characterProfile.contentType || 'SFW';
+            loadMoreCharacterImages(window.characterProfile.currentChatId, contentType);
         } else {
             loadMoreCharacterVideos(window.characterProfile.currentChatId);
         }

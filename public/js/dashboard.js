@@ -3226,7 +3226,7 @@ $(document).ready(function () {
             hasMoreChatsMap.set(query, false);
           }
             
-          displayChats(data.chats, 'all-chats-container');
+          window.displayChats(data.chats, 'all-chats-container');
           
   
           // Apply blur if needed

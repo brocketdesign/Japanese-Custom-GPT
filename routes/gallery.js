@@ -758,6 +758,7 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
   fastify.get('/chat/:chatId/images', async (request, reply) => {
     const { chatId } = request.params;
     const userChatId = request.query.userChatId; // Optional userChatId filter
+    const contentType = request.query.content_type; // Optional content_type filter (SFW/NSFW)
     const page = parseInt(request.query.page) || 1;
     const limit = 12;
     const skip = (page - 1) * limit;
@@ -827,6 +828,26 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
         }
       ];
 
+      // Add content_type filter if provided
+      if (contentType) {
+        const normalizedContentType = contentType.toUpperCase();
+        if (normalizedContentType === 'SFW') {
+          // SFW: only images where nsfw is not true
+          aggregatePipeline.push({
+            $match: {
+              'images.nsfw': { $ne: true }
+            }
+          });
+        } else if (normalizedContentType === 'NSFW') {
+          // NSFW: only images where nsfw is true
+          aggregatePipeline.push({
+            $match: {
+              'images.nsfw': true
+            }
+          });
+        }
+      }
+
       // Add userChatId filter if provided
       if (imageIdsFilter !== null) {
         if (imageIdsFilter.length === 0) {
@@ -867,6 +888,24 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
           } 
         }
       ];
+
+      // Add content_type filter to count pipeline if provided
+      if (contentType) {
+        const normalizedContentType = contentType.toUpperCase();
+        if (normalizedContentType === 'SFW') {
+          countPipeline.push({
+            $match: {
+              'images.nsfw': { $ne: true }
+            }
+          });
+        } else if (normalizedContentType === 'NSFW') {
+          countPipeline.push({
+            $match: {
+              'images.nsfw': true
+            }
+          });
+        }
+      }
 
       if (imageIdsFilter !== null && imageIdsFilter.length > 0) {
         countPipeline.push({

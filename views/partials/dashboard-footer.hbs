@@ -1218,11 +1218,4 @@ window.debugNotifications = function() {
     return 'Debug notifications started! Check the top-right corner of your screen.';
 };
 
-// Auto-show help on page load for developers
-if (window.MODE === 'development' || window.location.hostname === 'localhost') {
-    setTimeout(() => {
-        console.log('🔧 Notification debug functions loaded! Type debugNotificationsHelp() for help.');
-    }, 1000);
-}
-
 </script>

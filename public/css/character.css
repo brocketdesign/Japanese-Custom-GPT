@@ -1809,6 +1809,70 @@ body:has(.ig-profile-header) .dropdown-toggle:hover {
     }
 }
 
+/* SFW/NSFW Content Type Toggle */
+.content-type-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--ig-bg);
+    border-bottom: 1px solid var(--ig-border);
+}
+
+.content-type-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid var(--ig-border);
+    border-radius: 8px;
+    color: var(--ig-text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.content-type-btn i {
+    font-size: 16px;
+}
+
+.content-type-btn:hover {
+    background: var(--ig-surface);
+    border-color: var(--ig-text-secondary);
+}
+
+.content-type-btn.active {
+    background: var(--ig-purple);
+    border-color: var(--ig-purple);
+    color: white;
+}
+
+.content-type-btn.active:hover {
+    background: var(--ig-purple);
+    opacity: 0.9;
+}
+
+@media (max-width: 480px) {
+    .content-type-toggle {
+        padding: 10px 12px;
+    }
+    
+    .content-type-btn {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+    
+    .content-type-btn i {
+        font-size: 14px;
+    }
+    
+    .content-type-btn span {
+        display: inline;
+    }
+}
+
 @media (max-width: 480px) {
     #characterImagePreviewModal .image-like-overlay {
         top: 60px !important;

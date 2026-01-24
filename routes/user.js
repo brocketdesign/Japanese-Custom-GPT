@@ -1283,6 +1283,169 @@ async function routes(fastify, options) {
         return reply.status(500).send({ error: 'Failed to load settings' });
     }
   });
+
+  // History gallery route - API endpoint
+  fastify.get('/api/user/history', async (request, reply) => {
+    try {
+      const user = await fastify.getUser(request, reply);
+      const userId = new ObjectId(user._id);
+      const page = parseInt(request.query.page) || 1;
+      const limit = parseInt(request.query.limit) || 24;
+      const skip = (page - 1) * limit;
+      const characterFilter = request.query.character; // Optional filter by chatId
+
+      const db = fastify.mongo.db;
+      const galleryCollection = db.collection('gallery');
+      const videosCollection = db.collection('videos');
+      const chatsCollection = db.collection('chats');
+
+      // Build aggregation pipeline for images
+      const galleryPipeline = [
+        { $match: characterFilter ? { userId: userId, chatId: new ObjectId(characterFilter) } : { userId: userId } },
+        { $unwind: '$images' },
+        {
+          $project: {
+            _id: '$images._id',
+            imageUrl: { $ifNull: ['$images.imageUrl', '$images.url'] },
+            url: '$images.url',
+            prompt: '$images.prompt',
+            title: '$images.title',
+            slug: '$images.slug',
+            aspectRatio: '$images.aspectRatio',
+            seed: '$images.seed',
+            nsfw: '$images.nsfw',
+            type: { $ifNull: ['$images.type', 'image'] },
+            contentType: { $literal: 'image' },
+            isMerged: '$images.isMerged',
+            mergeId: '$images.mergeId',
+            originalImageUrl: '$images.originalImageUrl',
+            isUpscaled: '$images.isUpscaled',
+            likes: '$images.likes',
+            likedBy: '$images.likedBy',
+            actions: '$images.actions',
+            createdAt: { $ifNull: ['$images.createdAt', '$images.timestamp', new Date()] },
+            chatId: '$chatId',
+            chatSlug: '$chatSlug'
+          }
+        },
+        { $sort: { createdAt: -1 } }
+      ];
+
+      // Fetch images
+      const images = await galleryCollection.aggregate(galleryPipeline).toArray();
+
+      // Fetch user's videos
+      const videoQuery = { userId: userId };
+      if (characterFilter) {
+        videoQuery.chatId = new ObjectId(characterFilter);
+      }
+
+      const videos = await videosCollection
+        .find(videoQuery)
+        .sort({ createdAt: -1 })
+        .toArray();
+
+      // Combine and format videos
+      const formattedVideos = videos.map(video => ({
+        _id: video._id,
+        videoUrl: video.videoUrl,
+        imageUrl: video.imageUrl,
+        prompt: video.prompt,
+        chatId: video.chatId,
+        type: 'video',
+        contentType: 'video',
+        duration: video.duration,
+        aspectRatio: video.aspectRatio,
+        createdAt: video.createdAt || new Date()
+      }));
+
+      // Combine images and videos
+      let allContent = [...images, ...formattedVideos];
+
+      // Sort all content by creation date (most recent first)
+      allContent.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      // Total count before pagination
+      const totalCount = allContent.length;
+
+      // Paginate
+      const paginatedContent = allContent.slice(skip, skip + limit);
+
+      // Get unique chatIds to fetch character info
+      const chatIds = [...new Set(allContent.map(item => item.chatId).filter(Boolean))];
+      const chats = await chatsCollection
+        .find({ _id: { $in: chatIds } })
+        .project({ _id: 1, name: 1, slug: 1, chatImageUrl: 1, thumbnail: 1 })
+        .toArray();
+
+      // Create a map of chatId to chat info
+      const chatMap = {};
+      chats.forEach(chat => {
+        chatMap[chat._id.toString()] = {
+          name: chat.name,
+          slug: chat.slug,
+          thumbnail: chat.chatImageUrl || chat.thumbnail || '/img/default-thumbnail.png'
+        };
+      });
+
+      // Enrich content with character info
+      const enrichedContent = paginatedContent.map(item => ({
+        ...item,
+        characterName: item.chatId ? chatMap[item.chatId.toString()]?.name : 'Unknown',
+        characterSlug: item.chatId ? chatMap[item.chatId.toString()]?.slug : null,
+        characterThumbnail: item.chatId ? chatMap[item.chatId.toString()]?.thumbnail : '/img/default-thumbnail.png'
+      }));
+
+      // Group content by character for the response
+      const groupedByCharacter = {};
+      allContent.forEach(item => {
+        const chatIdStr = item.chatId ? item.chatId.toString() : 'unknown';
+        if (!groupedByCharacter[chatIdStr]) {
+          groupedByCharacter[chatIdStr] = {
+            chatId: item.chatId,
+            characterName: chatMap[chatIdStr]?.name || 'Unknown',
+            characterSlug: chatMap[chatIdStr]?.slug || null,
+            characterThumbnail: chatMap[chatIdStr]?.thumbnail || '/img/default-thumbnail.png',
+            count: 0,
+            items: []
+          };
+        }
+        groupedByCharacter[chatIdStr].count++;
+      });
+
+      const totalPages = Math.ceil(totalCount / limit);
+
+      return reply.send({
+        content: enrichedContent,
+        groupedByCharacter,
+        page,
+        totalPages,
+        totalCount
+      });
+
+    } catch (err) {
+      console.error('[History] Error fetching user history:', err);
+      reply.code(500).send({ error: 'Internal Server Error' });
+    }
+  });
+
+  // History gallery page route
+  fastify.get('/history', async (request, reply) => {
+    try {
+      const user = await fastify.getUser(request, reply);
+      const { translations, lang } = request;
+
+      return reply.renderWithGtm('history.hbs', {
+        title: 'History - Generated Content',
+        user,
+        translations,
+        lang
+      });
+    } catch (err) {
+      console.error('[History] Error rendering history page:', err);
+      reply.code(500).send('Internal Server Error');
+    }
+  });
 }
 
 module.exports = routes;

@@ -288,6 +288,11 @@
                 $btn.closest('.civitai-model-card').addClass('opacity-50');
                 
                 showNotification(translations.newCharacter?.modelAdded || 'Model added successfully', 'success');
+                
+                // Notify generation dashboard if it exists
+                if (window.genDashboard && typeof window.genDashboard.loadUserModels === 'function') {
+                    await window.genDashboard.loadUserModels();
+                }
             }
         } catch (error) {
             console.error('Error adding model:', error);

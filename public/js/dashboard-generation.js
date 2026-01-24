@@ -744,9 +744,22 @@ class GenerationDashboard {
   
   buildGenerationPayload(prompt) {
     const model = this.state.selectedModel;
-    const payload = {
-      models: [model.id]
-    };
+    const payload = {};
+    
+    // Check if this is a custom SD model
+    if (model.isCustom || model.isSDModel) {
+      // For SD models, use selectedSDModels array
+      payload.selectedSDModels = [{
+        model: model.sdName || model.modelName || model.model,
+        model_name: model.sdName || model.modelName || model.model,
+        name: model.name
+      }];
+      payload.models = []; // Empty array for standard models
+    } else {
+      // For standard models
+      payload.models = [model.id];
+      payload.selectedSDModels = []; // Empty array for SD models
+    }
     
     // Prompt is optional for face merge models
     if (prompt || model.category !== 'face') {

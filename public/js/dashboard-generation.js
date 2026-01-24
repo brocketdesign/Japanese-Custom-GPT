@@ -1029,6 +1029,14 @@ class GenerationDashboard {
   }
   
   createPendingResult(prompt) {
+    const selectedModel = this.state.selectedModel;
+    
+    // For custom SD models, get the actual model filename
+    let sdModelName = null;
+    if (selectedModel?.isCustom || selectedModel?.isSDModel) {
+      sdModelName = this.getSDModelName(selectedModel);
+    }
+    
     const result = {
       id: Date.now().toString(),
       taskId: null,
@@ -1036,7 +1044,11 @@ class GenerationDashboard {
       prompt,
       status: 'pending',
       mode: this.state.mode,
-      model: this.state.selectedModel?.name || 'Unknown',
+      model: selectedModel?.name || 'Unknown',
+      modelId: selectedModel?.id || null,           // Store the model ID for character creation
+      sdModelName: sdModelName,                      // Store SD model filename for custom models
+      isCustomModel: selectedModel?.isCustom || false,
+      isSDModel: selectedModel?.isSDModel || false,
       createdAt: new Date().toISOString(),
       mediaUrl: null,
       mediaUrls: [],         // Array of all image URLs for carousel
@@ -2075,7 +2087,34 @@ class GenerationDashboard {
       if (nameInput) nameInput.value = '';
       if (personalityInput) personalityInput.value = '';
       
-      // Get the current model info
+      // Get the model info from the result (not the currently selected model)
+      // This ensures we use the model that was actually used to generate the image
+      let resultModelId = result.modelId;
+      let resultModelName = result.model;
+      let resultSdModelName = result.sdModelName;
+      let resultIsCustomModel = result.isCustomModel || result.isSDModel;
+      
+      // Debug: log what we have in the result
+      console.log('[GenerationDashboard] Result model info:', {
+        modelId: resultModelId,
+        model: resultModelName,
+        sdModelName: resultSdModelName,
+        isCustomModel: resultIsCustomModel,
+        isSDModel: result.isSDModel
+      });
+      
+      // For legacy results, try to detect if the model name is an SD model filename
+      // SD model filenames typically end in .safetensors or .ckpt
+      if (!resultSdModelName && resultModelName) {
+        const modelNameLower = resultModelName.toLowerCase();
+        if (modelNameLower.endsWith('.safetensors') || modelNameLower.endsWith('.ckpt')) {
+          resultSdModelName = resultModelName;
+          resultIsCustomModel = true;
+          console.log('[GenerationDashboard] Detected SD model from name:', resultSdModelName);
+        }
+      }
+      
+      // Fallback to current model only if result doesn't have model info (legacy results)
       const currentModel = this.state.selectedModel;
       const currentModelCategory = currentModel?.category;
       
@@ -2113,14 +2152,23 @@ class GenerationDashboard {
       }
       
       // Store result data for character creation as instance property
+      // Use the result's stored model info, with fallback to current model for legacy results
+      // For custom SD models, the sdModelName is the key identifier
+      const finalModelId = resultIsCustomModel && resultSdModelName 
+        ? `custom-sd-${resultSdModelName}` 
+        : (resultModelId || currentModel?.id);
+      
       this._currentCharacterImageData = {
         imageUrl: currentImageUrl,
         prompt: result.prompt,
-        modelId: result.modelId || currentModel?.id,
-        // result.model contains the model name string when available
-        modelName: result.model || currentModel?.name,
+        modelId: finalModelId,
+        modelName: resultModelName || currentModel?.name,
+        sdModelName: resultSdModelName,  // SD model filename for custom models
+        isCustomModel: resultIsCustomModel,
         needsModelSelection: needsModelSelection
       };
+      
+      console.log('[GenerationDashboard] Character creation data:', this._currentCharacterImageData);
       
       // Show the modal
       const bsModal = new bootstrap.Modal(modal);
@@ -2361,6 +2409,8 @@ class GenerationDashboard {
     // Get the selected text-to-image model if the section is visible
     let finalModelId = imageData.modelId;
     let finalModelName = imageData.modelName;
+    let finalSdModelName = imageData.sdModelName;
+    let finalIsCustomModel = imageData.isCustomModel;
     
     if (imageData.needsModelSelection) {
       const modelSelect = document.getElementById('characterImageModelSelect');
@@ -2370,6 +2420,9 @@ class GenerationDashboard {
         if (selectedModel) {
           finalModelId = selectedModel.id;
           finalModelName = selectedModel.name;
+          // When user selects a different model, clear the SD model info
+          finalSdModelName = null;
+          finalIsCustomModel = false;
         }
       }
     }
@@ -2379,6 +2432,13 @@ class GenerationDashboard {
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Creating Character...';
     }
+    
+    console.log('[GenerationDashboard] Creating character with model info:', {
+      modelId: finalModelId,
+      modelName: finalModelName,
+      sdModelName: finalSdModelName,
+      isCustomModel: finalIsCustomModel
+    });
     
     try {
       const response = await fetch('/api/dashboard/create-character-from-image', {
@@ -2393,7 +2453,9 @@ class GenerationDashboard {
           nsfw: nsfw,
           useImageAsBaseFace: useImageAsBaseFace,
           modelId: finalModelId,
-          modelName: finalModelName
+          modelName: finalModelName,
+          sdModelName: finalSdModelName,
+          isCustomModel: finalIsCustomModel
         })
       });
       

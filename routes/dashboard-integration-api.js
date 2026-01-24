@@ -223,6 +223,8 @@ async function routes(fastify, options) {
                 modelId = null,
                 modelName = null,
                 imageModel = null,
+                sdModelName = null,  // SD model filename (e.g., prefectPonyXL_v50_1128833.safetensors)
+                isCustomModel = false,
                 imageVersion = 'sdxl',
                 imageStyle = 'general'
             } = request.body;
@@ -247,10 +249,14 @@ async function routes(fastify, options) {
                 }
             }
 
+            // Determine the actual image model to use
+            // For custom SD models, use sdModelName; otherwise use imageModel or modelId
+            const finalImageModel = sdModelName || imageModel || (isCustomModel ? modelId : null);
+
             console.log(`[DashboardIntegration] Creating character from image for user ${userId}`);
             console.log(`[DashboardIntegration] Image prompt: ${imagePrompt.substring(0, 100)}...`);
             console.log(`[DashboardIntegration] Use image as base face: ${useImageAsBaseFace}`);
-            console.log(`[DashboardIntegration] Model info: modelId=${modelId}, imageModel=${imageModel}, imageVersion=${imageVersion}, imageStyle=${imageStyle}`);
+            console.log(`[DashboardIntegration] Model info: modelId=${modelId}, sdModelName=${sdModelName}, imageModel=${finalImageModel}, imageVersion=${imageVersion}, imageStyle=${imageStyle}, isCustomModel=${isCustomModel}`);
 
             // Generate character data from image prompt
             const { characterData, extractedDetails, gender } = await generateCharacterFromImagePrompt(
@@ -286,7 +292,8 @@ async function routes(fastify, options) {
                 updatedAt: now.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }),
                 createdFromImageDashboard: true,
                 // Save model information for consistent image generation in chat
-                ...(imageModel && { imageModel: imageModel }),
+                // For custom SD models, finalImageModel contains the SD model filename
+                ...(finalImageModel && { imageModel: finalImageModel }),
                 ...(modelId && { modelId: modelId }),
                 imageStyle: imageStyle || 'general',
                 imageVersion: imageVersion || 'sdxl'

@@ -65,6 +65,11 @@
                     <span>{{translations.startChattingNow}}</span>
                 </a>
                 {{#unless user.isTemporary}}
+                    <button class="ig-secondary-btn character-favorite-btn" 
+                            data-chat-id="{{chat._id}}"
+                            title="Add to favorites">
+                        <i class="bi bi-star"></i>
+                    </button>
                     <button class="ig-secondary-btn share-btn">
                         <i class="bi bi-send"></i>
                     </button>
@@ -208,6 +213,7 @@
 
         <!-- Character Profile Scripts (only loaded when chat exists) -->
         <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+        <script src="/js/favorites.js"></script>
         <script src="/js/content-discovery-tracker.js"></script>
         <script src="/js/character-profile-loader.js"></script>
         <script src="/js/character-profile-ui.js"></script>
@@ -281,11 +287,77 @@
                     initializeSharing();
                 }
                 
+                // Initialize favorite button
+                initializeCharacterFavoriteButton(chatId);
+                
                 if (typeof showDashboardFooter === 'function') {
                     showDashboardFooter();
                 }
             }
         });
+        
+        /**
+         * Initialize character favorite button on profile page
+         */
+        function initializeCharacterFavoriteButton(chatId) {
+            if (!chatId || typeof Favorites === 'undefined') {
+                return;
+            }
+            
+            const favoriteBtn = document.querySelector('.character-favorite-btn');
+            if (!favoriteBtn) {
+                return;
+            }
+            
+            // Check if character is already favorited
+            Favorites.checkFavorite(chatId, function(isFavorited) {
+                updateCharacterFavoriteButton(favoriteBtn, isFavorited);
+            });
+            
+            // Add click handler
+            favoriteBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const currentState = favoriteBtn.classList.contains('favorited');
+                
+                // Optimistic update
+                updateCharacterFavoriteButton(favoriteBtn, !currentState);
+                
+                // Toggle favorite
+                Favorites.toggleFavorite(chatId, function(response) {
+                    if (response && response.success) {
+                        updateCharacterFavoriteButton(favoriteBtn, response.isFavorited);
+                    } else {
+                        // Revert on error
+                        updateCharacterFavoriteButton(favoriteBtn, currentState);
+                    }
+                });
+            });
+        }
+        
+        /**
+         * Update character favorite button visual state
+         */
+        function updateCharacterFavoriteButton(button, isFavorited) {
+            const icon = button.querySelector('i');
+            
+            if (isFavorited) {
+                button.classList.add('favorited');
+                button.title = window.translations?.favorite?.removeFavorite || 'Remove from favorites';
+                if (icon) {
+                    icon.classList.remove('bi-star');
+                    icon.classList.add('bi-star-fill');
+                }
+            } else {
+                button.classList.remove('favorited');
+                button.title = window.translations?.favorite?.addFavorite || 'Add to favorites';
+                if (icon) {
+                    icon.classList.remove('bi-star-fill');
+                    icon.classList.add('bi-star');
+                }
+            }
+        }
         </script>
 
     {{else}}
@@ -814,6 +886,8 @@
 {{> dashboard-footer}}
 
 <!-- Character Gallery Scripts -->
+<script src="/js/favorites.js"></script>
+<script src="/js/gallery-like.js"></script>
 <script src="/js/modules/ui-helpers.js"></script>
 
 <script src="/js/modules/popular-chats.js"></script>

@@ -170,6 +170,40 @@ body:has(.ig-profile-header) {
     background: rgba(255, 255, 255, 0.1);
 }
 
+/* Character favorite button - special styling */
+.character-favorite-btn {
+    position: relative;
+}
+
+.character-favorite-btn.favorited {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 193, 7, 0.15) 100%);
+    border-color: rgba(255, 215, 0, 0.5);
+    color: #FFD700;
+}
+
+.character-favorite-btn.favorited i {
+    animation: starPulse 0.5s ease;
+}
+
+.character-favorite-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--ig-text);
+}
+
+.character-favorite-btn.favorited:hover {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.25) 0%, rgba(255, 193, 7, 0.25) 100%);
+    border-color: #FFD700;
+}
+
+@keyframes starPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+}
+
 /* Admin Controls */
 .ig-admin-controls {
     display: flex;

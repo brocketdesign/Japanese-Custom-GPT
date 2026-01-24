@@ -1456,3 +1456,189 @@ html, body {
   border-color: rgba(130, 64, 255, 0.5) !important;
   background: rgba(130, 64, 255, 0.05);
 }
+
+/* ============================================================================
+   CAROUSEL STYLES FOR MULTIPLE IMAGES
+   ============================================================================ */
+
+/* Carousel container within result card */
+.gen-result-media .carousel {
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.gen-result-media .carousel-inner {
+  height: 100%;
+  border-radius: 16px;
+}
+
+.gen-result-media .carousel-item {
+  height: 100%;
+}
+
+.gen-result-media .carousel-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 16px;
+}
+
+/* Carousel controls styling */
+.gen-result-media .carousel-control-prev,
+.gen-result-media .carousel-control-next {
+  width: 40px;
+  height: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.gen-result-media:hover .carousel-control-prev,
+.gen-result-media:hover .carousel-control-next {
+  opacity: 1;
+}
+
+.gen-result-media .carousel-control-prev {
+  left: 10px;
+}
+
+.gen-result-media .carousel-control-next {
+  right: 10px;
+}
+
+.gen-result-media .carousel-control-prev:hover,
+.gen-result-media .carousel-control-next:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+/* Carousel indicators at bottom */
+.gen-result-media .carousel-indicators {
+  bottom: 10px;
+  margin-bottom: 0;
+  z-index: 10;
+}
+
+.gen-result-media .carousel-indicators button {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin: 0 4px;
+  background-color: rgba(255, 255, 255, 0.5);
+  border: none;
+  opacity: 1;
+  transition: all 0.3s ease;
+}
+
+.gen-result-media .carousel-indicators button.active {
+  background-color: #fff;
+  width: 24px;
+  border-radius: 4px;
+}
+
+.gen-result-media .carousel-indicators button.loading-dot {
+  background-color: rgba(255, 255, 255, 0.3);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Preview overlay carousel */
+.gen-preview-content .preview-carousel {
+  width: 100%;
+  height: 100%;
+}
+
+.gen-preview-content .carousel-inner {
+  height: 100%;
+}
+
+.gen-preview-content .carousel-item {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gen-preview-content .carousel-item img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Preview carousel controls */
+.gen-preview-content .carousel-control-prev,
+.gen-preview-content .carousel-control-next {
+  width: 50px;
+  height: 50px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.gen-preview-content .carousel-control-prev {
+  left: 20px;
+}
+
+.gen-preview-content .carousel-control-next {
+  right: 20px;
+}
+
+.gen-preview-content .carousel-control-prev:hover,
+.gen-preview-content .carousel-control-next:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+/* Preview carousel indicators */
+.gen-preview-content .carousel-indicators {
+  bottom: 20px;
+}
+
+.gen-preview-content .carousel-indicators button {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin: 0 6px;
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+.gen-preview-content .carousel-indicators button.active {
+  background-color: #fff;
+  width: 30px;
+  border-radius: 5px;
+}
+
+/* Mobile optimizations for carousel */
+@media (max-width: 768px) {
+  .gen-result-media .carousel-control-prev,
+  .gen-result-media .carousel-control-next {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .gen-preview-content .carousel-control-prev,
+  .gen-preview-content .carousel-control-next {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .gen-preview-content .carousel-control-prev {
+    left: 10px;
+  }
+  
+  .gen-preview-content .carousel-control-next {
+    right: 10px;
+  }
+}

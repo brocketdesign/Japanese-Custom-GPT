@@ -431,6 +431,178 @@ html, body {
 }
 
 /* ============================================================================
+   CAROUSEL - Multiple images display
+   ============================================================================ */
+
+.gen-carousel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.gen-carousel-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.gen-carousel-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gen-carousel-slide.active {
+  opacity: 1;
+  z-index: 1;
+}
+
+.gen-carousel-slide img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  cursor: pointer;
+}
+
+.gen-carousel-controls {
+  position: absolute;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 6px 12px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.gen-carousel-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gen-carousel-btn:hover:not(:disabled) {
+  background: var(--primary-color, #8240FF);
+}
+
+.gen-carousel-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.gen-carousel-btn i {
+  font-size: 14px;
+}
+
+.gen-carousel-counter {
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  min-width: 50px;
+  text-align: center;
+}
+
+.gen-carousel-dots {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 10;
+}
+
+.gen-carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gen-carousel-dot.active {
+  background: var(--primary-color, #8240FF);
+  transform: scale(1.2);
+}
+
+.gen-carousel-dot:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+/* Carousel loading state (while images are still generating) */
+.gen-carousel-loading {
+  position: relative;
+}
+
+.gen-carousel-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 20;
+  backdrop-filter: blur(4px);
+}
+
+.gen-carousel-loading-overlay .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(130, 64, 255, 0.2);
+  border-top-color: var(--primary-color, #8240FF);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.gen-carousel-loading-overlay span {
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Image count badge in meta */
+.image-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(130, 64, 255, 0.2);
+  color: var(--primary-light, #D2B8FF);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+.image-count-badge i {
+  font-size: 10px;
+}
+
+/* ============================================================================
    BOTTOM PROMPT BAR - Fixed, chat input style
    ============================================================================ */
 
@@ -928,6 +1100,67 @@ html, body {
   font-weight: 500;
 }
 
+/* Preview Carousel Navigation */
+.gen-preview-carousel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gen-preview-carousel img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.gen-preview-nav {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 10px 20px;
+  border-radius: 30px;
+  backdrop-filter: blur(10px);
+}
+
+.gen-preview-nav-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gen-preview-nav-btn:hover {
+  background: var(--primary-color, #8240FF);
+  transform: scale(1.1);
+}
+
+.gen-preview-nav-btn i {
+  font-size: 18px;
+}
+
+.gen-preview-counter {
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  min-width: 60px;
+  text-align: center;
+}
+
 /* ============================================================================
    IMAGE/VIDEO UPLOAD PREVIEW
    ============================================================================ */
@@ -1222,4 +1455,190 @@ html, body {
   opacity: 1;
   border-color: rgba(130, 64, 255, 0.5) !important;
   background: rgba(130, 64, 255, 0.05);
+}
+
+/* ============================================================================
+   CAROUSEL STYLES FOR MULTIPLE IMAGES
+   ============================================================================ */
+
+/* Carousel container within result card */
+.gen-result-media .carousel {
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.gen-result-media .carousel-inner {
+  height: 100%;
+  border-radius: 16px;
+}
+
+.gen-result-media .carousel-item {
+  height: 100%;
+}
+
+.gen-result-media .carousel-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 16px;
+}
+
+/* Carousel controls styling */
+.gen-result-media .carousel-control-prev,
+.gen-result-media .carousel-control-next {
+  width: 40px;
+  height: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.gen-result-media:hover .carousel-control-prev,
+.gen-result-media:hover .carousel-control-next {
+  opacity: 1;
+}
+
+.gen-result-media .carousel-control-prev {
+  left: 10px;
+}
+
+.gen-result-media .carousel-control-next {
+  right: 10px;
+}
+
+.gen-result-media .carousel-control-prev:hover,
+.gen-result-media .carousel-control-next:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+/* Carousel indicators at bottom */
+.gen-result-media .carousel-indicators {
+  bottom: 10px;
+  margin-bottom: 0;
+  z-index: 10;
+}
+
+.gen-result-media .carousel-indicators button {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin: 0 4px;
+  background-color: rgba(255, 255, 255, 0.5);
+  border: none;
+  opacity: 1;
+  transition: all 0.3s ease;
+}
+
+.gen-result-media .carousel-indicators button.active {
+  background-color: #fff;
+  width: 24px;
+  border-radius: 4px;
+}
+
+.gen-result-media .carousel-indicators button.loading-dot {
+  background-color: rgba(255, 255, 255, 0.3);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Preview overlay carousel */
+.gen-preview-content .preview-carousel {
+  width: 100%;
+  height: 100%;
+}
+
+.gen-preview-content .carousel-inner {
+  height: 100%;
+}
+
+.gen-preview-content .carousel-item {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gen-preview-content .carousel-item img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Preview carousel controls */
+.gen-preview-content .carousel-control-prev,
+.gen-preview-content .carousel-control-next {
+  width: 50px;
+  height: 50px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.gen-preview-content .carousel-control-prev {
+  left: 20px;
+}
+
+.gen-preview-content .carousel-control-next {
+  right: 20px;
+}
+
+.gen-preview-content .carousel-control-prev:hover,
+.gen-preview-content .carousel-control-next:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+/* Preview carousel indicators */
+.gen-preview-content .carousel-indicators {
+  bottom: 20px;
+}
+
+.gen-preview-content .carousel-indicators button {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin: 0 6px;
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+.gen-preview-content .carousel-indicators button.active {
+  background-color: #fff;
+  width: 30px;
+  border-radius: 5px;
+}
+
+/* Mobile optimizations for carousel */
+@media (max-width: 768px) {
+  .gen-result-media .carousel-control-prev,
+  .gen-result-media .carousel-control-next {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .gen-preview-content .carousel-control-prev,
+  .gen-preview-content .carousel-control-next {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .gen-preview-content .carousel-control-prev {
+    left: 10px;
+  }
+  
+  .gen-preview-content .carousel-control-next {
+    right: 10px;
+  }
 }

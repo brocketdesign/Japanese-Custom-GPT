@@ -664,41 +664,56 @@ class GenerationDashboard {
       
       const data = await response.json();
       
-      console.log('[GenerationDashboard] API Response:', JSON.stringify(data, null, 2));
+      console.log('[GenerationDashboard] 📨 API Response received');
+      console.log('[GenerationDashboard] 📨 Tasks count:', data.tasks?.length || 0);
+      
+      // Log detailed task info for debugging
+      if (data.tasks) {
+        data.tasks.forEach((task, idx) => {
+          console.log(`[GenerationDashboard] 📨 Task ${idx + 1}:`, {
+            taskId: task.taskId || task.task_id,
+            status: task.status,
+            async: task.async,
+            imagesCount: task.images?.length || 0,
+            imagesUrls: task.images?.map(img => (img?.imageUrl || img?.image_url || img?.url || 'UNKNOWN').substring(0, 50) + '...')
+          });
+        });
+      }
       
       if (!data.success && !data.tasks) {
         throw new Error(data.error || 'Generation failed');
       }
       
-      // Handle tasks - process all tasks for multiple image generation
+      // Handle tasks - ALL tasks should contribute to ONE result with carousel
       if (data.tasks && data.tasks.length > 0) {
-        console.log(`[GenerationDashboard] Processing ${data.tasks.length} task(s)`);
+        const totalTasks = data.tasks.length;
+        console.log(`[GenerationDashboard] 🔄 Processing ${totalTasks} task(s) into single carousel result`);
         
-        // For the first task, update the existing pending result
-        const firstTask = data.tasks[0];
-        console.log('[GenerationDashboard] First task:', {
-          taskId: firstTask.taskId || firstTask.task_id,
-          status: firstTask.status,
-          async: firstTask.async,
-          imagesCount: firstTask.images?.length || 0
-        });
+        // Initialize the pending result to track all tasks
+        pendingResult.expectedImageCount = totalTasks;
+        pendingResult.completedTaskCount = 0;
+        pendingResult.taskIds = [];
+        pendingResult.mediaUrls = [];
         
-        this.processTask(firstTask, pendingResult);
-        
-        // For additional tasks (when generating multiple images), create new result entries
-        for (let i = 1; i < data.tasks.length; i++) {
+        // Process all tasks - they all contribute to the same result
+        for (let i = 0; i < totalTasks; i++) {
           const task = data.tasks[i];
-          console.log(`[GenerationDashboard] Additional task ${i + 1}:`, {
-            taskId: task.taskId || task.task_id,
+          const taskId = task.taskId || task.task_id;
+          
+          console.log(`[GenerationDashboard] 🔄 Task ${i + 1}/${totalTasks}:`, {
+            taskId: taskId,
             status: task.status,
             async: task.async,
             imagesCount: task.images?.length || 0
           });
           
-          // Create a new result for this task and add it to the feed
-          const additionalResult = this.createPendingResult(prompt);
-          this.addResultToFeed(additionalResult);
-          this.processTask(task, additionalResult);
+          // Track this task ID
+          if (taskId) {
+            pendingResult.taskIds.push(taskId);
+          }
+          
+          // Process the task - it will add images to pendingResult
+          this.processTaskForCarousel(task, pendingResult);
         }
       } else if (data.result) {
         // Immediate result
@@ -725,38 +740,195 @@ class GenerationDashboard {
   }
   
   /**
-   * Process a single task from the generation response
+   * Process a single task and add its images to the shared result (for carousel)
+   * This handles both sync completed tasks and async tasks that need polling
    * @param {Object} task - Task object from backend
-   * @param {Object} result - Result object to update
+   * @param {Object} result - Shared result object to add images to
    */
-  processTask(task, result) {
+  processTaskForCarousel(task, result) {
     // Check if task is already completed (sync models like merge-face-segmind)
     if (task.status === 'completed' && task.images && task.images.length > 0) {
-      console.log('[GenerationDashboard] Sync task already completed with images:', task.images);
-      const imageUrl = task.images[0]?.imageUrl || task.images[0]?.image_url || task.images[0]?.url || task.images[0];
-      console.log('[GenerationDashboard] Extracted imageUrl:', imageUrl);
-      if (imageUrl) {
-        this.updateResultWithData(result.id, {
-          status: 'completed',
-          imageUrl: imageUrl
-        });
-      } else {
-        console.error('[GenerationDashboard] Sync task completed but no imageUrl found in:', task.images[0]);
-        this.updateResultWithData(result.id, { status: 'failed' });
-      }
+      console.log('[GenerationDashboard] 🖼️ Sync task completed with', task.images.length, 'image(s)');
+      
+      // Extract ALL image URLs from the task
+      const imageUrls = task.images.map((img, idx) => {
+        const url = img?.imageUrl || img?.image_url || img?.url || (typeof img === 'string' ? img : null);
+        console.log(`[GenerationDashboard] 🖼️ Sync Image ${idx + 1} URL:`, url ? url.substring(0, 80) + '...' : 'NOT FOUND');
+        return url;
+      }).filter(url => url);
+      
+      // Add images to the shared result
+      this.addImagesToResult(result.id, imageUrls);
+      
     } else if (task.status === 'completed') {
-      // Task completed but no images - might be an error
-      console.log('[GenerationDashboard] Task completed but no images:', task);
-      this.updateResultWithData(result.id, { status: 'failed' });
+      // Task completed but no images - count as completed but with no contribution
+      console.log('[GenerationDashboard] ⚠️ Task completed but no images:', task);
+      result.completedTaskCount = (result.completedTaskCount || 0) + 1;
+      this.checkAndFinalizeResult(result);
+      
     } else if (task.status === 'failed') {
-      // Task failed on backend
-      console.log('[GenerationDashboard] Task failed:', task.error || 'Unknown error');
-      this.updateResultWithData(result.id, { status: 'failed' });
+      // Task failed - count as completed (failed)
+      console.log('[GenerationDashboard] ❌ Task failed:', task.error || 'Unknown error');
+      result.completedTaskCount = (result.completedTaskCount || 0) + 1;
+      this.checkAndFinalizeResult(result);
+      
     } else {
       // Async task - need to poll for result
-      result.taskId = task.taskId || task.task_id;
-      this.startPollingTask(result);
+      const taskId = task.taskId || task.task_id;
+      console.log('[GenerationDashboard] ⏳ Starting async poll for task:', taskId);
+      this.startPollingTaskForCarousel(taskId, result);
     }
+  }
+  
+  /**
+   * Add images to a result and update the UI
+   * @param {string} resultId - Result ID
+   * @param {Array} imageUrls - Array of image URLs to add
+   */
+  addImagesToResult(resultId, imageUrls) {
+    const result = this.state.results.find(r => r.id === resultId);
+    if (!result) return;
+    
+    // Initialize mediaUrls array if not exists
+    if (!result.mediaUrls) {
+      result.mediaUrls = [];
+    }
+    
+    // Add new images
+    result.mediaUrls.push(...imageUrls);
+    
+    // Set primary mediaUrl for backward compatibility
+    if (!result.mediaUrl && result.mediaUrls.length > 0) {
+      result.mediaUrl = result.mediaUrls[0];
+    }
+    
+    // Increment completed task count
+    result.completedTaskCount = (result.completedTaskCount || 0) + 1;
+    
+    console.log(`[GenerationDashboard] 📊 Added ${imageUrls.length} images to result ${resultId}`);
+    console.log(`[GenerationDashboard] 📊 Total images now: ${result.mediaUrls.length}`);
+    console.log(`[GenerationDashboard] 📊 Tasks completed: ${result.completedTaskCount}/${result.expectedImageCount || '?'}`);
+    
+    // Check if all tasks are done
+    this.checkAndFinalizeResult(result);
+  }
+  
+  /**
+   * Check if all tasks are complete and finalize the result
+   * @param {Object} result - Result object
+   */
+  checkAndFinalizeResult(result) {
+    const expectedCount = result.expectedImageCount || 1;
+    const completedCount = result.completedTaskCount || 0;
+    
+    console.log(`[GenerationDashboard] 🔍 Checking result completion: ${completedCount}/${expectedCount}`);
+    
+    // Update status based on completion
+    if (completedCount >= expectedCount) {
+      // All tasks complete
+      if (result.mediaUrls && result.mediaUrls.length > 0) {
+        result.status = 'completed';
+        console.log(`[GenerationDashboard] ✅ All tasks complete! Total images: ${result.mediaUrls.length}`);
+      } else {
+        result.status = 'failed';
+        console.log('[GenerationDashboard] ❌ All tasks complete but no images received');
+      }
+    } else {
+      // Still waiting for more tasks
+      result.status = 'pending';
+    }
+    
+    // Log for debugging
+    console.log(`[GenerationDashboard] 📊 IMAGES RECEIVED: ${result.mediaUrls?.length || 0}`);
+    console.log(`[GenerationDashboard] 📊 IMAGES TO DISPLAY: ${result.mediaUrls?.length || (result.mediaUrl ? 1 : 0)}`);
+    
+    // Update card in DOM
+    const card = document.getElementById(`result-${result.id}`);
+    if (card) {
+      const newCard = this.createResultCard(result);
+      card.replaceWith(newCard);
+    }
+    
+    // Save to localStorage if completed
+    if (result.status === 'completed') {
+      this.saveResults();
+    }
+  }
+  
+  /**
+   * Start polling for an async task that will add images to a shared carousel result
+   * @param {string} taskId - Task ID to poll
+   * @param {Object} result - Shared result object to add images to
+   */
+  startPollingTaskForCarousel(taskId, result) {
+    if (!taskId) {
+      console.log('[GenerationDashboard] startPollingTaskForCarousel: No taskId provided');
+      result.completedTaskCount = (result.completedTaskCount || 0) + 1;
+      this.checkAndFinalizeResult(result);
+      return;
+    }
+    
+    // Skip polling for sync tasks (they already have results)
+    if (taskId.startsWith('sync-')) {
+      console.log('[GenerationDashboard] Skipping poll for sync task:', taskId);
+      return;
+    }
+    
+    console.log('[GenerationDashboard] Starting carousel poll for task:', taskId);
+    
+    const pollEndpoint = this.state.mode === 'image'
+      ? '/dashboard/image/status'
+      : '/dashboard/video/status';
+    
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`${pollEndpoint}/${taskId}`);
+        const data = await response.json();
+        
+        console.log('[GenerationDashboard] 📡 Carousel poll response for', taskId, '- status:', data.status);
+        
+        if (data.status === 'completed' || data.status === 'TASK_STATUS_SUCCEED') {
+          clearInterval(interval);
+          this.pollIntervals.delete(taskId);
+          
+          // Extract ALL image URLs
+          const rawImages = data.images || [];
+          console.log('[GenerationDashboard] 🖼️ Async task completed with', rawImages.length, 'image(s)');
+          
+          const imageUrls = rawImages.map((img, idx) => {
+            const url = img?.imageUrl || img?.image_url || img?.url || (typeof img === 'string' ? img : null);
+            console.log(`[GenerationDashboard] 🖼️ Async Image ${idx + 1} URL:`, url ? url.substring(0, 80) + '...' : 'NOT FOUND');
+            return url;
+          }).filter(url => url);
+          
+          // If no images from array, try direct imageUrl
+          if (imageUrls.length === 0 && data.imageUrl) {
+            imageUrls.push(data.imageUrl);
+          }
+          
+          console.log('[GenerationDashboard] ✅ Task', taskId, 'completed with', imageUrls.length, 'valid URLs');
+          
+          // Add images to the shared result
+          this.addImagesToResult(result.id, imageUrls);
+          
+        } else if (data.status === 'failed' || data.status === 'TASK_STATUS_FAILED') {
+          clearInterval(interval);
+          this.pollIntervals.delete(taskId);
+          console.log('[GenerationDashboard] ❌ Async task', taskId, 'failed:', data.error || 'Unknown error');
+          
+          // Mark this task as completed (failed)
+          result.completedTaskCount = (result.completedTaskCount || 0) + 1;
+          this.checkAndFinalizeResult(result);
+          
+        } else {
+          console.log('[GenerationDashboard] ⏳ Task', taskId, 'still processing, progress:', data.progress || 'unknown');
+        }
+      } catch (error) {
+        console.error('[GenerationDashboard] ❌ Polling error for task', taskId, ':', error);
+      }
+    }, 5000); // Poll every 5 seconds
+    
+    this.pollIntervals.set(taskId, interval);
   }
   
   buildGenerationPayload(prompt) {
@@ -860,12 +1032,16 @@ class GenerationDashboard {
     const result = {
       id: Date.now().toString(),
       taskId: null,
+      taskIds: [],           // Track all task IDs for multi-image generation
       prompt,
       status: 'pending',
       mode: this.state.mode,
       model: this.state.selectedModel?.name || 'Unknown',
       createdAt: new Date().toISOString(),
-      mediaUrl: null
+      mediaUrl: null,
+      mediaUrls: [],         // Array of all image URLs for carousel
+      expectedImageCount: 1, // How many tasks/images to expect
+      completedTaskCount: 0  // How many tasks have completed
     };
     
     this.state.results.unshift(result);
@@ -902,23 +1078,109 @@ class GenerationDashboard {
     
     const isImage = result.mode === 'image';
     
-    card.innerHTML = `
-      <div class="gen-result-media ${result.status === 'pending' ? 'loading' : ''}" data-result-id="${result.id}">
-        ${result.status === 'pending' ? `
+    // Check if we have multiple images for carousel
+    const hasMultipleImages = result.mediaUrls && result.mediaUrls.length > 1;
+    const imageCount = result.mediaUrls?.length || (result.mediaUrl ? 1 : 0);
+    const expectedCount = result.expectedImageCount || 1;
+    const completedCount = result.completedTaskCount || 0;
+    
+    // Debug logging for carousel display
+    console.log(`[GenerationDashboard] 🎨 createResultCard for ${result.id}:`, {
+      hasMultipleImages,
+      imageCount,
+      expectedCount,
+      completedCount,
+      status: result.status
+    });
+    
+    // Build media content - carousel if multiple images, single if one
+    let mediaContent = '';
+    if (result.status === 'pending') {
+      // Show progress if expecting multiple images
+      const progressText = expectedCount > 1 
+        ? `Generating ${imageCount}/${expectedCount} images...`
+        : 'Generating...';
+      
+      // If we have some images already, show a partial carousel with loading indicator
+      if (imageCount > 0 && isImage) {
+        mediaContent = `
+          <div class="gen-carousel gen-carousel-loading" data-result-id="${result.id}">
+            <div class="gen-carousel-inner">
+              ${result.mediaUrls.map((url, idx) => `
+                <div class="gen-carousel-slide ${idx === 0 ? 'active' : ''}" data-index="${idx}">
+                  <img src="${url}" alt="Generated image ${idx + 1}" loading="lazy">
+                </div>
+              `).join('')}
+            </div>
+            <div class="gen-carousel-controls">
+              <button class="gen-carousel-btn prev" onclick="genDashboard.carouselPrev('${result.id}')" ${imageCount <= 1 ? 'disabled' : ''}>
+                <i class="bi bi-chevron-left"></i>
+              </button>
+              <span class="gen-carousel-counter">${imageCount > 0 ? '1' : '0'} / ${expectedCount}</span>
+              <button class="gen-carousel-btn next" onclick="genDashboard.carouselNext('${result.id}')" ${imageCount <= 1 ? 'disabled' : ''}>
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </div>
+            <div class="gen-carousel-loading-overlay">
+              <div class="spinner"></div>
+              <span>${progressText}</span>
+            </div>
+          </div>
+        `;
+      } else {
+        mediaContent = `
           <div class="loading-indicator">
             <div class="spinner"></div>
-            <span>Generating...</span>
+            <span>${progressText}</span>
           </div>
-        ` : result.mediaUrl ? (isImage ? `
-          <img src="${result.mediaUrl}" alt="Generated image" loading="lazy">
-        ` : `
-          <video src="${result.mediaUrl}" preload="metadata" muted loop></video>
-        `) : `
-          <div class="loading-indicator">
-            <i class="bi bi-exclamation-triangle" style="font-size: 32px; color: #f87171;"></i>
-            <span>Generation failed</span>
+        `;
+      }
+    } else if (hasMultipleImages && isImage) {
+      // Carousel for multiple images
+      console.log(`[GenerationDashboard] 🎠 Creating carousel with ${result.mediaUrls.length} images`);
+      mediaContent = `
+        <div class="gen-carousel" data-result-id="${result.id}">
+          <div class="gen-carousel-inner">
+            ${result.mediaUrls.map((url, idx) => `
+              <div class="gen-carousel-slide ${idx === 0 ? 'active' : ''}" data-index="${idx}">
+                <img src="${url}" alt="Generated image ${idx + 1}" loading="lazy">
+              </div>
+            `).join('')}
           </div>
-        `}
+          <div class="gen-carousel-controls">
+            <button class="gen-carousel-btn prev" onclick="genDashboard.carouselPrev('${result.id}')" ${result.mediaUrls.length <= 1 ? 'disabled' : ''}>
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <span class="gen-carousel-counter">1 / ${result.mediaUrls.length}</span>
+            <button class="gen-carousel-btn next" onclick="genDashboard.carouselNext('${result.id}')" ${result.mediaUrls.length <= 1 ? 'disabled' : ''}>
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+          <div class="gen-carousel-dots">
+            ${result.mediaUrls.map((_, idx) => `
+              <span class="gen-carousel-dot ${idx === 0 ? 'active' : ''}" data-index="${idx}" onclick="genDashboard.carouselGoTo('${result.id}', ${idx})"></span>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    } else if (result.mediaUrl) {
+      // Single image or video
+      mediaContent = isImage 
+        ? `<img src="${result.mediaUrl}" alt="Generated image" loading="lazy">`
+        : `<video src="${result.mediaUrl}" preload="metadata" muted loop></video>`;
+    } else {
+      // Failed state
+      mediaContent = `
+        <div class="loading-indicator">
+          <i class="bi bi-exclamation-triangle" style="font-size: 32px; color: #f87171;"></i>
+          <span>Generation failed</span>
+        </div>
+      `;
+    }
+    
+    card.innerHTML = `
+      <div class="gen-result-media ${result.status === 'pending' ? 'loading' : ''}" data-result-id="${result.id}">
+        ${mediaContent}
       </div>
       <div class="gen-result-footer">
         <div class="gen-result-info">
@@ -926,6 +1188,7 @@ class GenerationDashboard {
           <div class="meta">
             <span class="gen-status-badge ${result.status}">${this.getStatusLabel(result.status)}</span>
             <span>${result.model}</span>
+            ${imageCount > 1 ? `<span class="image-count-badge"><i class="bi bi-images"></i> ${imageCount}</span>` : ''}
             <span>${this.formatTimeAgo(result.createdAt)}</span>
           </div>
         </div>
@@ -945,13 +1208,92 @@ class GenerationDashboard {
       </div>
     `;
     
-    // Add click handler for media preview
+    // Add click handler for media preview (not on carousel controls)
     const media = card.querySelector('.gen-result-media');
-    if (media && result.status === 'completed') {
+    if (media && result.status === 'completed' && !hasMultipleImages) {
       media.addEventListener('click', () => this.openPreview(result.id));
     }
     
+    // For carousel, add click on images only
+    if (hasMultipleImages) {
+      const slides = card.querySelectorAll('.gen-carousel-slide img');
+      slides.forEach(img => {
+        img.addEventListener('click', () => this.openPreview(result.id));
+      });
+    }
+    
     return card;
+  }
+  
+  /**
+   * Carousel navigation - go to previous slide
+   */
+  carouselPrev(resultId) {
+    const carousel = document.querySelector(`#result-${resultId} .gen-carousel`);
+    if (!carousel) return;
+    
+    const slides = carousel.querySelectorAll('.gen-carousel-slide');
+    const dots = carousel.querySelectorAll('.gen-carousel-dot');
+    const counter = carousel.querySelector('.gen-carousel-counter');
+    
+    let currentIndex = Array.from(slides).findIndex(s => s.classList.contains('active'));
+    currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+    
+    slides.forEach((s, i) => s.classList.toggle('active', i === currentIndex));
+    dots.forEach((d, i) => d.classList.toggle('active', i === currentIndex));
+    if (counter) counter.textContent = `${currentIndex + 1} / ${slides.length}`;
+    
+    console.log(`[GenerationDashboard] 🎠 Carousel prev: now showing image ${currentIndex + 1}/${slides.length}`);
+  }
+  
+  /**
+   * Carousel navigation - go to next slide
+   */
+  carouselNext(resultId) {
+    const carousel = document.querySelector(`#result-${resultId} .gen-carousel`);
+    if (!carousel) return;
+    
+    const slides = carousel.querySelectorAll('.gen-carousel-slide');
+    const dots = carousel.querySelectorAll('.gen-carousel-dot');
+    const counter = carousel.querySelector('.gen-carousel-counter');
+    
+    let currentIndex = Array.from(slides).findIndex(s => s.classList.contains('active'));
+    currentIndex = (currentIndex + 1) % slides.length;
+    
+    slides.forEach((s, i) => s.classList.toggle('active', i === currentIndex));
+    dots.forEach((d, i) => d.classList.toggle('active', i === currentIndex));
+    if (counter) counter.textContent = `${currentIndex + 1} / ${slides.length}`;
+    
+    console.log(`[GenerationDashboard] 🎠 Carousel next: now showing image ${currentIndex + 1}/${slides.length}`);
+  }
+  
+  /**
+   * Carousel navigation - go to specific slide
+   */
+  carouselGoTo(resultId, index) {
+    const carousel = document.querySelector(`#result-${resultId} .gen-carousel`);
+    if (!carousel) return;
+    
+    const slides = carousel.querySelectorAll('.gen-carousel-slide');
+    const dots = carousel.querySelectorAll('.gen-carousel-dot');
+    const counter = carousel.querySelector('.gen-carousel-counter');
+    
+    slides.forEach((s, i) => s.classList.toggle('active', i === index));
+    dots.forEach((d, i) => d.classList.toggle('active', i === index));
+    if (counter) counter.textContent = `${index + 1} / ${slides.length}`;
+    
+    console.log(`[GenerationDashboard] 🎠 Carousel goTo: now showing image ${index + 1}/${slides.length}`);
+  }
+  
+  /**
+   * Get current carousel index for a result
+   */
+  getCurrentCarouselIndex(resultId) {
+    const carousel = document.querySelector(`#result-${resultId} .gen-carousel`);
+    if (!carousel) return 0;
+    
+    const slides = carousel.querySelectorAll('.gen-carousel-slide');
+    return Array.from(slides).findIndex(s => s.classList.contains('active')) || 0;
   }
   
   updateResultWithData(resultId, data) {
@@ -961,12 +1303,20 @@ class GenerationDashboard {
     result.status = data.status || 'completed';
     result.mediaUrl = data.imageUrl || data.videoUrl || data.url;
     
-    console.log('[GenerationDashboard] updateResultWithData:', {
+    // Store all image URLs for carousel support
+    result.mediaUrls = data.imageUrls || (result.mediaUrl ? [result.mediaUrl] : []);
+    
+    console.log('[GenerationDashboard] 📊 updateResultWithData:', {
       resultId,
       status: result.status,
       mediaUrl: result.mediaUrl,
-      dataReceived: data
+      mediaUrlsCount: result.mediaUrls?.length || 0,
+      mediaUrls: result.mediaUrls
     });
+    
+    // Log for debugging carousel display issue
+    console.log(`[GenerationDashboard] 📊 IMAGES RECEIVED: ${result.mediaUrls?.length || 0}`);
+    console.log(`[GenerationDashboard] 📊 IMAGES TO DISPLAY: ${result.mediaUrls?.length || (result.mediaUrl ? 1 : 0)}`);
     
     // Update card in DOM
     const card = document.getElementById(`result-${resultId}`);
@@ -1007,31 +1357,45 @@ class GenerationDashboard {
         const response = await fetch(`${pollEndpoint}/${taskId}`);
         const data = await response.json();
         
-        console.log('[GenerationDashboard] Poll response for', taskId, ':', data);
+        console.log('[GenerationDashboard] 📡 Poll response for', taskId, '- status:', data.status);
         
         if (data.status === 'completed' || data.status === 'TASK_STATUS_SUCCEED') {
           clearInterval(interval);
           this.pollIntervals.delete(taskId);
           
-          // Extract image URL - backend returns images array with imageUrl property
-          const imageUrl = data.imageUrl || data.images?.[0]?.imageUrl || data.images?.[0]?.image_url || data.images?.[0]?.url;
+          // Extract ALL image URLs - backend returns images array with imageUrl property
+          const rawImages = data.images || [];
+          console.log('[GenerationDashboard] 🖼️ Async task completed with', rawImages.length, 'image(s)');
+          console.log('[GenerationDashboard] 🖼️ Raw images data:', JSON.stringify(rawImages, null, 2));
+          
+          const imageUrls = rawImages.map((img, idx) => {
+            const url = img?.imageUrl || img?.image_url || img?.url || (typeof img === 'string' ? img : null);
+            console.log(`[GenerationDashboard] 🖼️ Async Image ${idx + 1} URL:`, url ? url.substring(0, 80) + '...' : 'NOT FOUND');
+            return url;
+          }).filter(url => url);
+          
+          const imageUrl = data.imageUrl || imageUrls[0];
           const videoUrl = data.videoUrl || data.videos?.[0]?.videoUrl || data.videos?.[0]?.url;
           
-          console.log('[GenerationDashboard] Task completed, imageUrl:', imageUrl);
-          console.log('[GenerationDashboard] Raw images data:', data.images);
+          console.log('[GenerationDashboard] ✅ Task completed - Total valid URLs:', imageUrls.length);
+          console.log('[GenerationDashboard] ✅ Primary imageUrl:', imageUrl ? imageUrl.substring(0, 80) + '...' : 'NONE');
           
           this.updateResultWithData(result.id, {
             status: 'completed',
             imageUrl: imageUrl,
+            imageUrls: imageUrls.length > 0 ? imageUrls : (imageUrl ? [imageUrl] : []),
             videoUrl: videoUrl
           });
         } else if (data.status === 'failed' || data.status === 'TASK_STATUS_FAILED') {
           clearInterval(interval);
           this.pollIntervals.delete(taskId);
+          console.log('[GenerationDashboard] ❌ Async task failed:', data.error || 'Unknown error');
           this.updateResultWithData(result.id, { status: 'failed' });
+        } else {
+          console.log('[GenerationDashboard] ⏳ Task still processing, progress:', data.progress || 'unknown');
         }
       } catch (error) {
-        console.error('[GenerationDashboard] Polling error:', error);
+        console.error('[GenerationDashboard] ❌ Polling error:', error);
       }
     }, 5000); // Poll every 5 seconds
     
@@ -1279,11 +1643,39 @@ class GenerationDashboard {
     // Store current preview ID for action buttons in template
     this._currentPreviewId = resultId;
     this._currentPreviewResult = result;
+    this._previewImageIndex = this.getCurrentCarouselIndex(resultId) || 0;
     
     const isImage = result.mode === 'image';
-    content.innerHTML = isImage
-      ? `<img src="${result.mediaUrl}" alt="Preview">`
-      : `<video src="${result.mediaUrl}" controls autoplay></video>`;
+    const hasMultipleImages = result.mediaUrls && result.mediaUrls.length > 1;
+    
+    console.log(`[GenerationDashboard] 🔍 openPreview for ${resultId}:`, {
+      hasMultipleImages,
+      imageCount: result.mediaUrls?.length || 1,
+      currentIndex: this._previewImageIndex
+    });
+    
+    if (hasMultipleImages && isImage) {
+      // Show carousel in preview
+      const currentUrl = result.mediaUrls[this._previewImageIndex] || result.mediaUrl;
+      content.innerHTML = `
+        <div class="gen-preview-carousel">
+          <img src="${currentUrl}" alt="Preview">
+          <div class="gen-preview-nav">
+            <button class="gen-preview-nav-btn prev" onclick="genDashboard.previewPrev()">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <span class="gen-preview-counter">${this._previewImageIndex + 1} / ${result.mediaUrls.length}</span>
+            <button class="gen-preview-nav-btn next" onclick="genDashboard.previewNext()">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    } else {
+      content.innerHTML = isImage
+        ? `<img src="${result.mediaUrl}" alt="Preview">`
+        : `<video src="${result.mediaUrl}" controls autoplay></video>`;
+    }
     
     // Update footer with appropriate action buttons
     this.updatePreviewFooter(result);
@@ -1299,6 +1691,51 @@ class GenerationDashboard {
     if (closeBtn) {
       closeBtn.onclick = () => this.closePreview();
     }
+  }
+  
+  /**
+   * Navigate to previous image in preview carousel
+   */
+  previewPrev() {
+    const result = this._currentPreviewResult;
+    if (!result || !result.mediaUrls || result.mediaUrls.length <= 1) return;
+    
+    this._previewImageIndex = (this._previewImageIndex - 1 + result.mediaUrls.length) % result.mediaUrls.length;
+    this.updatePreviewImage();
+  }
+  
+  /**
+   * Navigate to next image in preview carousel
+   */
+  previewNext() {
+    const result = this._currentPreviewResult;
+    if (!result || !result.mediaUrls || result.mediaUrls.length <= 1) return;
+    
+    this._previewImageIndex = (this._previewImageIndex + 1) % result.mediaUrls.length;
+    this.updatePreviewImage();
+  }
+  
+  /**
+   * Update the preview image based on current index
+   */
+  updatePreviewImage() {
+    const result = this._currentPreviewResult;
+    if (!result || !result.mediaUrls) return;
+    
+    const content = this.elements.previewOverlay?.querySelector('.gen-preview-content');
+    if (!content) return;
+    
+    const img = content.querySelector('img');
+    const counter = content.querySelector('.gen-preview-counter');
+    
+    if (img) {
+      img.src = result.mediaUrls[this._previewImageIndex];
+    }
+    if (counter) {
+      counter.textContent = `${this._previewImageIndex + 1} / ${result.mediaUrls.length}`;
+    }
+    
+    console.log(`[GenerationDashboard] 🔍 Preview showing image ${this._previewImageIndex + 1}/${result.mediaUrls.length}`);
   }
   
   /**
@@ -1357,9 +1794,20 @@ class GenerationDashboard {
     const result = this.state.results.find(r => r.id === resultId);
     if (!result || !result.mediaUrl) return;
     
+    // If in preview mode with multiple images, download the current one
+    let downloadUrl = result.mediaUrl;
+    let imageIndex = 0;
+    
+    if (result.mediaUrls && result.mediaUrls.length > 1 && this._currentPreviewResult?.id === resultId) {
+      imageIndex = this._previewImageIndex || 0;
+      downloadUrl = result.mediaUrls[imageIndex] || result.mediaUrl;
+    }
+    
+    console.log(`[GenerationDashboard] 📥 Downloading image ${imageIndex + 1}:`, downloadUrl.substring(0, 80) + '...');
+    
     const link = document.createElement('a');
-    link.href = result.mediaUrl;
-    link.download = `generation-${result.id}.${result.mode === 'image' ? 'png' : 'mp4'}`;
+    link.href = downloadUrl;
+    link.download = `generation-${result.id}${result.mediaUrls?.length > 1 ? `-${imageIndex + 1}` : ''}.${result.mode === 'image' ? 'png' : 'mp4'}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

@@ -113,6 +113,18 @@
         <div class="tab-content">
             <!-- Images Tab -->
             <div id="images-tab" class="tab-pane active">
+                <!-- SFW/NSFW Toggle -->
+                <div class="content-type-toggle" id="contentTypeToggle">
+                    <button class="content-type-btn active" data-type="SFW">
+                        <i class="bi bi-shield-check"></i>
+                        <span>SFW</span>
+                    </button>
+                    <button class="content-type-btn" data-type="NSFW">
+                        <i class="bi bi-eye-slash"></i>
+                        <span>NSFW</span>
+                    </button>
+                </div>
+                
                 <div class="media-grid" id="imagesGrid">
                     <!-- Loading state -->
                     <div class="loading-grid">
@@ -266,7 +278,17 @@
                     currentChatId: chatId,
                     imagesLoading: false,
                     videosLoading: false,
-                    videosLoaded: false
+                    videosLoaded: false,
+                    // Separate pagination state for SFW and NSFW
+                    contentType: 'SFW', // default to SFW
+                    sfwPagination: {
+                        currentPage: 0,
+                        totalPages: 0
+                    },
+                    nsfwPagination: {
+                        currentPage: 0,
+                        totalPages: 0
+                    }
                 };
                 
                 console.log('[CharacterProfile] Initializing profile for chatId:', chatId);
@@ -277,6 +299,12 @@
                     initializeTabs();
                 } else {
                     console.error('[CharacterProfile] initializeTabs function not found!');
+                }
+                
+                // Initialize content type toggle
+                if (typeof initializeContentTypeToggle === 'function') {
+                    console.log('[CharacterProfile] Calling initializeContentTypeToggle()');
+                    initializeContentTypeToggle();
                 }
                 
                 if (typeof loadCharacterData === 'function') {

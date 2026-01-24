@@ -1276,7 +1276,8 @@ function addLoadMoreButton(type) {
     
     btn.addEventListener('click', function() {
         if (type === 'images') {
-            loadMoreCharacterImages(window.characterProfile.currentChatId);
+            const contentType = window.characterProfile.contentType || 'SFW';
+            loadMoreCharacterImages(window.characterProfile.currentChatId, contentType);
         } else {
             loadMoreCharacterVideos(window.characterProfile.currentChatId);
         }

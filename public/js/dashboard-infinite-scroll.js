@@ -74,13 +74,23 @@ function getGalleryConfig(type) {
  * @param {boolean} isModal - Whether loading in modal context
  * @returns {Promise}
  */
-window.loadChatImages = function(chatId, page = 1, reload = false, isModal = false) {
+window.loadChatImages = function(chatId, page = 1, reload = false, isModal = false, contentType = null) {
     const onCharacterPage = !!document.querySelector('#characterProfilePage');
     if (!onCharacterPage && !validateChatIdWithSession(chatId)) {
         console.warn(`[loadChatImages] Chat ID ${chatId} does not match session storage`);
         return Promise.resolve([]);
     }
-    return loadImages('chat', chatId, page, reload, isModal, `/chat/${chatId}/images`, onCharacterPage, 'image');
+    
+    // Build endpoint with content_type if provided
+    let endpoint = `/chat/${chatId}/images`;
+    if (contentType) {
+        endpoint += `?content_type=${contentType}`;
+    }
+    
+    // Update cache key to include content type if on character page
+    const cacheKeySuffix = onCharacterPage && contentType ? `_${contentType}` : '';
+    
+    return loadImages('chat', chatId, page, reload, isModal, endpoint, onCharacterPage, 'image', cacheKeySuffix);
 };
 
 /**
@@ -135,10 +145,10 @@ function validateChatIdWithSession(chatId) {
 /**
  * Generic function to load images with infinite scroll
  */
-function loadImages(type, id, page = 1, reload = false, isModal = false, endpoint, onCharacterPage = false, mediaType = 'image') {
+function loadImages(type, id, page = 1, reload = false, isModal = false, endpoint, onCharacterPage = false, mediaType = 'image', cacheKeySuffix = '') {
 
     const manager = window.chatImageManager;
-    const cacheKey = `${type}_${id}`;
+    const cacheKey = `${type}_${id}${cacheKeySuffix}`;
     const config = getGalleryConfig(type);
     
     // For chat images, validate session alignment before proceeding

@@ -1184,6 +1184,8 @@ function setupChatInterface(chat, character, userChat, isNew) {
                     if (sliderImages.length > 0) {
                         const sliderId = `slider-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
                         const subscriptionStatus = user.subscriptionStatus === 'active';
+                        const showNSFW = sessionStorage.getItem('showNSFW') === 'true';
+                        const isTemporary = !!user?.isTemporary;
                         
                         // Build slider slides HTML from stored image data
                         let slidesHtml = '';
@@ -1196,8 +1198,11 @@ function setupChatInterface(chat, character, userChat, isNew) {
                             const imageNsfw = imgData.nsfw || false;
                             if (index === 0) firstImageNsfw = imageNsfw;
                             
-                            const shouldBlur = imageNsfw && !subscriptionStatus;
-                            const displayMode = imageNsfw ? (subscriptionStatus ? 'show' : 'blur') : 'show';
+                            // Use proper blur logic that respects showNSFW setting (same as shouldBlurNSFW)
+                            // For temporary users or non-subscribers: always blur NSFW
+                            // For premium users: respect their showNSFW preference
+                            const shouldBlur = imageNsfw && (isTemporary || !subscriptionStatus || (subscriptionStatus && !showNSFW));
+                            const displayMode = imageNsfw ? (subscriptionStatus && showNSFW ? 'show' : (subscriptionStatus ? 'overlay' : 'blur')) : 'show';
                             
                             const imageUrl = imgData.imageUrl;
                             const titleText = imgData.title || imgData.prompt || 'Image';
@@ -1221,22 +1226,33 @@ function setupChatInterface(chat, character, userChat, isNew) {
                             // Only add img-blur class if the image should actually be blurred
                             const imgClass = shouldBlur ? 'img-blur slider-image' : 'slider-image';
                             
-                            // For NSFW images, use data-src instead of src to avoid exposing URL in console
+                            // For NSFW images that need blur, use data-src instead of src to avoid exposing URL in console
+                            // Only store data-src if user is premium (for later unblur), otherwise don't expose URL at all
                             const imgSrc = shouldBlur ? '/img/image-placeholder.gif' : imageUrl;
-                            const imgDataSrc = shouldBlur ? `data-src="${imageUrl}"` : '';
+                            const imgDataSrc = (shouldBlur && subscriptionStatus) ? `data-src="${imageUrl}"` : '';
+                            
+                            // Store additional data for preview modal
+                            const titleAttr = titleText ? `data-title="${titleText.replace(/"/g, '&quot;')}"` : '';
+                            const promptAttr = imagePrompt ? `data-prompt="${imagePrompt.replace(/"/g, '&quot;')}"` : '';
+                            
+                            // Container is always clickable - showImagePreview handles blur state checks
+                            // (loads plan page for non-premium, returns for blurred premium, opens preview for unblurred)
+                            const containerClass = shouldBlur ? 'assistant-image-box isBlurred' : 'assistant-image-box';
                             
                             slidesHtml += `
                                 <div class="swiper-slide" style="display: flex; flex-direction: column; align-items: center;">
-                                    <div style="display: flex; justify-content: center; align-items: center; border-radius: 12px; overflow: hidden; width: 100%; min-height: 200px;">
+                                    <div class="${containerClass}" onclick="showImagePreview(this)" data-id="${imgData.imageId}" ${!shouldBlur ? `data-src="${imageUrl}"` : ''} ${titleAttr} ${promptAttr} style="position: relative; display: flex; justify-content: center; align-items: center; border-radius: 12px; overflow: hidden; width: 100%; min-height: 200px; cursor: pointer;">
                                         <img src="${imgSrc}" 
                                              ${imgDataSrc}
                                              data-id="${imgData.imageId}"
                                              data-nsfw="${imageNsfw || false}"
                                              data-isUpscaled="${!!isUpscaled}"
                                              data-isMergeFace="${!!isMergeFace}"
+                                             ${titleAttr}
+                                             ${promptAttr}
                                              class="${imgClass}"
                                              style="max-width: 100%; max-height: 400px; width: auto; height: auto; border-radius: 12px; object-fit: contain;"
-                                             onerror="console.error('Failed to load slider image:', '${imageUrl}')">
+                                             onerror="console.error('Failed to load slider image')">
                                     </div>
                                     ${!isUpscaled ? `<div style="padding: 10px; text-align: center; font-size: 12px; color: #999;">${getImageTools({chatId, userChatId, imageId: imgData.imageId, isLiked:false, title: titleText, prompt: imagePrompt, nsfw: imageNsfw, imageUrl})}</div>` : ''}
                                 </div>
@@ -1279,9 +1295,12 @@ function setupChatInterface(chat, character, userChat, isNew) {
                                 });
                             }
                             
-                            // Apply blur only to images that should be blurred
+                            // Apply blur only to images that should be blurred using dashboard.js blurImage function
+                            // This fetches blurred version via API and doesn't expose real URL in console
                             $(`#${sliderId} .img-blur`).each(function() {
-                                blurImage(this);
+                                if (typeof window.blurImage === 'function') {
+                                    window.blurImage(this);
+                                }
                             });
                             
                             // Generate video icons for all images

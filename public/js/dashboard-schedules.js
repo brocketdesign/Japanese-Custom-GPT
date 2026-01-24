@@ -16,6 +16,9 @@ class SchedulesDashboard {
     this.viewScheduleModal = null;
     this.testRunInProgress = false;
     this.lastTestRunImage = null;
+    this.userCharacters = [];
+    this.customPrompts = [];
+    this.selectedCustomPromptIds = new Set();
     
     this.init();
   }
@@ -25,6 +28,8 @@ class SchedulesDashboard {
     this.setupEventListeners();
     this.loadSchedules();
     this.loadStats();
+    this.loadUserCharacters();
+    this.loadCustomPrompts();
   }
 
   setupModals() {
@@ -70,6 +75,13 @@ class SchedulesDashboard {
         this.toggleScheduleType(e.target.value);
       });
     });
+
+    // Prompt type toggle
+    document.querySelectorAll('input[name="promptTypeRadio"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        this.togglePromptType(e.target.value);
+      });
+    });
   }
 
   resetFilters() {
@@ -96,6 +108,141 @@ class SchedulesDashboard {
       singleFields.style.display = 'none';
       recurringFields.style.display = 'block';
     }
+  }
+
+  togglePromptType(type) {
+    const manualFields = document.getElementById('manualPromptFields');
+    const customFields = document.getElementById('customPromptFields');
+    
+    if (type === 'manual') {
+      manualFields.style.display = 'block';
+      customFields.style.display = 'none';
+    } else {
+      manualFields.style.display = 'none';
+      customFields.style.display = 'block';
+    }
+  }
+
+  async loadUserCharacters() {
+    try {
+      const response = await fetch('/api/schedules/user-characters');
+      const data = await response.json();
+      
+      if (data.success) {
+        this.userCharacters = data.characters;
+        this.populateCharacterDropdown();
+      }
+    } catch (error) {
+      console.error('Error loading characters:', error);
+    }
+  }
+
+  populateCharacterDropdown() {
+    const select = document.getElementById('actionCharacter');
+    if (!select) return;
+    
+    // Clear existing options except the first one
+    while (select.options.length > 1) {
+      select.remove(1);
+    }
+    
+    // Add character options
+    this.userCharacters.forEach(character => {
+      const option = document.createElement('option');
+      option.value = character.id;
+      option.textContent = character.name;
+      select.appendChild(option);
+    });
+  }
+
+  async loadCustomPrompts() {
+    try {
+      const response = await fetch('/api/schedules/custom-prompts');
+      const data = await response.json();
+      
+      if (data.success) {
+        this.customPrompts = data.prompts;
+        this.renderCustomPrompts();
+      }
+    } catch (error) {
+      console.error('Error loading custom prompts:', error);
+      this.renderCustomPromptsError();
+    }
+  }
+
+  renderCustomPrompts() {
+    const container = document.getElementById('customPromptsContainer');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (this.customPrompts.length === 0) {
+      container.innerHTML = `
+        <div class="text-center py-3">
+          <p class="text-muted mb-0">No custom prompts available</p>
+        </div>
+      `;
+      return;
+    }
+    
+    this.customPrompts.forEach(prompt => {
+      const card = document.createElement('div');
+      card.className = 'custom-prompt-card';
+      card.dataset.promptId = prompt.id;
+      
+      card.innerHTML = `
+        <img src="${prompt.imagePreview || '/images/placeholder.png'}" alt="${prompt.description}">
+        <div class="prompt-overlay">${this.truncateText(prompt.description, 50)}</div>
+        <div class="selected-badge">
+          <i class="bi bi-check"></i>
+        </div>
+      `;
+      
+      card.addEventListener('click', () => {
+        this.toggleCustomPromptSelection(prompt.id, card);
+      });
+      
+      container.appendChild(card);
+    });
+  }
+
+  renderCustomPromptsError() {
+    const container = document.getElementById('customPromptsContainer');
+    if (!container) return;
+    
+    container.innerHTML = `
+      <div class="text-center py-3">
+        <i class="bi bi-exclamation-triangle text-warning"></i>
+        <p class="text-muted mb-0 mt-2">Failed to load custom prompts</p>
+      </div>
+    `;
+  }
+
+  toggleCustomPromptSelection(promptId, cardElement) {
+    if (this.selectedCustomPromptIds.has(promptId)) {
+      this.selectedCustomPromptIds.delete(promptId);
+      cardElement.classList.remove('selected');
+    } else {
+      this.selectedCustomPromptIds.add(promptId);
+      cardElement.classList.add('selected');
+    }
+    
+    this.updateSelectedPromptsInfo();
+  }
+
+  updateSelectedPromptsInfo() {
+    const info = document.getElementById('selectedPromptsInfo');
+    const count = document.getElementById('selectedPromptsCount');
+    
+    if (!info || !count) return;
+    
+    count.textContent = this.selectedCustomPromptIds.size;
+    info.style.display = this.selectedCustomPromptIds.size > 0 ? 'block' : 'none';
+  }
+
+  truncateText(text, maxLength) {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
   }
 
   async loadSchedules() {
@@ -266,8 +413,20 @@ class SchedulesDashboard {
     document.getElementById('actionType').value = 'generate_image';
     document.getElementById('actionPrompt').value = '';
     document.getElementById('actionModel').value = 'flux-2-flex';
+    document.getElementById('actionCharacter').value = '';
     document.getElementById('publishInstagram').checked = false;
     document.getElementById('publishTwitter').checked = false;
+    
+    // Reset prompt type to manual
+    document.getElementById('promptTypeManual').checked = true;
+    this.togglePromptType('manual');
+    
+    // Clear custom prompt selections
+    this.selectedCustomPromptIds.clear();
+    document.querySelectorAll('.custom-prompt-card').forEach(card => {
+      card.classList.remove('selected');
+    });
+    this.updateSelectedPromptsInfo();
     
     // Set default schedule time (tomorrow at 9 AM)
     const tomorrow = new Date();
@@ -313,6 +472,31 @@ class SchedulesDashboard {
       document.getElementById('actionType').value = schedule.actionType;
       document.getElementById('actionPrompt').value = schedule.actionData?.prompt || '';
       document.getElementById('actionModel').value = schedule.actionData?.model || 'flux-2-flex';
+      document.getElementById('actionCharacter').value = schedule.actionData?.characterId || '';
+      
+      // Set prompt type based on whether custom prompts are used
+      if (schedule.actionData?.useCustomPrompts && schedule.actionData?.customPromptIds?.length > 0) {
+        document.getElementById('promptTypeCustom').checked = true;
+        this.togglePromptType('custom');
+        
+        // Restore selected custom prompts
+        this.selectedCustomPromptIds.clear();
+        schedule.actionData.customPromptIds.forEach(id => {
+          this.selectedCustomPromptIds.add(id);
+        });
+        
+        // Update UI
+        document.querySelectorAll('.custom-prompt-card').forEach(card => {
+          const promptId = card.dataset.promptId;
+          if (this.selectedCustomPromptIds.has(promptId)) {
+            card.classList.add('selected');
+          }
+        });
+        this.updateSelectedPromptsInfo();
+      } else {
+        document.getElementById('promptTypeManual').checked = true;
+        this.togglePromptType('manual');
+      }
       
       // Set type
       const isRecurring = schedule.type === 'recurring';
@@ -480,8 +664,13 @@ class SchedulesDashboard {
     const type = document.getElementById('scheduleType').value;
     const description = document.getElementById('scheduleDescription').value;
     const actionType = document.getElementById('actionType').value;
-    const prompt = document.getElementById('actionPrompt').value;
     const model = document.getElementById('actionModel').value;
+    
+    // Get prompt type
+    const promptType = document.querySelector('input[name="promptTypeRadio"]:checked').value;
+    
+    // Get character selection
+    const characterId = document.getElementById('actionCharacter').value || null;
     
     // Collect social platforms
     const socialPlatforms = [];
@@ -493,12 +682,28 @@ class SchedulesDashboard {
       actionType,
       description,
       actionData: {
-        prompt,
         model,
         socialPlatforms,
-        autoPublish: socialPlatforms.length > 0
+        autoPublish: socialPlatforms.length > 0,
+        characterId: characterId
       }
     };
+
+    // Handle prompt based on type
+    if (promptType === 'manual') {
+      const prompt = document.getElementById('actionPrompt').value;
+      scheduleData.actionData.prompt = prompt;
+      scheduleData.actionData.useCustomPrompts = false;
+    } else {
+      // Custom prompts mode
+      if (this.selectedCustomPromptIds.size === 0) {
+        this.showNotification('Please select at least one custom prompt', 'warning');
+        return;
+      }
+      scheduleData.actionData.useCustomPrompts = true;
+      scheduleData.actionData.customPromptIds = Array.from(this.selectedCustomPromptIds);
+      scheduleData.actionData.prompt = ''; // Optional: user can still provide additional context
+    }
 
     if (type === 'single') {
       const scheduledFor = document.getElementById('scheduledFor').value;

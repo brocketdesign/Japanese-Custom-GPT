@@ -1156,6 +1156,89 @@ Return ONLY the caption text with hashtags, nothing else.`;
       ]
     });
   });
+
+  /**
+   * GET /api/schedules/user-characters
+   * Get user's characters for schedule form
+   */
+  fastify.get('/api/schedules/user-characters', async (request, reply) => {
+    try {
+      const user = request.user;
+      if (!user || user.isTemporary) {
+        return reply.code(401).send({ error: 'Authentication required' });
+      }
+
+      const { ObjectId } = fastify.mongo;
+      
+      // Fetch user's characters from chats collection
+      const characters = await db.collection('chats')
+        .find({ userId: new ObjectId(user._id) })
+        .project({
+          _id: 1,
+          name: 1,
+          chatImageUrl: 1,
+          imageStyle: 1,
+          gender: 1
+        })
+        .sort({ createdAt: -1 })
+        .toArray();
+
+      return reply.send({
+        success: true,
+        characters: characters.map(char => ({
+          id: char._id.toString(),
+          name: char.name,
+          imageUrl: char.chatImageUrl,
+          imageStyle: char.imageStyle,
+          gender: char.gender
+        }))
+      });
+    } catch (error) {
+      console.error('[Schedules API] Get characters error:', error);
+      return reply.code(500).send({ error: 'Failed to get characters' });
+    }
+  });
+
+  /**
+   * GET /api/schedules/custom-prompts
+   * Get all custom prompts for schedule form
+   */
+  fastify.get('/api/schedules/custom-prompts', async (request, reply) => {
+    try {
+      const user = request.user;
+      if (!user || user.isTemporary) {
+        return reply.code(401).send({ error: 'Authentication required' });
+      }
+
+      // Fetch all custom prompts from prompts collection
+      const customPrompts = await db.collection('prompts')
+        .find({})
+        .project({
+          _id: 1,
+          prompt: 1,
+          cost: 1,
+          order: 1,
+          imagePreview: 1,
+          nsfw: 1
+        })
+        .sort({ order: 1 })
+        .toArray();
+
+      return reply.send({
+        success: true,
+        prompts: customPrompts.map(prompt => ({
+          id: prompt._id.toString(),
+          description: prompt.prompt,
+          cost: prompt.cost || 0,
+          imagePreview: prompt.imagePreview,
+          nsfw: prompt.nsfw || false
+        }))
+      });
+    } catch (error) {
+      console.error('[Schedules API] Get custom prompts error:', error);
+      return reply.code(500).send({ error: 'Failed to get custom prompts' });
+    }
+  });
 }
 
 module.exports = routes;

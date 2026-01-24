@@ -230,10 +230,69 @@
                         </div>
                     </div>
 
-                    <!-- Action Data: Prompt -->
+                    <!-- Character Selection -->
                     <div class="mb-3">
-                        <label class="form-label">{{translations.dashboard.prompt}}</label>
-                        <textarea class="form-control bg-secondary text-white border-secondary" id="actionPrompt" rows="8" placeholder="{{translations.dashboard.promptPlaceholder}}"></textarea>
+                        <label class="form-label">{{translations.dashboard.character}} <span class="text-muted">({{translations.dashboard.optional}})</span></label>
+                        <select id="actionCharacter" class="form-select bg-secondary text-white border-secondary">
+                            <option value="">{{translations.dashboard.noCharacter}}</option>
+                            <!-- Characters loaded dynamically -->
+                        </select>
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>Select a character to apply character-specific styling to generated images
+                        </small>
+                    </div>
+
+                    <!-- Prompt Type Selection -->
+                    <div class="mb-3">
+                        <label class="form-label">{{translations.dashboard.promptType}}</label>
+                        <div class="segmented-control" role="group">
+                            <input type="radio" class="btn-check" name="promptTypeRadio" id="promptTypeManual" value="manual" checked>
+                            <label class="segment-btn" for="promptTypeManual">
+                                <i class="bi bi-pencil"></i>
+                                <span>{{translations.dashboard.manualPrompt}}</span>
+                            </label>
+                            <input type="radio" class="btn-check" name="promptTypeRadio" id="promptTypeCustom" value="custom">
+                            <label class="segment-btn" for="promptTypeCustom">
+                                <i class="bi bi-collection"></i>
+                                <span>{{translations.dashboard.customPrompts}}</span>
+                            </label>
+                        </div>
+                        <small class="text-muted d-block mt-1">
+                            <i class="bi bi-info-circle me-1"></i>Choose between writing your own prompt or using pre-made custom prompts
+                        </small>
+                    </div>
+
+                    <!-- Manual Prompt Fields -->
+                    <div id="manualPromptFields">
+                        <!-- Action Data: Prompt -->
+                        <div class="mb-3">
+                            <label class="form-label">{{translations.dashboard.prompt}}</label>
+                            <textarea class="form-control bg-secondary text-white border-secondary" id="actionPrompt" rows="8" placeholder="{{translations.dashboard.promptPlaceholder}}"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Custom Prompts Selection -->
+                    <div id="customPromptFields" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label">{{translations.dashboard.selectCustomPrompts}}</label>
+                            <div id="customPromptsContainer" class="custom-prompts-grid">
+                                <!-- Custom prompts loaded dynamically -->
+                                <div class="text-center py-3">
+                                    <div class="spinner-border text-primary spinner-border-sm" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="text-muted mt-2 mb-0 small">Loading custom prompts...</p>
+                                </div>
+                            </div>
+                            <small class="text-muted d-block mt-2">
+                                <i class="bi bi-info-circle me-1"></i>Select one or multiple custom prompts. A random one will be used each time the schedule runs.
+                            </small>
+                            <div id="selectedPromptsInfo" class="mt-2" style="display: none;">
+                                <span class="badge bg-info">
+                                    <span id="selectedPromptsCount">0</span> prompt(s) selected
+                                </span>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Action Data: Model -->

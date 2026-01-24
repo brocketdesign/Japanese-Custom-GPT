@@ -77,9 +77,39 @@ async function executeScheduledAction(schedule, fastify) {
 async function executeImageGeneration(schedule, fastify) {
   const db = fastify.mongo.db;
   const { actionData } = schedule;
+  const { ObjectId } = require('mongodb');
+  
+  // Handle custom prompts if selected
+  let prompt = actionData.prompt;
+  let customPromptId = null;
+  let characterData = null;
+  
+  // If using custom prompts, randomly select one from the list
+  if (actionData.useCustomPrompts && actionData.customPromptIds && actionData.customPromptIds.length > 0) {
+    const randomIndex = Math.floor(Math.random() * actionData.customPromptIds.length);
+    customPromptId = actionData.customPromptIds[randomIndex];
+    
+    // Fetch the custom prompt to get its details
+    const customPrompt = await db.collection('prompts').findOne({ _id: new ObjectId(customPromptId) });
+    if (customPrompt) {
+      // Use custom prompt description if user prompt is not provided
+      if (!prompt || prompt.trim() === '') {
+        prompt = customPrompt.prompt || '';
+      }
+    }
+  }
+  
+  // If character is selected, fetch character data
+  if (actionData.characterId) {
+    characterData = await db.collection('chats').findOne({ _id: new ObjectId(actionData.characterId) });
+    if (characterData) {
+      // Optionally enhance prompt with character context
+      // This can be used by the image generation to apply character-specific styling
+      console.log(`[Scheduled Tasks] Using character: ${characterData.name} for image generation`);
+    }
+  }
   
   // Apply prompt mutation if enabled
-  let prompt = actionData.prompt;
   let mutationData = null;
   
   if (schedule.mutationEnabled || actionData.mutationEnabled) {
@@ -107,17 +137,21 @@ async function executeImageGeneration(schedule, fastify) {
   // Use central image generator in imagen.js
   const { generateImg } = require('./imagen');
 
-  // Generate image using the main generator. Pass fastify so it has access to DB and services.
-  const generationResultRaw = await generateImg({
+  // Prepare generation options
+  const generationOptions = {
     prompt,
     negativePrompt: actionData.negativePrompt,
     modelId: actionData.model,
     parameters: actionData.parameters || {},
     userId: schedule.userId.toString(),
-    chatId: null,
+    chatId: actionData.characterId || null, // Use characterId as chatId for character context
     imageType: 'schedule',
+    customPromptId: customPromptId, // Pass custom prompt ID if selected
     fastify
-  });
+  };
+
+  // Generate image using the main generator. Pass fastify so it has access to DB and services.
+  const generationResultRaw = await generateImg(generationOptions);
 
   // Normalize various possible return shapes to get an image URL
   let imageUrl = null;

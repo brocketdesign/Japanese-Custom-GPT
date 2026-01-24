@@ -367,6 +367,7 @@ class GenerationDashboard {
   }
   
   renderCustomModelItem(model) {
+    // For custom models, the model.modelId already includes the prefix
     const isSelected = this.state.selectedModel?.id === model.modelId;
     
     return `
@@ -435,13 +436,17 @@ class GenerationDashboard {
     }
     
     if (model) {
-      this.state.selectedModel = model;
+      // Store model with proper id field for consistency
+      this.state.selectedModel = {
+        ...model,
+        id: model.modelId || model.id
+      };
       this.updateModelDisplay();
       this.updateToolButtonsForModel(); // Update tool buttons based on model requirements
       this.updateCostDisplay(); // Update cost as different models may have different costs
       this.updateSubmitButtonState(); // Update submit button state for face merge models
       this.closeAllOverlays();
-      console.log('[GenerationDashboard] Model selected:', model.name, model);
+      console.log('[GenerationDashboard] Model selected:', this.state.selectedModel.name, this.state.selectedModel);
     }
   }
   

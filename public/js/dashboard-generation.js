@@ -1955,7 +1955,7 @@ class GenerationDashboard {
       
       // Store result data for character creation as instance property
       this._currentCharacterImageData = {
-        imageUrl: result.mediaUrl,
+        imageUrl: imageUrl, // Use the resolved imageUrl (supports carousel)
         prompt: result.prompt,
         modelId: result.modelId || currentModel?.id,
         // result.model contains the model name string when available
@@ -1971,7 +1971,7 @@ class GenerationDashboard {
     } else {
       // Redirect to character creation page with image URL
       const params = new URLSearchParams({
-        imageUrl: result.mediaUrl,
+        imageUrl: imageUrl, // Use the resolved imageUrl (supports carousel)
         prompt: result.prompt
       });
       window.location.href = `/character-creation?${params.toString()}`;

@@ -480,15 +480,17 @@
         {{/if}}
 
         <!-- Followers Modal -->
-        <div class="modal fade" id="followersModal" tabindex="-1" aria-labelledby="followersModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="followersModalLabel">{{userData.nickname}} {{translations.followers.followersListTitleFollowers}}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal fade followers-modal" id="followersModal" tabindex="-1" aria-labelledby="followersModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content followers-modal-content">
+                    <div class="modal-header followers-modal-header">
+                        <h5 class="modal-title followers-modal-title" id="followersModalLabel">
+                            <i class="bi bi-people-fill me-2"></i>{{userData.nickname}} {{translations.followers.followersListTitleFollowers}}
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body">
-                        <div id="followers-list" class="container">
+                    <div class="modal-body followers-modal-body">
+                        <div id="followers-list" class="followers-list-container">
                             <!-- Followers will be loaded here -->
                         </div>
                     </div>
@@ -497,15 +499,17 @@
         </div>
 
         <!-- Following Modal -->
-        <div class="modal fade" id="followingModal" tabindex="-1" aria-labelledby="followingModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="followingModalLabel">{{userData.nickname}} {{translations.followers.followingListTitle}}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal fade followers-modal" id="followingModal" tabindex="-1" aria-labelledby="followingModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content followers-modal-content">
+                    <div class="modal-header followers-modal-header">
+                        <h5 class="modal-title followers-modal-title" id="followingModalLabel">
+                            <i class="bi bi-person-check-fill me-2"></i>{{userData.nickname}} {{translations.followers.followingListTitle}}
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body">
-                        <div id="following-list" class="container">
+                    <div class="modal-body followers-modal-body">
+                        <div id="following-list" class="followers-list-container">
                             <!-- Following will be loaded here -->
                         </div>
                     </div>
@@ -862,35 +866,54 @@
     <script>
         function loadFollowList(type, containerId) {
             const userId = '{{userData._id}}';
-            $(`#${containerId}`).html('<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading...</div>');
+            $(`#${containerId}`).html(`
+                <div class="followers-loading">
+                    <div class="followers-loading-spinner">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </div>
+                    <span>Loading...</span>
+                </div>
+            `);
             $.get(`/user/${userId}/followers-or-followings?type=${type}&page=1`, function(data) {
-                let html = '<div class="row">';
+                let html = '';
                 if (data.users && data.users.length > 0) {
                     data.users.forEach(user => {
-                        console.log(user);
                         html += `
-                            <div class="col-md-6 col-lg-4 mb-3" onclick="window.open('/user/${user.userId}')" style="cursor: pointer;">
-                                <div class="follower-card">
-                                    <div class="follower-info">
-                                        <img src="${user.profilePicture || '/img/avatar.png'}" alt="${user.userName}">
-                                        <div class="follower-details">
-                                            <a href="/user/${user.userId}" class="follower-name">${user.userName}</a>
-                                            <div class="follower-stats">
-                                                ${user.userBio ? `<p class="mb-1">${user.userBio}</p>` : ''}
-                                            </div>
-                                        </div>
-                                    </div>
+                            <a href="/user/${user.userId}" class="follower-item">
+                                <div class="follower-avatar-wrapper">
+                                    <img src="${user.profilePicture || '/img/avatar.png'}" alt="${user.userName}" class="follower-avatar">
                                 </div>
-                            </div>
+                                <div class="follower-info-content">
+                                    <div class="follower-name-row">
+                                        <span class="follower-username">${user.userName}</span>
+                                    </div>
+                                    ${user.userBio ? `<p class="follower-bio">${user.userBio}</p>` : '<p class="follower-bio follower-bio-placeholder">No bio yet</p>'}
+                                </div>
+                                <div class="follower-action">
+                                    <i class="bi bi-chevron-right"></i>
+                                </div>
+                            </a>
                         `;
                     });
                 } else {
-                    html += '<div class="col-12 text-center">No users found.</div>';
+                    html = `
+                        <div class="followers-empty">
+                            <i class="bi bi-people"></i>
+                            <span>${type === 'followers' ? 'No followers yet' : 'Not following anyone yet'}</span>
+                        </div>
+                    `;
                 }
-                html += '</div>';
                 $(`#${containerId}`).html(html);
             }).fail(function() {
-                $(`#${containerId}`).html('<div class="text-center text-danger">Failed to load list.</div>');
+                $(`#${containerId}`).html(`
+                    <div class="followers-error">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <span>Failed to load list. Please try again.</span>
+                        <button class="followers-retry-btn" onclick="loadFollowList('${type}', '${containerId}')">
+                            <i class="bi bi-arrow-clockwise"></i> Retry
+                        </button>
+                    </div>
+                `);
             });
         }
 
@@ -970,67 +993,303 @@
                 width: 100%;
             }
         }
-        .follower-card {
-            border: 1px solid #e9ecef;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-            background-color: #fff;
-            box-shadow: 0 2px 8px rgba(130, 64, 255, 0.1);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        
+        /* ====================================
+           FOLLOWERS MODAL STYLES - Modern Native App Design
+           ==================================== */
+        .followers-modal .modal-dialog {
+            max-width: 420px;
+            margin: 1rem auto;
         }
-        .follower-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 16px rgba(130, 64, 255, 0.2);
+        
+        .followers-modal-content {
+            background: var(--bg-secondary, #1a1a1a);
+            border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
-        .follower-card img {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            object-position: top;
-            border-radius: 50%;
-            margin-right: 16px;
-            border: 2px solid #8240FF;
+        
+        .followers-modal-header {
+            background: linear-gradient(135deg, var(--primary-color, #8240FF) 0%, #9d5cff 100%);
+            border-bottom: none;
+            padding: 1.25rem 1.5rem;
+            position: relative;
         }
-        .follower-info {
+        
+        .followers-modal-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        }
+        
+        .followers-modal-title {
+            color: #fff;
+            font-weight: 600;
+            font-size: 1.1rem;
             display: flex;
             align-items: center;
+            margin: 0;
         }
-        .follower-details {
-            flex-grow: 1;
+        
+        .followers-modal-title i {
+            font-size: 1.2rem;
         }
-        .follower-name {
-            font-weight: 600;
-            color: #8240FF;
+        
+        .followers-modal-body {
+            padding: 0;
+            max-height: 60vh;
+            overflow-y: auto;
+            background: var(--bg-secondary, #1a1a1a);
+        }
+        
+        .followers-modal-body::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .followers-modal-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .followers-modal-body::-webkit-scrollbar-thumb {
+            background: var(--primary-color, #8240FF);
+            border-radius: 4px;
+        }
+        
+        .followers-list-container {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Follower Item - Native App Style */
+        .follower-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            gap: 14px;
             text-decoration: none;
-            font-size: 16px;
+            background: transparent;
+            border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.06));
+            transition: background 0.2s ease, transform 0.15s ease;
+            cursor: pointer;
         }
-        .follower-name:hover {
-            text-decoration: underline;
-            color: #6E20F4;
+        
+        .follower-item:hover {
+            background: rgba(130, 64, 255, 0.1);
+            text-decoration: none;
         }
-        .follower-stats {
+        
+        .follower-item:active {
+            transform: scale(0.98);
+            background: rgba(130, 64, 255, 0.15);
+        }
+        
+        .follower-item:last-child {
+            border-bottom: none;
+        }
+        
+        .follower-avatar-wrapper {
+            position: relative;
+            flex-shrink: 0;
+        }
+        
+        .follower-avatar {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            object-fit: cover;
+            object-position: top;
+            border: 2px solid var(--primary-color, #8240FF);
+            background: var(--bg-tertiary, #252525);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .follower-item:hover .follower-avatar {
+            border-color: #9d5cff;
+            box-shadow: 0 0 0 3px rgba(130, 64, 255, 0.2);
+        }
+        
+        .follower-info-content {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        
+        .follower-name-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .follower-username {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text-primary, #fff);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .follower-bio {
+            font-size: 13px;
+            color: var(--text-secondary, #b0b0b0);
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.4;
+        }
+        
+        .follower-bio-placeholder {
+            font-style: italic;
+            color: var(--text-muted, #6c757d);
+        }
+        
+        .follower-action {
+            flex-shrink: 0;
+            color: var(--text-muted, #6c757d);
+            transition: color 0.2s ease, transform 0.2s ease;
+        }
+        
+        .follower-item:hover .follower-action {
+            color: var(--primary-color, #8240FF);
+            transform: translateX(3px);
+        }
+        
+        /* Loading State */
+        .followers-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 24px;
+            gap: 12px;
+            color: var(--text-secondary, #b0b0b0);
+        }
+        
+        .followers-loading-spinner {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .followers-loading-spinner i {
+            font-size: 24px;
+            color: var(--primary-color, #8240FF);
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Empty State */
+        .followers-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 24px;
+            gap: 12px;
+            color: var(--text-secondary, #b0b0b0);
+        }
+        
+        .followers-empty i {
+            font-size: 48px;
+            color: var(--text-muted, #6c757d);
+            opacity: 0.5;
+        }
+        
+        .followers-empty span {
+            font-size: 15px;
+            text-align: center;
+        }
+        
+        /* Error State */
+        .followers-error {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 24px;
+            gap: 12px;
+            color: var(--text-secondary, #b0b0b0);
+        }
+        
+        .followers-error i {
+            font-size: 36px;
+            color: var(--danger-color, #ff4040);
+        }
+        
+        .followers-error span {
             font-size: 14px;
-            color: #6c757d;
+            text-align: center;
         }
-        .pagination-controls {
-            margin-top: 20px;
+        
+        .followers-retry-btn {
+            margin-top: 8px;
+            padding: 8px 20px;
+            background: var(--primary-color, #8240FF);
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-        .btn-primary {
-            background-color: #8240FF;
-            border-color: #8240FF;
+        
+        .followers-retry-btn:hover {
+            background: #9d5cff;
+            transform: translateY(-1px);
         }
-        .btn-primary:hover {
-            background-color: #6E20F4;
-            border-color: #6E20F4;
+        
+        .followers-retry-btn:active {
+            transform: translateY(0) scale(0.98);
         }
-        @media (max-width: 768px) {
-            .follower-card {
-                padding: 12px;
+        
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .followers-modal .modal-dialog {
+                margin: 0.5rem;
+                max-width: calc(100% - 1rem);
             }
-            .follower-card img {
-                width: 50px;
-                height: 50px;
+            
+            .followers-modal-content {
+                border-radius: 16px;
+            }
+            
+            .followers-modal-body {
+                max-height: 70vh;
+            }
+            
+            .follower-item {
+                padding: 12px 14px;
+            }
+            
+            .follower-avatar {
+                width: 46px;
+                height: 46px;
+            }
+            
+            .follower-username {
+                font-size: 14px;
+            }
+            
+            .follower-bio {
+                font-size: 12px;
             }
         }
         

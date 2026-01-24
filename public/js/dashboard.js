@@ -1645,6 +1645,18 @@ function generateChatUserPagination(currentPage, totalPages, chatId) {
 
 window.displayPeopleList = async function (userId, type = 'followers', page = 1) {
     try {
+        // Show loading state on first page
+        if (page === 1) {
+            $('#people-list').html(`
+                <div class="followers-page-loading">
+                    <div class="followers-loading-spinner">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </div>
+                    <span>Loading...</span>
+                </div>
+            `);
+        }
+        
         const response = await fetch(`/user/${userId}/followers-or-followings?type=${type}&page=${page}`);
         const data = await response.json();
 
@@ -1652,48 +1664,41 @@ window.displayPeopleList = async function (userId, type = 'followers', page = 1)
         let htmlContent = '';
 
         // If there are followers or following users
-        people.forEach(user => {
-            htmlContent += `
-            <li class="list-group-item border-0 py-3 px-2 mb-2 rounded shadow-sm people-list-item d-flex justify-content-between align-items-center transition"
-          style="background: #fff; transition: box-shadow 0.2s, transform 0.2s;">
-          <div class="d-flex align-items-center">
-              <a href="/user/${user.userId}" class="d-flex align-items-center text-decoration-none">
-            <img src="${user.profilePicture || '/img/default-avatar.png'}" alt="${user.userName}" 
-                class="rounded-circle me-3 border border-2 border-light user-avatar transition"
-                width="56" height="56"
-                style="box-shadow: 0 2px 8px rgba(0,0,0,0.07); transition: box-shadow 0.2s;">
-            <div>
-                <h6 class="mb-1 fw-semibold text-dark user-name" style="font-size: 1.1rem;">${user.userName}</h6>
-                <div class="text-muted small d-none">@${user.userId}</div>
-            </div>
-              </a>
-          </div>
-          <a href="/user/${user.userId}" class="btn btn-outline-primary btn-sm px-3 py-1 rounded-pill profile-btn transition"
-              style="font-weight: 500; letter-spacing: 0.02em;">
-              <i class="bi bi-person-lines-fill me-1"></i> プロフィールを見る
-          </a>
-            </li>`;
-        });
-
-        // Add hover effect via jQuery (or move to your CSS file)
-        $(document).off('mouseenter mouseleave', '.people-list-item').on('mouseenter', '.people-list-item', function() {
-            $(this).css({
-          'box-shadow': '0 4px 16px rgba(0,0,0,0.12)',
-          'transform': 'translateY(-2px) scale(1.015)'
+        if (people.length > 0) {
+            people.forEach(user => {
+                htmlContent += `
+                    <a href="/user/${user.userId}" class="follower-page-item">
+                        <div class="follower-avatar-wrapper">
+                            <img src="${user.profilePicture || '/img/avatar.png'}" alt="${user.userName}" class="follower-avatar">
+                        </div>
+                        <div class="follower-info-content">
+                            <div class="follower-name-row">
+                                <span class="follower-username">${user.userName}</span>
+                            </div>
+                            ${user.userBio ? `<p class="follower-bio">${user.userBio}</p>` : '<p class="follower-bio follower-bio-placeholder">No bio yet</p>'}
+                        </div>
+                        <div class="follower-action">
+                            <i class="bi bi-chevron-right"></i>
+                        </div>
+                    </a>
+                `;
             });
-            $(this).find('.user-avatar').css('box-shadow', '0 4px 16px rgba(0,0,0,0.18)');
-            $(this).find('.profile-btn').addClass('btn-primary').removeClass('btn-outline-primary');
-        }).on('mouseleave', '.people-list-item', function() {
-            $(this).css({
-          'box-shadow': '0 2px 8px rgba(0,0,0,0.07)',
-          'transform': 'none'
-            });
-            $(this).find('.user-avatar').css('box-shadow', '0 2px 8px rgba(0,0,0,0.07)');
-            $(this).find('.profile-btn').removeClass('btn-primary').addClass('btn-outline-primary');
-        });
+        } else if (page === 1) {
+            // Only show empty state on first page
+            htmlContent = `
+                <div class="followers-page-empty">
+                    <i class="bi bi-people"></i>
+                    <span>${type === 'followers' ? 'No followers yet' : 'Not following anyone yet'}</span>
+                </div>
+            `;
+        }
 
         // Update the HTML content for the list
-        $('#people-list').append(htmlContent);
+        if (page === 1) {
+            $('#people-list').html(htmlContent);
+        } else {
+            $('#people-list').append(htmlContent);
+        }
 
         // Generate pagination controls
         if ($('#pagination-controls').length > 0) {
@@ -1702,6 +1707,17 @@ window.displayPeopleList = async function (userId, type = 'followers', page = 1)
         }
     } catch (err) {
         console.error('Failed to load list', err);
+        if ($('#people-list').children().length === 0) {
+            $('#people-list').html(`
+                <div class="followers-page-error">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span>Failed to load list. Please try again.</span>
+                    <button class="followers-retry-btn" onclick="displayPeopleList('${userId}', '${type}', 1)">
+                        <i class="bi bi-arrow-clockwise"></i> Retry
+                    </button>
+                </div>
+            `);
+        }
     }
 };
 function generatePagination(currentPage, totalPages, userId, type) {

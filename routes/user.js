@@ -768,7 +768,7 @@ async function routes(fastify, options) {
       const totalItems = list ? list.length : 0;
 
       if (!list || totalItems === 0) {
-        return reply.code(404).send({ users: [], page, totalPages: 0 });
+        return reply.send({ users: [], page, totalPages: 0 });
       }
 
       // Get paginated followers or following

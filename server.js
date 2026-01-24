@@ -1488,12 +1488,23 @@ fastify.get('/api/recent-chats', async (request, reply) => {
     const userId = new fastify.mongo.ObjectId(user._id);
     const limit = parseInt(request.query.limit) || 10;
     
-    // Get user's recent chats with chat details
-    const userChats = await db.collection('userChat')
-      .find({ userId })
-      .sort({ updatedAt: -1, createdAt: -1 })
-      .limit(limit)
-      .toArray();
+    // Use aggregation to get only the latest chat per character (chatId)
+    const userChats = await db.collection('userChat').aggregate([
+      { $match: { userId } },
+      { $sort: { updatedAt: -1, createdAt: -1 } },
+      // Group by chatId (character) and keep only the first (latest) document
+      {
+        $group: {
+          _id: '$chatId',
+          doc: { $first: '$$ROOT' }
+        }
+      },
+      // Restore the document structure
+      { $replaceRoot: { newRoot: '$doc' } },
+      // Sort again after grouping
+      { $sort: { updatedAt: -1, createdAt: -1 } },
+      { $limit: limit }
+    ]).toArray();
     
     // Get chat details for each userChat
     const chatIds = [...new Set(userChats.map(uc => uc.chatId))];

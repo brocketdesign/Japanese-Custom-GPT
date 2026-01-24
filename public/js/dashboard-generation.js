@@ -532,8 +532,9 @@ class GenerationDashboard {
             imagesCount: task.images?.length || 0
           });
           
-          // Create a new result for this task
-          const additionalResult = this.createPendingResult(prompt, this.state.mode);
+          // Create a new result for this task and add it to the feed
+          const additionalResult = this.createPendingResult(prompt);
+          this.addResultToFeed(additionalResult);
           this.processTask(task, additionalResult);
         }
       } else if (data.result) {

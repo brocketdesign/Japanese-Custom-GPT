@@ -759,6 +759,19 @@
     color: var(--explore-text-secondary);
 }
 
+.nsfw-blur-content small {
+    font-size: 12px;
+    color: var(--explore-text-secondary);
+    opacity: 0.7;
+}
+
+/* Blurred image state for NSFW content in SFW mode */
+.explore-image-card.nsfw-blurred .explore-image {
+    filter: blur(15px);
+    transform: scale(1.1);
+}
+
+
 /* ===== Swiper Custom Navigation ===== */
 .swiper-pagination {
     display: none !important;

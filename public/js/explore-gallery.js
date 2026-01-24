@@ -247,14 +247,10 @@ class ExploreGallery {
             
             // If image is NSFW and we're in SFW mode, apply blur
             if (!isSfw && !this.showNSFW) {
-                // Add blur class
-                imageCard.classList.add('nsfw-content');
+                // Add blur class (CSS will apply the blur effect)
+                imageCard.classList.add('nsfw-content', 'nsfw-blurred');
                 
-                // Apply blur effect using CSS filter
-                img.style.filter = 'blur(15px)';
-                img.style.transform = 'scale(1.1)';
-                
-                // Add clickable overlay for premium users
+                // Add clickable overlay for premium users to toggle back to NSFW mode
                 if (this.isPremium && !this.isTemporary) {
                     const overlay = document.createElement('div');
                     overlay.className = 'nsfw-blur-overlay';
@@ -262,9 +258,10 @@ class ExploreGallery {
                         <div class="nsfw-blur-content">
                             <i class="bi bi-eye-slash-fill"></i>
                             <p>NSFW Content</p>
-                            <small>Click to toggle visibility</small>
+                            <small>Click to show all NSFW content</small>
                         </div>
                     `;
+                    // Clicking overlay toggles NSFW mode globally
                     overlay.addEventListener('click', (e) => {
                         e.stopPropagation();
                         this.toggleNSFW();
@@ -273,9 +270,7 @@ class ExploreGallery {
                 }
             } else {
                 // Remove blur
-                imageCard.classList.remove('nsfw-content');
-                img.style.filter = '';
-                img.style.transform = '';
+                imageCard.classList.remove('nsfw-content', 'nsfw-blurred');
             }
         });
     }

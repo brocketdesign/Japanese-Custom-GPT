@@ -206,7 +206,31 @@ window.updateNotificationViewedAndRedirect = function(notificationId, link) {
         dataType: 'json'
     }).done(() => {
         if (link && link !== '#') {
-            window.location.href = link;
+            // Check if link is for modal view (contains #modal)
+            if (link.includes('#modal:')) {
+                const modalData = link.split('#modal:')[1];
+                const [contentType, contentId] = modalData.split('/');
+                
+                // Open content modal if history-gallery.js is loaded
+                if (window.historyGallery && window.historyGallery.openContentModal) {
+                    // Navigate to history page if not already there
+                    if (!window.location.pathname.includes('/history')) {
+                        window.location.href = `/history?openModal=${contentType}/${contentId}`;
+                    } else {
+                        // Open modal directly
+                        window.historyGallery.openContentModal({
+                            _id: contentId,
+                            contentType: contentType
+                        });
+                    }
+                } else {
+                    // Fallback: navigate to history with modal param
+                    window.location.href = `/history?openModal=${contentType}/${contentId}`;
+                }
+            } else {
+                // Regular link navigation
+                window.location.href = link;
+            }
         } else {
             console.log('Notification marked as viewed.');
         }

@@ -1372,6 +1372,207 @@ fastify.get('/api/query-tags', async (request, reply) => {
       return reply.code(500).send({ error: 'Internal Server Error' });
     }
   });
+
+  // Get video details for modal view
+  fastify.get('/gallery/video/:videoId/info', async (request, reply) => {
+    try {
+      const videoId = request.params.videoId;
+      let objectId;
+      try {
+        objectId = new fastify.mongo.ObjectId(videoId);
+      } catch (e) {
+        return reply.code(400).send({ error: 'Invalid videoId format' });
+      }
+
+      const db = fastify.mongo.db;
+      const videosCollection = db.collection('videos');
+      const chatsCollection = db.collection('chats');
+
+      // Find the video
+      const video = await videosCollection.findOne({ _id: objectId });
+
+      if (!video) {
+        return reply.code(404).send({ error: 'Video not found' });
+      }
+
+      // Get chat info if available
+      let chatInfo = null;
+      if (video.chatId) {
+        const chat = await chatsCollection.findOne(
+          { _id: video.chatId },
+          { projection: { name: 1, slug: 1, language: 1, chatImageUrl: 1 } }
+        );
+        if (chat) {
+          chatInfo = {
+            name: chat.name,
+            slug: chat.slug,
+            language: chat.language,
+            thumbnail: chat.chatImageUrl
+          };
+        }
+      }
+
+      const videoInfo = {
+        video: {
+          _id: video._id,
+          videoUrl: video.videoUrl,
+          imageUrl: video.imageUrl,
+          prompt: video.prompt,
+          duration: video.duration,
+          aspectRatio: video.aspectRatio,
+          createdAt: video.createdAt
+        },
+        chat: chatInfo
+      };
+
+      return reply.send({ success: true, data: videoInfo });
+
+    } catch (error) {
+      console.error('Error in /gallery/video/:videoId/info:', error);
+      return reply.code(500).send({ error: 'Internal Server Error' });
+    }
+  });
+
+  // Get content details (unified endpoint for images and videos)
+  fastify.get('/gallery/content/:contentId/info', async (request, reply) => {
+    try {
+      const contentId = request.params.contentId;
+      const contentType = request.query.type || 'image'; // 'image' or 'video'
+      
+      let objectId;
+      try {
+        objectId = new fastify.mongo.ObjectId(contentId);
+      } catch (e) {
+        return reply.code(400).send({ error: 'Invalid contentId format' });
+      }
+
+      const db = fastify.mongo.db;
+      const chatsCollection = db.collection('chats');
+
+      if (contentType === 'video') {
+        const videosCollection = db.collection('videos');
+        const video = await videosCollection.findOne({ _id: objectId });
+
+        if (!video) {
+          return reply.code(404).send({ error: 'Video not found' });
+        }
+
+        let chatInfo = null;
+        if (video.chatId) {
+          const chat = await chatsCollection.findOne(
+            { _id: video.chatId },
+            { projection: { name: 1, slug: 1, language: 1, chatImageUrl: 1 } }
+          );
+          if (chat) {
+            chatInfo = {
+              name: chat.name,
+              slug: chat.slug,
+              language: chat.language,
+              thumbnail: chat.chatImageUrl
+            };
+          }
+        }
+
+        return reply.send({
+          success: true,
+          contentType: 'video',
+          data: {
+            content: {
+              _id: video._id,
+              videoUrl: video.videoUrl,
+              imageUrl: video.imageUrl,
+              prompt: video.prompt,
+              duration: video.duration,
+              aspectRatio: video.aspectRatio,
+              createdAt: video.createdAt
+            },
+            chat: chatInfo
+          }
+        });
+      } else {
+        // Image content
+        const galleryCollection = db.collection('gallery');
+        const tasksCollection = db.collection('tasks');
+
+        const pipeline = [
+          { $unwind: '$images' },
+          { $match: { 'images._id': objectId } },
+          {
+            $lookup: {
+              from: 'tasks',
+              localField: 'images.taskId',
+              foreignField: 'taskId',
+              as: 'task'
+            }
+          },
+          { $unwind: { path: '$task', preserveNullAndEmptyArrays: true } },
+          {
+            $lookup: {
+              from: 'chats',
+              localField: 'chatId',
+              foreignField: '_id',
+              as: 'chat'
+            }
+          },
+          { $unwind: { path: '$chat', preserveNullAndEmptyArrays: true } },
+          {
+            $project: {
+              _id: 0,
+              content: {
+                _id: '$images._id',
+                prompt: '$images.prompt',
+                title: '$images.title',
+                slug: '$images.slug',
+                imageUrl: '$images.imageUrl',
+                aspectRatio: '$images.aspectRatio',
+                seed: '$images.seed',
+                nsfw: '$images.nsfw',
+                isMerged: '$images.isMerged',
+                mergeId: '$images.mergeId',
+                originalImageUrl: '$images.originalImageUrl',
+                createdAt: '$images.createdAt',
+                likes: '$images.likes',
+                likedBy: '$images.likedBy'
+              },
+              request: {
+                model_name: '$task.model_name',
+                width: '$task.width',
+                height: '$task.height',
+                sampler_name: '$task.sampler_name',
+                guidance_scale: '$task.guidance_scale',
+                steps: '$task.steps',
+                negative_prompt: '$task.negative_prompt',
+                blur: '$task.blur',
+                chatCreation: '$task.chatCreation'
+              },
+              chat: {
+                name: '$chat.name',
+                slug: '$chat.slug',
+                language: '$chat.language',
+                thumbnail: '$chat.chatImageUrl'
+              }
+            }
+          }
+        ];
+
+        const result = await galleryCollection.aggregate(pipeline).toArray();
+
+        if (result.length === 0) {
+          return reply.code(404).send({ error: 'Image not found' });
+        }
+
+        return reply.send({
+          success: true,
+          contentType: 'image',
+          data: result[0]
+        });
+      }
+
+    } catch (error) {
+      console.error('Error in /gallery/content/:contentId/info:', error);
+      return reply.code(500).send({ error: 'Internal Server Error' });
+    }
+  });
 }
 
 module.exports = routes;

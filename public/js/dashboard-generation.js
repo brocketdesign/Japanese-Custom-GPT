@@ -795,19 +795,24 @@ class GenerationDashboard {
       imageUrl: imageUrl?.substring(0, 80) + '...'
     });
     
-    // Initialize images array if needed
+    // Initialize images array and completion tracker if needed
     if (!result.images) {
       result.images = [];
+    }
+    if (!result.completedTaskCount) {
+      result.completedTaskCount = 0;
     }
     
     // Add image at the correct index
     result.images[imageIndex] = imageUrl;
+    result.completedTaskCount++;
     
-    // Check if all images are complete
-    const allImagesComplete = result.images.filter(Boolean).length === result.imageCount;
-    if (allImagesComplete) {
+    // Check if all tasks are complete (either succeeded or failed)
+    const allTasksProcessed = result.completedTaskCount >= result.imageCount;
+    if (allTasksProcessed) {
       result.status = 'completed';
-      console.log('[GenerationDashboard] All carousel images completed');
+      const successCount = result.images.filter(Boolean).length;
+      console.log(`[GenerationDashboard] All carousel tasks processed: ${successCount}/${result.imageCount} succeeded`);
     }
     
     // Update card in DOM
@@ -932,7 +937,8 @@ class GenerationDashboard {
       images: imageCount > 1 ? [] : null, // Array for multiple images, null for single
       imageCount: imageCount,
       activeImageIndex: 0, // Track which image is currently being viewed
-      taskIds: [] // Track all task IDs for this generation
+      taskIds: [], // Track all task IDs for this generation
+      completedTaskCount: 0 // Track how many tasks have finished (success or fail)
     };
     
     this.state.results.unshift(result);
@@ -996,13 +1002,21 @@ class GenerationDashboard {
       } else {
         // At least one image loaded - show carousel
         const carouselId = `carousel-${result.id}`;
+        // Map completed images with their indices for proper carousel navigation
+        const completedImageIndices = result.images
+          .map((img, idx) => img ? idx : null)
+          .filter(idx => idx !== null);
+        
         mediaContent = `
           <div id="${carouselId}" class="carousel slide" data-bs-ride="false" data-bs-interval="false">
             <div class="carousel-inner">
               ${result.images.map((imageUrl, index) => {
                 if (!imageUrl) return ''; // Skip empty slots
+                // Check if this is the first completed image (should be active if activeImageIndex isn't set yet)
+                const isActive = index === result.activeImageIndex || 
+                                (result.activeImageIndex === 0 && index === completedImageIndices[0]);
                 return `
-                  <div class="carousel-item ${index === result.activeImageIndex ? 'active' : ''}" data-image-index="${index}">
+                  <div class="carousel-item ${isActive ? 'active' : ''}" data-image-index="${index}">
                     <img src="${imageUrl}" alt="Generated image ${index + 1}" loading="lazy" class="d-block w-100">
                   </div>
                 `;
@@ -1021,12 +1035,17 @@ class GenerationDashboard {
             <div class="carousel-indicators">
               ${result.images.map((imageUrl, index) => {
                 if (!imageUrl) {
-                  return `<button type="button" class="loading-dot"></button>`;
+                  // Show loading dot without navigation
+                  return `<button type="button" class="loading-dot" disabled></button>`;
                 }
+                // Find the slide index for this image (only count completed images)
+                const slideIndex = completedImageIndices.indexOf(index);
+                const isActive = index === result.activeImageIndex || 
+                                (result.activeImageIndex === 0 && index === completedImageIndices[0]);
                 return `
-                  <button type="button" data-bs-target="#${carouselId}" data-bs-slide-to="${index}" 
-                    class="${index === result.activeImageIndex ? 'active' : ''}" 
-                    aria-current="${index === result.activeImageIndex ? 'true' : 'false'}" 
+                  <button type="button" data-bs-target="#${carouselId}" data-bs-slide-to="${slideIndex}" 
+                    class="${isActive ? 'active' : ''}" 
+                    aria-current="${isActive ? 'true' : 'false'}" 
                     aria-label="Image ${index + 1}"></button>
                 `;
               }).join('')}
@@ -1091,9 +1110,13 @@ class GenerationDashboard {
       if (carousel) {
         carousel.addEventListener('slid.bs.carousel', (e) => {
           const activeItem = e.relatedTarget;
-          const imageIndex = parseInt(activeItem.dataset.imageIndex);
-          result.activeImageIndex = imageIndex;
-          console.log('[GenerationDashboard] Carousel slid to image:', imageIndex);
+          if (activeItem && activeItem.dataset && activeItem.dataset.imageIndex !== undefined) {
+            const imageIndex = parseInt(activeItem.dataset.imageIndex, 10);
+            if (!isNaN(imageIndex) && imageIndex >= 0 && imageIndex < result.images.length) {
+              result.activeImageIndex = imageIndex;
+              console.log('[GenerationDashboard] Carousel slid to image:', imageIndex);
+            }
+          }
         });
       }
     }
@@ -1232,11 +1255,26 @@ class GenerationDashboard {
           clearInterval(interval);
           this.pollIntervals.delete(taskId);
           console.log('[GenerationDashboard] Carousel task failed for imageIndex:', imageIndex);
-          // Don't add the failed image, but update the UI to show loading is done
-          const card = document.getElementById(`result-${result.id}`);
-          if (card) {
-            const newCard = this.createResultCard(result);
-            card.replaceWith(newCard);
+          
+          // Increment completion counter even for failed tasks
+          const foundResult = this.state.results.find(r => r.id === result.id);
+          if (foundResult) {
+            if (!foundResult.completedTaskCount) {
+              foundResult.completedTaskCount = 0;
+            }
+            foundResult.completedTaskCount++;
+            
+            // Check if all tasks are done
+            if (foundResult.completedTaskCount >= foundResult.imageCount) {
+              foundResult.status = 'completed';
+            }
+            
+            // Update the UI
+            const card = document.getElementById(`result-${result.id}`);
+            if (card) {
+              const newCard = this.createResultCard(foundResult);
+              card.replaceWith(newCard);
+            }
           }
         }
       } catch (error) {
@@ -1499,14 +1537,20 @@ class GenerationDashboard {
     if (result.images && result.images.length > 0) {
       const carouselId = `preview-carousel-${result.id}`;
       const completedImages = result.images.filter(Boolean);
+      // Map completed images with their indices for proper carousel navigation
+      const completedImageIndices = result.images
+        .map((img, idx) => img ? idx : null)
+        .filter(idx => idx !== null);
       
       content.innerHTML = `
         <div id="${carouselId}" class="carousel slide preview-carousel" data-bs-ride="false" data-bs-interval="false">
           <div class="carousel-inner">
             ${result.images.map((imageUrl, index) => {
               if (!imageUrl) return ''; // Skip empty slots
+              const isActive = index === result.activeImageIndex || 
+                              (result.activeImageIndex === 0 && index === completedImageIndices[0]);
               return `
-                <div class="carousel-item ${index === result.activeImageIndex ? 'active' : ''}" data-image-index="${index}">
+                <div class="carousel-item ${isActive ? 'active' : ''}" data-image-index="${index}">
                   <img src="${imageUrl}" alt="Preview image ${index + 1}" class="d-block w-100">
                 </div>
               `;
@@ -1525,10 +1569,14 @@ class GenerationDashboard {
           <div class="carousel-indicators">
             ${result.images.map((imageUrl, index) => {
               if (!imageUrl) return '';
+              // Find the slide index for this image (only count completed images)
+              const slideIndex = completedImageIndices.indexOf(index);
+              const isActive = index === result.activeImageIndex || 
+                              (result.activeImageIndex === 0 && index === completedImageIndices[0]);
               return `
-                <button type="button" data-bs-target="#${carouselId}" data-bs-slide-to="${index}" 
-                  class="${index === result.activeImageIndex ? 'active' : ''}" 
-                  aria-current="${index === result.activeImageIndex ? 'true' : 'false'}" 
+                <button type="button" data-bs-target="#${carouselId}" data-bs-slide-to="${slideIndex}" 
+                  class="${isActive ? 'active' : ''}" 
+                  aria-current="${isActive ? 'true' : 'false'}" 
                   aria-label="Image ${index + 1}"></button>
               `;
             }).join('')}
@@ -1542,11 +1590,15 @@ class GenerationDashboard {
         if (carousel) {
           carousel.addEventListener('slid.bs.carousel', (e) => {
             const activeItem = e.relatedTarget;
-            const imageIndex = parseInt(activeItem.dataset.imageIndex);
-            result.activeImageIndex = imageIndex;
-            console.log('[GenerationDashboard] Preview carousel slid to image:', imageIndex);
-            // Update footer buttons to reference the new active image
-            this.updatePreviewFooter(result);
+            if (activeItem && activeItem.dataset && activeItem.dataset.imageIndex !== undefined) {
+              const imageIndex = parseInt(activeItem.dataset.imageIndex, 10);
+              if (!isNaN(imageIndex) && imageIndex >= 0 && imageIndex < result.images.length) {
+                result.activeImageIndex = imageIndex;
+                console.log('[GenerationDashboard] Preview carousel slid to image:', imageIndex);
+                // Update footer buttons to reference the new active image
+                this.updatePreviewFooter(result);
+              }
+            }
           });
         }
       }, 100);

@@ -5,90 +5,338 @@
     <title>{{requestedUser.userName}} {{translations.followers.pageTitleFollowers}}</title>
     <meta name="description" content="{{translations.followers.metaDescriptionFollowers}}">
     <style>
-        .follower-card {
-            border: 1px solid #e9ecef;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-            background-color: #fff;
-            box-shadow: 0 2px 8px rgba(130, 64, 255, 0.1);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        /* ====================================
+           FOLLOWERS PAGE STYLES - Modern Native App Design
+           ==================================== */
+        .followers-page-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px 16px 40px;
+            min-height: calc(100vh - 60px);
         }
-        .follower-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 16px rgba(130, 64, 255, 0.2);
+        
+        .followers-page-header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding: 20px 0;
         }
-        .follower-card img {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            object-position: top;
-            border-radius: 50%;
-            margin-right: 16px;
-            border: 2px solid #8240FF;
-        }
-        .follower-info {
+        
+        .followers-page-title {
+            color: var(--text-primary, #fff);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
             display: flex;
             align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
-        .follower-details {
-            flex-grow: 1;
+        
+        .followers-page-title i {
+            color: var(--primary-color, #8240FF);
         }
-        .follower-name {
-            font-weight: 600;
-            color: #8240FF;
+        
+        .people-grid {
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-secondary, #1a1a1a);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg, 0 10px 25px rgba(0, 0, 0, 0.5));
+            border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+        }
+        
+        /* Follower Item - Native App Style */
+        .follower-page-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            gap: 14px;
             text-decoration: none;
-            font-size: 16px;
+            background: transparent;
+            border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.06));
+            transition: background 0.2s ease, transform 0.15s ease;
+            cursor: pointer;
         }
-        .follower-name:hover {
-            text-decoration: underline;
-            color: #6E20F4;
+        
+        .follower-page-item:hover {
+            background: rgba(130, 64, 255, 0.1);
+            text-decoration: none;
         }
-        .follower-stats {
+        
+        .follower-page-item:active {
+            transform: scale(0.98);
+            background: rgba(130, 64, 255, 0.15);
+        }
+        
+        .follower-page-item:last-child {
+            border-bottom: none;
+        }
+        
+        .follower-avatar-wrapper {
+            position: relative;
+            flex-shrink: 0;
+        }
+        
+        .follower-avatar {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            object-fit: cover;
+            object-position: top;
+            border: 2px solid var(--primary-color, #8240FF);
+            background: var(--bg-tertiary, #252525);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .follower-page-item:hover .follower-avatar {
+            border-color: #9d5cff;
+            box-shadow: 0 0 0 3px rgba(130, 64, 255, 0.2);
+        }
+        
+        .follower-info-content {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        
+        .follower-name-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .follower-username {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text-primary, #fff);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .follower-bio {
+            font-size: 13px;
+            color: var(--text-secondary, #b0b0b0);
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.4;
+        }
+        
+        .follower-bio-placeholder {
+            font-style: italic;
+            color: var(--text-muted, #6c757d);
+        }
+        
+        .follower-action {
+            flex-shrink: 0;
+            color: var(--text-muted, #6c757d);
+            transition: color 0.2s ease, transform 0.2s ease;
+        }
+        
+        .follower-page-item:hover .follower-action {
+            color: var(--primary-color, #8240FF);
+            transform: translateX(3px);
+        }
+        
+        /* Loading State */
+        .followers-page-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 24px;
+            gap: 12px;
+            color: var(--text-secondary, #b0b0b0);
+            background: var(--bg-secondary, #1a1a1a);
+            border-radius: 16px;
+        }
+        
+        .followers-loading-spinner {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .followers-loading-spinner i {
+            font-size: 24px;
+            color: var(--primary-color, #8240FF);
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Empty State */
+        .followers-page-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 24px;
+            gap: 12px;
+            color: var(--text-secondary, #b0b0b0);
+            background: var(--bg-secondary, #1a1a1a);
+            border-radius: 16px;
+        }
+        
+        .followers-page-empty i {
+            font-size: 48px;
+            color: var(--text-muted, #6c757d);
+            opacity: 0.5;
+        }
+        
+        .followers-page-empty span {
+            font-size: 15px;
+            text-align: center;
+        }
+        
+        /* Error State */
+        .followers-page-error {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 24px;
+            gap: 12px;
+            color: var(--text-secondary, #b0b0b0);
+            background: var(--bg-secondary, #1a1a1a);
+            border-radius: 16px;
+        }
+        
+        .followers-page-error i {
+            font-size: 36px;
+            color: var(--danger-color, #ff4040);
+        }
+        
+        .followers-page-error span {
             font-size: 14px;
-            color: #6c757d;
+            text-align: center;
         }
+        
+        .followers-retry-btn {
+            margin-top: 8px;
+            padding: 8px 20px;
+            background: var(--primary-color, #8240FF);
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .followers-retry-btn:hover {
+            background: #9d5cff;
+            transform: translateY(-1px);
+        }
+        
+        .followers-retry-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+        
+        /* Pagination */
         .pagination-controls {
-            margin-top: 20px;
+            margin-top: 24px;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
         }
-        .btn-primary {
-            background-color: #8240FF;
-            border-color: #8240FF;
+        
+        .pagination-controls .btn {
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
         }
-        .btn-primary:hover {
-            background-color: #6E20F4;
-            border-color: #6E20F4;
+        
+        .pagination-controls .btn-outline-primary {
+            color: var(--text-secondary, #b0b0b0);
+            border-color: var(--border-color, rgba(255, 255, 255, 0.1));
+            background: var(--bg-secondary, #1a1a1a);
         }
-        @media (max-width: 768px) {
-            .follower-card {
-                padding: 12px;
+        
+        .pagination-controls .btn-outline-primary:hover {
+            background: rgba(130, 64, 255, 0.2);
+            border-color: var(--primary-color, #8240FF);
+            color: var(--text-primary, #fff);
+        }
+        
+        .pagination-controls .btn-primary {
+            background: var(--primary-color, #8240FF);
+            border-color: var(--primary-color, #8240FF);
+        }
+        
+        .pagination-controls .btn-primary:hover {
+            background: #9d5cff;
+            border-color: #9d5cff;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .followers-page-container {
+                padding: 16px 12px 32px;
             }
-            .follower-card img {
-                width: 50px;
-                height: 50px;
+            
+            .followers-page-title {
+                font-size: 1.25rem;
+            }
+            
+            .people-grid {
+                border-radius: 12px;
+            }
+            
+            .follower-page-item {
+                padding: 12px 14px;
+            }
+            
+            .follower-avatar {
+                width: 46px;
+                height: 46px;
+            }
+            
+            .follower-username {
+                font-size: 14px;
+            }
+            
+            .follower-bio {
+                font-size: 12px;
             }
         }
+        
+        footer { display: inline !important; }
+        .sticky-bottom { display: inline-block !important; width: 100%; }
     </style>
 </head>
 <body>
     {{> dashboard-nav}}
 
-    <section class="container mt-4">
-        <div class="row">
-            <div class="col-12">
-                <h3 class="mb-4 text-center" style="color: #8240FF;">{{title}}</h3>
-                <div id="people-list" class="people-grid">
-                    <!-- Follower cards will be dynamically inserted here by JavaScript -->
-                </div>
-                <div id="pagination-controls" class="pagination-controls d-flex justify-content-center"></div>
-            </div>
+    <section class="followers-page-container">
+        <div class="followers-page-header">
+            <h3 class="followers-page-title">
+                <i class="bi bi-{{#if (eq type 'followers')}}people-fill{{else}}person-check-fill{{/if}}"></i>
+                {{title}}
+            </h3>
         </div>
+        <div id="people-list" class="people-grid">
+            <!-- Follower cards will be dynamically inserted here by JavaScript -->
+        </div>
+        <div id="pagination-controls" class="pagination-controls"></div>
     </section>
 
-    <style>
-        footer { display: inline !important; }
-        .sticky-bottom { display: inline-block !important; width: 100%; }
-    </style>
     {{> dashboard-footer}}
 
     <script>

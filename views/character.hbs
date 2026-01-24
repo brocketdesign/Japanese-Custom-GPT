@@ -70,9 +70,6 @@
                             title="Add to favorites">
                         <i class="bi bi-star"></i>
                     </button>
-                    <button class="ig-secondary-btn share-btn">
-                        <i class="bi bi-send"></i>
-                    </button>
                 {{/unless}}
             </div>
 
@@ -88,6 +85,12 @@
                         data-id="{{chat._id}}" 
                         onclick="toggleChatNSFW(this);">
                     <i class="bi {{#if chat.nsfw}}bi-eye-slash{{else}}bi-eye{{/if}}"></i>
+                </button>
+                <button class="ig-admin-btn delete-character-btn" 
+                        data-id="{{chat._id}}" 
+                        onclick="deleteCharacter(this);"
+                        title="Delete character">
+                    <i class="bi bi-trash"></i>
                 </button>
             </div>
             {{/if}}

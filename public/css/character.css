@@ -1735,3 +1735,89 @@ body:has(.ig-profile-header) .dropdown-toggle:hover {
     background: rgba(130, 64, 255, 0.15) !important;
     border-color: var(--primary-color) !important;
 }
+
+/* ===== Image Preview Modal Favorites Button ===== */
+#characterImagePreviewModal .image-like-overlay {
+    top: 80px !important;
+    right: 20px !important;
+    left: auto !important;
+}
+
+#characterImagePreviewModal .image-like-overlay .image-like-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(130, 64, 255, 0.95), rgba(210, 184, 255, 0.95)) !important;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(130, 64, 255, 0.4);
+}
+
+#characterImagePreviewModal .image-like-overlay .image-like-btn:hover {
+    transform: scale(1.15);
+    box-shadow: 0 6px 28px rgba(130, 64, 255, 0.6);
+    background: linear-gradient(135deg, rgba(155, 90, 255, 0.95), rgba(235, 209, 255, 0.95)) !important;
+}
+
+#characterImagePreviewModal .image-like-overlay .image-like-btn:active {
+    transform: scale(0.95);
+}
+
+#characterImagePreviewModal .image-like-overlay .image-like-btn.liked {
+    background: linear-gradient(135deg, #ff006e, #ff4d9d) !important;
+    box-shadow: 0 4px 20px rgba(255, 0, 110, 0.4);
+}
+
+#characterImagePreviewModal .image-like-overlay .image-like-btn.liked:hover {
+    transform: scale(1.15);
+    box-shadow: 0 6px 28px rgba(255, 0, 110, 0.6);
+}
+
+/* ===== Image Preview Modal Full Screen on Mobile ===== */
+@media (max-width: 768px) {
+    #characterImagePreviewModal .modal-dialog {
+        max-width: 100%;
+        height: 100vh;
+        margin: 0;
+    }
+    
+    #characterImagePreviewModal .modal-content {
+        height: 100vh;
+        border-radius: 0;
+    }
+    
+    #characterImagePreviewModal .modal-body {
+        height: 100vh !important;
+        padding: 0 !important;
+    }
+    
+    /* Hide pagination on small screens */
+    #characterImagePreviewModal .swiper-pagination {
+        display: none !important;
+    }
+    
+    /* Adjust close button for mobile */
+    #characterImagePreviewModal .modal-header {
+        top: 0 !important;
+    }
+    
+    #characterImagePreviewModal .btn-close {
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+}
+
+@media (max-width: 480px) {
+    #characterImagePreviewModal .image-like-overlay {
+        top: 60px !important;
+        right: 12px !important;
+    }
+    
+    #characterImagePreviewModal .image-like-overlay .image-like-btn {
+        width: 48px;
+        height: 48px;
+        font-size: 18px;
+    }
+}

@@ -910,3 +910,259 @@
     transform: scale(1.05);
     box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
 }
+
+/* ===== Mobile Full Screen Images ===== */
+@media (max-width: 768px) {
+    .explore-sticky-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 999;
+        height: auto;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(10px);
+        padding: 8px 12px;
+    }
+    
+    .explore-gallery-wrapper {
+        width: 100vw;
+        height: 100vh;
+        margin-top: 0;
+    }
+    
+    .explore-vertical-swiper {
+        width: 100vw;
+        height: 100vh;
+    }
+    
+    .swiper-slide {
+        width: 100vw;
+        height: 100vh;
+    }
+    
+    /* Ensure images take full height on mobile */
+    .explore-image-card {
+        width: 100vw;
+        height: 100vh;
+    }
+    
+    .explore-image {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+    
+    .character-slide {
+        width: 100vw;
+        height: 100vh;
+    }
+    
+    .character-images-swiper {
+        width: 100vw;
+        height: 100vh;
+    }
+    
+    .character-images-swiper .swiper-slide {
+        width: 100vw;
+        height: 100vh;
+    }
+    
+    .tiktok-actions {
+        right: 12px;
+        bottom: 80px;
+        gap: 12px;
+    }
+    
+    .tiktok-action-btn {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .action-icon {
+        font-size: 20px;
+    }
+}
+
+/* Mobile specific image card styles for preview */
+@media (max-width: 480px) {
+    .explore-image-card {
+        width: 100vw;
+        height: 100vh;
+    }
+    
+    .character-info-overlay {
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: auto;
+        max-height: 25%;
+        overflow-y: auto;
+    }
+    
+    .tiktok-actions {
+        right: 10px;
+        bottom: 70px;
+        gap: 10px;
+    }
+    
+    .tiktok-action-btn {
+        width: 44px;
+        height: 44px;
+    }
+    
+    .action-icon {
+        font-size: 18px;
+    }
+    
+    .action-count {
+        font-size: 10px;
+    }
+}
+
+
+/* ===== Floating Favorite Button (deprecated - using TikTok buttons instead) ===== */
+.image-favorite-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(130, 64, 255, 0.95), rgba(210, 184, 255, 0.95));
+    border: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+    opacity: 0;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(130, 64, 255, 0.4);
+}
+
+.image-favorite-btn i {
+    font-size: 20px;
+    transition: all 0.2s ease;
+}
+
+.image-favorite-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(130, 64, 255, 0.6);
+}
+
+.image-favorite-btn:active {
+    transform: scale(0.95);
+}
+
+.image-favorite-btn.liked {
+    background: linear-gradient(135deg, #ff006e, #ff4d9d);
+    box-shadow: 0 4px 12px rgba(255, 0, 110, 0.4);
+}
+
+.image-favorite-btn.liked:hover {
+    box-shadow: 0 6px 16px rgba(255, 0, 110, 0.6);
+}
+
+/* Show button on image hover */
+.explore-image-card:hover .image-favorite-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Button appears on touch/mobile */
+.explore-image-card.active .image-favorite-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ===== TikTok Style Action Buttons ===== */
+.tiktok-actions {
+    position: absolute;
+    right: 16px;
+    bottom: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    z-index: 20;
+}
+
+.tiktok-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.tiktok-action-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.1);
+}
+
+.tiktok-action-btn:active {
+    transform: scale(0.95);
+}
+
+.action-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.action-count {
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 20px;
+}
+
+/* Heart button specific styling */
+.tiktok-action-btn.heart-btn {
+    background: rgba(255, 0, 110, 0.15);
+    border-color: rgba(255, 0, 110, 0.3);
+}
+
+.tiktok-action-btn.heart-btn:hover {
+    background: rgba(255, 0, 110, 0.25);
+}
+
+.tiktok-action-btn.heart-btn.liked .action-icon i {
+    color: #ff006e;
+}
+
+.tiktok-action-btn.heart-btn.liked {
+    background: rgba(255, 0, 110, 0.2);
+}
+
+/* Profile button */
+.tiktok-action-btn.profile-btn {
+    background: rgba(130, 64, 255, 0.15);
+    border-color: rgba(130, 64, 255, 0.3);
+}
+
+.tiktok-action-btn.profile-btn:hover {
+    background: rgba(130, 64, 255, 0.25);
+}
+
+/* Chat button */
+.tiktok-action-btn.chat-btn {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.tiktok-action-btn.chat-btn:hover {
+    background: rgba(99, 102, 241, 0.25);
+}

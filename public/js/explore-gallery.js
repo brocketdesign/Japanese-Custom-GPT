@@ -26,6 +26,9 @@ class ExploreGallery {
         this.isPremium = this.user.subscriptionStatus === 'active';
         this.isTemporary = this.user.isTemporary || false;
         
+        // Liked images state (per image ID)
+        this.likedImages = new Set();
+        
         // Swipers
         this.verticalSwiper = null;
         this.horizontalSwipers = new Map();
@@ -340,6 +343,7 @@ class ExploreGallery {
         const slide = document.createElement('div');
         slide.className = 'swiper-slide character-slide';
         slide.dataset.characterId = character.chatId;
+        slide.dataset.currentImageId = character.images[0]?._id || character.images[0]?.imageUrl || '';
         
         const imagesHtml = character.images.map((img, idx) => {
             // Use imageUrl as primary source, fallback to thumbnailUrl, then placeholder
@@ -349,7 +353,7 @@ class ExploreGallery {
 
             // All images use the full imageUrl for display
             return `
-                <div class="swiper-slide">
+                <div class="swiper-slide" data-image-id="${img._id || img.imageUrl}">
                     <div class="explore-image-card ${isNsfw ? 'nsfw-content' : ''}">
                         <img 
                             src="${imageUrl}" 
@@ -372,6 +376,35 @@ class ExploreGallery {
                     ${imagesHtml}
                 </div>
             </div>
+            
+            <!-- TikTok-style action buttons (right side, vertical) -->
+            <div class="tiktok-actions">
+                <span class="tiktok-action-btn heart-btn" 
+                        data-chat-id="${character.chatId}"
+                        data-id="${character.images[0]?._id || character.images[0]?.imageUrl || ''}"
+                        onclick="event.stopPropagation(); window.exploreGallery.handleLikeImage(this);"
+                        title="Add to favorites">
+                    <div class="action-icon">
+                        <i class="bi bi-heart"></i>
+                    </div>
+                </span>
+                <button class="tiktok-action-btn profile-btn" 
+                        onclick="event.stopPropagation(); window.location.href='/character/slug/${character.chatSlug}'" 
+                        title="View Profile">
+                    <div class="action-icon">
+                        <i class="bi bi-person"></i>
+                    </div>
+                </button>
+                <button class="tiktok-action-btn chat-btn" 
+                        onclick="event.stopPropagation(); window.exploreGallery.handleChatClick('${character.chatId}')" 
+                        title="Open Chat">
+                    <div class="action-icon">
+                        <i class="bi bi-chat-dots"></i>
+                    </div>
+                </button>
+            </div>
+            
+            <!-- Bottom info overlay -->
             <div class="character-info-overlay">
                 <div class="character-header">
                     <div class="character-avatar-link">
@@ -389,14 +422,6 @@ class ExploreGallery {
                         <p class="image-counter">
                             <span class="current-image">1</span> / ${character.images.length} images
                         </p>
-                    </div>
-                    <div class="character-actions">
-                        <button class="action-btn" onclick="event.stopPropagation(); window.location.href='/character/slug/${character.chatSlug}'" title="View Profile">
-                            <i class="bi bi-person"></i>
-                        </button>
-                        <button class="action-btn primary" onclick="event.stopPropagation(); window.exploreGallery.handleChatClick('${character.chatId}')" title="Open Chat">
-                            <i class="bi bi-chat-dots"></i>
-                        </button>
                     </div>
                 </div>
                 ${dotsHtml}
@@ -525,6 +550,163 @@ class ExploreGallery {
             swiper.update();
             
             this.horizontalSwipers.set(charId, swiper);
+            
+            // Update heart button state for the first image
+            this.updateHeartButtonForImage(container, 0);
+            
+            // Setup double-tap to like on images
+            this.setupDoubleTapLike(container);
+        });
+    }
+    
+    /**
+     * Setup double-tap to like on images
+     */
+    setupDoubleTapLike(container) {
+        const slide = container.closest('.character-slide');
+        if (!slide) return;
+        
+        let lastTapTime = 0;
+        let lastTapX = 0;
+        let lastTapY = 0;
+        
+        container.addEventListener('touchend', (e) => {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTapTime;
+            
+            // Get current touch point
+            if (e.changedTouches.length > 0) {
+                const touch = e.changedTouches[0];
+                const currentX = touch.clientX;
+                const currentY = touch.clientY;
+                
+                // Check if it's a double tap (within 300ms and same location within 30px)
+                const distance = Math.sqrt(
+                    Math.pow(currentX - lastTapX, 2) + 
+                    Math.pow(currentY - lastTapY, 2)
+                );
+                
+                if (tapLength < 300 && tapLength > 0 && distance < 30) {
+                    e.preventDefault();
+                    
+                    // Trigger like on the heart button
+                    const heartBtn = slide.querySelector('.tiktok-action-btn.heart-btn');
+                    if (heartBtn) {
+                        this.handleLikeImage(heartBtn);
+                    }
+                }
+                
+                lastTapTime = currentTime;
+                lastTapX = currentX;
+                lastTapY = currentY;
+            }
+        });
+    }
+    
+    /**
+     * Update heart button for a specific image
+     */
+    updateHeartButtonForImage(container, imageIndex) {
+        const slide = container.closest('.character-slide');
+        if (!slide) return;
+        
+        const imageSlidesArray = Array.from(slide.querySelectorAll('.character-images-swiper .swiper-slide'));
+        if (!imageSlidesArray[imageIndex]) return;
+        
+        const imageId = imageSlidesArray[imageIndex].dataset.imageId;
+        const heartBtn = slide.querySelector('.tiktok-action-btn.heart-btn');
+        
+        if (heartBtn && imageId) {
+            heartBtn.dataset.id = imageId;
+            this.syncHeartButtonState(heartBtn, imageId);
+        }
+    }
+    
+    /**
+     * Synchronize heart button state with the actual like status
+     */
+    syncHeartButtonState(heartBtn, imageId) {
+        if (!heartBtn || !imageId) return;
+        
+        // Check current icon state
+        const icon = heartBtn.querySelector('.action-icon i');
+        if (!icon) return;
+        
+        // Check if we have this image's like state stored locally
+        const isLiked = this.likedImages && this.likedImages.has(imageId);
+        
+        // Update the heart button to match the stored state
+        if (isLiked) {
+            heartBtn.classList.add('liked');
+            icon.classList.remove('bi-heart');
+            icon.classList.add('bi-heart-fill');
+            icon.classList.add('text-danger');
+        } else {
+            heartBtn.classList.remove('liked');
+            icon.classList.remove('bi-heart-fill');
+            icon.classList.remove('text-danger');
+            icon.classList.add('bi-heart');
+        }
+    }
+    
+    /**
+     * Handle like/unlike image with proper state management and notification
+     */
+    handleLikeImage(buttonEl) {
+        // Check if user is temporary
+        if (this.isTemporary) {
+            if (typeof openLoginForm === 'function') {
+                openLoginForm();
+            }
+            return;
+        }
+        
+        const imageId = buttonEl.dataset.id;
+        const chatId = buttonEl.dataset.chatId;
+        if (!imageId) return;
+        
+        const icon = buttonEl.querySelector('.action-icon i');
+        if (!icon) return;
+        
+        // Determine current state and toggle
+        const isCurrentlyLiked = this.likedImages.has(imageId);
+        const action = isCurrentlyLiked ? 'unlike' : 'like';
+        
+        // Update local state FIRST
+        if (action === 'like') {
+            this.likedImages.add(imageId);
+        } else {
+            this.likedImages.delete(imageId);
+        }
+        
+        // Update UI immediately
+        this.syncHeartButtonState(buttonEl, imageId);
+        
+        // Show notification for likes
+        if (action === 'like') {
+            if (typeof showNotification === 'function') {
+                const message = window.translations?.like_grant_points?.replace('{point}', '5') || 'Image liked! +5 points';
+                showNotification(message, 'success');
+            }
+        }
+        
+        // Make API call
+        fetch(`/gallery/${imageId}/like-toggle`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({ action, userChatId: chatId })
+        }).catch(err => {
+            console.error('[ExploreGallery] Failed to toggle like:', err);
+            // Revert state on error
+            if (action === 'like') {
+                this.likedImages.delete(imageId);
+            } else {
+                this.likedImages.add(imageId);
+            }
+            this.syncHeartButtonState(buttonEl, imageId);
         });
     }
     
@@ -574,6 +756,20 @@ class ExploreGallery {
             dots.forEach((dot, i) => {
                 dot.classList.toggle('active', i === imageIndex);
             });
+            
+            // Update the heart button with the new image ID
+            const imageSlidesArray = Array.from(slide.querySelectorAll('.character-images-swiper .swiper-slide'));
+            if (imageSlidesArray[imageIndex]) {
+                const newImageId = imageSlidesArray[imageIndex].dataset.imageId;
+                const heartBtn = slide.querySelector('.tiktok-action-btn.heart-btn');
+                if (heartBtn && newImageId) {
+                    heartBtn.dataset.id = newImageId;
+                    slide.dataset.currentImageId = newImageId;
+                    
+                    // Synchronize heart button state with the actual like status
+                    this.syncHeartButtonState(heartBtn, newImageId);
+                }
+            }
         }
     }
     
@@ -644,6 +840,86 @@ class ExploreGallery {
     startChat() {
         if (this.currentCharacter) {
             this.goToChat(this.currentCharacter.chatSlug);
+        }
+    }
+    
+    /**
+     * Handle image favorite button click
+     */
+    handleImageFavorite(button, chatId) {
+        // Check if user is logged in
+        if (this.isTemporary) {
+            // Open login modal for non-logged-in users
+            if (typeof openLoginForm === 'function') {
+                openLoginForm();
+            } else {
+                window.location.href = '/login';
+            }
+            return;
+        }
+        
+        // Toggle favorite status
+        const isCurrentlyLiked = button.classList.contains('liked');
+        
+        // Optimistic UI update
+        if (isCurrentlyLiked) {
+            button.classList.remove('liked');
+            const icon = button.querySelector('.action-icon i');
+            if (icon) {
+                icon.classList.remove('bi-heart-fill');
+                icon.classList.add('bi-heart');
+            }
+        } else {
+            button.classList.add('liked');
+            const icon = button.querySelector('.action-icon i');
+            if (icon) {
+                icon.classList.remove('bi-heart');
+                icon.classList.add('bi-heart-fill');
+            }
+        }
+        
+        // Call favorites API
+        if (typeof Favorites !== 'undefined') {
+            Favorites.toggleFavorite(chatId, (response) => {
+                // Update UI based on actual response
+                if (response && response.success) {
+                    const actualState = response.isFavorited;
+                    
+                    // Ensure UI matches actual state
+                    if (actualState) {
+                        button.classList.add('liked');
+                        const icon = button.querySelector('.action-icon i');
+                        if (icon) {
+                            icon.classList.remove('bi-heart');
+                            icon.classList.add('bi-heart-fill');
+                        }
+                    } else {
+                        button.classList.remove('liked');
+                        const icon = button.querySelector('.action-icon i');
+                        if (icon) {
+                            icon.classList.remove('bi-heart-fill');
+                            icon.classList.add('bi-heart');
+                        }
+                    }
+                } else {
+                    // Revert optimistic update on error
+                    if (isCurrentlyLiked) {
+                        button.classList.add('liked');
+                        const icon = button.querySelector('.action-icon i');
+                        if (icon) {
+                            icon.classList.remove('bi-heart');
+                            icon.classList.add('bi-heart-fill');
+                        }
+                    } else {
+                        button.classList.remove('liked');
+                        const icon = button.querySelector('.action-icon i');
+                        if (icon) {
+                            icon.classList.remove('bi-heart-fill');
+                            icon.classList.add('bi-heart');
+                        }
+                    }
+                }
+            });
         }
     }
     

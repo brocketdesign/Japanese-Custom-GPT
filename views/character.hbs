@@ -242,33 +242,7 @@
             const profilePage = document.querySelector('#characterProfilePage');
             const chatId = profilePage?.dataset?.chatId || null;
             
-            // === DEBUG: Log all template data ===
-            console.log('=== CHARACTER PROFILE DEBUG ===');
-            console.log('chatId from data attribute:', chatId);
-            console.log('CHAT DATA:', {{{json chat}}});
-            console.log('Chat _id:', '{{chat._id}}');
-            console.log('Chat Name:', '{{chat.name}}');
-            console.log('Chat Image URL:', '{{chat.chatImageUrl}}');
-            console.log('Chat NSFW:', {{#if chat.nsfw}}true{{else}}false{{/if}});
-            console.log('Chat Tags:', {{{json chat.tags}}});
-            console.log('Chat Gender:', '{{chat.gender}}');
-            console.log('Chat Style:', '{{chat.imageStyle}}');
-            
-            {{#if image}}
-            console.log('IMAGE DATA:', {{{json image}}});
-            console.log('Image URL:', '{{image.imageUrl}}');
-            console.log('Image isBlur:', {{#if isBlur}}true{{else}}false{{/if}});
-            {{else}}
-            console.log('NO IMAGE DATA');
-            {{/if}}
-            
-            console.log('USER:', {
-                _id: '{{user._id}}',
-                isTemporary: {{#if user.isTemporary}}true{{else}}false{{/if}},
-                subscriptionStatus: '{{user.subscriptionStatus}}'
-            });
-            console.log('isAdmin:', {{#if isAdmin}}true{{else}}false{{/if}});
-            console.log('=== END DEBUG ===');
+
             
             if (chatId) {
                 // Initialize Instagram-style profile
@@ -291,27 +265,18 @@
                     }
                 };
                 
-                console.log('[CharacterProfile] Initializing profile for chatId:', chatId);
-                
                 // Initialize tabs and load data
                 if (typeof initializeTabs === 'function') {
-                    console.log('[CharacterProfile] Calling initializeTabs()');
                     initializeTabs();
-                } else {
-                    console.error('[CharacterProfile] initializeTabs function not found!');
                 }
                 
                 // Initialize content type toggle
                 if (typeof initializeContentTypeToggle === 'function') {
-                    console.log('[CharacterProfile] Calling initializeContentTypeToggle()');
                     initializeContentTypeToggle();
                 }
                 
                 if (typeof loadCharacterData === 'function') {
-                    console.log('[CharacterProfile] Calling loadCharacterData()');
                     loadCharacterData(chatId);
-                } else {
-                    console.error('[CharacterProfile] loadCharacterData function not found!');
                 }
                 
                 if (typeof initializeSharing === 'function') {

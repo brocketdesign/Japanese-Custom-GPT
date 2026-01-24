@@ -314,6 +314,6 @@
     return originalFetch(url, options);
   };
 
-  console.log('[ContentDiscovery] Tracker initialized');
+
 
 })(window);

@@ -88,8 +88,6 @@ function initializeContentTypeToggle() {
             }
         });
     });
-    
-    console.log('[initializeContentTypeToggle] Content type toggle initialized');
 }
 
 /**
@@ -109,43 +107,75 @@ function loadCharacterImages(chatId, contentType = 'SFW') {
         ? window.characterProfile.sfwPagination 
         : window.characterProfile.nsfwPagination;
     
-    if (typeof loadChatImages === 'function') {
-        window.characterProfile.imagesLoading = true;
-        window.loadedImages = [];
-        
-        console.log(`[loadCharacterImages] START - Calling loadChatImages with reload=true, chatId=${chatId}, contentType=${contentType}`);
-        
-        loadChatImages(chatId, 1, true, false, contentType)
-            .then((images) => {
-                const manager = window.chatImageManager;
-                const imagesCount = (window.loadedImages || []).length;
-                                
-                // Get the actual state from cache manager after fetch completes
-                const actualCurrentPage = manager.currentPages.get(cacheKey) || 1;
-                const actualTotalPages = manager.totalPages.get(cacheKey) || 1;
-                const hasCache = manager.cache.has(cacheKey);
-                                                
-                // Display images directly - pass chatId for data-chat-id attribute
-                displayImagesInGrid(images, chatId);
-                    
-                // Re-read the state AGAIN after display, in case totalPages was just updated
-                const finalCurrentPage = manager.currentPages.get(cacheKey) || 1;
-                const finalTotalPages = manager.totalPages.get(cacheKey) || 1;
-                
-                // Sync pagination state with actual cache state AFTER display
-                paginationState.currentPage = finalCurrentPage;
-                paginationState.totalPages = finalTotalPages;
-                
-                // After loading first page, update button visibility USING FINAL STATE
-                updateLoadMoreButton(chatId, contentType);
-                window.characterProfile.imagesLoading = false;
-                
-            })
-            .catch((error) => {
-                window.characterProfile.imagesLoading = false;
-                displayImagesInGrid([]);
-            });
+    // Wait for loadChatImages to be available (it's loaded from dashboard-infinite-scroll.js)
+    if (typeof loadChatImages !== 'function') {
+        // Retry after a short delay (scripts may still be loading)
+        setTimeout(() => {
+            loadCharacterImages(chatId, contentType);
+        }, 100);
+        return;
     }
+    
+    // Also check if chatImageManager is ready
+    if (typeof window.chatImageManager === 'undefined') {
+        setTimeout(() => {
+            loadCharacterImages(chatId, contentType);
+        }, 100);
+        return;
+    }
+    
+    window.characterProfile.imagesLoading = true;
+    window.loadedImages = [];
+    
+    loadChatImages(chatId, 1, true, false, contentType)
+        .then((images) => {
+            const manager = window.chatImageManager;
+                            
+            // Get the actual state from cache manager after fetch completes
+            const actualCurrentPage = manager.currentPages.get(cacheKey) || 1;
+            const actualTotalPages = manager.totalPages.get(cacheKey) || 1;
+            const hasCache = manager.cache.has(cacheKey);
+                                            
+            // Display images directly - pass chatId for data-chat-id attribute
+            // Only call displayImagesInGrid if we have images to display, otherwise keep the loading state
+            if (images && images.length > 0) {
+                displayImagesInGrid(images, chatId);
+            } else {
+                // No images found - show the "no images" message after confirming API call completed
+                const grid = document.getElementById('imagesGrid');
+                if (grid && grid.querySelector('.loading-grid')) {
+                    // Replace loading grid with "no images available" message
+                    grid.innerHTML = `<div style="padding: 60px 20px; text-align: center; color: #999; grid-column: 1/-1; font-size: 0.95rem;">
+                        <i class="bi bi-image" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5; display: block;"></i>
+                        No images available
+                    </div>`;
+                }
+            }
+                
+            // Re-read the state AGAIN after display, in case totalPages was just updated
+            const finalCurrentPage = manager.currentPages.get(cacheKey) || 1;
+            const finalTotalPages = manager.totalPages.get(cacheKey) || 1;
+            
+            // Sync pagination state with actual cache state AFTER display
+            paginationState.currentPage = finalCurrentPage;
+            paginationState.totalPages = finalTotalPages;
+            
+            // After loading first page, update button visibility USING FINAL STATE
+            updateLoadMoreButton(chatId, contentType);
+            window.characterProfile.imagesLoading = false;
+            
+        })
+        .catch((error) => {
+            window.characterProfile.imagesLoading = false;
+            // On error, show "no images available" message instead of spinner
+            const grid = document.getElementById('imagesGrid');
+            if (grid) {
+                grid.innerHTML = `<div style="padding: 60px 20px; text-align: center; color: #999; grid-column: 1/-1; font-size: 0.95rem;">
+                    <i class="bi bi-image" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5; display: block;"></i>
+                    No images available
+                </div>`;
+            }
+        });
 }
 
 /**

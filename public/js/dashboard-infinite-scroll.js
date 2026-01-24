@@ -298,7 +298,6 @@ async function handleReload(id, cacheKey, type, mediaType) {
         
         return true; // Indicate we have cache
     }
-    
     // If no cache, ensure current page is set to 0
     manager.currentPages.set(cacheKey, 0);
     return false; // No cache available
@@ -338,6 +337,7 @@ async function fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type
         }
         
         const items = mediaType === 'video' ? response.videos || [] : response.images || [];
+        
         // Cache the response
         manager.cache.get(cacheKey).set(response.page, items);
         manager.totalPages.set(cacheKey, response.totalPages || 1);

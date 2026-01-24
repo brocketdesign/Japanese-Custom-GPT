@@ -8,30 +8,14 @@
  * Global displayChats function for rendering character cards in galleries
  */
 window.displayChats = function (chatData, targetGalleryId = 'chat-gallery', modal = false) {
-    console.log('[displayChats] ===== FUNCTION CALLED =====' );
-    console.log('[displayChats] Target Gallery ID:', targetGalleryId);
-    console.log('[displayChats] Chat Data Received:', chatData);
-    console.log('[displayChats] Chat Data Type:', typeof chatData);
-    console.log('[displayChats] Chat Data Is Array:', Array.isArray(chatData));
-    if (Array.isArray(chatData)) {
-        console.log('[displayChats] Data Array Length:', chatData.length);
-        if (chatData.length > 0) {
-            console.log('[displayChats] First Chat Object Keys:', Object.keys(chatData[0]));
-            console.log('[displayChats] First Chat Object:', chatData[0]);
-        }
-    }
-    
     const currentUser = window.user || {};
-    console.log('[displayChats] Current User:', currentUser);
     const currentUserId = currentUser._id;
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
     const isTemporaryUser = !!currentUser.isTemporary;
-    console.log('[displayChats] Subscription Status:', subscriptionStatus, '| Is Temporary:', isTemporaryUser);
     
     let htmlContent = '';
     
     if (!Array.isArray(chatData)) {
-        console.error('[displayChats] ERROR: chatData is not an array:', chatData);
         return;
     }
     
@@ -139,30 +123,15 @@ window.displayChats = function (chatData, targetGalleryId = 'chat-gallery', moda
     });
     
     // Append to target gallery
-    console.log('[displayChats] Looking for target gallery:', `#${targetGalleryId}`);
     const $target = $(`#${targetGalleryId}`);
-    console.log('[displayChats] Target jQuery object found?', $target.length > 0);
-    console.log('[displayChats] All galleries on page:', {
-        chatGallery: $('#chat-gallery').length > 0,
-        allChatsContainer: $('#all-chats-container').length > 0,
-        imagesGrid: $('#imagesGrid').length > 0,
-        videosGrid: $('#videosGrid').length > 0,
-        latestChatsGallery: $('#latest-chats-gallery').length > 0
-    });
     
     if ($target.length > 0) {
-        console.log('[displayChats] SUCCESS: Appending to target gallery');
         $target.append(htmlContent);
     } else {
-        console.warn(`[displayChats] WARNING: Target gallery not found: #${targetGalleryId}`);
-        console.log('[displayChats] Attempting fallback to #chat-gallery');
         // Try fallback
         const $fallback = $('#chat-gallery');
         if ($fallback.length > 0) {
-            console.log('[displayChats] Fallback successful: appending to #chat-gallery');
             $fallback.append(htmlContent);
-        } else {
-            console.error('[displayChats] CRITICAL ERROR: Neither target gallery nor fallback found!');
         }
     }
     
@@ -176,6 +145,4 @@ window.displayChats = function (chatData, targetGalleryId = 'chat-gallery', moda
         $(this).find('.gallery-img-secondary').css('opacity', '0');
         $(this).find('.hover-overlay').css('opacity', '0');
     });
-    
-    console.log(`[displayChats] Rendered ${chatData.length} chats to #${targetGalleryId}`);
 };

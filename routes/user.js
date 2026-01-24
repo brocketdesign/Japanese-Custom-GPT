@@ -1299,38 +1299,40 @@ async function routes(fastify, options) {
       const videosCollection = db.collection('videos');
       const chatsCollection = db.collection('chats');
 
-      // Build query for user's images
-      const galleryQuery = { userId: userId };
-      if (characterFilter) {
-        galleryQuery.chatId = new ObjectId(characterFilter);
-      }
+      // Build aggregation pipeline for images
+      const galleryPipeline = [
+        { $match: characterFilter ? { userId: userId, chatId: new ObjectId(characterFilter) } : { userId: userId } },
+        { $unwind: '$images' },
+        {
+          $project: {
+            _id: '$images._id',
+            imageUrl: { $ifNull: ['$images.imageUrl', '$images.url'] },
+            url: '$images.url',
+            prompt: '$images.prompt',
+            title: '$images.title',
+            slug: '$images.slug',
+            aspectRatio: '$images.aspectRatio',
+            seed: '$images.seed',
+            nsfw: '$images.nsfw',
+            type: { $ifNull: ['$images.type', 'image'] },
+            contentType: { $literal: 'image' },
+            isMerged: '$images.isMerged',
+            mergeId: '$images.mergeId',
+            originalImageUrl: '$images.originalImageUrl',
+            isUpscaled: '$images.isUpscaled',
+            likes: '$images.likes',
+            likedBy: '$images.likedBy',
+            actions: '$images.actions',
+            createdAt: { $ifNull: ['$images.createdAt', '$images.timestamp', new Date()] },
+            chatId: '$chatId',
+            chatSlug: '$chatSlug'
+          }
+        },
+        { $sort: { createdAt: -1 } }
+      ];
 
-      // Fetch gallery documents with images
-      const galleryDocs = await galleryCollection
-        .find(galleryQuery)
-        .sort({ 'images.createdAt': -1 })
-        .toArray();
-
-      // Extract all images with their chat context
-      let allImages = [];
-      for (const doc of galleryDocs) {
-        if (doc.images && doc.images.length > 0) {
-          const chatInfo = {
-            chatId: doc.chatId,
-            chatSlug: doc.chatSlug
-          };
-          
-          doc.images.forEach(image => {
-            allImages.push({
-              ...image,
-              ...chatInfo,
-              type: image.type || 'image',
-              contentType: 'image',
-              createdAt: image.createdAt || image.timestamp || new Date()
-            });
-          });
-        }
-      }
+      // Fetch images
+      const images = await galleryCollection.aggregate(galleryPipeline).toArray();
 
       // Fetch user's videos
       const videoQuery = { userId: userId };
@@ -1343,30 +1345,34 @@ async function routes(fastify, options) {
         .sort({ createdAt: -1 })
         .toArray();
 
-      // Add videos to the content array
-      videos.forEach(video => {
-        allImages.push({
-          _id: video._id,
-          videoUrl: video.videoUrl,
-          imageUrl: video.imageUrl,
-          prompt: video.prompt,
-          chatId: video.chatId,
-          type: 'video',
-          contentType: 'video',
-          duration: video.duration,
-          aspectRatio: video.aspectRatio,
-          createdAt: video.createdAt || new Date()
-        });
-      });
+      // Combine and format videos
+      const formattedVideos = videos.map(video => ({
+        _id: video._id,
+        videoUrl: video.videoUrl,
+        imageUrl: video.imageUrl,
+        prompt: video.prompt,
+        chatId: video.chatId,
+        type: 'video',
+        contentType: 'video',
+        duration: video.duration,
+        aspectRatio: video.aspectRatio,
+        createdAt: video.createdAt || new Date()
+      }));
+
+      // Combine images and videos
+      let allContent = [...images, ...formattedVideos];
 
       // Sort all content by creation date (most recent first)
-      allImages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      allContent.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      // Total count before pagination
+      const totalCount = allContent.length;
 
       // Paginate
-      const paginatedContent = allImages.slice(skip, skip + limit);
+      const paginatedContent = allContent.slice(skip, skip + limit);
 
       // Get unique chatIds to fetch character info
-      const chatIds = [...new Set(allImages.map(item => item.chatId).filter(Boolean))];
+      const chatIds = [...new Set(allContent.map(item => item.chatId).filter(Boolean))];
       const chats = await chatsCollection
         .find({ _id: { $in: chatIds } })
         .project({ _id: 1, name: 1, slug: 1, chatImageUrl: 1, thumbnail: 1 })
@@ -1392,7 +1398,7 @@ async function routes(fastify, options) {
 
       // Group content by character for the response
       const groupedByCharacter = {};
-      allImages.forEach(item => {
+      allContent.forEach(item => {
         const chatIdStr = item.chatId ? item.chatId.toString() : 'unknown';
         if (!groupedByCharacter[chatIdStr]) {
           groupedByCharacter[chatIdStr] = {
@@ -1407,14 +1413,14 @@ async function routes(fastify, options) {
         groupedByCharacter[chatIdStr].count++;
       });
 
-      const totalPages = Math.ceil(allImages.length / limit);
+      const totalPages = Math.ceil(totalCount / limit);
 
       return reply.send({
         content: enrichedContent,
         groupedByCharacter,
         page,
         totalPages,
-        totalCount: allImages.length
+        totalCount
       });
 
     } catch (err) {

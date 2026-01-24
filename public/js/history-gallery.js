@@ -171,12 +171,12 @@
         } else if (currentFilter === 'videos') {
             filtered = filtered.filter(item => item.contentType === 'video');
         } else if (currentFilter === 'recent') {
-            // Show content from last 7 days
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            // Show content from last 24 hours (matching badge logic)
+            const twentyFourHoursAgo = new Date();
+            twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
             filtered = filtered.filter(item => {
                 const createdAt = new Date(item.createdAt);
-                return createdAt >= sevenDaysAgo;
+                return createdAt >= twentyFourHoursAgo;
             });
         }
 

@@ -214,7 +214,7 @@ window.updateNotificationViewedAndRedirect = function(notificationId, link) {
                 // Open content modal if history-gallery.js is loaded
                 if (window.historyGallery && window.historyGallery.openContentModal) {
                     // Navigate to history page if not already there
-                    if (!window.location.pathname.includes('/history')) {
+                    if (window.location.pathname !== '/history') {
                         window.location.href = `/history?openModal=${contentType}/${contentId}`;
                     } else {
                         // Open modal directly

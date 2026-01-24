@@ -9,9 +9,14 @@
     let currentFilter = 'all';
     let currentCharacter = '';
     let allContent = [];
+    let displayedContent = []; // Track what's already displayed
     let groupedByCharacter = {};
     let isLoading = false;
     let hasMore = true;
+    let infiniteScrollObserver = null;
+    let loadThrottleTimer = null;
+    let carouselInitialized = false; // Track if carousel has been built
+    const LOAD_THROTTLE_MS = 1000; // Minimum time between loads
 
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
@@ -48,28 +53,151 @@
                 setActiveFilter(filter);
                 currentFilter = filter;
                 currentPage = 1;
+                displayedContent = []; // Reset displayed content
+                // Reset character filter to all when changing content type filter
+                if (currentCharacter) {
+                    currentCharacter = '';
+                    document.querySelectorAll('.character-filter-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    const allItem = document.querySelector('.character-filter-item[data-character=""]');
+                    if (allItem) allItem.classList.add('active');
+                }
                 loadHistory();
             });
         });
 
-        // Character filter dropdown
-        const characterFilter = document.getElementById('characterFilter');
-        if (characterFilter) {
-            characterFilter.addEventListener('change', function() {
-                currentCharacter = this.value;
-                currentPage = 1;
-                loadHistory();
-            });
-        }
+        // Initialize character carousel navigation
+        initializeCharacterCarousel();
 
-        // Load more button
+        // Load more button (fallback)
         const loadMoreBtn = document.getElementById('loadMoreBtn');
         if (loadMoreBtn) {
             loadMoreBtn.addEventListener('click', function() {
-                currentPage++;
-                loadHistory(true); // append mode
+                if (!isLoading && hasMore) {
+                    currentPage++;
+                    loadHistory(true); // append mode
+                }
             });
         }
+
+        // Setup infinite scroll with IntersectionObserver
+        setupInfiniteScroll();
+    }
+
+    /**
+     * Setup infinite scroll using IntersectionObserver
+     */
+    function setupInfiniteScroll() {
+        // Clean up existing observer
+        if (infiniteScrollObserver) {
+            infiniteScrollObserver.disconnect();
+        }
+
+        const loadMoreContainer = document.getElementById('loadMoreContainer');
+        if (!loadMoreContainer) return;
+
+        infiniteScrollObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && hasMore && !isLoading) {
+                    // Throttle loading to prevent rapid-fire requests
+                    if (loadThrottleTimer) return;
+                    
+                    loadThrottleTimer = setTimeout(() => {
+                        loadThrottleTimer = null;
+                    }, LOAD_THROTTLE_MS);
+
+                    currentPage++;
+                    loadHistory(true);
+                }
+            });
+        }, {
+            rootMargin: '200px', // Start loading before reaching the bottom
+            threshold: 0.1
+        });
+
+        infiniteScrollObserver.observe(loadMoreContainer);
+    }
+
+    /**
+     * Initialize character carousel navigation and click handlers
+     */
+    function initializeCharacterCarousel() {
+        const carousel = document.getElementById('characterCarousel');
+        const scrollLeftBtn = document.getElementById('charScrollLeft');
+        const scrollRightBtn = document.getElementById('charScrollRight');
+        
+        if (!carousel) return;
+
+        // Scroll amount per click
+        const scrollAmount = 240;
+
+        // Left scroll button
+        if (scrollLeftBtn) {
+            scrollLeftBtn.addEventListener('click', () => {
+                carousel.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            });
+        }
+
+        // Right scroll button
+        if (scrollRightBtn) {
+            scrollRightBtn.addEventListener('click', () => {
+                carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            });
+        }
+
+        // Update button states on scroll
+        carousel.addEventListener('scroll', () => {
+            updateCarouselButtons();
+        });
+
+        // Initial button state update
+        updateCarouselButtons();
+
+        // Add click handler for the "All" option
+        const allCharacterItem = carousel.querySelector('.character-filter-item[data-character=""]');
+        if (allCharacterItem) {
+            allCharacterItem.addEventListener('click', () => {
+                selectCharacterFilter('', allCharacterItem);
+            });
+        }
+    }
+
+    /**
+     * Update carousel navigation button states
+     */
+    function updateCarouselButtons() {
+        const carousel = document.getElementById('characterCarousel');
+        const scrollLeftBtn = document.getElementById('charScrollLeft');
+        const scrollRightBtn = document.getElementById('charScrollRight');
+
+        if (!carousel || !scrollLeftBtn || !scrollRightBtn) return;
+
+        // Check if at the beginning
+        scrollLeftBtn.disabled = carousel.scrollLeft <= 10;
+
+        // Check if at the end
+        const maxScroll = carousel.scrollWidth - carousel.clientWidth;
+        scrollRightBtn.disabled = carousel.scrollLeft >= maxScroll - 10;
+    }
+
+    /**
+     * Select a character filter item
+     */
+    function selectCharacterFilter(characterId, element) {
+        // Remove active class from all items
+        document.querySelectorAll('.character-filter-item').forEach(item => {
+            item.classList.remove('active');
+        });
+
+        // Add active class to selected item
+        element.classList.add('active');
+
+        // Update filter and reload
+        currentCharacter = characterId;
+        currentPage = 1;
+        displayedContent = []; // Reset displayed content
+        loadHistory();
     }
 
     /**
@@ -91,10 +219,17 @@
         isLoading = true;
         const contentGrid = document.getElementById('contentGrid');
         const loadMoreContainer = document.getElementById('loadMoreContainer');
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        const loadMoreSpinner = document.getElementById('loadMoreSpinner');
         const emptyState = document.getElementById('emptyState');
 
         if (!append) {
             contentGrid.innerHTML = '<div class="loading-spinner"><i class="bi bi-hourglass-split"></i><p>Loading your content...</p></div>';
+            displayedContent = [];
+        } else {
+            // Show loading spinner in load more area
+            if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+            if (loadMoreSpinner) loadMoreSpinner.style.display = 'block';
         }
 
         // Build query params
@@ -113,23 +248,39 @@
             .then(data => {
                 isLoading = false;
 
+                // Get the new content from this page
+                const newContent = data.content || [];
+                
                 if (!append) {
-                    allContent = data.content || [];
+                    allContent = newContent;
                     groupedByCharacter = data.groupedByCharacter || {};
                 } else {
-                    allContent = allContent.concat(data.content || []);
+                    // Only add items that aren't already in allContent
+                    const existingIds = new Set(allContent.map(item => item._id));
+                    const uniqueNewContent = newContent.filter(item => !existingIds.has(item._id));
+                    allContent = allContent.concat(uniqueNewContent);
                 }
 
                 hasMore = data.page < data.totalPages;
 
-                // Update character filter dropdown
-                updateCharacterDropdown(groupedByCharacter);
+                // Update character carousel with thumbnails (only on initial load, not when filtering)
+                if (!append && !carouselInitialized) {
+                    updateCharacterCarousel(groupedByCharacter);
+                    carouselInitialized = true;
+                }
 
-                // Apply client-side filtering
-                let filteredContent = filterContent(allContent);
+                // Apply client-side filtering to new content only
+                let filteredNewContent = filterContent(newContent);
+                
+                // Filter out already displayed items
+                const displayedIds = new Set(displayedContent.map(item => item._id));
+                const toDisplay = filteredNewContent.filter(item => !displayedIds.has(item._id));
+
+                // Check if we have any content at all
+                const totalFilteredContent = filterContent(allContent);
 
                 // Render content
-                if (filteredContent.length === 0 && !append) {
+                if (totalFilteredContent.length === 0 && !append) {
                     contentGrid.innerHTML = '';
                     emptyState.style.display = 'block';
                     loadMoreContainer.style.display = 'none';
@@ -142,9 +293,16 @@
                         const spinner = contentGrid.querySelector('.loading-spinner');
                         if (spinner) spinner.remove();
                     }
-                    renderContent(filteredContent, append);
                     
-                    // Show/hide load more button
+                    // Only render new items
+                    renderContent(toDisplay);
+                    displayedContent = displayedContent.concat(toDisplay);
+                    
+                    // Hide spinner, show button
+                    if (loadMoreSpinner) loadMoreSpinner.style.display = 'none';
+                    if (loadMoreBtn) loadMoreBtn.style.display = 'inline-block';
+                    
+                    // Show/hide load more container based on hasMore
                     if (hasMore) {
                         loadMoreContainer.style.display = 'block';
                     } else {
@@ -155,7 +313,12 @@
             .catch(error => {
                 console.error('Error loading history:', error);
                 isLoading = false;
-                contentGrid.innerHTML = '<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h3>Error loading content</h3><p>Please try again later</p></div>';
+                // Hide spinner on error
+                if (loadMoreSpinner) loadMoreSpinner.style.display = 'none';
+                if (loadMoreBtn) loadMoreBtn.style.display = 'inline-block';
+                if (!append) {
+                    contentGrid.innerHTML = '<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><h3>Error loading content</h3><p>Please try again later</p></div>';
+                }
             });
     }
 
@@ -184,15 +347,20 @@
     }
 
     /**
-     * Render content items
+     * Render content items (only renders passed items, no duplicates)
      */
-    function renderContent(content, append = false) {
+    function renderContent(content) {
         const contentGrid = document.getElementById('contentGrid');
+        
+        // Use DocumentFragment for better performance
+        const fragment = document.createDocumentFragment();
         
         content.forEach(item => {
             const contentItem = createContentItem(item);
-            contentGrid.appendChild(contentItem);
+            fragment.appendChild(contentItem);
         });
+        
+        contentGrid.appendChild(fragment);
     }
 
     /**
@@ -234,24 +402,60 @@
     }
 
     /**
-     * Update character filter dropdown
+     * Update character carousel with character thumbnails
      */
-    function updateCharacterDropdown(grouped) {
-        const dropdown = document.getElementById('characterFilter');
-        if (!dropdown) return;
+    function updateCharacterCarousel(grouped) {
+        const carousel = document.getElementById('characterCarousel');
+        if (!carousel) return;
 
-        // Keep the "All Characters" option
-        dropdown.innerHTML = '<option value="">All Characters</option>';
+        // Keep the "All" option and remove other items
+        const allOption = carousel.querySelector('.character-filter-item[data-character=""]');
+        carousel.innerHTML = '';
+        if (allOption) {
+            carousel.appendChild(allOption);
+        }
 
-        // Add character options
-        Object.values(grouped).forEach(group => {
-            if (group.characterName && group.characterName !== 'Unknown') {
-                const option = document.createElement('option');
-                option.value = group.chatId;
-                option.textContent = `${group.characterName} (${group.count})`;
-                dropdown.appendChild(option);
-            }
+        // Sort characters by count (most content first)
+        const sortedCharacters = Object.values(grouped)
+            .filter(group => group.characterName && group.characterName !== 'Unknown')
+            .sort((a, b) => b.count - a.count);
+
+        // Add character items
+        sortedCharacters.forEach(group => {
+            const characterItem = document.createElement('div');
+            characterItem.className = 'character-filter-item';
+            characterItem.setAttribute('data-character', group.chatId);
+            
+            // Use character thumbnail or a default avatar
+            const avatarUrl = group.characterThumbnail || '/img/default-thumbnail.png';
+            
+            characterItem.innerHTML = `
+                <div class="character-filter-avatar">
+                    <img src="${avatarUrl}" alt="${group.characterName}" onerror="this.src='/img/default-thumbnail.png'">
+                    <span class="character-filter-count">${group.count}</span>
+                </div>
+                <span class="character-filter-name" title="${group.characterName}">${group.characterName}</span>
+            `;
+
+            // Add click handler
+            characterItem.addEventListener('click', () => {
+                selectCharacterFilter(group.chatId, characterItem);
+            });
+
+            carousel.appendChild(characterItem);
         });
+
+        // If current character is selected, highlight it
+        if (currentCharacter) {
+            const selectedItem = carousel.querySelector(`.character-filter-item[data-character="${currentCharacter}"]`);
+            if (selectedItem) {
+                document.querySelectorAll('.character-filter-item').forEach(item => item.classList.remove('active'));
+                selectedItem.classList.add('active');
+            }
+        }
+
+        // Update navigation button states
+        setTimeout(updateCarouselButtons, 100);
     }
 
     /**

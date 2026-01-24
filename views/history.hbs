@@ -51,7 +51,7 @@
     .filter-section {
         display: flex;
         gap: 12px;
-        margin-bottom: 24px;
+        margin-bottom: 16px;
         flex-wrap: wrap;
         align-items: center;
     }
@@ -72,6 +72,162 @@
         background: var(--primary-gradient);
         border-color: rgba(181, 138, 254, 0.5);
         transform: translateY(-2px);
+    }
+
+    /* Character Filter Carousel */
+    .character-filter-section {
+        margin-bottom: 24px;
+    }
+
+    .character-filter-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .character-filter-title {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .character-nav-buttons {
+        display: flex;
+        gap: 8px;
+    }
+
+    .character-nav-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .character-nav-btn:hover:not(:disabled) {
+        background: var(--primary-gradient);
+        border-color: rgba(181, 138, 254, 0.5);
+        transform: scale(1.1);
+    }
+
+    .character-nav-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    .character-carousel-wrapper {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .character-carousel {
+        display: flex;
+        gap: 16px;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        padding: 8px 0;
+    }
+
+    .character-carousel::-webkit-scrollbar {
+        display: none;
+    }
+
+    .character-filter-item {
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        padding: 12px;
+        border-radius: 16px;
+        background: var(--card-bg);
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+        min-width: 100px;
+        max-width: 100px;
+    }
+
+    .character-filter-item:hover {
+        background: rgba(181, 138, 254, 0.15);
+        border-color: rgba(181, 138, 254, 0.3);
+        transform: translateY(-4px);
+    }
+
+    .character-filter-item.active {
+        background: linear-gradient(135deg, rgba(181, 138, 254, 0.25) 0%, rgba(108, 92, 231, 0.25) 100%);
+        border-color: rgba(181, 138, 254, 0.6);
+        box-shadow: 0 8px 24px rgba(181, 138, 254, 0.3);
+    }
+
+    .character-filter-avatar {
+        position: relative;
+        width: 64px;
+        height: 64px;
+    }
+
+    .character-filter-avatar img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .character-filter-item.active .character-filter-avatar img {
+        border-color: rgba(181, 138, 254, 0.8);
+        box-shadow: 0 0 20px rgba(181, 138, 254, 0.5);
+    }
+
+    .character-filter-avatar .all-icon {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: var(--primary-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .character-filter-count {
+        position: absolute;
+        bottom: -4px;
+        right: -4px;
+        background: var(--primary-gradient);
+        color: white;
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 12px;
+        min-width: 24px;
+        text-align: center;
+    }
+
+    .character-filter-name {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+    }
+
+    .character-filter-item.active .character-filter-name {
+        color: #b58afe;
     }
 
     /* Character Groups Section */
@@ -231,14 +387,41 @@
         background: var(--dark-bg);
         border: 1px solid var(--card-border);
         border-radius: 16px;
+        max-height: 90vh;
     }
 
     .modal-header {
         border-bottom: 1px solid var(--card-border);
+        position: sticky;
+        top: 0;
+        background: var(--dark-bg);
+        z-index: 10;
+        border-radius: 16px 16px 0 0;
     }
 
     .modal-body {
         color: var(--text-primary);
+        overflow-y: auto;
+        max-height: calc(90vh - 60px);
+        padding: 20px;
+    }
+
+    .modal-body::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .modal-body::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+    }
+
+    .modal-body::-webkit-scrollbar-thumb {
+        background: rgba(181, 138, 254, 0.5);
+        border-radius: 4px;
+    }
+
+    .modal-body::-webkit-scrollbar-thumb:hover {
+        background: rgba(181, 138, 254, 0.7);
     }
 
     .detail-item {
@@ -298,7 +481,7 @@
             <p class="history-subtitle">Browse all your generated images and videos</p>
         </div>
 
-        <!-- Filters -->
+        <!-- Content Type Filters -->
         <div class="filter-section">
             <button class="filter-btn active" data-filter="all">
                 <i class="bi bi-grid-3x3"></i> All Content
@@ -312,9 +495,35 @@
             <button class="filter-btn" data-filter="videos">
                 <i class="bi bi-camera-video"></i> Videos Only
             </button>
-            <select id="characterFilter" class="filter-btn" style="min-width: 200px;">
-                <option value="">All Characters</option>
-            </select>
+        </div>
+
+        <!-- Character Filter Carousel -->
+        <div class="character-filter-section">
+            <div class="character-filter-header">
+                <span class="character-filter-title"><i class="bi bi-people-fill"></i> Filter by Character</span>
+                <div class="character-nav-buttons">
+                    <button class="character-nav-btn" id="charScrollLeft" disabled>
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <button class="character-nav-btn" id="charScrollRight">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="character-carousel-wrapper">
+                <div class="character-carousel" id="characterCarousel">
+                    <!-- All Characters Option -->
+                    <div class="character-filter-item active" data-character="">
+                        <div class="character-filter-avatar">
+                            <div class="all-icon">
+                                <i class="bi bi-grid-3x3-gap-fill"></i>
+                            </div>
+                        </div>
+                        <span class="character-filter-name">All</span>
+                    </div>
+                    <!-- Character items will be populated dynamically -->
+                </div>
+            </div>
         </div>
 
         <!-- Character Groups (shown when grouping by character) -->
@@ -330,8 +539,12 @@
             </div>
         </div>
 
-        <!-- Load More -->
-        <div id="loadMoreContainer" class="text-center mt-4" style="display: none;">
+        <!-- Load More / Infinite Scroll Trigger -->
+        <div id="loadMoreContainer" class="text-center mt-4 py-4" style="display: none;">
+            <div id="loadMoreSpinner" class="loading-spinner" style="display: none;">
+                <i class="bi bi-hourglass-split"></i>
+                <p>Loading more...</p>
+            </div>
             <button id="loadMoreBtn" class="filter-btn">
                 <i class="bi bi-arrow-down-circle"></i> Load More
             </button>

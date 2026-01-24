@@ -1118,47 +1118,52 @@ html, body {
 
 .gen-preview-nav {
   position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 16px;
+  left: 16px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   background: rgba(0, 0, 0, 0.7);
-  padding: 10px 20px;
-  border-radius: 30px;
+  padding: 8px 16px;
+  border-radius: 24px;
   backdrop-filter: blur(10px);
+  z-index: 10;
 }
 
 .gen-preview-nav-btn {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: none;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.5);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
 }
 
 .gen-preview-nav-btn:hover {
   background: var(--primary-color, #8240FF);
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 .gen-preview-nav-btn i {
-  font-size: 18px;
+  font-size: 14px;
 }
 
 .gen-preview-counter {
   color: white;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
-  min-width: 60px;
+  min-width: 50px;
   text-align: center;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 4px 8px;
+  border-radius: 12px;
+  backdrop-filter: blur(4px);
 }
 
 /* ============================================================================

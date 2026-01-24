@@ -2047,6 +2047,14 @@ class GenerationDashboard {
       return;
     }
     
+    // Get the current image URL (for carousel, use the current preview index)
+    let currentImageUrl = result.mediaUrl;
+    if (result.mediaUrls && result.mediaUrls.length > 1 && this._currentPreviewResult?.id === resultId) {
+      const imageIndex = this._previewImageIndex || 0;
+      currentImageUrl = result.mediaUrls[imageIndex] || result.mediaUrl;
+      console.log(`[GenerationDashboard] Creating character from carousel image ${imageIndex + 1}/${result.mediaUrls.length}`);
+    }
+    
     // Check if the create character modal exists on the page
     const modal = document.getElementById('createCharacterModal');
     if (modal) {
@@ -2057,7 +2065,7 @@ class GenerationDashboard {
       const nameInput = document.getElementById('characterNameInput');
       const personalityInput = document.getElementById('characterPersonalityInput');
       
-      if (previewImg) previewImg.src = result.mediaUrl;
+      if (previewImg) previewImg.src = currentImageUrl;
       if (promptPreview) {
         const promptText = result.prompt.length > 200 
           ? result.prompt.substring(0, 200) + '...' 
@@ -2106,7 +2114,7 @@ class GenerationDashboard {
       
       // Store result data for character creation as instance property
       this._currentCharacterImageData = {
-        imageUrl: result.mediaUrl,
+        imageUrl: currentImageUrl,
         prompt: result.prompt,
         modelId: result.modelId || currentModel?.id,
         // result.model contains the model name string when available
@@ -2139,6 +2147,14 @@ class GenerationDashboard {
       return;
     }
     
+    // Get the current image URL (for carousel, use the current preview index)
+    let currentImageUrl = result.mediaUrl;
+    if (result.mediaUrls && result.mediaUrls.length > 1 && this._currentPreviewResult?.id === resultId) {
+      const imageIndex = this._previewImageIndex || 0;
+      currentImageUrl = result.mediaUrls[imageIndex] || result.mediaUrl;
+      console.log(`[GenerationDashboard] Creating post from carousel image ${imageIndex + 1}/${result.mediaUrls.length}`);
+    }
+    
     // Check if post modal exists
     const modal = document.getElementById('createPostModal');
     if (modal) {
@@ -2146,10 +2162,10 @@ class GenerationDashboard {
       const mediaPreview = modal.querySelector('.post-media-preview');
       if (mediaPreview) {
         if (result.mode === 'image') {
-          mediaPreview.innerHTML = `<img src="${result.mediaUrl}" alt="Post image" 
+          mediaPreview.innerHTML = `<img src="${currentImageUrl}" alt="Post image" 
                                         style="max-height: 250px; max-width: 100%; border-radius: 8px; object-fit: contain;">`;
         } else {
-          mediaPreview.innerHTML = `<video src="${result.mediaUrl}" controls 
+          mediaPreview.innerHTML = `<video src="${currentImageUrl}" controls 
                                           style="max-height: 250px; max-width: 100%; border-radius: 8px; object-fit: contain;"></video>`;
         }
       }
@@ -2157,10 +2173,9 @@ class GenerationDashboard {
       const captionInput = modal.querySelector('#postCaption');
       if (captionInput) captionInput.value = result.prompt;
       
-      // Store result data for posting
-      // Store result data for posting as instance property
+      // Store result data for posting (use current carousel image)
       this._currentPostData = {
-        mediaUrl: result.mediaUrl,
+        mediaUrl: currentImageUrl,
         mediaType: result.mode,
         prompt: result.prompt
       };
@@ -2172,7 +2187,7 @@ class GenerationDashboard {
     } else {
       // Redirect to posts dashboard with the image
       const params = new URLSearchParams({
-        imageUrl: result.mediaUrl,
+        imageUrl: currentImageUrl,
         caption: result.prompt
       });
       window.location.href = `/dashboard/posts?${params.toString()}`;

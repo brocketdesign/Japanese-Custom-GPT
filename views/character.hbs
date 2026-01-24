@@ -341,17 +341,19 @@
          */
         function updateCharacterFavoriteButton(button, isFavorited) {
             const icon = button.querySelector('i');
+            const FAVORITE_TEXT = window.translations?.favorite?.addFavorite || 'Add to favorites';
+            const UNFAVORITE_TEXT = window.translations?.favorite?.removeFavorite || 'Remove from favorites';
             
             if (isFavorited) {
                 button.classList.add('favorited');
-                button.title = window.translations?.favorite?.removeFavorite || 'Remove from favorites';
+                button.title = UNFAVORITE_TEXT;
                 if (icon) {
                     icon.classList.remove('bi-star');
                     icon.classList.add('bi-star-fill');
                 }
             } else {
                 button.classList.remove('favorited');
-                button.title = window.translations?.favorite?.addFavorite || 'Add to favorites';
+                button.title = FAVORITE_TEXT;
                 if (icon) {
                     icon.classList.remove('bi-star-fill');
                     icon.classList.add('bi-star');

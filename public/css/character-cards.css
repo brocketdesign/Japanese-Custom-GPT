@@ -381,6 +381,16 @@
    Modern, intuitive design for character cards
    ======================================== */
 
+/* CSS Variables for Like Button Theme */
+:root {
+  --like-btn-gradient-from: rgba(130, 64, 255, 0.95);
+  --like-btn-gradient-to: rgba(210, 184, 255, 0.95);
+  --like-btn-liked-from: #ff006e;
+  --like-btn-liked-to: #ff4d9d;
+  --like-btn-shadow-color: rgba(130, 64, 255, 0.4);
+  --like-btn-liked-shadow-color: rgba(255, 0, 110, 0.4);
+}
+
 .gallery-like-btn {
   position: absolute;
   bottom: 12px;
@@ -389,7 +399,7 @@
   height: 44px;
   border-radius: 50%;
   border: none;
-  background: linear-gradient(135deg, rgba(130, 64, 255, 0.95) 0%, rgba(210, 184, 255, 0.95) 100%);
+  background: linear-gradient(135deg, var(--like-btn-gradient-from) 0%, var(--like-btn-gradient-to) 100%);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   color: white;
@@ -400,14 +410,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(130, 64, 255, 0.4);
+  box-shadow: 0 4px 12px var(--like-btn-shadow-color);
   opacity: 0.9;
 }
 
 .gallery-like-btn:hover {
   transform: scale(1.1);
   opacity: 1;
-  box-shadow: 0 6px 16px rgba(130, 64, 255, 0.5);
+  box-shadow: 0 6px 16px var(--like-btn-shadow-color);
 }
 
 .gallery-like-btn:active {
@@ -420,12 +430,12 @@
 
 /* Liked state */
 .gallery-like-btn.liked {
-  background: linear-gradient(135deg, #ff006e 0%, #ff4d9d 100%);
-  box-shadow: 0 4px 12px rgba(255, 0, 110, 0.4);
+  background: linear-gradient(135deg, var(--like-btn-liked-from) 0%, var(--like-btn-liked-to) 100%);
+  box-shadow: 0 4px 12px var(--like-btn-liked-shadow-color);
 }
 
 .gallery-like-btn.liked:hover {
-  box-shadow: 0 6px 16px rgba(255, 0, 110, 0.5);
+  box-shadow: 0 6px 16px var(--like-btn-liked-shadow-color);
 }
 
 .gallery-like-btn.liked i {

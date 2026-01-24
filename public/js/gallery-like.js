@@ -216,8 +216,10 @@ if (!document.getElementById('double-tap-animation-styles')) {
  * Initialize event listeners when DOM is ready
  */
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize like states after a short delay to allow gallery to load
-    setTimeout(initializeGalleryLikeStates, 500);
+    // Initialize like states after gallery loads
+    // Delay allows time for gallery cards to be rendered
+    const GALLERY_INIT_DELAY = 500; // Wait for initial gallery render
+    setTimeout(initializeGalleryLikeStates, GALLERY_INIT_DELAY);
     
     // Add double-tap listener for mobile devices
     if ('ontouchstart' in window) {
@@ -226,15 +228,22 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Re-initialize when new cards are added (e.g., pagination)
-const originalDisplayChats = window.displayChats;
-if (originalDisplayChats) {
+// Use event-driven approach if possible, fallback to function wrapping
+const PAGINATION_INIT_DELAY = 300; // Wait for new cards to be added to DOM
+
+// Check if displayChats exists before wrapping
+if (typeof window.displayChats === 'function') {
+    const originalDisplayChats = window.displayChats;
+    
     window.displayChats = function(...args) {
         // Call original function
         const result = originalDisplayChats.apply(this, args);
         
-        // Initialize like states for new cards
-        setTimeout(initializeGalleryLikeStates, 300);
+        // Initialize like states for new cards after DOM updates
+        setTimeout(initializeGalleryLikeStates, PAGINATION_INIT_DELAY);
         
         return result;
     };
+} else {
+    console.warn('[gallery-like] displayChats function not found - like buttons may not initialize on pagination');
 }

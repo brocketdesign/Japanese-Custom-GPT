@@ -48,8 +48,13 @@ function initializeContentTypeToggle() {
         btn.addEventListener('click', function() {
             const selectedType = this.dataset.type; // 'SFW' or 'NSFW'
             
-            // Don't reload if already selected
+            // If already selected, provide visual feedback without reloading
             if (selectedType === window.characterProfile.contentType) {
+                // Add brief pulse animation for feedback
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = 'scale(1)';
+                }, 150);
                 return;
             }
             
@@ -274,8 +279,12 @@ async function fetchCharacterImageCount(chatId, contentType = 'SFW') {
     const cacheKey = `chat_${chatId}_${contentType}`;
     
     try {
-        const url = `/chat/${chatId}/images?page=1&content_type=${contentType}`;
-        const response = await fetch(url);
+        // Build URL with URLSearchParams for robust query string handling
+        const url = new URL(`/chat/${chatId}/images`, window.location.origin);
+        url.searchParams.set('page', '1');
+        url.searchParams.set('content_type', contentType);
+        
+        const response = await fetch(url.toString());
         if (response.ok) {
             const data = await response.json();
             const totalCount = data.totalImages || 0;

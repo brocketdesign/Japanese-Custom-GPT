@@ -2002,7 +2002,8 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
                                             cond: { $and: [
                                                 { $ne: ['$$image', null] },
                                                 { $ne: ['$$image.nsfw', true] },
-                                                { $ne: ['$$image.nsfw', 'true'] }
+                                                { $ne: ['$$image.nsfw', 'true'] },
+                                                { $ne: ['$$image.nsfw', 'on'] }
                                             ]}
                                         }
                                     },
@@ -2538,12 +2539,13 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             language: request.lang,
         };
 
-        // Query for NSFW chats - handle both boolean and string values
+        // Query for NSFW chats - handle boolean, string 'true', and string 'on' values
         const nsfwQuery = { 
             ...baseQuery, 
             $or: [
                 { nsfw: true },
-                { nsfw: 'true' }
+                { nsfw: 'true' },
+                { nsfw: 'on' }
             ] 
         };
         const nsfwChats = await chatsCollection.find(nsfwQuery)

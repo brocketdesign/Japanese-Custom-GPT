@@ -1290,7 +1290,8 @@ fastify.get('/search', async (request, reply) => {
     }
 
     // Determine NSFW setting - only show if user is premium and has enabled it
-    const showNSFW = user.subscriptionStatus === 'active' && user.showNSFW === true;
+    // Handle both boolean true and string 'true' from database
+    const showNSFW = user.subscriptionStatus === 'active' && (user.showNSFW === true || user.showNSFW === 'true');
 
     return reply.renderWithGtm('search.hbs', {
       title: seoTitle,

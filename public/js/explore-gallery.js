@@ -10,6 +10,19 @@
  */
 
 class ExploreGallery {
+    /**
+     * Helper to check if a value represents NSFW content
+     * Handles: boolean true, string 'true', string 'on', and any truthy non-false value
+     */
+    static isNsfwValue(value) {
+        if (value === true) return true;
+        if (value === 'true') return true;
+        if (value === 'on') return true;
+        if (value === 1) return true;
+        if (value === '1') return true;
+        return false;
+    }
+    
     constructor() {
         // State
         this.characters = [];
@@ -268,7 +281,8 @@ class ExploreGallery {
         const allImages = document.querySelectorAll('.explore-image[data-sfw]');
         
         allImages.forEach(img => {
-            const isSfw = img.getAttribute('data-sfw') === 'true';
+            const dataSfwAttr = img.getAttribute('data-sfw');
+            const isSfw = dataSfwAttr === 'true';
             const imageCard = img.closest('.explore-image-card');
             
             if (!imageCard) return;
@@ -402,19 +416,12 @@ class ExploreGallery {
     }
     
     processCharacters(characters) {
-        return characters.map(char => {
-            // Filter images based on NSFW setting
-            let images = char.images || [];
-            
-            if (!this.showNSFW) {
-                images = images.filter(img => !img.nsfw);
-            }
-            
-            return {
-                ...char,
-                images: images
-            };
-        }).filter(char => char.images.length > 0); // Only keep characters with visible images
+        // Don't filter out NSFW images - just pass them through
+        // Blurring is handled in createCharacterSlide and updateImageBlurStates
+        return characters.map(char => ({
+            ...char,
+            images: char.images || []
+        })).filter(char => char.images.length > 0);
     }
     
     renderCharacterSlides(characters) {
@@ -444,13 +451,13 @@ class ExploreGallery {
             // Use imageUrl as primary source, fallback to thumbnailUrl, then placeholder
             const imageUrl = img.imageUrl || img.thumbnailUrl || '/img/placeholder.png';
             const thumbUrl = img.thumbnailUrl || img.imageUrl || '/img/placeholder.png';
-            // Image is NSFW - check for both boolean true and string 'true'
-            const isNsfwImage = img.nsfw === true || img.nsfw === 'true';
+            // Check if image is NSFW using helper (handles boolean, 'true', 'on', etc.)
+            const isNsfwImage = ExploreGallery.isNsfwValue(img.nsfw);
             const shouldBlur = isNsfwImage && !this.showNSFW;
+            // data-sfw is the inverse of isNsfwImage
+            const isSfw = !isNsfwImage;
 
             // All images use the full imageUrl for display
-            // data-sfw should be 'true' only if nsfw is falsy (not true and not 'true')
-            const dataSfwValue = !isNsfwImage;
             return `
                 <div class="swiper-slide" data-image-id="${img._id || img.imageUrl}">
                     <div class="explore-image-card ${isNsfwImage ? 'nsfw-content' : ''} ${shouldBlur ? 'nsfw-blurred' : ''}">
@@ -458,7 +465,7 @@ class ExploreGallery {
                             src="${imageUrl}" 
                             alt="${this.escapeHtml(character.chatName)}"
                             class="explore-image"
-                            data-sfw="${dataSfwValue}"
+                            data-sfw="${isSfw}"
                             loading="${idx < 2 ? 'eager' : 'lazy'}"
                             onerror="this.onerror=null; this.src='/img/placeholder.png';"
                         >

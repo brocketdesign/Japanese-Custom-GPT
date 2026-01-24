@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the API routes that the AI Character Creation Platform (app.chatlamix.com) should provide to connect with the Marketing Dashboard. These APIs are designed to help understand user behavior, track character performance, analyze revenue, and drive platform growth.
+This document outlines the API routes that the AI Character Creation Platform (app.chatlamix.com) should provide to connect with the external Marketing Dashboard (Marketing Command Center). These APIs are designed to power the AI Influencer Marketing Dashboard, enabling character performance tracking, content pipeline management, analytics insights, and marketing campaign optimization.
 
 **Base URL:** `https://app.chatlamix.com`
 
@@ -13,52 +13,84 @@ Authorization: Bearer <api_key>
 
 ---
 
-## 1. Platform Overview APIs
+## 1. Marketing Command Center APIs (Dashboard Overview)
 
 ### 1.1 GET `/api/marketing/dashboard/summary`
-**Purpose:** Get comprehensive platform metrics summary for the main dashboard view.
+**Purpose:** Get comprehensive platform metrics summary for the Marketing Command Center main dashboard view.
+
+**Query Parameters:**
+- `period` (optional): `7d`, `30d`, `90d` (default: `7d`)
 
 **Response:**
 ```json
 {
   "success": true,
   "data": {
-    "overview": {
-      "totalUsers": 15000,
-      "newUsersToday": 125,
-      "newUsersThisWeek": 850,
-      "newUsersThisMonth": 3500,
-      "userGrowthRate": 12.5,
-      "activeUsersToday": 2500,
-      "activeUsersThisWeek": 8000,
-      "monthlyActiveUsers": 12000
+    "metrics": {
+      "totalFollowers": {
+        "value": 503400,
+        "formatted": "503.4K",
+        "change": 12.4,
+        "changeDirection": "up"
+      },
+      "weeklyViews": {
+        "value": 2400000,
+        "formatted": "2.4M",
+        "change": 23.1,
+        "changeDirection": "up"
+      },
+      "platformSignups": {
+        "value": 29800,
+        "formatted": "29.8K",
+        "change": 8.7,
+        "changeDirection": "up"
+      },
+      "avgEngagement": {
+        "value": 8.2,
+        "formatted": "8.2%",
+        "change": -1.2,
+        "changeDirection": "down"
+      }
     },
-    "characters": {
-      "totalCharacters": 5000,
-      "publicCharacters": 3500,
-      "privateCharacters": 1500,
-      "newCharactersThisWeek": 200,
-      "characterGrowthRate": 8.2
+    "characterPerformance": {
+      "characters": [
+        {
+          "id": "char_123",
+          "name": "Luna",
+          "imageUrl": "https://cdn.example.com/characters/luna.jpg",
+          "followers": 45200,
+          "followersFormatted": "45.2K",
+          "status": "active"
+        },
+        {
+          "id": "char_456",
+          "name": "Kai",
+          "imageUrl": "https://cdn.example.com/characters/kai.jpg",
+          "followers": 67800,
+          "followersFormatted": "67.8K",
+          "status": "active"
+        }
+      ],
+      "totalCharacters": 10
     },
-    "engagement": {
-      "totalMessages": 1500000,
-      "messagesToday": 25000,
-      "messagesThisWeek": 150000,
-      "averageMessagesPerUser": 100,
-      "averageSessionDuration": "15:30",
-      "totalImagesGenerated": 500000,
-      "imagesGeneratedToday": 8000
-    },
-    "revenue": {
-      "totalRevenue": 50000.00,
-      "revenueToday": 500.00,
-      "revenueThisWeek": 3500.00,
-      "revenueThisMonth": 12000.00,
-      "revenueGrowthRate": 15.3,
-      "averageRevenuePerUser": 3.33,
-      "premiumUsers": 1500,
-      "premiumConversionRate": 10.0
-    },
+    "hotTrends": [
+      {
+        "id": "trend_1",
+        "name": "Shy Dance Challenge",
+        "views": 45000000,
+        "viewsFormatted": "45M views",
+        "daysActive": 3,
+        "status": "active"
+      },
+      {
+        "id": "trend_2",
+        "name": "Get Ready With Me 2.0",
+        "views": 28000000,
+        "viewsFormatted": "28M views",
+        "daysActive": 7,
+        "status": "active"
+      }
+    ],
     "lastUpdated": "2024-01-23T04:39:57.846Z"
   }
 }
@@ -77,6 +109,21 @@ Authorization: Bearer <api_key>
     "apiLatency": 45,
     "activeConnections": 250,
     "serverUptime": "15d 4h 30m"
+  }
+}
+```
+
+### 1.3 POST `/api/marketing/dashboard/sync`
+**Purpose:** Trigger a data sync between the platform and external marketing tools.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "syncId": "sync_123",
+    "status": "started",
+    "startedAt": "2024-01-23T04:39:57.846Z"
   }
 }
 ```
@@ -234,10 +281,178 @@ Authorization: Bearer <api_key>
 
 ---
 
-## 3. Character Analytics APIs
+## 3. AI Characters APIs (Character Management)
 
-### 3.1 GET `/api/marketing/characters/stats`
-**Purpose:** Overall character statistics.
+### 3.1 GET `/api/marketing/characters`
+**Purpose:** Get list of all AI characters with their marketing metrics for the Characters page.
+
+**Query Parameters:**
+- `status` (optional): `active`, `scheduled`, `draft`, `all` (default: `all`)
+- `sortBy` (optional): `followers`, `engagement`, `posts`, `platformReferrals` (default: `followers`)
+- `order` (optional): `asc`, `desc` (default: `desc`)
+- `page` (optional): Page number (default: `1`)
+- `limit` (optional): 1-50 (default: `20`)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "characters": [
+      {
+        "id": "char_123",
+        "name": "Luna",
+        "shortDescription": "Dreamy Artist",
+        "imageUrl": "https://cdn.example.com/characters/luna.jpg",
+        "status": "active",
+        "metrics": {
+          "followers": 45200,
+          "followersFormatted": "45.2K",
+          "engagement": 8.2,
+          "engagementFormatted": "8.2%",
+          "posts": 156,
+          "platformReferrals": 2300,
+          "platformReferralsFormatted": "2.3K"
+        },
+        "createdAt": "2024-01-01T00:00:00.000Z"
+      },
+      {
+        "id": "char_456",
+        "name": "Kai",
+        "shortDescription": "Energetic Gamer",
+        "imageUrl": "https://cdn.example.com/characters/kai.jpg",
+        "status": "active",
+        "metrics": {
+          "followers": 67800,
+          "followersFormatted": "67.8K",
+          "engagement": 9.1,
+          "engagementFormatted": "9.1%",
+          "posts": 203,
+          "platformReferrals": 4100,
+          "platformReferralsFormatted": "4.1K"
+        },
+        "createdAt": "2024-01-01T00:00:00.000Z"
+      }
+    ],
+    "pagination": {
+      "currentPage": 1,
+      "totalPages": 5,
+      "totalCharacters": 100,
+      "hasMore": true
+    }
+  }
+}
+```
+
+### 3.2 GET `/api/marketing/characters/:characterId`
+**Purpose:** Get detailed information about a specific AI character.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "char_123",
+    "name": "Luna",
+    "shortDescription": "Dreamy Artist",
+    "fullDescription": "A mysterious and creative artist with a passion for fantasy worlds...",
+    "imageUrl": "https://cdn.example.com/characters/luna.jpg",
+    "status": "active",
+    "metrics": {
+      "followers": 45200,
+      "followersFormatted": "45.2K",
+      "followersChange": 12.4,
+      "engagement": 8.2,
+      "engagementFormatted": "8.2%",
+      "posts": 156,
+      "platformReferrals": 2300,
+      "platformReferralsFormatted": "2.3K",
+      "totalViews": 1500000,
+      "avgViewsPerPost": 9615,
+      "signupsGenerated": 450
+    },
+    "tags": ["dreamy", "artist", "creative", "fantasy"],
+    "category": "Creative",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-23T00:00:00.000Z"
+  }
+}
+```
+
+### 3.3 GET `/api/marketing/characters/:characterId/analytics`
+**Purpose:** Get detailed analytics for a specific character for the Analytics modal/page.
+
+**Query Parameters:**
+- `period` (optional): `7d`, `30d`, `90d` (default: `30d`)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "characterId": "char_123",
+    "characterName": "Luna",
+    "period": "30d",
+    "overview": {
+      "totalFollowers": 45200,
+      "newFollowers": 5400,
+      "followerGrowth": 13.5,
+      "totalViews": 1500000,
+      "engagement": 8.2,
+      "platformReferrals": 2300
+    },
+    "timeline": {
+      "labels": ["Jan 1", "Jan 2", "Jan 3", "Jan 4", "Jan 5"],
+      "followers": [40000, 41200, 42500, 43800, 45200],
+      "views": [280000, 295000, 310000, 305000, 320000],
+      "engagement": [7.8, 8.0, 8.1, 8.3, 8.2]
+    },
+    "contentPerformance": {
+      "topPosts": [
+        {
+          "postId": "post_1",
+          "type": "Trending Dance",
+          "trend": "Shy Dance Challenge",
+          "views": 450000,
+          "engagement": 12.5,
+          "publishedAt": "2024-01-20T00:00:00.000Z"
+        }
+      ],
+      "averageViews": 9615,
+      "averageEngagement": 8.2
+    }
+  }
+}
+```
+
+### 3.4 PUT `/api/marketing/characters/:characterId`
+**Purpose:** Update character details or status.
+
+**Request Body:**
+```json
+{
+  "shortDescription": "Updated description",
+  "status": "active",
+  "tags": ["dreamy", "artist", "creative"]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "char_123",
+    "name": "Luna",
+    "shortDescription": "Updated description",
+    "status": "active",
+    "updatedAt": "2024-01-23T04:39:57.846Z"
+  }
+}
+```
+
+### 3.5 GET `/api/marketing/characters/stats`
+**Purpose:** Overall character statistics summary.
 
 **Query Parameters:**
 - `period` (optional): `7d`, `30d`, `90d`, `all` (default: `30d`)
@@ -264,7 +479,7 @@ Authorization: Bearer <api_key>
 }
 ```
 
-### 3.2 GET `/api/marketing/characters/top-performing`
+### 3.6 GET `/api/marketing/characters/top-performing`
 **Purpose:** Get top performing characters for marketing insights.
 
 **Query Parameters:**
@@ -308,7 +523,7 @@ Authorization: Bearer <api_key>
 }
 ```
 
-### 3.3 GET `/api/marketing/characters/categories`
+### 3.7 GET `/api/marketing/characters/categories`
 **Purpose:** Character distribution by category/tags.
 
 **Response:**
@@ -335,7 +550,7 @@ Authorization: Bearer <api_key>
 }
 ```
 
-### 3.4 GET `/api/marketing/characters/engagement`
+### 3.8 GET `/api/marketing/characters/engagement`
 **Purpose:** Character engagement metrics over time.
 
 **Query Parameters:**
@@ -495,9 +710,570 @@ Authorization: Bearer <api_key>
 
 ---
 
-## 5. Revenue Analytics APIs
+## 5. Content Studio APIs (Content Management & Pipeline)
 
-### 5.1 GET `/api/marketing/revenue/summary`
+### 5.1 GET `/api/marketing/content/stats`
+**Purpose:** Get content status counts for the Content Studio overview.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "inQueue": {
+      "count": 23,
+      "label": "In Queue"
+    },
+    "rendering": {
+      "count": 5,
+      "label": "Rendering"
+    },
+    "scheduled": {
+      "count": 18,
+      "label": "Scheduled"
+    },
+    "publishedToday": {
+      "count": 12,
+      "change": 20,
+      "changeDirection": "up",
+      "label": "Published Today"
+    }
+  }
+}
+```
+
+### 5.2 GET `/api/marketing/content/pipeline`
+**Purpose:** Get the content pipeline list for viewing scheduled and in-progress content.
+
+**Query Parameters:**
+- `status` (optional): `all`, `draft`, `rendering`, `review`, `scheduled`, `queued`, `published` (default: `all`)
+- `characterId` (optional): Filter by specific character
+- `page` (optional): Page number (default: `1`)
+- `limit` (optional): 1-50 (default: `20`)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "content": [
+      {
+        "id": "content_1",
+        "character": {
+          "id": "char_123",
+          "name": "Aria",
+          "imageUrl": "https://cdn.example.com/characters/aria.jpg"
+        },
+        "contentType": "Trending Dance",
+        "trend": {
+          "id": "trend_1",
+          "name": "Shy Dance Challenge"
+        },
+        "status": "rendering",
+        "progress": 67,
+        "scheduledAt": "2024-01-23T15:00:00.000Z",
+        "scheduledFormatted": "Today 3:00 PM",
+        "createdAt": "2024-01-23T10:00:00.000Z"
+      },
+      {
+        "id": "content_2",
+        "character": {
+          "id": "char_456",
+          "name": "Kai",
+          "imageUrl": "https://cdn.example.com/characters/kai.jpg"
+        },
+        "contentType": "Reaction Video",
+        "trend": {
+          "id": "trend_2",
+          "name": "Gaming Meme"
+        },
+        "status": "review",
+        "progress": 100,
+        "scheduledAt": "2024-01-23T17:00:00.000Z",
+        "scheduledFormatted": "Today 5:00 PM",
+        "createdAt": "2024-01-23T09:00:00.000Z"
+      },
+      {
+        "id": "content_3",
+        "character": {
+          "id": "char_789",
+          "name": "Luna",
+          "imageUrl": "https://cdn.example.com/characters/luna.jpg"
+        },
+        "contentType": "Aesthetic Dance",
+        "trend": {
+          "id": "trend_3",
+          "name": "Ethereal Vibes"
+        },
+        "status": "scheduled",
+        "progress": 100,
+        "scheduledAt": "2024-01-24T10:00:00.000Z",
+        "scheduledFormatted": "Tomorrow 10:00 AM",
+        "createdAt": "2024-01-23T08:00:00.000Z"
+      },
+      {
+        "id": "content_4",
+        "character": {
+          "id": "char_012",
+          "name": "Sofia",
+          "imageUrl": "https://cdn.example.com/characters/sofia.jpg"
+        },
+        "contentType": "Boss Energy",
+        "trend": {
+          "id": "trend_4",
+          "name": "Confidence Walk"
+        },
+        "status": "queued",
+        "progress": 0,
+        "scheduledAt": "2024-01-24T14:00:00.000Z",
+        "scheduledFormatted": "Tomorrow 2:00 PM",
+        "createdAt": "2024-01-23T11:00:00.000Z"
+      },
+      {
+        "id": "content_5",
+        "character": {
+          "id": "char_345",
+          "name": "Jade",
+          "imageUrl": "https://cdn.example.com/characters/jade.jpg"
+        },
+        "contentType": "Sassy Response",
+        "trend": {
+          "id": "trend_5",
+          "name": "Comment Clap Back"
+        },
+        "status": "draft",
+        "progress": 30,
+        "scheduledAt": null,
+        "scheduledFormatted": "Unscheduled",
+        "createdAt": "2024-01-23T07:00:00.000Z"
+      }
+    ],
+    "pagination": {
+      "currentPage": 1,
+      "totalPages": 3,
+      "totalItems": 58,
+      "hasMore": true
+    }
+  }
+}
+```
+
+### 5.3 POST `/api/marketing/content`
+**Purpose:** Create new content for a character (Generate Content).
+
+**Request Body:**
+```json
+{
+  "characterId": "char_123",
+  "contentType": "Trending Dance",
+  "trendId": "trend_1",
+  "scheduledAt": "2024-01-24T15:00:00.000Z",
+  "options": {
+    "style": "energetic",
+    "duration": 30,
+    "music": "trending_track_id"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "content_new",
+    "characterId": "char_123",
+    "contentType": "Trending Dance",
+    "status": "queued",
+    "progress": 0,
+    "scheduledAt": "2024-01-24T15:00:00.000Z",
+    "createdAt": "2024-01-23T04:39:57.846Z"
+  }
+}
+```
+
+### 5.4 PUT `/api/marketing/content/:contentId`
+**Purpose:** Update content details or reschedule.
+
+**Request Body:**
+```json
+{
+  "scheduledAt": "2024-01-25T10:00:00.000Z",
+  "status": "scheduled"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "content_1",
+    "status": "scheduled",
+    "scheduledAt": "2024-01-25T10:00:00.000Z",
+    "updatedAt": "2024-01-23T04:39:57.846Z"
+  }
+}
+```
+
+### 5.5 DELETE `/api/marketing/content/:contentId`
+**Purpose:** Delete or cancel content.
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Content deleted successfully"
+}
+```
+
+### 5.6 GET `/api/marketing/content/types`
+**Purpose:** Get available content types for content creation.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "contentTypes": [
+      {
+        "id": "trending_dance",
+        "name": "Trending Dance",
+        "description": "Dance content following trending challenges"
+      },
+      {
+        "id": "reaction_video",
+        "name": "Reaction Video",
+        "description": "Character reactions to trending content"
+      },
+      {
+        "id": "aesthetic_dance",
+        "name": "Aesthetic Dance",
+        "description": "Artistic and visually pleasing dance content"
+      },
+      {
+        "id": "boss_energy",
+        "name": "Boss Energy",
+        "description": "Confident and empowering content"
+      },
+      {
+        "id": "sassy_response",
+        "name": "Sassy Response",
+        "description": "Witty responses to comments or trends"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 6. Trends APIs
+
+### 6.1 GET `/api/marketing/trends`
+**Purpose:** Get current hot trends for the dashboard and content creation.
+
+**Query Parameters:**
+- `limit` (optional): 1-50 (default: `10`)
+- `category` (optional): Filter by trend category
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "trends": [
+      {
+        "id": "trend_1",
+        "name": "Shy Dance Challenge",
+        "views": 45000000,
+        "viewsFormatted": "45M views",
+        "daysActive": 3,
+        "status": "hot",
+        "category": "dance",
+        "recommendedFor": ["dance", "cute", "casual"]
+      },
+      {
+        "id": "trend_2",
+        "name": "Get Ready With Me 2.0",
+        "views": 28000000,
+        "viewsFormatted": "28M views",
+        "daysActive": 7,
+        "status": "active",
+        "category": "lifestyle",
+        "recommendedFor": ["lifestyle", "beauty", "casual"]
+      },
+      {
+        "id": "trend_3",
+        "name": "Dad Dance Remix",
+        "views": 12000000,
+        "viewsFormatted": "12M views",
+        "daysActive": 2,
+        "status": "active",
+        "category": "dance",
+        "recommendedFor": ["comedy", "dance", "family"]
+      },
+      {
+        "id": "trend_4",
+        "name": "Outfit Transition",
+        "views": 89000000,
+        "viewsFormatted": "89M views",
+        "daysActive": 14,
+        "status": "active",
+        "category": "fashion",
+        "recommendedFor": ["fashion", "lifestyle", "creative"]
+      }
+    ],
+    "lastUpdated": "2024-01-23T04:39:57.846Z"
+  }
+}
+```
+
+### 6.2 GET `/api/marketing/trends/:trendId`
+**Purpose:** Get detailed information about a specific trend.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "trend_1",
+    "name": "Shy Dance Challenge",
+    "description": "A cute dance challenge with shy gestures",
+    "views": 45000000,
+    "viewsFormatted": "45M views",
+    "daysActive": 3,
+    "startedAt": "2024-01-20T00:00:00.000Z",
+    "status": "hot",
+    "category": "dance",
+    "hashtags": ["#shydance", "#dancechallenge", "#viral"],
+    "sourceUrl": "https://example.com/trend/shy-dance",
+    "exampleVideos": [
+      "https://example.com/video/1",
+      "https://example.com/video/2"
+    ],
+    "recommendedFor": ["dance", "cute", "casual"],
+    "characterParticipation": {
+      "total": 5,
+      "characters": [
+        { "id": "char_123", "name": "Luna", "status": "published" },
+        { "id": "char_456", "name": "Aria", "status": "rendering" }
+      ]
+    }
+  }
+}
+```
+
+---
+
+## 7. Analytics & Insights APIs
+
+### 7.1 GET `/api/marketing/analytics/overview`
+**Purpose:** Get analytics overview for the Analytics & Insights page.
+
+**Query Parameters:**
+- `period` (optional): `7d`, `30d`, `90d` (default: `7d`)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "metrics": {
+      "newFollowers": {
+        "value": 47200,
+        "formatted": "+47.2K",
+        "change": 23.5,
+        "changeDirection": "up"
+      },
+      "totalViews": {
+        "value": 2400000,
+        "formatted": "2.4M",
+        "change": 18.2,
+        "changeDirection": "up"
+      },
+      "platformSignups": {
+        "value": 8234,
+        "formatted": "8,234",
+        "change": 31.4,
+        "changeDirection": "up"
+      },
+      "conversionRate": {
+        "value": 4.2,
+        "formatted": "4.2%",
+        "change": 0.8,
+        "changeDirection": "up"
+      }
+    },
+    "period": "7d",
+    "lastUpdated": "2024-01-23T04:39:57.846Z"
+  }
+}
+```
+
+### 7.2 GET `/api/marketing/analytics/funnel`
+**Purpose:** Get funnel performance data for the marketing funnel visualization.
+
+**Query Parameters:**
+- `period` (optional): `7d`, `30d`, `90d` (default: `7d`)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "funnel": [
+      {
+        "stage": "Video Views",
+        "value": 2400000,
+        "formatted": "2.4M",
+        "percentage": 100
+      },
+      {
+        "stage": "Profile Visits",
+        "value": 320000,
+        "formatted": "320K",
+        "percentage": 13.3
+      },
+      {
+        "stage": "Link Clicks",
+        "value": 45000,
+        "formatted": "45K",
+        "percentage": 14.1
+      },
+      {
+        "stage": "Platform Visits",
+        "value": 32000,
+        "formatted": "32K",
+        "percentage": 71.1
+      },
+      {
+        "stage": "Signups",
+        "value": 8200,
+        "formatted": "8.2K",
+        "percentage": 25.6
+      },
+      {
+        "stage": "First Chat",
+        "value": 6100,
+        "formatted": "6.1K",
+        "percentage": 74.4
+      }
+    ],
+    "overallConversion": {
+      "videoViewsToSignups": 0.34,
+      "signupsToFirstChat": 74.4
+    },
+    "period": "7d"
+  }
+}
+```
+
+### 7.3 GET `/api/marketing/analytics/top-performers`
+**Purpose:** Get top performing characters for the leaderboard.
+
+**Query Parameters:**
+- `period` (optional): `7d`, `30d`, `90d` (default: `7d`)
+- `limit` (optional): 1-20 (default: `5`)
+- `sortBy` (optional): `signups`, `engagement`, `views` (default: `signups`)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "performers": [
+      {
+        "rank": 1,
+        "character": {
+          "id": "char_123",
+          "name": "Aria",
+          "imageUrl": "https://cdn.example.com/characters/aria.jpg"
+        },
+        "engagement": 10.2,
+        "engagementFormatted": "10.2% engagement",
+        "signups": 5700,
+        "signupsFormatted": "5.7K signups"
+      },
+      {
+        "rank": 2,
+        "character": {
+          "id": "char_456",
+          "name": "Kai",
+          "imageUrl": "https://cdn.example.com/characters/kai.jpg"
+        },
+        "engagement": 9.1,
+        "engagementFormatted": "9.1% engagement",
+        "signups": 4100,
+        "signupsFormatted": "4.1K signups"
+      },
+      {
+        "rank": 3,
+        "character": {
+          "id": "char_789",
+          "name": "Sofia",
+          "imageUrl": "https://cdn.example.com/characters/sofia.jpg"
+        },
+        "engagement": 7.8,
+        "engagementFormatted": "7.8% engagement",
+        "signups": 3900,
+        "signupsFormatted": "3.9K signups"
+      },
+      {
+        "rank": 4,
+        "character": {
+          "id": "char_012",
+          "name": "Luna",
+          "imageUrl": "https://cdn.example.com/characters/luna.jpg"
+        },
+        "engagement": 8.2,
+        "engagementFormatted": "8.2% engagement",
+        "signups": 2300,
+        "signupsFormatted": "2.3K signups"
+      },
+      {
+        "rank": 5,
+        "character": {
+          "id": "char_345",
+          "name": "Milo",
+          "imageUrl": "https://cdn.example.com/characters/milo.jpg"
+        },
+        "engagement": 6.9,
+        "engagementFormatted": "6.9% engagement",
+        "signups": 2000,
+        "signupsFormatted": "2.0K signups"
+      }
+    ],
+    "period": "7d"
+  }
+}
+```
+
+### 7.4 GET `/api/marketing/analytics/export`
+**Purpose:** Export analytics data for the given period.
+
+**Query Parameters:**
+- `period` (optional): `7d`, `30d`, `90d` (default: `7d`)
+- `format` (optional): `json`, `csv` (default: `json`)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "exportUrl": "https://cdn.example.com/exports/analytics_2024_01_23.csv",
+    "expiresAt": "2024-01-24T04:39:57.846Z",
+    "period": "7d",
+    "generatedAt": "2024-01-23T04:39:57.846Z"
+  }
+}
+```
+
+---
+
+## 8. Revenue Analytics APIs
+
+### 8.1 GET `/api/marketing/revenue/summary`
 **Purpose:** Revenue summary and key financial metrics.
 
 **Query Parameters:**
@@ -535,7 +1311,7 @@ Authorization: Bearer <api_key>
 }
 ```
 
-### 5.2 GET `/api/marketing/revenue/timeline`
+### 8.2 GET `/api/marketing/revenue/timeline`
 **Purpose:** Revenue over time for trend charts.
 
 **Query Parameters:**
@@ -564,7 +1340,7 @@ Authorization: Bearer <api_key>
 }
 ```
 
-### 5.3 GET `/api/marketing/revenue/subscriptions`
+### 8.3 GET `/api/marketing/revenue/subscriptions`
 **Purpose:** Subscription-specific analytics.
 
 **Query Parameters:**
@@ -597,7 +1373,7 @@ Authorization: Bearer <api_key>
 }
 ```
 
-### 5.4 GET `/api/marketing/revenue/conversions`
+### 8.4 GET `/api/marketing/revenue/conversions`
 **Purpose:** Conversion funnel and metrics.
 
 **Response:**
@@ -629,9 +1405,9 @@ Authorization: Bearer <api_key>
 
 ---
 
-## 6. Creator Analytics APIs
+## 9. Creator Analytics APIs
 
-### 6.1 GET `/api/marketing/creators/stats`
+### 9.1 GET `/api/marketing/creators/stats`
 **Purpose:** Creator ecosystem statistics.
 
 **Response:**
@@ -658,7 +1434,7 @@ Authorization: Bearer <api_key>
 }
 ```
 
-### 6.2 GET `/api/marketing/creators/top`
+### 9.2 GET `/api/marketing/creators/top`
 **Purpose:** Top performing creators for partnerships/features.
 
 **Query Parameters:**
@@ -699,9 +1475,9 @@ Authorization: Bearer <api_key>
 
 ---
 
-## 7. Content Moderation APIs
+## 10. Content Moderation APIs
 
-### 7.1 GET `/api/marketing/content/stats`
+### 10.1 GET `/api/marketing/moderation/stats`
 **Purpose:** Content overview for moderation and safety.
 
 **Response:**
@@ -732,9 +1508,9 @@ Authorization: Bearer <api_key>
 
 ---
 
-## 8. Geographic & Language APIs
+## 11. Geographic & Language APIs
 
-### 8.1 GET `/api/marketing/geo/distribution`
+### 11.1 GET `/api/marketing/geo/distribution`
 **Purpose:** Geographic distribution of users for localization decisions.
 
 **Response:**
@@ -763,9 +1539,9 @@ Authorization: Bearer <api_key>
 
 ---
 
-## 9. Feature Usage APIs
+## 12. Feature Usage APIs
 
-### 9.1 GET `/api/marketing/features/usage`
+### 12.1 GET `/api/marketing/features/usage`
 **Purpose:** Feature adoption and usage statistics.
 
 **Response:**
@@ -817,9 +1593,9 @@ Authorization: Bearer <api_key>
 
 ---
 
-## 10. Export APIs
+## 13. Export APIs
 
-### 10.1 GET `/api/marketing/export/users`
+### 13.1 GET `/api/marketing/export/users`
 **Purpose:** Export user data for external analysis.
 
 **Query Parameters:**
@@ -850,7 +1626,7 @@ Authorization: Bearer <api_key>
 }
 ```
 
-### 10.2 GET `/api/marketing/export/characters`
+### 13.2 GET `/api/marketing/export/characters`
 **Purpose:** Export character data for analysis.
 
 **Query Parameters:**
@@ -883,7 +1659,7 @@ Authorization: Bearer <api_key>
 }
 ```
 
-### 10.3 GET `/api/marketing/export/revenue`
+### 13.3 GET `/api/marketing/export/revenue`
 **Purpose:** Export revenue data for financial analysis.
 
 **Query Parameters:**
@@ -922,9 +1698,9 @@ Authorization: Bearer <api_key>
 
 ---
 
-## 11. Real-time / Webhooks
+## 14. Real-time / Webhooks
 
-### 11.1 POST `/api/marketing/webhooks/register`
+### 14.1 POST `/api/marketing/webhooks/register`
 **Purpose:** Register a webhook URL to receive real-time marketing events.
 
 **Request Body:**
@@ -1036,12 +1812,17 @@ Common error codes:
 
 | Category | Endpoint | Description |
 |----------|----------|-------------|
-| **Overview** | `GET /api/marketing/dashboard/summary` | Platform summary metrics |
-| **Overview** | `GET /api/marketing/dashboard/health` | Platform health check |
+| **Dashboard** | `GET /api/marketing/dashboard/summary` | Marketing Command Center summary |
+| **Dashboard** | `GET /api/marketing/dashboard/health` | Platform health check |
+| **Dashboard** | `POST /api/marketing/dashboard/sync` | Trigger data sync |
 | **Users** | `GET /api/marketing/users/stats` | User statistics |
 | **Users** | `GET /api/marketing/users/growth` | User growth timeline |
 | **Users** | `GET /api/marketing/users/retention` | Retention & churn |
 | **Users** | `GET /api/marketing/users/segments` | User segments |
+| **Characters** | `GET /api/marketing/characters` | List all AI characters |
+| **Characters** | `GET /api/marketing/characters/:id` | Get character details |
+| **Characters** | `GET /api/marketing/characters/:id/analytics` | Character analytics |
+| **Characters** | `PUT /api/marketing/characters/:id` | Update character |
 | **Characters** | `GET /api/marketing/characters/stats` | Character statistics |
 | **Characters** | `GET /api/marketing/characters/top-performing` | Top characters |
 | **Characters** | `GET /api/marketing/characters/categories` | Category distribution |
@@ -1050,13 +1831,25 @@ Common error codes:
 | **Engagement** | `GET /api/marketing/engagement/images` | Image generation stats |
 | **Engagement** | `GET /api/marketing/engagement/sessions` | Session analytics |
 | **Engagement** | `GET /api/marketing/engagement/favorites` | Favorite analytics |
+| **Content** | `GET /api/marketing/content/stats` | Content status counts |
+| **Content** | `GET /api/marketing/content/pipeline` | Content pipeline list |
+| **Content** | `POST /api/marketing/content` | Create new content |
+| **Content** | `PUT /api/marketing/content/:id` | Update content |
+| **Content** | `DELETE /api/marketing/content/:id` | Delete content |
+| **Content** | `GET /api/marketing/content/types` | Available content types |
+| **Trends** | `GET /api/marketing/trends` | Hot trends list |
+| **Trends** | `GET /api/marketing/trends/:id` | Trend details |
+| **Analytics** | `GET /api/marketing/analytics/overview` | Analytics overview |
+| **Analytics** | `GET /api/marketing/analytics/funnel` | Funnel performance |
+| **Analytics** | `GET /api/marketing/analytics/top-performers` | Top performers leaderboard |
+| **Analytics** | `GET /api/marketing/analytics/export` | Export analytics data |
 | **Revenue** | `GET /api/marketing/revenue/summary` | Revenue summary |
 | **Revenue** | `GET /api/marketing/revenue/timeline` | Revenue timeline |
 | **Revenue** | `GET /api/marketing/revenue/subscriptions` | Subscription analytics |
 | **Revenue** | `GET /api/marketing/revenue/conversions` | Conversion funnel |
 | **Creators** | `GET /api/marketing/creators/stats` | Creator statistics |
 | **Creators** | `GET /api/marketing/creators/top` | Top creators |
-| **Content** | `GET /api/marketing/content/stats` | Content moderation stats |
+| **Moderation** | `GET /api/marketing/moderation/stats` | Content moderation stats |
 | **Geographic** | `GET /api/marketing/geo/distribution` | Geographic distribution |
 | **Features** | `GET /api/marketing/features/usage` | Feature usage stats |
 | **Export** | `GET /api/marketing/export/users` | Export user data |

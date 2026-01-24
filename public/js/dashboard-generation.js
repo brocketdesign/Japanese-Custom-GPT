@@ -507,42 +507,34 @@ class GenerationDashboard {
         throw new Error(data.error || 'Generation failed');
       }
       
-      // Handle tasks
+      // Handle tasks - process all tasks for multiple image generation
       if (data.tasks && data.tasks.length > 0) {
-        const task = data.tasks[0];
-        console.log('[GenerationDashboard] Task received:', {
-          taskId: task.taskId || task.task_id,
-          status: task.status,
-          async: task.async,
-          imagesCount: task.images?.length || 0
+        console.log(`[GenerationDashboard] Processing ${data.tasks.length} task(s)`);
+        
+        // For the first task, update the existing pending result
+        const firstTask = data.tasks[0];
+        console.log('[GenerationDashboard] First task:', {
+          taskId: firstTask.taskId || firstTask.task_id,
+          status: firstTask.status,
+          async: firstTask.async,
+          imagesCount: firstTask.images?.length || 0
         });
         
-        // Check if task is already completed (sync models like merge-face-segmind)
-        if (task.status === 'completed' && task.images && task.images.length > 0) {
-          console.log('[GenerationDashboard] Sync task already completed with images:', task.images);
-          const imageUrl = task.images[0]?.imageUrl || task.images[0]?.image_url || task.images[0]?.url || task.images[0];
-          console.log('[GenerationDashboard] Extracted imageUrl:', imageUrl);
-          if (imageUrl) {
-            this.updateResultWithData(pendingResult.id, {
-              status: 'completed',
-              imageUrl: imageUrl
-            });
-          } else {
-            console.error('[GenerationDashboard] Sync task completed but no imageUrl found in:', task.images[0]);
-            this.updateResultWithData(pendingResult.id, { status: 'failed' });
-          }
-        } else if (task.status === 'completed') {
-          // Task completed but no images - might be an error
-          console.log('[GenerationDashboard] Task completed but no images:', task);
-          this.updateResultWithData(pendingResult.id, { status: 'failed' });
-        } else if (task.status === 'failed') {
-          // Task failed on backend
-          console.log('[GenerationDashboard] Task failed:', task.error || 'Unknown error');
-          this.updateResultWithData(pendingResult.id, { status: 'failed' });
-        } else {
-          // Async task - need to poll for result
-          pendingResult.taskId = task.taskId || task.task_id;
-          this.startPollingTask(pendingResult);
+        this.processTask(firstTask, pendingResult);
+        
+        // For additional tasks (when generating multiple images), create new result entries
+        for (let i = 1; i < data.tasks.length; i++) {
+          const task = data.tasks[i];
+          console.log(`[GenerationDashboard] Additional task ${i + 1}:`, {
+            taskId: task.taskId || task.task_id,
+            status: task.status,
+            async: task.async,
+            imagesCount: task.images?.length || 0
+          });
+          
+          // Create a new result for this task
+          const additionalResult = this.createPendingResult(prompt, this.state.mode);
+          this.processTask(task, additionalResult);
         }
       } else if (data.result) {
         // Immediate result
@@ -565,6 +557,41 @@ class GenerationDashboard {
     } finally {
       this.state.isGenerating = false;
       this.updateGeneratingState(false);
+    }
+  }
+  
+  /**
+   * Process a single task from the generation response
+   * @param {Object} task - Task object from backend
+   * @param {Object} result - Result object to update
+   */
+  processTask(task, result) {
+    // Check if task is already completed (sync models like merge-face-segmind)
+    if (task.status === 'completed' && task.images && task.images.length > 0) {
+      console.log('[GenerationDashboard] Sync task already completed with images:', task.images);
+      const imageUrl = task.images[0]?.imageUrl || task.images[0]?.image_url || task.images[0]?.url || task.images[0];
+      console.log('[GenerationDashboard] Extracted imageUrl:', imageUrl);
+      if (imageUrl) {
+        this.updateResultWithData(result.id, {
+          status: 'completed',
+          imageUrl: imageUrl
+        });
+      } else {
+        console.error('[GenerationDashboard] Sync task completed but no imageUrl found in:', task.images[0]);
+        this.updateResultWithData(result.id, { status: 'failed' });
+      }
+    } else if (task.status === 'completed') {
+      // Task completed but no images - might be an error
+      console.log('[GenerationDashboard] Task completed but no images:', task);
+      this.updateResultWithData(result.id, { status: 'failed' });
+    } else if (task.status === 'failed') {
+      // Task failed on backend
+      console.log('[GenerationDashboard] Task failed:', task.error || 'Unknown error');
+      this.updateResultWithData(result.id, { status: 'failed' });
+    } else {
+      // Async task - need to poll for result
+      result.taskId = task.taskId || task.task_id;
+      this.startPollingTask(result);
     }
   }
   

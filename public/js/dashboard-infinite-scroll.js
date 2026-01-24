@@ -321,7 +321,9 @@ async function fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type
     showLoadingIndicator(true, type);
     
     try {
-        const url = `${endpoint}?page=${page}`;
+        // Properly append page parameter to endpoint URL
+        const separator = endpoint.includes('?') ? '&' : '?';
+        const url = `${endpoint}${separator}page=${page}`;
         
         const response = await $.ajax({
             url: url,

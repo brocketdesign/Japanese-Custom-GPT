@@ -1,4 +1,4 @@
-# AI Character Studio
+# ChatLamix | AI Character Studio
 
 > 🔞 **Adult Content Warning**: This application contains NSFW (Not Safe For Work) content. Users must be 18+ years old.
 

@@ -1405,7 +1405,7 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
         const filters = [];
         
         // Only require chatImageUrl when NOT filtering by specific user
-        // When viewing a user's characters, show all characters even without images
+        // Require profile images for public browsing to maintain quality, but allow all characters for user-specific views
         if (!hasValidUserId) {
             filters.push({ chatImageUrl: { $exists: true, $ne: '' } }); // must have at least one image
         }

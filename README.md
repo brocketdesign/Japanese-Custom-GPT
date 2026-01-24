@@ -142,11 +142,11 @@ This project is licensed under the ISC License.
 
 ## 👥 Author
 
-- **Hato LLC** (合同会社はと)
+- **Imagine LLC**
 
 ## 🔗 Links
 
-- [Live Application](https://app.lamix.jp)
+- [Live Application](https://app.chatlamix.jp)
 - [Documentation](./QUICK_START_GUIDE.md)
 - [Testing Guide](./TESTING_GUIDE.md)
 

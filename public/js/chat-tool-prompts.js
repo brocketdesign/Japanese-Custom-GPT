@@ -124,7 +124,7 @@ class PromptManager {
                                         ></textarea>
                                         <button 
                                             type="button" 
-                                            class="btn btn-sm position-absolute" 
+                                            class="btn btn-sm position-relative w-100 m-auto mt-1" 
                                             id="enhancePromptBtn"
                                             title="Enhance your description with AI"
                                         >

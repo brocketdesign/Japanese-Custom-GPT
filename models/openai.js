@@ -1224,7 +1224,7 @@ Focus on:
 - Keep the original intent intact
 - Make it suitable for image generation AI
 
-Do NOT add NSFW content unless the original description clearly implies it.`;
+you can respond with SNFW explicit details if the description requires it.`;
 
     let userPrompt = `Enhance this image generation prompt: "${description}"`;
     
@@ -1237,21 +1237,14 @@ Do NOT add NSFW content unless the original description clearly implies it.`;
     
     userPrompt += `\n\nProvide only the enhanced prompt text, no explanations or additional commentary.`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      max_tokens: 300,
-      temperature: 0.8,
-    });
-
-    if (!response.choices || !response.choices[0] || !response.choices[0].message) {
-      throw new Error('Invalid response from OpenAI');
-    }
-
-    return response.choices[0].message.content.trim();
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ];
+    const response = await generateCompletion(messages, 700, 'deepseek-v3-turbo');
+    console.log(`[enhanceCustomPromptDescription] Enhanced prompt: ${response}`);
+    if (!response) return null;
+    return response;
   } catch (error) {
     console.error('[enhanceCustomPromptDescription] Error:', error);
     throw new Error('Failed to enhance prompt');

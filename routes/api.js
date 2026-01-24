@@ -1402,15 +1402,20 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
         // -------------------------------
         // 2. Base filters (always applied)
         // -------------------------------
-        const filters = [
-        { chatImageUrl: { $exists: true, $ne: '' } }, // must have at least one image
-        {
+        const filters = [];
+        
+        // Only require chatImageUrl when NOT filtering by specific user
+        // When viewing a user's characters, show all characters even without images
+        if (!hasValidUserId) {
+            filters.push({ chatImageUrl: { $exists: true, $ne: '' } }); // must have at least one image
+        }
+        
+        filters.push({
             $or: [
             { characterPrompt: { $exists: true, $ne: '' } },
             { enhancedPrompt: { $exists: true, $ne: '' } },
             ],
-        }, // must have some prompt
-        ];
+        }); // must have some prompt
 
         // Language filter (only if not filtering by specific user)
         if (language && !hasValidUserId) {

@@ -6,6 +6,9 @@
 // Model categories that cannot be used for text-to-image generation
 const INCOMPATIBLE_TEXT_TO_IMAGE_CATEGORIES = ['face', 'img2img'];
 
+// Custom model ID prefix
+const CUSTOM_MODEL_PREFIX = 'custom-';
+
 class GenerationDashboard {
   constructor(config = {}) {
     // Core state
@@ -419,10 +422,10 @@ class GenerationDashboard {
   }
   
   selectModel(modelId) {
-    // Check if it's a custom model
+    // Check if it's a custom model using the prefix constant
     let model = null;
     
-    if (modelId.startsWith('custom-')) {
+    if (modelId.startsWith(CUSTOM_MODEL_PREFIX)) {
       // Search in user models
       model = this.userModels.find(m => m.modelId === modelId);
     } else {
@@ -504,6 +507,15 @@ class GenerationDashboard {
   }
   
   /**
+   * Get the model name for SD models, handling multiple possible field names
+   * @param {Object} model - Model object
+   * @returns {string} Model name
+   */
+  getSDModelName(model) {
+    return model.sdName || model.modelName || model.model || 'Unknown Model';
+  }
+  
+  /**
    * Load user's custom models from the API
    */
   async loadUserModels() {
@@ -514,7 +526,7 @@ class GenerationDashboard {
       if (data.success && data.models) {
         // Convert user models to the format expected by the dashboard
         this.userModels = data.models.map(model => ({
-          modelId: `custom-${model.modelId}`,
+          modelId: `${CUSTOM_MODEL_PREFIX}${model.modelId}`,
           name: model.name,
           sdName: model.model,
           model: model.model,
@@ -749,9 +761,10 @@ class GenerationDashboard {
     // Check if this is a custom SD model
     if (model.isCustom || model.isSDModel) {
       // For SD models, use selectedSDModels array
+      const modelName = this.getSDModelName(model);
       payload.selectedSDModels = [{
-        model: model.sdName || model.modelName || model.model,
-        model_name: model.sdName || model.modelName || model.model,
+        model: modelName,
+        model_name: modelName,
         name: model.name
       }];
       payload.models = []; // Empty array for standard models

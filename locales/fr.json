@@ -516,6 +516,7 @@
     "step3StartConversation": "<strong>3. Commencez une conversation :</strong> Envoyez votre première phrase et profitez d'une conversation sans limite.",
     "followersListTitleFollowers": "Abonnés de {{name}}",
     "followersListTitleFollowing": "Utilisateurs suivis par {{name}}",
+    "followingListTitle": "Abonnements",
     "followingButton": "Abonné",
     "followButton": "Suivre",
     "followedByTextSuffix": "vous suit"
@@ -1428,7 +1429,12 @@
     "loadingPosts": "Chargement des publications...",
     "scheduledPosts": "Publications planifiées et automatisation",
     "manageSchedules": "Gérer",
-    "loadingSchedules": "Chargement des planifications..."
+    "loadingSchedules": "Chargement des planifications...",
+    "creatorBadgeTitle": "Créateur",
+    "verifiedCreator": "Créateur Vérifié",
+    "becomeCreator": "Devenir Créateur",
+    "manageContent": "Gérer le Contenu",
+    "subscribe": "S'abonner"
   },
   "startChatting": "Commencer à discuter",
   "like": "J'aime",
@@ -2659,12 +2665,5 @@
       "badge": "Badge créateur exclusif affiché sur votre profil",
       "tools": "Accès aux outils créateur avancés et à la gestion de contenu"
     }
-  },
-  
-  "profile": {
-    "creatorBadgeTitle": "Créateur",
-    "verifiedCreator": "Créateur Vérifié",
-    "becomeCreator": "Devenir Créateur",
-    "manageContent": "Gérer le Contenu"
   }
 }

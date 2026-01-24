@@ -670,17 +670,14 @@
     }
 </style>
 <body>
+
+    {{> dashboard-nav}}
     {{> onboarding-modals}}
-    
     <div class="dashboard-container">
         <!-- Welcome Section -->
         <section class="welcome-section">
-            {{#if user.picture}}
-            <img src="{{user.picture}}" alt="Profile" class="welcome-avatar" onerror="this.src='/img/default-avatar.webp'">
-            {{else}}
-            <div class="welcome-avatar" style="background: var(--primary-gradient); display: flex; align-items: center; justify-content: center;">
-                <i class="bi bi-person-fill" style="font-size: 2rem;"></i>
-            </div>
+            {{#if user.profileUrl}}
+            <img src="{{user.profileUrl}}" alt="Profile" class="welcome-avatar" onerror="this.src='/img/default-avatar.webp'">
             {{/if}}
             <h1 class="welcome-text">{{translations.welcome}}, {{#if user.nickname}}{{user.nickname}}{{else if userData.nickname}}{{userData.nickname}}{{else}}{{translations.guest}}{{/if}}!</h1>
             <p class="welcome-subtext">{{translations.welcomeMessage}}</p>

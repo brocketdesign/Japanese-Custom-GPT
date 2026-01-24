@@ -532,6 +532,7 @@
     "step3StartConversation": "<strong>3. 会話を開始:</strong> 最初の一言を送って、自由な会話を楽しもう。",
     "followersListTitleFollowers": "さんのフォロワー",
     "followersListTitleFollowing": "さんがフォロー中",
+    "followingListTitle": "フォロー中",
     "followingButton": "フォロー中",
     "followButton": "フォロー",
     "followedByTextSuffix": "にフォローされています"
@@ -1483,7 +1484,12 @@
     "loadingPosts": "投稿を読み込み中...",
     "scheduledPosts": "予約投稿と自動化",
     "manageSchedules": "管理",
-    "loadingSchedules": "スケジュールを読み込み中..."
+    "loadingSchedules": "スケジュールを読み込み中...",
+    "creatorBadgeTitle": "クリエイター",
+    "verifiedCreator": "認証済みクリエイター",
+    "becomeCreator": "クリエイターになる",
+    "manageContent": "コンテンツ管理",
+    "subscribe": "購読する"
   },
   "startChatting": " チャットする",
   "like": "いいね",
@@ -2673,12 +2679,5 @@
       "badge": "プロフィールに表示される限定クリエイターバッジ",
       "tools": "高度なクリエイターツールとコンテンツ管理へのアクセス"
     }
-  },
-  
-  "profile": {
-    "creatorBadgeTitle": "クリエイター",
-    "verifiedCreator": "認証済みクリエイター",
-    "becomeCreator": "クリエイターになる",
-    "manageContent": "コンテンツ管理"
   }
 }

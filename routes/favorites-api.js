@@ -183,11 +183,11 @@ async function routes(fastify, options) {
   });
 
   /**
-   * GET /favorites
-   * Get user's favorite chats with pagination
+   * GET /favorites/list
+   * Get user's favorite chats with pagination (JSON API)
    * Query: { page: 1, limit: 12 }
    */
-  fastify.get('/favorites', async (request, reply) => {
+  fastify.get('/favorites/list', async (request, reply) => {
     try {
       const user = request.user;
       if (!user || !user._id) {
@@ -202,8 +202,61 @@ async function routes(fastify, options) {
 
       return reply.send(result);
     } catch (error) {
-      console.error('Error in /favorites:', error);
+      console.error('Error in /favorites/list:', error);
       return reply.code(500).send({ error: 'Internal Server Error' });
+    }
+  });
+
+  /**
+   * GET /favorites
+   * Render the favorites page or return JSON if page/limit params present
+   */
+  fastify.get('/favorites', async (request, reply) => {
+    try {
+      const user = request.user;
+      const { translations, lang } = request;
+      
+      // If page or limit query params exist, return JSON (for backward compatibility)
+      if (request.query.page || request.query.limit) {
+        if (!user || !user._id) {
+          return reply.code(401).send({ error: 'Unauthorized' });
+        }
+
+        const page = parseInt(request.query.page) || 1;
+        const limit = parseInt(request.query.limit) || 12;
+
+        const db = fastify.mongo.db;
+        const result = await getUserFavorites(db, user._id, { page, limit });
+
+        return reply.send(result);
+      }
+      
+      // Redirect non-logged-in (temporary) users to search page
+      if (!user || user.isTemporary) {
+        return reply.redirect('/search');
+      }
+
+      const { generateSeoMetadata } = require('../models/tool');
+      const seoMetadata = generateSeoMetadata(request, '/favorites', lang);
+
+      return reply.view('favorites.hbs', {
+        title: translations.favorite?.favorites || 'My Favorites',
+        canonicalUrl: seoMetadata.canonicalUrl,
+        alternates: seoMetadata.alternates,
+        user,
+        userId: user._id,
+        seo: [
+          { name: 'description', content: translations.favorite?.favoritesDescription || 'Manage your favorite chats' },
+          { property: 'og:title', content: translations.favorite?.favorites || 'My Favorites' },
+          { property: 'og:description', content: translations.favorite?.favoritesDescription || 'Manage your favorite chats' },
+          { property: 'og:image', content: '/img/share.png' },
+          { property: 'og:url', content: seoMetadata.canonicalUrl },
+          { property: 'og:locale', content: lang },
+        ],
+      });
+    } catch (error) {
+      console.error('Error in /favorites:', error);
+      return reply.code(500).send({ error: 'Unable to render favorites page' });
     }
   });
 

@@ -30,239 +30,44 @@
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
     }
 
-    .dashboard-container {
+    .favorites-container {
         max-width: 1200px;
         margin: 0 auto;
         padding: 20px 16px 100px;
     }
 
-    /* Welcome Section */
-    .welcome-section {
-        padding: 30px 0;
+    /* Page Header */
+    .page-header {
+        padding: 20px 0 30px;
         text-align: center;
     }
 
-    .welcome-avatar {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 3px solid rgba(181, 138, 254, 0.5);
-        box-shadow: 0 8px 32px rgba(181, 138, 254, 0.3);
-        margin-bottom: 16px;
+    .page-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
     }
 
-    .welcome-text {
+    .page-title i {
         font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: 4px;
         background: var(--primary-gradient);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
     }
 
-    .welcome-subtext {
+    .page-subtitle {
         color: var(--text-secondary);
         font-size: 0.95rem;
     }
-
-    /* Stats Grid */
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-        margin-bottom: 24px;
-    }
-
-    @media (min-width: 768px) {
-        .stats-grid {
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-        }
-    }
-
-    .stat-card {
-        background: var(--card-bg);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid var(--card-border);
-        border-radius: 20px;
-        padding: 20px;
-        position: relative;
-        overflow: hidden;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
-    }
-
-    .stat-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        border-radius: 20px 20px 0 0;
-    }
-
-    .stat-card.purple::before { background: var(--primary-gradient); }
-    .stat-card.blue::before { background: var(--secondary-gradient); }
-    .stat-card.green::before { background: var(--success-gradient); }
-    .stat-card.orange::before { background: var(--warning-gradient); }
-
-    .stat-icon {
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.3rem;
-        margin-bottom: 12px;
-    }
-
-    .stat-card.purple .stat-icon { background: rgba(181, 138, 254, 0.2); color: #b58afe; }
-    .stat-card.blue .stat-icon { background: rgba(116, 185, 255, 0.2); color: #74b9ff; }
-    .stat-card.green .stat-icon { background: rgba(0, 184, 148, 0.2); color: #00b894; }
-    .stat-card.orange .stat-icon { background: rgba(253, 203, 110, 0.2); color: #fdcb6e; }
-
-    .stat-value {
-        font-size: 1.75rem;
-        font-weight: 700;
-        margin-bottom: 4px;
-    }
-
-    .stat-label {
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-    }
-
-    /* Quick Actions - Modern App Grid */
-    .quick-actions-section {
-        margin-bottom: 24px;
-    }
-
-    .quick-actions-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-    }
-
-    .quick-actions-title {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: var(--text-secondary);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .quick-actions {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 12px;
-        margin-bottom: 16px;
-    }
-
-    @media (max-width: 480px) {
-        .quick-actions {
-            gap: 8px;
-        }
-    }
-
-    .quick-action-btn {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 16px 8px;
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: 16px;
-        color: var(--text-primary);
-        text-decoration: none;
-        transition: all 0.3s ease;
-        cursor: pointer;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .quick-action-btn::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(135deg, transparent 0%, rgba(181, 138, 254, 0.05) 100%);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .quick-action-btn:hover::before {
-        opacity: 1;
-    }
-
-    .quick-action-btn:hover {
-        background: rgba(181, 138, 254, 0.15);
-        border-color: rgba(181, 138, 254, 0.3);
-        color: var(--text-primary);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(181, 138, 254, 0.2);
-    }
-
-    .quick-action-btn:active {
-        transform: translateY(0) scale(0.98);
-    }
-
-    .quick-action-btn i {
-        font-size: 1.4rem;
-        margin-bottom: 6px;
-        color: #b58afe;
-        position: relative;
-        z-index: 1;
-    }
-
-    .quick-action-btn span {
-        font-size: 0.7rem;
-        text-align: center;
-        color: var(--text-secondary);
-        font-weight: 500;
-        position: relative;
-        z-index: 1;
-        line-height: 1.2;
-    }
-
-    /* Featured Action Button */
-    .quick-action-btn.featured {
-        background: linear-gradient(135deg, rgba(181, 138, 254, 0.2) 0%, rgba(108, 92, 231, 0.2) 100%);
-        border-color: rgba(181, 138, 254, 0.4);
-    }
-
-    .quick-action-btn.featured i {
-        color: #fff;
-    }
-
-    .quick-action-btn.featured:hover {
-        background: linear-gradient(135deg, rgba(181, 138, 254, 0.3) 0%, rgba(108, 92, 231, 0.3) 100%);
-    }
-
-    /* Color Variants */
-    .quick-action-btn.blue i { color: #74b9ff; }
-    .quick-action-btn.green i { color: #00b894; }
-    .quick-action-btn.orange i { color: #fdcb6e; }
-    .quick-action-btn.pink i { color: #fd79a8; }
-    .quick-action-btn.cyan i { color: #00cec9; }
-
-    .quick-action-btn.blue:hover { border-color: rgba(116, 185, 255, 0.4); }
-    .quick-action-btn.green:hover { border-color: rgba(0, 184, 148, 0.4); }
-    .quick-action-btn.orange:hover { border-color: rgba(253, 203, 110, 0.4); }
-    .quick-action-btn.pink:hover { border-color: rgba(253, 121, 168, 0.4); }
-    .quick-action-btn.cyan:hover { border-color: rgba(0, 206, 201, 0.4); }
 
     /* Section Headers */
     .section-header {
@@ -293,7 +98,7 @@
         gap: 4px;
     }
 
-    /* Chat Lists */
+    /* Chat Tabs */
     .chats-section {
         margin-bottom: 24px;
     }
@@ -522,11 +327,6 @@
         border-radius: 16px;
     }
 
-    .stat-skeleton {
-        height: 120px;
-        border-radius: 20px;
-    }
-
     /* Bottom Navigation */
     .bottom-nav {
         position: fixed;
@@ -615,27 +415,6 @@
         background: rgba(181, 138, 254, 0.5);
     }
 
-    /* Pull to Refresh Indicator */
-    .refresh-indicator {
-        text-align: center;
-        padding: 20px;
-        color: var(--text-secondary);
-        display: none;
-    }
-
-    .refresh-indicator.visible {
-        display: block;
-    }
-
-    .refresh-indicator i {
-        font-size: 1.5rem;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        100% { transform: rotate(360deg); }
-    }
-
     /* Toast notifications */
     .toast-container {
         position: fixed;
@@ -668,116 +447,47 @@
             transform: translateY(0);
         }
     }
+
+    /* Back button */
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        margin-bottom: 16px;
+    }
+
+    .back-button:hover {
+        background: rgba(181, 138, 254, 0.1);
+        border-color: rgba(181, 138, 254, 0.3);
+        color: var(--text-primary);
+    }
 </style>
 <body>
 
     {{> dashboard-nav}}
-    {{> onboarding-modals}}
-    <div class="dashboard-container">
-        <!-- Welcome Section -->
-        <section class="welcome-section">
-            {{#if user.profileUrl}}
-            <img src="{{user.profileUrl}}" alt="Profile" class="welcome-avatar" onerror="this.src='/img/default-avatar.webp'">
-            {{/if}}
-            <h1 class="welcome-text">{{translations.welcome}}, {{#if user.nickname}}{{user.nickname}}{{else if userData.nickname}}{{userData.nickname}}{{else}}{{translations.guest}}{{/if}}!</h1>
-            <p class="welcome-subtext">{{translations.welcomeMessage}}</p>
-        </section>
+    
+    <div class="favorites-container">
+        <!-- Back Button -->
+        <a href="/dashboard" class="back-button">
+            <i class="bi bi-arrow-left"></i>
+            {{translations.back}}
+        </a>
 
-        <!-- Stats Grid -->
-        <section class="stats-grid" id="stats-grid">
-            <div class="stat-card purple">
-                <div class="stat-icon"><i class="bi bi-people"></i></div>
-                <div class="stat-value" id="stat-characters">-</div>
-                <div class="stat-label">{{translations.characters}}</div>
-            </div>
-            <div class="stat-card blue">
-                <div class="stat-icon"><i class="bi bi-chat-dots"></i></div>
-                <div class="stat-value" id="stat-chats">-</div>
-                <div class="stat-label">{{translations.chats}}</div>
-            </div>
-            <div class="stat-card green">
-                <div class="stat-icon"><i class="bi bi-image"></i></div>
-                <div class="stat-value" id="stat-images">-</div>
-                <div class="stat-label">{{translations.images}}</div>
-            </div>
-            <div class="stat-card orange">
-                <div class="stat-icon"><i class="bi bi-film"></i></div>
-                <div class="stat-value" id="stat-videos">-</div>
-                <div class="stat-label">{{translations.videos.title}}</div>
-            </div>
-        </section>
-
-        <!-- Quick Actions - Create Section -->
-        <section class="quick-actions-section">
-            <div class="quick-actions-header">
-                <span class="quick-actions-title">{{translations.create}}</span>
-            </div>
-            <div class="quick-actions">
-                <a href="/dashboard/generation" class="quick-action-btn featured">
-                    <i class="bi bi-card-image"></i>
-                    <span>{{translations.avatar.generationDashboard}}</span>
-                </a>
-                <a href="#" class="quick-action-btn green" onclick="loadCharacterCreationPage(); return false;">
-                    <i class="bi bi-person-plus"></i>
-                    <span>{{translations.avatar.createCharacter}}</span>
-                </a>
-                <a href="/dashboard/templates" class="quick-action-btn orange">
-                    <i class="bi bi-file-text"></i>
-                    <span>{{translations.avatar.promptTemplates}}</span>
-                </a>
-            </div>
-        </section>
-
-        <!-- Quick Actions - Manage Section -->
-        <section class="quick-actions-section">
-            <div class="quick-actions-header">
-                <span class="quick-actions-title">{{translations.manage}}</span>
-            </div>
-            <div class="quick-actions">
-                <a href="/dashboard/posts" class="quick-action-btn pink">
-                    <i class="bi bi-images"></i>
-                    <span>{{translations.avatar.myPosts}}</span>
-                </a>
-                <a href="/dashboard/schedules" class="quick-action-btn cyan">
-                    <i class="bi bi-calendar-event"></i>
-                    <span>{{translations.avatar.mySchedules}}</span>
-                </a>
-                <a href="/subscriptions" class="quick-action-btn">
-                    <i class="bi bi-heart"></i>
-                    <span>{{translations.avatar.mySubscriptions}}</span>
-                </a>
-                <a href="#" class="quick-action-btn blue" onclick="openUserConnectionsModal(); return false;">
-                    <i class="bi bi-share-fill"></i>
-                    <span>{{translations.avatar.connections}}</span>
-                </a>
-            </div>
-        </section>
-
-        <!-- Quick Actions - Discover Section -->
-        <section class="quick-actions-section">
-            <div class="quick-actions-header">
-                <span class="quick-actions-title">{{translations.explore}}</span>
-            </div>
-            <div class="quick-actions">
-                <a href="/character" class="quick-action-btn">
-                    <i class="bi bi-grid-3x3-gap"></i>
-                    <span>{{translations.explore}}</span>
-                </a>
-                <a href="/search" class="quick-action-btn green">
-                    <i class="bi bi-search"></i>
-                    <span>{{translations.search}}</span>
-                </a>
-                {{#if user._id}}
-                <a href="/user/{{user._id}}" class="quick-action-btn pink">
-                    <i class="bi bi-person-circle"></i>
-                    <span>{{translations.avatar.profile}}</span>
-                </a>
-                {{/if}}
-                <a href="#" class="quick-action-btn orange" onclick="loadSettingsPage(); return false;">
-                    <i class="bi bi-gear"></i>
-                    <span>{{translations.avatar.settings}}</span>
-                </a>
-            </div>
+        <!-- Page Header -->
+        <section class="page-header">
+            <h1 class="page-title">
+                <i class="bi bi-heart-fill"></i>
+                {{translations.favorite.favorites}}
+            </h1>
+            <p class="page-subtitle">{{translations.favorite.favoritesDescription}}</p>
         </section>
 
         <!-- Chats Section -->
@@ -792,14 +502,14 @@
                 </a>
             </div>
 
-            <!-- Tabs -->
+            <!-- Tabs - Favorites is default active -->
             <div class="chat-tabs">
-                <button class="chat-tab active" data-tab="recent" onclick="switchDashboardTab('recent')">
+                <button class="chat-tab" data-tab="recent" onclick="switchFavoritesTab('recent')">
                     <i class="bi bi-clock-history"></i>
                     {{translations.recent}}
                     <span class="chat-tab-badge" id="recent-count">0</span>
                 </button>
-                <button class="chat-tab" data-tab="favorites" onclick="switchDashboardTab('favorites')">
+                <button class="chat-tab active" data-tab="favorites" onclick="switchFavoritesTab('favorites')">
                     <i class="bi bi-star"></i>
                     {{translations.favorite.favorites}}
                     <span class="chat-tab-badge" id="favorites-count">0</span>
@@ -807,7 +517,7 @@
             </div>
 
             <!-- Recent Chats List -->
-            <div class="chat-list-container active" id="recent-chats-container">
+            <div class="chat-list-container" id="recent-chats-container">
                 <div class="chat-list" id="recent-chats-list">
                     <!-- Loading skeletons -->
                     <div class="loading-skeleton chat-skeleton"></div>
@@ -816,8 +526,8 @@
                 </div>
             </div>
 
-            <!-- Favorites Chats List -->
-            <div class="chat-list-container" id="favorites-chats-container">
+            <!-- Favorites Chats List - Default active -->
+            <div class="chat-list-container active" id="favorites-chats-container">
                 <div class="chat-list" id="favorites-chats-list">
                     <!-- Loading skeletons -->
                     <div class="loading-skeleton chat-skeleton"></div>
@@ -830,7 +540,7 @@
     <!-- Bottom Navigation -->
     <nav class="bottom-nav">
         <div class="bottom-nav-inner">
-            <a href="/dashboard" class="nav-item active">
+            <a href="/dashboard" class="nav-item">
                 <i class="bi bi-house"></i>
                 <span>{{translations.home}}</span>
             </a>
@@ -862,24 +572,19 @@
     <!-- Toast Container -->
     <div class="toast-container" id="toast-container"></div>
 
+{{> dashboard-avatar}}
 {{> dashboard-footer}}
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize dashboard
-    initDashboard();
+    // Initialize favorites page
+    initFavoritesPage();
 });
 
-// Global dashboard state
-const dashboardState = {
+// Global favorites page state
+const favoritesState = {
     recentChats: [],
     favoriteChats: [],
-    stats: {
-        characters: 0,
-        chats: 0,
-        images: 0,
-        videos: 0
-    },
     isLoading: false
 };
 
@@ -908,8 +613,8 @@ function normalizeChatData(chat = {}, isFavorite = false) {
 }
 
 function syncFavoriteFlagsOnRecent() {
-    const favoriteIds = new Set(dashboardState.favoriteChats.map(chat => getChatId(chat)));
-    dashboardState.recentChats = dashboardState.recentChats.map(chat => ({
+    const favoriteIds = new Set(favoritesState.favoriteChats.map(chat => getChatId(chat)));
+    favoritesState.recentChats = favoritesState.recentChats.map(chat => ({
         ...chat,
         isFavorite: favoriteIds.has(getChatId(chat))
     }));
@@ -919,14 +624,14 @@ function renderRecentChatList() {
     const container = document.getElementById('recent-chats-list');
     if (!container) return;
 
-    document.getElementById('recent-count').textContent = dashboardState.recentChats.length;
+    document.getElementById('recent-count').textContent = favoritesState.recentChats.length;
 
-    if (dashboardState.recentChats.length === 0) {
+    if (favoritesState.recentChats.length === 0) {
         container.innerHTML = renderEmptyState('recent');
         return;
     }
 
-    container.innerHTML = dashboardState.recentChats
+    container.innerHTML = favoritesState.recentChats
         .map(chat => renderChatItem(chat, chat.isFavorite))
         .join('');
 }
@@ -935,38 +640,38 @@ function renderFavoriteChatList() {
     const container = document.getElementById('favorites-chats-list');
     if (!container) return;
 
-    document.getElementById('favorites-count').textContent = dashboardState.favoriteChats.length;
+    document.getElementById('favorites-count').textContent = favoritesState.favoriteChats.length;
 
-    if (dashboardState.favoriteChats.length === 0) {
+    if (favoritesState.favoriteChats.length === 0) {
         container.innerHTML = renderEmptyState('favorites');
         return;
     }
 
-    container.innerHTML = dashboardState.favoriteChats
+    container.innerHTML = favoritesState.favoriteChats
         .map(chat => renderChatItem(chat, true))
         .join('');
 }
 
 function findChatById(chatId) {
-    return dashboardState.recentChats.find(chat => getChatId(chat) === chatId)
-        || dashboardState.favoriteChats.find(chat => getChatId(chat) === chatId);
+    return favoritesState.recentChats.find(chat => getChatId(chat) === chatId)
+        || favoritesState.favoriteChats.find(chat => getChatId(chat) === chatId);
 }
 
 function applyFavoriteToggle(chatId, isFavorited, chatData) {
     const normalizedChat = normalizeChatData(chatData || { _id: chatId }, true);
 
     // Update recent list flag
-    dashboardState.recentChats = dashboardState.recentChats.map(chat =>
+    favoritesState.recentChats = favoritesState.recentChats.map(chat =>
         getChatId(chat) === chatId ? { ...chat, isFavorite: isFavorited } : chat
     );
 
     if (isFavorited) {
-        const alreadyInFavorites = dashboardState.favoriteChats.some(chat => getChatId(chat) === chatId);
+        const alreadyInFavorites = favoritesState.favoriteChats.some(chat => getChatId(chat) === chatId);
         if (!alreadyInFavorites && normalizedChat) {
-            dashboardState.favoriteChats.unshift({ ...normalizedChat, isFavorite: true });
+            favoritesState.favoriteChats.unshift({ ...normalizedChat, isFavorite: true });
         }
     } else {
-        dashboardState.favoriteChats = dashboardState.favoriteChats.filter(chat => getChatId(chat) !== chatId);
+        favoritesState.favoriteChats = favoritesState.favoriteChats.filter(chat => getChatId(chat) !== chatId);
     }
 
     syncFavoriteFlagsOnRecent();
@@ -974,86 +679,23 @@ function applyFavoriteToggle(chatId, isFavorited, chatData) {
     renderRecentChatList();
 }
 
-// Initialize dashboard
-async function initDashboard() {
+// Initialize favorites page
+async function initFavoritesPage() {
     await Promise.all([
-        loadDashboardStats(),
         loadRecentChats(),
         loadFavoriteChats()
     ]);
 }
 
-// Load dashboard stats
-async function loadDashboardStats() {
-    try {
-        const response = await fetch('/api/dashboard/stats');
-        if (!response.ok) throw new Error('Failed to load stats');
-        
-        const data = await response.json();
-        
-        // Animate stat counters
-        animateCounter('stat-characters', data.characters || 0);
-        animateCounter('stat-chats', data.chats || 0);
-        animateCounter('stat-images', data.images || 0);
-        animateCounter('stat-videos', data.videos || 0);
-        
-        dashboardState.stats = data;
-    } catch (error) {
-        console.error('Error loading stats:', error);
-        // Set default values on error
-        document.getElementById('stat-characters').textContent = '0';
-        document.getElementById('stat-chats').textContent = '0';
-        document.getElementById('stat-images').textContent = '0';
-        document.getElementById('stat-videos').textContent = '0';
-    }
-}
-
-// Animate counter
-function animateCounter(elementId, targetValue) {
-    const element = document.getElementById(elementId);
-    if (!element) return;
-    
-    const duration = 1000;
-    const startTime = Date.now();
-    const startValue = 0;
-    
-    function update() {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        
-        // Ease out cubic
-        const easeProgress = 1 - Math.pow(1 - progress, 3);
-        const currentValue = Math.round(startValue + (targetValue - startValue) * easeProgress);
-        
-        element.textContent = formatNumber(currentValue);
-        
-        if (progress < 1) {
-            requestAnimationFrame(update);
-        }
-    }
-    
-    update();
-}
-
-// Format large numbers
-function formatNumber(num) {
-    if (num >= 1000000) {
-        return (num / 1000000).toFixed(1) + 'M';
-    } else if (num >= 1000) {
-        return (num / 1000).toFixed(1) + 'K';
-    }
-    return num.toString();
-}
-
 // Load recent chats
 async function loadRecentChats() {
     try {
-        const response = await fetch('/api/recent-chats?limit=10');
+        const response = await fetch('/api/recent-chats?limit=20');
         if (!response.ok) throw new Error('Failed to load chats');
         
         const data = await response.json();
         const chats = Array.isArray(data?.chats) ? data.chats : [];
-        dashboardState.recentChats = chats
+        favoritesState.recentChats = chats
             .map(chat => normalizeChatData(chat, false))
             .filter(Boolean);
 
@@ -1061,7 +703,7 @@ async function loadRecentChats() {
         renderRecentChatList();
     } catch (error) {
         console.error('Error loading recent chats:', error);
-        dashboardState.recentChats = [];
+        favoritesState.recentChats = [];
         renderRecentChatList();
     }
 }
@@ -1069,7 +711,7 @@ async function loadRecentChats() {
 // Load favorite chats
 async function loadFavoriteChats() {
     try {
-        const response = await fetch('/favorites?page=1&limit=10');
+        const response = await fetch('/favorites/list?page=1&limit=50');
         if (!response.ok) throw new Error('Failed to load favorites');
         
         const data = await response.json();
@@ -1081,7 +723,7 @@ async function loadFavoriteChats() {
                     ? data
                     : [];
 
-        dashboardState.favoriteChats = favorites
+        favoritesState.favoriteChats = favorites
             .map(fav => normalizeChatData(fav, true))
             .filter(Boolean);
 
@@ -1090,7 +732,7 @@ async function loadFavoriteChats() {
         renderRecentChatList();
     } catch (error) {
         console.error('Error loading favorites:', error);
-        dashboardState.favoriteChats = [];
+        favoritesState.favoriteChats = [];
         renderFavoriteChatList();
     }
 }
@@ -1151,8 +793,8 @@ function renderEmptyState(type) {
     `;
 }
 
-// Switch dashboard tab
-function switchDashboardTab(tab) {
+// Switch favorites tab
+function switchFavoritesTab(tab) {
     // Update tab buttons
     document.querySelectorAll('.chat-tab').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tab === tab);
@@ -1266,41 +908,6 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Load character creation page (if function doesn't exist)
-if (typeof loadCharacterCreationPage === 'undefined') {
-    window.loadCharacterCreationPage = function(chatId) {
-        if (window.user && window.user.isTemporary) {
-            if (typeof openLoginForm === 'function') {
-                openLoginForm();
-            } else {
-                window.location.href = '/signin-redirection';
-            }
-            return;
-        }
-        
-        if (chatId) {
-            window.location.href = `/chat/edit/${chatId}`;
-        } else {
-            window.location.href = '/chat/edit/';
-        }
-    };
-}
-
-// Load settings page (if function doesn't exist)
-if (typeof loadSettingsPage === 'undefined') {
-    window.loadSettingsPage = function() {
-        if (window.user && window.user.isTemporary) {
-            if (typeof openLoginForm === 'function') {
-                openLoginForm();
-            } else {
-                window.location.href = '/signin-redirection';
-            }
-            return;
-        }
-        window.location.href = '/settings';
-    };
-}
-
 // Pull to refresh functionality
 let touchStartY = 0;
 let touchEndY = 0;
@@ -1319,7 +926,7 @@ document.addEventListener('touchend', () => {
     
     if (swipeDistance > 100 && scrollTop === 0) {
         // Pull to refresh
-        initDashboard();
+        initFavoritesPage();
         showToast(translations.refreshing || 'Refreshing...');
     }
 });

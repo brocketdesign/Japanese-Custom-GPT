@@ -2304,6 +2304,47 @@ window.toggleChatNSFW = function(el) {
     }
   });
 }
+
+window.deleteCharacter = function(el) {
+  event.stopPropagation();
+  const $btn = $(el);
+  const chatId = $btn.data('id');
+  
+  if (!chatId) {
+    showNotification('No chat ID found', 'error');
+    return;
+  }
+  
+  // Show confirmation dialog
+  if (!confirm('Are you sure you want to delete this character? This action cannot be undone.')) {
+    return;
+  }
+  
+  // Show loading state
+  const originalHtml = $btn.html();
+  $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span>');
+  
+  $.ajax({
+    url: `/api/delete-chat/${chatId}`,
+    method: 'DELETE',
+    xhrFields: {
+      withCredentials: true
+    },
+    success: function(response) {
+      showNotification('Character deleted successfully', 'success');
+      // Redirect to home or dashboard after deletion
+      setTimeout(function() {
+        window.location.href = '/';
+      }, 1500);
+    },
+    error: function(xhr) {
+      $btn.prop('disabled', false).html(originalHtml);
+      const errorMessage = xhr.responseJSON?.error || 'Failed to delete character';
+      showNotification(errorMessage, 'error');
+    }
+  });
+}
+
 window.loadAllUserPosts = async function (page = 1) {
     const currentUser = user
     const currentUserId = currentUser._id;

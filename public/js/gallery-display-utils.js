@@ -113,6 +113,14 @@ window.displayChats = function (chatData, targetGalleryId = 'chat-gallery', moda
                         ${chat.premium ? `<span class="badge" style="background: var(--explore-accent);"><i class="bi bi-gem"></i></span>` : ''}
                     </div>
                     
+                    <!-- Floating Like Button -->
+                    <button class="gallery-like-btn" 
+                            data-chat-id="${chatId}"
+                            onclick="event.stopPropagation(); toggleCharacterFavorite('${chatId}', this);"
+                            title="Add to favorites">
+                        <i class="bi bi-heart"></i>
+                    </button>
+                    
                     <!-- Hover overlay content -->
                     <div class="hover-overlay position-absolute inset-0 d-flex align-items-center justify-content-center" 
                          style="background: rgba(0,0,0,0.4); opacity: 0; transition: opacity 0.2s ease; inset: 0; position: absolute;">

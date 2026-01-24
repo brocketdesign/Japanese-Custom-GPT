@@ -114,7 +114,7 @@ window.displayChats = function (chatData, targetGalleryId = 'chat-gallery', moda
                     </div>
                     
                     <!-- Floating Like Button -->
-                    <button class="gallery-like-btn" 
+                    <button class="gallery-like-btn d-none" 
                             data-chat-id="${chatId}"
                             onclick="event.stopPropagation(); toggleCharacterFavorite('${chatId}', this);"
                             title="Add to favorites">

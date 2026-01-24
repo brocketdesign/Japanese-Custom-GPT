@@ -19,7 +19,10 @@ class ExploreGallery {
         this.page = 1;
         this.limit = 15;
         this.query = window.initialQuery || '';
-        this.showNSFW = window.showNSFW || false;
+        
+        // Read showNSFW from sessionStorage first (user's current session preference),
+        // then localStorage (persisted preference), then window.showNSFW (server default)
+        this.showNSFW = this.getStoredNSFWPreference();
         
         // User state
         this.user = window.user || {};
@@ -51,11 +54,38 @@ class ExploreGallery {
         this.init();
     }
     
+    getStoredNSFWPreference() {
+        try {
+            // Check sessionStorage first (current session preference)
+            const sessionValue = sessionStorage.getItem('showNSFW');
+            if (sessionValue !== null) {
+                return sessionValue === 'true';
+            }
+            
+            // Then check localStorage (persisted preference)
+            const localValue = localStorage.getItem('showNSFW');
+            if (localValue !== null) {
+                return localValue === 'true';
+            }
+        } catch (err) {
+            console.warn('[ExploreGallery] Failed to read from storage:', err);
+        }
+        
+        // Fall back to server-provided value
+        return window.showNSFW || false;
+    }
+    
     async init() {
+        // Update the NSFW button to reflect the current state
+        this.updateNSFWButton();
+        
         this.setupEventListeners();
         this.checkSwipeHint();
         await this.loadCharacters();
         this.initVerticalSwiper();
+        
+        // Apply blur states after initial render
+        this.updateImageBlurStates();
     }
     
     setupEventListeners() {
@@ -414,21 +444,25 @@ class ExploreGallery {
             // Use imageUrl as primary source, fallback to thumbnailUrl, then placeholder
             const imageUrl = img.imageUrl || img.thumbnailUrl || '/img/placeholder.png';
             const thumbUrl = img.thumbnailUrl || img.imageUrl || '/img/placeholder.png';
-            const isNsfw = img.nsfw && (!this.showNSFW || !this.isPremium);
+            // Image is NSFW - check for both boolean true and string 'true'
+            const isNsfwImage = img.nsfw === true || img.nsfw === 'true';
+            const shouldBlur = isNsfwImage && !this.showNSFW;
 
             // All images use the full imageUrl for display
+            // data-sfw should be 'true' only if nsfw is falsy (not true and not 'true')
+            const dataSfwValue = !isNsfwImage;
             return `
                 <div class="swiper-slide" data-image-id="${img._id || img.imageUrl}">
-                    <div class="explore-image-card ${isNsfw ? 'nsfw-content' : ''}">
+                    <div class="explore-image-card ${isNsfwImage ? 'nsfw-content' : ''} ${shouldBlur ? 'nsfw-blurred' : ''}">
                         <img 
                             src="${imageUrl}" 
                             alt="${this.escapeHtml(character.chatName)}"
                             class="explore-image"
-                            data-sfw="${!img.nsfw}"
+                            data-sfw="${dataSfwValue}"
                             loading="${idx < 2 ? 'eager' : 'lazy'}"
                             onerror="this.onerror=null; this.src='/img/placeholder.png';"
                         >
-                        ${isNsfw ? this.createNSFWOverlay() : ''}
+                        ${shouldBlur ? this.createNSFWOverlay() : ''}
                     </div>
                 </div>
             `;

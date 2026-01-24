@@ -130,7 +130,22 @@
             lang: '{{user.lang}}'
         };
         
-        window.showNSFW = {{#if showNSFW}}true{{else}}false{{/if}};
+        // Read showNSFW from storage first, then fall back to server value
+        (function() {
+            try {
+                const sessionValue = sessionStorage.getItem('showNSFW');
+                if (sessionValue !== null) {
+                    window.showNSFW = sessionValue === 'true';
+                    return;
+                }
+                const localValue = localStorage.getItem('showNSFW');
+                if (localValue !== null) {
+                    window.showNSFW = localValue === 'true';
+                    return;
+                }
+            } catch (e) {}
+            window.showNSFW = {{#if showNSFW}}true{{else}}false{{/if}};
+        })();
         window.initialQuery = '{{query}}';
         
         window.translations = {

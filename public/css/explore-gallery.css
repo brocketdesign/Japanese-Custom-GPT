@@ -357,13 +357,7 @@
     color: #ef4444;
 }
 
-.nsfw-btn[data-nsfw="true"] .nsfw-label::before {
-    content: 'N';
-}
 
-.nsfw-btn[data-nsfw="false"] .nsfw-label::before {
-    content: '';
-}
 
 .nsfw-btn:hover {
     transform: scale(1.02);
@@ -764,6 +758,19 @@
     font-size: 14px;
     color: var(--explore-text-secondary);
 }
+
+.nsfw-blur-content small {
+    font-size: 12px;
+    color: var(--explore-text-secondary);
+    opacity: 0.7;
+}
+
+/* Blurred image state for NSFW content in SFW mode */
+.explore-image-card.nsfw-blurred .explore-image {
+    filter: blur(15px);
+    transform: scale(1.1);
+}
+
 
 /* ===== Swiper Custom Navigation ===== */
 .swiper-pagination {

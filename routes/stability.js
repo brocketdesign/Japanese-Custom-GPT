@@ -63,7 +63,8 @@ async function routes(fastify, options) {
           }
         })
         const customPromptText = promptData.prompt
-        const nsfw = promptData.nsfw == 'on' || true ? true : false;
+        // Check for NSFW: handle 'on' (checkbox), boolean true, and string 'true'
+        const nsfw = promptData.nsfw === 'on' || promptData.nsfw === true || promptData.nsfw === 'true';
         imageType = nsfw ? 'nsfw' : 'sfw';
         processPromptToTags(db, customPromptText);
         

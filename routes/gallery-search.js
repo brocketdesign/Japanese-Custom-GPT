@@ -29,8 +29,10 @@ async function routes(fastify, options) {
       const db = fastify.mongo.db;
       
       // Check user's NSFW preference and subscription status
+      // Handle both string 'true' and boolean true for user.showNSFW
+      const userWantsNSFW = user.showNSFW === true || user.showNSFW === 'true';
       const showNSFW = nsfwFilter === 'include' && 
-                       user.showNSFW === true && 
+                       userWantsNSFW && 
                        user.subscriptionStatus === 'active';
       
       // Get user interaction state

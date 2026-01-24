@@ -510,6 +510,12 @@ async function searchVideos(db, user, queryStr, page = 1, limit = 24) {
  * Returns characters with their images for swipe navigation
  * Now with TikTok-style sequencing: weighted randomness + personalization
  */
+
+// Helper to check NSFW value (server-side version)
+function isNsfwValue(value) {
+  return value === true || value === 'true' || value === 'on' || value === 1 || value === '1';
+}
+
 async function searchImagesGroupedByCharacter(db, user, queryStr = '', page = 1, limit = 20, showNSFW = false, userState = null) {
   const language = getLanguageName(user?.lang);
   const requestLang = user?.lang || 'en';
@@ -545,18 +551,6 @@ async function searchImagesGroupedByCharacter(db, user, queryStr = '', page = 1,
         'images.imageUrl': { $exists: true, $ne: null }
       } 
     },
-
-    // NSFW filter - completely exclude NSFW if showNSFW is false
-    ...(showNSFW ? [] : [
-      { 
-        $match: { 
-          $or: [
-            { 'images.nsfw': { $ne: true } },
-            { 'images.nsfw': { $exists: false } }
-          ]
-        } 
-      }
-    ]),
 
     // Lookup chat information
     {
@@ -656,7 +650,25 @@ async function searchImagesGroupedByCharacter(db, user, queryStr = '', page = 1,
   pipeline.push({ $skip: skip });
   pipeline.push({ $limit: fetchLimit });
 
-  // Limit images per character for performance (max 20 images per character)
+  // Balance SFW and NSFW images using $filter
+  pipeline.push({
+    $addFields: {
+      sfwImages: {
+        $filter: {
+          input: '$images',
+          cond: { $not: { $in: ['$$this.nsfw', [true, 'true', 'on']] } }
+        }
+      },
+      nsfwImages: {
+        $filter: {
+          input: '$images',
+          cond: { $in: ['$$this.nsfw', [true, 'true', 'on']] }
+        }
+      }
+    }
+  });
+
+  // Final projection: take up to 10 SFW + 10 NSFW for balanced mix
   pipeline.push({
     $project: {
       _id: 0,
@@ -667,7 +679,12 @@ async function searchImagesGroupedByCharacter(db, user, queryStr = '', page = 1,
       chatTags: { $ifNull: ['$chatTags', []] },
       description: 1,
       imageCount: 1,
-      images: { $slice: ['$images', 20] },
+      images: {
+        $concatArrays: [
+          { $slice: ['$sfwImages', 10] },
+          { $slice: ['$nsfwImages', 10] }
+        ]
+      },
       latestImage: 1
     }
   });
@@ -677,7 +694,7 @@ async function searchImagesGroupedByCharacter(db, user, queryStr = '', page = 1,
     { $unwind: '$images' },
     { $match: { 'images.imageUrl': { $exists: true, $ne: null } } },
     ...(showNSFW ? [] : [
-      { $match: { $or: [{ 'images.nsfw': { $ne: true } }, { 'images.nsfw': { $exists: false } }] } }
+      { $match: { $and: [{ 'images.nsfw': { $ne: true } }, { 'images.nsfw': { $ne: 'true' } }, { 'images.nsfw': { $ne: 'on' } }] } }
     ]),
     {
       $lookup: {

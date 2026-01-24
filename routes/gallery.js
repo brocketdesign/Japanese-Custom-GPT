@@ -1102,7 +1102,8 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
             {
               $match: {
                 'images.imageUrl': { $exists: true, $ne: null },
-                'images.nsfw': { $ne: true }, // Only SFW content
+                // Only SFW content - exclude all NSFW values (boolean true, string 'true', string 'on')
+                'images.nsfw': { $nin: [true, 'true', 'on'] },
                 $or: [
                   { 'images.prompt': { $in: tagRegexes } },
                   { 'images.style': { $in: category.tags } }
@@ -1124,7 +1125,8 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
                   { 'chat.language': language },
                   { 'chat.language': requestLang }
                 ],
-                'chat.nsfw': { $ne: true } // Only SFW chats
+                // Only SFW chats
+                'chat.nsfw': { $nin: [true, 'true', 'on'] }
               }
             },
             { $sample: { size: 1 } }, // Get random image
@@ -1161,7 +1163,8 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
               {
                 $match: {
                   'images.imageUrl': { $exists: true, $ne: null },
-                  'images.nsfw': { $ne: true }
+                  // Only SFW content - exclude all NSFW values
+                  'images.nsfw': { $nin: [true, 'true', 'on'] }
                 }
               },
               {
@@ -1179,7 +1182,8 @@ fastify.get('/chats/horizontal-gallery', async (request, reply) => {
                     { 'chat.language': language },
                     { 'chat.language': requestLang }
                   ],
-                  'chat.nsfw': { $ne: true }
+                  // Only SFW chats
+                  'chat.nsfw': { $nin: [true, 'true', 'on'] }
                 }
               },
               { $sample: { size: 1 } },

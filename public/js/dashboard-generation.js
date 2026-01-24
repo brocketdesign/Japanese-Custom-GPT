@@ -1977,6 +1977,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Get configuration from page
   const config = window.GEN_DASHBOARD_CONFIG || {};
   genDashboard = new GenerationDashboard(config);
+  
+  // Expose to window for other scripts (e.g., civitai-model-search.js)
+  window.genDashboard = genDashboard;
 });
 
 // Export for use in other scripts

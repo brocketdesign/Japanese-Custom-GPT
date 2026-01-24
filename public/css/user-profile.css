@@ -1432,6 +1432,224 @@ body.user-profile-page .media-item:hover {
     opacity: 0.85;
 }
 
+/* ====================================
+   INSTAGRAM-STYLE USER IMAGE GALLERY
+   ==================================== */
+
+/* Instagram Grid Container */
+body.user-profile-page #user-images-gallery {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    padding: 0;
+    background: var(--bg-primary);
+}
+
+/* Instagram Image Card */
+.ig-image-card {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    background: var(--bg-tertiary);
+    cursor: pointer;
+}
+
+.ig-image-card .ig-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Blurred image for locked content */
+.ig-image-card .ig-image-blur {
+    filter: blur(15px);
+    transform: scale(1.1);
+}
+
+.ig-image-blur-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.ig-lock-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 48px;
+    height: 48px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    backdrop-filter: blur(4px);
+}
+
+/* NSFW Overlay for Premium Users (showNSFW=false) */
+.ig-image-nsfw-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.ig-image-card .ig-image-nsfw {
+    filter: blur(15px);
+    transform: scale(1.1);
+}
+
+.ig-image-nsfw-wrapper[data-revealed="true"] .ig-image-nsfw {
+    filter: none;
+    transform: scale(1);
+}
+
+.ig-nsfw-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: white;
+    backdrop-filter: blur(2px);
+    transition: opacity 0.2s ease;
+}
+
+.ig-nsfw-overlay i {
+    font-size: 1.5rem;
+    opacity: 0.9;
+}
+
+.ig-nsfw-overlay span {
+    font-size: 11px;
+    font-weight: 500;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ig-nsfw-overlay:hover {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.ig-nsfw-overlay:hover i,
+.ig-nsfw-overlay:hover span {
+    opacity: 1;
+}
+
+/* Hover Overlay - Hidden (mobile-first design) */
+.ig-image-overlay {
+    display: none;
+}
+
+.ig-image-stats {
+    display: flex;
+    gap: 20px;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.ig-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Like Button - Always visible (mobile-first) */
+.ig-like-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 10;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.4);
+    border: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.85rem;
+    backdrop-filter: blur(4px);
+}
+
+.ig-like-btn.liked {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.ig-like-btn.liked i {
+    color: #ef4444;
+}
+
+/* Character Footer - Always visible (mobile-first) */
+.ig-image-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 6px 8px;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.ig-footer-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1.5px solid rgba(255, 255, 255, 0.5);
+    flex-shrink: 0;
+}
+
+.ig-footer-name {
+    color: white;
+    font-size: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+}
+
+/* Responsive Grid Adjustments */
+@media (min-width: 768px) {
+    body.user-profile-page #user-images-gallery {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 3px;
+    }
+}
+
+@media (min-width: 1024px) {
+    body.user-profile-page #user-images-gallery {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4px;
+    }
+}
+
+@media (min-width: 1400px) {
+    body.user-profile-page #user-images-gallery {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 4px;
+    }
+}
+
 /* Loading Grid */
 .loading-grid {
     display: grid;

@@ -465,9 +465,117 @@ async function renderImages(images, id, type) {
 }
 
 /**
+ * Create Instagram-style image card for user favorites gallery
+ */
+function createInstagramImageCard(item, isBlur, isLiked, isAdmin, isTemporary, subscriptionStatus, loadedIndex, id) {
+    const chatId = item.chatId;
+    const displayUrl = item.thumbnailUrl || item.imageUrl;
+    const fullUrl = item.imageUrl;
+    const characterThumbnail = item.thumbnail || '/img/default-thumbnail.png';
+    const characterName = item.chatName || 'Unknown';
+    
+    // Use getNSFWDisplayMode for proper handling of premium users with showNSFW=false
+    const displayMode = typeof getNSFWDisplayMode === 'function' 
+        ? getNSFWDisplayMode(item, subscriptionStatus) 
+        : (isBlur ? 'blur' : 'show');
+    
+    const showContent = displayMode === 'show';
+    const showOverlay = displayMode === 'overlay'; // Premium user with showNSFW=false
+    const showBlur = displayMode === 'blur'; // Non-subscriber
+    
+    // Character info footer (always visible - mobile-first design)
+    const characterFooter = (showContent || showOverlay) ? `
+        <div class="ig-image-footer" onclick="event.stopPropagation(); openCharacterIntroModal('${chatId}')">
+            <img src="${characterThumbnail}" 
+                 alt="${characterName}" 
+                 class="ig-footer-avatar"
+                 onerror="this.src='/img/default-thumbnail.png'">
+            <span class="ig-footer-name">${characterName}</span>
+        </div>` : '';
+    
+    // Like button (show for all modes except temporary users)
+    const likeButton = !isTemporary ? `
+        <button class="ig-like-btn ${isLiked ? 'liked' : ''}" 
+                data-id="${item._id}" 
+                data-chat-id="${chatId}" 
+                onclick="event.stopPropagation(); toggleImageFavorite(this)">
+            <i class="bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'}"></i>
+        </button>` : '';
+    
+    // Image content based on display mode
+    let imageContent;
+    
+    if (showBlur) {
+        // Non-subscriber: blurred with lock, click to upgrade
+        imageContent = `
+            <div class="ig-image-blur-wrapper" onclick="event.stopPropagation();handleClickRegisterOrPay(event,${isTemporary})">
+                <img data-src="${displayUrl}" 
+                     data-full-url="${fullUrl}" 
+                     data-id="${item._id}" 
+                     src="/img/logo.webp" 
+                     class="ig-image ig-image-blur lazy-image" 
+                     loading="lazy">
+                <div class="ig-lock-overlay">
+                    <i class="bi bi-lock-fill"></i>
+                </div>
+            </div>`;
+    } else if (showOverlay) {
+        // Premium user with showNSFW=false: blurred but clickable to reveal
+        // Store item data for adding to loadedImages when revealed
+        const itemDataJson = JSON.stringify({
+            _id: item._id,
+            imageUrl: item.imageUrl,
+            thumbnailUrl: item.thumbnailUrl,
+            chatId: item.chatId,
+            chatName: item.chatName,
+            thumbnail: item.thumbnail,
+            prompt: item.prompt,
+            isLiked: item.isLiked
+        }).replace(/"/g, '&quot;');
+        
+        imageContent = `
+            <div class="ig-image-nsfw-wrapper" data-revealed="false" data-item="${itemDataJson}" onclick="event.stopPropagation(); revealNSFWImage(this)">
+                <img data-src="${displayUrl}" 
+                     data-full-url="${fullUrl}" 
+                     data-id="${item._id}" 
+                     src="/img/logo.webp" 
+                     class="ig-image ig-image-nsfw lazy-image" 
+                     loading="lazy">
+                <div class="ig-nsfw-overlay">
+                    <i class="bi bi-eye-slash"></i>
+                    <span>${window.translations?.clickToReveal || 'Click to reveal'}</span>
+                </div>
+            </div>`;
+    } else {
+        // Normal display
+        imageContent = `
+            <img data-src="${displayUrl}" 
+                 data-full-url="${fullUrl}" 
+                 src="/img/logo.webp" 
+                 alt="${item.prompt || ''}" 
+                 class="ig-image lazy-image" 
+                 loading="lazy"
+                 onclick="event.stopPropagation(); openUserFavoriteImagePreview(this, ${loadedIndex})">`;
+    }
+    
+    return `
+        <div class="ig-image-card" data-image-id="${item._id}" data-full-url="${fullUrl}" data-index="${loadedIndex}">
+            ${likeButton}
+            ${imageContent}
+            ${characterFooter}
+        </div>
+    `;
+}
+
+/**
  * Create HTML for individual image card
  */
 function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, subscriptionStatus, loadedIndex, id, type, onChatPage = false) {
+    // Use Instagram-style card for user favorites gallery
+    if (type === 'user') {
+        return createInstagramImageCard(item, isBlur, isLiked, isAdmin, isTemporary, subscriptionStatus, loadedIndex, id);
+    }
+    
     const chatId = type === 'chat' ? id : item.chatId;
     const linkUrl = item.chatSlug ? `/character/slug/${item.chatSlug}?imageSlug=${item.slug}` : `/character/${chatId}`;
     const addToChatLabel = window.translations?.image_tools?.add_to_chat || 'Add to Chat';
@@ -489,36 +597,7 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, subscripti
     // Always keep full imageUrl for preview/modal (stored in data-full-url)
     const fullUrl = item.imageUrl;
     
-    // Character info for user favorites gallery
-    const characterThumbnail = item.thumbnail || '/img/default-thumbnail.png';
-    const characterName = item.chatName || 'Unknown';
-    
-    // Character footer overlay for user favorites type
-    const characterFooterOverlay = type === 'user' && !isBlur ? `
-        <div class="character-footer-overlay position-absolute bottom-0 start-0 end-0" 
-             style="background: linear-gradient(transparent, rgba(0,0,0,0.85)); padding: 8px; z-index: 4; border-radius: 0 0 0.375rem 0.375rem;">
-            <div class="d-flex align-items-center gap-2 character-info-link" 
-                 onclick="event.stopPropagation(); openCharacterIntroModal('${chatId}')" 
-                 style="cursor: pointer;">
-                <img src="${characterThumbnail}" 
-                     alt="${characterName}" 
-                     class="rounded-circle" 
-                     style="width: 28px; height: 28px; object-fit: cover; border: 2px solid rgba(255,255,255,0.3);"
-                     onerror="this.src='/img/default-thumbnail.png'">
-                <span class="text-white text-truncate" style="font-size: 12px; font-weight: 500; max-width: 100px;">
-                    ${characterName}
-                </span>
-            </div>
-        </div>` : '';
-    
-    // Different click handlers for user favorites vs other galleries
-    const imageClickHandler = type === 'user' && !isBlur 
-        ? `onclick="event.stopPropagation(); openUserFavoriteImagePreview(this, ${loadedIndex})"` 
-        : `onclick="toggleImageFavorite(this)"`;
-    
-    const imageContainerClass = type === 'user' 
-        ? 'image-container user-favorite-image' 
-        : 'image-container image-fav-double-click';
+    const imageContainerClass = 'image-container image-fav-double-click';
     
     return `
         <div class="image-card col-6 col-md-3 col-lg-2 mb-2 px-1" data-image-id="${item._id}" data-full-url="${fullUrl}">
@@ -532,11 +611,10 @@ function createImageCard(item, isBlur, isLiked, isAdmin, isTemporary, subscripti
                     </div>` :
                     `<div href="${linkUrl}" data-index="${loadedIndex}" 
                         class="${imageContainerClass}"
-                        data-id="${item._id}" data-chat-id="${chatId}" ${imageClickHandler}>
+                        data-id="${item._id}" data-chat-id="${chatId}" onclick="toggleImageFavorite(this)">
                         <img data-src="${displayUrl}" data-full-url="${fullUrl}" src="/img/logo.webp" alt="${item.prompt || ''}" class="card-img-top lazy-image" style="object-fit: cover;" loading="lazy">
                     </div>`
                 }
-                ${characterFooterOverlay}
                 ${isTemporary || (!subscriptionStatus && isBlur) ? '':
                     `
                     <div class="position-absolute top-0 start-0 m-1" style="z-index:5;">
@@ -790,6 +868,11 @@ function handleScroll(id, isModal, cacheKey, type) {
  * Apply consistent grid layout
  */
 function applyGridLayout(selector = '#chat-images-gallery') {
+    // Skip grid layout for user-images-gallery - it uses CSS Grid with Instagram-style layout
+    if (selector === '#user-images-gallery') {
+        return;
+    }
+    
     const gallery = $(selector);
     if (gallery.length && typeof gridLayout === 'function') {
         gridLayout(selector);
@@ -1188,6 +1271,66 @@ window.handleUnlockVideo = function(button, isTemporary) {
 };
 
 /**
+ * Reveal NSFW image for premium users (with showNSFW=false)
+ * @param {HTMLElement} wrapper - The wrapper element containing the image
+ */
+window.revealNSFWImage = function(wrapper) {
+    const $wrapper = $(wrapper);
+    const isRevealed = $wrapper.attr('data-revealed') === 'true';
+    
+    if (isRevealed) {
+        // Already revealed, open the preview using the stored index
+        const loadedIndex = parseInt($wrapper.attr('data-loaded-index'), 10);
+        if (!isNaN(loadedIndex)) {
+            openUserFavoriteImagePreview(wrapper, loadedIndex);
+        }
+        return;
+    }
+    
+    // Get the image data stored on the wrapper
+    const itemDataStr = $wrapper.attr('data-item');
+    if (itemDataStr) {
+        try {
+            const item = JSON.parse(itemDataStr.replace(/&quot;/g, '"'));
+            
+            // Add to loadedImages if not already present
+            if (!Array.isArray(window.loadedImages)) {
+                window.loadedImages = [];
+            }
+            
+            if (!window.loadedImages.some(img => img._id === item._id)) {
+                window.loadedImages.push(item);
+            }
+            
+            // Get the index of this image in loadedImages
+            const loadedIndex = window.loadedImages.findIndex(img => img._id === item._id);
+            $wrapper.attr('data-loaded-index', loadedIndex);
+            
+            // Also update the parent card's data-index
+            $wrapper.closest('.ig-image-card').attr('data-index', loadedIndex);
+        } catch (e) {
+            console.error('[revealNSFWImage] Failed to parse item data:', e);
+        }
+    }
+    
+    // Reveal the image
+    $wrapper.attr('data-revealed', 'true');
+    $wrapper.find('.ig-image').removeClass('ig-image-nsfw');
+    $wrapper.find('.ig-nsfw-overlay').fadeOut(200, function() {
+        $(this).remove();
+    });
+    
+    // Update click handler to open preview on next click
+    const newLoadedIndex = parseInt($wrapper.attr('data-loaded-index'), 10);
+    $wrapper.off('click').on('click', function(e) {
+        e.stopPropagation();
+        if (!isNaN(newLoadedIndex)) {
+            openUserFavoriteImagePreview(wrapper, newLoadedIndex);
+        }
+    });
+};
+
+/**
  * Open image preview modal for user favorite images gallery
  * @param {HTMLElement} el - The clicked element
  * @param {number} clickedIndex - The index of the clicked image in loadedImages
@@ -1234,6 +1377,16 @@ window.openUserFavoriteImagePreview = function(el, clickedIndex) {
                 </div>
             `;
             $('body').append(modalHTML);
+            
+            // Add cleanup handler for modal hidden event
+            $('#imagePreviewModal').on('hidden.bs.modal', function() {
+                // Remove any stale backdrops
+                $('.modal-backdrop').remove();
+                // Remove modal-open class from body if no other modals are open
+                if ($('.modal.show').length === 0) {
+                    $('body').removeClass('modal-open').css('overflow', '');
+                }
+            });
         }
     }
     
@@ -1302,8 +1455,12 @@ window.openUserFavoriteImagePreview = function(el, clickedIndex) {
     window.previewImages = previewItems;
     window.initialSlideIndex = Math.max(0, Math.min(clickedIndex, previewItems.length - 1));
     
-    // Show the modal
-    const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+    // Show the modal - reuse existing instance or create new one
+    const modalEl = document.getElementById('imagePreviewModal');
+    let modal = bootstrap.Modal.getInstance(modalEl);
+    if (!modal) {
+        modal = new bootstrap.Modal(modalEl, { backdrop: true, keyboard: true });
+    }
     modal.show();
     
     // Initialize swiper after modal is shown

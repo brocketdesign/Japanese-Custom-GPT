@@ -1334,7 +1334,10 @@ window.createOverlay = function(img, imageUrl) {
         .on('click', function (e) {
             e.stopPropagation();
             $(img).attr('src', imageUrl).removeClass('img-blur');
-            $(img).closest('.assistant-image-box').removeClass('isBlurred');
+            const $container = $(img).closest('.assistant-image-box');
+            $container.removeClass('isBlurred');
+            // Set data-src on container so showImagePreview can find the image URL
+            $container.attr('data-src', imageUrl);
             const imageId = $(img).attr('data-id');
             const $imageTools = $(document).find(`.image-tools[data-id="${imageId}"]`);
             

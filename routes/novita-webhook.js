@@ -260,17 +260,19 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
         if (taskDoc.hunyuanParentTaskId || taskDoc.hunyuanExpectedCount) {
           // This is a Hunyuan batch task - get batch info
           if (taskDoc.hunyuanExpectedCount) {
-            // This is the parent task
+            // This is the parent task (batchIndex 0)
             hunyuanBatchInfo = {
               batchIndex: 0,
               batchSize: taskDoc.hunyuanExpectedCount
             };
-          } else if (taskDoc.hunyuanParentTaskId && taskDoc.hunyuanImageIndex) {
+          } else if (taskDoc.hunyuanParentTaskId && typeof taskDoc.hunyuanImageIndex === 'number') {
             // This is a child task - get parent info
+            // hunyuanImageIndex starts at 2 (i + 1 where i starts at 1 in the creation loop)
+            // So child tasks have indices 2, 3, 4... which map to batchIndex 1, 2, 3...
             const parentTask = await tasksCollection.findOne({ taskId: taskDoc.hunyuanParentTaskId });
             if (parentTask && parentTask.hunyuanExpectedCount) {
               hunyuanBatchInfo = {
-                batchIndex: taskDoc.hunyuanImageIndex - 1, // hunyuanImageIndex is 1-based (2, 3, 4...), convert to 0-based
+                batchIndex: taskDoc.hunyuanImageIndex - 1, // Convert to 0-based (2->1, 3->2, etc.)
                 batchSize: parentTask.hunyuanExpectedCount
               };
             }

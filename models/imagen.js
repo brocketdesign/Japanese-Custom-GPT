@@ -2732,6 +2732,10 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
         fastify.sendNotificationToUser(userId, 'characterImageGenerated', { imageUrl, thumbnailUrl, nsfw, chatId });
         characterImageUrls.push(imageUrl);
       } else {
+        // Calculate batch info: use hunyuanBatchInfo for Hunyuan multi-image batches,
+        // otherwise use the default index/images.length
+        const { batchIndex = index, batchSize = images.length } = hunyuanBatchInfo || {};
+        
         const notificationData = {
           id: imageId?.toString(),
           imageId: imageId?.toString(),
@@ -2745,10 +2749,9 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
           isAutoMerge: isMerged || false,
           url: imageUrl,
           // Batch info for grouping multiple images into a slider
-          // Use hunyuanBatchInfo if available (for Hunyuan multi-image batches)
           batchId: placeholderId || taskStatus.taskId,
-          batchIndex: hunyuanBatchInfo ? hunyuanBatchInfo.batchIndex : index,
-          batchSize: hunyuanBatchInfo ? hunyuanBatchInfo.batchSize : images.length
+          batchIndex,
+          batchSize
         };
 
         fastify.sendNotificationToUser(userId, 'imageGenerated', notificationData);

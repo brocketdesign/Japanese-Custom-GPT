@@ -8,6 +8,34 @@ let thumbNavGalleryLoadedUserChatId = null;
 let thumbNavGalleryLoading = false;
 const thumbNavGalleryImageIds = new Set();
 
+/**
+ * Helper function to attach event listeners to image tools containers
+ * to prevent swiper from capturing touch/mouse events when scrolling tools
+ * @param {HTMLElement} swiperElement - The swiper container element
+ */
+function attachImageToolsEventListeners(swiperElement) {
+    const imageToolsContainers = swiperElement.querySelectorAll('.image-tools');
+    imageToolsContainers.forEach(toolsContainer => {
+        // Prevent swiper from capturing touch events on image tools
+        toolsContainer.addEventListener('touchstart', function(e) {
+            e.stopPropagation();
+        }, { passive: true });
+        
+        toolsContainer.addEventListener('touchmove', function(e) {
+            e.stopPropagation();
+        }, { passive: true });
+        
+        // Also handle mouse events for desktop
+        toolsContainer.addEventListener('mousedown', function(e) {
+            e.stopPropagation();
+        });
+        
+        toolsContainer.addEventListener('mousemove', function(e) {
+            e.stopPropagation();
+        });
+    });
+}
+
 let language
 
 function getIdFromUrl(url) {
@@ -1292,11 +1320,11 @@ function setupChatInterface(chat, character, userChat, isNew) {
                                         nextEl: `#${sliderId} .swiper-button-next`,
                                         prevEl: `#${sliderId} .swiper-button-prev`
                                     },
-                                    // Allow touch events to pass through on specific elements
+                                    // Specify that touch events target the wrapper element
                                     touchEventsTarget: 'wrapper',
                                     // Prevent swiping when touching image tools
                                     allowTouchMove: true,
-                                    // Add event delegation to handle touch events on image tools
+                                    // Handle touch events to disable swiping on image tools
                                     on: {
                                         touchStart: function(swiper, event) {
                                             // Check if the touch started on image tools container
@@ -1308,33 +1336,15 @@ function setupChatInterface(chat, character, userChat, isNew) {
                                             }
                                         },
                                         touchEnd: function(swiper, event) {
-                                            // Re-enable touch move after touch ends
+                                            // Always re-enable touch move after touch ends
+                                            // This is safe because stopPropagation on image-tools prevents unwanted swipes
                                             swiper.allowTouchMove = true;
                                         }
                                     }
                                 });
                                 
-                                // Additional event listeners to prevent swiper interference with image tools scrolling
-                                const imageToolsContainers = swiperElement.querySelectorAll('.image-tools');
-                                imageToolsContainers.forEach(toolsContainer => {
-                                    // Prevent swiper from capturing touch events on image tools
-                                    toolsContainer.addEventListener('touchstart', function(e) {
-                                        e.stopPropagation();
-                                    }, { passive: true });
-                                    
-                                    toolsContainer.addEventListener('touchmove', function(e) {
-                                        e.stopPropagation();
-                                    }, { passive: true });
-                                    
-                                    // Also handle mouse events for desktop
-                                    toolsContainer.addEventListener('mousedown', function(e) {
-                                        e.stopPropagation();
-                                    });
-                                    
-                                    toolsContainer.addEventListener('mousemove', function(e) {
-                                        e.stopPropagation();
-                                    });
-                                });
+                                // Attach event listeners to prevent swiper interference with image tools scrolling
+                                attachImageToolsEventListeners(swiperElement);
                             }
                             
                             // Apply blur only to images that should be blurred using dashboard.js blurImage function
@@ -2241,11 +2251,11 @@ function setupChatInterface(chat, character, userChat, isNew) {
                             nextEl: `#${sliderId} .swiper-button-next`,
                             prevEl: `#${sliderId} .swiper-button-prev`
                         },
-                        // Allow touch events to pass through on specific elements
+                        // Specify that touch events target the wrapper element
                         touchEventsTarget: 'wrapper',
                         // Prevent swiping when touching image tools
                         allowTouchMove: true,
-                        // Add event delegation to handle touch events on image tools
+                        // Handle touch events to disable swiping on image tools
                         on: {
                             touchStart: function(swiper, event) {
                                 // Check if the touch started on image tools container
@@ -2257,33 +2267,15 @@ function setupChatInterface(chat, character, userChat, isNew) {
                                 }
                             },
                             touchEnd: function(swiper, event) {
-                                // Re-enable touch move after touch ends
+                                // Always re-enable touch move after touch ends
+                                // This is safe because stopPropagation on image-tools prevents unwanted swipes
                                 swiper.allowTouchMove = true;
                             }
                         }
                     });
                     
-                    // Additional event listeners to prevent swiper interference with image tools scrolling
-                    const imageToolsContainers = swiperElement.querySelectorAll('.image-tools');
-                    imageToolsContainers.forEach(toolsContainer => {
-                        // Prevent swiper from capturing touch events on image tools
-                        toolsContainer.addEventListener('touchstart', function(e) {
-                            e.stopPropagation();
-                        }, { passive: true });
-                        
-                        toolsContainer.addEventListener('touchmove', function(e) {
-                            e.stopPropagation();
-                        }, { passive: true });
-                        
-                        // Also handle mouse events for desktop
-                        toolsContainer.addEventListener('mousedown', function(e) {
-                            e.stopPropagation();
-                        });
-                        
-                        toolsContainer.addEventListener('mousemove', function(e) {
-                            e.stopPropagation();
-                        });
-                    });
+                    // Attach event listeners to prevent swiper interference with image tools scrolling
+                    attachImageToolsEventListeners(swiperElement);
                 }
                 
                 // Apply blur if needed

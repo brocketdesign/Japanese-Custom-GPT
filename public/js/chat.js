@@ -1291,7 +1291,49 @@ function setupChatInterface(chat, character, userChat, isNew) {
                                     navigation: {
                                         nextEl: `#${sliderId} .swiper-button-next`,
                                         prevEl: `#${sliderId} .swiper-button-prev`
+                                    },
+                                    // Allow touch events to pass through on specific elements
+                                    touchEventsTarget: 'wrapper',
+                                    // Prevent swiping when touching image tools
+                                    allowTouchMove: true,
+                                    // Add event delegation to handle touch events on image tools
+                                    on: {
+                                        touchStart: function(swiper, event) {
+                                            // Check if the touch started on image tools container
+                                            const target = event.target;
+                                            const imageTools = target.closest('.image-tools');
+                                            if (imageTools) {
+                                                // Disable swiper touch move when touching image tools
+                                                swiper.allowTouchMove = false;
+                                            }
+                                        },
+                                        touchEnd: function(swiper, event) {
+                                            // Re-enable touch move after touch ends
+                                            swiper.allowTouchMove = true;
+                                        }
                                     }
+                                });
+                                
+                                // Additional event listeners to prevent swiper interference with image tools scrolling
+                                const imageToolsContainers = swiperElement.querySelectorAll('.image-tools');
+                                imageToolsContainers.forEach(toolsContainer => {
+                                    // Prevent swiper from capturing touch events on image tools
+                                    toolsContainer.addEventListener('touchstart', function(e) {
+                                        e.stopPropagation();
+                                    }, { passive: true });
+                                    
+                                    toolsContainer.addEventListener('touchmove', function(e) {
+                                        e.stopPropagation();
+                                    }, { passive: true });
+                                    
+                                    // Also handle mouse events for desktop
+                                    toolsContainer.addEventListener('mousedown', function(e) {
+                                        e.stopPropagation();
+                                    });
+                                    
+                                    toolsContainer.addEventListener('mousemove', function(e) {
+                                        e.stopPropagation();
+                                    });
                                 });
                             }
                             

@@ -6150,6 +6150,26 @@ color: #fff !important;
     transform: none !important;
 }
 
+/* Make image grabbable for carousel swiping */
+.chat-image-swiper .assistant-image-box {
+    cursor: grab !important;
+}
+
+.chat-image-swiper .assistant-image-box:active {
+    cursor: grabbing !important;
+}
+
+/* Make image tools scrollable, not swipeable */
+.chat-image-swiper .image-tools {
+    cursor: default !important;
+    touch-action: pan-x !important; /* Allow horizontal scrolling on touch devices */
+    user-select: none;
+}
+
+.chat-image-swiper .image-tools .d-flex {
+    touch-action: pan-x !important; /* Allow horizontal scrolling on touch devices */
+}
+
 /* Mobile responsive adjustments */
 @media (max-width: 576px) {
     .chat-image-swiper .swiper-slide img.slider-image {

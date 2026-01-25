@@ -254,6 +254,32 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
           return;
         }
         
+        // Build hunyuanBatchInfo for proper batch grouping in carousel
+        // Hunyuan tasks don't support image_num, so each image is a separate task
+        let hunyuanBatchInfo = null;
+        if (taskDoc.hunyuanParentTaskId || taskDoc.hunyuanExpectedCount) {
+          // This is a Hunyuan batch task - get batch info
+          if (taskDoc.hunyuanExpectedCount) {
+            // This is the parent task
+            hunyuanBatchInfo = {
+              batchIndex: 0,
+              batchSize: taskDoc.hunyuanExpectedCount
+            };
+          } else if (taskDoc.hunyuanParentTaskId && taskDoc.hunyuanImageIndex) {
+            // This is a child task - get parent info
+            const parentTask = await tasksCollection.findOne({ taskId: taskDoc.hunyuanParentTaskId });
+            if (parentTask && parentTask.hunyuanExpectedCount) {
+              hunyuanBatchInfo = {
+                batchIndex: taskDoc.hunyuanImageIndex - 1, // hunyuanImageIndex is 1-based (2, 3, 4...), convert to 0-based
+                batchSize: parentTask.hunyuanExpectedCount
+              };
+            }
+          }
+          if (hunyuanBatchInfo) {
+            console.log(`[NovitaWebhook] Hunyuan batch info for task ${taskId}: index=${hunyuanBatchInfo.batchIndex}, size=${hunyuanBatchInfo.batchSize}`);
+          }
+        }
+        
         // Update taskStatus to have string userId for handleTaskCompletion
         const formattedTaskStatus = {
           ...taskStatus,
@@ -266,7 +292,8 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
           translations: translations,
           userId: userId,
           chatId: chatId,
-          placeholderId: taskDoc.placeholderId
+          placeholderId: taskDoc.placeholderId,
+          hunyuanBatchInfo
         });
       } catch (error) {
         console.error(`[NovitaWebhook] Error calling handleTaskCompletion for task ${taskId}:`, error);

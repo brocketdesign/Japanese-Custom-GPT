@@ -2688,7 +2688,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
 
 // Handle task completion: send notifications and save images as needed
 async function handleTaskCompletion(taskStatus, fastify, options = {}) {
-  const { chatCreation, translations, userId, chatId, placeholderId } = options;
+  const { chatCreation, translations, userId, chatId, placeholderId, hunyuanBatchInfo } = options;
   let images = [];
   let characterImageUrls = [];
   // Try multiple ways to get the correct images with merge data
@@ -2745,9 +2745,10 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
           isAutoMerge: isMerged || false,
           url: imageUrl,
           // Batch info for grouping multiple images into a slider
+          // Use hunyuanBatchInfo if available (for Hunyuan multi-image batches)
           batchId: placeholderId || taskStatus.taskId,
-          batchIndex: index,
-          batchSize: images.length
+          batchIndex: hunyuanBatchInfo ? hunyuanBatchInfo.batchIndex : index,
+          batchSize: hunyuanBatchInfo ? hunyuanBatchInfo.batchSize : images.length
         };
 
         fastify.sendNotificationToUser(userId, 'imageGenerated', notificationData);
@@ -2911,12 +2912,27 @@ async function pollHunyuanTasksWithFallback(taskId, allTaskIds, fastify, options
             
             // Call handleTaskCompletion to send notifications
             if (taskDocAfter) {
+              // Build hunyuanBatchInfo for proper batch grouping in carousel
+              // Hunyuan tasks don't support image_num, so each image is a separate task
+              // We need to tell the frontend the correct batch size and index
+              let hunyuanBatchInfo = null;
+              if (taskIds.length > 1) {
+                // This is part of a Hunyuan multi-image batch
+                const taskIndex = taskIds.indexOf(tid);
+                hunyuanBatchInfo = {
+                  batchIndex: taskIndex >= 0 ? taskIndex : 0,
+                  batchSize: taskIds.length
+                };
+                console.log(`[pollHunyuanTasks] Hunyuan batch info for task ${tid}: index=${hunyuanBatchInfo.batchIndex}, size=${hunyuanBatchInfo.batchSize}`);
+              }
+              
               await handleTaskCompletion(taskStatus, fastify, {
                 chatCreation: taskDocAfter.chatCreation || false,
                 translations: taskDocAfter.translations || translations,
                 userId: taskStatus.userId?.toString() || taskDocAfter.userId?.toString(),
                 chatId: taskDocAfter.chatId?.toString(),
-                placeholderId: taskDocAfter.placeholderId
+                placeholderId: taskDocAfter.placeholderId,
+                hunyuanBatchInfo
               });
             }
           } else {

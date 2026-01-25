@@ -16,6 +16,10 @@ class SchedulesDashboard {
     this.viewScheduleModal = null;
     this.testRunInProgress = false;
     this.lastTestRunImage = null;
+    this.userCharacters = [];
+    this.customPrompts = [];
+    this.selectedCustomPromptIds = new Set();
+    this.selectedCharacterId = '';
     
     this.init();
   }
@@ -25,6 +29,8 @@ class SchedulesDashboard {
     this.setupEventListeners();
     this.loadSchedules();
     this.loadStats();
+    this.loadUserCharacters();
+    this.loadCustomPrompts();
   }
 
   setupModals() {
@@ -70,6 +76,81 @@ class SchedulesDashboard {
         this.toggleScheduleType(e.target.value);
       });
     });
+
+    // Prompt type toggle
+    document.querySelectorAll('input[name="promptTypeRadio"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        this.togglePromptType(e.target.value);
+      });
+    });
+
+    // Action type selector buttons
+    document.querySelectorAll('.schedule-action-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        this.selectActionType(e.currentTarget.dataset.action);
+      });
+    });
+
+    // Model selector button
+    const modelSelectorBtn = document.getElementById('modelSelectorBtn');
+    const modelDropdown = document.getElementById('modelDropdown');
+    
+    if (modelSelectorBtn && modelDropdown) {
+      modelSelectorBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        modelSelectorBtn.classList.toggle('open');
+        modelDropdown.classList.toggle('show');
+      });
+
+      // Model dropdown items
+      document.querySelectorAll('.model-dropdown-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          this.selectModel(item.dataset.value, item.dataset.name);
+          modelDropdown.classList.remove('show');
+          modelSelectorBtn.classList.remove('open');
+        });
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!modelSelectorBtn.contains(e.target) && !modelDropdown.contains(e.target)) {
+          modelDropdown.classList.remove('show');
+          modelSelectorBtn.classList.remove('open');
+        }
+      });
+
+      // Select first model by default
+      const firstModel = document.querySelector('.model-dropdown-item');
+      if (firstModel) {
+        this.selectModel(firstModel.dataset.value, firstModel.dataset.name);
+      }
+    }
+  }
+
+  selectActionType(actionType) {
+    // Update hidden input
+    document.getElementById('actionType').value = actionType;
+    
+    // Update button states
+    document.querySelectorAll('.schedule-action-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.action === actionType);
+    });
+  }
+
+  selectModel(modelId, modelName) {
+    // Update hidden input
+    document.getElementById('actionModel').value = modelId;
+    
+    // Update selector button text
+    const modelNameEl = document.querySelector('.schedule-model-selector .model-name');
+    if (modelNameEl) {
+      modelNameEl.textContent = modelName;
+    }
+    
+    // Update selected state in dropdown
+    document.querySelectorAll('.model-dropdown-item').forEach(item => {
+      item.classList.toggle('selected', item.dataset.value === modelId);
+    });
   }
 
   resetFilters() {
@@ -96,6 +177,229 @@ class SchedulesDashboard {
       singleFields.style.display = 'none';
       recurringFields.style.display = 'block';
     }
+  }
+
+  togglePromptType(type) {
+    const manualFields = document.getElementById('manualPromptFields');
+    const customFields = document.getElementById('customPromptFields');
+    
+    if (type === 'manual') {
+      manualFields.style.display = 'block';
+      customFields.style.display = 'none';
+    } else {
+      manualFields.style.display = 'none';
+      customFields.style.display = 'block';
+    }
+  }
+
+  async loadUserCharacters() {
+    try {
+      const response = await fetch('/api/schedules/user-characters');
+      const data = await response.json();
+      
+      if (data.success) {
+        this.userCharacters = data.characters;
+        this.populateCharacterDropdown();
+      } else {
+        // Show error state if API returns success: false
+        this.showCharacterLoadError();
+      }
+    } catch (error) {
+      console.error('Error loading characters:', error);
+      this.showCharacterLoadError();
+    }
+  }
+
+  showCharacterLoadError() {
+    const container = document.getElementById('characterSelectionContainer');
+    if (!container) return;
+    container.innerHTML = `
+      <div class="text-center py-2">
+        <p class="text-muted mb-0 small">No characters found</p>
+      </div>
+    `;
+  }
+
+  populateCharacterDropdown() {
+    const container = document.getElementById('characterSelectionContainer');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    // Create "None" option
+    const noneItem = document.createElement('div');
+    noneItem.className = 'character-selection-item';
+    noneItem.dataset.characterId = '';
+    noneItem.innerHTML = `
+      <div class="character-item-avatar">
+        <i class="bi bi-x-circle"></i>
+      </div>
+      <div class="character-item-info">
+        <div class="character-item-name">None</div>
+      </div>
+    `;
+    noneItem.addEventListener('click', () => this.selectCharacter('', noneItem));
+    container.appendChild(noneItem);
+    
+    // Add character items
+    this.userCharacters.forEach(character => {
+      const item = document.createElement('div');
+      item.className = 'character-selection-item';
+      item.dataset.characterId = character.id;
+      
+      // API returns imageUrl, also check thumbnail and chatImageUrl for backward compatibility
+      // Use /img/avatar.png as fallback since default-thumbnail.png doesn't exist
+      const thumbnail = character.imageUrl || character.thumbnail || character.chatImageUrl || '/img/avatar.png';
+      const charName = this.escapeHtml(character.name || 'Unknown');
+      const favoriteIcon = character.isFavorite ? '<i class="bi bi-star-fill character-favorite-icon"></i>' : '';
+      
+      item.innerHTML = `
+        <div class="character-item-avatar">
+          <img src="${thumbnail}" alt="${charName}" onerror="this.src='/img/avatar.png'">
+        </div>
+        <div class="character-item-info">
+          <div class="character-item-name">${charName}${favoriteIcon}</div>
+        </div>
+      `;
+      
+      item.addEventListener('click', () => this.selectCharacter(character.id, item));
+      container.appendChild(item);
+    });
+  }
+
+  selectCharacter(characterId, itemElement) {
+    // Remove active class from all items
+    document.querySelectorAll('.character-selection-item').forEach(item => {
+      item.classList.remove('active');
+    });
+    
+    // Add active class to clicked item
+    if (itemElement) {
+      itemElement.classList.add('active');
+    }
+    
+    // Store selected character
+    this.selectedCharacterId = characterId;
+  }
+
+  async loadCustomPrompts() {
+    try {
+      const response = await fetch('/api/schedules/custom-prompts');
+      const data = await response.json();
+      
+      if (data.success && data.prompts) {
+        this.customPrompts = data.prompts;
+        this.renderCustomPrompts();
+      } else {
+        console.error('Custom prompts API returned no data:', data);
+        this.renderCustomPromptsError();
+      }
+    } catch (error) {
+      console.error('Error loading custom prompts:', error);
+      this.renderCustomPromptsError();
+    }
+  }
+
+  renderCustomPrompts() {
+    const container = document.getElementById('customPromptsContainer');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (this.customPrompts.length === 0) {
+      container.innerHTML = `
+        <div class="text-center py-3">
+          <p class="text-muted mb-0">No custom prompts available</p>
+        </div>
+      `;
+      return;
+    }
+    
+    this.customPrompts.forEach(prompt => {
+      const card = document.createElement('div');
+      card.className = 'custom-prompt-card';
+      card.dataset.promptId = prompt.id;
+      
+      // Create image element - use imagePreview which contains the prompt image
+      const img = document.createElement('img');
+      const imageUrl = prompt.imagePreview || '/img/image-placeholder-1.gif';
+      img.src = imageUrl;
+      img.alt = this.escapeHtml(prompt.title || '');
+      img.onerror = () => { img.src = '/img/image-placeholder-1.gif'; };
+      
+      // Create overlay with title or description
+      const overlay = document.createElement('div');
+      overlay.className = 'prompt-overlay';
+      const displayText = prompt.title || prompt.description || '';
+      overlay.textContent = this.truncateText(displayText, 40);
+      
+      // Create badge
+      const badge = document.createElement('div');
+      badge.className = 'selected-badge';
+      badge.innerHTML = '<i class="bi bi-check"></i>';
+      
+      card.appendChild(img);
+      card.appendChild(overlay);
+      card.appendChild(badge);
+      
+      card.addEventListener('click', () => {
+        this.toggleCustomPromptSelection(prompt.id, card);
+      });
+      
+      container.appendChild(card);
+    });
+  }
+
+  renderCustomPromptsError() {
+    const container = document.getElementById('customPromptsContainer');
+    if (!container) return;
+    
+    container.innerHTML = `
+      <div class="text-center py-3">
+        <i class="bi bi-exclamation-triangle text-warning"></i>
+        <p class="text-muted mb-0 mt-2">Failed to load custom prompts</p>
+      </div>
+    `;
+  }
+
+  toggleCustomPromptSelection(promptId, cardElement) {
+    if (this.selectedCustomPromptIds.has(promptId)) {
+      this.selectedCustomPromptIds.delete(promptId);
+      cardElement.classList.remove('selected');
+    } else {
+      this.selectedCustomPromptIds.add(promptId);
+      cardElement.classList.add('selected');
+    }
+    
+    this.updateSelectedPromptsInfo();
+  }
+
+  updateSelectedPromptsInfo() {
+    const info = document.getElementById('selectedPromptsInfo');
+    const count = document.getElementById('selectedPromptsCount');
+    
+    if (!info || !count) return;
+    
+    count.textContent = this.selectedCustomPromptIds.size;
+    info.style.display = this.selectedCustomPromptIds.size > 0 ? 'block' : 'none';
+  }
+
+  escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+    return String(text).replace(/[&<>"']/g, m => map[m]);
+  }
+
+  truncateText(text, maxLength) {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
   }
 
   async loadSchedules() {
@@ -263,11 +567,44 @@ class SchedulesDashboard {
     // Reset form
     document.getElementById('scheduleId').value = '';
     document.getElementById('scheduleDescription').value = '';
-    document.getElementById('actionType').value = 'generate_image';
     document.getElementById('actionPrompt').value = '';
-    document.getElementById('actionModel').value = 'flux-2-flex';
+    
+    // Reset action type to generate_image
+    this.selectActionType('generate_image');
+    
+    // Reset model to first available or flux-2-flex
+    const firstModel = document.querySelector('.model-dropdown-item');
+    if (firstModel) {
+      this.selectModel(firstModel.dataset.value, firstModel.dataset.name);
+    } else {
+      document.getElementById('actionModel').value = 'flux-2-flex';
+    }
+    
+    // Reset character selection
+    this.selectedCharacterId = '';
+    document.querySelectorAll('.character-selection-item').forEach(item => {
+      item.classList.remove('active');
+    });
+    
+    // Select the "None" option first
+    const noneItem = document.querySelector('.character-selection-item[data-character-id=""]');
+    if (noneItem) {
+      noneItem.classList.add('active');
+    }
+    
     document.getElementById('publishInstagram').checked = false;
     document.getElementById('publishTwitter').checked = false;
+    
+    // Reset prompt type to manual
+    document.getElementById('promptTypeManual').checked = true;
+    this.togglePromptType('manual');
+    
+    // Clear custom prompt selections
+    this.selectedCustomPromptIds.clear();
+    document.querySelectorAll('.custom-prompt-card').forEach(card => {
+      card.classList.remove('selected');
+    });
+    this.updateSelectedPromptsInfo();
     
     // Set default schedule time (tomorrow at 9 AM)
     const tomorrow = new Date();
@@ -310,9 +647,45 @@ class SchedulesDashboard {
       // Populate form
       document.getElementById('scheduleId').value = schedule._id;
       document.getElementById('scheduleDescription').value = schedule.description || '';
-      document.getElementById('actionType').value = schedule.actionType;
       document.getElementById('actionPrompt').value = schedule.actionData?.prompt || '';
-      document.getElementById('actionModel').value = schedule.actionData?.model || 'flux-2-flex';
+      
+      // Update action type selector
+      this.selectActionType(schedule.actionType);
+      
+      // Update model selector
+      const modelId = schedule.actionData?.model || 'flux-2-flex';
+      const modelItem = document.querySelector(`.model-dropdown-item[data-value="${modelId}"]`);
+      if (modelItem) {
+        this.selectModel(modelId, modelItem.dataset.name);
+      } else {
+        document.getElementById('actionModel').value = modelId;
+      }
+      
+      document.getElementById('actionCharacter').value = schedule.actionData?.characterId || '';
+      
+      // Set prompt type based on whether custom prompts are used
+      if (schedule.actionData?.useCustomPrompts && schedule.actionData?.customPromptIds?.length > 0) {
+        document.getElementById('promptTypeCustom').checked = true;
+        this.togglePromptType('custom');
+        
+        // Restore selected custom prompts
+        this.selectedCustomPromptIds.clear();
+        schedule.actionData.customPromptIds.forEach(id => {
+          this.selectedCustomPromptIds.add(id);
+        });
+        
+        // Update UI
+        document.querySelectorAll('.custom-prompt-card').forEach(card => {
+          const promptId = card.dataset.promptId;
+          if (this.selectedCustomPromptIds.has(promptId)) {
+            card.classList.add('selected');
+          }
+        });
+        this.updateSelectedPromptsInfo();
+      } else {
+        document.getElementById('promptTypeManual').checked = true;
+        this.togglePromptType('manual');
+      }
       
       // Set type
       const isRecurring = schedule.type === 'recurring';
@@ -480,8 +853,13 @@ class SchedulesDashboard {
     const type = document.getElementById('scheduleType').value;
     const description = document.getElementById('scheduleDescription').value;
     const actionType = document.getElementById('actionType').value;
-    const prompt = document.getElementById('actionPrompt').value;
     const model = document.getElementById('actionModel').value;
+    
+    // Get prompt type
+    const promptType = document.querySelector('input[name="promptTypeRadio"]:checked').value;
+    
+    // Get character selection (from the new list-based selector)
+    const characterId = this.selectedCharacterId || null;
     
     // Collect social platforms
     const socialPlatforms = [];
@@ -493,12 +871,28 @@ class SchedulesDashboard {
       actionType,
       description,
       actionData: {
-        prompt,
         model,
         socialPlatforms,
-        autoPublish: socialPlatforms.length > 0
+        autoPublish: socialPlatforms.length > 0,
+        characterId: characterId
       }
     };
+
+    // Handle prompt based on type
+    if (promptType === 'manual') {
+      const prompt = document.getElementById('actionPrompt').value;
+      scheduleData.actionData.prompt = prompt;
+      scheduleData.actionData.useCustomPrompts = false;
+    } else {
+      // Custom prompts mode
+      if (this.selectedCustomPromptIds.size === 0) {
+        this.showNotification('Please select at least one custom prompt', 'warning');
+        return;
+      }
+      scheduleData.actionData.useCustomPrompts = true;
+      scheduleData.actionData.customPromptIds = Array.from(this.selectedCustomPromptIds);
+      scheduleData.actionData.prompt = ''; // Optional: user can still provide additional context
+    }
 
     if (type === 'single') {
       const scheduledFor = document.getElementById('scheduledFor').value;

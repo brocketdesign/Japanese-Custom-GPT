@@ -894,13 +894,19 @@ function normalizeChatData(chat = {}, isFavorite = false) {
     const id = getChatId(base);
     if (!id) return null;
 
+    // Extract lastMessage - could be a string or object with content
+    const rawLastMessage = chat.lastMessage || base.lastMessage || base.description || '';
+    const lastMessage = typeof rawLastMessage === 'string' 
+        ? rawLastMessage 
+        : (rawLastMessage?.content || rawLastMessage?.text || '');
+
     return {
         ...base,
         _id: base._id || id,
         chatId: base.chatId || id,
         name: base.name || base.chatName || 'Unknown Character',
         chatImageUrl: base.chatImageUrl || base.imageUrl || '/img/default-avatar.webp',
-        lastMessage: chat.lastMessage || base.lastMessage || base.description || '',
+        lastMessage: lastMessage,
         updatedAt: base.updatedAt || base.createdAt || new Date(),
         createdAt: base.createdAt,
         isFavorite: isFavorite || base.isFavorite === true
@@ -911,7 +917,8 @@ function syncFavoriteFlagsOnRecent() {
     const favoriteIds = new Set(dashboardState.favoriteChats.map(chat => getChatId(chat)));
     dashboardState.recentChats = dashboardState.recentChats.map(chat => ({
         ...chat,
-        isFavorite: favoriteIds.has(getChatId(chat))
+        // Preserve existing isFavorite flag from API or check favorites list
+        isFavorite: chat.isFavorite === true || favoriteIds.has(getChatId(chat))
     }));
 }
 
@@ -1069,10 +1076,15 @@ async function loadRecentChats() {
 // Load favorite chats
 async function loadFavoriteChats() {
     try {
-        const response = await fetch('/favorites?page=1&limit=10');
-        if (!response.ok) throw new Error('Failed to load favorites');
+        const response = await fetch('/favorites/list?page=1&limit=50');
+        if (!response.ok) {
+            console.error('Favorites API error:', response.status, response.statusText);
+            throw new Error('Failed to load favorites');
+        }
         
         const data = await response.json();
+        console.log('Favorites API response:', data);
+        
         const favorites = Array.isArray(data?.data)
             ? data.data
             : Array.isArray(data?.favorites)
@@ -1081,9 +1093,13 @@ async function loadFavoriteChats() {
                     ? data
                     : [];
 
+        console.log('Parsed favorites:', favorites);
+
         dashboardState.favoriteChats = favorites
             .map(fav => normalizeChatData(fav, true))
             .filter(Boolean);
+
+        console.log('Normalized favoriteChats:', dashboardState.favoriteChats);
 
         syncFavoriteFlagsOnRecent();
         renderFavoriteChatList();
@@ -1254,8 +1270,11 @@ function formatTimeAgo(date) {
 // Helper: Truncate text
 function truncateText(text, maxLength) {
     if (!text) return '';
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
+    // Ensure text is a string (could be an object with content property)
+    const str = typeof text === 'string' ? text : (text?.content || text?.text || String(text));
+    if (!str || typeof str !== 'string') return '';
+    if (str.length <= maxLength) return str;
+    return str.substring(0, maxLength) + '...';
 }
 
 // Helper: Escape HTML

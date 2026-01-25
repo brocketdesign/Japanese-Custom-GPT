@@ -138,18 +138,28 @@ async function getUserFavorites(db, userId, options = {}) {
     .limit(limit)
     .toArray();
   
-  // Extract chat IDs
+  // Extract chat IDs - ensure they're ObjectIds for the query
   const chatIds = favoriteDocs.map(fav => fav.chatId);
+  const chatIdObjs = chatIds.map(id => {
+    try {
+      return id instanceof ObjectId ? id : toObjectId(id);
+    } catch (e) {
+      console.error('Invalid chatId in favorites:', id);
+      return null;
+    }
+  }).filter(Boolean);
   
   // Fetch chat data
   const chats = await chatsCollection
-    .find({ _id: { $in: chatIds } })
+    .find({ _id: { $in: chatIdObjs } })
     .toArray();
+
+  console.log(`getUserFavorites: Found ${favoriteDocs.length} favorite docs, ${chats.length} matching chats`);
 
   // Fetch last messages for these chats for the requesting user
   const chatLastMessageColl = db.collection('chatLastMessage');
   const lastMessages = await chatLastMessageColl
-    .find({ chatId: { $in: chatIds }, userId: userIdObj })
+    .find({ chatId: { $in: chatIdObjs }, userId: userIdObj })
     .toArray();
 
   const lastMessageMap = {};
@@ -169,7 +179,8 @@ async function getUserFavorites(db, userId, options = {}) {
       userId: chat.userId && typeof chat.userId.toString === 'function' ? chat.userId.toString() : chat.userId,
       lastMessage: lastMessageMap[chat._id.toString()] || null,
       updatedAt: chat.updatedAt instanceof Date ? chat.updatedAt.toISOString() : chat.updatedAt,
-      createdAt: chat.createdAt instanceof Date ? chat.createdAt.toISOString() : chat.createdAt
+      createdAt: chat.createdAt instanceof Date ? chat.createdAt.toISOString() : chat.createdAt,
+      isFavorite: true // Mark as favorite since it's from the favorites list
     };
 
     return {

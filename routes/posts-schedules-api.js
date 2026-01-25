@@ -1156,6 +1156,131 @@ Return ONLY the caption text with hashtags, nothing else.`;
       ]
     });
   });
+
+  /**
+   * GET /api/schedules/user-characters
+   * Get user's characters for schedule form
+   */
+  fastify.get('/api/schedules/user-characters', async (request, reply) => {
+    try {
+      const user = request.user;
+      if (!user || user.isTemporary) {
+        return reply.code(401).send({ error: 'Authentication required' });
+      }
+
+      const { ObjectId } = fastify.mongo;
+      const userId = user._id.toString();
+      const userIdObj = new ObjectId(userId);
+      
+      // Fetch user's favorites - check both ObjectId and string formats
+      const userFavorites = await db.collection('user_favorites')
+        .find({ 
+          $or: [
+            { userId: userIdObj },
+            { userId: userId }
+          ]
+        })
+        .project({ chatId: 1 })
+        .toArray();
+      
+      // Create a set of favorite chat IDs (as strings for comparison)
+      const favoriteIds = new Set(userFavorites.map(f => f.chatId.toString()));
+      
+      // Fetch user's characters from chats collection
+      // Check both ObjectId and string formats for userId
+      const characters = await db.collection('chats')
+        .find({ 
+          $or: [
+            { userId: new ObjectId(userId) },
+            { userId: userId },
+            { creatorId: new ObjectId(userId) },
+            { creatorId: userId }
+          ]
+        })
+        .project({
+          _id: 1,
+          name: 1,
+          chatImageUrl: 1,
+          imageStyle: 1,
+          gender: 1
+        })
+        .sort({ createdAt: -1 })
+        .limit(50) // Limit to 50 characters for performance
+        .toArray();
+
+      // Map characters and add isFavorite flag
+      const mappedCharacters = characters.map(char => ({
+        id: char._id.toString(),
+        name: char.name || 'Unnamed Character',
+        imageUrl: char.chatImageUrl || null,
+        imageStyle: char.imageStyle || null,
+        gender: char.gender || null,
+        isFavorite: favoriteIds.has(char._id.toString())
+      }));
+      
+      // Sort: favorites first, then by name
+      mappedCharacters.sort((a, b) => {
+        if (a.isFavorite && !b.isFavorite) return -1;
+        if (!a.isFavorite && b.isFavorite) return 1;
+        return (a.name || '').localeCompare(b.name || '');
+      });
+
+      return reply.send({
+        success: true,
+        characters: mappedCharacters
+      });
+    } catch (error) {
+      console.error('[Schedules API] Get characters error:', error);
+      return reply.code(500).send({ error: 'Failed to get characters' });
+    }
+  });
+
+  /**
+   * GET /api/schedules/custom-prompts
+   * Get all custom prompts for schedule form
+   */
+  fastify.get('/api/schedules/custom-prompts', async (request, reply) => {
+    try {
+      const user = request.user;
+      if (!user || user.isTemporary) {
+        return reply.code(401).send({ error: 'Authentication required' });
+      }
+
+      // Fetch custom prompts with a reasonable limit
+      const limit = parseInt(request.query.limit) || 100;
+      const customPrompts = await db.collection('prompts')
+        .find({})
+        .project({
+          _id: 1,
+          prompt: 1,
+          title: 1,
+          cost: 1,
+          order: 1,
+          image: 1,
+          imagePreview: 1,
+          nsfw: 1
+        })
+        .sort({ order: 1 })
+        .limit(Math.min(limit, 200)) // Cap at 200 to prevent excessive queries
+        .toArray();
+
+      return reply.send({
+        success: true,
+        prompts: customPrompts.map(prompt => ({
+          id: prompt._id.toString(),
+          description: prompt.prompt,
+          title: prompt.title,
+          cost: prompt.cost || 0,
+          // Use 'image' field (the actual field name in DB), fallback to imagePreview for compatibility
+          imagePreview: prompt.image || prompt.imagePreview,
+          nsfw: prompt.nsfw || false
+        }))
+      });
+    } catch (error) {
+      console.error('[Schedules API] Get custom prompts error:', error);
+      return reply.code(500).send({ error: 'Failed to get custom prompts' });
+    }
+  });
 }
 
 module.exports = routes;

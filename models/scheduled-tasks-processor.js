@@ -3,6 +3,8 @@
  * Executes scheduled single tasks and recurring cron jobs
  */
 
+const { ObjectId } = require('mongodb');
+
 const {
   getPendingSingleSchedules,
   getActiveRecurringSchedules,
@@ -78,15 +80,45 @@ async function executeImageGeneration(schedule, fastify) {
   const db = fastify.mongo.db;
   const { actionData } = schedule;
   
+  // Handle custom prompts if selected
+  let basePrompt = actionData.prompt || '';
+  let customPromptId = null;
+  let characterData = null;
+  
+  // If using custom prompts, randomly select one from the list
+  if (actionData.useCustomPrompts && actionData.customPromptIds && actionData.customPromptIds.length > 0) {
+    const randomIndex = Math.floor(Math.random() * actionData.customPromptIds.length);
+    customPromptId = actionData.customPromptIds[randomIndex];
+    
+    // Fetch the custom prompt to get its details
+    const customPrompt = await db.collection('prompts').findOne({ _id: new ObjectId(customPromptId) });
+    if (customPrompt) {
+      // Use custom prompt description if user prompt is not provided
+      if (!basePrompt || basePrompt.trim() === '') {
+        basePrompt = customPrompt.prompt || '';
+      }
+    }
+  }
+  
+  // If character is selected, fetch character data
+  if (actionData.characterId) {
+    characterData = await db.collection('chats').findOne({ _id: new ObjectId(actionData.characterId) });
+    if (characterData) {
+      // Optionally enhance prompt with character context
+      // This can be used by the image generation to apply character-specific styling
+      console.log(`[Scheduled Tasks] Using character: ${characterData.name} for image generation`);
+    }
+  }
+  
   // Apply prompt mutation if enabled
-  let prompt = actionData.prompt;
+  let finalPrompt = basePrompt;
   let mutationData = null;
   
   if (schedule.mutationEnabled || actionData.mutationEnabled) {
     if (actionData.templateId) {
       // Apply template
       const templateResult = await applyTemplate(actionData.templateId, db, actionData.mutationOptions || {});
-      prompt = templateResult.mutatedPrompt;
+      finalPrompt = templateResult.mutatedPrompt;
       mutationData = {
         templateId: actionData.templateId,
         templateName: templateResult.templateName,
@@ -95,8 +127,8 @@ async function executeImageGeneration(schedule, fastify) {
       };
     } else {
       // Direct mutation
-      const mutationResult = mutatePrompt(prompt, actionData.mutationOptions || {});
-      prompt = mutationResult.mutatedPrompt;
+      const mutationResult = mutatePrompt(basePrompt, actionData.mutationOptions || {});
+      finalPrompt = mutationResult.mutatedPrompt;
       mutationData = {
         mutations: mutationResult.mutations,
         seed: mutationResult.seed
@@ -107,17 +139,21 @@ async function executeImageGeneration(schedule, fastify) {
   // Use central image generator in imagen.js
   const { generateImg } = require('./imagen');
 
-  // Generate image using the main generator. Pass fastify so it has access to DB and services.
-  const generationResultRaw = await generateImg({
-    prompt,
+  // Prepare generation options
+  const generationOptions = {
+    prompt: finalPrompt,
     negativePrompt: actionData.negativePrompt,
     modelId: actionData.model,
     parameters: actionData.parameters || {},
     userId: schedule.userId.toString(),
-    chatId: null,
+    chatId: actionData.characterId || null, // Use characterId as chatId for character context
     imageType: 'schedule',
+    customPromptId: customPromptId, // Pass custom prompt ID if selected
     fastify
-  });
+  };
+
+  // Generate image using the main generator. Pass fastify so it has access to DB and services.
+  const generationResultRaw = await generateImg(generationOptions);
 
   // Normalize various possible return shapes to get an image URL
   let imageUrl = null;
@@ -134,7 +170,7 @@ async function executeImageGeneration(schedule, fastify) {
     userId: schedule.userId.toString(),
     testId: generationResultRaw._id || null,
     imageUrl,
-    prompt,
+    prompt: finalPrompt,
     negativePrompt: actionData.negativePrompt,
     model: actionData.model,
     parameters: actionData.parameters,

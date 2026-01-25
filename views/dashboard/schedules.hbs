@@ -178,11 +178,21 @@
                     <!-- Action Type -->
                     <div class="mb-3">
                         <label class="form-label">{{translations.dashboard.actionType}}</label>
-                        <select id="actionType" class="form-select bg-secondary text-white border-secondary">
-                            <option value="generate_image">{{translations.dashboard.generateImage}}</option>
-                            <option value="generate_video">{{translations.dashboard.generateVideo}}</option>
-                            <option value="publish_post">{{translations.dashboard.publishPost}}</option>
-                        </select>
+                        <div class="schedule-action-selector">
+                            <button type="button" class="schedule-action-btn active" data-action="generate_image">
+                                <i class="bi bi-images"></i>
+                                <span>{{translations.dashboard.generateImage}}</span>
+                            </button>
+                            <button type="button" class="schedule-action-btn" data-action="generate_video">
+                                <i class="bi bi-film"></i>
+                                <span>{{translations.dashboard.generateVideo}}</span>
+                            </button>
+                            <button type="button" class="schedule-action-btn" data-action="publish_post">
+                                <i class="bi bi-send-fill"></i>
+                                <span>{{translations.dashboard.publishPost}}</span>
+                            </button>
+                        </div>
+                        <input type="hidden" id="actionType" value="generate_image">
                     </div>
 
                     <!-- Single Schedule: Date/Time -->
@@ -233,10 +243,15 @@
                     <!-- Character Selection -->
                     <div class="mb-3">
                         <label class="form-label">{{translations.dashboard.character}} <span class="text-muted">({{translations.dashboard.optional}})</span></label>
-                        <select id="actionCharacter" class="form-select bg-secondary text-white border-secondary">
-                            <option value="">{{translations.dashboard.noCharacter}}</option>
+                        <div id="characterSelectionContainer" class="character-selection-list">
                             <!-- Characters loaded dynamically -->
-                        </select>
+                            <div class="text-center py-3">
+                                <div class="spinner-border text-primary spinner-border-sm" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="text-muted mt-2 mb-0 small">Loading characters...</p>
+                            </div>
+                        </div>
                         <small class="text-muted">
                             <i class="bi bi-info-circle me-1"></i>Select a character to apply character-specific styling to generated images
                         </small>
@@ -296,25 +311,54 @@
                     </div>
 
                     <!-- Action Data: Model -->
-                    <div class="mb-3">
+                    <div class="mb-3" id="modelSelectorSection">
                         <label class="form-label">{{translations.dashboard.model}}</label>
-                        <select id="actionModel" class="form-select bg-secondary text-white border-secondary">
-                            <optgroup label="Text to Image Models">
-                                {{#each scheduleModels}}
-                                <option value="{{this.id}}" {{#if (eq this.id "flux-2-flex")}}selected{{/if}}>
-                                    {{this.name}}
-                                    {{#if this.async}}(Async){{else}}(Sync){{/if}}
-                                </option>
-                                {{/each}}
-                            </optgroup>
+                        <button type="button" class="schedule-model-selector" id="modelSelectorBtn">
+                            <div class="model-icon">
+                                <i class="bi bi-cpu"></i>
+                            </div>
+                            <span class="model-name">Select Model</span>
+                            <i class="bi bi-chevron-down model-chevron"></i>
+                        </button>
+                        <input type="hidden" id="actionModel" value="">
+                        
+                        <!-- Model Dropdown -->
+                        <div class="schedule-model-dropdown" id="modelDropdown">
+                            <div class="model-dropdown-header">
+                                <span>Text to Image Models</span>
+                            </div>
+                            {{#each scheduleModels}}
+                            <div class="model-dropdown-item" data-value="{{this.id}}" data-name="{{this.name}}">
+                                <div class="model-item-icon">
+                                    <i class="bi bi-image"></i>
+                                </div>
+                                <div class="model-item-info">
+                                    <span class="model-item-name">{{this.name}}</span>
+                                    <span class="model-item-badge {{#if this.async}}async{{else}}sync{{/if}}">
+                                        {{#if this.async}}Async{{else}}Sync{{/if}}
+                                    </span>
+                                </div>
+                                <i class="bi bi-check-lg model-check"></i>
+                            </div>
+                            {{/each}}
                             {{#if activeSDModels.length}}
-                            <optgroup label="Custom SD Models">
-                                {{#each activeSDModels}}
-                                <option value="sd-{{this.modelId}}">{{this.name}} (SD)</option>
-                                {{/each}}
-                            </optgroup>
+                            <div class="model-dropdown-header">
+                                <span>Custom SD Models</span>
+                            </div>
+                            {{#each activeSDModels}}
+                            <div class="model-dropdown-item" data-value="sd-{{this.modelId}}" data-name="{{this.name}}">
+                                <div class="model-item-icon sd">
+                                    <i class="bi bi-stars"></i>
+                                </div>
+                                <div class="model-item-info">
+                                    <span class="model-item-name">{{this.name}}</span>
+                                    <span class="model-item-badge sd">SD</span>
+                                </div>
+                                <i class="bi bi-check-lg model-check"></i>
+                            </div>
+                            {{/each}}
                             {{/if}}
-                        </select>
+                        </div>
                         <small class="text-muted">
                             <i class="bi bi-info-circle me-1"></i>Same models available as in the Image Dashboard
                         </small>

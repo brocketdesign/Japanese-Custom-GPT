@@ -19,6 +19,7 @@ class SchedulesDashboard {
     this.userCharacters = [];
     this.customPrompts = [];
     this.selectedCustomPromptIds = new Set();
+    this.selectedCharacterId = '';
     
     this.init();
   }
@@ -82,6 +83,74 @@ class SchedulesDashboard {
         this.togglePromptType(e.target.value);
       });
     });
+
+    // Action type selector buttons
+    document.querySelectorAll('.schedule-action-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        this.selectActionType(e.currentTarget.dataset.action);
+      });
+    });
+
+    // Model selector button
+    const modelSelectorBtn = document.getElementById('modelSelectorBtn');
+    const modelDropdown = document.getElementById('modelDropdown');
+    
+    if (modelSelectorBtn && modelDropdown) {
+      modelSelectorBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        modelSelectorBtn.classList.toggle('open');
+        modelDropdown.classList.toggle('show');
+      });
+
+      // Model dropdown items
+      document.querySelectorAll('.model-dropdown-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          this.selectModel(item.dataset.value, item.dataset.name);
+          modelDropdown.classList.remove('show');
+          modelSelectorBtn.classList.remove('open');
+        });
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!modelSelectorBtn.contains(e.target) && !modelDropdown.contains(e.target)) {
+          modelDropdown.classList.remove('show');
+          modelSelectorBtn.classList.remove('open');
+        }
+      });
+
+      // Select first model by default
+      const firstModel = document.querySelector('.model-dropdown-item');
+      if (firstModel) {
+        this.selectModel(firstModel.dataset.value, firstModel.dataset.name);
+      }
+    }
+  }
+
+  selectActionType(actionType) {
+    // Update hidden input
+    document.getElementById('actionType').value = actionType;
+    
+    // Update button states
+    document.querySelectorAll('.schedule-action-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.action === actionType);
+    });
+  }
+
+  selectModel(modelId, modelName) {
+    // Update hidden input
+    document.getElementById('actionModel').value = modelId;
+    
+    // Update selector button text
+    const modelNameEl = document.querySelector('.schedule-model-selector .model-name');
+    if (modelNameEl) {
+      modelNameEl.textContent = modelName;
+    }
+    
+    // Update selected state in dropdown
+    document.querySelectorAll('.model-dropdown-item').forEach(item => {
+      item.classList.toggle('selected', item.dataset.value === modelId);
+    });
   }
 
   resetFilters() {
@@ -131,28 +200,86 @@ class SchedulesDashboard {
       if (data.success) {
         this.userCharacters = data.characters;
         this.populateCharacterDropdown();
+      } else {
+        // Show error state if API returns success: false
+        this.showCharacterLoadError();
       }
     } catch (error) {
       console.error('Error loading characters:', error);
+      this.showCharacterLoadError();
     }
   }
 
+  showCharacterLoadError() {
+    const container = document.getElementById('characterSelectionContainer');
+    if (!container) return;
+    container.innerHTML = `
+      <div class="text-center py-2">
+        <p class="text-muted mb-0 small">No characters found</p>
+      </div>
+    `;
+  }
+
   populateCharacterDropdown() {
-    const select = document.getElementById('actionCharacter');
-    if (!select) return;
+    const container = document.getElementById('characterSelectionContainer');
+    if (!container) return;
     
-    // Clear existing options except the first one
-    while (select.options.length > 1) {
-      select.remove(1);
+    container.innerHTML = '';
+    
+    // Create "None" option
+    const noneItem = document.createElement('div');
+    noneItem.className = 'character-selection-item';
+    noneItem.dataset.characterId = '';
+    noneItem.innerHTML = `
+      <div class="character-item-avatar">
+        <i class="bi bi-x-circle"></i>
+      </div>
+      <div class="character-item-info">
+        <div class="character-item-name">None</div>
+      </div>
+    `;
+    noneItem.addEventListener('click', () => this.selectCharacter('', noneItem));
+    container.appendChild(noneItem);
+    
+    // Add character items
+    this.userCharacters.forEach(character => {
+      const item = document.createElement('div');
+      item.className = 'character-selection-item';
+      item.dataset.characterId = character.id;
+      
+      // API returns imageUrl, also check thumbnail and chatImageUrl for backward compatibility
+      // Use /img/avatar.png as fallback since default-thumbnail.png doesn't exist
+      const thumbnail = character.imageUrl || character.thumbnail || character.chatImageUrl || '/img/avatar.png';
+      const charName = this.escapeHtml(character.name || 'Unknown');
+      const favoriteIcon = character.isFavorite ? '<i class="bi bi-star-fill character-favorite-icon"></i>' : '';
+      
+      item.innerHTML = `
+        <div class="character-item-avatar">
+          <img src="${thumbnail}" alt="${charName}" onerror="this.src='/img/avatar.png'">
+        </div>
+        <div class="character-item-info">
+          <div class="character-item-name">${charName}${favoriteIcon}</div>
+        </div>
+      `;
+      
+      item.addEventListener('click', () => this.selectCharacter(character.id, item));
+      container.appendChild(item);
+    });
+  }
+
+  selectCharacter(characterId, itemElement) {
+    // Remove active class from all items
+    document.querySelectorAll('.character-selection-item').forEach(item => {
+      item.classList.remove('active');
+    });
+    
+    // Add active class to clicked item
+    if (itemElement) {
+      itemElement.classList.add('active');
     }
     
-    // Add character options
-    this.userCharacters.forEach(character => {
-      const option = document.createElement('option');
-      option.value = character.id;
-      option.textContent = character.name;
-      select.appendChild(option);
-    });
+    // Store selected character
+    this.selectedCharacterId = characterId;
   }
 
   async loadCustomPrompts() {
@@ -160,9 +287,12 @@ class SchedulesDashboard {
       const response = await fetch('/api/schedules/custom-prompts');
       const data = await response.json();
       
-      if (data.success) {
+      if (data.success && data.prompts) {
         this.customPrompts = data.prompts;
         this.renderCustomPrompts();
+      } else {
+        console.error('Custom prompts API returned no data:', data);
+        this.renderCustomPromptsError();
       }
     } catch (error) {
       console.error('Error loading custom prompts:', error);
@@ -190,15 +320,18 @@ class SchedulesDashboard {
       card.className = 'custom-prompt-card';
       card.dataset.promptId = prompt.id;
       
-      // Create image element
+      // Create image element - use imagePreview which contains the prompt image
       const img = document.createElement('img');
-      img.src = prompt.imagePreview || '/images/placeholder.png';
-      img.alt = ''; // Don't use user content in alt
+      const imageUrl = prompt.imagePreview || '/img/image-placeholder-1.gif';
+      img.src = imageUrl;
+      img.alt = this.escapeHtml(prompt.title || '');
+      img.onerror = () => { img.src = '/img/image-placeholder-1.gif'; };
       
-      // Create overlay with escaped text
+      // Create overlay with title or description
       const overlay = document.createElement('div');
       overlay.className = 'prompt-overlay';
-      overlay.textContent = this.truncateText(prompt.description, 50);
+      const displayText = prompt.title || prompt.description || '';
+      overlay.textContent = this.truncateText(displayText, 40);
       
       // Create badge
       const badge = document.createElement('div');
@@ -251,7 +384,20 @@ class SchedulesDashboard {
     info.style.display = this.selectedCustomPromptIds.size > 0 ? 'block' : 'none';
   }
 
+  escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+    return String(text).replace(/[&<>"']/g, m => map[m]);
+  }
+
   truncateText(text, maxLength) {
+    if (!text) return '';
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
   }
@@ -421,10 +567,31 @@ class SchedulesDashboard {
     // Reset form
     document.getElementById('scheduleId').value = '';
     document.getElementById('scheduleDescription').value = '';
-    document.getElementById('actionType').value = 'generate_image';
     document.getElementById('actionPrompt').value = '';
-    document.getElementById('actionModel').value = 'flux-2-flex';
-    document.getElementById('actionCharacter').value = '';
+    
+    // Reset action type to generate_image
+    this.selectActionType('generate_image');
+    
+    // Reset model to first available or flux-2-flex
+    const firstModel = document.querySelector('.model-dropdown-item');
+    if (firstModel) {
+      this.selectModel(firstModel.dataset.value, firstModel.dataset.name);
+    } else {
+      document.getElementById('actionModel').value = 'flux-2-flex';
+    }
+    
+    // Reset character selection
+    this.selectedCharacterId = '';
+    document.querySelectorAll('.character-selection-item').forEach(item => {
+      item.classList.remove('active');
+    });
+    
+    // Select the "None" option first
+    const noneItem = document.querySelector('.character-selection-item[data-character-id=""]');
+    if (noneItem) {
+      noneItem.classList.add('active');
+    }
+    
     document.getElementById('publishInstagram').checked = false;
     document.getElementById('publishTwitter').checked = false;
     
@@ -480,9 +647,20 @@ class SchedulesDashboard {
       // Populate form
       document.getElementById('scheduleId').value = schedule._id;
       document.getElementById('scheduleDescription').value = schedule.description || '';
-      document.getElementById('actionType').value = schedule.actionType;
       document.getElementById('actionPrompt').value = schedule.actionData?.prompt || '';
-      document.getElementById('actionModel').value = schedule.actionData?.model || 'flux-2-flex';
+      
+      // Update action type selector
+      this.selectActionType(schedule.actionType);
+      
+      // Update model selector
+      const modelId = schedule.actionData?.model || 'flux-2-flex';
+      const modelItem = document.querySelector(`.model-dropdown-item[data-value="${modelId}"]`);
+      if (modelItem) {
+        this.selectModel(modelId, modelItem.dataset.name);
+      } else {
+        document.getElementById('actionModel').value = modelId;
+      }
+      
       document.getElementById('actionCharacter').value = schedule.actionData?.characterId || '';
       
       // Set prompt type based on whether custom prompts are used
@@ -680,8 +858,8 @@ class SchedulesDashboard {
     // Get prompt type
     const promptType = document.querySelector('input[name="promptTypeRadio"]:checked').value;
     
-    // Get character selection
-    const characterId = document.getElementById('actionCharacter').value || null;
+    // Get character selection (from the new list-based selector)
+    const characterId = this.selectedCharacterId || null;
     
     // Collect social platforms
     const socialPlatforms = [];

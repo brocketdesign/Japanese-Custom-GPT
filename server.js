@@ -1518,9 +1518,25 @@ fastify.get('/api/recent-chats', async (request, reply) => {
       chatMap[chat._id.toString()] = chat;
     });
     
+    // Get favorites status for all chat IDs
+    const favoritesMap = {};
+    if (chatIds.length > 0) {
+      const favorites = await db.collection('user_favorites')
+        .find({
+          userId: userId,
+          chatId: { $in: chatIds.map(id => new fastify.mongo.ObjectId(id)) }
+        })
+        .toArray();
+      
+      favorites.forEach(fav => {
+        favoritesMap[fav.chatId.toString()] = true;
+      });
+    }
+    
     // Combine data
     const recentChats = userChats.map(uc => {
       const chat = chatMap[uc.chatId?.toString()] || {};
+      const chatIdStr = (chat._id || uc.chatId)?.toString();
       return {
         _id: chat._id || uc.chatId,
         name: chat.name || 'Unknown',
@@ -1529,7 +1545,8 @@ fastify.get('/api/recent-chats', async (request, reply) => {
         lastMessage: uc.messages?.[uc.messages.length - 1]?.content || '',
         updatedAt: uc.updatedAt || uc.createdAt,
         createdAt: uc.createdAt,
-        userChatId: uc._id
+        userChatId: uc._id,
+        isFavorite: !!favoritesMap[chatIdStr]
       };
     }).filter(c => c._id);
     

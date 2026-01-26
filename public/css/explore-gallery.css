@@ -1176,19 +1176,31 @@
 
 /* ===== Double Tap Heart Animation ===== */
 .double-tap-heart {
-    position: absolute;
+    position: fixed;
     pointer-events: none;
-    z-index: 1000;
-    animation: floatHeart 1s ease-out forwards;
+    z-index: 999999 !important;
     font-size: 80px;
     color: #ff006e;
     text-shadow: 0 0 20px rgba(255, 0, 110, 0.8);
     transform-origin: center;
+    will-change: transform, opacity;
+    /* Add visible background for debugging */
+    background: radial-gradient(circle, rgba(255, 0, 110, 0.3) 0%, transparent 70%);
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Ensure it's not hidden */
+    visibility: visible !important;
+    opacity: 1;
 }
 
 .double-tap-heart i {
     display: block;
     filter: drop-shadow(0 0 10px rgba(255, 0, 110, 0.6));
+    color: #ff006e;
+    text-shadow: 0 0 30px rgba(255, 0, 110, 1);
 }
 
 @keyframes floatHeart {

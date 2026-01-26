@@ -685,32 +685,33 @@ class ExploreGallery {
     setupDoubleTapLike(container) {
         const slide = container.closest('.character-slide');
         if (!slide) return;
-        
+
         let lastTapTime = 0;
         let lastTapX = 0;
         let lastTapY = 0;
-        
+
+        // Touch events for mobile
         container.addEventListener('touchend', (e) => {
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTapTime;
-            
+
             // Get current touch point
             if (e.changedTouches.length > 0) {
                 const touch = e.changedTouches[0];
                 const currentX = touch.clientX;
                 const currentY = touch.clientY;
-                
+
                 // Check if it's a double tap (within 300ms and same location within 30px)
                 const distance = Math.sqrt(
-                    Math.pow(currentX - lastTapX, 2) + 
+                    Math.pow(currentX - lastTapX, 2) +
                     Math.pow(currentY - lastTapY, 2)
                 );
-                
+
                 if (tapLength < 300 && tapLength > 0 && distance < 30) {
                     e.preventDefault();
 
                     // Create floating heart animation at tap position
-                    this.createDoubleTapHearts(currentX, currentY, container);
+                    this.createDoubleTapHearts(currentX, currentY, slide);
 
                     // Trigger like on the heart button
                     const heartBtn = slide.querySelector('.tiktok-action-btn.heart-btn');
@@ -718,10 +719,24 @@ class ExploreGallery {
                         this.handleLikeImage(heartBtn);
                     }
                 }
-                
+
                 lastTapTime = currentTime;
                 lastTapX = currentX;
                 lastTapY = currentY;
+            }
+        });
+
+        // Double-click support for desktop
+        container.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+
+            // Create floating heart animation at click position
+            this.createDoubleTapHearts(e.clientX, e.clientY, slide);
+
+            // Trigger like on the heart button
+            const heartBtn = slide.querySelector('.tiktok-action-btn.heart-btn');
+            if (heartBtn) {
+                this.handleLikeImage(heartBtn);
             }
         });
     }
@@ -729,31 +744,55 @@ class ExploreGallery {
     /**
      * Create floating hearts animation at double-tap position
      */
-    createDoubleTapHearts(x, y, container) {
+    createDoubleTapHearts(x, y, slide) {
+        console.log(`🎯 Creating hearts at position: (${x}, ${y})`);
+
         const numHearts = 3;
-        const animations = ['', 'floatHeartLeft', 'floatHeartRight'];
+        const animations = ['floatHeart', 'floatHeartLeft', 'floatHeartRight'];
 
         for (let i = 0; i < numHearts; i++) {
             const heart = document.createElement('div');
             heart.className = `double-tap-heart heart-${i + 1}`;
-            heart.innerHTML = '<i class="fas fa-heart"></i>';
 
-            // Position at tap location
-            heart.style.left = `${x}px`;
-            heart.style.top = `${y}px`;
+            // Check if Bootstrap Icons are available, otherwise use emoji
+            const testIcon = document.createElement('i');
+            testIcon.className = 'bi bi-heart-fill';
+            testIcon.style.position = 'absolute';
+            testIcon.style.visibility = 'hidden';
+            document.body.appendChild(testIcon);
+            const computedStyle = window.getComputedStyle(testIcon);
+            const hasBootstrapIcons = computedStyle.fontFamily.includes('bootstrap-icons');
+            document.body.removeChild(testIcon);
 
-            // Apply different animation for variation
-            if (i > 0 && animations[i]) {
-                heart.style.animation = `${animations[i]} 1s ease-out forwards`;
-                heart.style.animationDelay = `${i * 0.1}s`;
+            // Use Bootstrap icon or emoji fallback
+            if (hasBootstrapIcons) {
+                heart.innerHTML = '<i class="bi bi-heart-fill"></i>';
+            } else {
+                heart.innerHTML = '❤️';
+                console.log('Using emoji fallback for heart animation');
             }
 
-            // Add to container
-            container.appendChild(heart);
+            // Use fixed positioning to work with clientX/clientY coordinates
+            heart.style.position = 'fixed';
+            heart.style.left = `${x}px`;
+            heart.style.top = `${y}px`;
+            heart.style.zIndex = '999999';
+
+            // Apply animation for each heart
+            heart.style.animation = `${animations[i]} 1s ease-out forwards`;
+            heart.style.animationDelay = `${i * 0.1}s`;
+
+            console.log(`❤️ Heart ${i + 1} created with animation: ${animations[i]}`);
+
+            // Add to body for proper fixed positioning
+            document.body.appendChild(heart);
 
             // Remove after animation completes
             setTimeout(() => {
-                heart.remove();
+                if (heart.parentNode) {
+                    heart.remove();
+                    console.log(`🗑️ Heart ${i + 1} removed`);
+                }
             }, 1200 + (i * 100));
         }
     }
@@ -1140,3 +1179,86 @@ class ExploreGallery {
 document.addEventListener('DOMContentLoaded', () => {
     window.exploreGallery = new ExploreGallery();
 });
+
+// Debug function to test heart animation from console
+window.testHeartAnimation = function(x, y) {
+    console.log('🧪 Testing heart animation...');
+
+    // Check if Font Awesome is loaded
+    const testIcon = document.createElement('i');
+    testIcon.className = 'fas fa-heart';
+    document.body.appendChild(testIcon);
+    const computedStyle = window.getComputedStyle(testIcon);
+    const isFontAwesome = computedStyle.fontFamily.includes('Font Awesome');
+    document.body.removeChild(testIcon);
+    console.log('📦 Font Awesome loaded:', isFontAwesome);
+
+    // Use center of screen if no coordinates provided
+    if (x === undefined || y === undefined) {
+        x = window.innerWidth / 2;
+        y = window.innerHeight / 2;
+        console.log(`📍 Using center of screen: (${x}, ${y})`);
+    }
+
+    const numHearts = 3;
+    const animations = ['floatHeart', 'floatHeartLeft', 'floatHeartRight'];
+
+    for (let i = 0; i < numHearts; i++) {
+        const heart = document.createElement('div');
+        heart.className = `double-tap-heart heart-${i + 1}`;
+
+        // Use both icon and text as fallback
+        heart.innerHTML = '<i class="fas fa-heart"></i>';
+        if (!isFontAwesome) {
+            heart.innerHTML = '❤️'; // Fallback to emoji
+            console.warn('⚠️ Font Awesome not detected, using emoji fallback');
+        }
+
+        // Use fixed positioning
+        heart.style.position = 'fixed';
+        heart.style.left = `${x}px`;
+        heart.style.top = `${y}px`;
+        heart.style.zIndex = '999999';
+
+        // Apply animation
+        heart.style.animation = `${animations[i]} 1s ease-out forwards`;
+        heart.style.animationDelay = `${i * 0.1}s`;
+
+        console.log(`❤️ Heart ${i + 1} created:`, {
+            position: heart.style.position,
+            left: heart.style.left,
+            top: heart.style.top,
+            zIndex: heart.style.zIndex,
+            animation: heart.style.animation,
+            className: heart.className,
+            innerHTML: heart.innerHTML
+        });
+
+        // Add to body
+        document.body.appendChild(heart);
+
+        // Log computed styles after adding to DOM
+        const computed = window.getComputedStyle(heart);
+        console.log(`🎨 Heart ${i + 1} computed styles:`, {
+            position: computed.position,
+            left: computed.left,
+            top: computed.top,
+            zIndex: computed.zIndex,
+            opacity: computed.opacity,
+            visibility: computed.visibility,
+            display: computed.display,
+            fontSize: computed.fontSize,
+            color: computed.color
+        });
+
+        // Remove after animation
+        setTimeout(() => {
+            if (heart.parentNode) {
+                heart.remove();
+                console.log(`🗑️ Heart ${i + 1} removed`);
+            }
+        }, 1200 + (i * 100));
+    }
+
+    console.log('✅ Heart animation test complete! Hearts should be visible now.');
+};

@@ -1052,12 +1052,53 @@ function setupChatInterface(chat, character, userChat, isNew) {
         let userChatMessages = userChat.messages || [];
         console.log(`[displayChat] Retrieved ${userChatMessages.length} messages from database:`, userChatMessages);
 
+        // CRITICAL FIX: Filter out invalid/undefined messages before processing
+        const invalidMessages = [];
+        userChatMessages = userChatMessages.filter((msg, index) => {
+            // Skip null or undefined messages
+            if (!msg) {
+                console.warn(`[displayChat] Removing undefined/null message at index ${index}`);
+                invalidMessages.push({ index, reason: 'null or undefined' });
+                return false;
+            }
+
+            // For image messages, validate they have required fields
+            if (msg.type === 'image' || msg.type === 'mergeFace' || msg.imageId) {
+                if (!msg.imageUrl || !msg.imageId) {
+                    console.warn(`[displayChat] Removing invalid image message at index ${index}: imageUrl=${!!msg.imageUrl}, imageId=${!!msg.imageId}`);
+                    invalidMessages.push({ index, reason: 'missing imageUrl or imageId', msg });
+                    return false;
+                }
+                // Validate imageUrl format
+                if (!msg.imageUrl.startsWith('http') && !msg.imageUrl.startsWith('data:image/') && !msg.imageUrl.startsWith('/')) {
+                    console.warn(`[displayChat] Removing message with invalid imageUrl format at index ${index}: ${msg.imageUrl?.substring(0, 60)}`);
+                    invalidMessages.push({ index, reason: 'invalid imageUrl format', msg });
+                    return false;
+                }
+            }
+
+            // For batched messages, validate batch metadata
+            if (msg.batchId && (msg.batchIndex === undefined || msg.batchSize === undefined)) {
+                console.warn(`[displayChat] Removing message with incomplete batch metadata at index ${index}: batchId=${msg.batchId}, batchIndex=${msg.batchIndex}, batchSize=${msg.batchSize}`);
+                invalidMessages.push({ index, reason: 'incomplete batch metadata', msg });
+                return false;
+            }
+
+            return true;
+        });
+
+        if (invalidMessages.length > 0) {
+            console.warn(`[displayChat] ⚠️  Filtered out ${invalidMessages.length} invalid messages:`, invalidMessages);
+        }
+
+        console.log(`[displayChat] Processing ${userChatMessages.length} valid messages`);
+
         // ===== NEW: Group batched images into slider messages =====
         // Reconstruct bot-image-slider messages from individual batched image messages
         const processedMessages = [];
         const batchedGroups = new Map(); // Track batches by batchId
         const processedIndices = new Set(); // Track which messages we've already processed
-        
+
         // First pass: identify all batches and group messages
         for (let i = 0; i < userChatMessages.length; i++) {
             const msg = userChatMessages[i];
@@ -1078,6 +1119,14 @@ function setupChatInterface(chat, character, userChat, isNew) {
                 
                 // Add this image to the batch, but skip duplicates by imageId
                 const batch = batchedGroups.get(msg.batchId);
+
+                // Validate message has required data before adding to batch
+                if (!msg.imageUrl || !msg.imageId) {
+                    console.warn(`[displayChat] Skipping batched message with missing data: imageUrl=${!!msg.imageUrl}, imageId=${!!msg.imageId}`);
+                    processedIndices.add(i);
+                    continue;
+                }
+
                 if (msg.imageId && batch.seenImageIds.has(msg.imageId)) {
                     console.log(`[displayChat] Skipping duplicate imageId ${msg.imageId} at batchIndex ${msg.batchIndex}`);
                 } else {
@@ -1221,17 +1270,27 @@ function setupChatInterface(chat, character, userChat, isNew) {
                         const imageDataArray = [];
                         
                         sliderImages.forEach((imgData, index) => {
-                            if (!imgData) return;
-                            
+                            // Validate image data before rendering
+                            if (!imgData) {
+                                console.warn(`[displayChat] Skipping undefined image at slider index ${index}`);
+                                return;
+                            }
+
+                            // CRITICAL FIX: Validate required fields
+                            if (!imgData.imageUrl || !imgData.imageId) {
+                                console.warn(`[displayChat] Skipping invalid slider image at index ${index}: imageUrl=${!!imgData.imageUrl}, imageId=${!!imgData.imageId}`);
+                                return;
+                            }
+
                             const imageNsfw = imgData.nsfw || false;
                             if (index === 0) firstImageNsfw = imageNsfw;
-                            
+
                             // Use proper blur logic that respects showNSFW setting (same as shouldBlurNSFW)
                             // For temporary users or non-subscribers: always blur NSFW
                             // For premium users: respect their showNSFW preference
                             const shouldBlur = imageNsfw && (isTemporary || !subscriptionStatus || (subscriptionStatus && !showNSFW));
                             const displayMode = imageNsfw ? (subscriptionStatus && showNSFW ? 'show' : (subscriptionStatus ? 'overlay' : 'blur')) : 'show';
-                            
+
                             const imageUrl = imgData.imageUrl;
                             const titleText = imgData.title || imgData.prompt || 'Image';
                             const imagePrompt = imgData.prompt || '';

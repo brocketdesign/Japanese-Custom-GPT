@@ -2325,9 +2325,28 @@ async function getImageSeed(db, imageId) {
   }
 }
 async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title, slug, imageUrl, aspectRatio, seed, blurredImageUrl = null, nsfw = false, fastify, isMerged = false, originalImageUrl = null, mergeId = null, shouldAutoMerge = false, thumbnailUrl = null, batchId = null, batchIndex = null, batchSize = null}) {
-  
+
   console.log(`🖼️ [saveImageToDB] START: batchIndex=${batchIndex}/${batchSize}, batchId=${batchId}, taskId=${taskId}, imageUrl=${imageUrl?.substring(0, 60)}...`);
-  
+
+  // CRITICAL VALIDATION: Ensure we have all required data before saving
+  if (!imageUrl || !taskId || !userId || !chatId) {
+    console.error(`❌ [saveImageToDB] CRITICAL: Missing required data - imageUrl=${!!imageUrl}, taskId=${!!taskId}, userId=${!!userId}, chatId=${!!chatId}`);
+    console.error(`❌ [saveImageToDB] Refusing to save incomplete image to prevent database corruption`);
+    return false;
+  }
+
+  // Validate imageUrl is a proper URL or data URI
+  if (!imageUrl.startsWith('http') && !imageUrl.startsWith('data:image/')) {
+    console.error(`❌ [saveImageToDB] CRITICAL: Invalid imageUrl format: ${imageUrl?.substring(0, 60)}...`);
+    return false;
+  }
+
+  // Validate ObjectId formats
+  if (!ObjectId.isValid(userId) || !ObjectId.isValid(chatId)) {
+    console.error(`❌ [saveImageToDB] CRITICAL: Invalid ObjectId - userId=${userId}, chatId=${chatId}`);
+    return false;
+  }
+
   const db = fastify.mongo.db;
   const { generateThumbnailFromUrl } = require('../models/tool');
   try {
@@ -2598,9 +2617,10 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
     }
     
     if (!userChatId || !ObjectId.isValid(userChatId)) {
-      console.log(`[saveImageToDB] Invalid or missing userChatId: ${userChatId}, skipping message save`);
-      return { 
-        imageId, 
+      console.warn(`⚠️  [saveImageToDB] Invalid or missing userChatId: ${userChatId}, image saved to gallery but NOT to chat messages. This may cause undefined images in chat!`);
+      console.warn(`⚠️  [saveImageToDB] imageId=${imageId}, taskId=${taskId}, batchId=${batchId}, batchIndex=${batchIndex}`);
+      return {
+        imageId,
         imageUrl,
         thumbnailUrl: finalThumbnailUrl,
         prompt,

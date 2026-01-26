@@ -500,13 +500,30 @@ async function addMergeFaceMessageToChat(userChatId, mergeId, mergedImageUrl, fa
   try {
     const db = fastify.mongo.db;
     const collectionUserChat = db.collection('userChat');
-    
-    const userChatDoc = await collectionUserChat.findOne({ 
-      _id: new ObjectId(userChatId) 
+
+    const userChatDoc = await collectionUserChat.findOne({
+      _id: new ObjectId(userChatId)
     });
-    
+
     if (!userChatDoc) {
       console.error(`[addMergeFaceMessageToChat] Call ID: ${callId} - UserChat not found: ${userChatId}`);
+      return;
+    }
+
+    // CRITICAL FIX: Check if this mergeId already exists to prevent duplicates
+    const existingMessage = await collectionUserChat.findOne({
+      _id: new ObjectId(userChatId),
+      'messages.mergeId': mergeId
+    });
+
+    if (existingMessage) {
+      console.log(`🧬 [addMergeFaceMessageToChat] Call ID: ${callId} - Message with mergeId ${mergeId} already exists, skipping duplicate`);
+      return;
+    }
+
+    // Validate that we have all required data
+    if (!mergedImageUrl || !mergeId) {
+      console.error(`[addMergeFaceMessageToChat] Call ID: ${callId} - Invalid data: mergedImageUrl=${mergedImageUrl}, mergeId=${mergeId}`);
       return;
     }
 
@@ -525,12 +542,12 @@ async function addMergeFaceMessageToChat(userChatId, mergeId, mergedImageUrl, fa
     // Add the message to the chat using $push for atomicity
     const updateResult = await collectionUserChat.updateOne(
       { _id: new ObjectId(userChatId) },
-      { 
+      {
         $push: { messages: assistantMessage },
         $set: { updatedAt: new Date() }
       }
     );
-    
+
     console.log(`[addMergeFaceMessageToChat] Call ID: ${callId} - Message added successfully`);
   } catch (error) {
     console.error(`[addMergeFaceMessageToChat] Call ID: ${callId} - Error: ${error.message}`);

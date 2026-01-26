@@ -254,6 +254,34 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
           return;
         }
         
+        // Build sequentialBatchInfo for proper batch grouping in carousel
+        // Models without batch support generate each image as a separate task
+        let sequentialBatchInfo = null;
+        if (taskDoc.sequentialParentTaskId || taskDoc.sequentialExpectedCount) {
+          // This is a sequential batch task - get batch info
+          if (taskDoc.sequentialExpectedCount) {
+            // This is the parent task (batchIndex 0)
+            sequentialBatchInfo = {
+              batchIndex: 0,
+              batchSize: taskDoc.sequentialExpectedCount
+            };
+          } else if (taskDoc.sequentialParentTaskId && typeof taskDoc.sequentialImageIndex === 'number') {
+            // This is a child task - get parent info
+            // sequentialImageIndex starts at 2 (i + 1 where i starts at 1 in the creation loop)
+            // So child tasks have indices 2, 3, 4... which map to batchIndex 1, 2, 3...
+            const parentTask = await tasksCollection.findOne({ taskId: taskDoc.sequentialParentTaskId });
+            if (parentTask && parentTask.sequentialExpectedCount) {
+              sequentialBatchInfo = {
+                batchIndex: taskDoc.sequentialImageIndex - 1, // Convert to 0-based (2->1, 3->2, etc.)
+                batchSize: parentTask.sequentialExpectedCount
+              };
+            }
+          }
+          if (sequentialBatchInfo) {
+            console.log(`[NovitaWebhook] Sequential batch info for task ${taskId}: index=${sequentialBatchInfo.batchIndex}, size=${sequentialBatchInfo.batchSize}`);
+          }
+        }
+        
         // Update taskStatus to have string userId for handleTaskCompletion
         const formattedTaskStatus = {
           ...taskStatus,
@@ -266,7 +294,8 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
           translations: translations,
           userId: userId,
           chatId: chatId,
-          placeholderId: taskDoc.placeholderId
+          placeholderId: taskDoc.placeholderId,
+          sequentialBatchInfo
         });
       } catch (error) {
         console.error(`[NovitaWebhook] Error calling handleTaskCompletion for task ${taskId}:`, error);

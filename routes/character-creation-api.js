@@ -589,18 +589,20 @@ async function routes(fastify, options) {
                 // Generate placeholder ID for tracking
                 const placeholderId = new fastify.mongo.ObjectId().toString();
 
-                // Determine if we should use Hunyuan Image 3 for photorealistic style
-                const useHunyuan = imageStyle === 'photorealistic' || (imageStyle !== 'anime' && !modelId);
+                // Determine the model to use based on image style
+                // If photorealistic style or no specific model provided (and not anime), use Hunyuan Image 3
+                const useHunyuanModel = imageStyle === 'photorealistic' || (imageStyle !== 'anime' && !modelId);
+                const effectiveModelId = modelId || (useHunyuanModel ? 'hunyuan-image-3' : null);
                 
                 console.log('\x1b[36m🖼️ ===== IMAGE GENERATION PARAMS =====\x1b[0m');
                 console.log(`   - prompt: ${enhancedPrompt ? enhancedPrompt.substring(0, 80) + '...' : 'MISSING'}`);
-                console.log(`   - modelId: ${modelId || 'DEFAULT (not provided)'}`);
+                console.log(`   - modelId: ${effectiveModelId || 'DEFAULT (not provided)'}`);
                 console.log(`   - chatId: ${chatId}`);
                 console.log(`   - userId: ${userId}`);
                 console.log(`   - imageType: sfw`);
                 console.log(`   - image_num: 4`);
                 console.log(`   - chatCreation: true`);
-                console.log(`   - hunyuan: ${useHunyuan}`);
+                console.log(`   - useHunyuanModel: ${useHunyuanModel}`);
                 console.log(`   - baseFaceUrl: ${baseFaceUrl ? 'YES' : 'NO'}`);
                 console.log(`   - enableMergeFace: ${enableMergeFace || baseFaceBase64 ? 'YES' : 'NO'}`);
                 console.log('\x1b[36m=====================================\x1b[0m');
@@ -612,7 +614,7 @@ async function routes(fastify, options) {
                     generateImg({
                         prompt: enhancedPrompt,
                         negativePrompt: negativePrompt || null,
-                        modelId: modelId || null, // Pass modelId to generateImg
+                        modelId: effectiveModelId, // Use the effective model ID
                         userId: userId,
                         chatId: chatId,
                         userChatId: null,
@@ -624,7 +626,8 @@ async function routes(fastify, options) {
                         translations: request.translations,
                         fastify: fastify,
                         enableMergeFace: shouldEnableMergeFace,
-                        hunyuan: useHunyuan
+                        // hunyuan param kept for backward compatibility with fetchNovitaMagic API endpoint selection
+                        hunyuan: useHunyuanModel
                     }).then(() => {
                         console.log('\x1b[32m✅ Image gen done\x1b[0m');
                     }).catch(error => {

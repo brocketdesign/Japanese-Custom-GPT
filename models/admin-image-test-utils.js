@@ -270,6 +270,57 @@ const MODEL_CONFIGS = {
   }
 };
 
+/**
+ * Check if a model supports batch image generation (multiple images in a single API call)
+ * Models that support batch generation have 'images' or 'image_num' in their supportedParams
+ * Models without batch support require separate API calls for each image (sequential generation)
+ * 
+ * Known models WITHOUT batch support (require sequential generation):
+ * - hunyuan-image-3: No image_num or images parameter
+ * - z-image-turbo: No image_num or images parameter
+ * - seedream-4.0, seedream-4.5: Use sequential_image_generation: 'disabled'
+ * - qwen-image-2512: No batch parameters
+ * - reimagine: No batch parameters
+ * 
+ * Known models WITH batch support:
+ * - flux-2-flex, flux-2-dev: Support 'images' parameter
+ * - flux-kontext-*: Support 'images' parameter
+ * - sd-img2img, sd-txt2img: Support 'image_num' parameter
+ * 
+ * @param {string} modelId - The model identifier from MODEL_CONFIGS
+ * @returns {boolean} - True if model supports batch generation, false if requires sequential.
+ *                      Returns false for unknown models (safer assumption - treats them as sequential)
+ */
+function modelSupportsBatchGeneration(modelId) {
+  const config = MODEL_CONFIGS[modelId];
+  if (!config) {
+    // Unknown models default to not supporting batch generation.
+    // This is a conservative approach - if we don't know the model's capabilities,
+    // we assume it doesn't support batch and make separate API calls.
+    // This may result in more API calls but ensures images are generated correctly.
+    return false;
+  }
+  
+  const supportedParams = config.supportedParams || [];
+  // Check if model supports 'images' (batch output) or 'image_num' (batch count parameter)
+  return supportedParams.includes('images') || supportedParams.includes('image_num');
+}
+
+/**
+ * Check if a model requires sequential generation for multiple images
+ * This is the inverse of modelSupportsBatchGeneration
+ * 
+ * Sequential generation means making separate API calls for each image requested,
+ * rather than a single API call with image_num parameter.
+ * 
+ * @param {string} modelId - The model identifier from MODEL_CONFIGS
+ * @returns {boolean} - True if model requires sequential generation (separate API calls per image),
+ *                      false if model supports batch generation (single API call for multiple images)
+ */
+function modelRequiresSequentialGeneration(modelId) {
+  return !modelSupportsBatchGeneration(modelId);
+}
+
 // Size options for different models
 const SIZE_OPTIONS = [
   { value: '512*512', label: '512x512 (Square)', minPixels: 0 },
@@ -1383,6 +1434,8 @@ module.exports = {
   STYLE_PRESETS,
   NSFW_KEYWORDS,
   isNSFWPrompt,
+  modelSupportsBatchGeneration,
+  modelRequiresSequentialGeneration,
   initializeModelTest,
   checkTaskResult,
   saveTestResult,

@@ -1694,44 +1694,6 @@ body:has(.ig-profile-header) .brand-logo i {
     color: var(--text-primary) !important;
 }
 
-/* Style header action buttons for character page */
-body:has(.ig-profile-header) #avatarMenuContainer {
-    background: var(--bg-secondary);
-    border-radius: 25px;
-    padding: 4px 8px;
-    border: 1px solid var(--border-color);
-    gap: 6px !important;
-}
-
-body:has(.ig-profile-header) #avatarMenuContainer .btn,
-body:has(.ig-profile-header) #avatarMenuContainer .badge,
-body:has(.ig-profile-header) #avatarMenuContainer span.btn {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    padding: 6px 10px !important;
-    font-size: 0.8rem !important;
-    border-radius: 20px !important;
-    transition: all 0.2s ease;
-}
-
-body:has(.ig-profile-header) #avatarMenuContainer .btn:hover,
-body:has(.ig-profile-header) #avatarMenuContainer span.btn:hover {
-    background: rgba(130, 64, 255, 0.15) !important;
-}
-
-body:has(.ig-profile-header) #avatarMenuContainer .btn-outline-primary,
-body:has(.ig-profile-header) #avatarMenuContainer .btn-gradient-border {
-    background: linear-gradient(135deg, rgba(130, 64, 255, 0.2), rgba(168, 85, 247, 0.2)) !important;
-    border: 1px solid rgba(130, 64, 255, 0.4) !important;
-    color: var(--primary-light) !important;
-}
-
-body:has(.ig-profile-header) #avatarMenuContainer .btn-primary-50 {
-    background: rgba(130, 64, 255, 0.2) !important;
-    color: var(--text-primary) !important;
-}
-
 body:has(.ig-profile-header) #avatarMenuBtn {
     width: 32px !important;
     height: 32px !important;

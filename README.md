@@ -6,7 +6,7 @@
 
 ChatLamix is a comprehensive platform for creating, customizing, and interacting with AI-powered characters. Generate stunning images and videos of your custom characters, engage in immersive chat conversations, and personalize every aspect of your experience with advanced AI models.
 
-🌐 **Live Application**: [https://app.chatlamix.jp](https://app.chatlamix.jp)
+🌐 **Live Application**: [https://app.chatlamix.com](https://app.chatlamix.com)
 
 ## ✨ Features
 
@@ -146,7 +146,7 @@ This project is licensed under the ISC License.
 
 ## 🔗 Links
 
-- [Live Application](https://app.chatlamix.jp)
+- [Live Application](https://app.chatlamix.com)
 - [Documentation](./QUICK_START_GUIDE.md)
 - [Testing Guide](./TESTING_GUIDE.md)
 

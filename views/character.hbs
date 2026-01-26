@@ -389,7 +389,10 @@
                 e.preventDefault();
                 e.stopPropagation();
                 
-                const currentState = followBtn.classList.contains('following');
+                // Get current state from cache if available, otherwise from UI
+                const currentState = CharacterFollowers.followCache.has(chatId) 
+                    ? CharacterFollowers.followCache.get(chatId)
+                    : followBtn.classList.contains('following');
                 
                 // Optimistic update
                 updateCharacterFollowButton(followBtn, !currentState);

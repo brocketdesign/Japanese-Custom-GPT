@@ -15,6 +15,12 @@ const CharacterFollowers = {
    * @param {Function} callback - Optional callback after toggle
    */
   toggleFollow: function(chatId, callback) {
+    if (!chatId) {
+      console.error('toggleFollow: chatId is required');
+      if (callback) callback({ success: false, error: 'chatId is required' });
+      return;
+    }
+    
     $.ajax({
       type: 'POST',
       url: '/character-followers/toggle',
@@ -53,6 +59,12 @@ const CharacterFollowers = {
    * @param {Function} callback - Optional callback
    */
   followCharacter: function(chatId, callback) {
+    if (!chatId) {
+      console.error('followCharacter: chatId is required');
+      if (callback) callback({ success: false, error: 'chatId is required' });
+      return;
+    }
+    
     $.ajax({
       type: 'POST',
       url: '/character-followers/follow',
@@ -86,6 +98,12 @@ const CharacterFollowers = {
    * @param {Function} callback - Optional callback
    */
   unfollowCharacter: function(chatId, callback) {
+    if (!chatId) {
+      console.error('unfollowCharacter: chatId is required');
+      if (callback) callback({ success: false, error: 'chatId is required' });
+      return;
+    }
+    
     $.ajax({
       type: 'POST',
       url: '/character-followers/unfollow',

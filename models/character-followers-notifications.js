@@ -1,15 +1,40 @@
 const { ObjectId } = require('mongodb');
 const { getCharacterFollowers, toObjectId } = require('./character-followers-utils');
+const fs = require('fs');
+const path = require('path');
+
+// Cache for translations
+const translationsCache = {};
+
+/**
+ * Load translations for a specific language
+ * @param {string} lang - Language code (en, fr, ja)
+ * @returns {Object} Translations object
+ */
+function getTranslations(lang) {
+  if (!lang) lang = 'en';
+  
+  if (!translationsCache[lang]) {
+    const translationFile = path.join(__dirname, '..', 'locales', `${lang}.json`);
+    if (fs.existsSync(translationFile)) {
+      translationsCache[lang] = JSON.parse(fs.readFileSync(translationFile, 'utf-8'));
+    } else {
+      translationsCache[lang] = {};
+    }
+  }
+  return translationsCache[lang];
+}
 
 /**
  * Send notifications to character followers when new content is created
  * @param {Object} db - MongoDB database instance
+ * @param {Object} fastify - Fastify instance for websocket notifications
  * @param {string|ObjectId} chatId - Character/Chat ID
  * @param {string} contentType - Type of content ('image' or 'video')
  * @param {Object} contentData - Additional content data (imageUrl, title, etc.)
  * @returns {Promise<number>} Number of notifications sent
  */
-async function notifyCharacterFollowers(db, chatId, contentType, contentData = {}) {
+async function notifyCharacterFollowers(db, fastify, chatId, contentType, contentData = {}) {
   try {
     const chatIdObj = toObjectId(chatId);
     
@@ -23,56 +48,110 @@ async function notifyCharacterFollowers(db, chatId, contentType, contentData = {
     }
     
     // Get all followers of this character
-    const followers = await getCharacterFollowers(db, chatId);
+    const followerIds = await getCharacterFollowers(db, chatId);
     
-    if (followers.length === 0) {
+    if (followerIds.length === 0) {
       console.log(`[CharacterFollowers] No followers to notify for character: ${character.name}`);
       return 0;
     }
     
-    // Prepare notification content
+    // Get user details for each follower to get their language preference
+    const usersCollection = db.collection('users');
+    const followers = await usersCollection.find({
+      _id: { $in: followerIds.map(id => toObjectId(id)) }
+    }).toArray();
+    
     const notificationsCollection = db.collection('notifications');
     const characterName = character.name || 'Character';
     
-    let title, message, link, imageUrl;
-    
+    // Determine link based on content type
+    let link, imageUrl;
     if (contentType === 'image') {
-      title = `New image from ${characterName}`;
-      message = contentData.title || `${characterName} has posted a new image`;
       link = contentData.imageUrl || `/character/${chatId}`;
       imageUrl = contentData.thumbnailUrl || contentData.imageUrl;
     } else if (contentType === 'video') {
-      title = `New video from ${characterName}`;
-      message = contentData.title || `${characterName} has posted a new video`;
       link = contentData.videoUrl || `/character/${chatId}`;
       imageUrl = contentData.thumbnailUrl;
     } else {
-      title = `New content from ${characterName}`;
-      message = `${characterName} has posted new content`;
       link = `/character/${chatId}`;
+      imageUrl = contentData.thumbnailUrl || contentData.imageUrl;
     }
     
-    // Create notifications for all followers
-    const notifications = followers.map(userId => ({
-      userId: toObjectId(userId),
-      title,
-      message,
-      type: 'info',
-      data: {
-        link,
-        imageUrl,
-        chatId: chatIdObj.toString(),
-        contentType
-      },
-      viewed: false,
-      createdAt: new Date().toISOString(),
-      sticky: false
-    }));
+    // Create notifications for each follower with their language
+    const notifications = [];
+    const liveNotifications = [];
     
-    // Insert notifications
+    for (const follower of followers) {
+      const userLang = follower.lang || 'en';
+      const translations = getTranslations(userLang);
+      
+      // Get translated notification text
+      let title, message;
+      if (contentType === 'image') {
+        title = (translations.follow?.notificationNewImage || 'New image from {characterName}')
+          .replace('{characterName}', characterName);
+        message = contentData.title || `${characterName} has posted a new image`;
+      } else if (contentType === 'video') {
+        title = (translations.follow?.notificationNewVideo || 'New video from {characterName}')
+          .replace('{characterName}', characterName);
+        message = contentData.title || `${characterName} has posted a new video`;
+      } else {
+        title = `New content from ${characterName}`;
+        message = `${characterName} has posted new content`;
+      }
+      
+      // Database notification
+      notifications.push({
+        userId: toObjectId(follower._id),
+        title,
+        message,
+        type: 'info',
+        data: {
+          link,
+          imageUrl,
+          chatId: chatIdObj.toString(),
+          contentType
+        },
+        viewed: false,
+        createdAt: new Date().toISOString(),
+        sticky: false
+      });
+      
+      // Prepare live notification for websocket
+      liveNotifications.push({
+        userId: follower._id.toString(),
+        title,
+        message,
+        link,
+        imageUrl
+      });
+    }
+    
+    // Insert notifications to database
     if (notifications.length > 0) {
       await notificationsCollection.insertMany(notifications);
       console.log(`[CharacterFollowers] Sent ${notifications.length} notifications for ${contentType} from ${characterName}`);
+    }
+    
+    // Send live websocket notifications if fastify is available
+    if (fastify && fastify.sendNotificationToUser) {
+      for (const liveNotif of liveNotifications) {
+        try {
+          fastify.sendNotificationToUser(
+            liveNotif.userId,
+            'showNotification',
+            {
+              message: liveNotif.title,
+              icon: 'info'
+            },
+            { queue: true }
+          );
+          
+          console.log(`[CharacterFollowers] Sent live notification to user ${liveNotif.userId}`);
+        } catch (wsError) {
+          console.error(`[CharacterFollowers] Error sending websocket notification:`, wsError);
+        }
+      }
     }
     
     return notifications.length;
@@ -88,17 +167,17 @@ async function notifyCharacterFollowers(db, chatId, contentType, contentData = {
  * 
  * Example usage in routes/stability.js or models/imagen.js:
  * 
- * const { notifyCharacterFollowers } = require('../models/character-followers-notifications');
+ * const { onImageCreated } = require('../models/character-followers-notifications');
  * 
  * // After image is saved to gallery
- * await notifyCharacterFollowers(db, chatId, 'image', {
+ * await onImageCreated(db, fastify, chatId, {
  *   imageUrl: imageUrl,
  *   thumbnailUrl: thumbnailUrl,
  *   title: imageTitle
  * });
  */
-async function onImageCreated(db, chatId, imageData) {
-  return await notifyCharacterFollowers(db, chatId, 'image', imageData);
+async function onImageCreated(db, fastify, chatId, imageData) {
+  return await notifyCharacterFollowers(db, fastify, chatId, 'image', imageData);
 }
 
 /**
@@ -107,17 +186,17 @@ async function onImageCreated(db, chatId, imageData) {
  * 
  * Example usage in routes/img2video-api.js or routes/dashboard-video.js:
  * 
- * const { notifyCharacterFollowers } = require('../models/character-followers-notifications');
+ * const { onVideoCreated } = require('../models/character-followers-notifications');
  * 
  * // After video is saved
- * await notifyCharacterFollowers(db, chatId, 'video', {
+ * await onVideoCreated(db, fastify, chatId, {
  *   videoUrl: videoUrl,
  *   thumbnailUrl: thumbnailUrl,
  *   title: videoTitle
  * });
  */
-async function onVideoCreated(db, chatId, videoData) {
-  return await notifyCharacterFollowers(db, chatId, 'video', videoData);
+async function onVideoCreated(db, fastify, chatId, videoData) {
+  return await notifyCharacterFollowers(db, fastify, chatId, 'video', videoData);
 }
 
 module.exports = {

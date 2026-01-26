@@ -3,6 +3,31 @@
 ## Overview
 This guide explains how to integrate the character follow notification system into the existing image and video generation workflows.
 
+## ✨ Key Features
+
+### Multi-Language Support
+- Notifications are automatically saved in each user's preferred language (English, French, Japanese)
+- Uses translation keys from `/locales/{lang}.json`
+- Supports `{characterName}` placeholder replacement
+
+### Live WebSocket Notifications
+- Real-time notifications sent to online users via WebSocket
+- Uses `fastify.sendNotificationToUser()` for instant delivery
+- Offline users receive queued notifications when they reconnect
+- Automatic expiry and cleanup of old queued notifications
+
+### Notification Flow
+1. Content (image/video) is created for a character
+2. System finds all followers of that character
+3. For each follower:
+   - Loads their language preference (from `user.lang`)
+   - Generates translated notification text
+   - Saves notification to database
+   - Sends live WebSocket notification if user is online
+4. Users see both:
+   - Toast notification (if online)
+   - Persistent notification in notification center
+
 ## Files Created
 - `/models/character-followers-utils.js` - Core follower management utilities
 - `/models/character-followers-notifications.js` - Notification helpers
@@ -21,12 +46,17 @@ When an image is successfully generated and saved to the gallery, add a notifica
 const { onImageCreated } = require('../models/character-followers-notifications');
 
 // After image is successfully saved to gallery
-await onImageCreated(db, chatId, {
+await onImageCreated(db, fastify, chatId, {
   imageUrl: imageUrl,
   thumbnailUrl: thumbnailUrl || imageUrl,
   title: imageTitle || 'New image'
 });
 ```
+
+**Features:**
+- Notifications are saved in each user's preferred language
+- Live websocket notifications are sent to online users
+- Offline users receive notifications when they reconnect
 
 **Recommended locations:**
 - `models/imagen.js` - After image task completion and gallery update
@@ -43,12 +73,17 @@ When a video is successfully generated and saved, add a notification call:
 const { onVideoCreated } = require('../models/character-followers-notifications');
 
 // After video is successfully saved
-await onVideoCreated(db, chatId, {
+await onVideoCreated(db, fastify, chatId, {
   videoUrl: videoUrl,
   thumbnailUrl: thumbnailUrl,
   title: videoTitle || 'New video'
 });
 ```
+
+**Features:**
+- Notifications are saved in each user's preferred language
+- Live websocket notifications are sent to online users
+- Offline users receive notifications when they reconnect
 
 **Recommended locations:**
 - `routes/img2video-api.js` - After video generation completes (look for status === 'completed')
@@ -103,7 +138,7 @@ The notification functions are designed to fail gracefully:
 
 ```javascript
 try {
-  const notificationCount = await onImageCreated(db, chatId, imageData);
+  const notificationCount = await onImageCreated(db, fastify, chatId, imageData);
   console.log(`Notified ${notificationCount} followers`);
 } catch (error) {
   console.error('Notification error:', error);

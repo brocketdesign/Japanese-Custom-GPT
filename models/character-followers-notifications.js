@@ -1,5 +1,5 @@
 const { ObjectId } = require('mongodb');
-const { getCharacterFollowers } = require('./character-followers-utils');
+const { getCharacterFollowers, toObjectId } = require('./character-followers-utils');
 
 /**
  * Send notifications to character followers when new content is created
@@ -11,7 +11,7 @@ const { getCharacterFollowers } = require('./character-followers-utils');
  */
 async function notifyCharacterFollowers(db, chatId, contentType, contentData = {}) {
   try {
-    const chatIdObj = chatId instanceof ObjectId ? chatId : new ObjectId(chatId);
+    const chatIdObj = toObjectId(chatId);
     
     // Get the character info
     const chatsCollection = db.collection('chats');
@@ -54,7 +54,7 @@ async function notifyCharacterFollowers(db, chatId, contentType, contentData = {
     
     // Create notifications for all followers
     const notifications = followers.map(userId => ({
-      userId: userId instanceof ObjectId ? userId : new ObjectId(userId),
+      userId: toObjectId(userId),
       title,
       message,
       type: 'info',

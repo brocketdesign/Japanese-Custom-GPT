@@ -44,7 +44,6 @@ async function followCharacter(db, userId, chatId) {
   const result = await followersCollection.insertOne({
     userId: userIdObj,
     chatId: chatIdObj,
-    followedAt: new Date(),
     createdAt: new Date(),
     updatedAt: new Date()
   });
@@ -165,7 +164,7 @@ async function getCharacterFollowers(db, chatId, options = {}) {
   
   const followers = await followersCollection
     .find({ chatId: chatIdObj })
-    .sort({ followedAt: -1 })
+    .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
     .toArray();
@@ -194,7 +193,7 @@ async function getUserFollowedCharacters(db, userId, options = {}) {
   // Get followed characters with pagination
   const follows = await followersCollection
     .find({ userId: userIdObj })
-    .sort({ followedAt: -1 })
+    .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
     .toArray();
@@ -213,7 +212,7 @@ async function getUserFollowedCharacters(db, userId, options = {}) {
       const character = characters.find(c => c._id.toString() === follow.chatId.toString());
       return {
         ...character,
-        followedAt: follow.followedAt
+        followedAt: follow.createdAt
       };
     }).filter(Boolean),
     pagination: {

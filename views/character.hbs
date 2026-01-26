@@ -67,12 +67,12 @@
                 {{#unless user.isTemporary}}
                     <button class="ig-secondary-btn character-follow-btn" 
                             data-chat-id="{{chat._id}}"
-                            title="Follow to get notifications">
+                            title="{{translations.follow.follow}}">
                         <i class="bi bi-bell-slash"></i>
                     </button>
                     <button class="ig-secondary-btn character-favorite-btn" 
                             data-chat-id="{{chat._id}}"
-                            title="Add to favorites">
+                            title="{{translations.favorite.addFavorite}}">
                         <i class="bi bi-star"></i>
                     </button>
                 {{/unless}}

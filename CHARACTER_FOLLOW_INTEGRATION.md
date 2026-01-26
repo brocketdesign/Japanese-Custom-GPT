@@ -137,8 +137,7 @@ db.notifications.find({
   _id: ObjectId,
   userId: ObjectId,        // User who is following
   chatId: ObjectId,        // Character being followed
-  followedAt: Date,
-  createdAt: Date,
+  createdAt: Date,         // When the follow relationship was created
   updatedAt: Date
 }
 ```

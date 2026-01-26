@@ -128,10 +128,20 @@ window.loadIntroImages = function(chatId, page = 1, reload = false, isModal = fa
  * @param {number} page - Page number to load
  * @param {boolean} reload - Whether to reload from cache
  * @param {boolean} isModal - Whether loading in modal context
+ * @param {string} contentType - Optional content type filter (SFW/NSFW)
  * @returns {Promise}
  */
-window.loadUserImages = function(userId, page = 1, reload = false, isModal = false) {
-    return loadImages('user', userId, page, reload, isModal, `/user/${userId}/liked-images`);
+window.loadUserImages = function(userId, page = 1, reload = false, isModal = false, contentType = null) {
+    // Build endpoint with content_type if provided
+    let endpoint = `/user/${userId}/liked-images`;
+    if (contentType) {
+        endpoint += `?content_type=${contentType}`;
+    }
+
+    // Update cache key to include content type if provided
+    const cacheKeySuffix = contentType ? `_${contentType}` : '';
+
+    return loadImages('user', userId, page, reload, isModal, endpoint, false, 'image', cacheKeySuffix);
 };
 
 /**

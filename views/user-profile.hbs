@@ -233,6 +233,18 @@
         <div class="tab-content">
             <!-- Likes Tab -->
             <div id="images-tab" class="tab-pane active">
+                <!-- SFW/NSFW Toggle -->
+                <div class="content-type-toggle" id="userContentTypeToggle">
+                    <button class="content-type-btn active" data-type="SFW">
+                        <i class="bi bi-shield-check"></i>
+                        <span>SFW</span>
+                    </button>
+                    <button class="content-type-btn" data-type="NSFW">
+                        <i class="bi bi-eye-slash"></i>
+                        <span>NSFW</span>
+                    </button>
+                </div>
+
                 <div class="media-grid" id="user-images-gallery">
                     <!-- Loading state -->
                     <div class="loading-grid">
@@ -600,7 +612,9 @@
                 // Show selected tab pane and load data
                 if (tabName === 'images') {
                     $('#images-tab').show();
-                    loadUserImages(userId, 1, true);
+                    // Load with current content type selection
+                    const currentContentType = window.userProfile ? window.userProfile.contentType : 'SFW';
+                    loadUserImages(userId, 1, true, false, currentContentType);
                 } else if (tabName === 'characters') {
                     $('#characters-tab').show();
                     // Force refresh with cache-busting to show latest characters first
@@ -845,8 +859,71 @@
                 return date.toLocaleDateString();
             }
 
-            // Load initial data
-            loadUserImages(userId, 1, true);
+            // Initialize user profile state for content type filtering
+            if (typeof window.userProfile === 'undefined') {
+                window.userProfile = {
+                    contentType: 'SFW', // default to SFW
+                    sfwPagination: {
+                        currentPage: 0,
+                        totalPages: 0
+                    },
+                    nsfwPagination: {
+                        currentPage: 0,
+                        totalPages: 0
+                    }
+                };
+            }
+
+            // Initialize content type toggle for user liked images
+            const userContentToggle = document.getElementById('userContentTypeToggle');
+            if (userContentToggle) {
+                const toggleButtons = userContentToggle.querySelectorAll('.content-type-btn');
+
+                toggleButtons.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const selectedType = this.dataset.type; // 'SFW' or 'NSFW'
+
+                        // If already selected, provide visual feedback without reloading
+                        if (selectedType === window.userProfile.contentType) {
+                            this.style.transform = 'scale(0.95)';
+                            setTimeout(() => {
+                                this.style.transform = 'scale(1)';
+                            }, 150);
+                            return;
+                        }
+
+                        // Update active state
+                        toggleButtons.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+
+                        // Update user profile content type
+                        window.userProfile.contentType = selectedType;
+
+                        // Clear the images grid and show loading state
+                        const imagesGrid = document.getElementById('user-images-gallery');
+                        if (imagesGrid) {
+                            imagesGrid.innerHTML = `
+                                <div class="loading-grid">
+                                    <div class="loading-item"></div>
+                                    <div class="loading-item"></div>
+                                    <div class="loading-item"></div>
+                                    <div class="loading-item"></div>
+                                    <div class="loading-item"></div>
+                                    <div class="loading-item"></div>
+                                </div>
+                            `;
+                        }
+
+                        // Load images for the selected content type
+                        if (userId) {
+                            loadUserImages(userId, 1, true, false, selectedType);
+                        }
+                    });
+                });
+            }
+
+            // Load initial data with default SFW content type
+            loadUserImages(userId, 1, true, false, window.userProfile.contentType);
         });
     </script>
 

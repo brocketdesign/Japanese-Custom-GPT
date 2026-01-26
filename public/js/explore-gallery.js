@@ -708,7 +708,10 @@ class ExploreGallery {
                 
                 if (tapLength < 300 && tapLength > 0 && distance < 30) {
                     e.preventDefault();
-                    
+
+                    // Create floating heart animation at tap position
+                    this.createDoubleTapHearts(currentX, currentY, container);
+
                     // Trigger like on the heart button
                     const heartBtn = slide.querySelector('.tiktok-action-btn.heart-btn');
                     if (heartBtn) {
@@ -722,7 +725,39 @@ class ExploreGallery {
             }
         });
     }
-    
+
+    /**
+     * Create floating hearts animation at double-tap position
+     */
+    createDoubleTapHearts(x, y, container) {
+        const numHearts = 3;
+        const animations = ['', 'floatHeartLeft', 'floatHeartRight'];
+
+        for (let i = 0; i < numHearts; i++) {
+            const heart = document.createElement('div');
+            heart.className = `double-tap-heart heart-${i + 1}`;
+            heart.innerHTML = '<i class="fas fa-heart"></i>';
+
+            // Position at tap location
+            heart.style.left = `${x}px`;
+            heart.style.top = `${y}px`;
+
+            // Apply different animation for variation
+            if (i > 0 && animations[i]) {
+                heart.style.animation = `${animations[i]} 1s ease-out forwards`;
+                heart.style.animationDelay = `${i * 0.1}s`;
+            }
+
+            // Add to container
+            container.appendChild(heart);
+
+            // Remove after animation completes
+            setTimeout(() => {
+                heart.remove();
+            }, 1200 + (i * 100));
+        }
+    }
+
     /**
      * Update heart button for a specific image
      */

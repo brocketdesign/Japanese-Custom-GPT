@@ -355,14 +355,15 @@ async function routes(fastify, options) {
     try {
       const userId = new ObjectId(request.params.userId);
       const page = parseInt(request.query.page) || 1;
+      const contentType = request.query.content_type; // Optional content_type filter (SFW/NSFW)
       const limit = 12; // Number of images per page
       const skip = (page - 1) * limit;
-  
+
       const db = fastify.mongo.db;
       const imagesLikesCollection = db.collection('images_likes');
       const chatsGalleryCollection = db.collection('gallery');
       const chatsCollection = db.collection('chats');
-  
+
       // Find the images liked by the user
       const likedImageIds = await imagesLikesCollection
         .find({ userId })
@@ -377,14 +378,38 @@ async function routes(fastify, options) {
         return reply.send({ images: [], page, totalPages: 0 });
       }
   
+      // Build aggregation pipeline with content_type filter
+      const aggregatePipeline = [
+        { $match: { 'images._id': { $in: likedImageIds } } },  // Match only documents where the liked image IDs exist
+        { $unwind: '$images' },  // Unwind to get individual images
+        { $match: { 'images._id': { $in: likedImageIds } } }  // Match the images specifically with the liked IDs
+      ];
+
+      // Add content_type filter if provided
+      if (contentType) {
+        const normalizedContentType = contentType.toUpperCase();
+        if (normalizedContentType === 'SFW') {
+          // SFW: only images where nsfw is not true
+          aggregatePipeline.push({
+            $match: {
+              'images.nsfw': { $ne: true }
+            }
+          });
+        } else if (normalizedContentType === 'NSFW') {
+          // NSFW: only images where nsfw is true
+          aggregatePipeline.push({
+            $match: {
+              'images.nsfw': true
+            }
+          });
+        }
+      }
+
+      aggregatePipeline.push({ $project: { image: '$images', chatId: 1, _id: 0 } });  // Project image and chatId
+
       // Fetch the documents that contain the liked images from the gallery collection
       const likedImagesDocs = await chatsGalleryCollection
-        .aggregate([
-          { $match: { 'images._id': { $in: likedImageIds } } },  // Match only documents where the liked image IDs exist
-          { $unwind: '$images' },  // Unwind to get individual images
-          { $match: { 'images._id': { $in: likedImageIds } } },  // Match the images specifically with the liked IDs
-          { $project: { image: '$images', chatId: 1, _id: 0 } }  // Project image and chatId
-        ])
+        .aggregate(aggregatePipeline)
         .toArray();
   
       // Extract chatIds from the liked images
@@ -409,8 +434,31 @@ async function routes(fastify, options) {
         };
       });
   
-      // Total liked images by user
-      const totalLikedCount = await imagesLikesCollection.countDocuments({ userId });
+      // Total liked images by user (filtered by content_type if specified)
+      let totalLikedCount;
+      if (contentType) {
+        // If filtering by content type, count filtered images
+        const countPipeline = [
+          { $match: { 'images._id': { $in: await imagesLikesCollection.find({ userId }).map(doc => doc.imageId).toArray() } } },
+          { $unwind: '$images' },
+          { $match: { 'images._id': { $in: await imagesLikesCollection.find({ userId }).map(doc => doc.imageId).toArray() } } }
+        ];
+
+        const normalizedContentType = contentType.toUpperCase();
+        if (normalizedContentType === 'SFW') {
+          countPipeline.push({ $match: { 'images.nsfw': { $ne: true } } });
+        } else if (normalizedContentType === 'NSFW') {
+          countPipeline.push({ $match: { 'images.nsfw': true } });
+        }
+
+        countPipeline.push({ $count: 'total' });
+
+        const countResult = await chatsGalleryCollection.aggregate(countPipeline).toArray();
+        totalLikedCount = countResult.length > 0 ? countResult[0].total : 0;
+      } else {
+        // No filter, count all liked images
+        totalLikedCount = await imagesLikesCollection.countDocuments({ userId });
+      }
       const totalPages = Math.ceil(totalLikedCount / limit);
 
       return reply.send({

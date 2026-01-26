@@ -1173,3 +1173,83 @@
 .tiktok-action-btn.chat-btn:hover {
     background: rgba(99, 102, 241, 0.25);
 }
+
+/* ===== Double Tap Heart Animation ===== */
+.double-tap-heart {
+    position: absolute;
+    pointer-events: none;
+    z-index: 1000;
+    animation: floatHeart 1s ease-out forwards;
+    font-size: 80px;
+    color: #ff006e;
+    text-shadow: 0 0 20px rgba(255, 0, 110, 0.8);
+    transform-origin: center;
+}
+
+.double-tap-heart i {
+    display: block;
+    filter: drop-shadow(0 0 10px rgba(255, 0, 110, 0.6));
+}
+
+@keyframes floatHeart {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0);
+    }
+    20% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+    40% {
+        transform: translate(-50%, -60%) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -120%) scale(0.8) rotate(15deg);
+    }
+}
+
+/* Multiple hearts variation */
+.double-tap-heart.heart-1 {
+    animation-delay: 0s;
+}
+
+.double-tap-heart.heart-2 {
+    animation-delay: 0.1s;
+    font-size: 60px;
+}
+
+.double-tap-heart.heart-3 {
+    animation-delay: 0.2s;
+    font-size: 70px;
+}
+
+@keyframes floatHeartLeft {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0) rotate(0deg);
+    }
+    20% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1) rotate(-10deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-80%, -130%) scale(0.6) rotate(-20deg);
+    }
+}
+
+@keyframes floatHeartRight {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0) rotate(0deg);
+    }
+    20% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1) rotate(10deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-20%, -130%) scale(0.6) rotate(20deg);
+    }
+}

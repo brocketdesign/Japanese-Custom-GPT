@@ -228,9 +228,12 @@
             <!-- Navigation -->
             <div class="col-lg-3">
                 <nav class="docs-nav">
+                    <div class="nav-category text-secondary small mb-2 px-3">Authentication</div>
                     <a class="nav-link active" href="#authentication">
                         <i class="bi bi-shield-lock me-2"></i>Authentication
                     </a>
+                    <hr class="my-3 opacity-25">
+                    <div class="nav-category text-secondary small mb-2 px-3">Characters</div>
                     <a class="nav-link" href="#create-character">
                         <i class="bi bi-person-plus me-2"></i>Create Character
                     </a>
@@ -243,6 +246,25 @@
                     <a class="nav-link" href="#add-video">
                         <i class="bi bi-film me-2"></i>Add Video
                     </a>
+                    <hr class="my-3 opacity-25">
+                    <div class="nav-category text-secondary small mb-2 px-3">Marketing APIs</div>
+                    <a class="nav-link" href="#marketing-dashboard">
+                        <i class="bi bi-speedometer2 me-2"></i>Dashboard Summary
+                    </a>
+                    <a class="nav-link" href="#marketing-characters">
+                        <i class="bi bi-people-fill me-2"></i>AI Characters
+                    </a>
+                    <a class="nav-link" href="#marketing-content">
+                        <i class="bi bi-collection-play me-2"></i>Content Studio
+                    </a>
+                    <a class="nav-link" href="#marketing-analytics">
+                        <i class="bi bi-graph-up me-2"></i>Analytics
+                    </a>
+                    <a class="nav-link" href="#marketing-trends">
+                        <i class="bi bi-fire me-2"></i>Trends
+                    </a>
+                    <hr class="my-3 opacity-25">
+                    <div class="nav-category text-secondary small mb-2 px-3">Error Handling</div>
                     <a class="nav-link" href="#errors">
                         <i class="bi bi-exclamation-triangle me-2"></i>Error Handling
                     </a>
@@ -630,6 +652,499 @@
     })
 });</code></pre>
                     </div>
+                </section>
+
+                <!-- Marketing Dashboard Section -->
+                <section id="marketing-dashboard" class="docs-section">
+                    <h2><i class="bi bi-speedometer2 text-purple"></i>Marketing Dashboard Summary</h2>
+                    <p>Get comprehensive platform metrics for the Marketing Command Center dashboard, including followers, views, signups, and engagement.</p>
+
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <span class="endpoint-badge badge-get">GET</span>
+                        <code class="endpoint-url">/api/marketing/dashboard/summary</code>
+                    </div>
+
+                    <h3>Query Parameters</h3>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <code>period</code>
+                                    <span class="param-optional ms-2">optional</span>
+                                </td>
+                                <td>string</td>
+                                <td>Time period: "7d", "30d", "90d". Default: "7d"</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Example Request</h3>
+                    <div class="code-block position-relative">
+                        <button class="copy-btn" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                        <pre><code class="language-javascript">const response = await fetch('https://app.chatlamix.com/api/marketing/dashboard/summary?period=7d', {
+    method: 'GET',
+    headers: {
+        'X-API-Key': 'clx_your_api_key_here'
+    }
+});</code></pre>
+                    </div>
+
+                    <h3>Response</h3>
+                    <div class="response-example">
+                        <pre><code class="language-json">{
+    "success": true,
+    "data": {
+        "metrics": {
+            "totalFollowers": {
+                "value": 503400,
+                "formatted": "503.4K",
+                "change": 12.4,
+                "changeDirection": "up"
+            },
+            "weeklyViews": {
+                "value": 2400000,
+                "formatted": "2.4M",
+                "change": 23.1,
+                "changeDirection": "up"
+            },
+            "platformSignups": {
+                "value": 29800,
+                "formatted": "29.8K",
+                "change": 8.7,
+                "changeDirection": "up"
+            },
+            "avgEngagement": {
+                "value": 8.2,
+                "formatted": "8.2%",
+                "change": -1.2,
+                "changeDirection": "down"
+            }
+        },
+        "characterPerformance": {
+            "characters": [
+                {
+                    "id": "char_123",
+                    "name": "Luna",
+                    "imageUrl": "https://...",
+                    "followers": 45200,
+                    "followersFormatted": "45.2K",
+                    "status": "active"
+                }
+            ],
+            "totalCharacters": 10
+        },
+        "hotTrends": [
+            {
+                "id": "trend_1",
+                "name": "Shy Dance Challenge",
+                "views": 45000000,
+                "viewsFormatted": "45M views",
+                "daysActive": 3,
+                "status": "active"
+            }
+        ],
+        "lastUpdated": "2024-01-23T04:39:57.846Z"
+    }
+}</code></pre>
+                    </div>
+
+                    <h3 class="mt-4">Health Check</h3>
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <span class="endpoint-badge badge-get">GET</span>
+                        <code class="endpoint-url">/api/marketing/dashboard/health</code>
+                    </div>
+                    <p>Check platform health status and server uptime.</p>
+                </section>
+
+                <!-- Marketing Characters Section -->
+                <section id="marketing-characters" class="docs-section">
+                    <h2><i class="bi bi-people-fill text-success"></i>AI Characters</h2>
+                    <p>Manage AI influencer characters with marketing metrics including followers, engagement, posts, and platform referrals.</p>
+
+                    <h3>List Characters</h3>
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <span class="endpoint-badge badge-get">GET</span>
+                        <code class="endpoint-url">/api/marketing/characters</code>
+                    </div>
+
+                    <h3>Query Parameters</h3>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>status</code><span class="param-optional ms-2">optional</span></td>
+                                <td>string</td>
+                                <td>Filter by status: "active", "scheduled", "draft", "all". Default: "all"</td>
+                            </tr>
+                            <tr>
+                                <td><code>sortBy</code><span class="param-optional ms-2">optional</span></td>
+                                <td>string</td>
+                                <td>Sort field: "followers", "engagement", "posts". Default: "followers"</td>
+                            </tr>
+                            <tr>
+                                <td><code>order</code><span class="param-optional ms-2">optional</span></td>
+                                <td>string</td>
+                                <td>Sort order: "asc", "desc". Default: "desc"</td>
+                            </tr>
+                            <tr>
+                                <td><code>page</code><span class="param-optional ms-2">optional</span></td>
+                                <td>integer</td>
+                                <td>Page number. Default: 1</td>
+                            </tr>
+                            <tr>
+                                <td><code>limit</code><span class="param-optional ms-2">optional</span></td>
+                                <td>integer</td>
+                                <td>Results per page (max 50). Default: 20</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Example Request</h3>
+                    <div class="code-block position-relative">
+                        <button class="copy-btn" onclick="copyCode(this)">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                        <pre><code class="language-javascript">const response = await fetch('https://app.chatlamix.com/api/marketing/characters?status=active&sortBy=followers&limit=10', {
+    method: 'GET',
+    headers: {
+        'X-API-Key': 'clx_your_api_key_here'
+    }
+});</code></pre>
+                    </div>
+
+                    <h3>Response</h3>
+                    <div class="response-example">
+                        <pre><code class="language-json">{
+    "success": true,
+    "data": {
+        "characters": [
+            {
+                "id": "char_123",
+                "name": "Luna",
+                "shortDescription": "Dreamy Artist",
+                "imageUrl": "https://...",
+                "status": "active",
+                "metrics": {
+                    "followers": 45200,
+                    "followersFormatted": "45.2K",
+                    "engagement": 8.2,
+                    "engagementFormatted": "8.2%",
+                    "posts": 156,
+                    "platformReferrals": 2300,
+                    "platformReferralsFormatted": "2.3K"
+                }
+            }
+        ],
+        "pagination": {
+            "currentPage": 1,
+            "totalPages": 5,
+            "totalCharacters": 100,
+            "hasMore": true
+        }
+    }
+}</code></pre>
+                    </div>
+
+                    <h3 class="mt-4">Get Character Details</h3>
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <span class="endpoint-badge badge-get">GET</span>
+                        <code class="endpoint-url">/api/marketing/characters/:characterId</code>
+                    </div>
+
+                    <h3 class="mt-4">Character Analytics</h3>
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <span class="endpoint-badge badge-get">GET</span>
+                        <code class="endpoint-url">/api/marketing/characters/:characterId/analytics</code>
+                    </div>
+                    <p>Get detailed analytics for a specific character including follower growth timeline, views, and engagement metrics.</p>
+                </section>
+
+                <!-- Marketing Content Section -->
+                <section id="marketing-content" class="docs-section">
+                    <h2><i class="bi bi-collection-play text-warning"></i>Content Studio</h2>
+                    <p>Manage the content pipeline with scheduling, rendering status, and publishing workflows.</p>
+
+                    <h3>Content Stats</h3>
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <span class="endpoint-badge badge-get">GET</span>
+                        <code class="endpoint-url">/api/marketing/content/stats</code>
+                    </div>
+                    <p>Get content status counts (In Queue, Rendering, Scheduled, Published Today).</p>
+
+                    <h3>Example Response</h3>
+                    <div class="response-example">
+                        <pre><code class="language-json">{
+    "success": true,
+    "data": {
+        "inQueue": { "count": 23, "label": "In Queue" },
+        "rendering": { "count": 5, "label": "Rendering" },
+        "scheduled": { "count": 18, "label": "Scheduled" },
+        "publishedToday": { 
+            "count": 12, 
+            "change": 20, 
+            "changeDirection": "up",
+            "label": "Published Today" 
+        }
+    }
+}</code></pre>
+                    </div>
+
+                    <h3 class="mt-4">Content Pipeline</h3>
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <span class="endpoint-badge badge-get">GET</span>
+                        <code class="endpoint-url">/api/marketing/content/pipeline</code>
+                    </div>
+
+                    <h3>Query Parameters</h3>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>status</code><span class="param-optional ms-2">optional</span></td>
+                                <td>string</td>
+                                <td>Filter: "all", "draft", "rendering", "review", "scheduled", "queued", "published"</td>
+                            </tr>
+                            <tr>
+                                <td><code>characterId</code><span class="param-optional ms-2">optional</span></td>
+                                <td>string</td>
+                                <td>Filter by specific character ID</td>
+                            </tr>
+                            <tr>
+                                <td><code>page</code><span class="param-optional ms-2">optional</span></td>
+                                <td>integer</td>
+                                <td>Page number. Default: 1</td>
+                            </tr>
+                            <tr>
+                                <td><code>limit</code><span class="param-optional ms-2">optional</span></td>
+                                <td>integer</td>
+                                <td>Results per page (max 50). Default: 20</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Example Response</h3>
+                    <div class="response-example">
+                        <pre><code class="language-json">{
+    "success": true,
+    "data": {
+        "content": [
+            {
+                "id": "content_1",
+                "character": {
+                    "id": "char_123",
+                    "name": "Aria",
+                    "imageUrl": "https://..."
+                },
+                "contentType": "Trending Dance",
+                "trend": {
+                    "id": "trend_1",
+                    "name": "Shy Dance Challenge"
+                },
+                "status": "rendering",
+                "progress": 67,
+                "scheduledAt": "2024-01-23T15:00:00.000Z",
+                "scheduledFormatted": "Today 3:00 PM"
+            }
+        ],
+        "pagination": {
+            "currentPage": 1,
+            "totalPages": 3,
+            "totalItems": 58,
+            "hasMore": true
+        }
+    }
+}</code></pre>
+                    </div>
+                </section>
+
+                <!-- Marketing Analytics Section -->
+                <section id="marketing-analytics" class="docs-section">
+                    <h2><i class="bi bi-graph-up text-info"></i>Analytics & Insights</h2>
+                    <p>Track performance with funnel analytics, conversion rates, and top performer leaderboards.</p>
+
+                    <h3>Analytics Overview</h3>
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <span class="endpoint-badge badge-get">GET</span>
+                        <code class="endpoint-url">/api/marketing/analytics/overview</code>
+                    </div>
+                    <p>Get key metrics: New Followers, Total Views, Platform Signups, Conversion Rate.</p>
+
+                    <h3 class="mt-4">Funnel Performance</h3>
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <span class="endpoint-badge badge-get">GET</span>
+                        <code class="endpoint-url">/api/marketing/analytics/funnel</code>
+                    </div>
+                    <p>Get conversion funnel data: Video Views → Profile Visits → Link Clicks → Platform Visits → Signups → First Chat.</p>
+
+                    <h3>Example Response</h3>
+                    <div class="response-example">
+                        <pre><code class="language-json">{
+    "success": true,
+    "data": {
+        "funnel": [
+            { "stage": "Video Views", "value": 2400000, "formatted": "2.4M", "percentage": 100 },
+            { "stage": "Profile Visits", "value": 320000, "formatted": "320K", "percentage": 13.3 },
+            { "stage": "Link Clicks", "value": 45000, "formatted": "45K", "percentage": 14.1 },
+            { "stage": "Platform Visits", "value": 32000, "formatted": "32K", "percentage": 71.1 },
+            { "stage": "Signups", "value": 8200, "formatted": "8.2K", "percentage": 25.6 },
+            { "stage": "First Chat", "value": 6100, "formatted": "6.1K", "percentage": 74.4 }
+        ],
+        "overallConversion": {
+            "videoViewsToSignups": 0.34,
+            "signupsToFirstChat": 74.4
+        },
+        "period": "7d"
+    }
+}</code></pre>
+                    </div>
+
+                    <h3 class="mt-4">Top Performers</h3>
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <span class="endpoint-badge badge-get">GET</span>
+                        <code class="endpoint-url">/api/marketing/analytics/top-performers</code>
+                    </div>
+                    <p>Get leaderboard of top performing characters by engagement or signups.</p>
+
+                    <h3>Query Parameters</h3>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>period</code><span class="param-optional ms-2">optional</span></td>
+                                <td>string</td>
+                                <td>Time period: "7d", "30d", "90d". Default: "7d"</td>
+                            </tr>
+                            <tr>
+                                <td><code>limit</code><span class="param-optional ms-2">optional</span></td>
+                                <td>integer</td>
+                                <td>Number of performers (max 20). Default: 5</td>
+                            </tr>
+                            <tr>
+                                <td><code>sortBy</code><span class="param-optional ms-2">optional</span></td>
+                                <td>string</td>
+                                <td>Sort by: "signups", "engagement", "views". Default: "signups"</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Example Response</h3>
+                    <div class="response-example">
+                        <pre><code class="language-json">{
+    "success": true,
+    "data": {
+        "performers": [
+            {
+                "rank": 1,
+                "character": {
+                    "id": "char_123",
+                    "name": "Aria",
+                    "imageUrl": "https://..."
+                },
+                "engagement": 10.2,
+                "engagementFormatted": "10.2% engagement",
+                "signups": 5700,
+                "signupsFormatted": "5.7K signups"
+            }
+        ],
+        "period": "7d"
+    }
+}</code></pre>
+                    </div>
+                </section>
+
+                <!-- Marketing Trends Section -->
+                <section id="marketing-trends" class="docs-section">
+                    <h2><i class="bi bi-fire text-danger"></i>Trends</h2>
+                    <p>Discover hot trends for content creation and character engagement.</p>
+
+                    <h3>List Trends</h3>
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <span class="endpoint-badge badge-get">GET</span>
+                        <code class="endpoint-url">/api/marketing/trends</code>
+                    </div>
+
+                    <h3>Query Parameters</h3>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>limit</code><span class="param-optional ms-2">optional</span></td>
+                                <td>integer</td>
+                                <td>Number of trends (max 50). Default: 10</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Example Response</h3>
+                    <div class="response-example">
+                        <pre><code class="language-json">{
+    "success": true,
+    "data": {
+        "trends": [
+            {
+                "id": "trend_1",
+                "name": "Shy Dance Challenge",
+                "views": 45000000,
+                "viewsFormatted": "45M views",
+                "daysActive": 3,
+                "status": "hot",
+                "category": "dance",
+                "recommendedFor": ["dance", "cute", "casual"]
+            },
+            {
+                "id": "trend_2",
+                "name": "Get Ready With Me 2.0",
+                "views": 28000000,
+                "viewsFormatted": "28M views",
+                "daysActive": 7,
+                "status": "active",
+                "category": "lifestyle"
+            }
+        ],
+        "lastUpdated": "2024-01-23T04:39:57.846Z"
+    }
+}</code></pre>
+                    </div>
+
+                    <h3 class="mt-4">Trend Details</h3>
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <span class="endpoint-badge badge-get">GET</span>
+                        <code class="endpoint-url">/api/marketing/trends/:trendId</code>
+                    </div>
+                    <p>Get detailed information about a specific trend including hashtags and character participation.</p>
                 </section>
 
                 <!-- Error Handling Section -->

@@ -89,6 +89,18 @@
     "removedFromFavorites": "キャラクターをお気に入りから削除しました",
     "requestFailed": "お気に入りのステータスを更新できませんでした"
   },
+  "follow": {
+    "follow": "通知を受け取るにはフォロー",
+    "following": "フォロー中 - クリックでフォロー解除",
+    "unfollow": "フォロー解除",
+    "followed": "キャラクターをフォロー中",
+    "unfollowed": "キャラクターのフォローを解除しました",
+    "nowFollowing": "このキャラクターをフォローしています",
+    "alreadyFollowing": "すでにこのキャラクターをフォローしています",
+    "requestFailed": "フォローステータスを更新できませんでした",
+    "notificationNewImage": "{characterName}の新しい画像",
+    "notificationNewVideo": "{characterName}の新しい動画"
+  },
   "requestFailed": "リクエストに失敗しました",
   "image_leaderboard_title": "画像リーダーボード",
   "chat_goal_completed": "チャット目標が達成されました, {{points}} ポイントを獲得しました！",

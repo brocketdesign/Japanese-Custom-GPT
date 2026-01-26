@@ -95,6 +95,18 @@
       "removedFromFavorites": "Personnage supprimé de vos favoris",
       "requestFailed": "Impossible de mettre à jour le statut des favoris"
     },
+    "follow": {
+      "follow": "Suivre pour recevoir des notifications",
+      "following": "Suivi - Cliquez pour ne plus suivre",
+      "unfollow": "Ne plus suivre",
+      "followed": "Personnage suivi",
+      "unfollowed": "Personnage non suivi",
+      "nowFollowing": "Vous suivez maintenant ce personnage",
+      "alreadyFollowing": "Vous suivez déjà ce personnage",
+      "requestFailed": "Impossible de mettre à jour le statut de suivi",
+      "notificationNewImage": "Nouvelle image de {characterName}",
+      "notificationNewVideo": "Nouvelle vidéo de {characterName}"
+    },
     "relationships": {
       "friend": "Ami",
       "companion": "Compagnon",

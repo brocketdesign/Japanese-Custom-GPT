@@ -90,6 +90,18 @@
     "removedFromFavorites": "Character removed from your favorites",
     "requestFailed": "Failed to update favorite status"
   },
+  "follow": {
+    "follow": "Follow to get notifications",
+    "following": "Following - Click to unfollow",
+    "unfollow": "Unfollow",
+    "followed": "Following character",
+    "unfollowed": "Unfollowed character",
+    "nowFollowing": "You are now following this character",
+    "alreadyFollowing": "Already following this character",
+    "requestFailed": "Failed to update follow status",
+    "notificationNewImage": "New image from {characterName}",
+    "notificationNewVideo": "New video from {characterName}"
+  },
   "requestFailed": "Request failed",
   "image_leaderboard_title": "Image Leaderboard",
   "chat_goal_completed": "Chat goal completed, received {{points}} points!",

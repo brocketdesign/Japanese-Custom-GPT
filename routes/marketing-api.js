@@ -251,9 +251,9 @@ async function routes(fastify, options) {
             const trends = hotTrends.map((trend, index) => ({
                 id: `trend_${index + 1}`,
                 name: trend._id,
-                views: trend.count * 1000, // Estimated views
+                views: trend.count * 1000, // Estimated views based on usage
                 viewsFormatted: formatNumber(trend.count * 1000) + ' views',
-                daysActive: Math.floor(Math.random() * 14) + 1,
+                daysActive: Math.max(1, 14 - (index * 2)), // Deterministic: more popular = newer
                 status: 'active'
             }));
 
@@ -696,7 +696,13 @@ async function routes(fastify, options) {
             if (status !== 'all') {
                 matchFilter.status = status;
             }
-            if (characterId && ObjectId.isValid(characterId)) {
+            if (characterId) {
+                if (!ObjectId.isValid(characterId)) {
+                    return reply.status(400).send({
+                        success: false,
+                        error: 'Invalid character ID format'
+                    });
+                }
                 matchFilter.chatId = new ObjectId(characterId);
             }
 
@@ -1023,7 +1029,7 @@ async function routes(fastify, options) {
                 name: trend._id,
                 views: trend.count * 1000000,
                 viewsFormatted: formatNumber(trend.count * 1000000) + ' views',
-                daysActive: Math.floor(Math.random() * 14) + 1,
+                daysActive: Math.max(1, 14 - (index * 2)), // Deterministic: top trends are newer
                 status: index < 3 ? 'hot' : 'active',
                 category: 'general',
                 recommendedFor: ['dance', 'lifestyle', 'creative']

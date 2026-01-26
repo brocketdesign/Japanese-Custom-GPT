@@ -1470,7 +1470,8 @@
     "tiers": "Subscription Tiers",
     "subscribers": "Subscribers",
     "mySubscriptions": "My Subscriptions",
-    "becomeCreator": "Become a Creator"
+    "becomeCreator": "Become a Creator",
+    "creator": "Creator"
   },
   "notifications": {
     "title": "Notifications",

@@ -1399,7 +1399,8 @@
     "tiers": "Niveaux d'abonnement",
     "subscribers": "Abonnés",
     "mySubscriptions": "Mes Abonnements",
-    "becomeCreator": "Devenir Créateur"
+    "becomeCreator": "Devenir Créateur",
+    "creator": "Créateur"
   },
   "notifications": {
     "title": "Notifications",

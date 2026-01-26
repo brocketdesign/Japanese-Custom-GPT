@@ -540,6 +540,26 @@ function getCreatorCategories() {
   return CREATOR_CATEGORIES;
 }
 
+/**
+ * Check if user is a creator
+ * @param {Object} db - MongoDB database instance
+ * @param {string|ObjectId} userId - User ID
+ * @returns {boolean} Whether user is a creator
+ */
+async function isCreator(db, userId) {
+  try {
+    const usersCollection = db.collection('users');
+    const user = await usersCollection.findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { isCreator: 1 } }
+    );
+    return user?.isCreator === true;
+  } catch (error) {
+    console.error('Error checking creator status:', error);
+    return false;
+  }
+}
+
 module.exports = {
   CREATOR_CATEGORIES,
   getDefaultCreatorProfile,
@@ -552,5 +572,6 @@ module.exports = {
   verifyCreator,
   formatCreatorForDisplay,
   updateSubscriberCount,
-  getCreatorCategories
+  getCreatorCategories,
+  isCreator
 };

@@ -780,6 +780,36 @@
             </div>
         </section>
 
+        <!-- Quick Actions - Creator Section -->
+        <section class="quick-actions-section">
+            <div class="quick-actions-header">
+                <span class="quick-actions-title">{{translations.avatar.creator}}</span>
+                {{#unless user.isCreator}}
+                <a href="/creators/apply" class="section-link" style="font-size: 0.75rem;">
+                    {{translations.avatar.becomeCreator}} <i class="bi bi-chevron-right"></i>
+                </a>
+                {{/unless}}
+            </div>
+            <div class="quick-actions">
+                <a href="{{#if user.isCreator}}/dashboard/earnings{{else}}/creators/apply{{/if}}" class="quick-action-btn green">
+                    <i class="bi bi-wallet2"></i>
+                    <span>{{translations.avatar.earnings}}</span>
+                </a>
+                <a href="{{#if user.isCreator}}/dashboard/analytics{{else}}/creators/apply{{/if}}" class="quick-action-btn blue">
+                    <i class="bi bi-graph-up"></i>
+                    <span>{{translations.avatar.analytics}}</span>
+                </a>
+                <a href="{{#if user.isCreator}}/dashboard/tiers{{else}}/creators/apply{{/if}}" class="quick-action-btn orange">
+                    <i class="bi bi-layers"></i>
+                    <span>{{translations.avatar.tiers}}</span>
+                </a>
+                <a href="{{#if user.isCreator}}/dashboard/subscribers{{else}}/creators/apply{{/if}}" class="quick-action-btn pink">
+                    <i class="bi bi-people-fill"></i>
+                    <span>{{translations.avatar.subscribers}}</span>
+                </a>
+            </div>
+        </section>
+
         <!-- Chats Section -->
         <section class="chats-section">
             <div class="section-header">

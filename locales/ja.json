@@ -1454,7 +1454,8 @@
     "tiers": "サブスクリプションティア",
     "subscribers": "会員",
     "mySubscriptions": "マイサブスクリプション",
-    "becomeCreator": "クリエイターになる"
+    "becomeCreator": "クリエイターになる",
+    "creator": "クリエイター"
   },
   "notifications": {
     "title": "通知",

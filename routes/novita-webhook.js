@@ -254,31 +254,31 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
           return;
         }
         
-        // Build hunyuanBatchInfo for proper batch grouping in carousel
-        // Hunyuan tasks don't support image_num, so each image is a separate task
-        let hunyuanBatchInfo = null;
-        if (taskDoc.hunyuanParentTaskId || taskDoc.hunyuanExpectedCount) {
-          // This is a Hunyuan batch task - get batch info
-          if (taskDoc.hunyuanExpectedCount) {
+        // Build sequentialBatchInfo for proper batch grouping in carousel
+        // Models without batch support generate each image as a separate task
+        let sequentialBatchInfo = null;
+        if (taskDoc.sequentialParentTaskId || taskDoc.sequentialExpectedCount) {
+          // This is a sequential batch task - get batch info
+          if (taskDoc.sequentialExpectedCount) {
             // This is the parent task (batchIndex 0)
-            hunyuanBatchInfo = {
+            sequentialBatchInfo = {
               batchIndex: 0,
-              batchSize: taskDoc.hunyuanExpectedCount
+              batchSize: taskDoc.sequentialExpectedCount
             };
-          } else if (taskDoc.hunyuanParentTaskId && typeof taskDoc.hunyuanImageIndex === 'number') {
+          } else if (taskDoc.sequentialParentTaskId && typeof taskDoc.sequentialImageIndex === 'number') {
             // This is a child task - get parent info
-            // hunyuanImageIndex starts at 2 (i + 1 where i starts at 1 in the creation loop)
+            // sequentialImageIndex starts at 2 (i + 1 where i starts at 1 in the creation loop)
             // So child tasks have indices 2, 3, 4... which map to batchIndex 1, 2, 3...
-            const parentTask = await tasksCollection.findOne({ taskId: taskDoc.hunyuanParentTaskId });
-            if (parentTask && parentTask.hunyuanExpectedCount) {
-              hunyuanBatchInfo = {
-                batchIndex: taskDoc.hunyuanImageIndex - 1, // Convert to 0-based (2->1, 3->2, etc.)
-                batchSize: parentTask.hunyuanExpectedCount
+            const parentTask = await tasksCollection.findOne({ taskId: taskDoc.sequentialParentTaskId });
+            if (parentTask && parentTask.sequentialExpectedCount) {
+              sequentialBatchInfo = {
+                batchIndex: taskDoc.sequentialImageIndex - 1, // Convert to 0-based (2->1, 3->2, etc.)
+                batchSize: parentTask.sequentialExpectedCount
               };
             }
           }
-          if (hunyuanBatchInfo) {
-            console.log(`[NovitaWebhook] Hunyuan batch info for task ${taskId}: index=${hunyuanBatchInfo.batchIndex}, size=${hunyuanBatchInfo.batchSize}`);
+          if (sequentialBatchInfo) {
+            console.log(`[NovitaWebhook] Sequential batch info for task ${taskId}: index=${sequentialBatchInfo.batchIndex}, size=${sequentialBatchInfo.batchSize}`);
           }
         }
         
@@ -295,7 +295,7 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
           userId: userId,
           chatId: chatId,
           placeholderId: taskDoc.placeholderId,
-          hunyuanBatchInfo
+          sequentialBatchInfo
         });
       } catch (error) {
         console.error(`[NovitaWebhook] Error calling handleTaskCompletion for task ${taskId}:`, error);

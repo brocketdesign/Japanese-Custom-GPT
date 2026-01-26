@@ -10,7 +10,7 @@ const slugify = require('slugify');
 const { generateImageSlug } = require('./slug-utils');
 const sharp = require('sharp');
 const { time } = require('console');
-const { MODEL_CONFIGS } = require('./admin-image-test-utils');
+const { MODEL_CONFIGS, modelRequiresSequentialGeneration } = require('./admin-image-test-utils');
 
 
 const default_prompt = {
@@ -664,28 +664,32 @@ async function generateImg({
     }
 
     // Send request to Novita and get taskId
-    // For Hunyuan: image_num is not supported, so we need multiple API calls
-    const hunyuanImageCount = hunyuan ? (image_num || 1) : 1;
+    // Determine if model requires sequential generation (separate API calls for each image)
+    // Check both the hunyuan flag (for backward compatibility) and the model config
+    const requiresSequentialGen = hunyuan || (isBuiltInModel && modelRequiresSequentialGeneration(imageModel));
+    const sequentialImageCount = requiresSequentialGen ? (image_num || 1) : 1;
     let novitaResult;
-    let hunyuanTaskIds = [];
+    let sequentialTaskIds = [];
     
-    if (hunyuan && hunyuanImageCount > 1) {
-      // Hunyuan doesn't support image_num, so make multiple API calls
-      console.log(`[generateImg] Hunyuan: Making ${hunyuanImageCount} separate API calls for multiple images`);
-      for (let i = 0; i < hunyuanImageCount; i++) {
+    if (requiresSequentialGen && sequentialImageCount > 1) {
+      // Model doesn't support image_num, so make multiple API calls
+      console.log(`[generateImg] Sequential generation: Making ${sequentialImageCount} separate API calls for model ${imageModel || 'hunyuan'}`);
+      for (let i = 0; i < sequentialImageCount; i++) {
         // Use different seeds for each image to get variety
         const seedForCall = requestData.seed === -1 ? -1 : (requestData.seed || 0) + i;
         const callData = { ...requestData, seed: seedForCall };
+        // Note: hunyuan param is still passed for backward compatibility with fetchNovitaMagic
+        // which uses it to determine the API endpoint for legacy Hunyuan calls
         const taskId = await fetchNovitaMagic(callData, flux, hunyuan, isBuiltInModel ? imageModel : null);
         if (taskId) {
-          hunyuanTaskIds.push(taskId);
-          console.log(`[generateImg] Hunyuan image ${i + 1}/${hunyuanImageCount} task started: ${taskId}`);
+          sequentialTaskIds.push(taskId);
+          console.log(`[generateImg] Sequential image ${i + 1}/${sequentialImageCount} task started: ${taskId}`);
         } else {
-          console.error(`[generateImg] Hunyuan image ${i + 1}/${hunyuanImageCount} failed to start`);
+          console.error(`[generateImg] Sequential image ${i + 1}/${sequentialImageCount} failed to start`);
         }
       }
       
-      if (hunyuanTaskIds.length === 0) {
+      if (sequentialTaskIds.length === 0) {
         fastify.sendNotificationToUser(userId, 'showNotification', {
           message: 'Failed to initiate image generation',
           icon: 'error'
@@ -694,9 +698,10 @@ async function generateImg({
       }
       
       // Use the first task ID as the primary result
-      novitaResult = hunyuanTaskIds[0];
+      novitaResult = sequentialTaskIds[0];
     } else {
       console.log(`[generateImg] 📤 Calling fetchNovitaMagic with isBuiltInModel=${isBuiltInModel}, imageModel=${imageModel}`);
+      // Note: hunyuan param is still passed for backward compatibility with fetchNovitaMagic
       novitaResult = await fetchNovitaMagic(requestData, flux, hunyuan, isBuiltInModel ? imageModel : null);
       console.log(`[generateImg] 📥 fetchNovitaMagic result:`, novitaResult);
     }
@@ -761,17 +766,17 @@ async function generateImg({
         updatedAt: new Date(),
         shouldAutoMerge,
         enableMergeFace: enableMergeFace || false,
-        isHunyuan: hunyuan || false,
+        requiresSequentialGeneration: requiresSequentialGen || false,  // Flag for models without batch support
         isBuiltInModel: isBuiltInModel || false,  // Store model type flag
         imageModelId: imageModel || null,  // Store the model ID for reference
         translations: translations || null  // Store translations for webhook/polling handlers
     };
     
-    // For Hunyuan with multiple images, store all task IDs
-    if (hunyuan && hunyuanTaskIds.length > 1) {
-        taskData.hunyuanTaskIds = hunyuanTaskIds;
-        taskData.hunyuanExpectedCount = hunyuanTaskIds.length;
-        taskData.hunyuanCompletedCount = 0;
+    // For models requiring sequential generation with multiple images, store all task IDs
+    if (requiresSequentialGen && sequentialTaskIds.length > 1) {
+        taskData.sequentialTaskIds = sequentialTaskIds;
+        taskData.sequentialExpectedCount = sequentialTaskIds.length;
+        taskData.sequentialCompletedCount = 0;
     }
     
     // Store original request data for character creation tasks with merge face enabled
@@ -795,12 +800,12 @@ async function generateImg({
     await db.collection('tasks').insertOne(taskData);
     console.log(`[generateImg] ✅ Task stored in database successfully`);
     
-    // For Hunyuan with multiple images, also create task records for additional task IDs
+    // For models requiring sequential generation, create task records for additional task IDs
     // so the webhook handler can process them individually
-    if (hunyuan && hunyuanTaskIds.length > 1) {
-        for (let i = 1; i < hunyuanTaskIds.length; i++) {
+    if (requiresSequentialGen && sequentialTaskIds.length > 1) {
+        for (let i = 1; i < sequentialTaskIds.length; i++) {
             const additionalTaskData = {
-                taskId: hunyuanTaskIds[i],
+                taskId: sequentialTaskIds[i],
                 type: imageType,
                 task_type: 'txt2img',
                 status: 'pending',
@@ -819,9 +824,9 @@ async function generateImg({
                 updatedAt: new Date(),
                 shouldAutoMerge,
                 enableMergeFace: enableMergeFace || false,
-                isHunyuan: true,
-                hunyuanParentTaskId: novitaTaskId, // Link to the primary task
-                hunyuanImageIndex: i + 1,
+                requiresSequentialGeneration: true,
+                sequentialParentTaskId: novitaTaskId, // Link to the primary task
+                sequentialImageIndex: i + 1,
                 translations: translations || null  // Store translations for webhook/polling handlers
             };
             
@@ -833,19 +838,19 @@ async function generateImg({
             }
             
             await db.collection('tasks').insertOne(additionalTaskData);
-            console.log(`[generateImg] Created task record for Hunyuan image ${i + 1}: ${hunyuanTaskIds[i]}`);
+            console.log(`[generateImg] Created task record for sequential image ${i + 1}: ${sequentialTaskIds[i]}`);
         }
     }
 
     // Start fallback polling for all models (regardless of context)
     // This ensures images are processed even if webhooks fail
     // Works for: character creation, in-chat generation, any model
-    const allTaskIds = hunyuan ? (hunyuanTaskIds.length > 0 ? hunyuanTaskIds : [novitaTaskId]) : [novitaTaskId];
-    const modelName = hunyuan ? 'Hunyuan' : (imageModel || 'built-in');
+    const allTaskIds = requiresSequentialGen ? (sequentialTaskIds.length > 0 ? sequentialTaskIds : [novitaTaskId]) : [novitaTaskId];
+    const modelName = imageModel || 'built-in';
     console.log(`[generateImg] 🚀 Starting fallback polling for ${allTaskIds.length} ${modelName} task(s): ${allTaskIds.join(', ')} (chatCreation=${chatCreation})`);
     
     // Don't await - let it run in background
-    pollHunyuanTasksWithFallback(novitaTaskId, allTaskIds, fastify, {
+    pollSequentialTasksWithFallback(novitaTaskId, allTaskIds, fastify, {
       chatCreation: chatCreation,  // Pass actual value, not hardcoded
       translations,
       userId,
@@ -858,7 +863,7 @@ async function generateImg({
     });
 
     console.log(`[generateImg] 🎉 Returning taskId: ${novitaTaskId}`);
-    return { taskId: novitaTaskId, hunyuanTaskIds: hunyuan && hunyuanTaskIds.length > 1 ? hunyuanTaskIds : undefined };
+    return { taskId: novitaTaskId, sequentialTaskIds: requiresSequentialGen && sequentialTaskIds.length > 1 ? sequentialTaskIds : undefined };
 }
 
 // Add this function to your code
@@ -2688,7 +2693,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
 
 // Handle task completion: send notifications and save images as needed
 async function handleTaskCompletion(taskStatus, fastify, options = {}) {
-  const { chatCreation, translations, userId, chatId, placeholderId, hunyuanBatchInfo } = options;
+  const { chatCreation, translations, userId, chatId, placeholderId, sequentialBatchInfo } = options;
   let images = [];
   let characterImageUrls = [];
   // Try multiple ways to get the correct images with merge data
@@ -2732,9 +2737,9 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
         fastify.sendNotificationToUser(userId, 'characterImageGenerated', { imageUrl, thumbnailUrl, nsfw, chatId });
         characterImageUrls.push(imageUrl);
       } else {
-        // Calculate batch info: use hunyuanBatchInfo for Hunyuan multi-image batches,
+        // Calculate batch info: use sequentialBatchInfo for models without batch support,
         // otherwise use the default index/images.length
-        const { batchIndex = index, batchSize = images.length } = hunyuanBatchInfo || {};
+        const { batchIndex = index, batchSize = images.length } = sequentialBatchInfo || {};
         
         const notificationData = {
           id: imageId?.toString(),
@@ -2822,11 +2827,11 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
  * Poll for Hunyuan task completion as a fallback when webhooks don't arrive
  * This runs server-side and ensures images are processed even if Novita doesn't send webhooks
  * @param {string} taskId - Primary task ID
- * @param {string[]} allTaskIds - All Hunyuan task IDs to poll
+ * @param {string[]} allTaskIds - All task IDs to poll (for models requiring sequential generation)
  * @param {Object} fastify - Fastify instance
  * @param {Object} options - Additional options
  */
-async function pollHunyuanTasksWithFallback(taskId, allTaskIds, fastify, options = {}) {
+async function pollSequentialTasksWithFallback(taskId, allTaskIds, fastify, options = {}) {
   const { chatCreation, translations, userId, chatId, placeholderId } = options;
   const db = fastify.mongo.db;
   const tasksCollection = db.collection('tasks');
@@ -2835,14 +2840,14 @@ async function pollHunyuanTasksWithFallback(taskId, allTaskIds, fastify, options
   const pollInterval = 5000; // 5 seconds
   const taskIds = allTaskIds && allTaskIds.length > 0 ? allTaskIds : [taskId];
   
-  console.log(`[pollHunyuanTasks] Starting fallback polling for ${taskIds.length} tasks`);
+  console.log(`[pollSequentialTasks] Starting fallback polling for ${taskIds.length} tasks`);
   
   let attempts = 0;
   const completedTasks = new Map(); // Track completed tasks and their images
   
   const pollOnce = async () => {
     attempts++;
-    console.log(`[pollHunyuanTasks] Poll attempt ${attempts}/${maxAttempts} for ${taskIds.length} tasks`);
+    console.log(`[pollSequentialTasks] Poll attempt ${attempts}/${maxAttempts} for ${taskIds.length} tasks`);
     
     let allComplete = true;
     
@@ -2855,7 +2860,7 @@ async function pollHunyuanTasksWithFallback(taskId, allTaskIds, fastify, options
       // Check if webhook already processed this task
       const taskDoc = await tasksCollection.findOne({ taskId: tid });
       if (taskDoc && (taskDoc.status === 'completed' || taskDoc.webhookProcessed)) {
-        console.log(`[pollHunyuanTasks] Task ${tid} already processed (webhook arrived)`);
+        console.log(`[pollSequentialTasks] Task ${tid} already processed (webhook arrived)`);
         completedTasks.set(tid, taskDoc.result?.images || []);
         continue;
       }
@@ -2865,13 +2870,13 @@ async function pollHunyuanTasksWithFallback(taskId, allTaskIds, fastify, options
         const result = await fetchNovitaResult(tid);
         
         if (result && result.status === 'processing') {
-          console.log(`[pollHunyuanTasks] Task ${tid} still processing (${result.progress || 0}%)`);
+          console.log(`[pollSequentialTasks] Task ${tid} still processing (${result.progress || 0}%)`);
           allComplete = false;
           continue;
         }
         
         if (result && result.error) {
-          console.error(`[pollHunyuanTasks] Task ${tid} failed: ${result.error}`);
+          console.error(`[pollSequentialTasks] Task ${tid} failed: ${result.error}`);
           await tasksCollection.updateOne(
             { taskId: tid },
             { $set: { status: 'failed', result: { error: result.error }, updatedAt: new Date() } }
@@ -2882,7 +2887,7 @@ async function pollHunyuanTasksWithFallback(taskId, allTaskIds, fastify, options
         
         // Task completed - process it
         if (result) {
-          console.log(`[pollHunyuanTasks] Task ${tid} completed, processing images`);
+          console.log(`[pollSequentialTasks] Task ${tid} completed, processing images`);
           
           // Convert result to array format
           const images = Array.isArray(result) ? result : [result];
@@ -2915,18 +2920,18 @@ async function pollHunyuanTasksWithFallback(taskId, allTaskIds, fastify, options
             
             // Call handleTaskCompletion to send notifications
             if (taskDocAfter) {
-              // Build hunyuanBatchInfo for proper batch grouping in carousel
-              // Hunyuan tasks don't support image_num, so each image is a separate task
+              // Build sequentialBatchInfo for proper batch grouping in carousel
+              // Models without batch support generate each image as a separate task
               // We need to tell the frontend the correct batch size and index
-              let hunyuanBatchInfo = null;
+              let sequentialBatchInfo = null;
               if (taskIds.length > 1) {
-                // This is part of a Hunyuan multi-image batch
+                // This is part of a sequential multi-image batch
                 const taskIndex = taskIds.indexOf(tid);
-                hunyuanBatchInfo = {
+                sequentialBatchInfo = {
                   batchIndex: taskIndex >= 0 ? taskIndex : 0,
                   batchSize: taskIds.length
                 };
-                console.log(`[pollHunyuanTasks] Hunyuan batch info for task ${tid}: index=${hunyuanBatchInfo.batchIndex}, size=${hunyuanBatchInfo.batchSize}`);
+                console.log(`[pollSequentialTasks] Sequential batch info for task ${tid}: index=${sequentialBatchInfo.batchIndex}, size=${sequentialBatchInfo.batchSize}`);
               }
               
               await handleTaskCompletion(taskStatus, fastify, {
@@ -2935,7 +2940,7 @@ async function pollHunyuanTasksWithFallback(taskId, allTaskIds, fastify, options
                 userId: taskStatus.userId?.toString() || taskDocAfter.userId?.toString(),
                 chatId: taskDocAfter.chatId?.toString(),
                 placeholderId: taskDocAfter.placeholderId,
-                hunyuanBatchInfo
+                sequentialBatchInfo
               });
             }
           } else {
@@ -2943,14 +2948,14 @@ async function pollHunyuanTasksWithFallback(taskId, allTaskIds, fastify, options
           }
         }
       } catch (error) {
-        console.error(`[pollHunyuanTasks] Error polling task ${tid}:`, error.message);
+        console.error(`[pollSequentialTasks] Error polling task ${tid}:`, error.message);
         allComplete = false;
       }
     }
     
     // Check if all tasks are complete
     if (completedTasks.size === taskIds.length) {
-      console.log(`[pollHunyuanTasks] All ${taskIds.length} tasks completed`);
+      console.log(`[pollSequentialTasks] All ${taskIds.length} tasks completed`);
       return true;
     }
     
@@ -2965,7 +2970,7 @@ async function pollHunyuanTasksWithFallback(taskId, allTaskIds, fastify, options
     
     // Timeout - some tasks didn't complete
     if (attempts >= maxAttempts) {
-      console.warn(`[pollHunyuanTasks] Timeout: ${completedTasks.size}/${taskIds.length} tasks completed after ${maxAttempts} attempts`);
+      console.warn(`[pollSequentialTasks] Timeout: ${completedTasks.size}/${taskIds.length} tasks completed after ${maxAttempts} attempts`);
       
       // Send notification about timeout if this is character creation
       if (chatCreation && typeof fastify.sendNotificationToUser === 'function') {
@@ -2980,7 +2985,7 @@ async function pollHunyuanTasksWithFallback(taskId, allTaskIds, fastify, options
   };
   
   // Start polling after a short delay to give webhooks a chance
-  console.log(`[pollHunyuanTasks] Waiting 10 seconds before starting fallback polling...`);
+  console.log(`[pollSequentialTasks] Waiting 10 seconds before starting fallback polling...`);
   await new Promise(resolve => setTimeout(resolve, 10000));
   
   // Check if webhook already completed all tasks
@@ -2994,7 +2999,7 @@ async function pollHunyuanTasksWithFallback(taskId, allTaskIds, fastify, options
   }
   
   if (allAlreadyComplete) {
-    console.log(`[pollHunyuanTasks] All tasks already completed via webhook, skipping fallback polling`);
+    console.log(`[pollSequentialTasks] All tasks already completed via webhook, skipping fallback polling`);
     return true;
   }
   
@@ -3022,5 +3027,5 @@ module.exports = {
   fetchNovitaResult,
   fetchOriginalTaskData,
   getTitleString,
-  pollHunyuanTasksWithFallback
+  pollSequentialTasksWithFallback
 };

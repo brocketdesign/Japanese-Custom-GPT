@@ -73,9 +73,14 @@
   "follow": {
     "following": "Following",
     "followed": "Followed!",
-    "follow": "Follow",
+    "follow": "Follow to get notifications",
     "unfollowed": "Unfollowed!",
-    "requestFailed": "Request failed."
+    "unfollow": "Unfollow",
+    "nowFollowing": "You are now following this character",
+    "alreadyFollowing": "Already following this character",
+    "requestFailed": "Failed to update follow status",
+    "notificationNewImage": "New image from {characterName}",
+    "notificationNewVideo": "New video from {characterName}"
   },
   "favorite": {
     "latest": "Latest",

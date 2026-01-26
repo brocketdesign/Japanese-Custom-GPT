@@ -76,13 +76,20 @@
   "follow": {
     "following": "Abonné",
     "followed": "Abonné !",
-    "follow": "Suivre",
-      "Fena": {
-        "name": "Fena - Personnage",
-        "description": "Jeune fille impertinente"
-      }
-    },
-    "favorite": {
+    "follow": "Suivre pour recevoir des notifications",
+    "unfollow": "Ne plus suivre",
+    "unfollowed": "Personnage non suivi",
+    "nowFollowing": "Vous suivez maintenant ce personnage",
+    "alreadyFollowing": "Vous suivez déjà ce personnage",
+    "requestFailed": "Impossible de mettre à jour le statut de suivi",
+    "notificationNewImage": "Nouvelle image de {characterName}",
+    "notificationNewVideo": "Nouvelle vidéo de {characterName}",
+    "Fena": {
+      "name": "Fena - Personnage",
+      "description": "Jeune fille impertinente"
+    }
+  },
+  "favorite": {
       "latest": "Récent",
       "addFavorite": "Ajouter aux favoris",
       "removeFavorite": "Supprimer des favoris",

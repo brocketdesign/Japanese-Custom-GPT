@@ -72,9 +72,14 @@
   "follow": {
     "following": "フォロー中",
     "followed": "フォローしました！",
-    "follow": "フォロー",
+    "follow": "通知を受け取るにはフォロー",
     "unfollowed": "フォロー解除しました！",
-    "requestFailed": "リクエストに失敗しました。"
+    "unfollow": "フォロー解除",
+    "nowFollowing": "このキャラクターをフォローしています",
+    "alreadyFollowing": "すでにこのキャラクターをフォローしています",
+    "requestFailed": "フォローステータスを更新できませんでした",
+    "notificationNewImage": "{characterName}の新しい画像",
+    "notificationNewVideo": "{characterName}の新しい動画"
   },
   "favorite": {
     "latest": "最新",

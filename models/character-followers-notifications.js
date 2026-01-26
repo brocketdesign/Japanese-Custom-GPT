@@ -11,18 +11,26 @@ const translationsCache = {};
  * @param {string} lang - Language code (en, fr, ja)
  * @returns {Object} Translations object
  */
-function getTranslations(lang) {
-  if (!lang) lang = 'en';
+function getTranslations(lang = 'en') {
+  // Ensure we have a valid language code
+  const validLang = lang || 'en';
   
-  if (!translationsCache[lang]) {
-    const translationFile = path.join(__dirname, '..', 'locales', `${lang}.json`);
-    if (fs.existsSync(translationFile)) {
-      translationsCache[lang] = JSON.parse(fs.readFileSync(translationFile, 'utf-8'));
-    } else {
-      translationsCache[lang] = {};
+  if (!translationsCache[validLang]) {
+    const translationFile = path.join(__dirname, '..', 'locales', `${validLang}.json`);
+    try {
+      if (fs.existsSync(translationFile)) {
+        const fileContent = fs.readFileSync(translationFile, 'utf-8');
+        translationsCache[validLang] = JSON.parse(fileContent);
+      } else {
+        console.warn(`[CharacterFollowers] Translation file not found for language: ${validLang}`);
+        translationsCache[validLang] = {};
+      }
+    } catch (error) {
+      console.error(`[CharacterFollowers] Error loading translations for ${validLang}:`, error);
+      translationsCache[validLang] = {};
     }
   }
-  return translationsCache[lang];
+  return translationsCache[validLang];
 }
 
 /**

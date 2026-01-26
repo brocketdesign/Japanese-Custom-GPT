@@ -195,6 +195,46 @@ body:has(.ig-profile-header) {
     border-color: #FFD700;
 }
 
+/* Character follow button - special styling */
+.character-follow-btn {
+    position: relative;
+}
+
+.character-follow-btn.following {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(56, 142, 60, 0.15) 100%);
+    border-color: rgba(76, 175, 80, 0.5);
+    color: #4CAF50;
+}
+
+.character-follow-btn.following i {
+    animation: bellRing 0.5s ease;
+}
+
+.character-follow-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--ig-text);
+}
+
+.character-follow-btn.following:hover {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.25) 0%, rgba(56, 142, 60, 0.25) 100%);
+    border-color: #4CAF50;
+}
+
+@keyframes bellRing {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    25% {
+        transform: rotate(-10deg);
+    }
+    50% {
+        transform: rotate(10deg);
+    }
+    75% {
+        transform: rotate(-10deg);
+    }
+}
+
 @keyframes starPulse {
     0%, 100% {
         transform: scale(1);

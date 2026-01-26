@@ -65,6 +65,11 @@
                     <span>{{translations.startChattingNow}}</span>
                 </a>
                 {{#unless user.isTemporary}}
+                    <button class="ig-secondary-btn character-follow-btn" 
+                            data-chat-id="{{chat._id}}"
+                            title="Follow to get notifications">
+                        <i class="bi bi-bell-slash"></i>
+                    </button>
                     <button class="ig-secondary-btn character-favorite-btn" 
                             data-chat-id="{{chat._id}}"
                             title="Add to favorites">
@@ -229,6 +234,7 @@
         <!-- Character Profile Scripts (only loaded when chat exists) -->
         <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
         <script src="/js/favorites.js"></script>
+        <script src="/js/character-followers.js"></script>
         <script src="/js/content-discovery-tracker.js"></script>
         <script src="/js/character-profile-loader.js"></script>
         <script src="/js/character-profile-ui.js"></script>
@@ -285,6 +291,9 @@
                 
                 // Initialize favorite button
                 initializeCharacterFavoriteButton(chatId);
+                
+                // Initialize follow button
+                initializeCharacterFollowButton(chatId);
                 
                 if (typeof showDashboardFooter === 'function') {
                     showDashboardFooter();
@@ -353,6 +362,73 @@
                 if (icon) {
                     icon.classList.remove('bi-star-fill');
                     icon.classList.add('bi-star');
+                }
+            }
+        }
+        
+        /**
+         * Initialize character follow button on profile page
+         */
+        function initializeCharacterFollowButton(chatId) {
+            if (!chatId || typeof CharacterFollowers === 'undefined') {
+                return;
+            }
+            
+            const followBtn = document.querySelector('.character-follow-btn');
+            if (!followBtn) {
+                return;
+            }
+            
+            // Check if user is already following this character
+            CharacterFollowers.checkFollow(chatId, function(isFollowing) {
+                updateCharacterFollowButton(followBtn, isFollowing);
+            });
+            
+            // Add click handler
+            followBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const currentState = followBtn.classList.contains('following');
+                
+                // Optimistic update
+                updateCharacterFollowButton(followBtn, !currentState);
+                
+                // Toggle follow
+                CharacterFollowers.toggleFollow(chatId, function(response) {
+                    if (response && response.success) {
+                        updateCharacterFollowButton(followBtn, response.isFollowing);
+                    } else {
+                        // Revert on error
+                        updateCharacterFollowButton(followBtn, currentState);
+                    }
+                });
+            });
+        }
+        
+        /**
+         * Update character follow button visual state
+         */
+        function updateCharacterFollowButton(button, isFollowing) {
+            const icon = button.querySelector('i');
+            const FOLLOW_TEXT = window.translations?.follow?.follow || 'Follow to get notifications';
+            const FOLLOWING_TEXT = window.translations?.follow?.following || 'Following - Click to unfollow';
+            
+            if (isFollowing) {
+                button.classList.add('following');
+                button.classList.remove('not-following');
+                button.title = FOLLOWING_TEXT;
+                if (icon) {
+                    icon.classList.remove('bi-bell-slash');
+                    icon.classList.add('bi-bell-fill');
+                }
+            } else {
+                button.classList.remove('following');
+                button.classList.add('not-following');
+                button.title = FOLLOW_TEXT;
+                if (icon) {
+                    icon.classList.remove('bi-bell-fill');
+                    icon.classList.add('bi-bell-slash');
                 }
             }
         }

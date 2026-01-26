@@ -3,7 +3,7 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const { ObjectId } = require('mongodb');
 const axios = require('axios');
 const { createHash } = require('crypto');
-const { addNotification, saveChatImageToDB, getLanguageName, uploadToS3 } = require('../models/tool')
+const { saveChatImageToDB, getLanguageName, uploadToS3 } = require('../models/tool')
 const { getAutoMergeFaceSetting } = require('../models/chat-tool-settings-utils')
 const { awardImageGenerationReward, awardCharacterImageMilestoneReward } = require('./user-points-utils');
 const slugify = require('slugify');
@@ -2815,16 +2815,6 @@ async function handleTaskCompletion(taskStatus, fastify, options = {}) {
     fastify.sendNotificationToUser(userId, 'showNotification', {
       message: translations?.newCharacter?.imageCompletionDone_message || 'Your image has been generated successfully.',
       icon: 'success'
-    });
-    const notification = {
-      title: translations?.newCharacter?.imageCompletionDone_title || 'Image generation completed',
-      message: translations?.newCharacter?.imageCompletionDone_message || 'Your image has been generated successfully.',
-      type: 'image',
-      link: `/chat/${chatId}`,
-      ico: 'success'
-    };
-    addNotification(fastify, userId, notification).then(() => {
-      fastify.sendNotificationToUser(userId, 'updateNotificationCountOnLoad', { userId });
     });
   }
 

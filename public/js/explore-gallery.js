@@ -369,9 +369,10 @@ class ExploreGallery {
     
     async loadCharacters() {
         if (this.isLoading || !this.hasMore) return;
-        
+
         this.isLoading = true;
-        
+        this.showLoading();
+
         try {
             const params = new URLSearchParams({
                 query: this.query,
@@ -379,36 +380,48 @@ class ExploreGallery {
                 limit: this.limit,
                 nsfw: this.showNSFW ? 'include' : 'exclude'
             });
-            
+
             // Use fetchWithState if available (includes user state for personalization)
             const fetchFn = window.fetchWithState || fetch;
             const response = await fetchFn(`/api/gallery/explore?${params}`);
-            
+
             if (!response.ok) {
                 throw new Error(`HTTP error: ${response.status}`);
             }
-            
+
             const data = await response.json();
-            
+
             if (data.characters && data.characters.length > 0) {
                 // Process characters
                 const newCharacters = this.processCharacters(data.characters);
                 this.characters.push(...newCharacters);
                 this.renderCharacterSlides(newCharacters);
-                
+
                 this.page++;
-                this.hasMore = data.hasMore !== false && newCharacters.length > 0;
-            } else if (this.characters.length === 0) {
-                this.showEmpty();
+
+                // Continue infinite scroll: hasMore is true if we got results
+                // Even if backend says hasMore=false, we keep trying (backend might have more on next page)
+                this.hasMore = newCharacters.length > 0;
+            } else {
+                // No more characters found
+                this.hasMore = false;
+
+                if (this.characters.length === 0) {
+                    this.showEmpty();
+                }
             }
-            
+
             this.hideLoading();
-            
+
         } catch (err) {
             console.error('[ExploreGallery] Failed to load characters:', err);
             this.hideLoading();
+
             if (this.characters.length === 0) {
                 this.showEmpty();
+            } else {
+                // On error, allow retry by keeping hasMore true
+                this.hasMore = true;
             }
         } finally {
             this.isLoading = false;
@@ -820,15 +833,22 @@ class ExploreGallery {
     onCharacterChange() {
         this.currentCharacterIndex = this.verticalSwiper.activeIndex;
         this.updateCurrentCharacter();
-        
+
         // Track character view
         this.trackCharacterView();
-        
+
         // Initialize horizontal swiper for new slides
         this.initHorizontalSwipers();
-        
+
         // Preload next characters
         this.preloadNextCharacters();
+
+        // Load more characters when approaching the end (5 characters before the end)
+        const remainingCharacters = this.characters.length - this.currentCharacterIndex;
+        if (remainingCharacters <= 5 && this.hasMore && !this.isLoading) {
+            console.log('[ExploreGallery] Approaching end, preloading more characters...');
+            this.loadCharacters();
+        }
     }
     
     preloadNextCharacters() {
@@ -881,7 +901,9 @@ class ExploreGallery {
     }
     
     onReachEnd() {
+        // Load more characters when reaching near the end
         if (this.hasMore && !this.isLoading) {
+            console.log('[ExploreGallery] Reached end, loading more characters...');
             this.loadCharacters();
         }
     }

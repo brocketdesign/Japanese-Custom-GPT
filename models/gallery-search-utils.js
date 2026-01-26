@@ -532,9 +532,9 @@ async function searchImagesGroupedByCharacter(db, user, queryStr = '', page = 1,
     interactionState = await getUserInteractionState(db, user._id);
   }
 
-  // For page 1 with no query, use smart sequencing
-  // For pages > 1 or with query, use traditional pagination
-  const useSmartSequencing = page === 1 && !hasQuery;
+  // Use smart sequencing for page 1 (with or without query)
+  // For pages > 1, use traditional pagination
+  const useSmartSequencing = page === 1;
   
   // Fetch MORE characters than needed if using smart sequencing (for better selection pool)
   const fetchLimit = useSmartSequencing ? limit * 3 : limit;
@@ -584,18 +584,20 @@ async function searchImagesGroupedByCharacter(db, user, queryStr = '', page = 1,
             { $regexMatch: { input: { $ifNull: ['$images.prompt', ''] }, regex: new RegExp(word, 'i') } },
             { $regexMatch: { input: { $ifNull: ['$chat.name', ''] }, regex: new RegExp(word, 'i') } },
             { $regexMatch: { input: { $ifNull: ['$chat.description', ''] }, regex: new RegExp(word, 'i') } },
-            { 
+            { $regexMatch: { input: { $ifNull: ['$chat.first_message', ''] }, regex: new RegExp(word, 'i') } },
+            { $regexMatch: { input: { $ifNull: ['$chat.nickname', ''] }, regex: new RegExp(word, 'i') } },
+            {
               $gt: [
-                { 
-                  $size: { 
-                    $filter: { 
-                      input: { $ifNull: ['$chat.tags', []] }, 
-                      cond: { $regexMatch: { input: '$$this', regex: new RegExp(word, 'i') } } 
-                    } 
-                  } 
-                }, 
+                {
+                  $size: {
+                    $filter: {
+                      input: { $ifNull: ['$chat.tags', []] },
+                      cond: { $regexMatch: { input: '$$this', regex: new RegExp(word, 'i') } }
+                    }
+                  }
+                },
                 0
-              ] 
+              ]
             }
           ]
         },
@@ -689,13 +691,10 @@ async function searchImagesGroupedByCharacter(db, user, queryStr = '', page = 1,
     }
   });
 
-  // Count total characters for pagination
+  // Count total characters for pagination - mirrors the main pipeline for accuracy
   const countPipeline = [
     { $unwind: '$images' },
     { $match: { 'images.imageUrl': { $exists: true, $ne: null } } },
-    ...(showNSFW ? [] : [
-      { $match: { $and: [{ 'images.nsfw': { $ne: true } }, { 'images.nsfw': { $ne: 'true' } }, { 'images.nsfw': { $ne: 'on' } }] } }
-    ]),
     {
       $lookup: {
         from: 'chats',
@@ -713,10 +712,50 @@ async function searchImagesGroupedByCharacter(db, user, queryStr = '', page = 1,
           { 'chat.language': requestLang }
         ]
       }
-    },
-    { $group: { _id: '$chatId' } },
-    { $count: 'total' }
+    }
   ];
+
+  // Add search scoring to count pipeline if query exists
+  if (hasQuery) {
+    const scoreExpressions = queryWords.map(word => ({
+      $cond: [
+        {
+          $or: [
+            { $regexMatch: { input: { $ifNull: ['$images.prompt', ''] }, regex: new RegExp(word, 'i') } },
+            { $regexMatch: { input: { $ifNull: ['$chat.name', ''] }, regex: new RegExp(word, 'i') } },
+            { $regexMatch: { input: { $ifNull: ['$chat.description', ''] }, regex: new RegExp(word, 'i') } },
+            { $regexMatch: { input: { $ifNull: ['$chat.first_message', ''] }, regex: new RegExp(word, 'i') } },
+            { $regexMatch: { input: { $ifNull: ['$chat.nickname', ''] }, regex: new RegExp(word, 'i') } },
+            {
+              $gt: [
+                {
+                  $size: {
+                    $filter: {
+                      input: { $ifNull: ['$chat.tags', []] },
+                      cond: { $regexMatch: { input: '$$this', regex: new RegExp(word, 'i') } }
+                    }
+                  }
+                },
+                0
+              ]
+            }
+          ]
+        },
+        1,
+        0
+      ]
+    }));
+
+    countPipeline.push({
+      $addFields: {
+        matchScore: { $sum: scoreExpressions }
+      }
+    });
+    countPipeline.push({ $match: { matchScore: { $gt: 0 } } });
+  }
+
+  countPipeline.push({ $group: { _id: '$chatId' } });
+  countPipeline.push({ $count: 'total' });
 
   try {
     const [characters, countResult] = await Promise.all([

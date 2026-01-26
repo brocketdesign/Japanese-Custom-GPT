@@ -8,6 +8,7 @@
     <!-- Profile CSS -->
     <link rel="stylesheet" href="/css/user-profile.css">
     <link rel="stylesheet" href="/css/chat-list-tabs.css">
+    <link rel="stylesheet" href="/css/character.css">
     <!-- Modal CSS -->
     <link rel="stylesheet" href="/css/user-points.css">
     <link rel="stylesheet" href="/css/chat-footer.css">
@@ -872,6 +873,12 @@
                         totalPages: 0
                     }
                 };
+
+                // On first load, clear ALL old caches to prevent mixing
+                if (userId && typeof clearAllUserImageCaches === 'function') {
+                    clearAllUserImageCaches(userId);
+                    console.log('[DEBUG] Initial load - cleared all old caches');
+                }
             }
 
             // Initialize content type toggle for user liked images
@@ -898,6 +905,16 @@
 
                         // Update user profile content type
                         window.userProfile.contentType = selectedType;
+
+                        // Clear the loadedImages array to prevent gallery mixing
+                        window.loadedImages = [];
+
+                        // Clear ALL user image caches (old cache + SFW + NSFW)
+                        // This prevents loading mixed content from old caches
+                        if (typeof clearAllUserImageCaches === 'function') {
+                            clearAllUserImageCaches(userId);
+                            console.log(`[DEBUG] Switched to ${selectedType} - all caches cleared`);
+                        }
 
                         // Clear the images grid and show loading state
                         const imagesGrid = document.getElementById('user-images-gallery');
@@ -1004,6 +1021,32 @@
     </script>
 
     <style>
+        /* Debug Badge for Content Type */
+        .debug-content-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            z-index: 10;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            pointer-events: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .debug-content-badge.sfw {
+            background: #10b981;
+            color: white;
+        }
+
+        .debug-content-badge.nsfw {
+            background: #ef4444;
+            color: white;
+        }
+
         footer{display: inline !important;}
         .sticky-bottom{display: inline-block !important;width: 100%;}
         .isLoading .fa-image{

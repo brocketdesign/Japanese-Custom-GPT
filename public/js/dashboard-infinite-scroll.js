@@ -6,11 +6,24 @@ if (typeof chatImageManager === 'undefined') {
         currentPages: new Map(),
         totalPages: new Map(),
         scrollHandlers: new Map(),
-        initialized: new Set()
+        initialized: new Set(),
+        contentTypes: new Map() // Store content type for each gallery (for infinite scroll)
     };
 }
 
 const VIDEO_PROMPT_MAX_LENGTH = 160;
+
+/**
+ * DEBUG MODE FOR CONTENT TYPE FILTERING
+ *
+ * Set DEBUG_SHOW_CONTENT_TYPE to true to enable debug mode:
+ * - Shows SFW/NSFW badges on each image (green for SFW, red for NSFW)
+ * - Logs content type info in browser console
+ * - Backend logs filtering details in server console
+ *
+ * To disable: Change to false and refresh the page
+ */
+const DEBUG_SHOW_CONTENT_TYPE = false; // Change to true to enable debug badges
 
 /**
  * Load cache from localStorage for a specific key
@@ -161,6 +174,9 @@ function loadImages(type, id, page = 1, reload = false, isModal = false, endpoin
     const cacheKey = `${type}_${id}${cacheKeySuffix}`;
     const config = getGalleryConfig(type);
     
+    // Derive contentType from cacheKeySuffix (e.g., '_SFW' -> 'SFW', '_NSFW' -> 'NSFW')
+    const contentType = cacheKeySuffix ? cacheKeySuffix.replace(/^_/, '') : null;
+    
     // For chat images, validate session alignment before proceeding
     if (type === 'chat' && !onCharacterPage && !validateChatIdWithSession(id)) {
         console.warn(`[loadImages] Chat ID ${id} does not match session storage, skipping load`);
@@ -196,7 +212,7 @@ function loadImages(type, id, page = 1, reload = false, isModal = false, endpoin
                 
                 // Setup infinite scroll ONLY if NOT on character profile page
                 if (!onCharacterPage) {
-                    setupInfiniteScroll(id, isModal, type);
+                    setupInfiniteScroll(id, isModal, type, contentType);
                 }
                 
                 // Collect all cached images to return
@@ -234,7 +250,7 @@ function loadImages(type, id, page = 1, reload = false, isModal = false, endpoin
                 manager.currentPages.set(cacheKey, Math.max(manager.currentPages.get(cacheKey), page));
                 // Setup infinite scroll ONLY if NOT on character profile page
                 if (!onCharacterPage) {
-                    setupInfiniteScroll(id, isModal, type);
+                    setupInfiniteScroll(id, isModal, type, contentType);
                 }
                 resolve(cachedItems);
                 return;
@@ -259,7 +275,7 @@ function loadImages(type, id, page = 1, reload = false, isModal = false, endpoin
             }
             
             // Fetch from server
-            await fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type, mediaType);
+            await fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type, mediaType, contentType);
             
             // Return the newly fetched page
             const fetchedPageImages = manager.cache.get(cacheKey).get(page) || [];
@@ -292,6 +308,8 @@ async function handleReload(id, cacheKey, type, mediaType) {
         window.loadedImages = [];
     } else if (type === 'chatVideo') {
         window.loadedVideos = [];
+    } else if (type === 'user') {
+        window.loadedImages = [];
     }
     
     // If we have cached pages, render them
@@ -316,7 +334,7 @@ async function handleReload(id, cacheKey, type, mediaType) {
 /**
  * Fetch images from server and handle caching
  */
-async function fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type, mediaType) {
+async function fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type, mediaType, contentType = null) {
     const manager = window.chatImageManager;
     
     // Validate page number again
@@ -367,7 +385,7 @@ async function fetchImagesFromServer(id, page, cacheKey, isModal, endpoint, type
         // Setup infinite scroll ONLY if NOT on character profile page
         const onCharacterPage = !!document.querySelector('#characterProfilePage');
         if (!onCharacterPage) {
-            setupInfiniteScroll(id, isModal, type);
+            setupInfiniteScroll(id, isModal, type, contentType);
         }
         
     } catch (error) {
@@ -435,7 +453,12 @@ async function renderImages(images, id, type) {
         const isBlur = shouldBlurNSFW(item, subscriptionStatus);
         // Use the isLiked property from API response - it's already computed by the backend
         const isLiked = item?.isLiked ? item?.isLiked : (item?.likedBy?.includes(currentUserId) || false);
-        
+
+        // DEBUG: Log image content type
+        if (DEBUG_SHOW_CONTENT_TYPE && type === 'user') {
+            console.log(`[DEBUG] Image ${item._id}: ${item.nsfw ? 'NSFW' : 'SFW'} (nsfw=${item.nsfw})`);
+        }
+
         // LOG: Track NSFW images
         if (isBlur) {
             nsfw_count++;
@@ -477,7 +500,13 @@ async function renderImages(images, id, type) {
     const gallery = document.querySelector(gallerySelector);
     if (gallery && fragment.hasChildNodes()) {
         gallery.appendChild(fragment);
-        
+
+        // DEBUG: Log summary for user galleries
+        if (DEBUG_SHOW_CONTENT_TYPE && type === 'user') {
+            const currentContentType = window.userProfile?.contentType || 'UNKNOWN';
+            console.log(`[DEBUG] Gallery loaded - Content Type Filter: ${currentContentType}, SFW Images: ${non_nsfw_count}, NSFW Images: ${nsfw_count}, Total: ${newImagesAdded}, Duplicates Skipped: ${duplicatesSkipped}`);
+        }
+
         // Apply grid layout after DOM update
         requestAnimationFrame(() => {
             applyGridLayout(gallerySelector);
@@ -517,12 +546,18 @@ function createInstagramImageCard(item, isBlur, isLiked, isAdmin, isTemporary, s
     
     // Like button (show for all modes except temporary users)
     const likeButton = !isTemporary ? `
-        <button class="ig-like-btn ${isLiked ? 'liked' : ''}" 
-                data-id="${item._id}" 
-                data-chat-id="${chatId}" 
+        <button class="ig-like-btn ${isLiked ? 'liked' : ''}"
+                data-id="${item._id}"
+                data-chat-id="${chatId}"
                 onclick="event.stopPropagation(); toggleImageFavorite(this)">
             <i class="bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'}"></i>
         </button>` : '';
+
+    // Debug badge (show SFW/NSFW status for debugging)
+    const debugBadge = DEBUG_SHOW_CONTENT_TYPE ? `
+        <div class="debug-content-badge ${item.nsfw ? 'nsfw' : 'sfw'}">
+            ${item.nsfw ? 'NSFW' : 'SFW'}
+        </div>` : '';
     
     // Image content based on display mode
     let imageContent;
@@ -583,6 +618,7 @@ function createInstagramImageCard(item, isBlur, isLiked, isAdmin, isTemporary, s
     return `
         <div class="ig-image-card" data-image-id="${item._id}" data-full-url="${fullUrl}" data-index="${loadedIndex}">
             ${likeButton}
+            ${debugBadge}
             ${imageContent}
             ${characterFooter}
         </div>
@@ -781,18 +817,30 @@ function createVideoCard(video, isBlur, isTemporary) {
 /**
  * Setup infinite scroll with optimized event handling
  */
-function setupInfiniteScroll(id, isModal = false, type = 'chat') {
+function setupInfiniteScroll(id, isModal = false, type = 'chat', contentType = null) {
     const manager = window.chatImageManager;
+    // For user type, use a SINGLE scroll handler (no contentType in key)
+    // The handler will read the current contentType dynamically
     const scrollKey = `${id}_${isModal ? 'modal' : 'page'}_${type}`;
     
-    // Prevent duplicate scroll handlers
+    // For user galleries, always remove and recreate the handler to use the latest contentType
+    if (type === 'user') {
+        const scrollContainer = isModal ? $('#characterModal .modal-body') : $(window);
+        const eventName = `scroll.${type}Images_${id}_${isModal ? 'modal' : 'page'}`;
+        
+        // Remove any existing handler
+        scrollContainer.off(eventName);
+        manager.initialized.delete(scrollKey);
+        manager.scrollHandlers.delete(scrollKey);
+    }
+    
+    // Prevent duplicate scroll handlers (for non-user types)
     if (manager.initialized.has(scrollKey)) {
         return;
     }
     
     const scrollContainer = isModal ? (type === 'intro' ? $('#characterIntroModal .modal-body') : $('#characterModal .modal-body')) : $(window);
     const config = getGalleryConfig(type);
-    const cacheKey = `${type}_${id}`;
     
     // Use namespaced events to avoid conflicts with other scroll handlers
     const eventName = `scroll.${type}Images_${id}_${isModal ? 'modal' : 'page'}`;
@@ -805,7 +853,14 @@ function setupInfiniteScroll(id, isModal = false, type = 'chat') {
     const scrollHandler = function() {
         clearTimeout(scrollTimeout);
         scrollTimeout = setTimeout(() => {
-            handleScroll(id, isModal, cacheKey, type);
+            // For user type, read contentType dynamically from window.userProfile
+            const currentContentType = (type === 'user' && window.userProfile?.contentType) 
+                ? window.userProfile.contentType 
+                : contentType;
+            const cacheKeySuffix = currentContentType ? `_${currentContentType}` : '';
+            const dynamicCacheKey = `${type}_${id}${cacheKeySuffix}`;
+            
+            handleScroll(id, isModal, dynamicCacheKey, type, currentContentType);
         }, 100); // 100ms throttle
     };
     
@@ -817,7 +872,7 @@ function setupInfiniteScroll(id, isModal = false, type = 'chat') {
 /**
  * Handle scroll events and trigger loading when needed
  */
-function handleScroll(id, isModal, cacheKey, type) {
+function handleScroll(id, isModal, cacheKey, type, contentType = null) {
     const manager = window.chatImageManager;
     const config = getGalleryConfig(type);
 
@@ -878,11 +933,19 @@ function handleScroll(id, isModal, cacheKey, type) {
     if (rect.top < visibleBottom + triggerOffset) {
         const nextPage = currentPage + 1;
         
-        const loadFunction = type === 'chat' ? loadChatImages : type === 'intro' ? loadIntroImages : loadUserImages;
-        loadFunction(id, nextPage, false, isModal)
-            .catch(error => {
-                console.error(`[handleScroll] Failed to load page ${nextPage}:`, error);
-            });
+        // For user type, pass contentType; for other types, use the standard load function
+        if (type === 'user') {
+            loadUserImages(id, nextPage, false, isModal, contentType)
+                .catch(error => {
+                    console.error(`[handleScroll] Failed to load page ${nextPage}:`, error);
+                });
+        } else {
+            const loadFunction = type === 'chat' ? loadChatImages : type === 'intro' ? loadIntroImages : loadUserImages;
+            loadFunction(id, nextPage, false, isModal)
+                .catch(error => {
+                    console.error(`[handleScroll] Failed to load page ${nextPage}:`, error);
+                });
+        }
     }
 }
 
@@ -1176,6 +1239,36 @@ window.clearChatImageCache = function(chatId) {
  */
 window.clearUserImageCache = function(userId) {
     clearImageCache('user', userId);
+};
+
+/**
+ * Clear ALL user image caches (base + SFW + NSFW)
+ * Use this when switching content types to prevent cache mixing
+ */
+window.clearAllUserImageCaches = function(userId) {
+    const manager = window.chatImageManager;
+    const suffixes = ['', '_SFW', '_NSFW'];
+
+    suffixes.forEach(suffix => {
+        const cacheKey = `user_${userId}${suffix}`;
+
+        // Clear memory cache
+        manager.cache.delete(cacheKey);
+        manager.loadingStates.delete(cacheKey);
+        manager.currentPages.delete(cacheKey);
+        manager.totalPages.delete(cacheKey);
+
+        // Remove scroll handlers
+        const scrollKeys = Array.from(manager.initialized).filter(key => key.includes(cacheKey));
+        scrollKeys.forEach(key => {
+            manager.initialized.delete(key);
+            manager.scrollHandlers.delete(key);
+        });
+
+        // Clear localStorage
+        const localCacheKey = `images_${cacheKey}`;
+        localStorage.removeItem(localCacheKey);
+    });
 };
 
 /**

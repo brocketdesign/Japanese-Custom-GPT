@@ -364,30 +364,31 @@ async function routes(fastify, options) {
       const chatsGalleryCollection = db.collection('gallery');
       const chatsCollection = db.collection('chats');
 
-      // Find the images liked by the user
-      const likedImageIds = await imagesLikesCollection
+      // Get ALL liked imageIds (without pagination yet - we'll paginate after filtering)
+      const allLikedImageIds = await imagesLikesCollection
         .find({ userId })
         .sort({ _id: -1 })
-        .skip(skip)
-        .limit(limit)
         .map(doc => doc.imageId)
         .toArray();
-  
+
       // If no images liked by user
-      if (!likedImageIds.length) {
+      if (!allLikedImageIds.length) {
         return reply.send({ images: [], page, totalPages: 0 });
       }
-  
+
+      console.log(`[DEBUG] User liked images - Total liked images: ${allLikedImageIds.length}`);
+
       // Build aggregation pipeline with content_type filter
       const aggregatePipeline = [
-        { $match: { 'images._id': { $in: likedImageIds } } },  // Match only documents where the liked image IDs exist
+        { $match: { 'images._id': { $in: allLikedImageIds } } },  // Match only documents where the liked image IDs exist
         { $unwind: '$images' },  // Unwind to get individual images
-        { $match: { 'images._id': { $in: likedImageIds } } }  // Match the images specifically with the liked IDs
+        { $match: { 'images._id': { $in: allLikedImageIds } } }  // Match the images specifically with the liked IDs
       ];
 
-      // Add content_type filter if provided
+      // Add content_type filter if provided (BEFORE pagination)
       if (contentType) {
         const normalizedContentType = contentType.toUpperCase();
+        console.log(`[DEBUG] User liked images - Filtering by content_type: ${normalizedContentType} (userId: ${userId}, page ${page})`);
         if (normalizedContentType === 'SFW') {
           // SFW: only images where nsfw is not true
           aggregatePipeline.push({
@@ -403,15 +404,30 @@ async function routes(fastify, options) {
             }
           });
         }
+      } else {
+        console.log(`[DEBUG] User liked images - No content_type filter (userId: ${userId}, page ${page})`);
       }
 
-      aggregatePipeline.push({ $project: { image: '$images', chatId: 1, _id: 0 } });  // Project image and chatId
+      // Add sorting to maintain liked order, then apply pagination
+      aggregatePipeline.push(
+        { $addFields: {
+          likeOrder: {
+            $indexOfArray: [allLikedImageIds.map(id => id.toString()), { $toString: '$images._id' }]
+          }
+        }},
+        { $sort: { likeOrder: 1 } },  // Sort by original like order
+        { $skip: skip },               // Apply pagination AFTER filtering
+        { $limit: limit },
+        { $project: { image: '$images', chatId: 1, _id: 0 } }  // Project image and chatId
+      );
 
       // Fetch the documents that contain the liked images from the gallery collection
       const likedImagesDocs = await chatsGalleryCollection
         .aggregate(aggregatePipeline)
         .toArray();
-  
+
+      console.log(`[DEBUG] User liked images - Found ${likedImagesDocs.length} images after filtering and pagination (content_type: ${contentType || 'none'})`);
+
       // Extract chatIds from the liked images
       const chatIds = likedImagesDocs.map(doc => doc.chatId);
   
@@ -425,23 +441,28 @@ async function routes(fastify, options) {
         const image = doc.image;
         const chat = chats.find(c => c._id.equals(doc.chatId));
         image.chatSlug =  chat?.slug || ''
-        
-        return {
+
+        const imageData = {
           ...image,
           chatId: chat?._id,
           chatName: chat ? chat.name : 'Unknown Chat',
           thumbnail: chat ? chat?.chatImageUrl || chat?.thumbnail || chat?.thumbnailUrl : '/img/default-thumbnail.png'
         };
+
+        // DEBUG: Log each image's NSFW status
+        console.log(`[DEBUG]   - Image ${imageData._id}: ${imageData.nsfw ? 'NSFW' : 'SFW'} (nsfw=${imageData.nsfw})`);
+
+        return imageData;
       });
   
       // Total liked images by user (filtered by content_type if specified)
       let totalLikedCount;
       if (contentType) {
-        // If filtering by content type, count filtered images
+        // If filtering by content type, count filtered images using the same pipeline
         const countPipeline = [
-          { $match: { 'images._id': { $in: await imagesLikesCollection.find({ userId }).map(doc => doc.imageId).toArray() } } },
+          { $match: { 'images._id': { $in: allLikedImageIds } } },
           { $unwind: '$images' },
-          { $match: { 'images._id': { $in: await imagesLikesCollection.find({ userId }).map(doc => doc.imageId).toArray() } } }
+          { $match: { 'images._id': { $in: allLikedImageIds } } }
         ];
 
         const normalizedContentType = contentType.toUpperCase();
@@ -455,9 +476,10 @@ async function routes(fastify, options) {
 
         const countResult = await chatsGalleryCollection.aggregate(countPipeline).toArray();
         totalLikedCount = countResult.length > 0 ? countResult[0].total : 0;
+        console.log(`[DEBUG] User liked images - Total ${normalizedContentType} images: ${totalLikedCount}`);
       } else {
         // No filter, count all liked images
-        totalLikedCount = await imagesLikesCollection.countDocuments({ userId });
+        totalLikedCount = allLikedImageIds.length;
       }
       const totalPages = Math.ceil(totalLikedCount / limit);
 

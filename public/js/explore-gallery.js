@@ -540,16 +540,16 @@ class ExploreGallery {
                         <i class="bi bi-trash"></i>
                     </div>
                 </button>
-                <button class="tiktok-action-btn admin-btn preview-model-btn"
-                        data-chat-id="${character.chatId}"
-                        onclick="event.stopPropagation(); window.exploreGallery.handleAdminPreviewModel(this);"
-                        title="Preview Image Model">
-                    <div class="action-icon">
-                        <i class="bi bi-gpu-card"></i>
-                    </div>
-                </button>
                 ` : ''}
             </div>
+            
+            <!-- Image model indicator (admin only) -->
+            ${window.isAdmin ? `
+            <div class="image-model-indicator">
+                <i class="bi bi-gpu-card"></i>
+                <span class="model-name">${character.images[0]?.imageModelId || 'Unknown'}</span>
+            </div>
+            ` : ''}
             
             <!-- Bottom info overlay -->
             <div class="character-info-overlay">
@@ -772,8 +772,6 @@ class ExploreGallery {
      * Create floating hearts animation at double-tap position
      */
     createDoubleTapHearts(x, y, slide) {
-        console.log(`🎯 Creating hearts at position: (${x}, ${y})`);
-
         const numHearts = 3;
         const animations = ['floatHeart', 'floatHeartLeft', 'floatHeartRight'];
 
@@ -796,7 +794,6 @@ class ExploreGallery {
                 heart.innerHTML = '<i class="bi bi-heart-fill"></i>';
             } else {
                 heart.innerHTML = '❤️';
-                console.log('Using emoji fallback for heart animation');
             }
 
             // Use fixed positioning to work with clientX/clientY coordinates
@@ -809,8 +806,6 @@ class ExploreGallery {
             heart.style.animation = `${animations[i]} 1s ease-out forwards`;
             heart.style.animationDelay = `${i * 0.1}s`;
 
-            console.log(`❤️ Heart ${i + 1} created with animation: ${animations[i]}`);
-
             // Add to body for proper fixed positioning
             document.body.appendChild(heart);
 
@@ -818,7 +813,6 @@ class ExploreGallery {
             setTimeout(() => {
                 if (heart.parentNode) {
                     heart.remove();
-                    console.log(`🗑️ Heart ${i + 1} removed`);
                 }
             }, 1200 + (i * 100));
         }
@@ -989,6 +983,7 @@ class ExploreGallery {
             const imageSlidesArray = Array.from(slide.querySelectorAll('.character-images-swiper .swiper-slide'));
             if (imageSlidesArray[imageIndex]) {
                 const newImageId = imageSlidesArray[imageIndex].dataset.imageId;
+                const newImageModel = imageSlidesArray[imageIndex].dataset.imageModel;
                 const heartBtn = slide.querySelector('.tiktok-action-btn.heart-btn');
                 if (heartBtn && newImageId) {
                     heartBtn.dataset.id = newImageId;
@@ -996,6 +991,12 @@ class ExploreGallery {
                     
                     // Synchronize heart button state with the actual like status
                     this.syncHeartButtonState(heartBtn, newImageId);
+                }
+                
+                // Update model indicator (admin only)
+                const modelIndicator = slide.querySelector('.image-model-indicator .model-name');
+                if (modelIndicator) {
+                    modelIndicator.textContent = newImageModel || 'Unknown';
                 }
             }
         }
@@ -1240,26 +1241,6 @@ class ExploreGallery {
             btn.style.opacity = '1';
             btn.style.pointerEvents = 'auto';
         });
-    }
-
-    handleAdminPreviewModel(btn) {
-        // Get the currently visible image slide to find its model
-        const slide = btn.closest('.character-slide');
-        if (!slide) {
-            alert('Could not find character slide');
-            return;
-        }
-        
-        // Find the currently active image in the horizontal swiper
-        const currentImageSlide = slide.querySelector('.character-images-swiper .swiper-slide-active');
-        const imageModel = currentImageSlide?.dataset?.imageModel;
-        
-        if (!imageModel) {
-            alert('No image model set for this image');
-            return;
-        }
-        // Open the admin image test page filtered by this model
-        window.open(`/dashboard/image?model=${encodeURIComponent(imageModel)}`, '_blank');
     }
 
     // UI States

@@ -11,6 +11,7 @@ const { cacheSitemapData } = require('./sitemap-utils'); // <-- import sitemap u
 const { updateAnalyticsCache } = require('./cronUserAnalytics'); // <-- import analytics cache function
 const { persistQueryTags } = require('./query-tags-utils');
 const { createScheduledTasksProcessor } = require('./scheduled-tasks-processor'); // <-- import scheduled tasks processor
+const { recoverUnfinishedTasks } = require('./task-recovery-utils'); // <-- import task recovery utils
 // Store active cron jobs
 const cronJobs = {};
 
@@ -449,6 +450,31 @@ const initializeDayPassExpirationCheck = (fastify, checkExpiredDayPasses) => {
     console.error('💳 [CRON] ❌ Error initializing day pass expiration check:', error);
   }
 };
+
+/**
+ * Run task recovery on server startup
+ * Recovers unfinished image and video generation tasks
+ * 
+ * @param {Object} fastify - Fastify instance
+ */
+const runStartupTaskRecovery = async (fastify) => {
+  try {
+    console.log('\n╔══════════════════════════════════════════════════════════╗');
+    console.log('║      🔄 RUNNING STARTUP TASK RECOVERY                    ║');
+    console.log('╚══════════════════════════════════════════════════════════╝\n');
+    
+    // Run task recovery
+    const stats = await recoverUnfinishedTasks(fastify);
+    
+    console.log('\n╔══════════════════════════════════════════════════════════╗');
+    console.log('║      ✅ STARTUP TASK RECOVERY COMPLETED                  ║');
+    console.log('╚══════════════════════════════════════════════════════════╝\n');
+    
+  } catch (error) {
+    console.error('🔄 [STARTUP RECOVERY] ❌ Error during startup task recovery:', error);
+  }
+};
+
 /**
  * Initialize cron jobs from database settings
  * 
@@ -558,6 +584,11 @@ const initializeCronJobs = async (fastify) => {
     console.log('║          ✅ ALL CRON JOBS INITIALIZED SUCCESSFULLY       ║');
     console.log('╚══════════════════════════════════════════════════════════╝\n');
     
+    // Run task recovery on startup (after all cron jobs are initialized)
+    // This runs once immediately to recover any tasks that were interrupted
+    // by a server restart
+    await runStartupTaskRecovery(fastify);
+    
   } catch (error) {
     console.error('❌ [CRON] Error initializing cron jobs:', error);
   }
@@ -611,5 +642,6 @@ module.exports = {
   cachePopularChatsTask,
   cacheSitemapDataTask,
   getJobInfo,
-  getNextRunTime
+  getNextRunTime,
+  runStartupTaskRecovery
 };

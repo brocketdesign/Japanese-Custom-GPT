@@ -593,7 +593,20 @@ async function routes(fastify, options) {
                 // If photorealistic style or no specific model provided (and not anime), use Hunyuan Image 3
                 const useHunyuanModel = imageStyle === 'photorealistic' || (imageStyle !== 'anime' && !modelId);
                 const effectiveModelId = modelId || (useHunyuanModel ? 'hunyuan-image-3' : null);
-                
+
+                // Save the resolved model back to the chat so subsequent image generations use the correct model
+                if (effectiveModelId && effectiveModelId !== modelId) {
+                    const modelUpdateData = { modelId: effectiveModelId };
+                    if (!imageModel) {
+                        modelUpdateData.imageModel = effectiveModelId;
+                    }
+                    await fastify.mongo.db.collection('chats').updateOne(
+                        { _id: new ObjectId(chatId) },
+                        { $set: modelUpdateData }
+                    );
+                    console.log(`\x1b[32m✓ Chat updated with resolved model: modelId=${effectiveModelId}\x1b[0m`);
+                }
+
                 console.log('\x1b[36m🖼️ ===== IMAGE GENERATION PARAMS =====\x1b[0m');
                 console.log(`   - prompt: ${enhancedPrompt ? enhancedPrompt.substring(0, 80) + '...' : 'MISSING'}`);
                 console.log(`   - modelId: ${effectiveModelId || 'DEFAULT (not provided)'}`);

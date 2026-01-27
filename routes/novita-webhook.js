@@ -9,6 +9,7 @@ const { handleVideoTaskCompletion } = require('../models/img2video-utils');
 const axios = require('axios');
 const { createHash } = require('crypto');
 const { uploadToS3 } = require('../models/tool');
+const { IMAGE_TASK_TYPES, VIDEO_TASK_TYPES, isVideoTask } = require('../models/task-types');
 
 async function routes(fastify, options) {
   /**
@@ -70,16 +71,12 @@ async function routes(fastify, options) {
       // Check if already processed - but don't lock yet, let checkTaskStatus handle it
       // We'll store webhook data and let the existing handler process it
 
-      // Process based on task type
-      // Image task types: TXT_TO_IMG, IMG_TO_IMG, HUNYUAN_IMAGE_3, FLUX_2_FLEX, FLUX_2_DEV, Z_IMAGE_TURBO, etc.
-      const imageTaskTypes = ['TXT_TO_IMG', 'IMG_TO_IMG', 'HUNYUAN_IMAGE_3', 'FLUX_2_FLEX', 'FLUX_2_DEV', 'FLUX_1_KONTEXT_DEV', 'FLUX_1_KONTEXT_PRO', 'FLUX_1_KONTEXT_MAX', 'Z_IMAGE_TURBO'];
-      const videoTaskTypes = ['IMG_TO_VIDEO', 'WAN_2_2_I2V', 'WAN_2_5_I2V_PREVIEW', 'MINIMAX_VIDEO_01', 'WAN_2_2_T2V', 'WAN_2_5_T2V_PREVIEW', 'HUNYUAN_VIDEO_FAST'];
-      
-      if (imageTaskTypes.includes(taskType)) {
+      // Process based on task type using shared constants
+      if (IMAGE_TASK_TYPES.includes(taskType)) {
         // Handle image generation tasks
         console.log(`[NovitaWebhook] 🖼️ Handling as image task type: ${taskType}`);
         await handleImageWebhook(taskId, task, payload, taskDoc, fastify, db);
-      } else if (videoTaskTypes.includes(taskType) || taskId.startsWith('img2video-')) {
+      } else if (isVideoTask(taskType, taskId)) {
         // Handle video generation tasks
         console.log(`[NovitaWebhook] 🎬 Handling as video task type: ${taskType}`);
         await handleVideoWebhook(taskId, task, payload, taskDoc, fastify, db);

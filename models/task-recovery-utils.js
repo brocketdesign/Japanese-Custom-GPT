@@ -6,6 +6,7 @@
 const { ObjectId } = require('mongodb');
 const { checkTaskStatus } = require('./imagen');
 const { checkVideoTaskStatus, handleVideoTaskCompletion } = require('./img2video-utils');
+const { isVideoTask } = require('./task-types');
 
 /**
  * Recover unfinished image and video generation tasks
@@ -55,19 +56,29 @@ async function recoverUnfinishedTasks(fastify) {
         
         console.log(`🔄 [TASK RECOVERY] Processing ${taskType} task: ${taskId}`);
         
-        // Determine if it's an image or video task
-        const videoTaskTypes = ['img2video', 'IMG_TO_VIDEO', 'WAN_2_2_I2V', 'WAN_2_5_I2V_PREVIEW', 
-                               'MINIMAX_VIDEO_01', 'WAN_2_2_T2V', 'WAN_2_5_T2V_PREVIEW', 'HUNYUAN_VIDEO_FAST'];
-        const isVideoTask = videoTaskTypes.includes(taskType) || taskId.startsWith('img2video-');
+        // Determine if it's an image or video task using shared constant
+        const isVideo = isVideoTask(taskType, taskId);
         
-        if (isVideoTask) {
+        let recoveryResult;
+        if (isVideo) {
           // Process video task
-          await recoverVideoTask(task, fastify);
-          stats.videosRecovered++;
+          recoveryResult = await recoverVideoTask(task, fastify);
         } else {
           // Process image task
-          await recoverImageTask(task, fastify);
-          stats.imagesRecovered++;
+          recoveryResult = await recoverImageTask(task, fastify);
+        }
+        
+        // Update stats based on recovery result
+        if (recoveryResult === 'completed') {
+          if (isVideo) {
+            stats.videosRecovered++;
+          } else {
+            stats.imagesRecovered++;
+          }
+        } else if (recoveryResult === 'processing') {
+          stats.stillPending++;
+        } else if (recoveryResult === 'failed') {
+          stats.failed++;
         }
         
       } catch (taskError) {
@@ -92,6 +103,7 @@ async function recoverUnfinishedTasks(fastify) {
  * 
  * @param {Object} task - Task document from database
  * @param {Object} fastify - Fastify instance
+ * @returns {string} Recovery status: 'completed', 'processing', 'failed', or 'unknown'
  */
 async function recoverImageTask(task, fastify) {
   const taskId = task.taskId;
@@ -110,12 +122,16 @@ async function recoverImageTask(task, fastify) {
     
     if (result && result.status === 'completed') {
       console.log(`🔄 [TASK RECOVERY] ✅ Image task ${taskId} recovered successfully`);
+      return 'completed';
     } else if (result && result.status === 'processing') {
       console.log(`🔄 [TASK RECOVERY] ⏳ Image task ${taskId} still processing`);
+      return 'processing';
     } else if (result && result.status === 'failed') {
       console.log(`🔄 [TASK RECOVERY] ❌ Image task ${taskId} failed`);
+      return 'failed';
     } else {
       console.log(`🔄 [TASK RECOVERY] ⚠️  Image task ${taskId} status unknown`);
+      return 'unknown';
     }
     
   } catch (error) {
@@ -129,6 +145,7 @@ async function recoverImageTask(task, fastify) {
  * 
  * @param {Object} task - Task document from database
  * @param {Object} fastify - Fastify instance
+ * @returns {string} Recovery status: 'completed', 'processing', 'failed', or 'unknown'
  */
 async function recoverVideoTask(task, fastify) {
   const taskId = task.taskId;
@@ -166,9 +183,11 @@ async function recoverVideoTask(task, fastify) {
       };
       
       await handleVideoTaskCompletion(taskStatus, fastify, options);
+      return 'completed';
       
     } else if (result && result.status === 'processing') {
       console.log(`🔄 [TASK RECOVERY] ⏳ Video task ${taskId} still processing`);
+      return 'processing';
     } else if (result && result.status === 'failed') {
       console.log(`🔄 [TASK RECOVERY] ❌ Video task ${taskId} failed`);
       
@@ -183,8 +202,10 @@ async function recoverVideoTask(task, fastify) {
           } 
         }
       );
+      return 'failed';
     } else {
       console.log(`🔄 [TASK RECOVERY] ⚠️  Video task ${taskId} status unknown`);
+      return 'unknown';
     }
     
   } catch (error) {

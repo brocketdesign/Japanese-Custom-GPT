@@ -32,6 +32,14 @@ async function addAdminEmails(fastify, emails) {
     const result = await usersCollection.updateMany({ email: { $in: emails } }, { $set: { role: 'admin' } });
     return result;
 }
+// Configure Supabase Storage
+const { createClient } = require('@supabase/supabase-js');
+const supabase = process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY
+    ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY)
+    : null;
+
+const SUPABASE_BUCKET = process.env.SUPABASE_BUCKET || 'images';
+
 // Configure AWS S3
 const { S3Client, PutObjectCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3');
 const s3 = new S3Client({
@@ -91,6 +99,45 @@ const uploadToS3 = async (buffer, hash, filename) => {
         console.error("S3 Upload Error:", error.message);
         throw new Error("Failed to upload file to S3. Please try again.");
     }
+};
+
+const uploadToSupabase = async (buffer, hash, filename) => {
+    if (!supabase) {
+        throw new Error('Supabase is not configured');
+    }
+    const key = `${hash}_${filename}`;
+    const { data, error } = await supabase.storage
+        .from(SUPABASE_BUCKET)
+        .upload(key, buffer, {
+            contentType: 'application/octet-stream',
+            upsert: true,
+        });
+
+    if (error) {
+        console.error("Supabase Upload Error:", error.message);
+        throw new Error("Failed to upload file to Supabase.");
+    }
+
+    const { data: publicUrlData } = supabase.storage
+        .from(SUPABASE_BUCKET)
+        .getPublicUrl(key);
+
+    return publicUrlData.publicUrl;
+};
+
+const uploadImage = async (buffer, hash, filename) => {
+    // Try Supabase first
+    try {
+        const url = await uploadToSupabase(buffer, hash, filename);
+        console.log(`[Upload] Saved to Supabase: ${url}`);
+        return url;
+    } catch (err) {
+        console.warn(`[Upload] Supabase failed (${err.message}), falling back to S3`);
+    }
+    // Fallback to S3
+    const url = await uploadToS3(buffer, hash, filename);
+    console.log(`[Upload] Saved to S3: ${url}`);
+    return url;
 };
 
 /**
@@ -797,6 +844,8 @@ module.exports = {
     updateCounter,
     handleFileUpload,
     uploadToS3,
+    uploadToSupabase,
+    uploadImage,
     checkLimits,
     checkUserAdmin,
     convertImageUrlToBase64,

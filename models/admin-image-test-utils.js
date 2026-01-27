@@ -10,7 +10,7 @@
 const axios = require('axios');
 const { ObjectId } = require('mongodb');
 const { createHash } = require('crypto');
-const { uploadToS3 } = require('./tool');
+const { uploadImage } = require('./tool');
 
 // NSFW keywords for content detection
 const NSFW_KEYWORDS = [
@@ -870,22 +870,36 @@ async function checkTaskResult(taskId) {
       const images = response.data.images || response.data.data?.images || [];
       
       console.log(`[AdminImageTest] ✅ Task ${taskId} completed with ${images.length} image(s)`);
-      
-      // Log the actual image URLs for debugging
-      images.forEach((img, idx) => {
-        const imageUrl = img.image_url || img.url;
-        console.log(`[AdminImageTest] 🖼️ Image ${idx + 1} URL: ${imageUrl}`);
-      });
-      
+
+      // Download from Novita and upload to Supabase/S3 for permanent URLs
+      const uploadedImages = await Promise.all(images.map(async (img, idx) => {
+        const originalUrl = img.image_url || img.url;
+        console.log(`[AdminImageTest] 🖼️ Image ${idx + 1} original URL: ${originalUrl}`);
+        try {
+          const imageResponse = await axios.get(originalUrl, { responseType: 'arraybuffer', timeout: 120000 });
+          const buffer = Buffer.from(imageResponse.data, 'binary');
+          const hash = createHash('md5').update(buffer).digest('hex');
+          const permanentUrl = await uploadImage(buffer, hash, 'novita_result_image.png');
+          console.log(`[AdminImageTest] ✅ Image ${idx + 1} uploaded: ${permanentUrl.substring(0, 60)}...`);
+          return {
+            imageUrl: permanentUrl,
+            image_type: img.image_type,
+            nsfw_detection: img.nsfw_detection_result || null
+          };
+        } catch (err) {
+          console.error(`[AdminImageTest] ❌ Failed to upload image ${idx + 1}: ${err.message}`);
+          return {
+            imageUrl: originalUrl,
+            image_type: img.image_type,
+            nsfw_detection: img.nsfw_detection_result || null
+          };
+        }
+      }));
+
       return {
         status: 'completed',
         progress: 100,
-        images: images.map(img => ({
-          imageUrl: img.image_url || img.url,
-          image_type: img.image_type,
-          image_url_ttl: img.image_url_ttl,
-          nsfw_detection: img.nsfw_detection_result || null
-        })),
+        images: uploadedImages,
         seed: response.data.extra?.seed || null
       };
     } else if (taskStatus === 'TASK_STATUS_FAILED' || taskStatus === 'failed') {
@@ -1304,7 +1318,7 @@ async function uploadTestImageToS3(imageUrl, prefix = 'test') {
     }
 
     const hash = createHash('md5').update(buffer).digest('hex');
-    const s3Url = await uploadToS3(buffer, hash, `${prefix}_${hash}.png`);
+    const s3Url = await uploadImage(buffer, hash, `${prefix}_${hash}.png`);
     
     return s3Url;
   } catch (error) {

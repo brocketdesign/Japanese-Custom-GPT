@@ -3,7 +3,7 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const { ObjectId } = require('mongodb');
 const axios = require('axios');
 const { createHash } = require('crypto');
-const { saveChatImageToDB, getLanguageName, uploadToS3 } = require('../models/tool')
+const { saveChatImageToDB, getLanguageName, uploadImage } = require('../models/tool')
 const { getAutoMergeFaceSetting } = require('../models/chat-tool-settings-utils')
 const { awardImageGenerationReward, awardCharacterImageMilestoneReward } = require('./user-points-utils');
 const slugify = require('slugify');
@@ -1791,7 +1791,7 @@ async function fetchNovitaResult(task_id) {
           const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer', timeout: 60000 });
           const buffer = Buffer.from(imageResponse.data, 'binary');
           const hash = createHash('md5').update(buffer).digest('hex');
-          const uploadedUrl = await uploadToS3(buffer, hash, 'novita_result_image.png');
+          const uploadedUrl = await uploadImage(buffer, hash, 'novita_result_image.png');
           console.log(`🚀 [fetchNovitaResult] Uploaded image ${index + 1} with hash: ${hash}`);
           return { 
             imageId: hash, 

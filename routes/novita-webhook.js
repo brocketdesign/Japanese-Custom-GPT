@@ -8,7 +8,7 @@ const { handleTaskCompletion } = require('../models/imagen');
 const { handleVideoTaskCompletion } = require('../models/img2video-utils');
 const axios = require('axios');
 const { createHash } = require('crypto');
-const { uploadToS3 } = require('../models/tool');
+const { uploadImage } = require('../models/tool');
 const { IMAGE_TASK_TYPES, VIDEO_TASK_TYPES, isVideoTask } = require('../models/task-types');
 
 async function routes(fastify, options) {
@@ -151,36 +151,36 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
         return null;
       }
 
-      try {
-        console.log(`[NovitaWebhook] 📥 Downloading image ${index + 1}/${images.length} for task ${taskId}`);
-        const imageResponse = await axios.get(imageUrl, { 
-          responseType: 'arraybuffer',
-          timeout: 120000
-        });
-        const buffer = Buffer.from(imageResponse.data, 'binary');
-        const hash = createHash('md5').update(buffer).digest('hex');
-        console.log(`[NovitaWebhook] 📤 Uploading image ${index + 1} to S3 (hash: ${hash})`);
-        const uploadedUrl = await uploadToS3(buffer, hash, 'novita_result_image.png');
-        
-        console.log(`[NovitaWebhook] ✅ Image ${index + 1} uploaded successfully`);
-        return {
-          imageId: hash,
-          imageUrl: uploadedUrl,
-          nsfw_detection_result: image.nsfw_detection_result || null,
-          seed: payload.extra?.seed || 0,
-          index
-        };
-      } catch (error) {
-        console.error(`[NovitaWebhook] ❌ Error processing image ${index} for task ${taskId}:`, error.message);
-        // Fallback to original URL
-        return {
-          imageId: createHash('md5').update(imageUrl).digest('hex'),
-          imageUrl: imageUrl,
-          nsfw_detection_result: image.nsfw_detection_result || null,
-          seed: payload.extra?.seed || 0,
-          index
-        };
+      const maxRetries = 3;
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          console.log(`[NovitaWebhook] 📥 Downloading image ${index + 1}/${images.length} for task ${taskId} (attempt ${attempt}/${maxRetries})`);
+          const imageResponse = await axios.get(imageUrl, {
+            responseType: 'arraybuffer',
+            timeout: 120000
+          });
+          const buffer = Buffer.from(imageResponse.data, 'binary');
+          const hash = createHash('md5').update(buffer).digest('hex');
+          console.log(`[NovitaWebhook] 📤 Uploading image ${index + 1} to S3 (hash: ${hash})`);
+          const uploadedUrl = await uploadImage(buffer, hash, 'novita_result_image.png');
+
+          console.log(`[NovitaWebhook] ✅ Image ${index + 1} uploaded successfully`);
+          return {
+            imageId: hash,
+            imageUrl: uploadedUrl,
+            nsfw_detection_result: image.nsfw_detection_result || null,
+            seed: payload.extra?.seed || 0,
+            index
+          };
+        } catch (error) {
+          console.error(`[NovitaWebhook] ❌ Error processing image ${index} for task ${taskId} (attempt ${attempt}/${maxRetries}):`, error.message);
+          if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+          }
+        }
       }
+      console.error(`[NovitaWebhook] ❌ All ${maxRetries} attempts failed for image ${index} in task ${taskId}`);
+      return null;
     }));
 
     const validImages = processedImages.filter(img => img !== null);
@@ -389,18 +389,34 @@ async function handleVideoWebhook(taskId, task, payload, taskDoc, fastify, db) {
 
     // Download video and upload to S3
     let s3VideoUrl;
-    try {
-      const videoResponse = await axios.get(novitaVideoUrl, { 
-        responseType: 'arraybuffer',
-        timeout: 120000
-      });
-      const videoBuffer = Buffer.from(videoResponse.data);
-      const hash = createHash('md5').update(videoBuffer).digest('hex');
-      s3VideoUrl = await uploadToS3(videoBuffer, hash, 'novita_result_video.mp4');
-      console.log(`[NovitaWebhook] Video uploaded to S3: ${s3VideoUrl}`);
-    } catch (uploadError) {
-      console.error(`[NovitaWebhook] Error uploading video to S3, using original URL:`, uploadError);
-      s3VideoUrl = novitaVideoUrl; // Fallback to original URL
+    const maxRetries = 3;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const videoResponse = await axios.get(novitaVideoUrl, {
+          responseType: 'arraybuffer',
+          timeout: 120000
+        });
+        const videoBuffer = Buffer.from(videoResponse.data);
+        const hash = createHash('md5').update(videoBuffer).digest('hex');
+        s3VideoUrl = await uploadImage(videoBuffer, hash, 'novita_result_video.mp4');
+        console.log(`[NovitaWebhook] Video uploaded to S3: ${s3VideoUrl}`);
+        break;
+      } catch (uploadError) {
+        console.error(`[NovitaWebhook] Error uploading video to S3 (attempt ${attempt}/${maxRetries}):`, uploadError.message);
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+        } else {
+          console.error(`[NovitaWebhook] ❌ All ${maxRetries} attempts failed for video in task ${taskId}`);
+        }
+      }
+    }
+
+    if (!s3VideoUrl) {
+      await tasksCollection.updateOne(
+        { taskId },
+        { $set: { status: 'failed', result: { error: 'Failed to upload video to S3' }, updatedAt: new Date() } }
+      );
+      return;
     }
 
     // Create task status object

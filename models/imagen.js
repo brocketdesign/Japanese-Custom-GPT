@@ -268,7 +268,8 @@ async function handleFluxCompletion({
       isMerged: imageData.isMerged || false,
       originalImageUrl: imageData.originalImageUrl,
       mergeId: imageData.mergeId,
-      shouldAutoMerge: shouldAutoMerge
+      shouldAutoMerge: shouldAutoMerge,
+      imageModelId: 'FLUX' // FLUX models are identified by this
     });
 
     // Handle merge face relationships for FLUX
@@ -1812,7 +1813,8 @@ async function checkTaskStatus(taskId, fastify) {
       // Pass batch metadata for slider reconstruction on refresh
       batchId: task.placeholderId || task.taskId,
       batchIndex: arrayIndex,
-      batchSize: processedImages.length
+      batchSize: processedImages.length,
+      imageModelId: task.imageModelId || null
     });
 
     // When saving auto-merged results, make sure to create the relationship
@@ -2324,7 +2326,7 @@ async function getImageSeed(db, imageId) {
     }
   }
 }
-async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title, slug, imageUrl, aspectRatio, seed, blurredImageUrl = null, nsfw = false, fastify, isMerged = false, originalImageUrl = null, mergeId = null, shouldAutoMerge = false, thumbnailUrl = null, batchId = null, batchIndex = null, batchSize = null}) {
+async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title, slug, imageUrl, aspectRatio, seed, blurredImageUrl = null, nsfw = false, fastify, isMerged = false, originalImageUrl = null, mergeId = null, shouldAutoMerge = false, thumbnailUrl = null, batchId = null, batchIndex = null, batchSize = null, imageModelId = null}) {
 
   console.log(`🖼️ [saveImageToDB] START: batchIndex=${batchIndex}/${batchSize}, batchId=${batchId}, taskId=${taskId}, imageUrl=${imageUrl?.substring(0, 60)}...`);
 
@@ -2567,6 +2569,7 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       seed,
       isBlurred: !!blurredImageUrl,
       nsfw,
+      imageModelId: imageModelId || null,
       createdAt: new Date()
     };
 

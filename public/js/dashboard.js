@@ -886,7 +886,7 @@ window.toggleImageFavorite = function(el) {
   }
 
   if(action === 'like') {
-    showNotification(window.translations?.like_grant_points.replace('{point}', '5') || 'Image liked!', 'success');
+    showNotification(window.translations?.like_grant_points.replace('{point}', '1') || 'Image liked!', 'success');
   }
 
   $.ajax({

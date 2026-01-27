@@ -940,7 +940,6 @@ class ChatToolSettings {
                 const openaiResponse = await fetch('/audio/voice-samples/openai/manifest.json');
                 if (openaiResponse.ok) {
                     this.openaiVoiceSamples = await openaiResponse.json();
-                    console.log('[ChatToolSettings] OpenAI voice samples loaded:', this.openaiVoiceSamples.voices?.length || 0);
                 } else {
                     console.warn('[ChatToolSettings] Failed to load OpenAI voice samples manifest');
                     this.openaiVoiceSamples = null;

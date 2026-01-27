@@ -624,7 +624,6 @@ async function searchImagesGroupedByCharacter(db, user, queryStr = '', page = 1,
       chatImageUrl: { $first: '$chat.chatImageUrl' },
       chatTags: { $first: '$chat.tags' },
       description: { $first: '$chat.description' },
-      imageModel: { $first: '$chat.imageModel' },
       images: {
         $push: {
           _id: '$images._id',
@@ -633,7 +632,8 @@ async function searchImagesGroupedByCharacter(db, user, queryStr = '', page = 1,
           prompt: '$images.prompt',
           title: '$images.title',
           nsfw: '$images.nsfw',
-          createdAt: '$images.createdAt'
+          createdAt: '$images.createdAt',
+          imageModelId: '$images.imageModelId'
         }
       },
       imageCount: { $sum: 1 },

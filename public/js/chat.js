@@ -698,9 +698,6 @@ function setupChatInterface(chat, character, userChat, isNew) {
             currentUserChatId = sessionStorage.getItem('userChatId') || window.userChatId;
         }
 
-        // Debug log
-        console.log(`[DEBUG loadThumbNavGallery] Loading images for userChatId: ${currentUserChatId}, chatId: ${currentChatId}`);
-
         // Safeguard: Don't load if already loaded for this userChatId
         if (thumbNavGalleryLoadedUserChatId === currentUserChatId && currentUserChatId) {
             console.log(`[DEBUG loadThumbNavGallery] Already loaded for userChatId: ${currentUserChatId}, skipping`);
@@ -729,8 +726,6 @@ function setupChatInterface(chat, character, userChat, isNew) {
                 url += `&userChatId=${currentUserChatId}`;
             }
 
-            console.log(`[DEBUG loadThumbNavGallery] Fetching from: ${url}`);
-
             // Fetch images from the current chat (filtered by userChatId if provided)
             const response = await fetch(url);
             if (!response.ok) {
@@ -739,13 +734,6 @@ function setupChatInterface(chat, character, userChat, isNew) {
 
             const data = await response.json();
             const images = data.images || [];
-
-            console.log(`[DEBUG loadThumbNavGallery] Loaded ${images.length} images for userChatId: ${currentUserChatId}`);
-            console.log(`[DEBUG loadThumbNavGallery] Image details:`, images.map(img => ({
-                imageId: img._id || img.imageId,
-                imageUrl: img.imageUrl,
-                nsfw: img.nsfw
-            })));
 
             // Only proceed if this is still the current userChatId
             const currentUserChatIdInSession = sessionStorage.getItem('userChatId') || window.userChatId;
@@ -778,8 +766,6 @@ function setupChatInterface(chat, character, userChat, isNew) {
                 const shouldBlur = typeof window.shouldBlurNSFW === 'function' 
                     ? window.shouldBlurNSFW(image, subscriptionStatus)
                     : (image.nsfw && !subscriptionStatus); // Fallback if function not available
-
-                console.log(`[DEBUG loadThumbNavGallery] Image ${imageId}: nsfw=${image.nsfw}, subscriptionStatus=${subscriptionStatus}, shouldBlur=${shouldBlur}`);
 
                 if (imageId && imageUrl && !thumbNavGalleryImageIds.has(imageId)) {
                     displayImageThumb(imageId, imageUrl, null, shouldBlur);
@@ -1050,7 +1036,6 @@ function setupChatInterface(chat, character, userChat, isNew) {
         }
 
         let userChatMessages = userChat.messages || [];
-        console.log(`[displayChat] Retrieved ${userChatMessages.length} messages from database:`, userChatMessages);
 
         // CRITICAL FIX: Filter out invalid/undefined messages before processing
         const invalidMessages = [];
@@ -1090,8 +1075,6 @@ function setupChatInterface(chat, character, userChat, isNew) {
         if (invalidMessages.length > 0) {
             console.warn(`[displayChat] ⚠️  Filtered out ${invalidMessages.length} invalid messages:`, invalidMessages);
         }
-
-        console.log(`[displayChat] Processing ${userChatMessages.length} valid messages`);
 
         // ===== NEW: Group batched images into slider messages =====
         // Reconstruct bot-image-slider messages from individual batched image messages
@@ -1142,15 +1125,6 @@ function setupChatInterface(chat, character, userChat, isNew) {
                 }
                 processedIndices.add(i);
             }
-        }
-        
-        console.log(`[displayChat] Found ${batchedGroups.size} batches to reconstruct`);
-        if (batchedGroups.size > 0) {
-            console.log("[displayChat] Batch details:", Array.from(batchedGroups.entries()).map(([id, batch]) => ({
-                batchId: id,
-                imageCount: batch.images.filter(img => img !== undefined).length,
-                expectedSize: batch.batchSize
-            })));
         }
         
         // Second pass: rebuild messages with batches converted to slider messages

@@ -637,7 +637,7 @@ window.toggleVideoFavorite = function(el) {
     });
 
     if(action === 'like') {
-        showNotification(window.translations?.like_grant_points.replace('{point}', '5') || 'Video liked!', 'success');
+        showNotification(window.translations?.like_grant_points.replace('{point}', '1') || 'Video liked!', 'success');
     }
 
     // Message action updates are handled by the server; UI icon updated optimistically above

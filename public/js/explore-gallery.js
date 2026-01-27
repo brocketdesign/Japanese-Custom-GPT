@@ -472,7 +472,7 @@ class ExploreGallery {
 
             // All images use the full imageUrl for display
             return `
-                <div class="swiper-slide" data-image-id="${img._id || img.imageUrl}">
+                <div class="swiper-slide" data-image-id="${img._id || img.imageUrl}" data-image-model="${img.imageModelId || ''}">
                     <div class="explore-image-card ${isNsfwImage ? 'nsfw-content' : ''} ${shouldBlur ? 'nsfw-blurred' : ''}">
                         <img 
                             src="${imageUrl}" 
@@ -542,9 +542,8 @@ class ExploreGallery {
                 </button>
                 <button class="tiktok-action-btn admin-btn preview-model-btn"
                         data-chat-id="${character.chatId}"
-                        data-image-model="${character.imageModel || ''}"
                         onclick="event.stopPropagation(); window.exploreGallery.handleAdminPreviewModel(this);"
-                        title="Preview Image Model: ${character.imageModel || 'N/A'}">
+                        title="Preview Image Model">
                     <div class="action-icon">
                         <i class="bi bi-gpu-card"></i>
                     </div>
@@ -907,7 +906,7 @@ class ExploreGallery {
         // Show notification for likes
         if (action === 'like') {
             if (typeof showNotification === 'function') {
-                const message = window.translations?.like_grant_points?.replace('{point}', '5') || 'Image liked! +5 points';
+                const message = window.translations?.like_grant_points?.replace('{point}', '1') || 'Image liked! +1 point';
                 showNotification(message, 'success');
             }
         }
@@ -1244,9 +1243,19 @@ class ExploreGallery {
     }
 
     handleAdminPreviewModel(btn) {
-        const imageModel = btn.dataset.imageModel;
+        // Get the currently visible image slide to find its model
+        const slide = btn.closest('.character-slide');
+        if (!slide) {
+            alert('Could not find character slide');
+            return;
+        }
+        
+        // Find the currently active image in the horizontal swiper
+        const currentImageSlide = slide.querySelector('.character-images-swiper .swiper-slide-active');
+        const imageModel = currentImageSlide?.dataset?.imageModel;
+        
         if (!imageModel) {
-            alert('No image model set for this character');
+            alert('No image model set for this image');
             return;
         }
         // Open the admin image test page filtered by this model

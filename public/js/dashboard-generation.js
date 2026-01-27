@@ -56,6 +56,30 @@ class GenerationDashboard {
     this.init();
   }
   
+  /**
+   * Check if current user has an active premium subscription
+   */
+  isPremium() {
+    return window.user?.subscriptionStatus === 'active';
+  }
+
+  /**
+   * Check if a model is available for free users (non-premium)
+   * Only z-image-turbo is free for txt2img. All img2img and face models require premium.
+   */
+  isModelFree(model) {
+    if (!model) return false;
+    const category = model.category || 'txt2img';
+    // img2img and face categories are all premium
+    if (category === 'img2img' || category === 'face') return false;
+    // For txt2img, only z-image-turbo is free
+    if (category === 'txt2img') {
+      const id = model.id || model.modelId || '';
+      return id === 'z-image-turbo';
+    }
+    return false;
+  }
+
   init() {
     this.cacheElements();
     this.bindEvents();
@@ -63,7 +87,7 @@ class GenerationDashboard {
     this.loadStoredResults();
     this.loadUserModels(); // Load user's custom models
     this.updateUI();
-    
+
     console.log('[GenerationDashboard] Initialized with mode:', this.state.mode);
   }
   
@@ -191,9 +215,16 @@ class GenerationDashboard {
   handleModeSwitch(e) {
     const btn = e.currentTarget;
     const newMode = btn.dataset.mode;
-    
+
     if (newMode === this.state.mode) return;
-    
+
+    // Video mode is premium only
+    if (newMode === 'video' && !this.isPremium()) {
+      this.showNotification('Video generation is a premium feature.', 'warning');
+      if (typeof loadPlanPage === 'function') loadPlanPage();
+      return;
+    }
+
     this.state.mode = newMode;
     
     // Update UI
@@ -392,7 +423,9 @@ class GenerationDashboard {
   
   renderModelItem(model) {
     const isSelected = this.state.selectedModel?.id === model.id;
-    
+    const isFree = this.isModelFree(model);
+    const needsPremium = !isFree && !this.isPremium();
+
     const badges = [];
     if (model.async) badges.push('<span class="gen-model-badge async">Async</span>');
     if (model.category === 'i2v' || model.supportsImg2Img) {
@@ -404,19 +437,22 @@ class GenerationDashboard {
     if (model.category === 'face') {
       badges.push('<span class="gen-model-badge face">Face</span>');
     }
-    
+    if (needsPremium) {
+      badges.push('<span class="gen-model-badge premium"><i class="bi bi-gem"></i> Premium</span>');
+    }
+
     return `
-      <div class="gen-model-item ${isSelected ? 'selected' : ''}" data-model-id="${model.id}">
+      <div class="gen-model-item ${isSelected ? 'selected' : ''} ${needsPremium ? 'gen-premium-locked' : ''}" data-model-id="${model.id}" data-premium="${needsPremium ? 'true' : 'false'}">
         <div class="model-icon">
-          <i class="bi bi-${this.state.mode === 'image' ? 'image' : 'film'}"></i>
+          <i class="bi bi-${needsPremium ? 'lock-fill' : (this.state.mode === 'image' ? 'image' : 'film')}"></i>
         </div>
         <div class="model-info">
-          <div class="model-name">${model.name}</div>
+          <div class="model-name">${model.name}${needsPremium ? ' <i class="bi bi-gem" style="color: #a78bfa; font-size: 0.75em;"></i>' : ''}</div>
           <div class="model-desc">${model.description || ''}</div>
           <div class="model-badges">${badges.join('')}</div>
         </div>
         <div class="check-icon">
-          <i class="bi bi-check"></i>
+          ${needsPremium ? '<i class="bi bi-gem"></i>' : '<i class="bi bi-check"></i>'}
         </div>
       </div>
     `;
@@ -425,7 +461,7 @@ class GenerationDashboard {
   selectModel(modelId) {
     // Check if it's a custom model using the prefix constant
     let model = null;
-    
+
     if (modelId.startsWith(CUSTOM_MODEL_PREFIX)) {
       // Search in user models
       model = this.userModels.find(m => m.modelId === modelId);
@@ -434,7 +470,14 @@ class GenerationDashboard {
       const models = this.state.mode === 'image' ? this.imageModels : this.videoModels;
       model = models.find(m => m.id === modelId);
     }
-    
+
+    // Block non-premium users from selecting premium models
+    if (model && !this.isModelFree(model) && !this.isPremium()) {
+      this.showNotification('This model requires a premium subscription.', 'warning');
+      if (typeof loadPlanPage === 'function') loadPlanPage();
+      return;
+    }
+
     if (model) {
       // Store model with proper id field for consistency
       this.state.selectedModel = {
@@ -571,9 +614,8 @@ class GenerationDashboard {
     const isPremium = window.user?.subscriptionStatus === 'active';
     
     if (!isPremium) {
-      this.showNotification('Custom models are a premium feature. Please upgrade your plan.', 'warning');
-      // Redirect to plan page
-      window.location.href = '/plan';
+      this.showNotification('Custom models are a premium feature.', 'warning');
+      if (typeof loadPlanPage === 'function') loadPlanPage();
       return;
     }
     
@@ -1533,36 +1575,46 @@ class GenerationDashboard {
     // Aspect Ratio setting
     if (settingType === 'aspect-ratio' || settingType === 'settings') {
       const aspectRatios = ['1:1', '16:9', '9:16', '4:3', '3:4'];
+      const premium = this.isPremium();
       html += `
         <div class="gen-settings-group">
           <label>Aspect Ratio</label>
           <div class="gen-segmented-control">
-            ${aspectRatios.map(ratio => `
-              <button class="gen-segmented-btn ${this.state.tools.aspectRatio === ratio ? 'active' : ''}"
-                      data-value="${ratio}" data-setting="aspectRatio">
-                ${ratio}
+            ${aspectRatios.map(ratio => {
+              const isFreeRatio = ratio === '1:1';
+              const locked = !isFreeRatio && !premium;
+              return `
+              <button class="gen-segmented-btn ${this.state.tools.aspectRatio === ratio ? 'active' : ''} ${locked ? 'gen-premium-locked' : ''}"
+                      data-value="${ratio}" data-setting="aspectRatio" ${locked ? 'data-premium="true"' : ''}>
+                ${ratio}${locked ? ' <i class="bi bi-gem" style="font-size:0.7em;"></i>' : ''}
               </button>
-            `).join('')}
+            `}).join('')}
           </div>
+          ${!premium ? '<div class="form-text"><i class="bi bi-gem"></i> More aspect ratios available with Premium</div>' : ''}
         </div>
       `;
     }
-    
+
     // Image Count setting (only for image mode)
     if ((settingType === 'image-count' || settingType === 'settings') && this.state.mode === 'image') {
       const counts = [1, 2, 3, 4];
+      const premium = this.isPremium();
       html += `
         <div class="gen-settings-group">
           <label>Number of Images</label>
           <div class="gen-segmented-control">
-            ${counts.map(count => `
-              <button class="gen-segmented-btn ${this.state.tools.imageCount === count ? 'active' : ''}"
-                      data-value="${count}" data-setting="imageCount">
-                ${count}x
+            ${counts.map(count => {
+              const isFreeCount = count === 1;
+              const locked = !isFreeCount && !premium;
+              return `
+              <button class="gen-segmented-btn ${this.state.tools.imageCount === count ? 'active' : ''} ${locked ? 'gen-premium-locked' : ''}"
+                      data-value="${count}" data-setting="imageCount" ${locked ? 'data-premium="true"' : ''}>
+                ${count}x${locked ? ' <i class="bi bi-gem" style="font-size:0.7em;"></i>' : ''}
               </button>
-            `).join('')}
+            `}).join('')}
           </div>
           <div class="form-text">Cost: ${this.state.imageCostPerUnit} points per image</div>
+          ${!premium ? '<div class="form-text"><i class="bi bi-gem"></i> Generate multiple images with Premium</div>' : ''}
         </div>
       `;
     }
@@ -1603,6 +1655,13 @@ class GenerationDashboard {
     // Bind events for segmented buttons
     container.querySelectorAll('.gen-segmented-btn').forEach(btn => {
       btn.addEventListener('click', () => {
+        // Block premium-locked settings
+        if (btn.dataset.premium === 'true') {
+          this.showNotification('This option requires a premium subscription.', 'warning');
+          if (typeof loadPlanPage === 'function') loadPlanPage();
+          return;
+        }
+
         const setting = btn.dataset.setting;
         let value = btn.dataset.value;
         
@@ -1769,9 +1828,9 @@ class GenerationDashboard {
         <span>Reuse</span>
       </button>
       ${isImage ? `
-        <button class="gen-preview-action" onclick="genDashboard.openCreateCharacterModal('${result.id}')">
+        <button class="gen-preview-action ${!this.isPremium() ? 'gen-premium-locked' : ''}" onclick="${this.isPremium() ? `genDashboard.openCreateCharacterModal('${result.id}')` : `genDashboard.showPremiumGate('Character creation')`}">
           <i class="bi bi-person-plus"></i>
-          <span>Character</span>
+          <span>Character${!this.isPremium() ? ' <i class="bi bi-gem" style="font-size:0.75em;color:#a78bfa;"></i>' : ''}</span>
         </button>
         <button class="gen-preview-action" onclick="genDashboard.createPost('${result.id}')">
           <i class="bi bi-share"></i>
@@ -2019,6 +2078,14 @@ class GenerationDashboard {
     return labels[status] || status;
   }
   
+  /**
+   * Show premium gate notification and open the plan modal
+   */
+  showPremiumGate(featureName) {
+    this.showNotification(`${featureName} is a premium feature.`, 'warning');
+    if (typeof loadPlanPage === 'function') loadPlanPage();
+  }
+
   showNotification(message, type = 'info') {
     // Use existing notification system if available
     if (typeof window.showNotification === 'function') {

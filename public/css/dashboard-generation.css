@@ -989,6 +989,28 @@ html, body {
   color: #fff;
 }
 
+/* Premium locked items */
+.gen-model-item.gen-premium-locked {
+  opacity: 0.6;
+}
+.gen-model-item.gen-premium-locked:hover {
+  opacity: 0.8;
+}
+.gen-model-badge.premium {
+  background: rgba(167, 139, 250, 0.2);
+  color: #a78bfa;
+}
+.gen-segmented-btn.gen-premium-locked {
+  opacity: 0.5;
+  position: relative;
+}
+.gen-segmented-btn.gen-premium-locked:hover {
+  opacity: 0.7;
+}
+.gen-preview-action.gen-premium-locked {
+  opacity: 0.7;
+}
+
 /* Full Screen Preview Overlay */
 .gen-preview-overlay {
   position: fixed;

@@ -109,10 +109,7 @@ async function routes(fastify, options) {
           return reply.status(500).send({ error: `${userPointsTranslations?.need_coins?.replace('{coins}', cost) || `Need: ${cost}`}`});
         }
       }
-      // [DEBUG] use flux model
-      const flux = false
-
-      let imageSeed = !flux ? -1 : 0;
+      let imageSeed = -1;
       if(regenerate){
         imageSeed = await getImageSeed(db, placeholderId);
       }
@@ -124,8 +121,7 @@ async function routes(fastify, options) {
           imageSeed, 
           regenerate, 
           modelId,
-          flux,
-          userId, 
+          userId,
           chatId, 
           userChatId, 
           imageType, 

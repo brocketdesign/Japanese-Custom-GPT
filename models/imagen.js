@@ -50,20 +50,6 @@ const default_prompt = {
         seed: -1,
       }
     },
-    flux: {
-      sfw:{
-        sampler_name: 'euler',
-        prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (sfw), dressed, clothe on, natural lighting, `,
-        negative_prompt: `nipple, topless, nude, naked, exposed breasts, cleavage, bikini, nsfw, uncensored, revealing clothing, lower body, full body`,
-        seed: 0,
-      },
-      nsfw:{
-        sampler_name: 'euler',
-        prompt: `best quality, ultra high res, (photorealistic:1.4), masterpiece, (nsfw),uncensored, `,
-        negative_prompt: ``,
-        seed: 0,
-      }
-    }
   };    
   
 const params = {
@@ -93,250 +79,6 @@ function getTitleForLang(title, lang = 'en') {
   return title[key] || title.en || title.ja || title.fr || Object.values(title).find(v => !!v) || '';
 }
 
-/**
- * Handle FLUX immediate completion processing
- * @param {Object} params - All parameters needed for FLUX processing
- * @returns {Object} Task completion result
- */
-async function handleFluxCompletion({
-  novitaResult,
-  newTitle,
-  taskSlug,
-  prompt,
-  imageType,
-  image_request,
-  aspectRatio,
-  userId,
-  chatId,
-  userChatId,
-  chatCreation,
-  placeholderId,
-  shouldAutoMerge,
-  enableMergeFace,
-  image_base64,
-  chat,
-  customPromptId,
-  customGiftId,
-  fastify,
-  translations
-}) {
-  const db = fastify.mongo.db;
-  
-  // Process images immediately for FLUX with proper merge handling
-  let processedImages = Array.isArray(novitaResult.images) ? novitaResult.images : [novitaResult.images];
-  
-  // Handle auto merge for FLUX if enabled
-  if (shouldAutoMerge) {
-    if (chatCreation && enableMergeFace && image_base64) {
-      // Character creation with uploaded face image
-      
-      const mergedImages = [];
-      for (const imageData of processedImages) {
-        try {
-          const mergedResult = await performAutoMergeFaceWithBase64(
-            { 
-              imageUrl: imageData.imageUrl, 
-              imageId: null,
-              seed: imageData.seed || 0,
-              nsfw_detection_result: null
-            }, 
-            image_base64, 
-            fastify
-          );
-          
-          if (mergedResult && mergedResult.imageUrl) {
-            mergedImages.push({
-              ...mergedResult,
-              isMerged: true
-            });
-          } else {
-            mergedImages.push({ ...imageData, isMerged: false });
-          }
-        } catch (error) {
-          console.error(`FLUX character creation merge error:`, error.message);
-          mergedImages.push({ ...imageData, isMerged: false });
-        }
-      }
-      processedImages = mergedImages;
-    } else if (!chatCreation) {
-      // Regular auto merge with chat image - prioritize baseFaceUrl over chatImageUrl
-      const faceUrl = chat.baseFaceUrl || chat.chatImageUrl;
-      
-      if (faceUrl && faceUrl.length > 0) {
-        console.log(`[FLUX] Using ${chat.baseFaceUrl ? 'baseFaceUrl' : 'chatImageUrl'} for auto merge`);
-        const mergedImages = [];
-        for (const imageData of processedImages) {
-          try {
-            const mergedResult = await performAutoMergeFace(
-              { 
-                imageUrl: imageData.imageUrl, 
-                imageId: null,
-                seed: imageData.seed || 0,
-                nsfw_detection_result: null
-              }, 
-              faceUrl, 
-              fastify
-            );
-            
-            if (mergedResult && mergedResult.imageUrl) {
-              mergedImages.push({
-                ...imageData,
-                ...mergedResult,
-                isMerged: true
-              });
-            } else {
-              mergedImages.push({ ...imageData, isMerged: false });
-            }
-          } catch (error) {
-            console.error(`FLUX auto merge error:`, error.message);
-            mergedImages.push({ ...imageData, isMerged: false });
-          }
-        }
-        processedImages = mergedImages;
-      } else {
-        processedImages = processedImages.map(imageData => ({ ...imageData, isMerged: false }));
-      }
-    } else {
-      processedImages = processedImages.map(imageData => ({ ...imageData, isMerged: false }));
-    }
-  } else {
-    processedImages = processedImages.map(imageData => ({ ...imageData, isMerged: false }));
-  }
-
-  // Store basic task data with title and slug
-  const taskData = {
-    taskId: novitaResult.taskId,
-    type: imageType,
-    status: 'completed',
-    prompt: prompt,
-    title: newTitle,
-    slug: taskSlug,
-    negative_prompt: image_request.negative_prompt || '',
-    aspectRatio: aspectRatio,
-    userId: new ObjectId(userId),
-    chatId: new ObjectId(chatId),
-    userChatId: userChatId ? new ObjectId(userChatId) : null,
-    blur: image_request.blur,
-    chatCreation,
-    placeholderId,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    shouldAutoMerge,
-    enableMergeFace: enableMergeFace || false,
-    result: { images: processedImages }
-  };
-
-  // Add custom prompt/gift IDs if provided
-  if (customPromptId) taskData.customPromptId = customPromptId;
-  if (customGiftId) taskData.customGiftId = customGiftId;
-
-  // Store original request data for character creation tasks with merge face enabled
-  if (chatCreation && enableMergeFace && image_base64) {
-    taskData.originalRequestData = {
-      image_base64: image_base64
-    };
-  }
-
-  await db.collection('tasks').insertOne(taskData);
-
-  // Save processed images to database directly (bypass checkTaskStatus)
-  const savedImages = [];
-  for (let arrayIndex = 0; arrayIndex < processedImages.length; arrayIndex++) {
-    const imageData = processedImages[arrayIndex];
-    
-    let nsfw = imageType === 'nsfw';
-    
-    let uniqueSlug = taskSlug;
-    if (processedImages.length > 1) {
-      uniqueSlug = `${taskSlug}-${arrayIndex + 1}`;
-    }
-
-    const imageResult = await saveImageToDB({
-      taskId: novitaResult.taskId,
-      userId: new ObjectId(userId),
-      chatId: new ObjectId(chatId),
-      userChatId: userChatId ? new ObjectId(userChatId) : null,
-      prompt: prompt,
-      title: newTitle,
-      slug: uniqueSlug,
-      imageUrl: imageData.imageUrl,
-      aspectRatio: aspectRatio,
-      seed: imageData.seed || 0,
-      blurredImageUrl: null, // FLUX doesn't support blurred images
-      nsfw: nsfw,
-      fastify,
-      isMerged: imageData.isMerged || false,
-      originalImageUrl: imageData.originalImageUrl,
-      mergeId: imageData.mergeId,
-      shouldAutoMerge: shouldAutoMerge,
-      imageModelId: 'FLUX' // FLUX models are identified by this
-    });
-
-    // Handle merge face relationships for FLUX
-    if (shouldAutoMerge && imageData.isMerged && imageData.mergeId) {
-      try {
-        const { saveMergedFaceToDB } = require('./merge-face-utils');
-        await saveMergedFaceToDB({
-          originalImageId: imageResult.imageId,
-          mergedImageUrl: imageData.imageUrl,
-          userId: new ObjectId(userId),
-          chatId: new ObjectId(chatId),
-          userChatId: userChatId ? new ObjectId(userChatId) : null,
-          fastify
-        });
-      } catch (error) {
-        console.error(`[handleFluxCompletion] Error creating merge relationship:`, error);
-      }
-    }
-
-    savedImages.push({
-      ...imageResult,
-      status: 'completed'
-    });
-  }
-
-  // Update task with saved images
-  await db.collection('tasks').updateOne(
-    { taskId: novitaResult.taskId },
-    { 
-      $set: { 
-        status: 'completed', 
-        result: { images: savedImages }, 
-        updatedAt: new Date() 
-      } 
-    }
-  );
-
-  // Create the completed task status object for handleTaskCompletion
-  const completedTaskStatus = {
-    taskId: novitaResult.taskId,
-    userId: userId,
-    userChatId: userChatId,
-    status: 'completed',
-    images: savedImages,
-    result: { images: savedImages }
-  };
-
-  // Handle task completion using the standard flow
-  try {
-    await handleTaskCompletion(completedTaskStatus, fastify, {
-      chatCreation,
-      translations,
-      userId,
-      chatId,
-      placeholderId
-    });
-  } catch (error) {
-    console.error('Error handling FLUX task completion:', error);
-    fastify.sendNotificationToUser(userId, 'handleLoader', { imageId: placeholderId, action: 'remove' });
-    fastify.sendNotificationToUser(userId, 'handleRegenSpin', { imageId: placeholderId, spin: false });
-    fastify.sendNotificationToUser(userId, 'resetCharacterForm');
-    throw error;
-  }
-
-  return { taskId: novitaResult.taskId };
-}
-
 // Simplified generateImg function
 async function generateImg({
     title, 
@@ -355,9 +97,8 @@ async function generateImg({
     chatCreation, 
     placeholderId, 
     translations, 
-    fastify, 
-    flux = false,
-    hunyuan = false, 
+    fastify,
+    hunyuan = false,
     customPromptId = null, 
     customGiftId = null, 
     enableMergeFace = false,
@@ -392,7 +133,7 @@ async function generateImg({
     console.log(`\x1b[33m[generateImg] Chat model data: modelId=${chat?.modelId}, imageModel=${chat?.imageModel}, imageVersion=${chat?.imageVersion}\x1b[0m`);
     
     const imageVersion = chat?.imageVersion || 'sdxl';
-    const selectedStyle = !flux ? default_prompt[imageVersion] || default_prompt['sdxl'] : default_prompt.flux;
+    const selectedStyle = default_prompt[imageVersion] || default_prompt['sdxl'];
     
     // Priority: 1) modelId param, 2) chat.modelId, 3) default
     let effectiveModelId = modelId || chat?.modelId || null;
@@ -403,33 +144,30 @@ async function generateImg({
     console.log(`\x1b[33m[generateImg] Effective modelId: ${effectiveModelId || 'NONE - using default'}\x1b[0m`);
     console.log(`\x1b[33m[generateImg] Initial imageModel: ${imageModel}\x1b[0m`);
     
-    // For FLUX, use default flux settings instead of fetching model data
-    if (!flux) {
-        try {
-          // Check if effectiveModelId is a built-in model type (from MODEL_CONFIGS)
-          if (effectiveModelId && MODEL_CONFIGS[effectiveModelId]) {
-            console.log(`\x1b[32m[generateImg] ✓ Found built-in model: ${effectiveModelId}\x1b[0m`);
-            // For built-in models, we don't need to look up imageModel in database
-            // The effectiveModelId itself is the model type
-            isBuiltInModel = true;
-            imageModel = effectiveModelId;
-            modelData = { model: effectiveModelId, isBuiltIn: true };
-          } else {
-            // First try to find by modelId in database
-            if (effectiveModelId) {
-              modelData = await db.collection('myModels').findOne({ modelId: effectiveModelId.toString() });
-              console.log(`\x1b[33m[generateImg] Found model by modelId: ${modelData ? modelData.model : 'NOT FOUND'}\x1b[0m`);
-            }
-            // If not found by modelId, try by model name
-            if (!modelData && imageModel) {
-              modelData = await db.collection('myModels').findOne({ model: imageModel });
-              console.log(`\x1b[33m[generateImg] Found model by name: ${modelData ? modelData.model : 'NOT FOUND'}\x1b[0m`);
-            }
-          }
-        } catch (error) {
-          console.error('[generateImg] Error fetching modelData:', error);
-          modelData = null;
+    try {
+      // Check if effectiveModelId is a built-in model type (from MODEL_CONFIGS)
+      if (effectiveModelId && MODEL_CONFIGS[effectiveModelId]) {
+        console.log(`\x1b[32m[generateImg] ✓ Found built-in model: ${effectiveModelId}\x1b[0m`);
+        // For built-in models, we don't need to look up imageModel in database
+        // The effectiveModelId itself is the model type
+        isBuiltInModel = true;
+        imageModel = effectiveModelId;
+        modelData = { model: effectiveModelId, isBuiltIn: true };
+      } else {
+        // First try to find by modelId in database
+        if (effectiveModelId) {
+          modelData = await db.collection('myModels').findOne({ modelId: effectiveModelId.toString() });
+          console.log(`\x1b[33m[generateImg] Found model by modelId: ${modelData ? modelData.model : 'NOT FOUND'}\x1b[0m`);
         }
+        // If not found by modelId, try by model name
+        if (!modelData && imageModel) {
+          modelData = await db.collection('myModels').findOne({ model: imageModel });
+          console.log(`\x1b[33m[generateImg] Found model by name: ${modelData ? modelData.model : 'NOT FOUND'}\x1b[0m`);
+        }
+      }
+    } catch (error) {
+      console.error('[generateImg] Error fetching modelData:', error);
+      modelData = null;
     }
 
     // Update imageModel if we found model data
@@ -440,8 +178,8 @@ async function generateImg({
         console.log(`\x1b[33m[generateImg] ⚠️ No model data found, using default: ${imageModel}\x1b[0m`);
     }
 
-    // Set default model if not found (non-FLUX only)
-    if(modelId && regenerate && !flux){
+    // Set default model if not found
+    if(modelId && regenerate){
       try {
           imageModel = modelData?.model || imageModel;
       } catch (error) {
@@ -452,38 +190,22 @@ async function generateImg({
     const gender = chat?.gender
     console.log(`\x1b[33m[generateImg] Gender: ${gender || 'not set'}\x1b[0m`);
 
-    // Custom negative prompt by gender (not used for FLUX)
+    // Custom negative prompt by gender
     let genderNegativePrompt = '';
-    if (!flux) {
-        if(gender == 'female'){
-          genderNegativePrompt = 'muscular,manly,'
-        }
-        if(gender == 'male'){
-          genderNegativePrompt = 'feminine,womanly,'
-        }
-        if(gender == 'nonBinary'){
-          genderNegativePrompt = 'manly,womanly,'
-        }
+    if(gender == 'female'){
+      genderNegativePrompt = 'muscular,manly,'
+    }
+    if(gender == 'male'){
+      genderNegativePrompt = 'feminine,womanly,'
+    }
+    if(gender == 'nonBinary'){
+      genderNegativePrompt = 'manly,womanly,'
     }
 
     // Prepare task based on imageType and model
-    console.log(`\x1b[36m[generateImg] Preparing image generation request for user ${userId} (Type: ${imageType.toUpperCase()}, FLUX: ${flux}, BuiltInModel: ${isBuiltInModel})\x1b[0m`);
+    console.log(`\x1b[36m[generateImg] Preparing image generation request for user ${userId} (Type: ${imageType.toUpperCase()}, BuiltInModel: ${isBuiltInModel})\x1b[0m`);
     let image_request;
-    if (flux) {
-        // FLUX-specific request structure
-        const seed = typeof imageSeed === 'number' && imageSeed >= 0 ? imageSeed : selectedStyle[imageType].seed;
-        image_request = {
-            type: imageType,
-            prompt: (selectedStyle[imageType].prompt ? selectedStyle[imageType].prompt + prompt : prompt).replace(/^\s+/gm, '').trim(),
-            negative_prompt: selectedStyle[imageType].negative_prompt || '',
-            width: 768, // FLUX portrait dimensions
-            height: 1024,
-            seed: imageSeed || selectedStyle[imageType].seed,
-            steps: 4, // FLUX uses fewer steps
-            blur: false, // FLUX doesn't support blurring
-            ...(typeof seed === 'number' && seed >= 0 ? { seed } : {}),
-        };
-    } else if (isBuiltInModel) {
+    if (isBuiltInModel) {
         // Built-in model (z-image-turbo, etc.) - use simpler request structure
         const modelConfig = MODEL_CONFIGS[imageModel];
         const defaultSize = modelConfig?.defaultParams?.size || '1024*1024';
@@ -603,7 +325,7 @@ async function generateImg({
         });
         return;
     }
-    let requestData = flux ? { ...image_request, image_num } : { ...params, ...image_request, image_num };
+    let requestData = { ...params, ...image_request, image_num };
     
     if(process.env.MODE !== 'production'){
       // Log prompt & negative prompt
@@ -681,7 +403,7 @@ async function generateImg({
         const callData = { ...requestData, seed: seedForCall };
         // Note: hunyuan param is still passed for backward compatibility with fetchNovitaMagic
         // which uses it to determine the API endpoint for legacy Hunyuan calls
-        const taskId = await fetchNovitaMagic(callData, flux, hunyuan, isBuiltInModel ? imageModel : null);
+        const taskId = await fetchNovitaMagic(callData, hunyuan, isBuiltInModel ? imageModel : null);
         if (taskId) {
           sequentialTaskIds.push(taskId);
           console.log(`[generateImg] Sequential image ${i + 1}/${sequentialImageCount} task started: ${taskId}`);
@@ -703,7 +425,7 @@ async function generateImg({
     } else {
       console.log(`[generateImg] 📤 Calling fetchNovitaMagic with isBuiltInModel=${isBuiltInModel}, imageModel=${imageModel}`);
       // Note: hunyuan param is still passed for backward compatibility with fetchNovitaMagic
-      novitaResult = await fetchNovitaMagic(requestData, flux, hunyuan, isBuiltInModel ? imageModel : null);
+      novitaResult = await fetchNovitaMagic(requestData, hunyuan, isBuiltInModel ? imageModel : null);
       console.log(`[generateImg] 📥 fetchNovitaMagic result:`, novitaResult);
     }
 
@@ -716,33 +438,6 @@ async function generateImg({
         return;
     }
 
-    // Handle FLUX immediate completion with dedicated function
-    if (flux && novitaResult && novitaResult.isFluxComplete) {
-      return await handleFluxCompletion({
-        novitaResult,
-        newTitle,
-        taskSlug,
-        prompt,
-        imageType,
-        image_request,
-        aspectRatio,
-        userId,
-        chatId,
-        userChatId,
-        chatCreation,
-        placeholderId,
-        shouldAutoMerge,
-        enableMergeFace,
-        image_base64,
-        chat,
-        customPromptId,
-        customGiftId,
-        fastify,
-        translations
-      });
-    }
-
-    // For non-FLUX, continue with regular polling
     const novitaTaskId = typeof novitaResult === 'string' ? novitaResult : novitaResult.taskId;
     console.log(`[generateImg] 📋 Extracted taskId: ${novitaTaskId} (isBuiltInModel=${isBuiltInModel}, imageModel=${imageModel})`);
     
@@ -1916,7 +1611,7 @@ function getWebhookUrl() {
 }
 
 // Function to trigger the Novita API for text-to-image generation
-async function fetchNovitaMagic(data, flux = false, hunyuan = false, builtInModelId = null) {
+async function fetchNovitaMagic(data, hunyuan = false, builtInModelId = null) {
   try {
     // Validate prompt before sending to API (must be 1-1024 characters)
     if (!data.prompt || typeof data.prompt !== 'string') {
@@ -1936,10 +1631,6 @@ async function fetchNovitaMagic(data, flux = false, hunyuan = false, builtInMode
     let apiUrl = 'https://api.novita.ai/v3/async/txt2img';
     if (data.image_base64) {
       apiUrl = 'https://api.novita.ai/v3/async/img2img';
-    }
-    if (flux) {
-      apiUrl = 'https://api.novita.ai/v3beta/flux-1-schnell';
-      data.response_image_type = 'jpeg';
     }
     if (hunyuan) {
       apiUrl = 'https://api.novita.ai/v3/async/hunyuan-image-3';
@@ -1965,9 +1656,7 @@ async function fetchNovitaMagic(data, flux = false, hunyuan = false, builtInMode
         'Content-Type': 'application/json',
       },
     }
-    if (flux) {
-      requestBody.data = data;
-    } else if (hunyuan) {
+    if (hunyuan) {
       // Hunyuan Image 3 uses a different request format
       // Note: Hunyuan does NOT support image_num - only generates 1 image per call
       requestBody.data = {
@@ -2061,40 +1750,7 @@ async function fetchNovitaMagic(data, flux = false, hunyuan = false, builtInMode
       return taskId;
     }
         
-    // For FLUX, return the complete response with images
-    if (flux) {
-      const taskId = response.data.task.task_id;
-      console.log(`Flux task completed immediately with ID: ${taskId}`);
-      
-      // Process images immediately for FLUX
-      const images = response.data.images;
-      if (images && images.length > 0) {
-        const processedImages = await Promise.all(images.map(async (image, index) => {
-          const imageUrl = image.image_url;
-          const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-          const buffer = Buffer.from(imageResponse.data, 'binary');
-          const hash = createHash('md5').update(buffer).digest('hex');
-          const uploadedUrl = await uploadToS3(buffer, hash, 'novita_result_image.png');
-          console.log(`[fetchNovitaMagic] Uploaded image ${index + 1} with hash: ${hash}`);
-          return { 
-            imageId: hash, 
-            imageUrl: uploadedUrl, 
-            nsfw_detection_result: null, // FLUX doesn't return NSFW detection
-            seed: 0, // FLUX uses seed 0
-            index
-          };
-        }));
-        
-        return {
-          taskId,
-          status: 'completed',
-          images: processedImages.length === 1 ? processedImages[0] : processedImages,
-          isFluxComplete: true // Flag to indicate immediate completion
-        };
-      }
-    }
-    
-    // For non-FLUX, return just the task ID for polling
+    // Return the task ID for polling
     const taskId = response.data.task_id;
     return taskId;
     

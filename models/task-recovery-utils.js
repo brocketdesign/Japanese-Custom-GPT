@@ -3,7 +3,6 @@
  * Handles recovery of unfinished image and video generation tasks on server restart
  */
 
-const { ObjectId } = require('mongodb');
 const { checkTaskStatus } = require('./imagen');
 const { checkVideoTaskStatus, handleVideoTaskCompletion } = require('./img2video-utils');
 const { isVideoTask } = require('./task-types');
@@ -26,7 +25,8 @@ async function recoverUnfinishedTasks(fastify) {
     imagesRecovered: 0,
     videosRecovered: 0,
     failed: 0,
-    stillPending: 0
+    stillPending: 0,
+    unknown: 0
   };
   
   try {
@@ -79,6 +79,8 @@ async function recoverUnfinishedTasks(fastify) {
           stats.stillPending++;
         } else if (recoveryResult === 'failed') {
           stats.failed++;
+        } else if (recoveryResult === 'unknown') {
+          stats.unknown++;
         }
         
       } catch (taskError) {

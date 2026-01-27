@@ -624,6 +624,7 @@ async function searchImagesGroupedByCharacter(db, user, queryStr = '', page = 1,
       chatImageUrl: { $first: '$chat.chatImageUrl' },
       chatTags: { $first: '$chat.tags' },
       description: { $first: '$chat.description' },
+      imageModel: { $first: '$chat.imageModel' },
       images: {
         $push: {
           _id: '$images._id',

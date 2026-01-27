@@ -447,6 +447,39 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
             return reply.status(500).send({ error: 'Failed to delete chat' });
         }
     });
+
+    // Admin: Delete a specific image from a character's gallery
+    fastify.delete('/api/admin/delete-image/:chatId/:imageId', async (request, reply) => {
+        try {
+            const { chatId, imageId } = request.params;
+            const user = request.user;
+            const userId = new fastify.mongo.ObjectId(user._id);
+
+            const isAdmin = await checkUserAdmin(fastify, userId);
+            if (!isAdmin) {
+                return reply.status(403).send({ error: 'Forbidden' });
+            }
+
+            const db = fastify.mongo.db;
+            const galleryCollection = db.collection('gallery');
+
+            // Remove the image from the gallery document's images array
+            const result = await galleryCollection.updateOne(
+                { chatId: new fastify.mongo.ObjectId(chatId) },
+                { $pull: { images: { _id: new fastify.mongo.ObjectId(imageId) } } }
+            );
+
+            if (result.modifiedCount === 0) {
+                return reply.status(404).send({ error: 'Image not found' });
+            }
+
+            return reply.send({ success: true });
+        } catch (error) {
+            console.error('Failed to delete image:', error);
+            return reply.status(500).send({ error: 'Failed to delete image' });
+        }
+    });
+
     // This route handles updating the NSFW status of a chat
     fastify.put('/api/chat/:chatId/nsfw', async (request, reply) => {
         try {

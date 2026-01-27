@@ -129,6 +129,7 @@
             isTemporary: {{#if user.isTemporary}}true{{else}}false{{/if}},
             lang: '{{user.lang}}'
         };
+        window.isAdmin = {{#if isAdmin}}true{{else}}false{{/if}};
         
         // Read showNSFW from storage first, then fall back to server value
         (function() {

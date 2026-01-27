@@ -515,13 +515,41 @@ class ExploreGallery {
                         <i class="bi bi-person"></i>
                     </div>
                 </button>
-                <button class="tiktok-action-btn chat-btn" 
-                        onclick="event.stopPropagation(); window.exploreGallery.handleChatClick('${character.chatId}')" 
+                <button class="tiktok-action-btn chat-btn"
+                        onclick="event.stopPropagation(); window.exploreGallery.handleChatClick('${character.chatId}')"
                         title="Open Chat">
                     <div class="action-icon">
                         <i class="bi bi-chat-dots"></i>
                     </div>
                 </button>
+                ${window.isAdmin ? `
+                <div class="admin-actions-divider"></div>
+                <button class="tiktok-action-btn admin-btn delete-image-btn"
+                        data-chat-id="${character.chatId}"
+                        onclick="event.stopPropagation(); window.exploreGallery.handleAdminDeleteImage(this);"
+                        title="Delete Current Image">
+                    <div class="action-icon">
+                        <i class="bi bi-image"></i>
+                    </div>
+                </button>
+                <button class="tiktok-action-btn admin-btn delete-character-btn"
+                        data-chat-id="${character.chatId}"
+                        onclick="event.stopPropagation(); window.exploreGallery.handleAdminDeleteCharacter(this);"
+                        title="Delete Character">
+                    <div class="action-icon">
+                        <i class="bi bi-trash"></i>
+                    </div>
+                </button>
+                <button class="tiktok-action-btn admin-btn preview-model-btn"
+                        data-chat-id="${character.chatId}"
+                        data-image-model="${character.imageModel || ''}"
+                        onclick="event.stopPropagation(); window.exploreGallery.handleAdminPreviewModel(this);"
+                        title="Preview Image Model: ${character.imageModel || 'N/A'}">
+                    <div class="action-icon">
+                        <i class="bi bi-gpu-card"></i>
+                    </div>
+                </button>
+                ` : ''}
             </div>
             
             <!-- Bottom info overlay -->
@@ -1146,6 +1174,85 @@ class ExploreGallery {
         }
     }
     
+    // Admin actions
+    handleAdminDeleteImage(btn) {
+        const slide = btn.closest('.character-slide');
+        if (!slide) return;
+        const chatId = btn.dataset.chatId;
+        const currentImageSlide = slide.querySelector('.character-images-swiper .swiper-slide-active');
+        const imageId = currentImageSlide?.dataset?.imageId;
+        if (!imageId) {
+            alert('No image selected');
+            return;
+        }
+        if (!confirm('Delete this image? This cannot be undone.')) return;
+
+        btn.style.opacity = '0.5';
+        btn.style.pointerEvents = 'none';
+        fetch(`/api/admin/delete-image/${chatId}/${imageId}`, {
+            method: 'DELETE',
+            credentials: 'same-origin'
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // Remove the image slide
+                if (currentImageSlide) currentImageSlide.remove();
+                // Update horizontal swiper
+                const swiperEl = slide.querySelector('.character-images-swiper');
+                if (swiperEl?.swiper) swiperEl.swiper.update();
+                alert('Image deleted');
+            } else {
+                alert(data.error || 'Failed to delete image');
+            }
+        })
+        .catch(() => alert('Failed to delete image'))
+        .finally(() => {
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
+        });
+    }
+
+    handleAdminDeleteCharacter(btn) {
+        const chatId = btn.dataset.chatId;
+        if (!chatId) return;
+        if (!confirm('Delete this character and all their data? This cannot be undone.')) return;
+
+        btn.style.opacity = '0.5';
+        btn.style.pointerEvents = 'none';
+        fetch(`/api/delete-chat/${chatId}`, {
+            method: 'DELETE',
+            credentials: 'same-origin'
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.message || data.success) {
+                // Remove the character slide and move to next
+                const slide = btn.closest('.character-slide');
+                if (slide) slide.remove();
+                if (this.verticalSwiper) this.verticalSwiper.update();
+                alert('Character deleted');
+            } else {
+                alert(data.error || 'Failed to delete character');
+            }
+        })
+        .catch(() => alert('Failed to delete character'))
+        .finally(() => {
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
+        });
+    }
+
+    handleAdminPreviewModel(btn) {
+        const imageModel = btn.dataset.imageModel;
+        if (!imageModel) {
+            alert('No image model set for this character');
+            return;
+        }
+        // Open the admin image test page filtered by this model
+        window.open(`/dashboard/image?model=${encodeURIComponent(imageModel)}`, '_blank');
+    }
+
     // UI States
     showLoading() {
         if (this.loadingEl) {

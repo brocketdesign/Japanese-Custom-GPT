@@ -1174,6 +1174,32 @@
     background: rgba(99, 102, 241, 0.25);
 }
 
+/* Admin action buttons */
+.admin-actions-divider {
+    width: 24px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 2px auto;
+}
+
+.tiktok-action-btn.admin-btn {
+    background: rgba(220, 38, 38, 0.15);
+    border-color: rgba(220, 38, 38, 0.3);
+}
+
+.tiktok-action-btn.admin-btn:hover {
+    background: rgba(220, 38, 38, 0.3);
+}
+
+.tiktok-action-btn.admin-btn.preview-model-btn {
+    background: rgba(234, 179, 8, 0.15);
+    border-color: rgba(234, 179, 8, 0.3);
+}
+
+.tiktok-action-btn.admin-btn.preview-model-btn:hover {
+    background: rgba(234, 179, 8, 0.3);
+}
+
 /* ===== Double Tap Heart Animation ===== */
 .double-tap-heart {
     position: fixed;

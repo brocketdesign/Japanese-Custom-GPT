@@ -1304,12 +1304,14 @@ fastify.get('/search', async (request, reply) => {
     // Determine NSFW setting - only show if user is premium and has enabled it
     // Handle both boolean true and string 'true' from database
     const showNSFW = user.subscriptionStatus === 'active' && (user.showNSFW === true || user.showNSFW === 'true');
+    const isAdmin = await checkUserAdmin(fastify, userId);
 
     return reply.renderWithGtm('search.hbs', {
       title: seoTitle,
       query,
       user,
       showNSFW,
+      isAdmin,
       translations,
       seo: [
         { name: 'description', content: seoDescription },

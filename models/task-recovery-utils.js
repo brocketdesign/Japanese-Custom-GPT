@@ -5,7 +5,7 @@
 
 const { ObjectId } = require('mongodb');
 const { checkTaskStatus } = require('./imagen');
-const { checkVideoTaskStatus } = require('./img2video-utils');
+const { checkVideoTaskStatus, handleVideoTaskCompletion } = require('./img2video-utils');
 
 /**
  * Recover unfinished image and video generation tasks
@@ -145,24 +145,27 @@ async function recoverVideoTask(task, fastify) {
     const result = await checkVideoTaskStatus(taskId);
     
     if (result && result.status === 'completed') {
-      console.log(`🔄 [TASK RECOVERY] ✅ Video task ${taskId} completed, updating database...`);
+      console.log(`🔄 [TASK RECOVERY] ✅ Video task ${taskId} completed, processing with handleVideoTaskCompletion...`);
       
-      // Update task in database
-      await tasksCollection.updateOne(
-        { taskId: taskId },
-        { 
-          $set: { 
-            status: 'completed',
-            result: result.result,
-            updatedAt: new Date()
-          } 
-        }
-      );
+      // Use handleVideoTaskCompletion to process the video properly
+      // This handles saving to DB, updating chat messages, and sending notifications
+      const taskStatus = {
+        taskId: taskId,
+        status: 'completed',
+        result: result.result
+      };
       
-      // If video was generated in a chat context, update the chat messages
-      if (task.userChatId && task.placeholderId) {
-        await updateVideoInChat(task, result.result, fastify);
-      }
+      const options = {
+        userId: task.userId,
+        chatId: task.chatId,
+        userChatId: task.userChatId,
+        placeholderId: task.placeholderId,
+        imageId: task.imageId,
+        prompt: task.prompt,
+        nsfw: task.nsfw
+      };
+      
+      await handleVideoTaskCompletion(taskStatus, fastify, options);
       
     } else if (result && result.status === 'processing') {
       console.log(`🔄 [TASK RECOVERY] ⏳ Video task ${taskId} still processing`);
@@ -187,76 +190,6 @@ async function recoverVideoTask(task, fastify) {
   } catch (error) {
     console.error(`🔄 [TASK RECOVERY] ❌ Error recovering video task ${taskId}:`, error.message);
     throw error;
-  }
-}
-
-/**
- * Update video in chat messages after recovery
- * 
- * @param {Object} task - Task document from database
- * @param {Object} result - Video generation result with videoUrl
- * @param {Object} fastify - Fastify instance
- */
-async function updateVideoInChat(task, result, fastify) {
-  const db = fastify.mongo.db;
-  const userChatsCollection = db.collection('userChats');
-  
-  try {
-    const userChat = await userChatsCollection.findOne({ 
-      _id: task.userChatId 
-    });
-    
-    if (!userChat || !userChat.messages) {
-      console.log(`🔄 [TASK RECOVERY] ⚠️  User chat not found for video task ${task.taskId}`);
-      return;
-    }
-    
-    // Find the message with the placeholder
-    const messageIndex = userChat.messages.findIndex(msg => 
-      msg.placeholderId === task.placeholderId
-    );
-    
-    if (messageIndex === -1) {
-      console.log(`🔄 [TASK RECOVERY] ⚠️  Message with placeholder ${task.placeholderId} not found`);
-      return;
-    }
-    
-    // Update the message with the video URL
-    const updateResult = await userChatsCollection.updateOne(
-      { _id: task.userChatId },
-      { 
-        $set: { 
-          [`messages.${messageIndex}.videoUrl`]: result.videoUrl,
-          [`messages.${messageIndex}.status`]: 'completed',
-          [`messages.${messageIndex}.duration`]: result.duration || null
-        } 
-      }
-    );
-    
-    if (updateResult.modifiedCount > 0) {
-      console.log(`🔄 [TASK RECOVERY] ✅ Updated video in chat for task ${task.taskId}`);
-      
-      // Send WebSocket notification to user if they're connected
-      if (fastify.websocketClients && task.userId) {
-        const userIdStr = task.userId.toString();
-        const client = fastify.websocketClients.get(userIdStr);
-        
-        if (client && client.readyState === 1) { // 1 = OPEN
-          client.send(JSON.stringify({
-            type: 'videoGenerated',
-            userChatId: task.userChatId.toString(),
-            placeholderId: task.placeholderId,
-            videoUrl: result.videoUrl,
-            duration: result.duration || null
-          }));
-          
-          console.log(`🔄 [TASK RECOVERY] 📡 Sent WebSocket notification to user ${userIdStr}`);
-        }
-      }
-    }
-    
-  } catch (error) {
-    console.error(`🔄 [TASK RECOVERY] ❌ Error updating video in chat:`, error.message);
   }
 }
 

@@ -686,6 +686,10 @@ function openChatActionsModal() {
             
             ${window.isAdmin ? `
             <div class="action-divider"></div>
+            <div class="admin-section-header">
+                <i class="bi bi-shield-lock-fill"></i>
+                <span>Admin Settings</span>
+            </div>
             <div class="chat-action-item" onclick="closeChatActionsModal(); logFullConversation('${chat._id}')">
                 <div class="action-icon purple">
                     <i class="bi bi-terminal"></i>
@@ -693,11 +697,28 @@ function openChatActionsModal() {
                 <span class="action-text">Log Full Conversation</span>
                 <i class="bi bi-chevron-right action-arrow"></i>
             </div>
+            <div class="admin-model-section">
+                <div class="model-label">
+                    <i class="bi bi-image"></i>
+                    <span>Image Generation Model</span>
+                </div>
+                <div class="current-model-display" id="currentModelDisplay">
+                    <span class="current-model-name">${chat.imageModel || 'Not set'}</span>
+                </div>
+                <select id="modelDropdown" class="model-dropdown" onchange="updateCharacterModel('${chat._id}', this.value)">
+                    <option value="">Loading models...</option>
+                </select>
+            </div>
             ` : ''}
         `;
-        
+
         content.html(actionItems);
-        
+
+        // If admin, load available models for dropdown
+        if (window.isAdmin) {
+            loadTxt2ImgModels(chat.imageModel);
+        }
+
         // Show modal using Bootstrap
         const bsModal = new bootstrap.Modal(modal[0]);
         bsModal.show();
@@ -710,6 +731,113 @@ function closeChatActionsModal() {
     if (modal) {
         modal.hide();
     }
+}
+
+// Function to load txt2img models for dropdown
+function loadTxt2ImgModels(currentModel) {
+    const dropdown = $('#modelDropdown');
+
+    $.ajax({
+        url: '/api/txt2img-models',
+        method: 'GET',
+        success: function(response) {
+            if (response.success && response.models) {
+                dropdown.empty();
+                dropdown.append('<option value="">-- Select Model --</option>');
+
+                // Group models by type
+                const sdModels = response.models.filter(m => m.isSDModel);
+                const builtInModels = response.models.filter(m => !m.isSDModel);
+
+                // Add built-in models group
+                if (builtInModels.length > 0) {
+                    const builtInGroup = $('<optgroup label="Built-in Models"></optgroup>');
+                    builtInModels.forEach(model => {
+                        const selected = currentModel === model.id ? 'selected' : '';
+                        builtInGroup.append(`<option value="${model.id}" ${selected}>${model.name}</option>`);
+                    });
+                    dropdown.append(builtInGroup);
+                }
+
+                // Add SD/Custom models group
+                if (sdModels.length > 0) {
+                    const sdGroup = $('<optgroup label="Custom SD Models"></optgroup>');
+                    sdModels.forEach(model => {
+                        const selected = (currentModel === model.modelName || currentModel === model.sdName) ? 'selected' : '';
+                        sdGroup.append(`<option value="${model.id}" data-model-name="${model.modelName || model.sdName}" data-style="${model.style || ''}" ${selected}>${model.name}</option>`);
+                    });
+                    dropdown.append(sdGroup);
+                }
+            }
+        },
+        error: function(error) {
+            console.error('Error loading models:', error);
+            dropdown.html('<option value="">Error loading models</option>');
+        }
+    });
+}
+
+// Function to update character image model
+function updateCharacterModel(chatId, modelId) {
+    if (!modelId || !chatId) return;
+
+    const dropdown = $('#modelDropdown');
+    const selectedOption = dropdown.find('option:selected');
+
+    // Determine model details
+    let imageModel, imageStyle, imageVersion;
+
+    if (selectedOption.data('model-name')) {
+        // Custom SD model
+        imageModel = selectedOption.data('model-name');
+        imageStyle = selectedOption.data('style') || 'photorealistic';
+        imageVersion = 'SDXL 1.0';
+    } else {
+        // Built-in model
+        imageModel = modelId;
+        imageStyle = 'default';
+        imageVersion = 'API';
+    }
+
+    // Show loading state
+    const originalText = selectedOption.text();
+    dropdown.prop('disabled', true);
+
+    $.ajax({
+        url: '/novita/save-image-model',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            chatId: chatId,
+            modelId: modelId,
+            imageModel: imageModel,
+            imageStyle: imageStyle,
+            imageVersion: imageVersion
+        }),
+        success: function(response) {
+            // Update the current model display
+            $('#currentModelDisplay .current-model-name').text(imageModel);
+
+            // Update chat cache if exists
+            if (currentChatActionsData) {
+                currentChatActionsData.imageModel = imageModel;
+            }
+
+            dropdown.prop('disabled', false);
+
+            // Show success feedback
+            if (typeof window.showNotification === 'function') {
+                window.showNotification('Model updated successfully', 'success');
+            }
+        },
+        error: function(error) {
+            console.error('Error updating model:', error);
+            dropdown.prop('disabled', false);
+            if (typeof window.showNotification === 'function') {
+                window.showNotification('Failed to update model', 'error');
+            }
+        }
+    });
 }
 
 // Function to hide navbar chat actions

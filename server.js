@@ -424,6 +424,12 @@ fastify.get('/chat', async (request, reply) => {
   const promptData = await db.collection('prompts').find({}).sort({order: 1}).toArray();
   const giftData = await db.collection('gifts').find({}).sort({order: 1}).toArray();
 
+  // Normalize nsfw field to consistent 'on'/null values for Handlebars template
+  const normalizedPromptData = promptData.map(prompt => ({
+    ...prompt,
+    nsfw: (prompt.nsfw === 'on' || prompt.nsfw === true || prompt.nsfw === 'true') ? 'on' : null
+  }));
+
   const seoMetadata = generateSeoMetadata(request, `/chat/`, lang);
   
   // Flag to indicate URL should be updated client-side to /chat/
@@ -440,7 +446,7 @@ fastify.get('/chat', async (request, reply) => {
     userId,
     chatId: undefined,
     userData,
-    promptData,
+    promptData: normalizedPromptData,
     giftData,
     isTemporaryOrGuest: !user || user.isTemporary,
     shouldUpdateUrl,
@@ -489,6 +495,12 @@ fastify.get('/chat/:chatId', async (request, reply) => {
   const promptData = await db.collection('prompts').find({}).sort({order: 1}).toArray();
   const giftData = await db.collection('gifts').find({}).sort({order: 1}).toArray();
 
+  // Normalize nsfw field to consistent 'on'/null values for Handlebars template
+  const normalizedPromptData = promptData.map(prompt => ({
+    ...prompt,
+    nsfw: (prompt.nsfw === 'on' || prompt.nsfw === true || prompt.nsfw === 'true') ? 'on' : null
+  }));
+
   const seoMetadata = generateSeoMetadata(request, `/chat/${chatId}`, lang);
   return reply.view('chat.hbs', {
     title: translations.seo.title,
@@ -501,7 +513,7 @@ fastify.get('/chat/:chatId', async (request, reply) => {
     userId,
     chatId,
     userData,
-    promptData,
+    promptData: normalizedPromptData,
     giftData,
     isTemporaryOrGuest: !user || user.isTemporary,
     seo: [
@@ -1401,6 +1413,12 @@ fastify.get('/dashboard', async (request, reply) => {
     const promptData = await db.collection('prompts').find({}).sort({order: 1}).toArray();
     const giftData = await db.collection('gifts').find({}).sort({order: 1}).toArray();
 
+    // Normalize nsfw field to consistent 'on'/null values for Handlebars template
+    const normalizedPromptData = promptData.map(prompt => ({
+      ...prompt,
+      nsfw: (prompt.nsfw === 'on' || prompt.nsfw === true || prompt.nsfw === 'true') ? 'on' : null
+    }));
+
     const seoMetadata = generateSeoMetadata(request, '/dashboard', lang);
     return reply.view('dashboard.hbs', {
       title: translations.dashboard?.title || 'Dashboard',
@@ -1410,7 +1428,7 @@ fastify.get('/dashboard', async (request, reply) => {
       user,
       userId,
       userData,
-      promptData,
+      promptData: normalizedPromptData,
       giftData,
       isTemporaryOrGuest: !user || user.isTemporary,
       seo: [

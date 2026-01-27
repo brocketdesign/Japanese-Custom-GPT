@@ -8,6 +8,7 @@ const { upscaleImg } = require('../models/upscale-utils');
 const { removeUserPoints } = require('../models/user-points-utils');
 const { getUserMinImages } = require('../models/chat-tool-settings-utils');
 const { getImageGenerationCost, getImageUpscaleCost, getCustomPromptCost, getGiftCost } = require('../config/pricing');
+const { MODEL_CONFIGS: IMAGE_MODEL_CONFIGS } = require('../models/admin-image-test-utils');
 
 async function routes(fastify, options) {
 
@@ -251,6 +252,50 @@ async function routes(fastify, options) {
     } catch (error) {
       console.error('Error saving image model:', error);
       return reply.status(500).send({ error: 'Failed to save image model to database' });
+    }
+  });
+
+  // API endpoint to fetch available text-to-image models
+  fastify.get('/api/txt2img-models', async (request, reply) => {
+    try {
+      const db = fastify.mongo.db;
+
+      // Load active SD models from database
+      const activeSDModels = await db.collection('myModels').find({}).toArray();
+      const sdModelsForSelection = activeSDModels.map(model => ({
+        id: `sd-txt2img-${model.modelId}`,
+        modelId: model.modelId,
+        name: model.name || model.model,
+        sdName: model.model,
+        description: `Stable Diffusion ${model.style || ''} model`,
+        category: 'txt2img',
+        isSDModel: true,
+        modelName: model.model,
+        style: model.style,
+        baseModel: model.base_model || 'SD 1.5'
+      }));
+
+      // Get built-in txt2img models (non-SD models that don't require a model)
+      const builtInModels = Object.entries(IMAGE_MODEL_CONFIGS)
+        .filter(([id, config]) => !config.requiresModel && config.category === 'txt2img')
+        .map(([id, config]) => ({
+          id,
+          name: config.name,
+          description: config.description || '',
+          category: 'txt2img',
+          isSDModel: false
+        }));
+
+      // Combine all txt2img models
+      const allModels = [...builtInModels, ...sdModelsForSelection];
+
+      return reply.send({
+        success: true,
+        models: allModels
+      });
+    } catch (error) {
+      console.error('Error fetching txt2img models:', error);
+      return reply.status(500).send({ error: 'Failed to fetch models' });
     }
   });
 

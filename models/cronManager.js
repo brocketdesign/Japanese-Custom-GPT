@@ -12,6 +12,7 @@ const { updateAnalyticsCache } = require('./cronUserAnalytics'); // <-- import a
 const { persistQueryTags } = require('./query-tags-utils');
 const { createScheduledTasksProcessor } = require('./scheduled-tasks-processor'); // <-- import scheduled tasks processor
 const { recoverUnfinishedTasks } = require('./task-recovery-utils'); // <-- import task recovery utils
+const { runNightlyPreferencesAnalysis } = require('./user-preferences-analyzer'); // <-- import user preferences analyzer
 // Store active cron jobs
 const cronJobs = {};
 
@@ -432,6 +433,28 @@ const checkExpiredDayPassesTask = (checkExpiredDayPasses, fastify) => async () =
 };
 
 /**
+ * User preferences analyzer task
+ * Analyzes user behavior (likes, chats, favorites) to personalize explore gallery
+ * @param {Object} fastify - Fastify instance
+ */
+const createUserPreferencesAnalyzerTask = (fastify) => {
+  return async () => {
+    console.log('\n🔍 [CRON] ▶️  Starting user preferences analyzer...');
+    const db = fastify.mongo.db;
+    
+    try {
+      // Check if the database is accessible
+      await db.command({ ping: 1 });
+      
+      await runNightlyPreferencesAnalysis(db);
+      console.log('🔍 [CRON] ✅ User preferences analysis completed\n');
+    } catch (err) {
+      console.error('🔍 [CRON] ❌ Error analyzing user preferences:', err.message);
+    }
+  };
+};
+
+/**
  * Initialize day pass expiration check cron job
  * @param {Object} fastify - Fastify instance
  * @param {Function} checkExpiredDayPasses - The function from plan.js
@@ -580,6 +603,16 @@ const initializeCronJobs = async (fastify) => {
         scheduledTasksProcessor
     );
     
+    // Add user preferences analyzer task (nightly at 4 AM)
+    // Analyzes user likes, chats, and favorites to personalize explore gallery
+    const userPreferencesAnalyzerTask = createUserPreferencesAnalyzerTask(fastify);
+    configureCronJob(
+        'userPreferencesAnalyzer',
+        '0 4 * * *', // Runs every day at 4:00 AM
+        true, // Enable this job
+        userPreferencesAnalyzerTask
+    );
+    
     console.log('\n╔══════════════════════════════════════════════════════════╗');
     console.log('║          ✅ ALL CRON JOBS INITIALIZED SUCCESSFULLY       ║');
     console.log('╚══════════════════════════════════════════════════════════╝\n');
@@ -641,6 +674,7 @@ module.exports = {
   processBackgroundVideoTasks,
   cachePopularChatsTask,
   cacheSitemapDataTask,
+  createUserPreferencesAnalyzerTask,
   getJobInfo,
   getNextRunTime,
   runStartupTaskRecovery

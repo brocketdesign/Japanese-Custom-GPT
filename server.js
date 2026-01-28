@@ -291,6 +291,8 @@ fastify.get('/signin-redirection', async (request, reply) => {
 
   return reply.renderWithGtm(`signin.hbs`, {
     title: 'Sign In - AI Image Generation | ChatLamix',
+    signingInTitle: translations.auth?.signingIn || 'Signing In...',
+    redirectingMessage: translations.auth?.redirectingMessage || 'Please wait while we redirect you',
   });
 });
 
@@ -303,6 +305,8 @@ fastify.get('/signout-redirection', async (request, reply) => {
 
   return reply.renderWithGtm(`signout.hbs`, {
     title: 'Sign Out - AI Image Generation | ChatLamix',
+    signingOutTitle: translations.auth?.signingOut || 'Signing Out...',
+    seeYouSoon: translations.auth?.seeYouSoon || 'See you soon! Taking you back...',
   });
 });
 

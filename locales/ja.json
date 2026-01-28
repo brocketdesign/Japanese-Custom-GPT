@@ -1,5 +1,11 @@
 {
   "lang": "ja",
+    "auth": {
+        "signingIn": "サインイン中...",
+        "signingOut": "サインアウト中...",
+        "redirectingMessage": "リダイレクト中です。しばらくお待ちください",
+        "seeYouSoon": "またお会いしましょう！戻ります..."
+    },
     "contactUs": "お問い合わせ",
     "contactDescription": "最新情報やサポートについては、ソーシャルメディアでお気軽にお声かけください。",
     "quickLinks": "クイックリンク",

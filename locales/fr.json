@@ -1,5 +1,11 @@
 {
   "lang": "fr",
+    "auth": {
+        "signingIn": "Connexion en cours...",
+        "signingOut": "Déconnexion en cours...",
+        "redirectingMessage": "Veuillez patienter pendant la redirection",
+        "seeYouSoon": "À bientôt ! Redirection en cours..."
+    },
     "contactUs": "Nous Contacter",
     "contactDescription": "Connectez-vous avec nous sur les réseaux sociaux pour les mises à jour et le support.",
     "quickLinks": "Liens Rapides",

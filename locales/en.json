@@ -1,6 +1,12 @@
 
 {
     "lang": "en",
+    "auth": {
+        "signingIn": "Signing In...",
+        "signingOut": "Signing Out...",
+        "redirectingMessage": "Please wait while we redirect you",
+        "seeYouSoon": "See you soon! Taking you back..."
+    },
     "contactUs": "Contact Us",
     "contactDescription": "Connect with us on social media for updates and support.",
     "quickLinks": "Quick Links",

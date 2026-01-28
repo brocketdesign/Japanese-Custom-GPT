@@ -54,6 +54,9 @@ async function analyzeUserPreferences(db, userId) {
         _id: { $in: likedChatIds }
       }).toArray();
       
+      // Create a map for fast lookup
+      const chatMap = new Map(likedChats.map(chat => [chat._id.toString(), chat]));
+      
       // Count gender preferences from likes
       likedChats.forEach(chat => {
         const gender = normalizeGender(chat.gender);
@@ -69,10 +72,18 @@ async function analyzeUserPreferences(db, userId) {
         }
       });
       
-      // Analyze NSFW preference from likes
+      // Analyze NSFW preference from likes - batch query galleries
+      const galleriesForLikes = await galleryCollection.find({
+        chatId: { $in: likedChatIds }
+      }).toArray();
+      
+      // Create gallery map for fast lookup
+      const galleryMap = new Map(galleriesForLikes.map(g => [g.chatId.toString(), g]));
+      
+      // Check NSFW status for each like
       for (const like of userLikes) {
-        if (like.chatId) {
-          const gallery = await galleryCollection.findOne({ chatId: like.chatId });
+        if (like.chatId && like.imageId) {
+          const gallery = galleryMap.get(like.chatId.toString());
           if (gallery && gallery.images) {
             const likedImage = gallery.images.find(img => 
               img._id?.toString() === like.imageId?.toString()
@@ -100,11 +111,20 @@ async function analyzeUserPreferences(db, userId) {
         _id: { $in: chattedCharacterIds }
       }).toArray();
       
+      // Create a map of chatId to total message count
+      const messageCountMap = new Map();
+      userMessages.forEach(m => {
+        if (m.chatId) {
+          const chatIdStr = m.chatId.toString();
+          const count = m.messages?.length || 0;
+          messageCountMap.set(chatIdStr, (messageCountMap.get(chatIdStr) || 0) + count);
+        }
+      });
+      
       // Count gender preferences from chats
       chattedChats.forEach(chat => {
-        // Find message count for this chat
-        const chatMessages = userMessages.find(m => m.chatId?.toString() === chat._id.toString());
-        const messageCount = chatMessages?.messages?.length || 1;
+        // Get total message count for this chat
+        const messageCount = messageCountMap.get(chat._id.toString()) || 1;
         
         // Weight by message count (more messages = stronger preference)
         const weight = Math.min(Math.log2(messageCount + 1), 5); // Cap at 5
@@ -212,34 +232,52 @@ async function runNightlyPreferencesAnalysis(db) {
     
     // Process users in batches to avoid memory issues
     const batchSize = 50;
+    let lastLoggedBatch = -1;
+    
     for (let i = 0; i < activeUsers.length; i += batchSize) {
       const batch = activeUsers.slice(i, i + batchSize);
       
-      const batchPromises = batch.map(async (user) => {
-        try {
+      // Use Promise.allSettled to ensure all users are processed even if some fail
+      const results = await Promise.allSettled(
+        batch.map(async (user) => {
           const preferences = await analyzeUserPreferences(db, user._id);
           
           if (preferences && preferences.totalInteractions > 0) {
-            // Upsert the preferences cache
-            await preferencesCache.updateOne(
-              { userId: user._id },
-              { $set: preferences },
-              { upsert: true }
-            );
+            // Validate preferences before storing
+            if (typeof preferences.nsfwPreference === 'number' && 
+                preferences.nsfwPreference >= 0 && 
+                preferences.nsfwPreference <= 1) {
+              // Upsert the preferences cache
+              await preferencesCache.updateOne(
+                { userId: user._id },
+                { $set: preferences },
+                { upsert: true }
+              );
+              return { status: 'processed' };
+            }
+          }
+          return { status: 'skipped' };
+        })
+      );
+      
+      // Count results
+      results.forEach(result => {
+        if (result.status === 'fulfilled') {
+          if (result.value.status === 'processed') {
             processedCount++;
           } else {
             skippedCount++;
           }
-        } catch (error) {
-          console.error(`[UserPreferencesAnalyzer] Error processing user ${user._id}:`, error.message);
+        } else {
+          console.error(`[UserPreferencesAnalyzer] Error processing user:`, result.reason?.message || result.reason);
           errorCount++;
         }
       });
       
-      await Promise.all(batchPromises);
-      
-      // Log progress every 100 users
-      if ((i + batchSize) % 100 === 0 || i + batchSize >= activeUsers.length) {
+      // Log progress every 100 users or at the end
+      const currentBatch = Math.floor((i + batchSize) / 100);
+      if (currentBatch > lastLoggedBatch || i + batchSize >= activeUsers.length) {
+        lastLoggedBatch = currentBatch;
         console.log(`🔍 [CRON] 📈 Progress: ${Math.min(i + batchSize, activeUsers.length)}/${activeUsers.length} users`);
       }
     }

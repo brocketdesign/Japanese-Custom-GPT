@@ -583,7 +583,7 @@ function groupCharactersByDiversity(characters) {
 /**
  * Select characters with diversity-aware distribution
  * Ensures a balanced mix of genders, content ages, and NSFW/SFW content
- * @param {Array} scoredCharacters - Array of {character, score} objects
+ * @param {Array} scoredCharacters - Array of {character, score} objects or raw character objects
  * @param {number} count - Number of characters to select
  * @param {Object} userPreferences - Optional user preferences from nightly analysis
  * @returns {Array} Selected characters with diversity balance
@@ -606,35 +606,53 @@ function selectWithDiversity(scoredCharacters, count, userPreferences = null) {
   if (userPreferences?.preferredGenders) {
     // Boost preferred genders slightly while maintaining some diversity
     Object.keys(genderConfig).forEach(gender => {
-      if (userPreferences.preferredGenders[gender]) {
+      if (userPreferences.preferredGenders[gender] && userPreferences.preferredGenders[gender] > 0) {
         genderConfig[gender] = Math.min(0.6, genderConfig[gender] * 1.3);
       }
     });
-    // Normalize to sum to 1
+    // Normalize to sum to 1 (with safety check for zero total)
     const total = Object.values(genderConfig).reduce((a, b) => a + b, 0);
-    Object.keys(genderConfig).forEach(key => {
-      genderConfig[key] /= total;
-    });
+    if (total > 0) {
+      Object.keys(genderConfig).forEach(key => {
+        genderConfig[key] /= total;
+      });
+    }
   }
   
-  const targetCounts = {
-    gender: {
-      female: Math.ceil(count * genderConfig.female),
-      male: Math.ceil(count * genderConfig.male),
-      nonbinary: Math.ceil(count * genderConfig.nonbinary),
-      unknown: Math.ceil(count * genderConfig.unknown),
-    },
-    age: {
-      recent: Math.ceil(count * ageConfig.recent),
-      middle: Math.ceil(count * ageConfig.middle),
-      old: Math.ceil(count * ageConfig.old),
+  // Use floor instead of ceil to avoid exceeding count, then distribute remainder
+  const calculateTargets = (config, total) => {
+    const targets = {};
+    let sum = 0;
+    const keys = Object.keys(config);
+    
+    keys.forEach(key => {
+      targets[key] = Math.floor(total * config[key]);
+      sum += targets[key];
+    });
+    
+    // Distribute remainder to largest categories first
+    let remainder = total - sum;
+    const sortedKeys = [...keys].sort((a, b) => config[b] - config[a]);
+    for (let i = 0; remainder > 0 && i < sortedKeys.length; i++) {
+      targets[sortedKeys[i]]++;
+      remainder--;
     }
+    
+    return targets;
+  };
+  
+  const targetCounts = {
+    gender: calculateTargets(genderConfig, count),
+    age: calculateTargets(ageConfig, count),
   };
   
   /**
    * Helper to pick from a group using weighted random selection
+   * @param {Array} group - Group of characters to pick from
+   * @param {number} targetCount - Number of characters to pick
+   * @param {number} maxTotal - Maximum total selections allowed (to prevent exceeding count)
    */
-  const pickFromGroup = (group, targetCount) => {
+  const pickFromGroup = (group, targetCount, maxTotal) => {
     const picked = [];
     // Sort by score descending
     const sortedGroup = [...group].sort((a, b) => (b.score || 0) - (a.score || 0));
@@ -643,7 +661,17 @@ function selectWithDiversity(scoredCharacters, count, userPreferences = null) {
     const poolSize = Math.min(sortedGroup.length, targetCount * 3);
     const pool = sortedGroup.slice(0, poolSize);
     
-    for (let i = 0; i < targetCount && pool.length > 0; i++) {
+    let attempts = 0;
+    const maxAttempts = targetCount * 2; // Prevent infinite loops
+    
+    while (picked.length < targetCount && pool.length > 0 && attempts < maxAttempts) {
+      attempts++;
+      
+      // Check if we would exceed the maximum allowed
+      if (maxTotal !== undefined && (selected.length + picked.length) >= maxTotal) {
+        break;
+      }
+      
       const totalScore = pool.reduce((sum, c) => sum + (c.score || 1), 0);
       let random = Math.random() * totalScore;
       let selectedIndex = 0;
@@ -659,43 +687,55 @@ function selectWithDiversity(scoredCharacters, count, userPreferences = null) {
       const char = pool[selectedIndex];
       const charId = (char.character?.chatId || char.chatId)?.toString();
       
-      if (!selectedIds.has(charId)) {
+      // Remove from pool regardless of selection
+      pool.splice(selectedIndex, 1);
+      
+      // Only add if not already selected
+      if (charId && !selectedIds.has(charId)) {
         picked.push(char.character || char);
         selectedIds.add(charId);
       }
-      
-      pool.splice(selectedIndex, 1);
+      // Don't increment loop counter for duplicates - the while loop handles this
     }
     
     return picked;
   };
   
-  // Phase 1: Pick by gender distribution
+  // Phase 1: Pick by gender distribution (respecting count limit)
   Object.keys(targetCounts.gender).forEach(gender => {
+    if (selected.length >= count) return;
+    
     const genderGroup = groups.byGender[gender] || [];
-    const target = targetCounts.gender[gender];
-    const picks = pickFromGroup(genderGroup, target);
+    const target = Math.min(targetCounts.gender[gender], count - selected.length);
+    const picks = pickFromGroup(genderGroup, target, count);
     selected.push(...picks);
   });
   
-  // Phase 2: Ensure age distribution by adding missing categories
-  Object.keys(targetCounts.age).forEach(ageCategory => {
-    const current = selected.filter(char => {
-      const date = char.chatCreatedAt || char.latestImage;
-      return categorizeContentAge(date) === ageCategory;
-    }).length;
-    
-    if (current < targetCounts.age[ageCategory]) {
-      const deficit = targetCounts.age[ageCategory] - current;
-      const ageGroup = groups.byAge[ageCategory].filter(c => {
-        const charId = (c.character?.chatId || c.chatId)?.toString();
-        return !selectedIds.has(charId);
-      });
+  // Phase 2: Ensure age distribution by adding missing categories (respecting count limit)
+  if (selected.length < count) {
+    Object.keys(targetCounts.age).forEach(ageCategory => {
+      if (selected.length >= count) return;
       
-      const additionalPicks = pickFromGroup(ageGroup, deficit);
-      selected.push(...additionalPicks);
-    }
-  });
+      const current = selected.filter(char => {
+        const date = char.chatCreatedAt || char.latestImage;
+        return categorizeContentAge(date) === ageCategory;
+      }).length;
+      
+      if (current < targetCounts.age[ageCategory]) {
+        const deficit = Math.min(
+          targetCounts.age[ageCategory] - current,
+          count - selected.length
+        );
+        const ageGroup = groups.byAge[ageCategory].filter(c => {
+          const charId = (c.character?.chatId || c.chatId)?.toString();
+          return !selectedIds.has(charId);
+        });
+        
+        const additionalPicks = pickFromGroup(ageGroup, deficit, count);
+        selected.push(...additionalPicks);
+      }
+    });
+  }
   
   // Phase 3: Fill remaining slots with highest scored unselected characters
   if (selected.length < count) {
@@ -709,7 +749,7 @@ function selectWithDiversity(scoredCharacters, count, userPreferences = null) {
     for (const item of remaining) {
       if (selected.length >= count) break;
       const charId = (item.character?.chatId || item.chatId)?.toString();
-      if (!selectedIds.has(charId)) {
+      if (charId && !selectedIds.has(charId)) {
         selected.push(item.character || item);
         selectedIds.add(charId);
       }
@@ -740,12 +780,15 @@ function applyUserPreferenceBoost(character, userPreferences) {
   if (userPreferences.preferredGenders) {
     const charGender = normalizeGender(character.gender);
     const genderScore = userPreferences.preferredGenders[charGender] || 0;
-    if (genderScore > 0) {
-      boost *= (1 + (genderScore * (WEIGHTS.USER_PREFERENCE_MATCH - 1)));
+    if (genderScore > 0.3) { // Only boost if strong preference (>30%)
+      // Apply full boost for strong matches, scaled boost for moderate matches
+      const boostFactor = genderScore > 0.5 ? WEIGHTS.USER_PREFERENCE_MATCH : 1 + (genderScore * (WEIGHTS.USER_PREFERENCE_MATCH - 1));
+      boost *= boostFactor;
     }
   }
   
   // Boost for preferred character types (based on tags)
+  // Cap at 2.0x maximum boost to prevent tag count from dominating
   if (userPreferences.preferredCharacterTypes && character.chatTags) {
     const matchingTypes = character.chatTags.filter(tag => 
       userPreferences.preferredCharacterTypes.some(
@@ -754,7 +797,10 @@ function applyUserPreferenceBoost(character, userPreferences) {
     ).length;
     
     if (matchingTypes > 0) {
-      boost *= (1 + (matchingTypes * 0.2));
+      // Logarithmic scale to diminish returns for many matching tags
+      // Cap at 2.0x maximum boost
+      const tagBoost = Math.min(2.0, 1 + (Math.log2(matchingTypes + 1) * 0.3));
+      boost *= tagBoost;
     }
   }
   

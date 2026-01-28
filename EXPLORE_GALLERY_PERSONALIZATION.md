@@ -25,11 +25,13 @@ The system ensures a balanced distribution of content across multiple dimensions
 | Middle | 35% | Content between 1 week and 3 months old |
 | Old | 25% | Content older than 3 months |
 
-#### NSFW/SFW Distribution (for users with NSFW enabled)
-| Category | Target Percentage |
-|----------|------------------|
-| SFW | 70% |
-| NSFW | 30% |
+#### NSFW/SFW Content Handling
+The diversity configuration includes NSFW/SFW percentages (70% SFW, 30% NSFW) that are defined but **personalization-based** rather than strict enforcement. The system:
+- Tracks user's NSFW preference from their interaction history
+- Boosts content matching the user's NSFW preference (1.2x boost)
+- Respects user subscription and NSFW toggle settings for visibility
+
+**Note**: The actual SFW/NSFW mix depends on available content and user permissions. The configuration serves as a guideline for future strict enforcement.
 
 ### 2. User Preference Personalization
 

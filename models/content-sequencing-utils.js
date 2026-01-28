@@ -7,6 +7,8 @@
  * - Tag-based personalization
  * - Time-based decay
  * - Fresh content boosting
+ * - Diversity-aware selection (gender, age, NSFW/SFW)
+ * - User preference personalization (from nightly analysis)
  */
 
 const { ObjectId } = require('mongodb');
@@ -19,6 +21,8 @@ const TIME_CONSTANTS = {
   SHORT_TERM: 7 * 24 * 60 * 60 * 1000,     // 1 week - reduce weight
   MEDIUM_TERM: 30 * 24 * 60 * 60 * 1000,   // 1 month - neutral
   FRESH_CONTENT: 7 * 24 * 60 * 60 * 1000,  // Content from last week is "fresh"
+  OLD_CONTENT: 90 * 24 * 60 * 60 * 1000,   // Content older than 3 months
+  MIDDLE_CONTENT: 30 * 24 * 60 * 60 * 1000, // Content between 1-3 months
 };
 
 /**
@@ -31,6 +35,32 @@ const WEIGHTS = {
   RECENTLY_SEEN: 0.1,       // Heavy penalty for recently seen
   SHORT_TERM_SEEN: 0.5,     // Medium penalty for seen this week
   NEW_IMAGES: 1.3,          // Boost for characters with new images
+  USER_PREFERENCE_MATCH: 1.8, // Boost for matching user's analyzed preferences
+};
+
+/**
+ * Diversity distribution configuration
+ * Defines target percentages for content diversity in the explore gallery
+ */
+const DIVERSITY_CONFIG = {
+  // Gender distribution (percentages, should sum to 1.0)
+  gender: {
+    female: 0.45,      // 45% female characters
+    male: 0.35,        // 35% male characters
+    nonbinary: 0.15,   // 15% non-binary/other characters
+    unknown: 0.05,     // 5% unspecified gender
+  },
+  // Content age distribution (percentages, should sum to 1.0)
+  contentAge: {
+    recent: 0.40,      // 40% recent content (< 1 week)
+    middle: 0.35,      // 35% middle-aged content (1 week - 3 months)
+    old: 0.25,         // 25% older content (> 3 months)
+  },
+  // NSFW/SFW distribution (percentages for users with NSFW enabled)
+  contentRating: {
+    sfw: 0.70,         // 70% SFW content
+    nsfw: 0.30,        // 30% NSFW content
+  },
 };
 
 /**
@@ -267,18 +297,35 @@ async function getColdStartPool(db, limit = 20) {
 
 /**
  * Main sequencing function - applies weighted randomness to character list
+ * Now with diversity-aware selection for balanced content distribution
+ * @param {Array} characters - Raw character array from database
+ * @param {Object} userState - User interaction state (seen characters, tags, etc.)
+ * @param {Object} options - Sequencing options
+ * @param {number} options.limit - Number of characters to return (default: 20)
+ * @param {boolean} options.excludeRecent - Exclude recently seen characters (default: true)
+ * @param {boolean} options.useDiversity - Use diversity-aware selection (default: true)
+ * @param {Object} options.userPreferences - User preferences from nightly analysis
+ * @returns {Array} Sequenced and diversified character array
  */
 async function sequenceCharacters(characters, userState, options = {}) {
   const {
     limit = 20,
     excludeRecent = true,
+    useDiversity = true,
+    userPreferences = null,
   } = options;
   
   // Score each character
-  const scoredCharacters = characters.map(character => ({
-    character,
-    score: calculateCharacterScore(character, userState)
-  }));
+  const scoredCharacters = characters.map(character => {
+    let score = calculateCharacterScore(character, userState);
+    
+    // Apply user preference boost from nightly analysis
+    if (userPreferences) {
+      score *= applyUserPreferenceBoost(character, userPreferences);
+    }
+    
+    return { character, score };
+  });
   
   // Filter out very recently seen if requested
   let filteredCharacters = scoredCharacters;
@@ -295,8 +342,13 @@ async function sequenceCharacters(characters, userState, options = {}) {
     filteredCharacters = scoredCharacters;
   }
   
-  // Select top characters using weighted random selection
-  const selectedCharacters = selectTopCharacters(filteredCharacters, limit);
+  // Select characters using diversity-aware selection or simple weighted selection
+  let selectedCharacters;
+  if (useDiversity) {
+    selectedCharacters = selectWithDiversity(filteredCharacters, limit, userPreferences);
+  } else {
+    selectedCharacters = selectTopCharacters(filteredCharacters, limit);
+  }
   
   // Rotate images within each character
   if (userState?.seenImages) {
@@ -404,6 +456,342 @@ function updateTagPreferences(userState, tags, interactionStrength = 1.0) {
   return state;
 }
 
+/**
+ * Categorize character by age (based on creation date)
+ * @param {Date|string} createdAt - Character creation date
+ * @returns {string} 'recent', 'middle', or 'old'
+ */
+function categorizeContentAge(createdAt) {
+  if (!createdAt) return 'old';
+  
+  const now = Date.now();
+  const contentAge = now - new Date(createdAt).getTime();
+  
+  if (contentAge < TIME_CONSTANTS.SHORT_TERM) {
+    return 'recent';
+  } else if (contentAge < TIME_CONSTANTS.OLD_CONTENT) {
+    return 'middle';
+  }
+  return 'old';
+}
+
+/**
+ * Normalize gender value to standard categories
+ * @param {string} gender - Raw gender value from database
+ * @returns {string} 'female', 'male', 'nonbinary', or 'unknown'
+ */
+function normalizeGender(gender) {
+  if (!gender) return 'unknown';
+  
+  const genderLower = gender.toLowerCase().trim();
+  
+  // Female variations
+  if (['female', 'woman', 'girl', 'feminine', 'f'].includes(genderLower)) {
+    return 'female';
+  }
+  
+  // Male variations
+  if (['male', 'man', 'boy', 'masculine', 'm'].includes(genderLower)) {
+    return 'male';
+  }
+  
+  // Non-binary variations
+  if (['non-binary', 'nonbinary', 'non binary', 'enby', 'genderqueer', 
+       'genderfluid', 'agender', 'other', 'nb', 'trans', 'transgender'].includes(genderLower)) {
+    return 'nonbinary';
+  }
+  
+  return 'unknown';
+}
+
+/**
+ * Check if character has any NSFW images
+ * @param {Object} character - Character with images array
+ * @returns {boolean}
+ */
+function hasNsfwContent(character) {
+  if (!character.images || character.images.length === 0) return false;
+  
+  return character.images.some(img => 
+    img.nsfw === true || img.nsfw === 'true' || img.nsfw === 'on'
+  );
+}
+
+/**
+ * Check if character has SFW images
+ * @param {Object} character - Character with images array
+ * @returns {boolean}
+ */
+function hasSfwContent(character) {
+  if (!character.images || character.images.length === 0) return false;
+  
+  return character.images.some(img => 
+    img.nsfw !== true && img.nsfw !== 'true' && img.nsfw !== 'on'
+  );
+}
+
+/**
+ * Group characters by diversity categories
+ * @param {Array} characters - Array of character objects
+ * @returns {Object} Grouped characters by gender, age, and NSFW status
+ */
+function groupCharactersByDiversity(characters) {
+  const groups = {
+    byGender: {
+      female: [],
+      male: [],
+      nonbinary: [],
+      unknown: [],
+    },
+    byAge: {
+      recent: [],
+      middle: [],
+      old: [],
+    },
+    byRating: {
+      sfw: [],
+      nsfw: [],
+    }
+  };
+  
+  characters.forEach(char => {
+    // Group by gender
+    const gender = normalizeGender(char.character?.gender || char.gender);
+    if (groups.byGender[gender]) {
+      groups.byGender[gender].push(char);
+    }
+    
+    // Group by content age (using chatCreatedAt or latestImage)
+    const contentDate = char.character?.chatCreatedAt || char.character?.latestImage || 
+                       char.chatCreatedAt || char.latestImage;
+    const ageCategory = categorizeContentAge(contentDate);
+    groups.byAge[ageCategory].push(char);
+    
+    // Group by content rating
+    const charObj = char.character || char;
+    if (hasNsfwContent(charObj)) {
+      groups.byRating.nsfw.push(char);
+    }
+    if (hasSfwContent(charObj)) {
+      groups.byRating.sfw.push(char);
+    }
+  });
+  
+  return groups;
+}
+
+/**
+ * Select characters with diversity-aware distribution
+ * Ensures a balanced mix of genders, content ages, and NSFW/SFW content
+ * @param {Array} scoredCharacters - Array of {character, score} objects
+ * @param {number} count - Number of characters to select
+ * @param {Object} userPreferences - Optional user preferences from nightly analysis
+ * @returns {Array} Selected characters with diversity balance
+ */
+function selectWithDiversity(scoredCharacters, count, userPreferences = null) {
+  if (scoredCharacters.length === 0) return [];
+  if (scoredCharacters.length <= count) {
+    return scoredCharacters.map(c => c.character || c);
+  }
+  
+  const groups = groupCharactersByDiversity(scoredCharacters);
+  const selected = [];
+  const selectedIds = new Set();
+  
+  // Calculate target counts based on diversity config
+  // Adjust based on user preferences if available
+  let genderConfig = { ...DIVERSITY_CONFIG.gender };
+  let ageConfig = { ...DIVERSITY_CONFIG.contentAge };
+  
+  if (userPreferences?.preferredGenders) {
+    // Boost preferred genders slightly while maintaining some diversity
+    Object.keys(genderConfig).forEach(gender => {
+      if (userPreferences.preferredGenders[gender]) {
+        genderConfig[gender] = Math.min(0.6, genderConfig[gender] * 1.3);
+      }
+    });
+    // Normalize to sum to 1
+    const total = Object.values(genderConfig).reduce((a, b) => a + b, 0);
+    Object.keys(genderConfig).forEach(key => {
+      genderConfig[key] /= total;
+    });
+  }
+  
+  const targetCounts = {
+    gender: {
+      female: Math.ceil(count * genderConfig.female),
+      male: Math.ceil(count * genderConfig.male),
+      nonbinary: Math.ceil(count * genderConfig.nonbinary),
+      unknown: Math.ceil(count * genderConfig.unknown),
+    },
+    age: {
+      recent: Math.ceil(count * ageConfig.recent),
+      middle: Math.ceil(count * ageConfig.middle),
+      old: Math.ceil(count * ageConfig.old),
+    }
+  };
+  
+  /**
+   * Helper to pick from a group using weighted random selection
+   */
+  const pickFromGroup = (group, targetCount) => {
+    const picked = [];
+    // Sort by score descending
+    const sortedGroup = [...group].sort((a, b) => (b.score || 0) - (a.score || 0));
+    
+    // Take top candidates as pool
+    const poolSize = Math.min(sortedGroup.length, targetCount * 3);
+    const pool = sortedGroup.slice(0, poolSize);
+    
+    for (let i = 0; i < targetCount && pool.length > 0; i++) {
+      const totalScore = pool.reduce((sum, c) => sum + (c.score || 1), 0);
+      let random = Math.random() * totalScore;
+      let selectedIndex = 0;
+      
+      for (let j = 0; j < pool.length; j++) {
+        random -= (pool[j].score || 1);
+        if (random <= 0) {
+          selectedIndex = j;
+          break;
+        }
+      }
+      
+      const char = pool[selectedIndex];
+      const charId = (char.character?.chatId || char.chatId)?.toString();
+      
+      if (!selectedIds.has(charId)) {
+        picked.push(char.character || char);
+        selectedIds.add(charId);
+      }
+      
+      pool.splice(selectedIndex, 1);
+    }
+    
+    return picked;
+  };
+  
+  // Phase 1: Pick by gender distribution
+  Object.keys(targetCounts.gender).forEach(gender => {
+    const genderGroup = groups.byGender[gender] || [];
+    const target = targetCounts.gender[gender];
+    const picks = pickFromGroup(genderGroup, target);
+    selected.push(...picks);
+  });
+  
+  // Phase 2: Ensure age distribution by adding missing categories
+  Object.keys(targetCounts.age).forEach(ageCategory => {
+    const current = selected.filter(char => {
+      const date = char.chatCreatedAt || char.latestImage;
+      return categorizeContentAge(date) === ageCategory;
+    }).length;
+    
+    if (current < targetCounts.age[ageCategory]) {
+      const deficit = targetCounts.age[ageCategory] - current;
+      const ageGroup = groups.byAge[ageCategory].filter(c => {
+        const charId = (c.character?.chatId || c.chatId)?.toString();
+        return !selectedIds.has(charId);
+      });
+      
+      const additionalPicks = pickFromGroup(ageGroup, deficit);
+      selected.push(...additionalPicks);
+    }
+  });
+  
+  // Phase 3: Fill remaining slots with highest scored unselected characters
+  if (selected.length < count) {
+    const remaining = scoredCharacters
+      .filter(c => {
+        const charId = (c.character?.chatId || c.chatId)?.toString();
+        return !selectedIds.has(charId);
+      })
+      .sort((a, b) => (b.score || 0) - (a.score || 0));
+    
+    for (const item of remaining) {
+      if (selected.length >= count) break;
+      const charId = (item.character?.chatId || item.chatId)?.toString();
+      if (!selectedIds.has(charId)) {
+        selected.push(item.character || item);
+        selectedIds.add(charId);
+      }
+    }
+  }
+  
+  // Shuffle the final selection to avoid predictable ordering
+  for (let i = selected.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [selected[i], selected[j]] = [selected[j], selected[i]];
+  }
+  
+  return selected.slice(0, count);
+}
+
+/**
+ * Apply user preferences from nightly analysis to scoring
+ * @param {Object} character - Character object
+ * @param {Object} userPreferences - User preferences from database
+ * @returns {number} Additional score multiplier
+ */
+function applyUserPreferenceBoost(character, userPreferences) {
+  if (!userPreferences) return 1.0;
+  
+  let boost = 1.0;
+  
+  // Boost for preferred gender
+  if (userPreferences.preferredGenders) {
+    const charGender = normalizeGender(character.gender);
+    const genderScore = userPreferences.preferredGenders[charGender] || 0;
+    if (genderScore > 0) {
+      boost *= (1 + (genderScore * (WEIGHTS.USER_PREFERENCE_MATCH - 1)));
+    }
+  }
+  
+  // Boost for preferred character types (based on tags)
+  if (userPreferences.preferredCharacterTypes && character.chatTags) {
+    const matchingTypes = character.chatTags.filter(tag => 
+      userPreferences.preferredCharacterTypes.some(
+        pref => pref.toLowerCase() === tag.toLowerCase()
+      )
+    ).length;
+    
+    if (matchingTypes > 0) {
+      boost *= (1 + (matchingTypes * 0.2));
+    }
+  }
+  
+  // Boost for preferred content rating
+  if (userPreferences.nsfwPreference !== undefined) {
+    const charHasNsfw = hasNsfwContent(character);
+    if (userPreferences.nsfwPreference > 0.5 && charHasNsfw) {
+      boost *= 1.2;
+    } else if (userPreferences.nsfwPreference < 0.3 && !charHasNsfw) {
+      boost *= 1.2;
+    }
+  }
+  
+  return boost;
+}
+
+/**
+ * Get user preferences from the nightly analysis cache
+ * @param {Object} db - Database instance
+ * @param {string|ObjectId} userId - User ID
+ * @returns {Object|null} User preferences or null
+ */
+async function getUserPreferencesFromCache(db, userId) {
+  if (!userId) return null;
+  
+  try {
+    const userIdObj = typeof userId === 'string' ? new ObjectId(userId) : userId;
+    const preferencesCollection = db.collection('userPreferencesCache');
+    
+    const preferences = await preferencesCollection.findOne({ userId: userIdObj });
+    return preferences;
+  } catch (error) {
+    console.error('[ContentSequencing] Error fetching user preferences:', error);
+    return null;
+  }
+}
+
 module.exports = {
   sequenceCharacters,
   rotateCharacterImages,
@@ -412,6 +800,15 @@ module.exports = {
   updateSeenState,
   updateTagPreferences,
   calculateCharacterScore,
+  selectWithDiversity,
+  groupCharactersByDiversity,
+  normalizeGender,
+  categorizeContentAge,
+  hasNsfwContent,
+  hasSfwContent,
+  applyUserPreferenceBoost,
+  getUserPreferencesFromCache,
   TIME_CONSTANTS,
   WEIGHTS,
+  DIVERSITY_CONFIG,
 };

@@ -3,7 +3,8 @@ const { getLanguageName } = require('./tool');
 const { 
   sequenceCharacters, 
   rotateCharacterImages,
-  getColdStartPool 
+  getColdStartPool,
+  getUserPreferencesFromCache
 } = require('./content-sequencing-utils');
 const { getUserInteractionState } = require('./user-interaction-utils');
 
@@ -624,6 +625,8 @@ async function searchImagesGroupedByCharacter(db, user, queryStr = '', page = 1,
       chatImageUrl: { $first: '$chat.chatImageUrl' },
       chatTags: { $first: '$chat.tags' },
       description: { $first: '$chat.description' },
+      gender: { $first: '$chat.gender' },
+      chatCreatedAt: { $first: '$chat.createdAt' },
       images: {
         $push: {
           _id: '$images._id',
@@ -681,6 +684,8 @@ async function searchImagesGroupedByCharacter(db, user, queryStr = '', page = 1,
       chatImageUrl: { $ifNull: ['$chatImageUrl', '/img/default-thumbnail.png'] },
       chatTags: { $ifNull: ['$chatTags', []] },
       description: 1,
+      gender: { $ifNull: ['$gender', 'unknown'] },
+      chatCreatedAt: 1,
       imageCount: 1,
       images: {
         $concatArrays: [
@@ -769,10 +774,18 @@ async function searchImagesGroupedByCharacter(db, user, queryStr = '', page = 1,
     // Apply smart sequencing for page 1 without query
     let finalCharacters = characters;
     if (useSmartSequencing && characters.length > 0) {
-      // Apply weighted randomness and personalization
+      // Get user preferences from nightly analysis cache (for logged-in users)
+      let userPreferences = null;
+      if (user && !user.isTemporary) {
+        userPreferences = await getUserPreferencesFromCache(db, user._id);
+      }
+      
+      // Apply weighted randomness, diversity, and personalization
       finalCharacters = await sequenceCharacters(characters, interactionState, {
         limit,
-        excludeRecent: true
+        excludeRecent: true,
+        useDiversity: true,
+        userPreferences
       });
     }
     

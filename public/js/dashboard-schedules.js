@@ -20,7 +20,9 @@ class SchedulesDashboard {
     this.customPrompts = [];
     this.selectedCustomPromptIds = new Set();
     this.selectedCharacterId = '';
-    
+    this.socialConnections = [];
+    this.selectedSocialAccountIds = new Set();
+
     this.init();
   }
 
@@ -31,6 +33,7 @@ class SchedulesDashboard {
     this.loadStats();
     this.loadUserCharacters();
     this.loadCustomPrompts();
+    this.loadSocialConnections();
   }
 
   setupModals() {
@@ -130,11 +133,22 @@ class SchedulesDashboard {
   selectActionType(actionType) {
     // Update hidden input
     document.getElementById('actionType').value = actionType;
-    
+
     // Update button states
     document.querySelectorAll('.schedule-action-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.action === actionType);
     });
+
+    // Update description text using translations
+    const descriptionText = document.getElementById('actionTypeDescriptionText');
+    if (descriptionText && window.translations?.dashboard) {
+      const descriptions = {
+        'generate_image': window.translations.dashboard.generateImageDescription,
+        'generate_video': window.translations.dashboard.generateVideoDescription,
+        'publish_post': window.translations.dashboard.publishPostDescription
+      };
+      descriptionText.textContent = descriptions[actionType] || '';
+    }
   }
 
   selectModel(modelId, modelName) {
@@ -402,6 +416,109 @@ class SchedulesDashboard {
     return text.substring(0, maxLength) + '...';
   }
 
+  async loadSocialConnections() {
+    const container = document.getElementById('socialAccountsContainer');
+
+    if (!container) return;
+
+    try {
+      const response = await fetch('/api/social/status');
+      const data = await response.json();
+
+      if (data.success) {
+        this.socialConnections = data.connections || [];
+        this.renderSocialConnections();
+      } else {
+        console.error('Social connections API returned error:', data);
+        this.socialConnections = [];
+        this.renderSocialConnections();
+      }
+    } catch (error) {
+      console.error('Error loading social connections:', error);
+      this.socialConnections = [];
+      this.renderSocialConnections();
+    }
+  }
+
+  renderSocialConnections() {
+    const container = document.getElementById('socialAccountsContainer');
+    const noAccountsMessage = document.getElementById('noSocialAccountsMessage');
+
+    if (!container) return;
+
+    if (this.socialConnections.length === 0) {
+      container.style.display = 'none';
+      if (noAccountsMessage) {
+        noAccountsMessage.style.display = 'block';
+      }
+      return;
+    }
+
+    container.style.display = 'block';
+    if (noAccountsMessage) {
+      noAccountsMessage.style.display = 'none';
+    }
+
+    const platformIcons = {
+      instagram: '<i class="bi bi-instagram me-1"></i>',
+      twitter: '<i class="bi bi-twitter-x me-1"></i>'
+    };
+
+    const html = this.socialConnections.map(conn => {
+      const icon = platformIcons[conn.platform] || '<i class="bi bi-globe me-1"></i>';
+      const checkboxId = `socialAccount_${conn.id}`;
+      const isSelected = this.selectedSocialAccountIds.has(conn.id);
+
+      return `
+        <div class="form-check">
+          <input class="form-check-input social-account-checkbox"
+                 type="checkbox"
+                 id="${checkboxId}"
+                 value="${conn.id}"
+                 data-platform="${conn.platform}"
+                 data-username="${this.escapeHtml(conn.username)}"
+                 ${isSelected ? 'checked' : ''}>
+          <label class="form-check-label" for="${checkboxId}">
+            ${icon}@${this.escapeHtml(conn.username)}
+          </label>
+        </div>
+      `;
+    }).join('');
+
+    container.innerHTML = `<div class="d-flex flex-wrap gap-3">${html}</div>`;
+
+    // Add event listeners for checkboxes
+    container.querySelectorAll('.social-account-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          this.selectedSocialAccountIds.add(e.target.value);
+        } else {
+          this.selectedSocialAccountIds.delete(e.target.value);
+        }
+      });
+    });
+  }
+
+  openConnectionsSettings() {
+    // Try to open the settings modal on connections tab
+    if (typeof window.SocialConnections !== 'undefined' && window.SocialConnections.openSettingsConnectionsTab) {
+      window.SocialConnections.openSettingsConnectionsTab();
+    } else {
+      // Fallback: try to open settings modal directly
+      const settingsModal = document.getElementById('settingsModal');
+      if (settingsModal) {
+        const modal = new bootstrap.Modal(settingsModal);
+        modal.show();
+        setTimeout(() => {
+          const connectionsTab = document.getElementById('connections-tab');
+          if (connectionsTab) {
+            connectionsTab.click();
+          }
+        }, 300);
+      }
+    }
+  }
+
   async loadSchedules() {
     const grid = document.getElementById('schedulesGrid');
     const spinner = document.getElementById('loadingSpinner');
@@ -592,8 +709,11 @@ class SchedulesDashboard {
       noneItem.classList.add('active');
     }
     
-    document.getElementById('publishInstagram').checked = false;
-    document.getElementById('publishTwitter').checked = false;
+    // Reset social account selections
+    this.selectedSocialAccountIds.clear();
+    document.querySelectorAll('.social-account-checkbox').forEach(checkbox => {
+      checkbox.checked = false;
+    });
     
     // Reset prompt type to manual
     document.getElementById('promptTypeManual').checked = true;
@@ -661,8 +781,53 @@ class SchedulesDashboard {
         document.getElementById('actionModel').value = modelId;
       }
       
-      document.getElementById('actionCharacter').value = schedule.actionData?.characterId || '';
-      
+      // Restore character selection
+      const characterId = schedule.actionData?.characterId || '';
+      this.selectedCharacterId = characterId;
+
+      // Update character selection UI
+      document.querySelectorAll('.character-selection-item').forEach(item => {
+        item.classList.remove('active');
+      });
+
+      if (characterId) {
+        const characterItem = document.querySelector(`.character-selection-item[data-character-id="${characterId}"]`);
+        if (characterItem) {
+          characterItem.classList.add('active');
+        }
+      } else {
+        // Select "None" option (first item without data-character-id)
+        const noneItem = document.querySelector('.character-selection-item:not([data-character-id])');
+        if (noneItem) {
+          noneItem.classList.add('active');
+        }
+      }
+
+      // Restore social account selections
+      this.selectedSocialAccountIds.clear();
+      document.querySelectorAll('.social-account-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+      });
+
+      if (schedule.actionData?.socialAccountIds?.length > 0) {
+        schedule.actionData.socialAccountIds.forEach(accountId => {
+          this.selectedSocialAccountIds.add(accountId);
+          const checkbox = document.querySelector(`.social-account-checkbox[value="${accountId}"]`);
+          if (checkbox) {
+            checkbox.checked = true;
+          }
+        });
+      } else if (schedule.actionData?.socialPlatforms?.length > 0) {
+        // Fallback: select accounts by platform if accountIds not saved
+        schedule.actionData.socialPlatforms.forEach(platform => {
+          const checkbox = document.querySelector(`.social-account-checkbox[data-platform="${platform}"]`);
+          if (checkbox) {
+            checkbox.checked = true;
+            this.selectedSocialAccountIds.add(checkbox.value);
+          }
+        });
+      }
+
       // Set prompt type based on whether custom prompts are used
       if (schedule.actionData?.useCustomPrompts && schedule.actionData?.customPromptIds?.length > 0) {
         document.getElementById('promptTypeCustom').checked = true;
@@ -861,10 +1026,13 @@ class SchedulesDashboard {
     // Get character selection (from the new list-based selector)
     const characterId = this.selectedCharacterId || null;
     
-    // Collect social platforms
+    // Collect social platforms from connected accounts
     const socialPlatforms = [];
-    if (document.getElementById('publishInstagram').checked) socialPlatforms.push('instagram');
-    if (document.getElementById('publishTwitter').checked) socialPlatforms.push('twitter');
+    const socialAccountIds = [];
+    document.querySelectorAll('.social-account-checkbox:checked').forEach(checkbox => {
+      socialPlatforms.push(checkbox.dataset.platform);
+      socialAccountIds.push(checkbox.value);
+    });
     
     const scheduleData = {
       type,
@@ -873,6 +1041,7 @@ class SchedulesDashboard {
       actionData: {
         model,
         socialPlatforms,
+        socialAccountIds,
         autoPublish: socialPlatforms.length > 0,
         characterId: characterId
       }
@@ -1221,7 +1390,8 @@ class SchedulesDashboard {
           model,
           actionType,
           useCustomPrompts,
-          customPromptIds
+          customPromptIds,
+          characterId: this.selectedCharacterId || null
         })
       });
 

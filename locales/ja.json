@@ -2482,7 +2482,10 @@
     "autoPublishTo": "自動投稿先",
     "scheduleDetails": "スケジュール詳細",
     "testRun": "テスト実行",
-    "testRunDescription": "生成結果をプレビューするためのテストを実行"
+    "testRunDescription": "生成結果をプレビューするためのテストを実行",
+    "generateImageDescription": "AIで新しい画像を生成し、投稿に保存します。下でソーシャルアカウントを選択すると、自動的に投稿されます。",
+    "generateVideoDescription": "AIで新しい動画を生成し、投稿に保存します。下でソーシャルアカウントを選択すると、自動的に投稿されます。",
+    "publishPostDescription": "ライブラリの既存の投稿を選択したソーシャルメディアに公開します。新しいコンテンツは生成しません。"
   },
 
   "analytics": {

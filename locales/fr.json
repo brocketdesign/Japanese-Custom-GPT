@@ -2456,7 +2456,10 @@
     "autoPublishTo": "Publication automatique sur",
     "scheduleDetails": "Détails de la planification",
     "testRun": "Test",
-    "testRunDescription": "Exécutez un test pour prévisualiser ce qui sera généré"
+    "testRunDescription": "Exécutez un test pour prévisualiser ce qui sera généré",
+    "generateImageDescription": "Crée une nouvelle image générée par IA et l'enregistre dans vos publications. Si des comptes sociaux sont sélectionnés ci-dessous, elle sera également publiée automatiquement.",
+    "generateVideoDescription": "Crée une nouvelle vidéo générée par IA et l'enregistre dans vos publications. Si des comptes sociaux sont sélectionnés ci-dessous, elle sera également publiée automatiquement.",
+    "publishPostDescription": "Publie une publication existante de votre bibliothèque sur les réseaux sociaux sélectionnés. Ne génère PAS de nouveau contenu."
   },
 
   "analytics": {

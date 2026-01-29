@@ -100,13 +100,52 @@ async function executeImageGeneration(schedule, fastify) {
     }
   }
   
-  // If character is selected, fetch character data
+  // If character is selected, fetch character data and combine with prompt
   if (actionData.characterId) {
     characterData = await db.collection('chats').findOne({ _id: new ObjectId(actionData.characterId) });
     if (characterData) {
-      // Optionally enhance prompt with character context
-      // This can be used by the image generation to apply character-specific styling
       console.log(`[Scheduled Tasks] Using character: ${characterData.name} for image generation`);
+
+      // Build character description from available fields
+      const characterDescription = characterData.enhancedPrompt || characterData.characterPrompt || '';
+      const characterName = characterData.name || '';
+      const characterGender = characterData.gender || '';
+
+      // Build additional details if available
+      let appearanceDetails = '';
+      if (characterData.details?.appearance) {
+        const app = characterData.details.appearance;
+        const detailParts = [];
+        if (app.age) detailParts.push(`${app.age} years old`);
+        if (app.ethnicity) detailParts.push(app.ethnicity);
+        if (app.bodyType) detailParts.push(`${app.bodyType} body`);
+        if (detailParts.length > 0) {
+          appearanceDetails = detailParts.join(', ');
+        }
+      }
+
+      // Combine character details with the base prompt
+      // The user's custom/manual prompt describes the scene/action, character details describe who
+      if (characterDescription || characterName) {
+        const characterContext = [];
+        if (characterName) characterContext.push(characterName);
+        if (characterGender) characterContext.push(characterGender);
+        if (appearanceDetails) characterContext.push(appearanceDetails);
+        if (characterDescription) characterContext.push(characterDescription);
+
+        const characterPart = characterContext.join(', ');
+
+        // If there's a base prompt (custom/manual), combine it with character details
+        // Format: "[character details], [user's action/scene prompt]"
+        if (basePrompt && basePrompt.trim() !== '') {
+          basePrompt = `${characterPart}, ${basePrompt}`;
+          console.log(`[Scheduled Tasks] Combined prompt with character details: ${basePrompt.substring(0, 100)}...`);
+        } else {
+          // No custom prompt, use just the character description
+          basePrompt = characterPart;
+          console.log(`[Scheduled Tasks] Using character description as prompt: ${basePrompt.substring(0, 100)}...`);
+        }
+      }
     }
   }
   

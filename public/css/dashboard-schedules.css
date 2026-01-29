@@ -714,3 +714,23 @@
 .character-selection-list::-webkit-scrollbar-thumb:hover {
   background: rgba(110, 32, 244, 0.6);
 }
+
+/* Action Type Description */
+.action-type-description {
+  padding: 0.5rem 0.75rem;
+  background: rgba(110, 32, 244, 0.1);
+  border-left: 3px solid #B58AFE;
+  border-radius: 0 6px 6px 0;
+}
+
+.action-type-description small {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25rem;
+  line-height: 1.4;
+}
+
+.action-type-description i {
+  flex-shrink: 0;
+  margin-top: 2px;
+}

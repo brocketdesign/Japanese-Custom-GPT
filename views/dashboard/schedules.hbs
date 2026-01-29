@@ -193,6 +193,12 @@
                             </button>
                         </div>
                         <input type="hidden" id="actionType" value="generate_image">
+                        <div id="actionTypeDescription" class="action-type-description mt-2">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                <span id="actionTypeDescriptionText">{{translations.dashboard.generateImageDescription}}</span>
+                            </small>
+                        </div>
                     </div>
 
                     <!-- Single Schedule: Date/Time -->
@@ -406,19 +412,16 @@
                     <!-- Social Platforms -->
                     <div class="mb-3">
                         <label class="form-label">{{translations.dashboard.autoPublishTo}}</label>
-                        <div class="d-flex gap-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="publishInstagram" value="instagram">
-                                <label class="form-check-label" for="publishInstagram">
-                                    <i class="bi bi-instagram me-1"></i>Instagram
-                                </label>
+                        <div id="socialAccountsContainer">
+                            <div class="text-muted small">
+                                <span class="spinner-border spinner-border-sm me-1"></span>
+                                Loading connected accounts...
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="publishTwitter" value="twitter">
-                                <label class="form-check-label" for="publishTwitter">
-                                    <i class="bi bi-twitter-x me-1"></i>X (Twitter)
-                                </label>
-                            </div>
+                        </div>
+                        <div id="noSocialAccountsMessage" class="text-muted small" style="display: none;">
+                            <i class="bi bi-info-circle me-1"></i>
+                            No social accounts connected.
+                            <a href="#" onclick="schedulesDashboard.openConnectionsSettings(); return false;">Connect accounts</a> to auto-publish.
                         </div>
                     </div>
                 </div>

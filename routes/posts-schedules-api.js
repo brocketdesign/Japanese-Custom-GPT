@@ -778,23 +778,23 @@ Return ONLY the caption text with hashtags, nothing else.`;
         return reply.code(401).send({ error: 'Authentication required' });
       }
 
-      const { prompt, model, actionType, useCustomPrompts, customPromptIds } = request.body;
+      const { prompt, model, actionType, useCustomPrompts, customPromptIds, characterId } = request.body;
 
       // Handle custom prompts if selected
       let finalPrompt = prompt || '';
       let selectedCustomPromptId = null;
-      
+
       if (useCustomPrompts && customPromptIds && customPromptIds.length > 0) {
         // Validate custom prompt IDs
         const validIds = customPromptIds.filter(id => ObjectId.isValid(id));
         if (validIds.length === 0) {
           return reply.code(400).send({ error: 'Invalid custom prompt IDs' });
         }
-        
+
         // Randomly select one custom prompt from the valid list
         const randomIndex = Math.floor(Math.random() * validIds.length);
         selectedCustomPromptId = validIds[randomIndex];
-        
+
         // Fetch the custom prompt
         const customPrompt = await db.collection('prompts').findOne({ _id: new ObjectId(selectedCustomPromptId) });
         if (customPrompt) {
@@ -804,7 +804,53 @@ Return ONLY the caption text with hashtags, nothing else.`;
           }
         }
       }
-      
+
+      // If character is selected, combine character details with prompt
+      if (characterId && ObjectId.isValid(characterId)) {
+        const characterData = await db.collection('chats').findOne({ _id: new ObjectId(characterId) });
+        if (characterData) {
+          console.log(`[Schedules API] Test run using character: ${characterData.name}`);
+
+          // Build character description from available fields
+          const characterDescription = characterData.enhancedPrompt || characterData.characterPrompt || '';
+          const characterName = characterData.name || '';
+          const characterGender = characterData.gender || '';
+
+          // Build additional details if available
+          let appearanceDetails = '';
+          if (characterData.details?.appearance) {
+            const app = characterData.details.appearance;
+            const detailParts = [];
+            if (app.age) detailParts.push(`${app.age} years old`);
+            if (app.ethnicity) detailParts.push(app.ethnicity);
+            if (app.bodyType) detailParts.push(`${app.bodyType} body`);
+            if (detailParts.length > 0) {
+              appearanceDetails = detailParts.join(', ');
+            }
+          }
+
+          // Combine character details with the prompt
+          if (characterDescription || characterName) {
+            const characterContext = [];
+            if (characterName) characterContext.push(characterName);
+            if (characterGender) characterContext.push(characterGender);
+            if (appearanceDetails) characterContext.push(appearanceDetails);
+            if (characterDescription) characterContext.push(characterDescription);
+
+            const characterPart = characterContext.join(', ');
+
+            // Combine character details with user's prompt
+            if (finalPrompt && finalPrompt.trim() !== '') {
+              finalPrompt = `${characterPart}, ${finalPrompt}`;
+              console.log(`[Schedules API] Combined test prompt with character: ${finalPrompt.substring(0, 100)}...`);
+            } else {
+              finalPrompt = characterPart;
+              console.log(`[Schedules API] Using character description as test prompt: ${finalPrompt.substring(0, 100)}...`);
+            }
+          }
+        }
+      }
+
       if (!finalPrompt || !model) {
         return reply.code(400).send({ error: 'Prompt and model are required' });
       }

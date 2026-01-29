@@ -1175,9 +1175,20 @@ class SchedulesDashboard {
     const prompt = document.getElementById('actionPrompt').value.trim();
     const model = document.getElementById('actionModel').value;
     const actionType = document.getElementById('actionType').value;
+    
+    // Check if using custom prompts
+    const promptType = document.querySelector('input[name="promptTypeRadio"]:checked')?.value;
+    const useCustomPrompts = promptType === 'custom';
+    const customPromptIds = useCustomPrompts ? Array.from(this.selectedCustomPromptIds) : [];
 
-    if (!prompt) {
+    // Validate: either manual prompt or custom prompts must be provided
+    if (!useCustomPrompts && !prompt) {
       this.showNotification('Please enter a prompt first', 'warning');
+      return;
+    }
+    
+    if (useCustomPrompts && customPromptIds.length === 0) {
+      this.showNotification('Please select at least one custom prompt', 'warning');
       return;
     }
 
@@ -1208,7 +1219,9 @@ class SchedulesDashboard {
         body: JSON.stringify({
           prompt,
           model,
-          actionType
+          actionType,
+          useCustomPrompts,
+          customPromptIds
         })
       });
 

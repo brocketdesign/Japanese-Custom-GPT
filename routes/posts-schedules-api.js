@@ -496,7 +496,7 @@ Return ONLY the caption text with hashtags, nothing else.`;
     try {
       const user = request.user;
       if (!user || user.isTemporary) {
-        return reply.code(401).send({ error: 'Authentication required' });
+        return reply.code(401).send({ success: false, error: 'Authentication required' });
       }
 
       const filters = {
@@ -515,7 +515,7 @@ Return ONLY the caption text with hashtags, nothing else.`;
       });
     } catch (error) {
       console.error('[Schedules API] Get schedules error:', error);
-      return reply.code(500).send({ error: 'Failed to get schedules' });
+      return reply.code(500).send({ success: false, error: 'Failed to get schedules' });
     }
   });
 
@@ -527,7 +527,7 @@ Return ONLY the caption text with hashtags, nothing else.`;
     try {
       const user = request.user;
       if (!user || user.isTemporary) {
-        return reply.code(401).send({ error: 'Authentication required' });
+        return reply.code(401).send({ success: false, error: 'Authentication required' });
       }
 
       const stats = await getUserScheduleStats(user._id, db);
@@ -538,7 +538,7 @@ Return ONLY the caption text with hashtags, nothing else.`;
       });
     } catch (error) {
       console.error('[Schedules API] Get stats error:', error);
-      return reply.code(500).send({ error: 'Failed to get statistics' });
+      return reply.code(500).send({ success: false, error: 'Failed to get statistics' });
     }
   });
 
@@ -550,19 +550,25 @@ Return ONLY the caption text with hashtags, nothing else.`;
     try {
       const user = request.user;
       if (!user || user.isTemporary) {
-        return reply.code(401).send({ error: 'Authentication required' });
+        return reply.code(401).send({ success: false, error: 'Authentication required' });
       }
 
       const { scheduleId } = request.params;
+
+      // Validate scheduleId is a valid ObjectId
+      if (!ObjectId.isValid(scheduleId)) {
+        return reply.code(400).send({ success: false, error: 'Invalid schedule ID' });
+      }
+
       const schedule = await getScheduleById(scheduleId, db);
 
       if (!schedule) {
-        return reply.code(404).send({ error: 'Schedule not found' });
+        return reply.code(404).send({ success: false, error: 'Schedule not found' });
       }
 
       // Verify ownership
       if (schedule.userId.toString() !== user._id.toString()) {
-        return reply.code(403).send({ error: 'Not authorized' });
+        return reply.code(403).send({ success: false, error: 'Not authorized' });
       }
 
       return reply.send({
@@ -571,7 +577,7 @@ Return ONLY the caption text with hashtags, nothing else.`;
       });
     } catch (error) {
       console.error('[Schedules API] Get schedule error:', error);
-      return reply.code(500).send({ error: 'Failed to get schedule' });
+      return reply.code(500).send({ success: false, error: 'Failed to get schedule' });
     }
   });
 
@@ -583,18 +589,23 @@ Return ONLY the caption text with hashtags, nothing else.`;
     try {
       const user = request.user;
       if (!user || user.isTemporary) {
-        return reply.code(401).send({ error: 'Authentication required' });
+        return reply.code(401).send({ success: false, error: 'Authentication required' });
       }
 
       const { scheduleId } = request.params;
 
+      // Validate scheduleId is a valid ObjectId
+      if (!ObjectId.isValid(scheduleId)) {
+        return reply.code(400).send({ success: false, error: 'Invalid schedule ID' });
+      }
+
       // Verify ownership
       const schedule = await getScheduleById(scheduleId, db);
       if (!schedule) {
-        return reply.code(404).send({ error: 'Schedule not found' });
+        return reply.code(404).send({ success: false, error: 'Schedule not found' });
       }
       if (schedule.userId.toString() !== user._id.toString()) {
-        return reply.code(403).send({ error: 'Not authorized' });
+        return reply.code(403).send({ success: false, error: 'Not authorized' });
       }
 
       await updateSchedule(scheduleId, request.body, db);
@@ -605,7 +616,7 @@ Return ONLY the caption text with hashtags, nothing else.`;
       });
     } catch (error) {
       console.error('[Schedules API] Update error:', error);
-      return reply.code(500).send({ error: error.message || 'Failed to update schedule' });
+      return reply.code(500).send({ success: false, error: error.message || 'Failed to update schedule' });
     }
   });
 
@@ -617,18 +628,23 @@ Return ONLY the caption text with hashtags, nothing else.`;
     try {
       const user = request.user;
       if (!user || user.isTemporary) {
-        return reply.code(401).send({ error: 'Authentication required' });
+        return reply.code(401).send({ success: false, error: 'Authentication required' });
       }
 
       const { scheduleId } = request.params;
 
+      // Validate scheduleId is a valid ObjectId
+      if (!ObjectId.isValid(scheduleId)) {
+        return reply.code(400).send({ success: false, error: 'Invalid schedule ID' });
+      }
+
       // Verify ownership
       const schedule = await getScheduleById(scheduleId, db);
       if (!schedule) {
-        return reply.code(404).send({ error: 'Schedule not found' });
+        return reply.code(404).send({ success: false, error: 'Schedule not found' });
       }
       if (schedule.userId.toString() !== user._id.toString()) {
-        return reply.code(403).send({ error: 'Not authorized' });
+        return reply.code(403).send({ success: false, error: 'Not authorized' });
       }
 
       await pauseSchedule(scheduleId, db);
@@ -639,7 +655,7 @@ Return ONLY the caption text with hashtags, nothing else.`;
       });
     } catch (error) {
       console.error('[Schedules API] Pause error:', error);
-      return reply.code(500).send({ error: 'Failed to pause schedule' });
+      return reply.code(500).send({ success: false, error: 'Failed to pause schedule' });
     }
   });
 
@@ -651,18 +667,23 @@ Return ONLY the caption text with hashtags, nothing else.`;
     try {
       const user = request.user;
       if (!user || user.isTemporary) {
-        return reply.code(401).send({ error: 'Authentication required' });
+        return reply.code(401).send({ success: false, error: 'Authentication required' });
       }
 
       const { scheduleId } = request.params;
 
+      // Validate scheduleId is a valid ObjectId
+      if (!ObjectId.isValid(scheduleId)) {
+        return reply.code(400).send({ success: false, error: 'Invalid schedule ID' });
+      }
+
       // Verify ownership
       const schedule = await getScheduleById(scheduleId, db);
       if (!schedule) {
-        return reply.code(404).send({ error: 'Schedule not found' });
+        return reply.code(404).send({ success: false, error: 'Schedule not found' });
       }
       if (schedule.userId.toString() !== user._id.toString()) {
-        return reply.code(403).send({ error: 'Not authorized' });
+        return reply.code(403).send({ success: false, error: 'Not authorized' });
       }
 
       await resumeSchedule(scheduleId, db);
@@ -673,7 +694,7 @@ Return ONLY the caption text with hashtags, nothing else.`;
       });
     } catch (error) {
       console.error('[Schedules API] Resume error:', error);
-      return reply.code(500).send({ error: error.message || 'Failed to resume schedule' });
+      return reply.code(500).send({ success: false, error: error.message || 'Failed to resume schedule' });
     }
   });
 
@@ -685,14 +706,20 @@ Return ONLY the caption text with hashtags, nothing else.`;
     try {
       const user = request.user;
       if (!user || user.isTemporary) {
-        return reply.code(401).send({ error: 'Authentication required' });
+        return reply.code(401).send({ success: false, error: 'Authentication required' });
       }
 
       const { scheduleId } = request.params;
+
+      // Validate scheduleId is a valid ObjectId
+      if (!ObjectId.isValid(scheduleId)) {
+        return reply.code(400).send({ success: false, error: 'Invalid schedule ID' });
+      }
+
       const cancelled = await cancelSchedule(scheduleId, user._id, db);
 
       if (!cancelled) {
-        return reply.code(404).send({ error: 'Schedule not found or not authorized' });
+        return reply.code(404).send({ success: false, error: 'Schedule not found or not authorized' });
       }
 
       return reply.send({
@@ -701,7 +728,7 @@ Return ONLY the caption text with hashtags, nothing else.`;
       });
     } catch (error) {
       console.error('[Schedules API] Cancel error:', error);
-      return reply.code(500).send({ error: 'Failed to cancel schedule' });
+      return reply.code(500).send({ success: false, error: 'Failed to cancel schedule' });
     }
   });
 
@@ -713,14 +740,20 @@ Return ONLY the caption text with hashtags, nothing else.`;
     try {
       const user = request.user;
       if (!user || user.isTemporary) {
-        return reply.code(401).send({ error: 'Authentication required' });
+        return reply.code(401).send({ success: false, error: 'Authentication required' });
       }
 
       const { scheduleId } = request.params;
+
+      // Validate scheduleId is a valid ObjectId
+      if (!ObjectId.isValid(scheduleId)) {
+        return reply.code(400).send({ success: false, error: 'Invalid schedule ID' });
+      }
+
       const deleted = await deleteSchedule(scheduleId, user._id, db);
 
       if (!deleted) {
-        return reply.code(404).send({ error: 'Schedule not found or not authorized' });
+        return reply.code(404).send({ success: false, error: 'Schedule not found or not authorized' });
       }
 
       return reply.send({
@@ -729,7 +762,7 @@ Return ONLY the caption text with hashtags, nothing else.`;
       });
     } catch (error) {
       console.error('[Schedules API] Delete error:', error);
-      return reply.code(500).send({ error: 'Failed to delete schedule' });
+      return reply.code(500).send({ success: false, error: 'Failed to delete schedule' });
     }
   });
 

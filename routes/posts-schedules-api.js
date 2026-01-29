@@ -8,6 +8,8 @@
  * - Added like/comment endpoints for unified posts
  */
 
+const { ObjectId } = require('mongodb');
+
 const {
   POST_TYPES,
   POST_SOURCES,
@@ -750,12 +752,17 @@ Return ONLY the caption text with hashtags, nothing else.`;
       let selectedCustomPromptId = null;
       
       if (useCustomPrompts && customPromptIds && customPromptIds.length > 0) {
-        // Randomly select one custom prompt from the list
-        const randomIndex = Math.floor(Math.random() * customPromptIds.length);
-        selectedCustomPromptId = customPromptIds[randomIndex];
+        // Validate custom prompt IDs
+        const validIds = customPromptIds.filter(id => ObjectId.isValid(id));
+        if (validIds.length === 0) {
+          return reply.code(400).send({ error: 'Invalid custom prompt IDs' });
+        }
+        
+        // Randomly select one custom prompt from the valid list
+        const randomIndex = Math.floor(Math.random() * validIds.length);
+        selectedCustomPromptId = validIds[randomIndex];
         
         // Fetch the custom prompt
-        const { ObjectId } = require('mongodb');
         const customPrompt = await db.collection('prompts').findOne({ _id: new ObjectId(selectedCustomPromptId) });
         if (customPrompt) {
           // Use custom prompt - override manual prompt if not provided

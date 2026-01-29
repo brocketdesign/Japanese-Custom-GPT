@@ -699,8 +699,8 @@ async function initializeModelTest(modelId, params) {
     console.log(`[AdminImageTest] Response status: ${response.status}`);
     
     // Check for non-JSON responses (only for non-Segmind models)
-    if (!isSegmindModel && typeof response.data === 'string') {
-      console.error(`[AdminImageTest] ❌ ${config.name} returned non-JSON response:`, response.data.substring(0, 200));
+    if (!isSegmindModel && (typeof response.data !== 'object' || response.data === null)) {
+      console.error(`[AdminImageTest] ❌ ${config.name} returned non-JSON response:`, typeof response.data === 'string' ? response.data.substring(0, 200) : response.data);
       throw new Error('API returned non-JSON response. Please check your API key and model configuration.');
     }
     
@@ -868,8 +868,8 @@ async function checkTaskResult(taskId) {
     );
 
     // Check if response is valid JSON
-    if (typeof response.data === 'string') {
-      console.error(`[AdminImageTest] ❌ Task ${taskId} returned non-JSON response:`, response.data.substring(0, 200));
+    if (typeof response.data !== 'object' || response.data === null) {
+      console.error(`[AdminImageTest] ❌ Task ${taskId} returned non-JSON response:`, typeof response.data === 'string' ? response.data.substring(0, 200) : response.data);
       throw new Error('API returned non-JSON response. Please check your API key and model configuration.');
     }
 

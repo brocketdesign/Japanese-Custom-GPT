@@ -691,9 +691,18 @@ async function initializeModelTest(modelId, params) {
       responseConfig.responseType = 'arraybuffer';
     }
     
+    // Add response validation
+    responseConfig.validateStatus = (status) => status < 500; // Don't throw on 4xx errors
+    
     const response = await axios.post(config.endpoint, requestBody, responseConfig);
 
     console.log(`[AdminImageTest] Response status: ${response.status}`);
+    
+    // Check for non-JSON responses (only for non-Segmind models)
+    if (!isSegmindModel && typeof response.data === 'string') {
+      console.error(`[AdminImageTest] ❌ ${config.name} returned non-JSON response:`, response.data.substring(0, 200));
+      throw new Error('API returned non-JSON response. Please check your API key and model configuration.');
+    }
     
     // Don't log arraybuffer data
     if (!isSegmindModel) {
@@ -853,9 +862,16 @@ async function checkTaskResult(taskId) {
         headers: {
           'Authorization': `Bearer ${process.env.NOVITA_API_KEY}`
         },
-        timeout: 10000 // 10 second timeout for status checks
+        timeout: 10000, // 10 second timeout for status checks
+        validateStatus: (status) => status < 500 // Don't throw on 4xx errors
       }
     );
+
+    // Check if response is valid JSON
+    if (typeof response.data === 'string') {
+      console.error(`[AdminImageTest] ❌ Task ${taskId} returned non-JSON response:`, response.data.substring(0, 200));
+      throw new Error('API returned non-JSON response. Please check your API key and model configuration.');
+    }
 
     // Handle different response formats
     const taskData = response.data.task || response.data.data?.task || {};

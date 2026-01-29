@@ -743,9 +743,29 @@ Return ONLY the caption text with hashtags, nothing else.`;
         return reply.code(401).send({ error: 'Authentication required' });
       }
 
-      const { prompt, model, actionType } = request.body;
+      const { prompt, model, actionType, useCustomPrompts, customPromptIds } = request.body;
 
-      if (!prompt || !model) {
+      // Handle custom prompts if selected
+      let finalPrompt = prompt || '';
+      let selectedCustomPromptId = null;
+      
+      if (useCustomPrompts && customPromptIds && customPromptIds.length > 0) {
+        // Randomly select one custom prompt from the list
+        const randomIndex = Math.floor(Math.random() * customPromptIds.length);
+        selectedCustomPromptId = customPromptIds[randomIndex];
+        
+        // Fetch the custom prompt
+        const { ObjectId } = require('mongodb');
+        const customPrompt = await db.collection('prompts').findOne({ _id: new ObjectId(selectedCustomPromptId) });
+        if (customPrompt) {
+          // Use custom prompt - override manual prompt if not provided
+          if (!finalPrompt || finalPrompt.trim() === '') {
+            finalPrompt = customPrompt.prompt || '';
+          }
+        }
+      }
+      
+      if (!finalPrompt || !model) {
         return reply.code(400).send({ error: 'Prompt and model are required' });
       }
 
@@ -754,7 +774,7 @@ Return ONLY the caption text with hashtags, nothing else.`;
         return reply.code(400).send({ error: 'Only image generation is supported for test runs' });
       }
 
-      console.log(`[Schedules API] Test run for user ${user._id}: model=${model}, prompt=${prompt.substring(0, 50)}...`);
+      console.log(`[Schedules API] Test run for user ${user._id}: model=${model}, prompt=${finalPrompt.substring(0, 50)}...${useCustomPrompts ? ' (using custom prompt)' : ''}`);
 
       // Import image generation utilities
       const { initializeModelTest, checkTaskResult, MODEL_CONFIGS } = require('../models/admin-image-test-utils');
@@ -798,7 +818,7 @@ Return ONLY the caption text with hashtags, nothing else.`;
 
       // Prepare parameters
       const params = {
-        prompt,
+        prompt: finalPrompt,
         size: '1024*1024',
         imagesPerModel: 1
       };
@@ -865,7 +885,7 @@ Return ONLY the caption text with hashtags, nothing else.`;
       const post = await createPostFromImage({
         userId: user._id.toString(),
         imageUrl,
-        prompt,
+        prompt: finalPrompt,
         model: model,
         parameters: params,
         nsfw: false, // Could add NSFW detection here

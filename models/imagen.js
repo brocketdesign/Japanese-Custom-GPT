@@ -1,4 +1,4 @@
-const { generatePromptTitle } = require('./openai')
+const { generatePromptTitle, moderateImage } = require('./openai')
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const { ObjectId } = require('mongodb');
 const axios = require('axios');
@@ -1014,8 +1014,22 @@ async function addImageMessageToChatHelper(userDataCollection, userId, userChatI
   try {
     const titleString = getTitleString(title);
     const imageIdStr = imageId.toString();
-    
-    console.log(`📝 [addImageMessageToChatHelper] START: imageId=${imageIdStr}, batchIndex=${batchIndex}/${batchSize}, batchId=${batchId}`);
+
+    // Validate critical inputs
+    if (!imageUrl) {
+      console.error(`❌ [addImageMessageToChatHelper] VALIDATION FAILED: imageUrl is ${imageUrl}`);
+      return false;
+    }
+    if (!userChatId) {
+      console.error(`❌ [addImageMessageToChatHelper] VALIDATION FAILED: userChatId is ${userChatId}`);
+      return false;
+    }
+
+    console.log(`📝 [addImageMessageToChatHelper] START:`);
+    console.log(`   imageId=${imageIdStr}`);
+    console.log(`   batchId=${batchId}, batchIndex=${batchIndex}/${batchSize}`);
+    console.log(`   isMerged=${isMerged}, mergeId=${mergeId || 'none'}`);
+    console.log(`   imageUrl=${imageUrl?.substring(0, 60)}...`);
     
     const imageMessage = {
       role: "assistant",
@@ -1047,17 +1061,17 @@ async function addImageMessageToChatHelper(userDataCollection, userId, userChatI
     
     // For batched images, check if THIS SPECIFIC batchIndex already exists
     // This allows the same imageId to appear multiple times in different batch slots
+    // CRITICAL FIX: Use $elemMatch to ensure both conditions match on the SAME array element
     let duplicateCheckQuery;
     if (batchId && batchIndex !== null) {
       duplicateCheckQuery = {
-        userId: new ObjectId(userId), 
+        userId: new ObjectId(userId),
         _id: new ObjectId(userChatId),
-        'messages.batchId': batchId,
-        'messages.batchIndex': batchIndex
+        messages: { $elemMatch: { batchId: batchId, batchIndex: batchIndex } }
       };
     } else {
       duplicateCheckQuery = {
-        userId: new ObjectId(userId), 
+        userId: new ObjectId(userId),
         _id: new ObjectId(userChatId),
         'messages.imageId': imageIdStr
       };
@@ -1368,13 +1382,12 @@ async function checkTaskStatus(taskId, fastify) {
         for (const imageData of images) {
           try {
             const mergedResult = await performAutoMergeFaceWithBase64(
-              { 
-                imageUrl: imageData.imageUrl, 
+              {
+                imageUrl: imageData.imageUrl,
                 imageId: null,
-                seed: imageData.seed,
-                nsfw_detection_result: imageData.nsfw_detection_result
-              }, 
-              originalTaskRequest.image_base64, 
+                seed: imageData.seed
+              },
+              originalTaskRequest.image_base64,
               fastify
             );
             
@@ -1414,13 +1427,12 @@ async function checkTaskStatus(taskId, fastify) {
           console.log(`🧬 [checkTaskStatus] Starting auto-merge for arrayIndex=${arrayIndex}, originalUrl=${imageData.imageUrl?.substring(0, 60)}...`);
           try {
             const mergedResult = await performAutoMergeFace(
-              { 
-                imageUrl: imageData.imageUrl, 
+              {
+                imageUrl: imageData.imageUrl,
                 imageId: null,
-                seed: imageData.seed,
-                nsfw_detection_result: imageData.nsfw_detection_result
-              }, 
-              faceImageUrl, 
+                seed: imageData.seed
+              },
+              faceImageUrl,
               fastify
             );
             
@@ -1456,25 +1468,52 @@ async function checkTaskStatus(taskId, fastify) {
     console.log(`🖼️  [checkTaskStatus] Processing arrayIndex=${arrayIndex}/${processedImages.length}, imageUrl=${imageData.imageUrl?.substring(0, 60)}..., mergeId=${imageData.mergeId}`);
     
     let nsfw = task.type === 'nsfw';
-    
-    // === NSFW DETECTION LOGGING ===
+
+    // === OPENAI CONTENT MODERATION ===
     console.log(`[NSFW-CHECK] Task ${task.taskId} - Image ${arrayIndex + 1}:`);
     console.log(`[NSFW-CHECK]   - Task type: ${task.type}`);
     console.log(`[NSFW-CHECK]   - Initial NSFW flag (from task.type): ${nsfw}`);
-    console.log(`[NSFW-CHECK]   - nsfw_detection_result:`, JSON.stringify(imageData.nsfw_detection_result, null, 2));
-    
-    // Only flag as NSFW if confidence is very high (90+) to allow bikinis/swimwear
-    // Combined with nsfw_detection_level: 0, this only censors clearly visible nudity
-    if (imageData.nsfw_detection_result && imageData.nsfw_detection_result.valid && imageData.nsfw_detection_result.confidence >= 90) {
-      console.log(`[NSFW-CHECK]   - ⚠️ FLAGGED: confidence ${imageData.nsfw_detection_result.confidence}% >= 90% threshold`);
-      nsfw = true;
-    } else if (imageData.nsfw_detection_result && imageData.nsfw_detection_result.valid) {
-      console.log(`[NSFW-CHECK]   - ✅ PASSED: confidence ${imageData.nsfw_detection_result.confidence}% < 90% threshold`);
-    } else {
-      console.log(`[NSFW-CHECK]   - ℹ️ No valid NSFW detection result`);
+
+    // Use OpenAI Content Moderation API for accurate NSFW detection
+    try {
+      const moderationResult = await moderateImage(imageData.imageUrl);
+      console.log(`[NSFW-CHECK]   - OpenAI moderation result:`, JSON.stringify(moderationResult, null, 2));
+
+      if (moderationResult && moderationResult.results && moderationResult.results.length > 0) {
+        const result = moderationResult.results[0];
+
+        // Check if flagged by OpenAI
+        if (result.flagged) {
+          console.log(`[NSFW-CHECK]   - ⚠️ FLAGGED by OpenAI moderation`);
+          nsfw = true;
+
+          // Log specific categories that were flagged
+          const flaggedCategories = Object.entries(result.categories || {})
+            .filter(([_, flagged]) => flagged)
+            .map(([category]) => category);
+          console.log(`[NSFW-CHECK]   - Flagged categories: ${flaggedCategories.join(', ') || 'none'}`);
+
+          // Log category scores for debugging
+          if (result.category_scores) {
+            const highScores = Object.entries(result.category_scores)
+              .filter(([_, score]) => score > 0.5)
+              .map(([category, score]) => `${category}: ${(score * 100).toFixed(1)}%`);
+            if (highScores.length > 0) {
+              console.log(`[NSFW-CHECK]   - High scores: ${highScores.join(', ')}`);
+            }
+          }
+        } else {
+          console.log(`[NSFW-CHECK]   - ✅ PASSED OpenAI moderation`);
+        }
+      } else {
+        console.log(`[NSFW-CHECK]   - ℹ️ No valid OpenAI moderation result`);
+      }
+    } catch (moderationError) {
+      console.error(`[NSFW-CHECK]   - ❌ OpenAI moderation error:`, moderationError.message);
+      // On error, keep the initial nsfw flag based on task.type
     }
     console.log(`[NSFW-CHECK]   - Final NSFW flag: ${nsfw}`);
-    // === END NSFW DETECTION LOGGING ===
+    // === END OPENAI CONTENT MODERATION ===
     
     let uniqueSlug = task.slug;
     if (processedImages.length > 1) {
@@ -1733,8 +1772,6 @@ async function fetchNovitaMagic(data, hunyuan = false, builtInModelId = null) {
       requestBody.data = {
         extra: {
           response_image_type: 'jpeg',
-          enable_nsfw_detection: true,
-          nsfw_detection_level: 0, // Level 0 = only explicit nudity (bikinis allowed)
           webhook: {
             url: webhookUrl
           }
@@ -1819,10 +1856,9 @@ async function fetchNovitaResult(task_id) {
           const hash = createHash('md5').update(buffer).digest('hex');
           const uploadedUrl = await uploadImage(buffer, hash, 'novita_result_image.png');
           console.log(`🚀 [fetchNovitaResult] Uploaded image ${index + 1} with hash: ${hash}`);
-          return { 
-            imageId: hash, 
-            imageUrl: uploadedUrl, 
-            nsfw_detection_result: image.nsfw_detection_result || null, 
+          return {
+            imageId: hash,
+            imageUrl: uploadedUrl,
             seed: seed,
             index
           };
@@ -2058,13 +2094,13 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
             
             // For batched images, check for this specific batchIndex, not just mergeId
             // This allows the same merged image to appear in multiple batch slots
+            // CRITICAL FIX: Use $elemMatch to ensure both conditions match on the SAME array element
             let existingMessage;
             if (batchId && batchIndex !== null) {
               existingMessage = await userDataCollection.findOne({
                 userId: new ObjectId(userId),
                 _id: new ObjectId(userChatId),
-                'messages.batchId': batchId,
-                'messages.batchIndex': batchIndex
+                messages: { $elemMatch: { batchId: batchId, batchIndex: batchIndex } }
               });
             } else {
               existingMessage = await userDataCollection.findOne({
@@ -2124,13 +2160,13 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
             const userDataCollection = db.collection('userChat');
             
             // For batched images, check for this specific batchIndex
+            // CRITICAL FIX: Use $elemMatch to ensure both conditions match on the SAME array element
             let existingMessage;
             if (batchId && batchIndex !== null) {
               existingMessage = await userDataCollection.findOne({
                 userId: new ObjectId(userId),
                 _id: new ObjectId(userChatId),
-                'messages.batchId': batchId,
-                'messages.batchIndex': batchIndex
+                messages: { $elemMatch: { batchId: batchId, batchIndex: batchIndex } }
               });
             } else {
               existingMessage = await userDataCollection.findOne({
@@ -2595,7 +2631,6 @@ async function pollSequentialTasksWithFallback(taskId, allTaskIds, fastify, opti
                 'result.images': images.map(img => ({
                   imageUrl: img.imageUrl,
                   seed: img.seed || 0,
-                  nsfw_detection_result: img.nsfw_detection_result,
                   imageId: img.imageId
                 })),
                 'webhookProcessed': true,

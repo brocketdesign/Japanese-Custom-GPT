@@ -129,7 +129,7 @@ class GiftManager {
                     message: disclosureMessage,
                     name: 'gift_request',
                     imageUrl: gift.image,
-                    hidden: false,
+                    hidden: true,
                 }, function(error, res) {
                     // Generate assistant message
                     generateChatCompletion(null, false, true)

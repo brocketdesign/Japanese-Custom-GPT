@@ -486,6 +486,123 @@
   .gallery-like-btn {
     opacity: 1;
   }
-  
+
   /* Double tap support will be handled via JavaScript */
+}
+
+/* ========================================
+   ADMIN NSFW TOGGLE BUTTON
+   Toggle button for admin users to switch
+   images between SFW and NSFW categories
+   ======================================== */
+
+/* CSS Variables for Admin Toggle Button */
+:root {
+  --admin-toggle-sfw-from: rgba(34, 197, 94, 0.95);
+  --admin-toggle-sfw-to: rgba(74, 222, 128, 0.95);
+  --admin-toggle-nsfw-from: rgba(239, 68, 68, 0.95);
+  --admin-toggle-nsfw-to: rgba(248, 113, 113, 0.95);
+  --admin-toggle-shadow-sfw: rgba(34, 197, 94, 0.4);
+  --admin-toggle-shadow-nsfw: rgba(239, 68, 68, 0.4);
+}
+
+/* Admin NSFW Toggle Button - positioned below like button */
+.admin-nsfw-toggle {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 15;
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  margin-top: 8px;
+}
+
+/* Show on hover over media-item */
+.media-item:hover .admin-nsfw-toggle {
+  opacity: 1;
+}
+
+/* SFW state (image is currently SFW, clicking will make it NSFW) */
+.admin-nsfw-toggle.is-sfw {
+  background: linear-gradient(135deg, var(--admin-toggle-sfw-from) 0%, var(--admin-toggle-sfw-to) 100%);
+  box-shadow: 0 3px 10px var(--admin-toggle-shadow-sfw);
+}
+
+.admin-nsfw-toggle.is-sfw:hover {
+  transform: scale(1.1);
+  box-shadow: 0 5px 14px var(--admin-toggle-shadow-sfw);
+}
+
+/* NSFW state (image is currently NSFW, clicking will make it SFW) */
+.admin-nsfw-toggle.is-nsfw {
+  background: linear-gradient(135deg, var(--admin-toggle-nsfw-from) 0%, var(--admin-toggle-nsfw-to) 100%);
+  box-shadow: 0 3px 10px var(--admin-toggle-shadow-nsfw);
+}
+
+.admin-nsfw-toggle.is-nsfw:hover {
+  transform: scale(1.1);
+  box-shadow: 0 5px 14px var(--admin-toggle-shadow-nsfw);
+}
+
+.admin-nsfw-toggle:active {
+  transform: scale(0.95);
+}
+
+.admin-nsfw-toggle i {
+  transition: all 0.2s ease;
+}
+
+/* Loading state */
+.admin-nsfw-toggle.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.admin-nsfw-toggle.loading i {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Media item actions container - stack buttons vertically */
+.media-item-actions {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 15;
+  gap: 0;
+}
+
+/* Mobile adjustments for admin toggle */
+@media (max-width: 768px) {
+  .admin-nsfw-toggle {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+    /* Always visible on mobile for admin */
+    opacity: 1;
+  }
+}
+
+/* Touch device support - always show for admins */
+@media (hover: none) and (pointer: coarse) {
+  .admin-nsfw-toggle {
+    opacity: 1;
+  }
 }

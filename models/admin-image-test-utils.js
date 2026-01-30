@@ -899,15 +899,13 @@ async function checkTaskResult(taskId) {
           console.log(`[AdminImageTest] ✅ Image ${idx + 1} uploaded: ${permanentUrl.substring(0, 60)}...`);
           return {
             imageUrl: permanentUrl,
-            image_type: img.image_type,
-            nsfw_detection: img.nsfw_detection_result || null
+            image_type: img.image_type
           };
         } catch (err) {
           console.error(`[AdminImageTest] ❌ Failed to upload image ${idx + 1}: ${err.message}`);
           return {
             imageUrl: originalUrl,
-            image_type: img.image_type,
-            nsfw_detection: img.nsfw_detection_result || null
+            image_type: img.image_type
           };
         }
       }));

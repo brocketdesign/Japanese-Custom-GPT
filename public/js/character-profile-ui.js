@@ -4,6 +4,104 @@
  */
 
 /**
+ * Toggle image NSFW status (Admin only)
+ * Moves image between SFW and NSFW categories
+ */
+window.toggleImageNSFW = async function(button, event) {
+    // Prevent event bubbling to parent elements (modal open, etc.)
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    // Check admin status
+    if (!window.isAdmin) {
+        console.warn('toggleImageNSFW: Not an admin user');
+        return;
+    }
+
+    const imageId = button.dataset.id;
+    if (!imageId) {
+        console.error('toggleImageNSFW: No image ID found');
+        return;
+    }
+
+    // Determine current state and new state
+    const isCurrentlyNSFW = button.classList.contains('is-nsfw');
+    const newNSFWState = !isCurrentlyNSFW;
+
+    // Add loading state
+    button.classList.add('loading');
+    const icon = button.querySelector('i');
+    const originalIconClass = icon.className;
+    icon.className = 'bi bi-arrow-repeat';
+
+    try {
+        const response = await fetch(`/images/${imageId}/nsfw`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ nsfw: newNSFWState })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update NSFW status');
+        }
+
+        // Update button state
+        button.classList.remove('is-sfw', 'is-nsfw');
+        button.classList.add(newNSFWState ? 'is-nsfw' : 'is-sfw');
+        button.title = newNSFWState ? 'Move to SFW' : 'Move to NSFW';
+
+        // Update icon
+        icon.className = newNSFWState ? 'bi bi-eye-slash-fill' : 'bi bi-eye-fill';
+
+        // Get chatId from the page
+        const profilePage = document.querySelector('#characterProfilePage');
+        const chatId = profilePage?.dataset?.chatId;
+
+        // Clear localStorage cache for this chat's images
+        if (chatId) {
+            localStorage.removeItem(`images_chat_${chatId}_SFW`);
+            localStorage.removeItem(`images_chat_${chatId}_NSFW`);
+            console.log(`Cleared localStorage cache for chat ${chatId}`);
+        }
+
+        // Hide/remove the media item from the current view with animation
+        const mediaItem = button.closest('.media-item');
+        if (mediaItem) {
+            // Animate out
+            mediaItem.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            mediaItem.style.opacity = '0';
+            mediaItem.style.transform = 'scale(0.8)';
+
+            setTimeout(() => {
+                mediaItem.remove();
+            }, 300);
+        }
+
+        console.log(`Image ${imageId} NSFW status changed to: ${newNSFWState}`);
+
+    } catch (error) {
+        console.error('Error toggling NSFW status:', error);
+
+        // Restore original icon on error
+        icon.className = originalIconClass;
+
+        // Show error feedback
+        button.style.background = 'rgba(220, 53, 69, 0.9)';
+        setTimeout(() => {
+            button.style.background = '';
+        }, 1000);
+
+    } finally {
+        // Remove loading state
+        button.classList.remove('loading');
+    }
+};
+
+/**
  * Fetch blurred image from API (converts to blob for security)
  */
 function fetchBlurredImageForCharacter(imgElement, imageUrl) {
@@ -471,22 +569,25 @@ function displayImagesInGrid(images = [], chatId = null) {
         // For non-premium users: show placeholder and load blurred image via API
         if (shouldBlur && subscriptionStatus) {
             // Premium user with NSFW OFF - show normal image with overlay that will add blur effect
+            const adminToggleBtn = window.isAdmin ? `
+                    <button class="media-action-btn admin-nsfw-toggle ${isNSFW ? 'is-nsfw' : 'is-sfw'}"
+                            data-id="${image._id}"
+                            title="${isNSFW ? 'Move to SFW' : 'Move to NSFW'}"
+                            onclick="toggleImageNSFW(this, event)">
+                        <i class="bi ${isNSFW ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
+                    </button>
+            ` : '';
             item.innerHTML = `
-                <img src="${imgSrc}" data-full-url="${fullImgSrc}" alt="Image ${index + 1}" loading="lazy" onerror="this.style.display='none'" 
+                <img src="${imgSrc}" data-full-url="${fullImgSrc}" alt="Image ${index + 1}" loading="lazy" onerror="this.style.display='none'"
                      style="width: 100%; height: 100%; object-fit: cover;">
                 <div class="media-item-actions">
-                    <button class="media-action-btn image-fav ${isLiked ? 'liked' : ''}" 
-                            data-id="${image._id}" 
+                    <button class="media-action-btn image-fav ${isLiked ? 'liked' : ''}"
+                            data-id="${image._id}"
                             ${chatId ? `data-chat-id="${chatId}"` : ''}
                             title="Like">
                         <i class="bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'}"></i>
                     </button>
-                </div>
-                <div class="media-item-overlay">
-                    <div class="media-item-info">
-                        <i class="bi bi-images" style="margin-right: 4px;"></i>
-                        ${index + 1}
-                    </div>
+                    ${adminToggleBtn}
                 </div>
             `;
             
@@ -518,39 +619,42 @@ function displayImagesInGrid(images = [], chatId = null) {
             `;
         } else {
             // Show normal image with like button
+            const adminToggleBtnNormal = window.isAdmin ? `
+                    <button class="media-action-btn admin-nsfw-toggle ${isNSFW ? 'is-nsfw' : 'is-sfw'}"
+                            data-id="${image._id}"
+                            title="${isNSFW ? 'Move to SFW' : 'Move to NSFW'}"
+                            onclick="toggleImageNSFW(this, event)">
+                        <i class="bi ${isNSFW ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
+                    </button>
+            ` : '';
             item.innerHTML = `
                 <img src="${imgSrc}" data-full-url="${fullImgSrc}" alt="Image ${index + 1}" loading="lazy" onerror="this.style.display='none'">
                 <div class="media-item-actions">
-                    <button class="media-action-btn image-fav ${isLiked ? 'liked' : ''}" 
-                            data-id="${image._id}" 
+                    <button class="media-action-btn image-fav ${isLiked ? 'liked' : ''}"
+                            data-id="${image._id}"
                             ${chatId ? `data-chat-id="${chatId}"` : ''}
                             title="Like">
                         <i class="bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'}"></i>
                     </button>
-                </div>
-                <div class="media-item-overlay">
-                    <div class="media-item-info">
-                        <i class="bi bi-images" style="margin-right: 4px;"></i>
-                        ${index + 1}
-                    </div>
+                    ${adminToggleBtnNormal}
                 </div>
             `;
-            
+
             // Add event listener for like button
             const likeBtn = item.querySelector('.image-fav');
             if (likeBtn) {
                 likeBtn.addEventListener('click', toggleImageLike);
             }
-            
+
             // Store image data on the media-item element for later retrieval
             item.dataset.image = JSON.stringify(image);
-            
+
             // Make the entire media-item clickable with cursor pointer
             item.style.cursor = 'pointer';
             item.setAttribute('data-toggle', 'modal');
             item.setAttribute('role', 'button');
         }
-        
+
         grid.appendChild(item);
         
         // Apply overlay or blur effect based on user status
@@ -679,11 +783,7 @@ function displayMoreImagesInGrid(images = [], chatId = null) {
     const subscriptionStatus = currentUser.subscriptionStatus === 'active';
     const isTemporary = !!currentUser.isTemporary;
     const showNSFW = sessionStorage.getItem('showNSFW') === 'true';
-    
-    // Get current count of media items in grid (to continue numbering)
-    const existingMediaItems = grid.querySelectorAll('.media-item').length;
-    let imageIndexCounter = existingMediaItems + 1;
-    
+
     images.forEach((image) => {
         // Skip if already displayed
         const existingCard = grid.querySelector(`[data-image-id="${image._id}"]`);
@@ -713,42 +813,42 @@ function displayMoreImagesInGrid(images = [], chatId = null) {
         
         if (shouldBlur && subscriptionStatus) {
             // Premium user with NSFW OFF - show normal image with overlay that will add blur effect
+            const adminToggleBtnMore = window.isAdmin ? `
+                    <button class="media-action-btn admin-nsfw-toggle ${isNSFW ? 'is-nsfw' : 'is-sfw'}"
+                            data-id="${image._id}"
+                            title="${isNSFW ? 'Move to SFW' : 'Move to NSFW'}"
+                            onclick="toggleImageNSFW(this, event)">
+                        <i class="bi ${isNSFW ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
+                    </button>
+            ` : '';
             item.innerHTML = `
                 <img src="${imgSrc}" data-full-url="${fullImgSrc}" alt="Image" loading="lazy" onerror="this.style.display='none'"
                      style="width: 100%; height: 100%; object-fit: cover;">
                 <div class="media-item-actions">
-                    <button class="media-action-btn image-fav ${isLiked ? 'liked' : ''}" 
-                            data-id="${image._id}" 
+                    <button class="media-action-btn image-fav ${isLiked ? 'liked' : ''}"
+                            data-id="${image._id}"
                             ${chatId ? `data-chat-id="${chatId}"` : ''}
                             title="Like">
                         <i class="bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'}"></i>
                     </button>
-                </div>
-                <div class="media-item-overlay">
-                    <div class="media-item-info">
-                        <i class="bi bi-images" style="margin-right: 4px;"></i>
-                        ${imageIndexCounter}
-                    </div>
+                    ${adminToggleBtnMore}
                 </div>
             `;
-            
-            // Increment counter for next image
-            imageIndexCounter++;
-            
+
             // Add event listener for like button
             const likeBtn = item.querySelector('.image-fav');
             if (likeBtn) {
                 likeBtn.addEventListener('click', toggleImageLike);
             }
-            
+
             // Store image data on the media-item element for later retrieval
             item.dataset.image = JSON.stringify(image);
-            
+
             // Make the entire media-item clickable with cursor pointer
             item.style.cursor = 'pointer';
             item.setAttribute('data-toggle', 'modal');
             item.setAttribute('role', 'button');
-            
+
         } else if (shouldBlur) {
             // Non-premium user or temporary - show placeholder and load blurred image via API
             item.innerHTML = `
@@ -763,44 +863,44 @@ function displayMoreImagesInGrid(images = [], chatId = null) {
             `;
         } else {
             // Show normal image with like button (SAME as displayImagesInGrid)
+            const adminToggleBtnMoreNormal = window.isAdmin ? `
+                    <button class="media-action-btn admin-nsfw-toggle ${isNSFW ? 'is-nsfw' : 'is-sfw'}"
+                            data-id="${image._id}"
+                            title="${isNSFW ? 'Move to SFW' : 'Move to NSFW'}"
+                            onclick="toggleImageNSFW(this, event)">
+                        <i class="bi ${isNSFW ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
+                    </button>
+            ` : '';
             item.innerHTML = `
                 <img src="${imgSrc}" data-full-url="${fullImgSrc}" alt="Image" loading="lazy" onerror="this.style.display='none'">
                 <div class="media-item-actions">
-                    <button class="media-action-btn image-fav ${isLiked ? 'liked' : ''}" 
-                            data-id="${image._id}" 
+                    <button class="media-action-btn image-fav ${isLiked ? 'liked' : ''}"
+                            data-id="${image._id}"
                             ${chatId ? `data-chat-id="${chatId}"` : ''}
                             title="Like">
                         <i class="bi ${isLiked ? 'bi-heart-fill' : 'bi-heart'}"></i>
                     </button>
-                </div>
-                <div class="media-item-overlay">
-                    <div class="media-item-info">
-                        <i class="bi bi-images" style="margin-right: 4px;"></i>
-                        ${imageIndexCounter}
-                    </div>
+                    ${adminToggleBtnMoreNormal}
                 </div>
             `;
-            
-            // Increment counter for next image
-            imageIndexCounter++;
-            
+
             // Add event listener for like button
             const likeBtn = item.querySelector('.image-fav');
             if (likeBtn) {
                 likeBtn.addEventListener('click', toggleImageLike);
             }
-            
+
             // Store image data on the media-item element for later retrieval
             item.dataset.image = JSON.stringify(image);
-            
+
             // Make the entire media-item clickable with cursor pointer
             item.style.cursor = 'pointer';
             item.setAttribute('data-toggle', 'modal');
             item.setAttribute('role', 'button');
         }
-        
+
         grid.appendChild(item);
-        
+
         // Apply overlay or blur effect based on user status
         if (shouldBlur) {
             if (subscriptionStatus) {

@@ -555,9 +555,11 @@ class PromptManager {
         
         displayOrRemoveImageLoader(placeholderId, 'show', imagePreview);
         
-        // Get prompt from promptId
-        const promptTitle = $('.prompt-card[data-id="' + promptId + '"]').find('.prompt-image').attr('alt')
+            // Get prompt from promptId
+            const promptTitle = $('.prompt-card[data-id="' + promptId + '"]').find('.prompt-image').attr('alt')
+            
         // Add a new message to the chat container for sending a gift
+        /*
         addMessageToChat(c_chatId, c_userChatId, {
             role: 'user',
             message: window.translations.sendPoseRequest + promptTitle +' '+ description,
@@ -571,6 +573,7 @@ class PromptManager {
             console.error('Error adding gift message:', error);
             }
         });
+        */
 
         const chatId = sessionStorage.getItem('chatId') || window.chatId;
         const userChatId = sessionStorage.getItem('userChatId') || window.userChatId;

@@ -168,7 +168,6 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
           return {
             imageId: hash,
             imageUrl: uploadedUrl,
-            nsfw_detection_result: image.nsfw_detection_result || null,
             seed: payload.extra?.seed || 0,
             index
           };
@@ -211,7 +210,6 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
           'result.images': validImages.map(img => ({
             imageUrl: img.imageUrl,
             seed: img.seed || 0,
-            nsfw_detection_result: img.nsfw_detection_result,
             imageId: img.imageId
           })),
           'webhookProcessed': true, // Flag to skip polling in checkTaskStatus

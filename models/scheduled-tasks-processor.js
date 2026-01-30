@@ -226,7 +226,7 @@ async function executeImageGeneration(schedule, fastify) {
   
   return {
     postId: post._id,
-    imageUrl: generationResult.imageUrl,
+    imageUrl: imageUrl,
     mutationData
   };
 }

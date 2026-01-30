@@ -329,7 +329,7 @@ window.playVideoModal = function(videoUrl, chatName) {
                         style="display: flex;justify-content: center;align-items: center;border-radius: 0 0 25px 25px !important;background-color:rgba(33, 37, 41, 0.8)!important;backdrop-filter: blur(10px);
                         -webkit-backdrop-filter: blur(10px);">
                             <video id="modalVideo" class="w-auto" loop autoplay muted 
-                            style="max-height: 70vh; max-width: 90vw;">
+                            style="max-width: 90vw;">
                                 <source src="" type="video/mp4">
                                 Your browser does not support the video tag.
                             </video>

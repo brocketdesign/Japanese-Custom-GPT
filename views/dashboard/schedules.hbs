@@ -5,10 +5,10 @@
     {{> dashboard-nav}}
     <link rel="stylesheet" href="/css/dashboard-posts.css">
     <link rel="stylesheet" href="/css/dashboard-schedules.css">
-    
-    <section class="container-fluid py-4">
+
+    <section class="container-fluid py-4 schedules-page">
         <!-- Header -->
-        <div class="row mb-4">
+        <div class="row mb-4 schedules-header">
             <div class="col-12">
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
                     <div class="flex-grow-1">
@@ -21,7 +21,7 @@
                         <button class="btn btn-primary flex-fill flex-md-grow-0" onclick="schedulesDashboard.openCreateModal('single')">
                             <i class="bi bi-calendar-plus me-1"></i>{{translations.dashboard.newSchedule}}
                         </button>
-                        <button class="btn btn-outline-warning flex-fill flex-md-grow-0" onclick="schedulesDashboard.openCreateModal('recurring')">
+                        <button class="btn btn-outline-secondary flex-fill flex-md-grow-0" onclick="schedulesDashboard.openCreateModal('recurring')">
                             <i class="bi bi-arrow-repeat me-1"></i>{{translations.dashboard.newCronJob}}
                         </button>
                     </div>
@@ -30,82 +30,72 @@
         </div>
 
         <!-- Stats -->
-        <div class="row mb-4">
-            <div class="col-6 col-md-3">
-                <div class="card bg-dark border-primary h-100">
-                    <div class="card-body text-center py-3">
-                        <i class="bi bi-calendar-check text-primary fs-2"></i>
-                        <h3 class="text-white mt-2 mb-0" id="totalSchedules">0</h3>
-                        <p class="text-muted mb-0 small">{{translations.dashboard.total}}</p>
-                    </div>
+        <div class="stats-grid">
+            <div class="stats-card total">
+                <div class="stats-card-icon">
+                    <i class="bi bi-calendar-check"></i>
                 </div>
+                <div class="stats-card-value" id="totalSchedules">0</div>
+                <div class="stats-card-label">{{translations.dashboard.total}}</div>
             </div>
-            <div class="col-6 col-md-3">
-                <div class="card bg-dark border-success h-100">
-                    <div class="card-body text-center py-3">
-                        <i class="bi bi-play-circle text-success fs-2"></i>
-                        <h3 class="text-white mt-2 mb-0" id="activeSchedules">0</h3>
-                        <p class="text-muted mb-0 small">{{translations.dashboard.active}}</p>
-                    </div>
+            <div class="stats-card active">
+                <div class="stats-card-icon">
+                    <i class="bi bi-play-circle"></i>
                 </div>
+                <div class="stats-card-value" id="activeSchedules">0</div>
+                <div class="stats-card-label">{{translations.dashboard.active}}</div>
             </div>
-            <div class="col-6 col-md-3">
-                <div class="card bg-dark border-warning h-100">
-                    <div class="card-body text-center py-3">
-                        <i class="bi bi-pause-circle text-warning fs-2"></i>
-                        <h3 class="text-white mt-2 mb-0" id="pausedSchedules">0</h3>
-                        <p class="text-muted mb-0 small">{{translations.dashboard.paused}}</p>
-                    </div>
+            <div class="stats-card paused">
+                <div class="stats-card-icon">
+                    <i class="bi bi-pause-circle"></i>
                 </div>
+                <div class="stats-card-value" id="pausedSchedules">0</div>
+                <div class="stats-card-label">{{translations.dashboard.paused}}</div>
             </div>
-            <div class="col-6 col-md-3">
-                <div class="card bg-dark border-info h-100">
-                    <div class="card-body text-center py-3">
-                        <i class="bi bi-check-circle text-info fs-2"></i>
-                        <h3 class="text-white mt-2 mb-0" id="completedSchedules">0</h3>
-                        <p class="text-muted mb-0 small">{{translations.dashboard.completed}}</p>
-                    </div>
+            <div class="stats-card completed">
+                <div class="stats-card-icon">
+                    <i class="bi bi-check-circle"></i>
                 </div>
+                <div class="stats-card-value" id="completedSchedules">0</div>
+                <div class="stats-card-label">{{translations.dashboard.completed}}</div>
             </div>
         </div>
 
         <!-- Filters -->
-        <div class="card bg-dark border-secondary mb-4">
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label text-white">{{translations.dashboard.type}}</label>
-                        <select id="filterType" class="form-select bg-dark text-white border-secondary">
-                            <option value="">{{translations.dashboard.all}}</option>
-                            <option value="single">{{translations.dashboard.singleSchedule}}</option>
-                            <option value="recurring">{{translations.dashboard.recurringCron}}</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label text-white">{{translations.dashboard.status}}</label>
-                        <select id="filterStatus" class="form-select bg-dark text-white border-secondary">
-                            <option value="">{{translations.dashboard.all}}</option>
-                            <option value="pending">{{translations.dashboard.pending}}</option>
-                            <option value="active">{{translations.dashboard.active}}</option>
-                            <option value="paused">{{translations.dashboard.paused}}</option>
-                            <option value="completed">{{translations.dashboard.completed}}</option>
-                            <option value="failed">{{translations.dashboard.failed}}</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label text-white">{{translations.dashboard.action}}</label>
-                        <select id="filterAction" class="form-select bg-dark text-white border-secondary">
-                            <option value="">{{translations.dashboard.all}}</option>
-                            <option value="generate_image">{{translations.dashboard.generateImage}}</option>
-                            <option value="generate_video">{{translations.dashboard.generateVideo}}</option>
-                            <option value="publish_post">{{translations.dashboard.publishPost}}</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3 d-flex align-items-end">
-                        <button class="btn btn-outline-info w-100" id="resetFiltersBtn">
-                            <i class="bi bi-arrow-clockwise me-1"></i>{{translations.dashboard.reset}}
-                        </button>
-                    </div>
+        <div class="filters-card">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">{{translations.dashboard.type}}</label>
+                    <select id="filterType" class="form-select">
+                        <option value="">{{translations.dashboard.all}}</option>
+                        <option value="single">{{translations.dashboard.singleSchedule}}</option>
+                        <option value="recurring">{{translations.dashboard.recurringCron}}</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{translations.dashboard.status}}</label>
+                    <select id="filterStatus" class="form-select">
+                        <option value="">{{translations.dashboard.all}}</option>
+                        <option value="pending">{{translations.dashboard.pending}}</option>
+                        <option value="active">{{translations.dashboard.active}}</option>
+                        <option value="paused">{{translations.dashboard.paused}}</option>
+                        <option value="completed">{{translations.dashboard.completed}}</option>
+                        <option value="failed">{{translations.dashboard.failed}}</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{translations.dashboard.action}}</label>
+                    <select id="filterAction" class="form-select">
+                        <option value="">{{translations.dashboard.all}}</option>
+                        <option value="generate_image">{{translations.dashboard.generateImage}}</option>
+                        <option value="generate_video">{{translations.dashboard.generateVideo}}</option>
+                        <option value="publish_post">{{translations.dashboard.publishPost}}</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-outline-info w-100" id="resetFiltersBtn">
+                        <i class="bi bi-arrow-clockwise me-1"></i>{{translations.dashboard.reset}}
+                    </button>
                 </div>
             </div>
         </div>
@@ -117,16 +107,16 @@
 
         <!-- Loading Spinner -->
         <div id="loadingSpinner" class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
+            <div class="spinner-border" role="status">
                 <span class="visually-hidden">{{translations.dashboard.loading}}</span>
             </div>
         </div>
 
         <!-- No Schedules Message -->
         <div id="noSchedules" class="text-center py-5" style="display: none;">
-            <i class="bi bi-calendar-x fs-1 text-muted"></i>
-            <h3 class="text-white mt-3">{{translations.dashboard.noSchedules}}</h3>
-            <p class="text-muted">{{translations.dashboard.noSchedulesDescription}}</p>
+            <i class="bi bi-calendar-x"></i>
+            <h3>{{translations.dashboard.noSchedules}}</h3>
+            <p>{{translations.dashboard.noSchedulesDescription}}</p>
             <div class="d-flex justify-content-center gap-2 mt-3">
                 <button class="btn btn-primary" onclick="schedulesDashboard.openCreateModal('single')">
                     <i class="bi bi-calendar-plus me-1"></i>{{translations.dashboard.createFirstSchedule}}
@@ -140,9 +130,9 @@
 
     <!-- Create/Edit Schedule Modal -->
     <div class="modal fade" id="scheduleModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="false">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content bg-dark text-white border-secondary">
-                <div class="modal-header border-secondary">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
                     <h5 class="modal-title" id="scheduleModalTitle">
                         <i class="bi bi-calendar-plus me-2"></i>{{translations.dashboard.newSchedule}}
                     </h5>
@@ -151,7 +141,7 @@
                 <div class="modal-body">
                     <input type="hidden" id="scheduleId">
                     <input type="hidden" id="scheduleType" value="single">
-                    
+
                     <!-- Schedule Type Toggle -->
                     <div class="mb-4">
                         <label class="form-label">{{translations.dashboard.scheduleType}}</label>
@@ -172,7 +162,7 @@
                     <!-- Description -->
                     <div class="mb-3">
                         <label class="form-label">{{translations.dashboard.description}}</label>
-                        <input type="text" class="form-control bg-secondary text-white border-secondary" id="scheduleDescription" placeholder="{{translations.dashboard.scheduleDescriptionPlaceholder}}">
+                        <input type="text" class="form-control" id="scheduleDescription" placeholder="{{translations.dashboard.scheduleDescriptionPlaceholder}}">
                     </div>
 
                     <!-- Action Type -->
@@ -194,7 +184,7 @@
                         </div>
                         <input type="hidden" id="actionType" value="generate_image">
                         <div id="actionTypeDescription" class="action-type-description mt-2">
-                            <small class="text-muted">
+                            <small>
                                 <i class="bi bi-info-circle me-1"></i>
                                 <span id="actionTypeDescriptionText">{{translations.dashboard.generateImageDescription}}</span>
                             </small>
@@ -205,7 +195,7 @@
                     <div id="singleScheduleFields">
                         <div class="mb-3">
                             <label class="form-label">{{translations.dashboard.scheduledFor}}</label>
-                            <input type="datetime-local" class="form-control bg-secondary text-white border-secondary" id="scheduledFor">
+                            <input type="datetime-local" class="form-control" id="scheduledFor">
                         </div>
                     </div>
 
@@ -213,26 +203,26 @@
                     <div id="recurringScheduleFields" style="display: none;">
                         <div class="mb-3">
                             <label class="form-label">{{translations.dashboard.cronExpression}}</label>
-                            <input type="text" class="form-control bg-secondary text-white border-secondary" id="cronExpression" placeholder="0 9 * * *">
+                            <input type="text" class="form-control" id="cronExpression" placeholder="0 9 * * *">
                             <small class="text-muted">{{translations.dashboard.cronExpressionHelp}}</small>
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-3 cron-presets">
                             <label class="form-label">{{translations.dashboard.cronPresets}}</label>
                             <div class="d-flex flex-wrap gap-2">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setCronPreset('0 9 * * *')">Daily 9 AM</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setCronPreset('0 */6 * * *')">Every 6 hours</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setCronPreset('0 12 * * 1-5')">Weekdays noon</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setCronPreset('0 10 * * 6,0')">Weekends 10 AM</button>
+                                <button type="button" class="btn btn-sm" onclick="setCronPreset('0 9 * * *')">Daily 9 AM</button>
+                                <button type="button" class="btn btn-sm" onclick="setCronPreset('0 */6 * * *')">Every 6 hours</button>
+                                <button type="button" class="btn btn-sm" onclick="setCronPreset('0 12 * * 1-5')">Weekdays noon</button>
+                                <button type="button" class="btn btn-sm" onclick="setCronPreset('0 10 * * 6,0')">Weekends 10 AM</button>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">{{translations.dashboard.maxExecutions}}</label>
-                                <input type="number" class="form-control bg-secondary text-white border-secondary" id="maxExecutions" placeholder="{{translations.dashboard.unlimited}}" min="1">
+                                <input type="number" class="form-control" id="maxExecutions" placeholder="{{translations.dashboard.unlimited}}" min="1">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">{{translations.dashboard.endDate}}</label>
-                                <input type="date" class="form-control bg-secondary text-white border-secondary" id="endDate">
+                                <input type="date" class="form-control" id="endDate">
                             </div>
                         </div>
                         <div class="mb-3">
@@ -252,7 +242,7 @@
                         <div id="characterSelectionContainer" class="character-selection-list">
                             <!-- Characters loaded dynamically -->
                             <div class="text-center py-3">
-                                <div class="spinner-border text-primary spinner-border-sm" role="status">
+                                <div class="spinner-border spinner-border-sm" role="status">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
                                 <p class="text-muted mt-2 mb-0 small">Loading characters...</p>
@@ -288,7 +278,7 @@
                         <!-- Action Data: Prompt -->
                         <div class="mb-3">
                             <label class="form-label">{{translations.dashboard.prompt}}</label>
-                            <textarea class="form-control bg-secondary text-white border-secondary" id="actionPrompt" rows="8" placeholder="{{translations.dashboard.promptPlaceholder}}"></textarea>
+                            <textarea class="form-control" id="actionPrompt" rows="8" placeholder="{{translations.dashboard.promptPlaceholder}}"></textarea>
                         </div>
                     </div>
 
@@ -299,7 +289,7 @@
                             <div id="customPromptsContainer" class="custom-prompts-grid">
                                 <!-- Custom prompts loaded dynamically -->
                                 <div class="text-center py-3">
-                                    <div class="spinner-border text-primary spinner-border-sm" role="status">
+                                    <div class="spinner-border spinner-border-sm" role="status">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
                                     <p class="text-muted mt-2 mb-0 small">Loading custom prompts...</p>
@@ -309,7 +299,7 @@
                                 <i class="bi bi-info-circle me-1"></i>Select one or multiple custom prompts. A random one will be used each time the schedule runs.
                             </small>
                             <div id="selectedPromptsInfo" class="mt-2" style="display: none;">
-                                <span class="badge bg-info">
+                                <span class="schedule-status-badge pending">
                                     <span id="selectedPromptsCount">0</span> prompt(s) selected
                                 </span>
                             </div>
@@ -327,7 +317,7 @@
                             <i class="bi bi-chevron-down model-chevron"></i>
                         </button>
                         <input type="hidden" id="actionModel" value="">
-                        
+
                         <!-- Model Dropdown -->
                         <div class="schedule-model-dropdown" id="modelDropdown">
                             <div class="model-dropdown-header">
@@ -380,7 +370,7 @@
                         </div>
                         <div id="testRunPreview" class="test-run-preview" style="display: none;">
                             <div id="testRunLoading" class="text-center py-4" style="display: none;">
-                                <div class="spinner-border text-warning" role="status">
+                                <div class="spinner-border" role="status">
                                     <span class="visually-hidden">Generating...</span>
                                 </div>
                                 <p class="text-muted mt-2 mb-0">Generating test image...</p>
@@ -388,7 +378,7 @@
                             <div id="testRunResult" style="display: none;">
                                 <div class="position-relative">
                                     <img id="testRunImage" src="" alt="Test Result" class="img-fluid rounded mb-2" style="max-height: 300px; width: 100%; object-fit: contain;">
-                                    <button type="button" class="btn btn-sm btn-outline-info position-absolute top-0 end-0 m-2" onclick="schedulesDashboard.expandTestImage()">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary position-absolute top-0 end-0 m-2" onclick="schedulesDashboard.expandTestImage()">
                                         <i class="bi bi-arrows-fullscreen"></i>
                                     </button>
                                 </div>
@@ -425,7 +415,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer border-secondary">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         {{translations.dashboard.cancel}}
                     </button>
@@ -440,8 +430,8 @@
     <!-- View Schedule Modal -->
     <div class="modal fade" id="viewScheduleModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="false">
         <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content bg-dark text-white border-secondary">
-                <div class="modal-header border-secondary">
+            <div class="modal-content">
+                <div class="modal-header">
                     <h5 class="modal-title">
                         <i class="bi bi-calendar-event me-2"></i>{{translations.dashboard.scheduleDetails}}
                     </h5>
@@ -450,7 +440,7 @@
                 <div class="modal-body" id="viewScheduleBody">
                     <!-- Content loaded dynamically -->
                 </div>
-                <div class="modal-footer border-secondary" id="viewScheduleFooter">
+                <div class="modal-footer" id="viewScheduleFooter">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         {{translations.dashboard.close}}
                     </button>

@@ -574,84 +574,83 @@ class SchedulesDashboard {
     card.dataset.scheduleId = schedule._id;
 
     const isRecurring = schedule.type === 'recurring';
-    const statusColor = this.getStatusColor(schedule.status);
     const actionIcon = this.getActionIcon(schedule.actionType);
-    
+
     card.innerHTML = `
-      <div class="card bg-dark border-secondary h-100 schedule-card">
-        <div class="card-header bg-${isRecurring ? 'warning' : 'primary'} bg-opacity-25 d-flex justify-content-between align-items-center">
-          <span class="badge bg-${isRecurring ? 'warning' : 'primary'}">
-            <i class="bi bi-${isRecurring ? 'arrow-repeat' : 'calendar-event'} me-1"></i>
+      <div class="schedule-card h-100">
+        <div class="card-header">
+          <span class="schedule-type-badge ${isRecurring ? 'recurring' : 'single'}">
+            <i class="bi bi-${isRecurring ? 'arrow-repeat' : 'calendar-event'}"></i>
             ${isRecurring ? 'Recurring' : 'Single'}
           </span>
-          <span class="badge bg-${statusColor}">
+          <span class="schedule-status-badge ${schedule.status}">
             ${this.capitalizeFirst(schedule.status)}
           </span>
         </div>
         <div class="card-body">
-          <h6 class="card-title text-white mb-2">
-            <i class="bi ${actionIcon} me-2"></i>
+          <h6 class="card-title text-white mb-3">
+            <i class="bi ${actionIcon} me-2" style="color: var(--sched-primary-light);"></i>
             ${schedule.description || this.formatActionType(schedule.actionType)}
           </h6>
-          
+
           ${isRecurring ? `
-            <p class="text-info small mb-2">
+            <p class="small mb-2" style="color: var(--sched-primary-light);">
               <i class="bi bi-clock me-1"></i>
               Cron: <code>${schedule.cronExpression}</code>
             </p>
-            <p class="text-muted small mb-2">
+            <p class="small mb-2" style="color: var(--sched-text-secondary);">
               <i class="bi bi-play-circle me-1"></i>
               Runs: ${schedule.executionCount || 0}${schedule.maxExecutions ? '/' + schedule.maxExecutions : ''}
             </p>
             ${schedule.nextExecutionAt ? `
-              <p class="text-warning small mb-2">
+              <p class="small mb-2" style="color: #fbbf24;">
                 <i class="bi bi-arrow-right me-1"></i>
                 Next: ${this.formatDate(schedule.nextExecutionAt)}
               </p>
             ` : ''}
           ` : `
-            <p class="text-warning small mb-2">
+            <p class="small mb-2" style="color: #fbbf24;">
               <i class="bi bi-calendar me-1"></i>
               Scheduled: ${this.formatDate(schedule.scheduledFor)}
             </p>
           `}
-          
+
           ${schedule.lastExecutedAt ? `
-            <p class="text-success small mb-2">
+            <p class="small mb-2" style="color: #34d399;">
               <i class="bi bi-check me-1"></i>
               Last run: ${this.formatDate(schedule.lastExecutedAt)}
             </p>
           ` : ''}
-          
-          <p class="text-muted small mb-0">
+
+          <p class="small mb-0" style="color: var(--sched-text-muted);">
             <i class="bi bi-calendar-plus me-1"></i>
             Created: ${this.formatDate(schedule.createdAt)}
           </p>
         </div>
-        <div class="card-footer bg-transparent border-secondary">
-          <div class="d-flex gap-1 flex-wrap">
-            <button class="btn btn-sm btn-outline-primary" onclick="schedulesDashboard.viewSchedule('${schedule._id}')" title="View">
+        <div class="card-footer">
+          <div class="schedule-card-actions">
+            <button class="btn btn-outline-primary" onclick="schedulesDashboard.viewSchedule('${schedule._id}')" title="View">
               <i class="bi bi-eye"></i>
             </button>
-            <button class="btn btn-sm btn-outline-info" onclick="schedulesDashboard.editSchedule('${schedule._id}')" title="Edit">
+            <button class="btn btn-outline-secondary" onclick="schedulesDashboard.editSchedule('${schedule._id}')" title="Edit">
               <i class="bi bi-pencil"></i>
             </button>
             ${schedule.status === 'active' ? `
-              <button class="btn btn-sm btn-outline-warning" onclick="schedulesDashboard.pauseSchedule('${schedule._id}')" title="Pause">
+              <button class="btn btn-outline-warning" onclick="schedulesDashboard.pauseSchedule('${schedule._id}')" title="Pause">
                 <i class="bi bi-pause"></i>
               </button>
             ` : ''}
             ${schedule.status === 'paused' ? `
-              <button class="btn btn-sm btn-outline-success" onclick="schedulesDashboard.resumeSchedule('${schedule._id}')" title="Resume">
+              <button class="btn btn-outline-success" onclick="schedulesDashboard.resumeSchedule('${schedule._id}')" title="Resume">
                 <i class="bi bi-play"></i>
               </button>
             ` : ''}
             ${schedule.status === 'pending' ? `
-              <button class="btn btn-sm btn-outline-secondary" onclick="schedulesDashboard.cancelSchedule('${schedule._id}')" title="Cancel">
+              <button class="btn btn-outline-secondary" onclick="schedulesDashboard.cancelSchedule('${schedule._id}')" title="Cancel">
                 <i class="bi bi-x-circle"></i>
               </button>
             ` : ''}
-            <button class="btn btn-sm btn-outline-danger" onclick="schedulesDashboard.deleteSchedule('${schedule._id}')" title="Delete">
+            <button class="btn btn-outline-danger" onclick="schedulesDashboard.deleteSchedule('${schedule._id}')" title="Delete">
               <i class="bi bi-trash"></i>
             </button>
           </div>
@@ -894,33 +893,34 @@ class SchedulesDashboard {
 
       const schedule = data.schedule;
       const isRecurring = schedule.type === 'recurring';
-      
+
       const bodyHtml = `
         <div class="row">
           <div class="col-md-6">
             <div class="mb-3">
-              <label class="form-label text-muted small">Type</label>
+              <label class="form-label">Type</label>
               <p class="mb-0">
-                <span class="badge bg-${isRecurring ? 'warning' : 'primary'}">
+                <span class="schedule-type-badge ${isRecurring ? 'recurring' : 'single'}">
+                  <i class="bi bi-${isRecurring ? 'arrow-repeat' : 'calendar-event'}"></i>
                   ${isRecurring ? 'Recurring' : 'Single'}
                 </span>
               </p>
             </div>
             <div class="mb-3">
-              <label class="form-label text-muted small">Status</label>
+              <label class="form-label">Status</label>
               <p class="mb-0">
-                <span class="badge bg-${this.getStatusColor(schedule.status)}">
+                <span class="schedule-status-badge ${schedule.status}">
                   ${this.capitalizeFirst(schedule.status)}
                 </span>
               </p>
             </div>
             <div class="mb-3">
-              <label class="form-label text-muted small">Action</label>
+              <label class="form-label">Action</label>
               <p class="mb-0">${this.formatActionType(schedule.actionType)}</p>
             </div>
             ${schedule.description ? `
               <div class="mb-3">
-                <label class="form-label text-muted small">Description</label>
+                <label class="form-label">Description</label>
                 <p class="mb-0">${schedule.description}</p>
               </div>
             ` : ''}
@@ -928,42 +928,42 @@ class SchedulesDashboard {
           <div class="col-md-6">
             ${isRecurring ? `
               <div class="mb-3">
-                <label class="form-label text-muted small">Cron Expression</label>
+                <label class="form-label">Cron Expression</label>
                 <p class="mb-0"><code>${schedule.cronExpression}</code></p>
               </div>
               <div class="mb-3">
-                <label class="form-label text-muted small">Executions</label>
+                <label class="form-label">Executions</label>
                 <p class="mb-0">${schedule.executionCount || 0}${schedule.maxExecutions ? ' / ' + schedule.maxExecutions : ''}</p>
               </div>
               ${schedule.nextExecutionAt ? `
                 <div class="mb-3">
-                  <label class="form-label text-muted small">Next Execution</label>
-                  <p class="mb-0 text-warning">${this.formatDate(schedule.nextExecutionAt)}</p>
+                  <label class="form-label">Next Execution</label>
+                  <p class="mb-0" style="color: #fbbf24;">${this.formatDate(schedule.nextExecutionAt)}</p>
                 </div>
               ` : ''}
             ` : `
               <div class="mb-3">
-                <label class="form-label text-muted small">Scheduled For</label>
-                <p class="mb-0 text-warning">${this.formatDate(schedule.scheduledFor)}</p>
+                <label class="form-label">Scheduled For</label>
+                <p class="mb-0" style="color: #fbbf24;">${this.formatDate(schedule.scheduledFor)}</p>
               </div>
             `}
             ${schedule.lastExecutedAt ? `
               <div class="mb-3">
-                <label class="form-label text-muted small">Last Executed</label>
-                <p class="mb-0 text-success">${this.formatDate(schedule.lastExecutedAt)}</p>
+                <label class="form-label">Last Executed</label>
+                <p class="mb-0" style="color: #34d399;">${this.formatDate(schedule.lastExecutedAt)}</p>
               </div>
             ` : ''}
             <div class="mb-3">
-              <label class="form-label text-muted small">Created</label>
+              <label class="form-label">Created</label>
               <p class="mb-0">${this.formatDate(schedule.createdAt)}</p>
             </div>
           </div>
         </div>
-        
+
         ${schedule.actionData?.prompt ? `
-          <div class="mt-3 pt-3 border-top border-secondary">
-            <label class="form-label text-muted small">Prompt</label>
-            <p class="mb-0 text-secondary small" style="white-space: pre-wrap;">${schedule.actionData.prompt}</p>
+          <div class="mt-3 pt-3" style="border-top: 1px solid var(--sched-border);">
+            <label class="form-label">Prompt</label>
+            <p class="mb-0 small" style="white-space: pre-wrap; color: var(--sched-text-secondary);">${schedule.actionData.prompt}</p>
           </div>
         ` : ''}
         
@@ -1467,7 +1467,7 @@ class SchedulesDashboard {
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body text-center p-2">
-            <img src="${this.lastTestRunImage}" alt="Test Result" class="img-fluid" style="max-height: 70vh;">
+            <img src="${this.lastTestRunImage}" alt="Test Result" class="img-fluid">
           </div>
           <div class="modal-footer border-secondary">
             <a href="${this.lastTestRunImage}" target="_blank" class="btn btn-outline-info">

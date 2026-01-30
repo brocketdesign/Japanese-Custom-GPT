@@ -24,6 +24,9 @@
                         <button class="btn btn-outline-secondary flex-fill flex-md-grow-0" onclick="schedulesDashboard.openCreateModal('recurring')">
                             <i class="bi bi-arrow-repeat me-1"></i>{{translations.dashboard.newCronJob}}
                         </button>
+                        <button class="btn btn-outline-info flex-fill flex-md-grow-0" onclick="schedulesDashboard.openCalendarManager()">
+                            <i class="bi bi-calendar-week me-1"></i>Calendars
+                        </button>
                     </div>
                 </div>
             </div>
@@ -193,6 +196,36 @@
 
                     <!-- Single Schedule: Date/Time -->
                     <div id="singleScheduleFields">
+                        <!-- Calendar Selection -->
+                        <div class="mb-3">
+                            <label class="form-label">Use Calendar <span class="text-muted">(optional)</span></label>
+                            <div class="d-flex gap-2 align-items-start">
+                                <select class="form-select" id="calendarSelect" style="flex: 1;">
+                                    <option value="">Manual time selection</option>
+                                    <!-- Calendars loaded dynamically -->
+                                </select>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="schedulesDashboard.openCalendarManager()" title="Manage Calendars">
+                                    <i class="bi bi-gear"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>Select a calendar to auto-fill the next available time slot
+                            </small>
+                        </div>
+
+                        <!-- Next Available Slot Preview -->
+                        <div id="nextSlotPreview" class="mb-3" style="display: none;">
+                            <div class="alert alert-info py-2 mb-0 d-flex align-items-center justify-content-between">
+                                <div>
+                                    <i class="bi bi-calendar-check me-2"></i>
+                                    <span id="nextSlotText">Next slot: Loading...</span>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-info" onclick="schedulesDashboard.useNextSlot()">
+                                    Use this slot
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="mb-3">
                             <label class="form-label">{{translations.dashboard.scheduledFor}}</label>
                             <input type="datetime-local" class="form-control" id="scheduledFor">
@@ -201,18 +234,45 @@
 
                     <!-- Recurring Schedule: Cron Expression -->
                     <div id="recurringScheduleFields" style="display: none;">
+                        <!-- Calendar Selection for Recurring -->
                         <div class="mb-3">
-                            <label class="form-label">{{translations.dashboard.cronExpression}}</label>
-                            <input type="text" class="form-control" id="cronExpression" placeholder="0 9 * * *">
-                            <small class="text-muted">{{translations.dashboard.cronExpressionHelp}}</small>
+                            <label class="form-label">Use Calendar <span class="text-muted">(optional - replaces cron)</span></label>
+                            <div class="d-flex gap-2 align-items-start">
+                                <select class="form-select" id="recurringCalendarSelect" style="flex: 1;">
+                                    <option value="">Use cron expression instead</option>
+                                    <!-- Calendars loaded dynamically -->
+                                </select>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="schedulesDashboard.openCalendarManager()" title="Manage Calendars">
+                                    <i class="bi bi-gear"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>Select a calendar to use its weekly time slots instead of a cron expression
+                            </small>
                         </div>
-                        <div class="mb-3 cron-presets">
-                            <label class="form-label">{{translations.dashboard.cronPresets}}</label>
-                            <div class="d-flex flex-wrap gap-2">
-                                <button type="button" class="btn btn-sm" onclick="setCronPreset('0 9 * * *')">Daily 9 AM</button>
-                                <button type="button" class="btn btn-sm" onclick="setCronPreset('0 */6 * * *')">Every 6 hours</button>
-                                <button type="button" class="btn btn-sm" onclick="setCronPreset('0 12 * * 1-5')">Weekdays noon</button>
-                                <button type="button" class="btn btn-sm" onclick="setCronPreset('0 10 * * 6,0')">Weekends 10 AM</button>
+
+                        <!-- Next Available Slot Preview for Recurring -->
+                        <div id="recurringNextSlotPreview" class="mb-3" style="display: none;">
+                            <div class="alert alert-success py-2 mb-0">
+                                <span id="recurringNextSlotText">Calendar will publish at configured weekly slots</span>
+                            </div>
+                        </div>
+
+                        <!-- Cron Expression (hidden when calendar selected) -->
+                        <div id="cronExpressionSection">
+                            <div class="mb-3">
+                                <label class="form-label">{{translations.dashboard.cronExpression}}</label>
+                                <input type="text" class="form-control" id="cronExpression" placeholder="0 9 * * *">
+                                <small class="text-muted">{{translations.dashboard.cronExpressionHelp}}</small>
+                            </div>
+                            <div class="mb-3 cron-presets">
+                                <label class="form-label">{{translations.dashboard.cronPresets}}</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button type="button" class="btn btn-sm" onclick="setCronPreset('0 9 * * *')">Daily 9 AM</button>
+                                    <button type="button" class="btn btn-sm" onclick="setCronPreset('0 */6 * * *')">Every 6 hours</button>
+                                    <button type="button" class="btn btn-sm" onclick="setCronPreset('0 12 * * 1-5')">Weekdays noon</button>
+                                    <button type="button" class="btn btn-sm" onclick="setCronPreset('0 10 * * 6,0')">Weekends 10 AM</button>
+                                </div>
                             </div>
                         </div>
                         <div class="row">
@@ -444,6 +504,92 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         {{translations.dashboard.close}}
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Manager Modal -->
+    <div class="modal fade" id="calendarManagerModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="false">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-calendar-week me-2"></i>Publish Calendars
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Calendar List -->
+                    <div id="calendarListContainer">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <p class="text-muted mb-0">Create calendars with weekly time slots for automated publishing</p>
+                            <button class="btn btn-primary btn-sm" onclick="schedulesDashboard.openCreateCalendarModal()">
+                                <i class="bi bi-plus me-1"></i>New Calendar
+                            </button>
+                        </div>
+                        <div id="calendarList" class="calendar-list">
+                            <!-- Calendars loaded dynamically -->
+                            <div class="text-center py-4">
+                                <div class="spinner-border spinner-border-sm" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Create/Edit Calendar Form (hidden by default) -->
+                    <div id="calendarFormContainer" style="display: none;">
+                        <div class="d-flex align-items-center mb-3">
+                            <button type="button" class="btn btn-link text-muted p-0 me-2" onclick="schedulesDashboard.showCalendarList()">
+                                <i class="bi bi-arrow-left"></i>
+                            </button>
+                            <h6 class="mb-0" id="calendarFormTitle">New Calendar</h6>
+                        </div>
+
+                        <input type="hidden" id="editCalendarId">
+
+                        <div class="mb-3">
+                            <label class="form-label">Calendar Name</label>
+                            <input type="text" class="form-control" id="calendarName" placeholder="e.g., Daily Posts, Weekend Content">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Description <span class="text-muted">(optional)</span></label>
+                            <input type="text" class="form-control" id="calendarDescription" placeholder="Brief description of this calendar">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Timezone</label>
+                            <select class="form-select" id="calendarTimezone">
+                                <option value="UTC">UTC</option>
+                                <option value="America/New_York">Eastern Time (ET)</option>
+                                <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                                <option value="Europe/London">London (GMT)</option>
+                                <option value="Europe/Paris">Paris (CET)</option>
+                                <option value="Asia/Tokyo">Tokyo (JST)</option>
+                                <option value="Asia/Bangkok">Bangkok (ICT)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label mb-0">Time Slots</label>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="schedulesDashboard.addSlotRow()">
+                                    <i class="bi bi-plus me-1"></i>Add Slot
+                                </button>
+                            </div>
+                            <div id="slotsContainer" class="slots-container">
+                                <!-- Slots added dynamically -->
+                            </div>
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>Define weekly recurring time slots when posts should be published
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" id="calendarModalFooter">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>

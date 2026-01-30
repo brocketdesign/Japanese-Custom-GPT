@@ -14,6 +14,7 @@ class SchedulesDashboard {
     };
     this.scheduleModal = null;
     this.viewScheduleModal = null;
+    this.calendarManagerModal = null;
     this.testRunInProgress = false;
     this.lastTestRunImage = null;
     this.userCharacters = [];
@@ -22,6 +23,16 @@ class SchedulesDashboard {
     this.selectedCharacterId = '';
     this.socialConnections = [];
     this.selectedSocialAccountIds = new Set();
+
+    // Calendar-related properties (single schedule)
+    this.calendars = [];
+    this.selectedCalendarId = '';
+    this.nextAvailableSlot = null;
+    this.calendarSlots = [];
+
+    // Calendar-related properties (recurring/cron schedule)
+    this.selectedRecurringCalendarId = '';
+    this.recurringNextAvailableSlot = null;
 
     this.init();
   }
@@ -34,17 +45,22 @@ class SchedulesDashboard {
     this.loadUserCharacters();
     this.loadCustomPrompts();
     this.loadSocialConnections();
+    this.loadCalendars();
   }
 
   setupModals() {
     const scheduleModalEl = document.getElementById('scheduleModal');
     const viewScheduleModalEl = document.getElementById('viewScheduleModal');
-    
+    const calendarManagerModalEl = document.getElementById('calendarManagerModal');
+
     if (scheduleModalEl) {
       this.scheduleModal = new bootstrap.Modal(scheduleModalEl);
     }
     if (viewScheduleModalEl) {
       this.viewScheduleModal = new bootstrap.Modal(viewScheduleModalEl);
+    }
+    if (calendarManagerModalEl) {
+      this.calendarManagerModal = new bootstrap.Modal(calendarManagerModalEl);
     }
   }
 
@@ -92,6 +108,16 @@ class SchedulesDashboard {
       btn.addEventListener('click', (e) => {
         this.selectActionType(e.currentTarget.dataset.action);
       });
+    });
+
+    // Calendar selector (single schedule)
+    document.getElementById('calendarSelect')?.addEventListener('change', (e) => {
+      this.onCalendarSelected(e.target.value);
+    });
+
+    // Calendar selector (recurring/cron schedule)
+    document.getElementById('recurringCalendarSelect')?.addEventListener('change', (e) => {
+      this.onRecurringCalendarSelected(e.target.value);
     });
 
     // Model selector button
@@ -398,6 +424,514 @@ class SchedulesDashboard {
     info.style.display = this.selectedCustomPromptIds.size > 0 ? 'block' : 'none';
   }
 
+  // ============================================
+  // Calendar Management Methods
+  // ============================================
+
+  async loadCalendars() {
+    try {
+      const response = await fetch('/api/calendars');
+      const data = await response.json();
+
+      if (data.success) {
+        this.calendars = data.calendars || [];
+        this.populateCalendarSelect();
+      }
+    } catch (error) {
+      console.error('Error loading calendars:', error);
+    }
+  }
+
+  populateCalendarSelect() {
+    // Populate single schedule calendar selector
+    const select = document.getElementById('calendarSelect');
+    if (select) {
+      // Keep the first option (manual selection)
+      select.innerHTML = '<option value="">Manual time selection</option>';
+
+      this.calendars.forEach(calendar => {
+        const option = document.createElement('option');
+        option.value = calendar._id;
+        const slotCount = (calendar.slots || []).filter(s => s.isEnabled).length;
+        option.textContent = `${calendar.name} (${slotCount} slots)`;
+        select.appendChild(option);
+      });
+    }
+
+    // Populate recurring schedule calendar selector
+    const recurringSelect = document.getElementById('recurringCalendarSelect');
+    if (recurringSelect) {
+      // Keep the first option (cron expression)
+      recurringSelect.innerHTML = '<option value="">Use cron expression instead</option>';
+
+      this.calendars.forEach(calendar => {
+        const option = document.createElement('option');
+        option.value = calendar._id;
+        const slotCount = (calendar.slots || []).filter(s => s.isEnabled).length;
+        option.textContent = `${calendar.name} (${slotCount} slots)`;
+        recurringSelect.appendChild(option);
+      });
+    }
+  }
+
+  async onCalendarSelected(calendarId) {
+    this.selectedCalendarId = calendarId;
+    const previewEl = document.getElementById('nextSlotPreview');
+
+    if (!calendarId) {
+      this.nextAvailableSlot = null;
+      if (previewEl) previewEl.style.display = 'none';
+      return;
+    }
+
+    // Show loading state
+    if (previewEl) {
+      previewEl.style.display = 'block';
+      document.getElementById('nextSlotText').textContent = 'Finding next available slot...';
+    }
+
+    await this.fetchNextSlot(calendarId);
+  }
+
+  async fetchNextSlot(calendarId) {
+    try {
+      const response = await fetch(`/api/calendars/${calendarId}/next-slot`);
+      const data = await response.json();
+
+      const previewEl = document.getElementById('nextSlotPreview');
+      const textEl = document.getElementById('nextSlotText');
+
+      if (data.success && data.nextSlot) {
+        this.nextAvailableSlot = data.nextSlot;
+        const publishAt = new Date(data.nextSlot.publishAt);
+        textEl.textContent = `Next slot: ${this.formatDate(publishAt)}`;
+        previewEl.style.display = 'block';
+      } else {
+        this.nextAvailableSlot = null;
+        textEl.textContent = data.message || 'No available slots';
+        previewEl.style.display = 'block';
+      }
+    } catch (error) {
+      console.error('Error fetching next slot:', error);
+      this.nextAvailableSlot = null;
+      const previewEl = document.getElementById('nextSlotPreview');
+      if (previewEl) previewEl.style.display = 'none';
+    }
+  }
+
+  useNextSlot() {
+    if (!this.nextAvailableSlot) return;
+
+    const publishAt = new Date(this.nextAvailableSlot.publishAt);
+    // Format for datetime-local input (YYYY-MM-DDTHH:MM)
+    const localDateTime = new Date(publishAt.getTime() - publishAt.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16);
+
+    document.getElementById('scheduledFor').value = localDateTime;
+    this.showNotification('Time slot applied!', 'success');
+  }
+
+  // Handle calendar selection for recurring (cron) schedules
+  async onRecurringCalendarSelected(calendarId) {
+    this.selectedRecurringCalendarId = calendarId;
+    const previewEl = document.getElementById('recurringNextSlotPreview');
+    const cronSection = document.getElementById('cronExpressionSection');
+
+    if (!calendarId) {
+      this.recurringNextAvailableSlot = null;
+      if (previewEl) previewEl.style.display = 'none';
+      if (cronSection) cronSection.style.display = 'block';
+      return;
+    }
+
+    // Hide cron expression section when calendar is selected
+    if (cronSection) cronSection.style.display = 'none';
+
+    // Show loading state
+    if (previewEl) {
+      previewEl.style.display = 'block';
+      document.getElementById('recurringNextSlotText').innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Finding next available slot...';
+    }
+
+    await this.fetchRecurringNextSlot(calendarId);
+  }
+
+  async fetchRecurringNextSlot(calendarId) {
+    try {
+      const response = await fetch(`/api/calendars/${calendarId}/next-slot`);
+      const data = await response.json();
+
+      const previewEl = document.getElementById('recurringNextSlotPreview');
+      const textEl = document.getElementById('recurringNextSlotText');
+
+      if (data.success && data.nextSlot) {
+        this.recurringNextAvailableSlot = data.nextSlot;
+        const publishAt = new Date(data.nextSlot.publishAt);
+        
+        // Get calendar info for slot summary
+        const calendar = this.calendars.find(c => c._id === calendarId);
+        const enabledSlots = calendar ? (calendar.slots || []).filter(s => s.isEnabled).length : 0;
+        
+        textEl.innerHTML = `
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+              <strong>Next:</strong> ${this.formatDate(publishAt)}
+              <span class="text-muted ms-2">(${enabledSlots} weekly slots)</span>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-success" onclick="schedulesDashboard.useRecurringNextSlot()">
+              <i class="bi bi-check-lg me-1"></i>Use this slot
+            </button>
+          </div>
+        `;
+        previewEl.style.display = 'block';
+      } else {
+        this.recurringNextAvailableSlot = null;
+        textEl.innerHTML = `<i class="bi bi-exclamation-circle me-2"></i>${data.message || 'No available slots configured'}`;
+        previewEl.style.display = 'block';
+      }
+    } catch (error) {
+      console.error('Error fetching recurring next slot:', error);
+      this.recurringNextAvailableSlot = null;
+      const previewEl = document.getElementById('recurringNextSlotPreview');
+      if (previewEl) previewEl.style.display = 'none';
+      // Show cron section again on error
+      const cronSection = document.getElementById('cronExpressionSection');
+      if (cronSection) cronSection.style.display = 'block';
+    }
+  }
+
+  useRecurringNextSlot() {
+    if (!this.recurringNextAvailableSlot || !this.selectedRecurringCalendarId) return;
+
+    // For recurring schedules with calendar, we store the calendar ID
+    // The next slot is automatically determined by the calendar
+    this.showNotification('Calendar slot will be used for recurring schedule!', 'success');
+  }
+
+  // Calendar Manager Modal
+  openCalendarManager() {
+    this.showCalendarList();
+    this.loadCalendarList();
+    this.calendarManagerModal?.show();
+  }
+
+  async loadCalendarList() {
+    const listEl = document.getElementById('calendarList');
+    if (!listEl) return;
+
+    listEl.innerHTML = `
+      <div class="text-center py-4">
+        <div class="spinner-border spinner-border-sm" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    `;
+
+    try {
+      const response = await fetch('/api/calendars');
+      const data = await response.json();
+
+      if (data.success) {
+        this.calendars = data.calendars || [];
+        this.renderCalendarList();
+        // Also update the dropdown in the schedule modal
+        this.populateCalendarSelect();
+      } else {
+        throw new Error(data.error || 'Failed to load calendars');
+      }
+    } catch (error) {
+      console.error('Error loading calendar list:', error);
+      listEl.innerHTML = `
+        <div class="text-center py-4 text-danger">
+          <i class="bi bi-exclamation-triangle me-2"></i>Failed to load calendars
+        </div>
+      `;
+    }
+  }
+
+  renderCalendarList() {
+    const listEl = document.getElementById('calendarList');
+    if (!listEl) return;
+
+    if (this.calendars.length === 0) {
+      listEl.innerHTML = `
+        <div class="text-center py-4">
+          <i class="bi bi-calendar-x" style="font-size: 2rem; color: var(--sched-text-muted);"></i>
+          <p class="text-muted mt-2 mb-0">No calendars yet</p>
+          <p class="text-muted small">Create a calendar to schedule posts at recurring times</p>
+        </div>
+      `;
+      return;
+    }
+
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    listEl.innerHTML = this.calendars.map(calendar => {
+      const enabledSlots = (calendar.slots || []).filter(s => s.isEnabled);
+      const slotSummary = enabledSlots.length > 0
+        ? enabledSlots.slice(0, 3).map(s => `${dayNames[s.dayOfWeek]} ${String(s.hour).padStart(2, '0')}:${String(s.minute || 0).padStart(2, '0')}`).join(', ')
+          + (enabledSlots.length > 3 ? ` +${enabledSlots.length - 3} more` : '')
+        : 'No slots configured';
+
+      return `
+        <div class="calendar-list-item ${calendar.isActive ? '' : 'inactive'}">
+          <div class="calendar-item-info">
+            <div class="d-flex align-items-center gap-2">
+              <h6 class="mb-0">${this.escapeHtml(calendar.name)}</h6>
+              <span class="badge ${calendar.isActive ? 'bg-success' : 'bg-secondary'}">${calendar.isActive ? 'Active' : 'Inactive'}</span>
+            </div>
+            ${calendar.description ? `<p class="text-muted small mb-1">${this.escapeHtml(calendar.description)}</p>` : ''}
+            <p class="text-muted small mb-0">
+              <i class="bi bi-clock me-1"></i>${slotSummary}
+            </p>
+          </div>
+          <div class="calendar-item-actions">
+            <button class="btn btn-sm btn-outline-primary" onclick="schedulesDashboard.openEditCalendarModal('${calendar._id}')" title="Edit">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger" onclick="schedulesDashboard.deleteCalendarConfirm('${calendar._id}')" title="Delete">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  showCalendarList() {
+    document.getElementById('calendarListContainer').style.display = 'block';
+    document.getElementById('calendarFormContainer').style.display = 'none';
+    document.getElementById('calendarModalFooter').innerHTML = `
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+    `;
+  }
+
+  openCreateCalendarModal() {
+    // Reset form
+    document.getElementById('editCalendarId').value = '';
+    document.getElementById('calendarName').value = '';
+    document.getElementById('calendarDescription').value = '';
+    document.getElementById('calendarTimezone').value = 'UTC';
+    document.getElementById('calendarFormTitle').textContent = 'New Calendar';
+
+    // Clear and add default slots
+    this.calendarSlots = [];
+    this.renderSlotRows();
+
+    // Show form
+    document.getElementById('calendarListContainer').style.display = 'none';
+    document.getElementById('calendarFormContainer').style.display = 'block';
+    document.getElementById('calendarModalFooter').innerHTML = `
+      <button type="button" class="btn btn-secondary" onclick="schedulesDashboard.showCalendarList()">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="schedulesDashboard.saveCalendar()">
+        <i class="bi bi-check me-1"></i>Create Calendar
+      </button>
+    `;
+  }
+
+  async openEditCalendarModal(calendarId) {
+    try {
+      const response = await fetch(`/api/calendars/${calendarId}`);
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to load calendar');
+      }
+
+      const calendar = data.calendar;
+
+      // Populate form
+      document.getElementById('editCalendarId').value = calendar._id;
+      document.getElementById('calendarName').value = calendar.name || '';
+      document.getElementById('calendarDescription').value = calendar.description || '';
+      document.getElementById('calendarTimezone').value = calendar.timezone || 'UTC';
+      document.getElementById('calendarFormTitle').textContent = 'Edit Calendar';
+
+      // Populate slots
+      this.calendarSlots = (calendar.slots || []).map(s => ({
+        _id: s._id,
+        dayOfWeek: s.dayOfWeek,
+        hour: s.hour,
+        minute: s.minute || 0,
+        isEnabled: s.isEnabled !== false
+      }));
+      this.renderSlotRows();
+
+      // Show form
+      document.getElementById('calendarListContainer').style.display = 'none';
+      document.getElementById('calendarFormContainer').style.display = 'block';
+      document.getElementById('calendarModalFooter').innerHTML = `
+        <button type="button" class="btn btn-secondary" onclick="schedulesDashboard.showCalendarList()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="schedulesDashboard.saveCalendar()">
+          <i class="bi bi-check me-1"></i>Save Changes
+        </button>
+      `;
+
+    } catch (error) {
+      console.error('Error loading calendar:', error);
+      this.showNotification('Failed to load calendar', 'error');
+    }
+  }
+
+  addSlotRow() {
+    this.calendarSlots.push({
+      dayOfWeek: 1, // Monday
+      hour: 9,
+      minute: 0,
+      isEnabled: true
+    });
+    this.renderSlotRows();
+  }
+
+  removeSlotRow(index) {
+    this.calendarSlots.splice(index, 1);
+    this.renderSlotRows();
+  }
+
+  renderSlotRows() {
+    const container = document.getElementById('slotsContainer');
+    if (!container) return;
+
+    if (this.calendarSlots.length === 0) {
+      container.innerHTML = `
+        <div class="text-center py-3 text-muted">
+          <i class="bi bi-clock me-1"></i>No time slots configured
+        </div>
+      `;
+      return;
+    }
+
+    const dayOptions = [
+      { value: 0, label: 'Sunday' },
+      { value: 1, label: 'Monday' },
+      { value: 2, label: 'Tuesday' },
+      { value: 3, label: 'Wednesday' },
+      { value: 4, label: 'Thursday' },
+      { value: 5, label: 'Friday' },
+      { value: 6, label: 'Saturday' }
+    ];
+
+    container.innerHTML = this.calendarSlots.map((slot, index) => `
+      <div class="slot-row" data-index="${index}">
+        <select class="form-select form-select-sm slot-day" onchange="schedulesDashboard.updateSlot(${index}, 'dayOfWeek', this.value)">
+          ${dayOptions.map(d => `<option value="${d.value}" ${slot.dayOfWeek === d.value ? 'selected' : ''}>${d.label}</option>`).join('')}
+        </select>
+        <input type="time" class="form-control form-control-sm slot-time"
+               value="${String(slot.hour).padStart(2, '0')}:${String(slot.minute).padStart(2, '0')}"
+               onchange="schedulesDashboard.updateSlotTime(${index}, this.value)">
+        <div class="form-check form-switch slot-enabled">
+          <input class="form-check-input" type="checkbox" ${slot.isEnabled ? 'checked' : ''}
+                 onchange="schedulesDashboard.updateSlot(${index}, 'isEnabled', this.checked)">
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="schedulesDashboard.removeSlotRow(${index})">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+    `).join('');
+  }
+
+  updateSlot(index, field, value) {
+    if (this.calendarSlots[index]) {
+      if (field === 'dayOfWeek') {
+        this.calendarSlots[index][field] = parseInt(value);
+      } else {
+        this.calendarSlots[index][field] = value;
+      }
+    }
+  }
+
+  updateSlotTime(index, timeValue) {
+    if (this.calendarSlots[index] && timeValue) {
+      const [hour, minute] = timeValue.split(':').map(Number);
+      this.calendarSlots[index].hour = hour;
+      this.calendarSlots[index].minute = minute;
+    }
+  }
+
+  async saveCalendar() {
+    const calendarId = document.getElementById('editCalendarId').value;
+    const name = document.getElementById('calendarName').value.trim();
+    const description = document.getElementById('calendarDescription').value.trim();
+    const timezone = document.getElementById('calendarTimezone').value;
+
+    if (!name) {
+      this.showNotification('Please enter a calendar name', 'warning');
+      return;
+    }
+
+    const calendarData = {
+      name,
+      description,
+      timezone,
+      slots: this.calendarSlots.map(s => ({
+        dayOfWeek: parseInt(s.dayOfWeek),
+        hour: parseInt(s.hour),
+        minute: parseInt(s.minute) || 0,
+        isEnabled: s.isEnabled !== false
+      }))
+    };
+
+    try {
+      let response;
+      if (calendarId) {
+        // Update existing
+        response = await fetch(`/api/calendars/${calendarId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(calendarData)
+        });
+      } else {
+        // Create new
+        response = await fetch('/api/calendars', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(calendarData)
+        });
+      }
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to save calendar');
+      }
+
+      this.showNotification(calendarId ? 'Calendar updated!' : 'Calendar created!', 'success');
+      this.showCalendarList();
+      this.loadCalendarList();
+
+    } catch (error) {
+      console.error('Error saving calendar:', error);
+      this.showNotification('Failed to save calendar: ' + error.message, 'error');
+    }
+  }
+
+  deleteCalendarConfirm(calendarId) {
+    if (!confirm('Delete this calendar? This will also cancel any queued items.')) return;
+    this.deleteCalendar(calendarId);
+  }
+
+  async deleteCalendar(calendarId) {
+    try {
+      const response = await fetch(`/api/calendars/${calendarId}`, {
+        method: 'DELETE'
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to delete calendar');
+      }
+
+      this.showNotification('Calendar deleted', 'success');
+      this.loadCalendarList();
+
+    } catch (error) {
+      console.error('Error deleting calendar:', error);
+      this.showNotification('Failed to delete calendar', 'error');
+    }
+  }
+
   escapeHtml(text) {
     if (!text) return '';
     const map = {
@@ -594,10 +1128,17 @@ class SchedulesDashboard {
           </h6>
 
           ${isRecurring ? `
-            <p class="small mb-2" style="color: var(--sched-primary-light);">
-              <i class="bi bi-clock me-1"></i>
-              Cron: <code>${schedule.cronExpression}</code>
-            </p>
+            ${schedule.useCalendar && schedule.calendarName ? `
+              <p class="small mb-2" style="color: var(--sched-primary-light);">
+                <i class="bi bi-calendar-week me-1"></i>
+                Calendar: ${this.escapeHtml(schedule.calendarName)}
+              </p>
+            ` : `
+              <p class="small mb-2" style="color: var(--sched-primary-light);">
+                <i class="bi bi-clock me-1"></i>
+                Cron: <code>${schedule.cronExpression || 'N/A'}</code>
+              </p>
+            `}
             <p class="small mb-2" style="color: var(--sched-text-secondary);">
               <i class="bi bi-play-circle me-1"></i>
               Runs: ${schedule.executionCount || 0}${schedule.maxExecutions ? '/' + schedule.maxExecutions : ''}
@@ -684,6 +1225,24 @@ class SchedulesDashboard {
     document.getElementById('scheduleId').value = '';
     document.getElementById('scheduleDescription').value = '';
     document.getElementById('actionPrompt').value = '';
+
+    // Reset calendar selection (single schedule)
+    this.selectedCalendarId = '';
+    this.nextAvailableSlot = null;
+    const calendarSelect = document.getElementById('calendarSelect');
+    if (calendarSelect) calendarSelect.value = '';
+    const nextSlotPreview = document.getElementById('nextSlotPreview');
+    if (nextSlotPreview) nextSlotPreview.style.display = 'none';
+
+    // Reset calendar selection (recurring schedule)
+    this.selectedRecurringCalendarId = '';
+    this.recurringNextAvailableSlot = null;
+    const recurringCalendarSelect = document.getElementById('recurringCalendarSelect');
+    if (recurringCalendarSelect) recurringCalendarSelect.value = '';
+    const recurringNextSlotPreview = document.getElementById('recurringNextSlotPreview');
+    if (recurringNextSlotPreview) recurringNextSlotPreview.style.display = 'none';
+    const cronSection = document.getElementById('cronExpressionSection');
+    if (cronSection) cronSection.style.display = 'block';
     
     // Reset action type to generate_image
     this.selectActionType('generate_image');
@@ -767,7 +1326,15 @@ class SchedulesDashboard {
       document.getElementById('scheduleId').value = schedule._id;
       document.getElementById('scheduleDescription').value = schedule.description || '';
       document.getElementById('actionPrompt').value = schedule.actionData?.prompt || '';
-      
+
+      // Reset calendar selection (editing uses manual time)
+      this.selectedCalendarId = '';
+      this.nextAvailableSlot = null;
+      const calendarSelect = document.getElementById('calendarSelect');
+      if (calendarSelect) calendarSelect.value = '';
+      const nextSlotPreview = document.getElementById('nextSlotPreview');
+      if (nextSlotPreview) nextSlotPreview.style.display = 'none';
+
       // Update action type selector
       this.selectActionType(schedule.actionType);
       
@@ -857,7 +1424,27 @@ class SchedulesDashboard {
       this.toggleScheduleType(schedule.type);
       
       if (isRecurring) {
-        document.getElementById('cronExpression').value = schedule.cronExpression || '';
+        // Handle calendar-based vs cron-based recurring schedules
+        const recurringCalendarSelect = document.getElementById('recurringCalendarSelect');
+        const cronSection = document.getElementById('cronExpressionSection');
+        const recurringNextSlotPreview = document.getElementById('recurringNextSlotPreview');
+        
+        if (schedule.useCalendar && schedule.calendarId) {
+          // Calendar-based recurring schedule
+          this.selectedRecurringCalendarId = schedule.calendarId;
+          if (recurringCalendarSelect) recurringCalendarSelect.value = schedule.calendarId;
+          if (cronSection) cronSection.style.display = 'none';
+          // Fetch and show next slot
+          this.fetchRecurringNextSlot(schedule.calendarId);
+        } else {
+          // Traditional cron-based schedule
+          this.selectedRecurringCalendarId = '';
+          if (recurringCalendarSelect) recurringCalendarSelect.value = '';
+          if (cronSection) cronSection.style.display = 'block';
+          if (recurringNextSlotPreview) recurringNextSlotPreview.style.display = 'none';
+          document.getElementById('cronExpression').value = schedule.cronExpression || '';
+        }
+        
         document.getElementById('maxExecutions').value = schedule.maxExecutions || '';
         document.getElementById('endDate').value = schedule.endDate ? schedule.endDate.split('T')[0] : '';
         document.getElementById('mutationEnabled').checked = schedule.mutationEnabled || false;
@@ -927,10 +1514,20 @@ class SchedulesDashboard {
           </div>
           <div class="col-md-6">
             ${isRecurring ? `
-              <div class="mb-3">
-                <label class="form-label">Cron Expression</label>
-                <p class="mb-0"><code>${schedule.cronExpression}</code></p>
-              </div>
+              ${schedule.useCalendar && schedule.calendarName ? `
+                <div class="mb-3">
+                  <label class="form-label">Calendar</label>
+                  <p class="mb-0">
+                    <i class="bi bi-calendar-week me-1 text-info"></i>
+                    ${this.escapeHtml(schedule.calendarName)}
+                  </p>
+                </div>
+              ` : `
+                <div class="mb-3">
+                  <label class="form-label">Cron Expression</label>
+                  <p class="mb-0"><code>${schedule.cronExpression || 'N/A'}</code></p>
+                </div>
+              `}
               <div class="mb-3">
                 <label class="form-label">Executions</label>
                 <p class="mb-0">${schedule.executionCount || 0}${schedule.maxExecutions ? ' / ' + schedule.maxExecutions : ''}</p>
@@ -1071,12 +1668,27 @@ class SchedulesDashboard {
       }
       scheduleData.scheduledFor = new Date(scheduledFor).toISOString();
     } else {
+      // Check if using calendar-based scheduling or cron expression
+      const recurringCalendarId = this.selectedRecurringCalendarId || document.getElementById('recurringCalendarSelect')?.value;
       const cronExpression = document.getElementById('cronExpression').value;
-      if (!cronExpression) {
-        this.showNotification('Please enter a cron expression', 'warning');
+      
+      if (recurringCalendarId) {
+        // Calendar-based recurring schedule
+        scheduleData.calendarId = recurringCalendarId;
+        scheduleData.useCalendar = true;
+        // Generate cron from calendar slots for backend compatibility
+        const calendar = this.calendars.find(c => c._id === recurringCalendarId);
+        if (calendar) {
+          scheduleData.calendarName = calendar.name;
+        }
+      } else if (cronExpression) {
+        // Traditional cron-based schedule
+        scheduleData.cronExpression = cronExpression;
+        scheduleData.useCalendar = false;
+      } else {
+        this.showNotification('Please select a calendar or enter a cron expression', 'warning');
         return;
       }
-      scheduleData.cronExpression = cronExpression;
       
       const maxExecutions = document.getElementById('maxExecutions').value;
       const endDate = document.getElementById('endDate').value;

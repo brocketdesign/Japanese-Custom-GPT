@@ -46,6 +46,7 @@ async function registerRoutes(fastify) {
   fastify.register(require('../routes/social-api'));
   fastify.register(require('../routes/prompt-mutation-api'));
   fastify.register(require('../routes/posts-schedules-api'));
+  fastify.register(require('../routes/calendar-api'));
   fastify.register(require('../routes/dashboard-posts'));
   fastify.register(require('../routes/feature-access-api'));
   fastify.register(require('../routes/creators'));

@@ -939,7 +939,6 @@ opacity: 0.8;
 
   .segmented-control .btn-check:checked + .segment-btn i {
     opacity: 1;
-    color: #a78bfa;
   }
 
   /* Compact variant for inline/header use */

@@ -77,7 +77,7 @@ async function createSingleSchedule(data, db) {
 }
 
 /**
- * Create a recurring scheduled task (cron job)
+ * Create a recurring scheduled task (cron job or calendar-based)
  * @param {Object} data - Schedule data
  * @param {Object} db - Database connection
  * @returns {Object} Created schedule
@@ -87,6 +87,9 @@ async function createRecurringSchedule(data, db) {
     userId,
     actionType,
     cronExpression,
+    calendarId,
+    useCalendar = false,
+    calendarName = '',
     actionData,
     description = '',
     maxExecutions = null,
@@ -94,18 +97,44 @@ async function createRecurringSchedule(data, db) {
     mutationEnabled = false
   } = data;
 
-  // Validate cron expression
-  try {
-    parser.parseExpression(cronExpression);
-  } catch (error) {
-    throw new Error(`Invalid cron expression: ${error.message}`);
+  let nextExecutionAt = null;
+
+  // Handle calendar-based or cron-based scheduling
+  if (useCalendar && calendarId) {
+    // Calendar-based recurring schedule
+    // The next execution time will be determined by the calendar slots
+    const { getNextAvailableSlot } = require('./calendar-queue-utils');
+    const calendar = await db.collection('calendars').findOne({ _id: new ObjectId(calendarId) });
+    
+    if (!calendar) {
+      throw new Error('Calendar not found');
+    }
+    
+    const nextSlot = await getNextAvailableSlot(calendar, db);
+    if (nextSlot) {
+      nextExecutionAt = new Date(nextSlot.publishAt);
+    }
+  } else if (cronExpression) {
+    // Traditional cron-based schedule
+    // Validate cron expression
+    try {
+      parser.parseExpression(cronExpression);
+    } catch (error) {
+      throw new Error(`Invalid cron expression: ${error.message}`);
+    }
+    nextExecutionAt = getNextExecutionTime(cronExpression);
+  } else {
+    throw new Error('Either a cron expression or calendar must be specified');
   }
 
   const schedule = {
     userId: new ObjectId(userId),
     type: SCHEDULE_TYPES.RECURRING,
     actionType,
-    cronExpression,
+    cronExpression: cronExpression || null,
+    calendarId: calendarId ? new ObjectId(calendarId) : null,
+    useCalendar,
+    calendarName,
     actionData,
     description,
     mutationEnabled, // Whether to apply prompt mutations on each run
@@ -113,7 +142,7 @@ async function createRecurringSchedule(data, db) {
     endDate: endDate ? new Date(endDate) : null,
     executionCount: 0,
     lastExecutedAt: null,
-    nextExecutionAt: getNextExecutionTime(cronExpression),
+    nextExecutionAt,
     status: SCHEDULE_STATUSES.ACTIVE,
     generatedPostIds: [],
     error: null,
@@ -279,7 +308,23 @@ async function markRecurringScheduleExecuted(scheduleId, result, db) {
   }
 
   const newExecutionCount = schedule.executionCount + 1;
-  const nextExecutionAt = getNextExecutionTime(schedule.cronExpression);
+  
+  // Calculate next execution time based on calendar or cron
+  let nextExecutionAt = null;
+  if (schedule.useCalendar && schedule.calendarId) {
+    // Calendar-based: get next available slot
+    const { getNextAvailableSlot } = require('./calendar-queue-utils');
+    const calendar = await db.collection('calendars').findOne({ _id: schedule.calendarId });
+    if (calendar) {
+      const nextSlot = await getNextAvailableSlot(calendar, db);
+      if (nextSlot) {
+        nextExecutionAt = new Date(nextSlot.publishAt);
+      }
+    }
+  } else if (schedule.cronExpression) {
+    // Cron-based
+    nextExecutionAt = getNextExecutionTime(schedule.cronExpression);
+  }
   
   // Check if should be completed
   let newStatus = schedule.status;
@@ -289,6 +334,10 @@ async function markRecurringScheduleExecuted(scheduleId, result, db) {
     newStatus = SCHEDULE_STATUSES.COMPLETED;
   } else if (result.error) {
     newStatus = SCHEDULE_STATUSES.FAILED;
+  } else if (!nextExecutionAt) {
+    // No next execution available (calendar has no more slots)
+    newStatus = SCHEDULE_STATUSES.COMPLETED;
+  }
   }
 
   const update = {
@@ -347,7 +396,22 @@ async function resumeSchedule(scheduleId, db) {
     throw new Error('Schedule not found or not recurring');
   }
 
-  const nextExecutionAt = getNextExecutionTime(schedule.cronExpression);
+  // Calculate next execution time based on calendar or cron
+  let nextExecutionAt = null;
+  if (schedule.useCalendar && schedule.calendarId) {
+    // Calendar-based: get next available slot
+    const { getNextAvailableSlot } = require('./calendar-queue-utils');
+    const calendar = await db.collection('calendars').findOne({ _id: schedule.calendarId });
+    if (calendar) {
+      const nextSlot = await getNextAvailableSlot(calendar, db);
+      if (nextSlot) {
+        nextExecutionAt = new Date(nextSlot.publishAt);
+      }
+    }
+  } else if (schedule.cronExpression) {
+    // Cron-based
+    nextExecutionAt = getNextExecutionTime(schedule.cronExpression);
+  }
 
   await db.collection('schedules').updateOne(
     { _id: new ObjectId(scheduleId) },
@@ -424,12 +488,40 @@ async function updateSchedule(scheduleId, updates, db) {
     updatedAt: new Date()
   };
 
+  // Handle calendar-based vs cron-based recurring schedules
+  if (updates.useCalendar !== undefined) {
+    allowedUpdates.useCalendar = updates.useCalendar;
+  }
+  
+  if (updates.calendarId !== undefined) {
+    allowedUpdates.calendarId = updates.calendarId ? new ObjectId(updates.calendarId) : null;
+    allowedUpdates.calendarName = updates.calendarName || '';
+    
+    // If switching to calendar-based, calculate next slot
+    if (updates.useCalendar && updates.calendarId) {
+      const { getNextAvailableSlot } = require('./calendar-queue-utils');
+      const calendar = await db.collection('calendars').findOne({ _id: new ObjectId(updates.calendarId) });
+      if (calendar) {
+        const nextSlot = await getNextAvailableSlot(calendar, db);
+        if (nextSlot) {
+          allowedUpdates.nextExecutionAt = new Date(nextSlot.publishAt);
+        }
+      }
+      // Clear cron expression when using calendar
+      allowedUpdates.cronExpression = null;
+    }
+  }
+
   // For recurring schedules, allow updating cron expression
   if (updates.cronExpression) {
     try {
       parser.parseExpression(updates.cronExpression);
       allowedUpdates.cronExpression = updates.cronExpression;
       allowedUpdates.nextExecutionAt = getNextExecutionTime(updates.cronExpression);
+      // Clear calendar when using cron
+      allowedUpdates.useCalendar = false;
+      allowedUpdates.calendarId = null;
+      allowedUpdates.calendarName = '';
     } catch (error) {
       throw new Error(`Invalid cron expression: ${error.message}`);
     }

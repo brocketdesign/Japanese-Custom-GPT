@@ -1486,6 +1486,32 @@ async function checkTaskStatus(taskId, fastify) {
     // This prevents duplicate images from appearing in the chat after page refresh.
     // If merge fails, the original image is saved as a fallback (handled in the merge error catches above).
 
+    // Calculate proper batch metadata for sequential tasks
+    // Sequential tasks generate one image per task, but they should be grouped as a batch
+    let batchId = task.placeholderId || task.taskId;
+    let batchIndex = arrayIndex;
+    let batchSize = processedImages.length;
+    
+    if (task.requiresSequentialGeneration || task.sequentialParentTaskId) {
+      // This is a sequential task - get proper batch info
+      if (task.sequentialExpectedCount) {
+        // Parent task (batchIndex 0)
+        batchSize = task.sequentialExpectedCount;
+        batchIndex = 0;
+        console.log(`📦 [checkTaskStatus] Sequential parent task - batchId=${batchId}, batchIndex=${batchIndex}, batchSize=${batchSize}`);
+      } else if (task.sequentialParentTaskId && typeof task.sequentialImageIndex === 'number') {
+        // Child task - use parent's placeholderId as batchId
+        const db = fastify.mongo.db;
+        const parentTask = await db.collection('tasks').findOne({ taskId: task.sequentialParentTaskId });
+        if (parentTask) {
+          batchId = parentTask.placeholderId || task.sequentialParentTaskId;
+          batchSize = parentTask.sequentialExpectedCount || 1;
+          batchIndex = task.sequentialImageIndex - 1; // Convert to 0-based (2->1, 3->2, etc.)
+          console.log(`📦 [checkTaskStatus] Sequential child task - batchId=${batchId}, batchIndex=${batchIndex}, batchSize=${batchSize}`);
+        }
+      }
+    }
+
     // Save the merged/processed image (or original if merge failed)
     const imageResult = await saveImageToDB({
       taskId: task.taskId,
@@ -1506,9 +1532,9 @@ async function checkTaskStatus(taskId, fastify) {
       mergeId: imageData.mergeId,
       shouldAutoMerge: task.shouldAutoMerge,
       // Pass batch metadata for slider reconstruction on refresh
-      batchId: task.placeholderId || task.taskId,
-      batchIndex: arrayIndex,
-      batchSize: processedImages.length,
+      batchId: batchId,
+      batchIndex: batchIndex,
+      batchSize: batchSize,
       imageModelId: task.imageModelId || null
     });
 
@@ -2593,6 +2619,8 @@ async function pollSequentialTasksWithFallback(taskId, allTaskIds, fastify, opti
               // Models without batch support generate each image as a separate task
               // We need to tell the frontend the correct batch size and index
               let sequentialBatchInfo = null;
+              let effectivePlaceholderId = taskDocAfter.placeholderId;
+              
               if (taskIds.length > 1) {
                 // This is part of a sequential multi-image batch
                 const taskIndex = taskIds.indexOf(tid);
@@ -2600,7 +2628,16 @@ async function pollSequentialTasksWithFallback(taskId, allTaskIds, fastify, opti
                   batchIndex: taskIndex >= 0 ? taskIndex : 0,
                   batchSize: taskIds.length
                 };
-                console.log(`[pollSequentialTasks] Sequential batch info for task ${tid}: index=${sequentialBatchInfo.batchIndex}, size=${sequentialBatchInfo.batchSize}`);
+                
+                // For child tasks (not the first task), use the parent's placeholderId
+                if (taskIndex > 0 && taskDocAfter.sequentialParentTaskId) {
+                  const parentTask = await tasksCollection.findOne({ taskId: taskDocAfter.sequentialParentTaskId });
+                  if (parentTask) {
+                    effectivePlaceholderId = parentTask.placeholderId || taskDocAfter.sequentialParentTaskId;
+                  }
+                }
+                
+                console.log(`[pollSequentialTasks] Sequential batch info for task ${tid}: index=${sequentialBatchInfo.batchIndex}, size=${sequentialBatchInfo.batchSize}, placeholderId=${effectivePlaceholderId}`);
               }
               
               await handleTaskCompletion(taskStatus, fastify, {
@@ -2608,7 +2645,7 @@ async function pollSequentialTasksWithFallback(taskId, allTaskIds, fastify, opti
                 translations: taskDocAfter.translations || translations,
                 userId: taskStatus.userId?.toString() || taskDocAfter.userId?.toString(),
                 chatId: taskDocAfter.chatId?.toString(),
-                placeholderId: taskDocAfter.placeholderId,
+                placeholderId: effectivePlaceholderId,
                 sequentialBatchInfo
               });
             }

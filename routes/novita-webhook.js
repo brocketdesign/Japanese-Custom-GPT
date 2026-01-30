@@ -254,6 +254,8 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
         // Build sequentialBatchInfo for proper batch grouping in carousel
         // Models without batch support generate each image as a separate task
         let sequentialBatchInfo = null;
+        let effectivePlaceholderId = taskDoc.placeholderId;
+        
         if (taskDoc.sequentialParentTaskId || taskDoc.sequentialExpectedCount) {
           // This is a sequential batch task - get batch info
           if (taskDoc.sequentialExpectedCount) {
@@ -272,10 +274,12 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
                 batchIndex: taskDoc.sequentialImageIndex - 1, // Convert to 0-based (2->1, 3->2, etc.)
                 batchSize: parentTask.sequentialExpectedCount
               };
+              // CRITICAL: Use parent's placeholderId as batchId for proper grouping
+              effectivePlaceholderId = parentTask.placeholderId || taskDoc.sequentialParentTaskId;
             }
           }
           if (sequentialBatchInfo) {
-            console.log(`[NovitaWebhook] Sequential batch info for task ${taskId}: index=${sequentialBatchInfo.batchIndex}, size=${sequentialBatchInfo.batchSize}`);
+            console.log(`[NovitaWebhook] Sequential batch info for task ${taskId}: index=${sequentialBatchInfo.batchIndex}, size=${sequentialBatchInfo.batchSize}, effectivePlaceholderId=${effectivePlaceholderId}`);
           }
         }
         
@@ -291,7 +295,7 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
           translations: translations,
           userId: userId,
           chatId: chatId,
-          placeholderId: taskDoc.placeholderId,
+          placeholderId: effectivePlaceholderId,
           sequentialBatchInfo
         });
       } catch (error) {

@@ -1081,14 +1081,16 @@ function setupChatInterface(chat, character, userChat, isNew) {
         const processedMessages = [];
         const batchedGroups = new Map(); // Track batches by batchId
         const processedIndices = new Set(); // Track which messages we've already processed
+        
+        // CRITICAL FIX: Store reference to filtered messages for consistent iteration
+        const filteredMessages = [...userChatMessages];
 
         // First pass: identify all batches and group messages
-        for (let i = 0; i < userChatMessages.length; i++) {
-            const msg = userChatMessages[i];
+        for (let i = 0; i < filteredMessages.length; i++) {
+            const msg = filteredMessages[i];
             
             // Check if this message is part of a batch (has batchId, batchIndex, batchSize)
             if (msg.batchId && msg.batchIndex !== undefined && msg.batchSize !== undefined && msg.batchSize > 1) {
-                console.log(`[displayChat] Found batched image: batchId=${msg.batchId}, index=${msg.batchIndex}/${msg.batchSize}`);
                 // This is a batched image - group it
                 if (!batchedGroups.has(msg.batchId)) {
                     batchedGroups.set(msg.batchId, {
@@ -1096,11 +1098,12 @@ function setupChatInterface(chat, character, userChat, isNew) {
                         batchSize: msg.batchSize,
                         images: [],
                         seenImageIds: new Set(),  // Track unique imageIds to prevent duplicates
-                        firstMessageIndex: i  // Position in original array
+                        seenBatchIndices: new Set(), // Track unique batchIndices to prevent duplicates
+                        firstMessageIndex: i  // Position in filtered array
                     });
                 }
                 
-                // Add this image to the batch, but skip duplicates by imageId
+                // Add this image to the batch, but skip duplicates by imageId AND batchIndex
                 const batch = batchedGroups.get(msg.batchId);
 
                 // Validate message has required data before adding to batch
@@ -1110,29 +1113,40 @@ function setupChatInterface(chat, character, userChat, isNew) {
                     continue;
                 }
 
-                if (msg.imageId && batch.seenImageIds.has(msg.imageId)) {
-                    console.log(`[displayChat] Skipping duplicate imageId ${msg.imageId} at batchIndex ${msg.batchIndex}`);
+                // Skip duplicates by checking BOTH imageId AND batchIndex
+                const isDuplicateImageId = msg.imageId && batch.seenImageIds.has(msg.imageId);
+                const isDuplicateBatchIndex = batch.seenBatchIndices.has(msg.batchIndex);
+                
+                if (isDuplicateImageId || isDuplicateBatchIndex) {
+                    // Silently skip duplicates (log only in dev mode if needed)
                 } else {
-                    if (msg.imageId) batch.seenImageIds.add(msg.imageId);
+                    batch.seenImageIds.add(msg.imageId);
+                    batch.seenBatchIndices.add(msg.batchIndex);
                     // Use batchIndex as position, but fall back to pushing if index already occupied
                     if (batch.images[msg.batchIndex] === undefined) {
                         batch.images[msg.batchIndex] = msg;
                     } else {
                         // Index collision - find next available slot
                         batch.images.push(msg);
-                        console.log(`[displayChat] Index collision at ${msg.batchIndex}, appended to end`);
                     }
                 }
                 processedIndices.add(i);
             }
         }
         
+        // Log batch summary once per batch (not per message)
+        batchedGroups.forEach((batch, batchId) => {
+            const validImages = batch.images.filter(img => img !== undefined);
+            console.log(`[displayChat] Found batch ${batchId}: ${validImages.length} unique images (expected ${batch.batchSize})`);
+        });
+        
         // Second pass: rebuild messages with batches converted to slider messages
+        // CRITICAL FIX: Use filteredMessages instead of userChat.messages to maintain index consistency
         userChatMessages = [];
         const batchesAdded = new Set(); // Track which batches we've already added
         
-        for (let i = 0; i < userChat.messages.length; i++) {
-            const msg = userChat.messages[i];
+        for (let i = 0; i < filteredMessages.length; i++) {
+            const msg = filteredMessages[i];
             
             // Skip if this message was part of a batch we've already processed
             if (processedIndices.has(i)) {
@@ -1142,10 +1156,11 @@ function setupChatInterface(chat, character, userChat, isNew) {
                     const batch = batchedGroups.get(msg.batchId);
                     if (batch) {
                         // Add the entire batch as a single slider message
+                        const sliderImages = batch.images.filter(img => img !== undefined);
                         const sliderMessage = {
                             role: "assistant",
                             type: "bot-image-slider",
-                            sliderImages: batch.images.filter(img => img !== undefined), // Filter out any undefined entries
+                            sliderImages: sliderImages,
                             batchId: batch.batchId,
                             batchSize: batch.batchSize,
                             createdAt: msg.createdAt,
@@ -1153,7 +1168,7 @@ function setupChatInterface(chat, character, userChat, isNew) {
                         };
                         userChatMessages.push(sliderMessage);
                         batchesAdded.add(msg.batchId);
-                        console.log(`[displayChat] Reconstructed slider for batchId ${msg.batchId} with ${sliderMessage.sliderImages.length} images (expected ${batch.batchSize})`);
+                        console.log(`[displayChat] Reconstructed slider for batchId ${msg.batchId} with ${sliderImages.length} images`);
                     }
                 }
                 // Skip adding individual batched messages
@@ -1403,6 +1418,7 @@ function setupChatInterface(chat, character, userChat, isNew) {
                     }
                     
                     let actions = chatMessage.actions || null;
+                    console.log(`[displayChat] Fetching merged face for ID: ${mergeId}, design step: ${designStep}`);
                     const mergeData = await getImageUrlById(mergeId, designStep, thumbnail, actions);
                     if(!mergeData){
                         continue
@@ -1422,6 +1438,7 @@ function setupChatInterface(chat, character, userChat, isNew) {
                     
                     // This ensures consistent NSFW blur logic
                     let actions = chatMessage.actions || null;
+                    console.log(`[displayChat] Fetching image for ID: ${imageId}, design step: ${designStep}`);
                     const imageData = await getImageUrlById(imageId, designStep, thumbnail, actions);
                     if(!imageData){
                         continue

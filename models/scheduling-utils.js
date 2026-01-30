@@ -338,8 +338,6 @@ async function markRecurringScheduleExecuted(scheduleId, result, db) {
     // No next execution available (calendar has no more slots)
     newStatus = SCHEDULE_STATUSES.COMPLETED;
   }
-  }
-
   const update = {
     executionCount: newExecutionCount,
     lastExecutedAt: new Date(),

@@ -312,14 +312,113 @@ class SchedulesDashboard {
     document.querySelectorAll('.character-selection-item').forEach(item => {
       item.classList.remove('active');
     });
-    
+
     // Add active class to clicked item
     if (itemElement) {
       itemElement.classList.add('active');
     }
-    
+
     // Store selected character
     this.selectedCharacterId = characterId;
+
+    // If character has a model, add it to the dropdown and select it
+    if (characterId) {
+      const character = this.userCharacters.find(c => c.id === characterId);
+      console.log('[Schedule] Selected character:', character);
+      console.log('[Schedule] Character modelId:', character?.modelId);
+      console.log('[Schedule] Character modelName:', character?.modelName);
+      if (character && character.modelId) {
+        this.addCharacterModelToDropdown(character);
+      }
+    } else {
+      // No character selected - remove character model from dropdown
+      this.removeCharacterModelFromDropdown();
+    }
+  }
+
+  /**
+   * Add a character's model to the top of the model dropdown and select it
+   */
+  addCharacterModelToDropdown(character) {
+    if (!character || !character.modelId) return;
+
+    const modelDropdown = document.getElementById('modelDropdown');
+    if (!modelDropdown) return;
+
+    let modelId = character.modelId;
+    const modelName = character.modelName || modelId;
+
+    // Check if this is a numeric ID (SD/CivitAI model) - needs sd- prefix
+    // The API expects SD models to be prefixed with "sd-"
+    if (/^\d+$/.test(modelId)) {
+      modelId = `sd-${modelId}`;
+      console.log('[Schedule] Detected SD model, using prefixed ID:', modelId);
+    }
+
+    // Check if the model already exists in the dropdown
+    let existingItem = modelDropdown.querySelector(`.model-dropdown-item[data-value="${modelId}"]`);
+
+    if (existingItem) {
+      // Model exists in the list - just select it
+      const existingName = existingItem.dataset.name;
+      console.log('[Schedule] Found existing model in dropdown:', modelId, existingName);
+      this.selectModel(modelId, existingName);
+    } else {
+      // Model not in the standard list - add it as a character model
+      console.log('[Schedule] Adding character model to dropdown:', modelId, modelName);
+
+      // Remove any previous character model items
+      this.removeCharacterModelFromDropdown();
+
+      // Create a header for character model
+      const characterHeader = document.createElement('div');
+      characterHeader.className = 'model-dropdown-header character-model';
+      characterHeader.innerHTML = '<span>Character Model</span>';
+      modelDropdown.insertBefore(characterHeader, modelDropdown.firstChild);
+
+      // Create the model item
+      const modelItem = document.createElement('div');
+      modelItem.className = 'model-dropdown-item character-model-item';
+      modelItem.dataset.value = modelId;
+      modelItem.dataset.name = modelName;
+      modelItem.innerHTML = `
+        <div class="model-item-icon" style="background: linear-gradient(135deg, #ec4899, #8b5cf6);">
+          <i class="bi bi-person-hearts"></i>
+        </div>
+        <div class="model-item-info">
+          <span class="model-item-name">${this.escapeHtml(modelName)}</span>
+          <span class="model-item-badge" style="background: linear-gradient(135deg, #ec4899, #8b5cf6);">Character</span>
+        </div>
+        <i class="bi bi-check-lg model-check"></i>
+      `;
+
+      // Add click handler
+      modelItem.addEventListener('click', () => {
+        this.selectModel(modelId, modelName);
+        document.getElementById('modelDropdown').classList.remove('show');
+        document.getElementById('modelSelectorBtn').classList.remove('open');
+      });
+
+      // Insert after the header
+      modelDropdown.insertBefore(modelItem, characterHeader.nextSibling);
+
+      // Select this model
+      this.selectModel(modelId, modelName);
+    }
+  }
+
+  /**
+   * Remove character model items from dropdown
+   */
+  removeCharacterModelFromDropdown() {
+    const modelDropdown = document.getElementById('modelDropdown');
+    if (!modelDropdown) return;
+
+    const characterHeader = modelDropdown.querySelector('.model-dropdown-header.character-model');
+    if (characterHeader) characterHeader.remove();
+
+    const characterItems = modelDropdown.querySelectorAll('.character-model-item');
+    characterItems.forEach(item => item.remove());
   }
 
   async loadCustomPrompts() {
@@ -1994,17 +2093,21 @@ class SchedulesDashboard {
     testRunError.style.display = 'none';
 
     try {
+      const requestBody = {
+        prompt,
+        model,
+        actionType,
+        useCustomPrompts,
+        customPromptIds,
+        characterId: this.selectedCharacterId || null
+      };
+      console.log('[Schedule] Test run request:', requestBody);
+      console.log('[Schedule] Model being sent:', model);
+
       const response = await fetch('/api/schedules/test-run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt,
-          model,
-          actionType,
-          useCustomPrompts,
-          customPromptIds,
-          characterId: this.selectedCharacterId || null
-        })
+        body: JSON.stringify(requestBody)
       });
 
       const data = await response.json();

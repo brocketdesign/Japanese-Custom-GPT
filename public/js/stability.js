@@ -243,6 +243,83 @@ const trasckedImageTitles = new Set();
 const imageBatches = new Map();
 const BATCH_TIMEOUT = 30000; // 30 seconds timeout to wait for batch images
 
+// Track if we've already auto-set a background for this session
+let autoBackgroundSetForUserChatId = null;
+
+/**
+ * Reset the auto-background tracking state
+ * Call this when starting a new chat session
+ */
+window.resetAutoBackgroundState = function() {
+    autoBackgroundSetForUserChatId = null;
+    console.log('[autoSetChatBackground] State reset for new chat session');
+};
+
+/**
+ * Check if the current chat has a background image set
+ * @returns {boolean} - true if background is set, false otherwise
+ */
+function hasChatBackgroundSet() {
+    const bgImage = $('#chat-wrapper').css('background-image');
+    // Check if background-image is set and not 'none' or empty
+    return bgImage && bgImage !== 'none' && bgImage !== '' && bgImage !== 'url("")';
+}
+
+/**
+ * Auto-set the first SFW generated image as chat background
+ * Only sets if no background exists and the image is not NSFW
+ * @param {string} imageId - The image ID
+ * @param {string} imageUrl - The image URL
+ * @param {boolean} imageNsfw - Whether the image is NSFW
+ * @param {string} userChatId - The user chat ID
+ */
+function autoSetChatBackgroundIfNeeded(imageId, imageUrl, imageNsfw, userChatId) {
+    // Skip if image is NSFW
+    if (imageNsfw) {
+        console.log('[autoSetChatBackground] Skipping NSFW image');
+        return;
+    }
+
+    // Skip if we've already auto-set a background for this userChatId
+    if (autoBackgroundSetForUserChatId === userChatId) {
+        console.log('[autoSetChatBackground] Already auto-set background for this chat session');
+        return;
+    }
+
+    // Skip if background is already set
+    if (hasChatBackgroundSet()) {
+        console.log('[autoSetChatBackground] Background already set, skipping');
+        return;
+    }
+
+    console.log(`[autoSetChatBackground] Setting first SFW image as background: ${imageId}`);
+
+    // Mark that we've auto-set a background for this session
+    autoBackgroundSetForUserChatId = userChatId;
+
+    // Save to database via API and update UI
+    $.ajax({
+        url: `/api/user-chat/${userChatId}/background-image`,
+        type: 'PUT',
+        xhrFields: {
+            withCredentials: true
+        },
+        contentType: 'application/json',
+        data: JSON.stringify({ imageId, imageUrl }),
+        success: function(response) {
+            console.log('[autoSetChatBackground] Background auto-set successfully');
+            if (typeof window.updateChatBackgroundImage === 'function') {
+                window.updateChatBackgroundImage(imageUrl);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('[autoSetChatBackground] Failed to auto-set background:', error);
+            // Reset the flag so it can try again with the next image
+            autoBackgroundSetForUserChatId = null;
+        }
+    });
+}
+
 window.generateImage = async function(data, disableCompletion = false) {
     console.log('[generateImage] Called with data:', JSON.stringify({
         imageId: data?.imageId || data?.id,
@@ -353,7 +430,7 @@ window.generateImage = async function(data, disableCompletion = false) {
 // Display a single image (original behavior)
 function displaySingleImage(imageData, disableCompletion = false) {
     const { imageId, imageUrl, titleText, imagePrompt, imageNsfw, isUpscaled, isMergeFace, userChatId } = imageData;
-    
+
     const img = document.createElement('img');
     img.setAttribute('src', imageUrl);
     img.setAttribute('alt', titleText);
@@ -365,6 +442,9 @@ function displaySingleImage(imageData, disableCompletion = false) {
     img.setAttribute('data-isMergeFace', !!isMergeFace);
 
     displayMessage('bot-image', img, userChatId);
+
+    // Auto-set first SFW image as chat background if no background exists
+    autoSetChatBackgroundIfNeeded(imageId, imageUrl, imageNsfw, userChatId);
 
     // Check if the image has been added successfully
     setTimeout(() => {
@@ -385,18 +465,25 @@ function displaySingleImage(imageData, disableCompletion = false) {
 // Display batched images in a slider
 function displayBatchedImages(batch) {
     const { images, userChatId } = batch;
-    
+
     if (images.length === 0) return;
-    
+
     // Sort images by their batch index
     images.sort((a, b) => a.batchIndex - b.batchIndex);
-    
+
     // Use first image for the main message context
     const firstImage = images[0];
-    
+
     // Create the slider container
     displayMessage('bot-image-slider', images, userChatId);
-    
+
+    // Auto-set first SFW image as chat background if no background exists
+    // Find the first SFW image in the batch
+    const firstSfwImage = images.find(img => !img.imageNsfw);
+    if (firstSfwImage) {
+        autoSetChatBackgroundIfNeeded(firstSfwImage.imageId, firstSfwImage.imageUrl, firstSfwImage.imageNsfw, userChatId);
+    }
+
     // Trigger chat completion only once for the batch
     if (!trasckedImageTitles.has(firstImage.titleText)) {
         trasckedImageTitles.add(firstImage.titleText);

@@ -211,6 +211,11 @@ $(document).ready(async function() {
         thumbNavGalleryLoading = false;
         thumbNavGalleryImageIds.clear();
 
+        // Reset auto-background state for new chat
+        if (typeof window.resetAutoBackgroundState === 'function') {
+            window.resetAutoBackgroundState();
+        }
+
         postChatData(fetch_chatId, fetch_userId, userChatId, fetch_reset, callback);
     }
     

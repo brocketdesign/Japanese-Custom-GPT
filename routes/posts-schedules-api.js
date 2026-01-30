@@ -9,6 +9,7 @@
  */
 
 const { ObjectId } = require('mongodb');
+const { MODEL_CONFIGS } = require('../models/admin-image-test-utils');
 
 const {
   POST_TYPES,
@@ -1308,21 +1309,67 @@ Return ONLY the caption text with hashtags, nothing else.`;
           name: 1,
           chatImageUrl: 1,
           imageStyle: 1,
-          gender: 1
+          gender: 1,
+          modelId: 1,
+          imageModel: 1
         })
         .sort({ createdAt: -1 })
         .limit(50) // Limit to 50 characters for performance
         .toArray();
 
+      // Collect unique modelIds that need name lookup
+      const modelIdsToLookup = new Set();
+      characters.forEach(char => {
+        const modelId = char.modelId || char.imageModel;
+        if (modelId && !MODEL_CONFIGS[modelId]) {
+          modelIdsToLookup.add(modelId);
+        }
+      });
+
+      // Look up custom model names from myModels collection
+      let customModelNames = {};
+      if (modelIdsToLookup.size > 0) {
+        const customModels = await db.collection('myModels')
+          .find({ modelId: { $in: Array.from(modelIdsToLookup) } })
+          .project({ modelId: 1, name: 1 })
+          .toArray();
+        customModels.forEach(m => {
+          customModelNames[m.modelId] = m.name;
+        });
+      }
+
+      // Helper to get model name
+      const getModelName = (modelId) => {
+        if (!modelId) return null;
+        // First check MODEL_CONFIGS
+        if (MODEL_CONFIGS[modelId]) {
+          return MODEL_CONFIGS[modelId].name;
+        }
+        // Then check custom models from DB
+        if (customModelNames[modelId]) {
+          return customModelNames[modelId];
+        }
+        // Fallback to modelId itself
+        return modelId;
+      };
+
       // Map characters and add isFavorite flag
-      const mappedCharacters = characters.map(char => ({
-        id: char._id.toString(),
-        name: char.name || 'Unnamed Character',
-        imageUrl: char.chatImageUrl || null,
-        imageStyle: char.imageStyle || null,
-        gender: char.gender || null,
-        isFavorite: favoriteIds.has(char._id.toString())
-      }));
+      const mappedCharacters = characters.map(char => {
+        const modelId = char.modelId || null;
+        // imageModel is the model name, use it directly if available
+        // Otherwise look up the name from modelId
+        const modelName = char.imageModel || getModelName(modelId);
+        return {
+          id: char._id.toString(),
+          name: char.name || 'Unnamed Character',
+          imageUrl: char.chatImageUrl || null,
+          imageStyle: char.imageStyle || null,
+          gender: char.gender || null,
+          modelId: modelId,
+          modelName: modelName,
+          isFavorite: favoriteIds.has(char._id.toString())
+        };
+      });
       
       // Sort: favorites first, then by name
       mappedCharacters.sort((a, b) => {

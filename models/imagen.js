@@ -12,6 +12,17 @@ const sharp = require('sharp');
 const { time } = require('console');
 const { MODEL_CONFIGS, modelRequiresSequentialGeneration } = require('./admin-image-test-utils');
 
+// ===== SAFEGUARDS FOR IMAGE MESSAGE HANDLING =====
+// Maximum number of image messages allowed per chat to prevent database bloat
+const MAX_IMAGE_MESSAGES_PER_CHAT = 500;
+
+// In-memory lock to prevent race conditions when adding image messages
+// Key: `${userChatId}:${batchId}:${batchIndex}` or `${userChatId}:${imageId}`
+const imageMessageLocks = new Map();
+
+// Lock timeout to prevent stuck locks (5 seconds)
+const LOCK_TIMEOUT_MS = 5000;
+
 
 const default_prompt = {
     sdxl: {
@@ -1011,26 +1022,63 @@ function getTitleString(title) {
 
 // Add this helper function before saveImageToDB
 async function addImageMessageToChatHelper(userDataCollection, userId, userChatId, imageUrl, imageId, prompt, title, nsfw, isMerged, mergeId, originalImageUrl, batchId = null, batchIndex = null, batchSize = null) {
+  const titleString = getTitleString(title);
+  const imageIdStr = imageId.toString();
+
+  // Validate critical inputs
+  if (!imageUrl) {
+    console.error(`❌ [addImageMessageToChatHelper] VALIDATION FAILED: imageUrl is ${imageUrl}`);
+    return false;
+  }
+  if (!userChatId) {
+    console.error(`❌ [addImageMessageToChatHelper] VALIDATION FAILED: userChatId is ${userChatId}`);
+    return false;
+  }
+
+  // ===== SAFEGUARD 1: In-memory lock to prevent race conditions =====
+  const lockKey = batchId && batchIndex !== null
+    ? `${userChatId}:batch:${batchId}:${batchIndex}`
+    : `${userChatId}:image:${imageIdStr}`;
+
+  // Check if lock exists and is still valid
+  const existingLock = imageMessageLocks.get(lockKey);
+  if (existingLock) {
+    const lockAge = Date.now() - existingLock.timestamp;
+    if (lockAge < LOCK_TIMEOUT_MS) {
+      console.log(`🔒 [addImageMessageToChatHelper] Lock exists for ${lockKey}, skipping (age: ${lockAge}ms)`);
+      return true; // Already being processed
+    }
+    // Lock expired, remove it
+    imageMessageLocks.delete(lockKey);
+  }
+
+  // Acquire lock
+  imageMessageLocks.set(lockKey, { timestamp: Date.now() });
+
   try {
-    const titleString = getTitleString(title);
-    const imageIdStr = imageId.toString();
-
-    // Validate critical inputs
-    if (!imageUrl) {
-      console.error(`❌ [addImageMessageToChatHelper] VALIDATION FAILED: imageUrl is ${imageUrl}`);
-      return false;
-    }
-    if (!userChatId) {
-      console.error(`❌ [addImageMessageToChatHelper] VALIDATION FAILED: userChatId is ${userChatId}`);
-      return false;
-    }
-
     console.log(`📝 [addImageMessageToChatHelper] START:`);
     console.log(`   imageId=${imageIdStr}`);
     console.log(`   batchId=${batchId}, batchIndex=${batchIndex}/${batchSize}`);
     console.log(`   isMerged=${isMerged}, mergeId=${mergeId || 'none'}`);
     console.log(`   imageUrl=${imageUrl?.substring(0, 60)}...`);
-    
+
+    // ===== SAFEGUARD 2: Check image message count limit =====
+    const chatDoc = await userDataCollection.findOne({
+      userId: new ObjectId(userId),
+      _id: new ObjectId(userChatId)
+    });
+
+    if (chatDoc && chatDoc.messages) {
+      const imageMessageCount = chatDoc.messages.filter(m =>
+        m.type === 'image' || m.type === 'mergeFace' || m.type === 'bot-image-slider'
+      ).length;
+
+      if (imageMessageCount >= MAX_IMAGE_MESSAGES_PER_CHAT) {
+        console.warn(`⚠️ [addImageMessageToChatHelper] Chat ${userChatId} has reached max image limit (${imageMessageCount}/${MAX_IMAGE_MESSAGES_PER_CHAT}), skipping`);
+        return false;
+      }
+    }
+
     const imageMessage = {
       role: "assistant",
       content: titleString || prompt,
@@ -1058,51 +1106,40 @@ async function addImageMessageToChatHelper(userDataCollection, userId, userChatI
       imageMessage.mergeId = mergeId;
       imageMessage.originalImageUrl = originalImageUrl;
     }
-    
-    // For batched images, check if THIS SPECIFIC batchIndex already exists
-    // This allows the same imageId to appear multiple times in different batch slots
-    // CRITICAL FIX: Use $elemMatch to ensure both conditions match on the SAME array element
-    let duplicateCheckQuery;
+
+    // ===== SAFEGUARD 3: Atomic duplicate check + insert using findOneAndUpdate =====
+    // Build the filter to check for duplicates atomically
+    let atomicFilter;
     if (batchId && batchIndex !== null) {
-      duplicateCheckQuery = {
+      // For batched images: ensure no message with same batchId+batchIndex exists
+      atomicFilter = {
         userId: new ObjectId(userId),
         _id: new ObjectId(userChatId),
-        messages: { $elemMatch: { batchId: batchId, batchIndex: batchIndex } }
+        messages: { $not: { $elemMatch: { batchId: batchId, batchIndex: batchIndex } } }
       };
     } else {
-      duplicateCheckQuery = {
+      // For non-batched: ensure no message with same imageId exists
+      atomicFilter = {
         userId: new ObjectId(userId),
         _id: new ObjectId(userChatId),
-        'messages.imageId': imageIdStr
+        'messages.imageId': { $ne: imageIdStr }
       };
     }
-    
-    // Check if this specific message already exists
-    const existingDoc = await userDataCollection.findOne(duplicateCheckQuery);
-    if (existingDoc) {
-      console.log(`💾 [addImageMessageToChatHelper] Message already exists for ${batchId ? `batchIndex=${batchIndex}` : `imageId=${imageIdStr}`}, skipping duplicate`);
-      return true;
-    }
-    
-    // Add the message
+
+    // Atomic update: only adds if filter matches (no duplicate exists)
     const result = await userDataCollection.updateOne(
-      { userId: new ObjectId(userId), _id: new ObjectId(userChatId) },
+      atomicFilter,
       { $push: { messages: imageMessage } }
     );
+
+    if (result.matchedCount === 0) {
+      console.log(`💾 [addImageMessageToChatHelper] Message already exists (atomic check) for ${batchId ? `batchIndex=${batchIndex}` : `imageId=${imageIdStr}`}, skipping duplicate`);
+      return true;
+    }
 
     if (result.modifiedCount === 0) {
       console.error(`❌ [addImageMessageToChatHelper] Failed to add message - document not found for userChatId: ${userChatId}`);
       return false;
-    }
-
-    // DEBUG: Log all batch messages currently in the database after this save
-    const afterSave = await userDataCollection.findOne({ userId: new ObjectId(userId), _id: new ObjectId(userChatId) });
-    if (afterSave && afterSave.messages) {
-      const batchMessages = afterSave.messages.filter(m => m.batchId === batchId);
-      console.log(`📊 [addImageMessageToChatHelper] After save - batch messages in DB for batchId=${batchId}:`);
-      batchMessages.forEach((m, idx) => {
-        console.log(`   [${idx}] imageId=${m.imageId}, batchIndex=${m.batchIndex}`);
-      });
     }
 
     console.log(`💾 [addImageMessageToChatHelper] Successfully added message for imageId: ${imageIdStr}, batchIndex=${batchIndex}/${batchSize}`);
@@ -1110,6 +1147,9 @@ async function addImageMessageToChatHelper(userDataCollection, userId, userChatI
   } catch (error) {
     console.error(`❌ [addImageMessageToChatHelper] Error adding image message (batchIndex=${batchIndex}):`, error.message);
     return false;
+  } finally {
+    // Always release lock
+    imageMessageLocks.delete(lockKey);
   }
 }
 

@@ -6298,8 +6298,7 @@ color: #fff !important;
     background: var(--primary-gradient, linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%));
     border: none;
     color: #ffffff;
-    top: 12px !important;
-    right: 12px !important;
+    top: 8px !important;
     box-shadow: 0 2px 8px rgba(130, 64, 255, 0.3);
 }
 

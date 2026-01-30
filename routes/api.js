@@ -561,17 +561,6 @@ fastify.post('/api/deprecated/init-chat', async (request, reply) => {
                 response.userChat = userChatDocument;
                 response.isNew = false;
                 
-                // Log batch metadata in messages for debugging
-                if (userChatDocument.messages && userChatDocument.messages.length > 0) {
-                    const batchedMessages = userChatDocument.messages.filter(m => m.batchId);
-                    if (batchedMessages.length > 0) {
-                        console.log(`[/api/chat/] Returning userChat with ${batchedMessages.length} batched image messages:`);
-                        batchedMessages.forEach((msg, idx) => {
-                            console.log(`  Message ${idx}: batchId=${msg.batchId}, batchIndex=${msg.batchIndex}, batchSize=${msg.batchSize}, imageId=${msg.imageId}`);
-                        });
-                    }
-                }
-                
                 // check for a persona id
                 try {
                     if(userChatDocument.persona){

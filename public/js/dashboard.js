@@ -1170,10 +1170,19 @@ window.updateChatImage = function(el) {
     data: { imageUrl },
     success: function(response) {
       updateChatBackgroundImage(imageUrl);
+      updateChatbotImageSrc(imageUrl);
     }
   });
 }
 
+window.updateChatbotImageSrc = function(newImageUrl) {
+  $('.chatbot-image-chat').each(function() {
+    const currentSrc = $(this).attr('src');
+    if (currentSrc !== newImageUrl) {
+      $(this).attr('src', newImageUrl);
+    }
+  });
+}
 window.updateUserChatBackgroundImage = function(el) {
   const userChatId = $(el).data('user-chat-id');
   const imageUrl = $(el).data('img');

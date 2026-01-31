@@ -232,6 +232,7 @@
         </div>
 
         <!-- Character Profile Scripts (only loaded when chat exists) -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
         <script src="/js/favorites.js"></script>
         <script src="/js/character-followers.js"></script>
@@ -519,19 +520,14 @@
 
 </div>
 
-    <link rel="stylesheet" href="/css/character-gallery.css">
+<link rel="stylesheet" href="/css/character-gallery.css">
 <script src="/js/dashboard-category.js"></script>
-{{> dashboard-footer}}
 
 <!-- Character Gallery Scripts -->
 <script src="/js/favorites.js"></script>
 <script src="/js/gallery-like.js"></script>
 <script src="/js/modules/ui-helpers.js"></script>
 
-<script src="/js/modules/popular-chats.js"></script>
-<script src="/js/modules/latest-chats.js"></script>
-<script src="/js/modules/chat-filters.js"></script>
-<script src="/js/chat-list.js"></script>
 
 <script>
 $(document).ready(function() {
@@ -596,8 +592,12 @@ window.translations.loading = '{{translations.loading}}';
         </div>
     {{/if}}
 </div>
-
 {{> dashboard-footer}}
+
+<script src="/js/modules/popular-chats.js"></script>
+<script src="/js/modules/latest-chats.js"></script>
+<script src="/js/modules/chat-filters.js"></script>
+<script src="/js/chat-list.js"></script>
 
 </body>
 </html>

@@ -537,38 +537,6 @@
         </section>
     </div>
 
-    <!-- Bottom Navigation -->
-    <nav class="bottom-nav">
-        <div class="bottom-nav-inner">
-            <a href="/dashboard" class="nav-item">
-                <i class="bi bi-house"></i>
-                <span>{{translations.home}}</span>
-            </a>
-            <a href="/chat" class="nav-item">
-                <i class="bi bi-chat-dots"></i>
-                <span>{{translations.chats}}</span>
-            </a>
-            <a href="/dashboard/generation" class="nav-item nav-item-create">
-                <i class="bi bi-plus-lg"></i>
-            </a>
-            <a href="/character" class="nav-item">
-                <i class="bi bi-grid-3x3-gap"></i>
-                <span>{{translations.explore}}</span>
-            </a>
-            {{#if user.isTemporary}}
-            <a href="#" class="nav-item" onclick="openLoginForm(); return false;">
-                <i class="bi bi-person-circle"></i>
-                <span>{{translations.signIn}}</span>
-            </a>
-            {{else}}
-            <a href="/user/{{user._id}}" class="nav-item">
-                <i class="bi bi-person-circle"></i>
-                <span>{{translations.avatar.profile}}</span>
-            </a>
-            {{/if}}
-        </div>
-    </nav>
-
     <!-- Toast Container -->
     <div class="toast-container" id="toast-container"></div>
 

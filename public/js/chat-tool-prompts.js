@@ -122,14 +122,24 @@ class PromptManager {
                                             maxlength="500" 
                                             placeholder="${placeholderText}"
                                         ></textarea>
-                                        <button 
-                                            type="button" 
-                                            class="btn btn-sm position-relative w-100 m-auto mt-1" 
-                                            id="enhancePromptBtn"
-                                            title="Enhance your description with AI"
-                                        >
-                                            ${enhanceButtonText}
-                                        </button>
+                                        <div class="d-flex gap-2 mt-1">
+                                            <button 
+                                                type="button" 
+                                                class="btn btn-sm flex-grow-1" 
+                                                id="enhancePromptBtn"
+                                                title="Enhance your description with AI"
+                                            >
+                                                ${enhanceButtonText}
+                                            </button>
+                                            <button 
+                                                type="button" 
+                                                class="btn btn-sm btn-outline-danger" 
+                                                id="clearPromptBtn"
+                                                title="Clear the text area"
+                                            >
+                                                <i class="bi bi-eraser"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                     <div class="form-text d-flex justify-content-between align-items-center">
                                         <span><span id="customCharCount">0</span>/500 characters</span>
@@ -281,6 +291,14 @@ class PromptManager {
                     enhanceBtn.prop('disabled', false);
                     enhanceBtn.html(originalBtnText);
                 }
+            });
+
+            // Clear button click
+            const clearBtn = $('#clearPromptBtn');
+            clearBtn.on('click', function() {
+                textarea.val('');
+                charCount.text('0');
+                localStorage.removeItem(lastPromptKey);
             });
 
             // Style tag buttons click

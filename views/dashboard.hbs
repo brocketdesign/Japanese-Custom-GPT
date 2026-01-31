@@ -22,18 +22,15 @@
 
     body {
         background: var(--dark-bg);
-        background-image: 
-            radial-gradient(ellipse at top left, rgba(181, 138, 254, 0.15) 0%, transparent 50%),
-            radial-gradient(ellipse at bottom right, rgba(108, 92, 231, 0.15) 0%, transparent 50%);
         min-height: 100vh;
         color: var(--text-primary);
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
     }
 
     .dashboard-container {
-        max-width: 1200px;
         margin: 0 auto;
         padding: 20px 16px 100px;
+        background: var(--dark-bg);
     }
 
     /* Welcome Section */
@@ -71,32 +68,35 @@
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-        margin-bottom: 24px;
+        gap: 10px;
+        margin-bottom: 20px;
     }
 
     @media (min-width: 768px) {
         .stats-grid {
             grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
+            gap: 12px;
         }
     }
 
     .stat-card {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
         background: var(--card-bg);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         border: 1px solid var(--card-border);
-        border-radius: 20px;
-        padding: 20px;
+        border-radius: 14px;
+        padding: 14px;
         position: relative;
         overflow: hidden;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
     .stat-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     }
 
     .stat-card::before {
@@ -106,23 +106,27 @@
         left: 0;
         right: 0;
         height: 3px;
-        border-radius: 20px 20px 0 0;
+        border-radius: 14px 14px 0 0;
     }
-
+    @media (max-width:576px){
+        .stat-label {
+            display: none!important;
+        }
+    }
     .stat-card.purple::before { background: var(--primary-gradient); }
     .stat-card.blue::before { background: var(--secondary-gradient); }
     .stat-card.green::before { background: var(--success-gradient); }
     .stat-card.orange::before { background: var(--warning-gradient); }
 
     .stat-icon {
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.3rem;
-        margin-bottom: 12px;
+        font-size: 1.1rem;
+        margin-bottom: 8px;
     }
 
     .stat-card.purple .stat-icon { background: rgba(181, 138, 254, 0.2); color: #b58afe; }
@@ -131,14 +135,17 @@
     .stat-card.orange .stat-icon { background: rgba(253, 203, 110, 0.2); color: #fdcb6e; }
 
     .stat-value {
-        font-size: 1.75rem;
+        font-size: 1.4rem;
         font-weight: 700;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
+        line-height: 1;
     }
 
     .stat-label {
-        font-size: 0.85rem;
+        font-size: 0.75rem;
         color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
     }
 
     /* Quick Actions - Modern App Grid */
@@ -721,7 +728,7 @@
                     <i class="bi bi-person-plus"></i>
                     <span>{{translations.avatar.createCharacter}}</span>
                 </a>
-                <a href="/dashboard/templates" class="quick-action-btn orange">
+                <a href="/dashboard/templates" class="d-none quick-action-btn orange">
                     <i class="bi bi-file-text"></i>
                     <span>{{translations.avatar.promptTemplates}}</span>
                 </a>
@@ -742,7 +749,11 @@
                     <i class="bi bi-calendar-event"></i>
                     <span>{{translations.avatar.mySchedules}}</span>
                 </a>
-                <a href="/subscriptions" class="quick-action-btn">
+                <a href="/history" class="quick-action-btn orange">
+                    <i class="bi bi-clock-history"></i>
+                    <span>{{translations.history}}</span>
+                </a>
+                <a href="/subscriptions" class="d-none quick-action-btn">
                     <i class="bi bi-heart"></i>
                     <span>{{translations.avatar.mySubscriptions}}</span>
                 </a>
@@ -780,35 +791,7 @@
             </div>
         </section>
 
-        <!-- Quick Actions - Creator Section -->
-        <section class="quick-actions-section">
-            <div class="quick-actions-header">
-                <span class="quick-actions-title">{{translations.avatar.creator}}</span>
-                {{#unless user.isCreator}}
-                <a href="/creators/apply" class="section-link" style="font-size: 0.75rem;">
-                    {{translations.avatar.becomeCreator}} <i class="bi bi-chevron-right"></i>
-                </a>
-                {{/unless}}
-            </div>
-            <div class="quick-actions">
-                <a href="{{#if user.isCreator}}/dashboard/earnings{{else}}/creators/apply{{/if}}" class="quick-action-btn green">
-                    <i class="bi bi-wallet2"></i>
-                    <span>{{translations.avatar.earnings}}</span>
-                </a>
-                <a href="{{#if user.isCreator}}/dashboard/analytics{{else}}/creators/apply{{/if}}" class="quick-action-btn blue">
-                    <i class="bi bi-graph-up"></i>
-                    <span>{{translations.avatar.analytics}}</span>
-                </a>
-                <a href="{{#if user.isCreator}}/dashboard/tiers{{else}}/creators/apply{{/if}}" class="quick-action-btn orange">
-                    <i class="bi bi-layers"></i>
-                    <span>{{translations.avatar.tiers}}</span>
-                </a>
-                <a href="{{#if user.isCreator}}/dashboard/subscribers{{else}}/creators/apply{{/if}}" class="quick-action-btn pink">
-                    <i class="bi bi-people-fill"></i>
-                    <span>{{translations.avatar.subscribers}}</span>
-                </a>
-            </div>
-        </section>
+        {{!-- Creator Section - Hidden (Coming Soon) --}}
 
         <!-- Chats Section -->
         <section class="chats-section">
@@ -856,38 +839,6 @@
             </div>
         </section>
     </div>
-
-    <!-- Bottom Navigation -->
-    <nav class="bottom-nav">
-        <div class="bottom-nav-inner">
-            <a href="/dashboard" class="nav-item active">
-                <i class="bi bi-house"></i>
-                <span>{{translations.home}}</span>
-            </a>
-            <a href="/chat" class="nav-item">
-                <i class="bi bi-chat-dots"></i>
-                <span>{{translations.chats}}</span>
-            </a>
-            <a href="/dashboard/generation" class="nav-item nav-item-create">
-                <i class="bi bi-plus-lg"></i>
-            </a>
-            <a href="/character" class="nav-item">
-                <i class="bi bi-grid-3x3-gap"></i>
-                <span>{{translations.explore}}</span>
-            </a>
-            {{#if user.isTemporary}}
-            <a href="#" class="nav-item" onclick="openLoginForm(); return false;">
-                <i class="bi bi-person-circle"></i>
-                <span>{{translations.signIn}}</span>
-            </a>
-            {{else}}
-            <a href="/user/{{user._id}}" class="nav-item">
-                <i class="bi bi-person-circle"></i>
-                <span>{{translations.avatar.profile}}</span>
-            </a>
-            {{/if}}
-        </div>
-    </nav>
 
     <!-- Toast Container -->
     <div class="toast-container" id="toast-container"></div>

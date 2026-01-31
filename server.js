@@ -715,6 +715,12 @@ fastify.get('/character', async (request, reply) => {
 fastify.get('/landingpage/:pageid', async (request, reply) => {
   try {
     const { pageid } = request.params;
+
+    // Redirect creator-related landing pages to coming soon
+    if (pageid === 'become-creator-en') {
+      return reply.redirect('/creators/coming-soon');
+    }
+
     return reply.view(`landingpages/${pageid}.hbs`, {
       bannerNumber: 0,
       title: 'Landing Page',

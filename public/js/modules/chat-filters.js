@@ -18,8 +18,8 @@ const logFilters = (context) => {
     } catch {}
 };
 
-const updateChatFilters = () => {
-    $('.popular-chats-gallery .gallery-card').each(function () {
+window.updateChatFilters = () => {
+    $('.popular-chats-gallery .gallery-card, #chat-gallery .gallery-card, #latest-chats-gallery .gallery-card').each(function () {
         const $card = $(this);
         const isPremium = $card.hasClass('premium-chat');
         const genderMatch = $card.attr('class').match(/chat-gender-([a-z]+)/);
@@ -82,7 +82,7 @@ $(function () {
     updateGenderDropdownDisplay(currentGenderFilter);
 
     logFilters('on page load');
-    updateChatFilters();
+    window.updateChatFilters();
 });
 
 // Premium toggle
@@ -91,7 +91,7 @@ $(document).on('click', '#popular-chats-premium', function () {
     Cookies.set('premiumChatsHidden', premiumChatsHidden, { expires: 7 });
     $(this).toggleClass('active', !premiumChatsHidden);
     logFilters('premium toggle');
-    updateChatFilters();
+    window.updateChatFilters();
 });
 
 // NSFW toggle
@@ -102,7 +102,7 @@ $(document).on('click', '#popular-chats-nsfw', function () {
     // Update blur state based on new setting
     updateNsfwBlurState();
     logFilters('nsfw toggle');
-    updateChatFilters();
+    window.updateChatFilters();
 });
 
 // ========== GENDER DROPDOWN HANDLER (NEW) ==========
@@ -127,7 +127,7 @@ $(document).on('click', '.dropdown-menu [data-gender]', function (e) {
     $(this).closest('.dropdown-menu').dropdown('hide');
 
     logFilters('gender filter changed');
-    updateChatFilters();
+    window.updateChatFilters();
 });
 
 // Reset gender when clicking other filters (optional – keeps UX clean)
@@ -137,7 +137,7 @@ $(document).on('click', '.sorting-tools .btn:not(.dropdown-toggle)', function ()
         Cookies.remove('currentGenderFilter');
         updateGenderDropdownDisplay(null);
         logFilters('gender filter reset by other button');
-        updateChatFilters();
+        window.updateChatFilters();
     }
 });
 
@@ -151,7 +151,7 @@ window.loadStyleFilteredChats = function(style) {
     $(`#popular-chats-style-${style}`).addClass('active');
 
     logFilters('style filter applied');
-    updateChatFilters(); // Hide opposite style
+    window.updateChatFilters(); // Hide opposite style
 };
 
 // Style filters (now fetch from server instead of only hiding/showing)
@@ -191,7 +191,7 @@ $(document).on('click', '.sorting-tools .btn:not([id^="popular-chats-style-"])',
     }
 
     logFilters('reset style filter');
-    updateChatFilters();
+    window.updateChatFilters();
 });
 
 // Re-apply filters after any new chats are displayed
@@ -201,5 +201,5 @@ window.displayChats = function (...args) {
         originalDisplayChats.apply(this, args);
     }
     logFilters('after displayChats');
-    updateChatFilters();
+    window.updateChatFilters();
 };

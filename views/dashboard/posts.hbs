@@ -4,10 +4,10 @@
 <body class="bg-dark">
     {{> dashboard-nav}}
     <link rel="stylesheet" href="/css/dashboard-posts.css">
-    
-    <section class="container-fluid py-4">
+
+    <section class="container-fluid py-4 posts-page">
         <!-- Header -->
-        <div class="row mb-4">
+        <div class="row mb-4 posts-header">
             <div class="col-12">
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
                     <div class="flex-grow-1">
@@ -18,57 +18,9 @@
                     </div>
                     <div class="d-flex gap-2 w-100 w-md-auto">
                         <button class="btn btn-primary flex-fill flex-md-grow-0" onclick="window.location='/dashboard/generation'">
-                            <i class="bi bi-plus me-1"></i>{{translations.dashboard.newPost}}
+                            <i class="bi bi-plus-lg me-1"></i>{{translations.dashboard.newPost}}
                         </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Filters -->
-        <div class="card bg-dark border-secondary mb-4">
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-6 col-md-2">
-                        <label class="form-label text-white">{{translations.dashboard.type}}</label>
-                        <select id="filterType" class="form-select bg-dark text-white border-secondary">
-                            <option value="">{{translations.dashboard.all}}</option>
-                            <option value="image">{{translations.dashboard.images}}</option>
-                            <option value="video">{{translations.dashboard.videos}}</option>
-                        </select>
-                    </div>
-                    <div class="col-6 col-md-2">
-                        <label class="form-label text-white">{{translations.dashboard.status}}</label>
-                        <select id="filterStatus" class="form-select bg-dark text-white border-secondary">
-                            <option value="">{{translations.dashboard.all}}</option>
-                            <option value="draft">{{translations.dashboard.draft}}</option>
-                            <option value="scheduled">{{translations.dashboard.scheduled}}</option>
-                            <option value="published">{{translations.dashboard.published}}</option>
-                        </select>
-                    </div>
-                    <div class="col-6 col-md-2">
-                        <label class="form-label text-white">{{translations.dashboard.source}}</label>
-                        <select id="filterSource" class="form-select bg-dark text-white border-secondary">
-                            <option value="">{{translations.dashboard.all}}</option>
-                            <option value="chat">{{translations.dashboard.chatPosts}}</option>
-                            <option value="image_dashboard">{{translations.dashboard.imageDashboard}}</option>
-                            <option value="video_dashboard">{{translations.dashboard.videoDashboard}}</option>
-                            <option value="cron_job">{{translations.dashboard.cronJob}}</option>
-                        </select>
-                    </div>
-                    <div class="col-6 col-md-2">
-                        <label class="form-label text-white">{{translations.dashboard.sortBy}}</label>
-                        <select id="filterSort" class="form-select bg-dark text-white border-secondary">
-                            <option value="createdAt">{{translations.dashboard.dateCreated}}</option>
-                            <option value="updatedAt">{{translations.dashboard.dateUpdated}}</option>
-                            <option value="scheduledFor">{{translations.dashboard.scheduleDate}}</option>
-                        </select>
-                    </div>
-                    <div class="col-12 col-md-4 d-flex align-items-end gap-2">
-                        <button class="btn btn-outline-info flex-fill" id="resetFiltersBtn">
-                            <i class="bi bi-arrow-clockwise me-1"></i>{{translations.dashboard.reset}}
-                        </button>
-                        <a href="/dashboard/schedules" class="btn btn-outline-warning flex-fill">
+                        <a href="/dashboard/schedules" class="btn btn-outline-secondary flex-fill flex-md-grow-0">
                             <i class="bi bi-calendar-event me-1"></i>{{translations.dashboard.schedules}}
                         </a>
                     </div>
@@ -77,41 +29,79 @@
         </div>
 
         <!-- Stats -->
-        <div class="row mb-4">
-            <div class="col-6 col-md-3">
-                <div class="card bg-dark border-primary h-100">
-                    <div class="card-body text-center py-3">
-                        <i class="bi bi-file-image text-primary fs-2"></i>
-                        <h3 class="text-white mt-2 mb-0" id="totalPosts">0</h3>
-                        <p class="text-muted mb-0 small">{{translations.dashboard.totalPosts}}</p>
-                    </div>
+        <div class="stats-grid">
+            <div class="stats-card total">
+                <div class="stats-card-icon">
+                    <i class="bi bi-file-image"></i>
                 </div>
+                <div class="stats-card-value" id="totalPosts">0</div>
+                <div class="stats-card-label">{{translations.dashboard.totalPosts}}</div>
             </div>
-            <div class="col-6 col-md-3">
-                <div class="card bg-dark border-secondary h-100">
-                    <div class="card-body text-center py-3">
-                        <i class="bi bi-file-earmark text-secondary fs-2"></i>
-                        <h3 class="text-white mt-2 mb-0" id="draftPosts">0</h3>
-                        <p class="text-muted mb-0 small">{{translations.dashboard.drafts}}</p>
-                    </div>
+            <div class="stats-card draft">
+                <div class="stats-card-icon">
+                    <i class="bi bi-file-earmark"></i>
                 </div>
+                <div class="stats-card-value" id="draftPosts">0</div>
+                <div class="stats-card-label">{{translations.dashboard.drafts}}</div>
             </div>
-            <div class="col-6 col-md-3">
-                <div class="card bg-dark border-warning h-100">
-                    <div class="card-body text-center py-3">
-                        <i class="bi bi-clock text-warning fs-2"></i>
-                        <h3 class="text-white mt-2 mb-0" id="scheduledPosts">0</h3>
-                        <p class="text-muted mb-0 small">{{translations.dashboard.scheduledPosts}}</p>
-                    </div>
+            <div class="stats-card scheduled">
+                <div class="stats-card-icon">
+                    <i class="bi bi-clock"></i>
                 </div>
+                <div class="stats-card-value" id="scheduledPosts">0</div>
+                <div class="stats-card-label">{{translations.dashboard.scheduledPosts}}</div>
             </div>
-            <div class="col-6 col-md-3">
-                <div class="card bg-dark border-success h-100">
-                    <div class="card-body text-center py-3">
-                        <i class="bi bi-check-circle text-success fs-2"></i>
-                        <h3 class="text-white mt-2 mb-0" id="publishedPosts">0</h3>
-                        <p class="text-muted mb-0 small">{{translations.dashboard.publishedPosts}}</p>
-                    </div>
+            <div class="stats-card published">
+                <div class="stats-card-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stats-card-value" id="publishedPosts">0</div>
+                <div class="stats-card-label">{{translations.dashboard.publishedPosts}}</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-card">
+            <div class="row g-3">
+                <div class="col-6 col-md-2">
+                    <label class="form-label">{{translations.dashboard.type}}</label>
+                    <select id="filterType" class="form-select">
+                        <option value="">{{translations.dashboard.all}}</option>
+                        <option value="image">{{translations.dashboard.images}}</option>
+                        <option value="video">{{translations.dashboard.videos}}</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label">{{translations.dashboard.status}}</label>
+                    <select id="filterStatus" class="form-select">
+                        <option value="">{{translations.dashboard.all}}</option>
+                        <option value="draft">{{translations.dashboard.draft}}</option>
+                        <option value="scheduled">{{translations.dashboard.scheduled}}</option>
+                        <option value="published">{{translations.dashboard.published}}</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label">{{translations.dashboard.source}}</label>
+                    <select id="filterSource" class="form-select">
+                        <option value="">{{translations.dashboard.all}}</option>
+                        <option value="chat">{{translations.dashboard.chatPosts}}</option>
+                        <option value="image_dashboard">{{translations.dashboard.imageDashboard}}</option>
+                        <option value="video_dashboard">{{translations.dashboard.videoDashboard}}</option>
+                        <option value="cron_job">{{translations.dashboard.cronJob}}</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label">{{translations.dashboard.sortBy}}</label>
+                    <select id="filterSort" class="form-select">
+                        <option value="createdAt">{{translations.dashboard.dateCreated}}</option>
+                        <option value="updatedAt">{{translations.dashboard.dateUpdated}}</option>
+                        <option value="scheduledFor">{{translations.dashboard.scheduleDate}}</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-4 d-flex align-items-end gap-2">
+                    <button class="btn btn-outline-info flex-fill" id="resetFiltersBtn">
+                        <i class="bi bi-arrow-clockwise me-1"></i>{{translations.dashboard.reset}}
+                    </button>
                 </div>
             </div>
         </div>
@@ -123,18 +113,18 @@
 
         <!-- Loading Spinner -->
         <div id="loadingSpinner" class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
+            <div class="spinner-border" role="status">
                 <span class="visually-hidden">{{translations.dashboard.loading}}</span>
             </div>
         </div>
 
         <!-- No Posts Message -->
         <div id="noPosts" class="text-center py-5" style="display: none;">
-            <i class="bi bi-inbox fs-1 text-muted"></i>
-            <h3 class="text-white mt-3">{{translations.dashboard.noPosts}}</h3>
-            <p class="text-muted">{{translations.dashboard.noPostsDescription}}</p>
+            <i class="bi bi-inbox"></i>
+            <h3>{{translations.dashboard.noPosts}}</h3>
+            <p>{{translations.dashboard.noPostsDescription}}</p>
             <a href="/dashboard/generation" class="btn btn-primary mt-3">
-                <i class="bi bi-plus me-1"></i>{{translations.dashboard.createFirstPost}}
+                <i class="bi bi-plus-lg me-1"></i>{{translations.dashboard.createFirstPost}}
             </a>
         </div>
 
@@ -144,9 +134,9 @@
 
     <!-- Post View/Edit Modal -->
     <div class="modal fade" id="postModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="false">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content bg-dark text-white border-secondary">
-                <div class="modal-header border-secondary">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
                     <h5 class="modal-title" id="postModalTitle">
                         <i class="bi bi-file-image me-2"></i>{{translations.dashboard.postDetails}}
                     </h5>
@@ -155,7 +145,7 @@
                 <div class="modal-body" id="modalBody">
                     <!-- Content loaded dynamically -->
                 </div>
-                <div class="modal-footer border-secondary" id="modalFooter">
+                <div class="modal-footer" id="modalFooter">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="bi bi-x me-1"></i>{{translations.dashboard.close}}
                     </button>
@@ -167,8 +157,8 @@
     <!-- Schedule Modal -->
     <div class="modal fade" id="scheduleModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="false">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content bg-dark text-white border-secondary">
-                <div class="modal-header border-secondary">
+            <div class="modal-content">
+                <div class="modal-header">
                     <h5 class="modal-title">
                         <i class="bi bi-send me-2"></i>{{translations.dashboard.publishPost}}
                     </h5>
@@ -176,7 +166,7 @@
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="schedulePostId">
-                    
+
                     <!-- Destination Selection -->
                     <div class="mb-4">
                         <label class="form-label d-flex align-items-center">
@@ -191,17 +181,19 @@
                             No connected accounts. Connect in Settings to publish to social media.
                         </div>
                     </div>
-                    
+
                     <!-- Schedule Options -->
                     <div class="schedule-section">
                         <label class="form-label d-flex align-items-center">
                             <i class="bi bi-calendar-event me-2"></i>{{translations.dashboard.scheduleDateTime}}
                         </label>
-                        <input type="datetime-local" class="form-control bg-secondary text-white border-secondary" id="scheduleDateTime">
-                        <small class="text-muted mt-1 d-block">Optional: Leave empty to publish immediately to My Profile only</small>
+                        <input type="datetime-local" class="form-control" id="scheduleDateTime">
+                        <small class="text-muted mt-2 d-block">
+                            <i class="bi bi-info-circle me-1"></i>Optional: Leave empty to publish immediately to My Profile only
+                        </small>
                     </div>
                 </div>
-                <div class="modal-footer border-secondary d-flex justify-content-between">
+                <div class="modal-footer d-flex justify-content-between">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         {{translations.dashboard.cancel}}
                     </button>
@@ -221,8 +213,8 @@
     <!-- Edit Caption Modal -->
     <div class="modal fade" id="editCaptionModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="false">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content bg-dark text-white border-secondary">
-                <div class="modal-header border-secondary">
+            <div class="modal-content">
+                <div class="modal-header">
                     <h5 class="modal-title">
                         <i class="bi bi-pencil me-2"></i>{{translations.dashboard.editCaption}}
                     </h5>
@@ -232,7 +224,7 @@
                     <input type="hidden" id="editCaptionPostId">
                     <div class="mb-3">
                         <label class="form-label">{{translations.dashboard.caption}}</label>
-                        <textarea class="form-control bg-secondary text-white border-secondary" id="editCaptionText" rows="8" placeholder="{{translations.dashboard.enterCaption}}"></textarea>
+                        <textarea class="form-control" id="editCaptionText" rows="8" placeholder="{{translations.dashboard.enterCaption}}"></textarea>
                     </div>
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-outline-info btn-sm" onclick="postsDashboard.regenerateCaption()">
@@ -242,7 +234,7 @@
                     <!-- Caption History -->
                     <div id="editCaptionHistory" class="mt-3"></div>
                 </div>
-                <div class="modal-footer border-secondary">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         {{translations.dashboard.cancel}}
                     </button>

@@ -57,10 +57,12 @@
                 </div>
                 
                 <div class="ig-stats-row">
+                    {{#if isMyProfile}}
                     <div class="ig-stat likes-tab" style="cursor: pointer;">
                         <span class="ig-stat-number">{{default userData.imageLikeCount 0}}</span>
                         <span class="ig-stat-label">{{translations.profile.likes}}</span>
                     </div>
+                    {{/if}}
                     <div class="ig-stat characters-tab" style="cursor: pointer;">
                         <span class="ig-stat-number">{{default userData.chatCount 0}}</span>
                         <span class="ig-stat-label">{{translations.profile.characters}}</span>
@@ -152,31 +154,7 @@
             <!-- Action Buttons Row -->
             <div class="ig-action-row">
                 {{#if isMyProfile}}
-                    {{!-- My Profile Actions --}}
-                    {{#unless userData.isCreator}}
-                        {{#if isPremium}}
-                        <a href="/creators/apply" class="ig-chat-btn">
-                            <i class="bi bi-rocket-takeoff"></i>
-                            <span>{{#if translations.profile.becomeCreator}}{{translations.profile.becomeCreator}}{{else}}Become a Creator{{/if}}</span>
-                        </a>
-                        {{else}}
-                        <button type="button" class="ig-chat-btn ig-premium-btn" onclick="loadPlanPage()">
-                            <i class="bi bi-gem"></i>
-                            <span>{{#if translations.creators.upgradeToPremium}}{{translations.creators.upgradeToPremium}}{{else}}Upgrade to Premium{{/if}}</span>
-                        </button>
-                        {{/if}}
-                    {{else}}
-                        {{!-- Creator Quick Actions --}}
-                        <a href="/dashboard/earnings" class="ig-secondary-btn ig-success-btn" title="{{translations.avatar.earnings}}">
-                            <i class="bi bi-wallet2"></i>
-                        </a>
-                        <a href="/dashboard/analytics" class="ig-secondary-btn ig-info-btn" title="{{translations.avatar.analytics}}">
-                            <i class="bi bi-graph-up"></i>
-                        </a>
-                        <a href="/dashboard/posts" class="ig-secondary-btn" title="{{translations.profile.manageContent}}">
-                            <i class="bi bi-grid"></i>
-                        </a>
-                    {{/unless}}
+                    {{!-- My Profile Actions - Creator Section Hidden (Coming Soon) --}}
                     <a href="#" onclick="loadSettingsPage()" class="ig-secondary-btn" title="Settings">
                         <i class="bi bi-gear"></i>
                     </a>
@@ -216,10 +194,12 @@
 
         <!-- Instagram-style Tab Navigation -->
         <div class="ig-tab-nav">
+            {{#if isMyProfile}}
             <button class="ig-tab active" data-tab="images" title="{{translations.profile.likes}}">
                 <i class="bi bi-heart"></i>
             </button>
-            <button class="ig-tab" data-tab="characters" title="{{translations.profile.characters}}">
+            {{/if}}
+            <button class="ig-tab {{#unless isMyProfile}}active{{/unless}}" data-tab="characters" title="{{translations.profile.characters}}">
                 <i class="bi bi-chat-square-dots"></i>
             </button>
             <button class="ig-tab" data-tab="posts" title="{{translations.profile.posts}}">
@@ -232,6 +212,7 @@
 
         <!-- Content Areas -->
         <div class="tab-content">
+            {{#if isMyProfile}}
             <!-- Likes Tab -->
             <div id="images-tab" class="tab-pane active">
                 <!-- SFW/NSFW Toggle -->
@@ -259,9 +240,10 @@
                 </div>
                 <div id="images-pagination-controls" class="load-more-area"></div>
             </div>
+            {{/if}}
 
             <!-- Characters Tab -->
-            <div id="characters-tab" class="tab-pane" style="display: none;">
+            <div id="characters-tab" class="tab-pane {{#unless isMyProfile}}active{{/unless}}" {{#if isMyProfile}}style="display: none;"{{/if}}>
                 <div class="media-grid characters-grid" id="user-chat-gallery">
                     <!-- Loading state -->
                     <div class="loading-grid">

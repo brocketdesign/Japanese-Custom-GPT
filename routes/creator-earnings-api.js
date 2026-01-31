@@ -412,45 +412,10 @@ async function routes(fastify, options) {
     // ============================================
 
     /**
-     * Render earnings dashboard page
+     * Render earnings dashboard page - Redirect to coming soon
      */
     fastify.get('/dashboard/earnings', async (request, reply) => {
-        try {
-            const userId = request.user?._id;
-            if (!userId) {
-                return reply.redirect('/login');
-            }
-            
-            const isUserCreator = await isCreator(fastify.mongo.db, userId);
-            if (!isUserCreator) {
-                return reply.redirect('/creators/apply');
-            }
-            
-            // Load translations
-            const lang = request.translations?.lang || 'en';
-            let earningsTranslations = {};
-            try {
-                earningsTranslations = require(`../locales/earnings-${lang}.json`);
-            } catch (e) {
-                try {
-                    earningsTranslations = require('../locales/earnings-en.json');
-                } catch (e2) {
-                    earningsTranslations = {};
-                }
-            }
-            
-            return reply.view('dashboard/earnings.hbs', {
-                title: earningsTranslations.pageTitle || 'Creator Earnings',
-                user: request.user,
-                lang: lang,
-                earningsTranslations,
-                minimumPayout: MINIMUM_PAYOUT_USD,
-                platformCommission: PLATFORM_COMMISSION_RATE * 100
-            });
-        } catch (error) {
-            console.error('[Creator Earnings] Error rendering dashboard:', error);
-            return reply.status(500).send('Internal Server Error');
-        }
+        return reply.redirect('/creators/coming-soon');
     });
 
     // ============================================

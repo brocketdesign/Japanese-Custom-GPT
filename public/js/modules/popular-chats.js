@@ -104,6 +104,10 @@ window.loadPopularChats = async (page = 1, reload = false) => {
         if (typeof window.emptyAllGalleriesExcept === 'function') {
             window.emptyAllGalleriesExcept('chat-gallery');
         }
+        // Apply style/gender/premium filters after displaying chats
+        if (typeof window.updateChatFilters === 'function') {
+            window.updateChatFilters();
+        }
 
         popularChatsTotalPages = data.totalPages || 1;
         updatePopularChatsPagination(page);
@@ -123,12 +127,16 @@ const renderPopularChatsFromCache = (data) => {
         console.warn('[renderPopularChatsFromCache] Invalid cache data, skipping render');
         return;
     }
-    
+
     if (typeof window.displayChats === 'function') {
         window.displayChats(data.chats, 'chat-gallery', false);
     }
     if (typeof window.emptyAllGalleriesExcept === 'function') {
         window.emptyAllGalleriesExcept('chat-gallery');
+    }
+    // Apply style/gender/premium filters after displaying chats
+    if (typeof window.updateChatFilters === 'function') {
+        window.updateChatFilters();
     }
     popularChatsTotalPages = data.totalPages || 1;
     updatePopularChatsPagination(popularChatsPage);

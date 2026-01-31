@@ -25,85 +25,38 @@ async function routes(fastify, options) {
   // ==========================================
 
   /**
-   * GET /creators - Browse creators page
+   * GET /creators/coming-soon - Coming soon page for creator features
    */
-  fastify.get('/creators', async (request, reply) => {
+  fastify.get('/creators/coming-soon', async (request, reply) => {
     try {
       const translations = request.translations;
-      const db = fastify.mongo.db;
       const currentUser = request.user;
 
-      // Get initial data for the page
-      const [featuredResult, trendingResult, creatorsResult] = await Promise.all([
-        getFeaturedCreators(db, 6),
-        getTrendingCreators(db, 6),
-        getCreators(db, { page: 1, limit: 12, sortBy: 'popular' })
-      ]);
-
-      const categories = getCreatorCategories();
-
-      // Check if user has premium subscription
-      const isPremium = currentUser?.subscriptionStatus === 'active';
-
-      return reply.renderWithGtm('/creators/index.hbs', {
-        title: translations?.creators?.pageTitle || 'Discover Creators',
+      return reply.renderWithGtm('/creators/coming-soon.hbs', {
+        title: translations?.creators?.comingSoonTitle || 'Creator Program - Coming Soon',
         translations,
         mode: process.env.MODE,
         apiurl: getApiUrl(request),
-        user: currentUser,
-        featuredCreators: featuredResult.success ? featuredResult.creators : [],
-        trendingCreators: trendingResult.success ? trendingResult.creators : [],
-        creators: creatorsResult.success ? creatorsResult.creators : [],
-        pagination: creatorsResult.success ? creatorsResult.pagination : { page: 1, totalPages: 1 },
-        categories,
-        isPremium
+        user: currentUser
       });
     } catch (error) {
-      console.error('Error rendering creators page:', error);
+      console.error('Error rendering coming soon page:', error);
       return reply.status(500).send({ error: 'Internal server error' });
     }
   });
 
   /**
-   * GET /creators/apply - Creator application page
+   * GET /creators - Redirect to coming soon page
+   */
+  fastify.get('/creators', async (request, reply) => {
+    return reply.redirect('/creators/coming-soon');
+  });
+
+  /**
+   * GET /creators/apply - Redirect to coming soon page
    */
   fastify.get('/creators/apply', async (request, reply) => {
-    try {
-      if (!request.user || request.user.isTemporary) {
-        return reply.redirect('/login?redirect=/creators/apply');
-      }
-
-      const translations = request.translations;
-      const db = fastify.mongo.db;
-      const currentUser = request.user;
-
-      // Check if already a creator
-      const user = await db.collection('users').findOne({ 
-        _id: new ObjectId(currentUser._id) 
-      });
-
-      if (user?.isCreator) {
-        return reply.redirect(`/user/${currentUser._id}`);
-      }
-
-      // Check if user has premium subscription
-      const isPremium = user?.subscriptionStatus === 'active';
-
-      const categories = getCreatorCategories();
-
-      return reply.renderWithGtm('/creators/apply.hbs', {
-        title: translations?.creators?.applyTitle || 'Become a Creator',
-        translations,
-        mode: process.env.MODE,
-        apiurl: getApiUrl(request),
-        user: currentUser,
-        categories,
-        isPremium
-      });
-    } catch (error) {
-      console.error('Error rendering creator application page:', error);
-      return reply.status(500).send({ error: 'Internal server error' });
-    }
+    return reply.redirect('/creators/coming-soon');
   });
 
   // ==========================================

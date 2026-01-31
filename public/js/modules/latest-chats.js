@@ -66,6 +66,9 @@ window.loadLatestChats = async (page = 1, reload = false) => {
         if (typeof window.displayChats === 'function') {
             window.displayChats(data.chats, 'latest-chats-gallery', false);
         }
+        if (typeof window.updateChatFilters === 'function') {
+            window.updateChatFilters();
+        }
         latestChatsTotalPages = data.totalPages || 1;
         updateLatestChatsPagination(page);
         latestChatsLoading = false;
@@ -87,6 +90,9 @@ window.loadLatestChats = async (page = 1, reload = false) => {
         }
         if (typeof window.emptyAllGalleriesExcept === 'function') {
             window.emptyAllGalleriesExcept('latest-chats-gallery');
+        }
+        if (typeof window.updateChatFilters === 'function') {
+            window.updateChatFilters();
         }
         latestChatsTotalPages = data.totalPages || 1;
 

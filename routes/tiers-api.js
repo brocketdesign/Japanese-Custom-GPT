@@ -79,71 +79,17 @@ async function routes(fastify, options) {
   });
 
   /**
-   * GET /dashboard/tiers - Tier management dashboard page
+   * GET /dashboard/tiers - Redirect to coming soon
    */
   fastify.get('/dashboard/tiers', async (request, reply) => {
-    try {
-      const user = request.user;
-      if (!user || user.isTemporary) {
-        return reply.redirect('/login');
-      }
-
-      const translations = request.translations;
-      const { getApiUrl } = require('../models/tool');
-      const { isCreator } = require('../models/creator-utils');
-      const db = fastify.mongo.db;
-
-      // Check if user is a creator
-      const creatorStatus = await isCreator(db, user._id);
-      if (!creatorStatus) {
-        return reply.redirect('/creators/apply');
-      }
-
-      return reply.renderWithGtm('/dashboard/tiers.hbs', {
-        title: translations.subscriptions?.tierManagement || 'Tier Management',
-        translations,
-        mode: process.env.MODE,
-        apiurl: getApiUrl(request),
-        user
-      });
-    } catch (error) {
-      console.error('Error rendering tiers dashboard:', error);
-      return reply.status(500).send({ error: 'Internal server error' });
-    }
+    return reply.redirect('/creators/coming-soon');
   });
 
   /**
-   * GET /dashboard/subscribers - Subscribers dashboard page
+   * GET /dashboard/subscribers - Redirect to coming soon
    */
   fastify.get('/dashboard/subscribers', async (request, reply) => {
-    try {
-      const user = request.user;
-      if (!user || user.isTemporary) {
-        return reply.redirect('/login');
-      }
-
-      const translations = request.translations;
-      const { getApiUrl } = require('../models/tool');
-      const { isCreator } = require('../models/creator-utils');
-      const db = fastify.mongo.db;
-
-      // Check if user is a creator
-      const creatorStatus = await isCreator(db, user._id);
-      if (!creatorStatus) {
-        return reply.redirect('/creators/apply');
-      }
-
-      return reply.renderWithGtm('/dashboard/subscribers.hbs', {
-        title: translations.subscriptions?.subscribers || 'Subscribers',
-        translations,
-        mode: process.env.MODE,
-        apiurl: getApiUrl(request),
-        user
-      });
-    } catch (error) {
-      console.error('Error rendering subscribers dashboard:', error);
-      return reply.status(500).send({ error: 'Internal server error' });
-    }
+    return reply.redirect('/creators/coming-soon');
   });
 }
 

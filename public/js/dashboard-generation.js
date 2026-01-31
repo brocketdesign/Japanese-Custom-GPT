@@ -80,6 +80,144 @@ class GenerationDashboard {
     return false;
   }
 
+  /**
+   * Generate HTML for an image slide, with NSFW protection for non-premium users
+   * @param {string} url - Image URL
+   * @param {boolean} isNsfw - Whether the image is flagged as NSFW
+   * @param {number} idx - Image index
+   * @param {string} resultId - Result ID for data attributes
+   * @returns {string} HTML string for the image
+   */
+  generateImageSlideHtml(url, isNsfw, idx, resultId) {
+    const shouldBlur = isNsfw && !this.isPremium();
+
+    if (shouldBlur) {
+      // NSFW image for non-premium user: show blurred placeholder with overlay
+      return `
+        <div class="gen-carousel-slide ${idx === 0 ? 'active' : ''}" data-index="${idx}">
+          <div class="gen-nsfw-container" style="position: relative; width: 100%; height: 100%;">
+            <img
+              class="gen-nsfw-blurred"
+              src="/img/nsfw-blurred-2.png"
+              alt="NSFW content"
+              loading="lazy"
+              data-original-url="${url}"
+              data-result-id="${resultId}"
+              data-index="${idx}"
+              style="width: 100%; height: 100%; object-fit: cover; filter: blur(15px); transform: scale(1.1);">
+            <div class="gen-nsfw-overlay" style="
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              background: rgba(0, 0, 0, 0.25);
+              z-index: 2;">
+              <i class="bi bi-lock-fill" style="font-size: 2rem; color: #fff; opacity: 0.9; margin-bottom: 0.75rem;"></i>
+              <button class="btn btn-sm gen-unlock-btn" onclick="event.stopPropagation(); loadPlanPage();" style="
+                background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                padding: 0.5rem 1rem;
+                font-size: 0.85rem;
+                cursor: pointer;">
+                <i class="bi bi-unlock-fill me-2"></i>${window.translations?.blurButton || 'Unlock Content'}
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    } else {
+      // Normal image display
+      return `
+        <div class="gen-carousel-slide ${idx === 0 ? 'active' : ''}" data-index="${idx}">
+          <img src="${url}" alt="Generated image ${idx + 1}" loading="lazy">
+        </div>
+      `;
+    }
+  }
+
+  /**
+   * Generate HTML for a single image, with NSFW protection for non-premium users
+   * @param {string} url - Image URL
+   * @param {boolean} isNsfw - Whether the image is flagged as NSFW
+   * @param {string} resultId - Result ID
+   * @returns {string} HTML string for the image
+   */
+  generateSingleImageHtml(url, isNsfw, resultId) {
+    const shouldBlur = isNsfw && !this.isPremium();
+
+    if (shouldBlur) {
+      return `
+        <div class="gen-nsfw-container" style="position: relative; width: 100%; height: 100%;">
+          <img
+            class="gen-nsfw-blurred"
+            src="/img/nsfw-blurred-2.png"
+            alt="NSFW content"
+            loading="lazy"
+            data-original-url="${url}"
+            data-result-id="${resultId}"
+            style="width: 100%; height: 100%; object-fit: cover; filter: blur(15px); transform: scale(1.1);">
+          <div class="gen-nsfw-overlay" style="
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.25);
+            z-index: 2;">
+            <i class="bi bi-lock-fill" style="font-size: 2rem; color: #fff; opacity: 0.9; margin-bottom: 0.75rem;"></i>
+            <button class="btn btn-sm gen-unlock-btn" onclick="event.stopPropagation(); loadPlanPage();" style="
+              background: linear-gradient(90.9deg, #D2B8FF 2.74%, #8240FF 102.92%);
+              color: white;
+              border: none;
+              border-radius: 8px;
+              font-weight: 600;
+              padding: 0.5rem 1rem;
+              font-size: 0.85rem;
+              cursor: pointer;">
+              <i class="bi bi-unlock-fill me-2"></i>${window.translations?.blurButton || 'Unlock Content'}
+            </button>
+          </div>
+        </div>
+      `;
+    } else {
+      return `<img src="${url}" alt="Generated image" loading="lazy">`;
+    }
+  }
+
+  /**
+   * Fetch blurred image blob and update the image element
+   * @param {HTMLImageElement} imgElement - The image element to update
+   * @param {string} imageUrl - Original image URL
+   */
+  fetchBlurredImageForNsfw(imgElement, imageUrl) {
+    fetch('/blur-image?url=' + encodeURIComponent(imageUrl), {
+      method: 'GET',
+      credentials: 'include'
+    })
+    .then(response => response.blob())
+    .then(blob => {
+      const objectUrl = URL.createObjectURL(blob);
+      imgElement.src = objectUrl;
+      imgElement.style.filter = 'blur(15px)';
+      imgElement.style.transform = 'scale(1.1)';
+    })
+    .catch(error => {
+      console.error('[GenerationDashboard] Failed to load blurred image:', error);
+    });
+  }
+
   init() {
     this.cacheElements();
     this.bindEvents();
@@ -736,6 +874,7 @@ class GenerationDashboard {
         pendingResult.completedTaskCount = 0;
         pendingResult.taskIds = [];
         pendingResult.mediaUrls = [];
+        pendingResult.mediaItems = []; // Store {url, nsfw} objects
         
         // Process all tasks - they all contribute to the same result
         for (let i = 0; i < totalTasks; i++) {
@@ -791,16 +930,17 @@ class GenerationDashboard {
     // Check if task is already completed (sync models like merge-face-segmind)
     if (task.status === 'completed' && task.images && task.images.length > 0) {
       console.log('[GenerationDashboard] 🖼️ Sync task completed with', task.images.length, 'image(s)');
-      
-      // Extract ALL image URLs from the task
-      const imageUrls = task.images.map((img, idx) => {
+
+      // Extract ALL image data (URL + NSFW flag) from the task
+      const imageData = task.images.map((img, idx) => {
         const url = img?.imageUrl || img?.image_url || img?.url || (typeof img === 'string' ? img : null);
-        console.log(`[GenerationDashboard] 🖼️ Sync Image ${idx + 1} URL:`, url ? url.substring(0, 80) + '...' : 'NOT FOUND');
-        return url;
-      }).filter(url => url);
-      
+        const nsfw = img?.nsfw || false;
+        console.log(`[GenerationDashboard] 🖼️ Sync Image ${idx + 1} URL:`, url ? url.substring(0, 80) + '...' : 'NOT FOUND', 'NSFW:', nsfw);
+        return url ? { url, nsfw } : null;
+      }).filter(item => item);
+
       // Add images to the shared result
-      this.addImagesToResult(result.id, imageUrls);
+      this.addImagesToResult(result.id, imageData);
       
     } else if (task.status === 'completed') {
       // Task completed but no images - count as completed but with no contribution
@@ -825,32 +965,54 @@ class GenerationDashboard {
   /**
    * Add images to a result and update the UI
    * @param {string} resultId - Result ID
-   * @param {Array} imageUrls - Array of image URLs to add
+   * @param {Array} imageData - Array of image objects {url, nsfw} or URLs to add
    */
-  addImagesToResult(resultId, imageUrls) {
+  addImagesToResult(resultId, imageData) {
     const result = this.state.results.find(r => r.id === resultId);
     if (!result) return;
-    
-    // Initialize mediaUrls array if not exists
+
+    // Initialize arrays if not exists
     if (!result.mediaUrls) {
       result.mediaUrls = [];
     }
-    
-    // Add new images
-    result.mediaUrls.push(...imageUrls);
-    
+    if (!result.mediaItems) {
+      result.mediaItems = []; // Store full image data {url, nsfw}
+    }
+
+    // Normalize and add new images (with deduplication)
+    imageData.forEach(item => {
+      const url = typeof item === 'string' ? item : item?.url;
+      if (!url) return;
+
+      // Check if URL already exists to prevent duplicates
+      if (result.mediaUrls.includes(url)) {
+        console.log(`[GenerationDashboard] ⚠️ Skipping duplicate URL: ${url.substring(0, 50)}...`);
+        return;
+      }
+
+      if (typeof item === 'string') {
+        // Legacy: just a URL string
+        result.mediaUrls.push(item);
+        result.mediaItems.push({ url: item, nsfw: false });
+      } else if (item && item.url) {
+        // New format: {url, nsfw} object
+        result.mediaUrls.push(item.url);
+        result.mediaItems.push(item);
+      }
+    });
+
     // Set primary mediaUrl for backward compatibility
     if (!result.mediaUrl && result.mediaUrls.length > 0) {
       result.mediaUrl = result.mediaUrls[0];
     }
-    
+
     // Increment completed task count
     result.completedTaskCount = (result.completedTaskCount || 0) + 1;
-    
-    console.log(`[GenerationDashboard] 📊 Added ${imageUrls.length} images to result ${resultId}`);
+
+    console.log(`[GenerationDashboard] 📊 Added ${imageData.length} images to result ${resultId}`);
     console.log(`[GenerationDashboard] 📊 Total images now: ${result.mediaUrls.length}`);
     console.log(`[GenerationDashboard] 📊 Tasks completed: ${result.completedTaskCount}/${result.expectedImageCount || '?'}`);
-    
+
     // Check if all tasks are done
     this.checkAndFinalizeResult(result);
   }
@@ -932,26 +1094,27 @@ class GenerationDashboard {
         if (data.status === 'completed' || data.status === 'TASK_STATUS_SUCCEED') {
           clearInterval(interval);
           this.pollIntervals.delete(taskId);
-          
-          // Extract ALL image URLs
+
+          // Extract ALL image data (URL + NSFW flag)
           const rawImages = data.images || [];
           console.log('[GenerationDashboard] 🖼️ Async task completed with', rawImages.length, 'image(s)');
-          
-          const imageUrls = rawImages.map((img, idx) => {
+
+          const imageData = rawImages.map((img, idx) => {
             const url = img?.imageUrl || img?.image_url || img?.url || (typeof img === 'string' ? img : null);
-            console.log(`[GenerationDashboard] 🖼️ Async Image ${idx + 1} URL:`, url ? url.substring(0, 80) + '...' : 'NOT FOUND');
-            return url;
-          }).filter(url => url);
-          
+            const nsfw = img?.nsfw || false;
+            console.log(`[GenerationDashboard] 🖼️ Async Image ${idx + 1} URL:`, url ? url.substring(0, 80) + '...' : 'NOT FOUND', 'NSFW:', nsfw);
+            return url ? { url, nsfw } : null;
+          }).filter(item => item);
+
           // If no images from array, try direct imageUrl
-          if (imageUrls.length === 0 && data.imageUrl) {
-            imageUrls.push(data.imageUrl);
+          if (imageData.length === 0 && data.imageUrl) {
+            imageData.push({ url: data.imageUrl, nsfw: data.nsfw || false });
           }
-          
-          console.log('[GenerationDashboard] ✅ Task', taskId, 'completed with', imageUrls.length, 'valid URLs');
-          
+
+          console.log('[GenerationDashboard] ✅ Task', taskId, 'completed with', imageData.length, 'valid URLs');
+
           // Add images to the shared result
-          this.addImagesToResult(result.id, imageUrls);
+          this.addImagesToResult(result.id, imageData);
           
         } else if (data.status === 'failed' || data.status === 'TASK_STATUS_FAILED') {
           clearInterval(interval);
@@ -1094,6 +1257,7 @@ class GenerationDashboard {
       createdAt: new Date().toISOString(),
       mediaUrl: null,
       mediaUrls: [],         // Array of all image URLs for carousel
+      mediaItems: [],        // Array of {url, nsfw} objects for NSFW handling
       expectedImageCount: 1, // How many tasks/images to expect
       completedTaskCount: 0  // How many tasks have completed
     };
@@ -1157,14 +1321,15 @@ class GenerationDashboard {
       
       // If we have some images already, show a partial carousel with loading indicator
       if (imageCount > 0 && isImage) {
+        const mediaItems = result.mediaItems || result.mediaUrls.map(url => ({ url, nsfw: false }));
         mediaContent = `
           <div class="gen-carousel gen-carousel-loading" data-result-id="${result.id}">
             <div class="gen-carousel-inner">
-              ${result.mediaUrls.map((url, idx) => `
-                <div class="gen-carousel-slide ${idx === 0 ? 'active' : ''}" data-index="${idx}">
-                  <img src="${url}" alt="Generated image ${idx + 1}" loading="lazy">
-                </div>
-              `).join('')}
+              ${mediaItems.map((item, idx) => {
+                const url = typeof item === 'string' ? item : item.url;
+                const isNsfw = typeof item === 'object' ? item.nsfw : false;
+                return this.generateImageSlideHtml(url, isNsfw, idx, result.id);
+              }).join('')}
             </div>
             <div class="gen-carousel-controls">
               <button class="gen-carousel-btn prev" onclick="genDashboard.carouselPrev('${result.id}')" ${imageCount <= 1 ? 'disabled' : ''}>
@@ -1192,14 +1357,15 @@ class GenerationDashboard {
     } else if (hasMultipleImages && isImage) {
       // Carousel for multiple images
       console.log(`[GenerationDashboard] 🎠 Creating carousel with ${result.mediaUrls.length} images`);
+      const mediaItems = result.mediaItems || result.mediaUrls.map(url => ({ url, nsfw: false }));
       mediaContent = `
         <div class="gen-carousel" data-result-id="${result.id}">
           <div class="gen-carousel-inner">
-            ${result.mediaUrls.map((url, idx) => `
-              <div class="gen-carousel-slide ${idx === 0 ? 'active' : ''}" data-index="${idx}">
-                <img src="${url}" alt="Generated image ${idx + 1}" loading="lazy">
-              </div>
-            `).join('')}
+            ${mediaItems.map((item, idx) => {
+              const url = typeof item === 'string' ? item : item.url;
+              const isNsfw = typeof item === 'object' ? item.nsfw : false;
+              return this.generateImageSlideHtml(url, isNsfw, idx, result.id);
+            }).join('')}
           </div>
           <div class="gen-carousel-controls">
             <button class="gen-carousel-btn prev" onclick="genDashboard.carouselPrev('${result.id}')" ${result.mediaUrls.length <= 1 ? 'disabled' : ''}>
@@ -1219,8 +1385,10 @@ class GenerationDashboard {
       `;
     } else if (result.mediaUrl) {
       // Single image or video
-      mediaContent = isImage 
-        ? `<img src="${result.mediaUrl}" alt="Generated image" loading="lazy">`
+      const firstItem = result.mediaItems?.[0];
+      const isNsfw = firstItem?.nsfw || false;
+      mediaContent = isImage
+        ? this.generateSingleImageHtml(result.mediaUrl, isNsfw, result.id)
         : `<video src="${result.mediaUrl}" preload="metadata" muted loop></video>`;
     } else {
       // Failed state
@@ -1268,14 +1436,25 @@ class GenerationDashboard {
       media.addEventListener('click', () => this.openPreview(result.id));
     }
     
-    // For carousel, add click on images only
+    // For carousel, add click on images only (exclude NSFW blurred images)
     if (hasMultipleImages) {
-      const slides = card.querySelectorAll('.gen-carousel-slide img');
+      const slides = card.querySelectorAll('.gen-carousel-slide img:not(.gen-nsfw-blurred)');
       slides.forEach(img => {
         img.addEventListener('click', () => this.openPreview(result.id));
       });
     }
-    
+
+    // Fetch blurred versions for NSFW images (for non-premium users)
+    if (!this.isPremium()) {
+      const nsfwImages = card.querySelectorAll('.gen-nsfw-blurred');
+      nsfwImages.forEach(img => {
+        const originalUrl = img.dataset.originalUrl;
+        if (originalUrl) {
+          this.fetchBlurredImageForNsfw(img, originalUrl);
+        }
+      });
+    }
+
     return card;
   }
   
@@ -1353,13 +1532,24 @@ class GenerationDashboard {
   updateResultWithData(resultId, data) {
     const result = this.state.results.find(r => r.id === resultId);
     if (!result) return;
-    
+
     result.status = data.status || 'completed';
     result.mediaUrl = data.imageUrl || data.videoUrl || data.url;
-    
+
     // Store all image URLs for carousel support
     result.mediaUrls = data.imageUrls || (result.mediaUrl ? [result.mediaUrl] : []);
-    
+
+    // Also update mediaItems with NSFW info if available
+    if (data.images && Array.isArray(data.images)) {
+      result.mediaItems = data.images.map(img => ({
+        url: img?.imageUrl || img?.image_url || img?.url || img,
+        nsfw: img?.nsfw || false
+      }));
+    } else {
+      // Create mediaItems from mediaUrls if not provided
+      result.mediaItems = result.mediaUrls.map(url => ({ url, nsfw: false }));
+    }
+
     console.log('[GenerationDashboard] 📊 updateResultWithData:', {
       resultId,
       status: result.status,
@@ -1367,7 +1557,7 @@ class GenerationDashboard {
       mediaUrlsCount: result.mediaUrls?.length || 0,
       mediaUrls: result.mediaUrls
     });
-    
+
     // Log for debugging carousel display issue
     console.log(`[GenerationDashboard] 📊 IMAGES RECEIVED: ${result.mediaUrls?.length || 0}`);
     console.log(`[GenerationDashboard] 📊 IMAGES TO DISPLAY: ${result.mediaUrls?.length || (result.mediaUrl ? 1 : 0)}`);
@@ -1433,11 +1623,12 @@ class GenerationDashboard {
           
           console.log('[GenerationDashboard] ✅ Task completed - Total valid URLs:', imageUrls.length);
           console.log('[GenerationDashboard] ✅ Primary imageUrl:', imageUrl ? imageUrl.substring(0, 80) + '...' : 'NONE');
-          
+
           this.updateResultWithData(result.id, {
             status: 'completed',
             imageUrl: imageUrl,
             imageUrls: imageUrls.length > 0 ? imageUrls : (imageUrl ? [imageUrl] : []),
+            images: rawImages, // Pass raw images with NSFW flags
             videoUrl: videoUrl
           });
         } else if (data.status === 'failed' || data.status === 'TASK_STATUS_FAILED') {

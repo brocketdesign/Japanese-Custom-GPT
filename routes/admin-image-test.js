@@ -22,6 +22,40 @@ const {
 } = require('../models/admin-image-test-utils');
 const { removeUserPoints, getUserPoints } = require('../models/user-points-utils');
 const { PRICING_CONFIG, getImageGenerationCost, getFaceMergeCost } = require('../config/pricing');
+const { moderateImage } = require('../models/openai');
+
+/**
+ * Check if an image is NSFW using OpenAI Content Moderation API
+ * @param {string} imageUrl - URL of the image to check
+ * @returns {Promise<boolean>} - true if NSFW, false otherwise
+ */
+async function checkImageNSFW(imageUrl) {
+  try {
+    const moderation = await moderateImage(imageUrl);
+    if (moderation.results && moderation.results.length > 0) {
+      const result = moderation.results[0];
+      // Check if flagged or if sexual content score is high
+      if (result.flagged) {
+        console.log('[NSFW Check] Image flagged as NSFW');
+        return true;
+      }
+      // Also check specific categories
+      if (result.categories?.sexual || result.categories?.['sexual/minors']) {
+        console.log('[NSFW Check] Image has sexual content');
+        return true;
+      }
+      // Check scores with threshold
+      if (result.category_scores?.sexual > 0.5) {
+        console.log('[NSFW Check] Image sexual score above threshold:', result.category_scores.sexual);
+        return true;
+      }
+    }
+    return false;
+  } catch (error) {
+    console.error('[NSFW Check] Error checking image:', error);
+    return false; // Default to safe on error
+  }
+}
 
 async function routes(fastify, options) {
   
@@ -357,18 +391,42 @@ async function routes(fastify, options) {
         }
       }
 
-      // Log the response being sent to frontend
+      // Check if user is premium
+      const isPremium = user.subscriptionStatus === 'active';
+
+      // Log the response being sent to frontend and check NSFW for non-premium users
       console.log(`[AdminImageTest] 📤 Sending response with ${tasks.length} tasks:`);
-      tasks.forEach((task, idx) => {
+      for (let idx = 0; idx < tasks.length; idx++) {
+        const task = tasks[idx];
         console.log(`[AdminImageTest] 📤 Task ${idx + 1}: ${task.modelId}, status: ${task.status}, async: ${task.async}, images: ${task.images?.length || 0}`);
+
         if (task.images && task.images.length > 0) {
-          task.images.forEach((img, imgIdx) => {
+          for (let imgIdx = 0; imgIdx < task.images.length; imgIdx++) {
+            const img = task.images[imgIdx];
             const url = img.imageUrl || img.url || img;
             console.log(`[AdminImageTest] 📤   Image ${imgIdx + 1}: ${typeof url === 'string' ? url.substring(0, 80) + '...' : 'N/A'}`);
-          });
+
+            // For non-premium users with completed sync tasks, check NSFW
+            if (!isPremium && task.status === 'completed' && typeof url === 'string' && url.startsWith('http')) {
+              try {
+                const isNSFW = await checkImageNSFW(url);
+                task.images[imgIdx].nsfw = isNSFW;
+                if (isNSFW) {
+                  console.log(`[AdminImageTest] 🔞 Task ${idx + 1} Image ${imgIdx + 1} flagged as NSFW for non-premium user`);
+                }
+              } catch (nsfwError) {
+                console.error(`[AdminImageTest] Error checking NSFW:`, nsfwError);
+                task.images[imgIdx].nsfw = false;
+              }
+            } else {
+              if (typeof img === 'object') {
+                task.images[imgIdx].nsfw = false;
+              }
+            }
+          }
         }
-      });
-      
+      }
+
       return reply.send({
         success: true,
         tasks
@@ -398,18 +456,40 @@ async function routes(fastify, options) {
       }
 
       const result = await checkTaskResult(taskId);
-      
+
       // Log the status result being sent to frontend
       if (result.status === 'completed') {
         console.log(`[ImageDashboard] 📤 Sending completed result for task ${taskId}:`);
         console.log(`[ImageDashboard] 📤 Images count: ${result.images?.length || 0}`);
+
+        // Check NSFW for non-premium users
+        const isPremium = user.subscriptionStatus === 'active';
+
         if (result.images && result.images.length > 0) {
-          result.images.forEach((img, idx) => {
-            console.log(`[ImageDashboard] 📤 Image ${idx + 1} URL: ${img.imageUrl}`);
-          });
+          for (let i = 0; i < result.images.length; i++) {
+            const img = result.images[i];
+            const imageUrl = img.imageUrl || img.url;
+            console.log(`[ImageDashboard] 📤 Image ${i + 1} URL: ${imageUrl}`);
+
+            // For non-premium users, check if image is NSFW
+            if (!isPremium && imageUrl) {
+              try {
+                const isNSFW = await checkImageNSFW(imageUrl);
+                result.images[i].nsfw = isNSFW;
+                if (isNSFW) {
+                  console.log(`[ImageDashboard] 🔞 Image ${i + 1} flagged as NSFW for non-premium user`);
+                }
+              } catch (nsfwError) {
+                console.error(`[ImageDashboard] Error checking NSFW for image ${i + 1}:`, nsfwError);
+                result.images[i].nsfw = false;
+              }
+            } else {
+              result.images[i].nsfw = false;
+            }
+          }
         }
       }
-      
+
       return reply.send(result);
     } catch (error) {
       console.error('[ImageDashboard] Error checking status:', error);

@@ -21,6 +21,14 @@ class SchedulesDashboard {
     this.customPrompts = [];
     this.selectedCustomPromptIds = new Set();
     this.selectedCharacterId = '';
+
+    // Character pagination and search
+    this.characterSkip = 0;
+    this.characterLimit = 50;
+    this.characterHasMore = true;
+    this.characterSearchQuery = '';
+    this.characterLoading = false;
+    this.characterSearchTimeout = null;
     this.socialConnections = [];
     this.selectedSocialAccountIds = new Set();
 
@@ -154,6 +162,50 @@ class SchedulesDashboard {
         this.selectModel(firstModel.dataset.value, firstModel.dataset.name);
       }
     }
+
+    // Character search input
+    const characterSearchInput = document.getElementById('characterSearchInput');
+    if (characterSearchInput) {
+      characterSearchInput.addEventListener('input', (e) => {
+        this.onCharacterSearch(e.target.value);
+      });
+    }
+
+    // Character list infinite scroll
+    const characterContainer = document.getElementById('characterSelectionContainer');
+    if (characterContainer) {
+      characterContainer.addEventListener('scroll', () => {
+        this.onCharacterScroll(characterContainer);
+      });
+    }
+  }
+
+  onCharacterSearch(query) {
+    // Debounce search
+    if (this.characterSearchTimeout) {
+      clearTimeout(this.characterSearchTimeout);
+    }
+
+    this.characterSearchTimeout = setTimeout(() => {
+      this.characterSearchQuery = query.trim();
+      this.characterSkip = 0;
+      this.characterHasMore = true;
+      this.loadUserCharacters(false);
+    }, 300);
+  }
+
+  onCharacterScroll(container) {
+    if (this.characterLoading || !this.characterHasMore) return;
+
+    const scrollTop = container.scrollTop;
+    const scrollHeight = container.scrollHeight;
+    const clientHeight = container.clientHeight;
+
+    // Load more when scrolled near the bottom (within 50px)
+    if (scrollTop + clientHeight >= scrollHeight - 50) {
+      this.characterSkip += this.characterLimit;
+      this.loadUserCharacters(true);
+    }
   }
 
   selectActionType(actionType) {
@@ -232,21 +284,45 @@ class SchedulesDashboard {
     }
   }
 
-  async loadUserCharacters() {
+  async loadUserCharacters(append = false) {
+    if (this.characterLoading) return;
+    if (append && !this.characterHasMore) return;
+
+    this.characterLoading = true;
+
     try {
-      const response = await fetch('/api/schedules/user-characters');
+      const params = new URLSearchParams({
+        skip: this.characterSkip,
+        limit: this.characterLimit
+      });
+      if (this.characterSearchQuery) {
+        params.append('search', this.characterSearchQuery);
+      }
+
+      const response = await fetch(`/api/schedules/user-characters?${params}`);
       const data = await response.json();
-      
+
       if (data.success) {
-        this.userCharacters = data.characters;
-        this.populateCharacterDropdown();
+        const newCharactersCount = data.characters.length;
+        if (append) {
+          this.userCharacters = [...this.userCharacters, ...data.characters];
+        } else {
+          this.userCharacters = data.characters;
+        }
+        this.characterHasMore = data.pagination?.hasMore ?? false;
+        this.populateCharacterDropdown(append, newCharactersCount);
       } else {
-        // Show error state if API returns success: false
-        this.showCharacterLoadError();
+        if (!append) {
+          this.showCharacterLoadError();
+        }
       }
     } catch (error) {
       console.error('Error loading characters:', error);
-      this.showCharacterLoadError();
+      if (!append) {
+        this.showCharacterLoadError();
+      }
+    } finally {
+      this.characterLoading = false;
     }
   }
 
@@ -260,39 +336,54 @@ class SchedulesDashboard {
     `;
   }
 
-  populateCharacterDropdown() {
+  populateCharacterDropdown(append = false, newCount = 0) {
     const container = document.getElementById('characterSelectionContainer');
     if (!container) return;
-    
-    container.innerHTML = '';
-    
-    // Create "None" option
-    const noneItem = document.createElement('div');
-    noneItem.className = 'character-selection-item';
-    noneItem.dataset.characterId = '';
-    noneItem.innerHTML = `
-      <div class="character-item-avatar">
-        <i class="bi bi-x-circle"></i>
-      </div>
-      <div class="character-item-info">
-        <div class="character-item-name">None</div>
-      </div>
-    `;
-    noneItem.addEventListener('click', () => this.selectCharacter('', noneItem));
-    container.appendChild(noneItem);
-    
+
+    // Remove existing loader if present
+    const existingLoader = container.querySelector('.character-load-more');
+    if (existingLoader) {
+      existingLoader.remove();
+    }
+
+    if (!append) {
+      container.innerHTML = '';
+
+      // Create "None" option (only when not searching)
+      if (!this.characterSearchQuery) {
+        const noneItem = document.createElement('div');
+        noneItem.className = 'character-selection-item';
+        noneItem.dataset.characterId = '';
+        noneItem.innerHTML = `
+          <div class="character-item-avatar">
+            <i class="bi bi-x-circle"></i>
+          </div>
+          <div class="character-item-info">
+            <div class="character-item-name">None</div>
+          </div>
+        `;
+        noneItem.addEventListener('click', () => this.selectCharacter('', noneItem));
+        container.appendChild(noneItem);
+      }
+    }
+
+    // Determine which characters to add (all if not appending, or just the newly loaded ones)
+    const charactersToAdd = append
+      ? this.userCharacters.slice(-newCount)
+      : this.userCharacters;
+
     // Add character items
-    this.userCharacters.forEach(character => {
+    charactersToAdd.forEach(character => {
       const item = document.createElement('div');
       item.className = 'character-selection-item';
       item.dataset.characterId = character.id;
-      
+
       // API returns imageUrl, also check thumbnail and chatImageUrl for backward compatibility
       // Use /img/avatar.png as fallback since default-thumbnail.png doesn't exist
       const thumbnail = character.imageUrl || character.thumbnail || character.chatImageUrl || '/img/avatar.png';
       const charName = this.escapeHtml(character.name || 'Unknown');
       const favoriteIcon = character.isFavorite ? '<i class="bi bi-star-fill character-favorite-icon"></i>' : '';
-      
+
       item.innerHTML = `
         <div class="character-item-avatar">
           <img src="${thumbnail}" alt="${charName}" onerror="this.src='/img/avatar.png'">
@@ -301,10 +392,26 @@ class SchedulesDashboard {
           <div class="character-item-name">${charName}${favoriteIcon}</div>
         </div>
       `;
-      
+
       item.addEventListener('click', () => this.selectCharacter(character.id, item));
       container.appendChild(item);
     });
+
+    // Show "no results" message if searching and no characters found
+    if (!append && this.characterSearchQuery && this.userCharacters.length === 0) {
+      const noResults = document.createElement('div');
+      noResults.className = 'text-center py-3';
+      noResults.innerHTML = `<p class="text-muted mb-0 small">No characters found</p>`;
+      container.appendChild(noResults);
+    }
+
+    // Restore active state if a character was selected
+    if (this.selectedCharacterId) {
+      const selectedItem = container.querySelector(`[data-character-id="${this.selectedCharacterId}"]`);
+      if (selectedItem) {
+        selectedItem.classList.add('active');
+      }
+    }
   }
 
   selectCharacter(characterId, itemElement) {

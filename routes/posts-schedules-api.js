@@ -1278,10 +1278,15 @@ Return ONLY the caption text with hashtags, nothing else.`;
       const { ObjectId } = fastify.mongo;
       const userId = user._id.toString();
       const userIdObj = new ObjectId(userId);
-      
+
+      // Pagination and search parameters
+      const skip = parseInt(request.query.skip) || 0;
+      const limit = Math.min(parseInt(request.query.limit) || 50, 100); // Max 100 per request
+      const search = request.query.search ? request.query.search.trim() : '';
+
       // Fetch user's favorites - check both ObjectId and string formats
       const userFavorites = await db.collection('user_favorites')
-        .find({ 
+        .find({
           $or: [
             { userId: userIdObj },
             { userId: userId }
@@ -1289,21 +1294,31 @@ Return ONLY the caption text with hashtags, nothing else.`;
         })
         .project({ chatId: 1 })
         .toArray();
-      
+
       // Create a set of favorite chat IDs (as strings for comparison)
       const favoriteIds = new Set(userFavorites.map(f => f.chatId.toString()));
-      
-      // Fetch user's characters from chats collection
-      // Check both ObjectId and string formats for userId
+
+      // Build query for user's characters
+      const baseQuery = {
+        $or: [
+          { userId: new ObjectId(userId) },
+          { userId: userId },
+          { creatorId: new ObjectId(userId) },
+          { creatorId: userId }
+        ]
+      };
+
+      // Add search filter if provided
+      if (search) {
+        baseQuery.name = { $regex: search, $options: 'i' };
+      }
+
+      // Get total count for pagination
+      const totalCount = await db.collection('chats').countDocuments(baseQuery);
+
+      // Fetch user's characters from chats collection with pagination
       const characters = await db.collection('chats')
-        .find({ 
-          $or: [
-            { userId: new ObjectId(userId) },
-            { userId: userId },
-            { creatorId: new ObjectId(userId) },
-            { creatorId: userId }
-          ]
-        })
+        .find(baseQuery)
         .project({
           _id: 1,
           name: 1,
@@ -1314,7 +1329,8 @@ Return ONLY the caption text with hashtags, nothing else.`;
           imageModel: 1
         })
         .sort({ createdAt: -1 })
-        .limit(50) // Limit to 50 characters for performance
+        .skip(skip)
+        .limit(limit)
         .toArray();
 
       // Collect unique modelIds that need name lookup
@@ -1371,16 +1387,25 @@ Return ONLY the caption text with hashtags, nothing else.`;
         };
       });
       
-      // Sort: favorites first, then by name
-      mappedCharacters.sort((a, b) => {
-        if (a.isFavorite && !b.isFavorite) return -1;
-        if (!a.isFavorite && b.isFavorite) return 1;
-        return (a.name || '').localeCompare(b.name || '');
-      });
+      // Sort: favorites first, then by name (only for first page without search)
+      // For subsequent pages or search results, maintain database order for consistency
+      if (skip === 0 && !search) {
+        mappedCharacters.sort((a, b) => {
+          if (a.isFavorite && !b.isFavorite) return -1;
+          if (!a.isFavorite && b.isFavorite) return 1;
+          return (a.name || '').localeCompare(b.name || '');
+        });
+      }
 
       return reply.send({
         success: true,
-        characters: mappedCharacters
+        characters: mappedCharacters,
+        pagination: {
+          skip: skip,
+          limit: limit,
+          total: totalCount,
+          hasMore: skip + characters.length < totalCount
+        }
       });
     } catch (error) {
       console.error('[Schedules API] Get characters error:', error);

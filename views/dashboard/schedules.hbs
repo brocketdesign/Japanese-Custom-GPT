@@ -299,6 +299,10 @@
                     <!-- Character Selection -->
                     <div class="mb-3">
                         <label class="form-label">{{translations.dashboard.character}} <span class="text-muted">({{translations.dashboard.optional}})</span></label>
+                        <div class="character-search-wrapper">
+                            <i class="bi bi-search character-search-icon"></i>
+                            <input type="text" id="characterSearchInput" class="character-search-input" placeholder="Search characters...">
+                        </div>
                         <div id="characterSelectionContainer" class="character-selection-list">
                             <!-- Characters loaded dynamically -->
                             <div class="text-center py-3">

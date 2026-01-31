@@ -103,7 +103,7 @@ async function generateImg({
     chatId, 
     userChatId, 
     imageType, 
-    image_num, 
+    image_num = 1,
     image_base64, 
     chatCreation, 
     placeholderId, 

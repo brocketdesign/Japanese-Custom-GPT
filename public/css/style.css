@@ -6311,7 +6311,9 @@ color: #fff !important;
 #enhancePromptBtn:active {
     transform: translateY(0);
 }
-
+#clearPromptBtn {
+  top: 8px !important;
+}
 /* Character Counter */
 #customPromptModal .form-text.d-flex {
     padding: 8px 4px;

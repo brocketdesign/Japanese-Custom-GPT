@@ -166,26 +166,27 @@ async function mergeFaceWithNovita({ faceImageBase64, originalImageBase64 }) {
 }
 
 /**
- * Upload image to S3 for Segmind API (which requires URLs, not base64)
+ * Upload image for Segmind API (which requires URLs, not base64)
+ * Uses Supabase first, falls back to S3
  * @param {string} base64Image - Base64 image (with or without data URL prefix)
  * @param {string} prefix - Filename prefix
- * @returns {string} S3 URL
+ * @returns {string} Image URL
  */
 async function uploadImageToS3ForSegmind(base64Image, prefix = 'segmind') {
-  const { uploadToS3 } = require('./tool');
+  const { uploadImage } = require('./tool');
   const { createHash } = require('crypto');
-  
+
   // Clean base64 data
   const cleanBase64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
   const imageBuffer = Buffer.from(cleanBase64, 'base64');
-  
+
   // Generate hash for unique filename
   const hash = createHash('md5').update(imageBuffer).digest('hex');
   const filename = `${prefix}_${hash}.png`;
-  
-  // Upload to S3
-  const s3Url = await uploadToS3(imageBuffer, hash, filename);
-  return s3Url;
+
+  // Upload using uploadImage (Supabase first, S3 fallback)
+  const imageUrl = await uploadImage(imageBuffer, hash, filename);
+  return imageUrl;
 }
 
 /**
@@ -563,23 +564,24 @@ async function addMergeFaceMessageToChat(userChatId, mergeId, mergedImageUrl, fa
  */
 async function saveMergedImageToS3(base64Image, mergeId, fastify) {
   try {
-    const { uploadToS3 } = require('./tool');
+    // Use uploadImage which tries Supabase first, then falls back to S3
+    const { uploadImage } = require('./tool');
     const { createHash } = require('crypto');
-    
+
     // Convert base64 to buffer
     const base64Data = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
     const imageBuffer = Buffer.from(base64Data, 'base64');
-    
+
     // Generate hash for the buffer
     const hash = createHash('sha256').update(imageBuffer).digest('hex');
-    
-    // Upload to S3 using the tool.js function
-    const imageUrl = await uploadToS3(imageBuffer, hash, `merged-face-${mergeId}.jpg`);
-    console.log(`[saveMergedImageToS3] ${new Date().toISOString()} Image uploaded to S3: ${imageUrl}`);
+
+    // Upload using uploadImage (Supabase first, S3 fallback)
+    const imageUrl = await uploadImage(imageBuffer, hash, `merged-face-${mergeId}.jpg`);
+    console.log(`[saveMergedImageToS3] ${new Date().toISOString()} Image uploaded: ${imageUrl}`);
     return imageUrl;
   } catch (error) {
-    console.error('[saveMergedImageToS3] Error uploading to S3:', error);
-    throw new Error('Failed to save merged image to S3');
+    console.error('[saveMergedImageToS3] Error uploading image:', error);
+    throw new Error('Failed to save merged image');
   }
 }
 

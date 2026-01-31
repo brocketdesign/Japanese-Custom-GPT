@@ -35,7 +35,8 @@ User Request → generateImg() → Novita API → Webhook/Polling → checkTaskS
 | `models/imagen.js` | Core image generation logic, task processing, database saving |
 | `models/openai.js` | OpenAI API utilities including `moderateImage()` for content moderation |
 | `routes/novita-webhook.js` | Webhook handler for Novita AI task completion |
-| `models/merge-face-utils.js` | Face merge utilities for swapping faces |
+| `models/merge-face-utils.js` | Face merge utilities (Segmind FaceSwap V5 API) |
+| `models/tool.js` | Image upload utilities (Supabase first, S3 fallback) |
 | `public/js/chat.js` | Frontend chat display, batch image carousel reconstruction |
 | `models/admin-image-test-utils.js` | Model configurations (MODEL_CONFIGS) |
 
@@ -403,6 +404,10 @@ generateImg() starts pollSequentialTasksWithFallback()
 
 NSFW detection uses the **OpenAI Content Moderation API** (`omni-moderation-latest` model) for accurate content filtering.
 
+**OpenAI moderation is authoritative** - its result takes precedence over the task type:
+- If OpenAI flags the image → `nsfw = true`
+- If OpenAI passes the image → `nsfw = false` (even if task.type was 'nsfw')
+
 ### How It Works
 
 ```
@@ -413,8 +418,9 @@ checkTaskStatus()
   └── For each image:
         ├── Call moderateImage(imageUrl)
         ├── Check result.flagged
-        ├── Log flagged categories (sexual, violence, etc.)
-        └── Set nsfw = true if flagged
+        ├── If flagged → nsfw = true
+        ├── If not flagged → nsfw = false (OpenAI is trusted)
+        └── Log categories and scores
 ```
 
 ### Moderation Response Structure
@@ -451,7 +457,7 @@ checkTaskStatus()
 ### Debug Examples
 
 ```javascript
-// In server logs, look for:
+// Example 1: Image flagged by OpenAI
 [NSFW-CHECK] Task abc123 - Image 1:
 [NSFW-CHECK]   - Task type: sfw
 [NSFW-CHECK]   - Initial NSFW flag (from task.type): false
@@ -460,6 +466,14 @@ checkTaskStatus()
 [NSFW-CHECK]   - Flagged categories: sexual
 [NSFW-CHECK]   - High scores: sexual: 95.2%
 [NSFW-CHECK]   - Final NSFW flag: true
+
+// Example 2: Image passed by OpenAI (overrides task.type)
+[NSFW-CHECK] Task xyz789 - Image 1:
+[NSFW-CHECK]   - Task type: nsfw
+[NSFW-CHECK]   - Initial NSFW flag (from task.type): true
+[NSFW-CHECK]   - OpenAI moderation result: {...}
+[NSFW-CHECK]   - ✅ PASSED OpenAI moderation - marking as safe
+[NSFW-CHECK]   - Final NSFW flag: false
 ```
 
 ---
@@ -467,6 +481,8 @@ checkTaskStatus()
 ## Face Merge Flow
 
 ### Auto-Merge (during image generation)
+
+Uses **Segmind FaceSwap V5 API** for higher quality face swaps.
 
 ```
 checkTaskStatus()
@@ -478,8 +494,9 @@ checkTaskStatus()
   │           ├── Check mergedResults cache
   │           ├── Acquire mergeLock
   │           ├── Check gallery for existing merge
-  │           ├── Call mergeFaceWithNovita()
-  │           ├── saveMergedImageToS3()
+  │           ├── Upload images to storage (Supabase first, S3 fallback)
+  │           ├── Call mergeFaceWithSegmind()
+  │           ├── saveMergedImageToS3() → uses uploadImage (Supabase/S3)
   │           ├── Update mergedResults cache
   │           └── Release lock
   │
@@ -491,9 +508,11 @@ checkTaskStatus()
 ```
 POST /merge-face/merge
   │
-  └── mergeFaceWithNovita()
+  └── mergeFaceWithSegmind() (default) or mergeFaceWithNovita()
         └── saveMergedFaceToDB()
 ```
+
+**Note:** Manual merge defaults to Segmind (`provider = 'segmind'`) but can use Novita if specified.
 
 ---
 
@@ -614,8 +633,49 @@ The fix uses `$elemMatch` to ensure both conditions match the SAME array element
 - `tasks` collection: Is `shouldAutoMerge: true`?
 - `mergedResults` collection: Is there a cached result?
 - `mergeLocks` collection: Is there a stuck lock?
+- Environment: Is `SEGMIND_API_KEY` set?
 
-**Root cause:** Lock not released, or `chatImageUrl` missing
+**Root cause:** Lock not released, `chatImageUrl` missing, or Segmind API key not configured
+
+### 6. Original Image Appears Before Merged (FIXED Jan 2026)
+
+**Symptom:** When generating with auto-merge, original image briefly appears with "Generated Image" title, then merged image appears with proper title
+
+**Root cause:** Race condition between webhook and polling handlers. Both called `handleTaskCompletion()` - one with cached (pre-merge) data, one with processed (merged) data.
+
+**Fix:** Added `fromCache` flag to `checkTaskStatus()` cached results. Handlers now skip `handleTaskCompletion()` when `taskStatus.fromCache === true`.
+
+```javascript
+// In checkTaskStatus() - cached result now includes fromCache flag
+if (!lockResult.value) {
+  return {
+    ...cachedResult,
+    fromCache: true  // Signals caller to skip notifications
+  };
+}
+
+// In webhook/polling handlers
+if (taskStatus && !taskStatus.fromCache) {
+  await handleTaskCompletion(taskStatus, fastify, options);
+}
+```
+
+### 7. Undefined Image After Refresh
+
+**Symptom:** After page refresh, chat shows an "undefined" image alongside the merged face
+
+**Check:**
+- `userChat.messages`: Look for messages with `content: undefined` or `title: undefined`
+- Server logs: Look for validation warnings
+
+**Root cause (FIXED Jan 2026):** Image messages were saved with undefined content when title and prompt were both missing.
+
+**Fix:** Added validation in `addImageMessageToChatHelper()` to ensure `content`, `title`, and `prompt` are never undefined:
+```javascript
+const messageContent = titleString || prompt || 'Generated Image';
+const messageTitle = titleString || '';
+const messagePrompt = prompt || '';
+```
 
 ---
 
@@ -633,6 +693,7 @@ The fix uses `$elemMatch` to ensure both conditions match the SAME array element
 | `[pollSequentialTasks]` | imagen.js | Fallback polling |
 | `[displayChat]` | chat.js | Frontend message grouping |
 | `🧬 [addMergeFaceMessageToChat]` | merge-face-utils.js | Merge message creation |
+| `🧬 [MERGE-SEGMIND]` | merge-face-utils.js | Segmind FaceSwap API calls |
 | `🔒 [MergeLock]` | imagen.js | Lock acquisition/release |
 | `🔁 [MergeReuse]` | imagen.js | Cache hit for merge |
 | `🗂️ [MergeCache]` | imagen.js | Cache save for merge |
@@ -709,7 +770,9 @@ db.mergeLocks.deleteMany({
 | `handleTaskCompletion()` | imagen.js | Send WebSocket notifications |
 | `pollSequentialTasksWithFallback()` | imagen.js | Fallback polling |
 | `handleImageWebhook()` | novita-webhook.js | Process Novita webhook |
-| `performAutoMergeFace()` | imagen.js | Auto face merge |
+| `performAutoMergeFace()` | imagen.js | Auto face merge (uses Segmind) |
+| `mergeFaceWithSegmind()` | merge-face-utils.js | Segmind FaceSwap V5 API call |
+| `uploadImage()` | tool.js | Upload to Supabase (S3 fallback) |
 | `displayChat()` | chat.js | Frontend render + batch grouping |
 
 ---
@@ -758,7 +821,15 @@ node cleanup-duplicate-messages.js
 
 | Variable | Purpose |
 |----------|---------|
-| `NOVITA_API_KEY` | Novita API authentication |
+| `NOVITA_API_KEY` | Novita API authentication (image generation) |
+| `SEGMIND_API_KEY` | Segmind API key (required for face merge) |
 | `OPENAI_API_KEY` | OpenAI API key (required for content moderation) |
+| `SUPABASE_URL` | Supabase project URL (primary image storage) |
+| `SUPABASE_SERVICE_KEY` | Supabase service key |
+| `SUPABASE_BUCKET` | Supabase storage bucket name (default: 'images') |
+| `AWS_S3_BUCKET_NAME` | S3 bucket name (fallback storage) |
+| `AWS_REGION` | AWS region for S3 |
+| `AWS_ACCESS_KEY_ID` | AWS access key |
+| `AWS_SECRET_ACCESS_KEY` | AWS secret key |
 | `LOCAL_WEBHOOK_URL` | Override webhook URL (for dev with ngrok) |
 | `BASE_URL` | Production webhook URL base |

@@ -750,15 +750,15 @@ async function performAutoMergeFace(originalImage, chatImageUrl, fastify) {
       }
     }
 
-    const { 
-      mergeFaceWithNovita, 
-      optimizeImageForMerge, 
+    const {
+      mergeFaceWithSegmind,
+      optimizeImageForMerge,
       saveMergedImageToS3
     } = require('./merge-face-utils');
 
     // Convert chat image URL to base64 (face image)
     const axios = require('axios');
-    const chatImageResponse = await axios.get(chatImageUrl, { 
+    const chatImageResponse = await axios.get(chatImageUrl, {
       responseType: 'arraybuffer',
       timeout: 30000
     });
@@ -767,17 +767,17 @@ async function performAutoMergeFace(originalImage, chatImageUrl, fastify) {
     const faceImageBase64 = optimizedChatImage.base64Image;
 
     // Convert generated image URL to base64 (original image)
-    const generatedImageResponse = await axios.get(originalImage.imageUrl, { 
+    const generatedImageResponse = await axios.get(originalImage.imageUrl, {
       responseType: 'arraybuffer',
       timeout: 30000
     });
     const generatedImageBuffer = Buffer.from(generatedImageResponse.data);
-    
+
     const optimizedGeneratedImage = await optimizeImageForMerge(generatedImageBuffer, 2048);
     const originalImageBase64 = optimizedGeneratedImage.base64Image;
 
-    // Merge the faces using Novita API
-    const mergeResult = await mergeFaceWithNovita({
+    // Merge the faces using Segmind API (higher quality than Novita)
+    const mergeResult = await mergeFaceWithSegmind({
       faceImageBase64,
       originalImageBase64
     });
@@ -940,25 +940,25 @@ async function performAutoMergeFaceWithBase64(originalImage, faceImageBase64, fa
       }
     }
 
-    const { 
-      mergeFaceWithNovita, 
-      optimizeImageForMerge, 
+    const {
+      mergeFaceWithSegmind,
+      optimizeImageForMerge,
       saveMergedImageToS3
     } = require('./merge-face-utils');
 
     // Convert generated image URL to base64
     const axios = require('axios');
-    const generatedImageResponse = await axios.get(originalImage.imageUrl, { 
+    const generatedImageResponse = await axios.get(originalImage.imageUrl, {
       responseType: 'arraybuffer',
       timeout: 30000
     });
     const generatedImageBuffer = Buffer.from(generatedImageResponse.data);
-    
+
     const optimizedGeneratedImage = await optimizeImageForMerge(generatedImageBuffer, 2048);
     const originalImageBase64 = optimizedGeneratedImage.base64Image;
-    // Merge the faces using Novita API
 
-    const mergeResult = await mergeFaceWithNovita({
+    // Merge the faces using Segmind API (higher quality than Novita)
+    const mergeResult = await mergeFaceWithSegmind({
       faceImageBase64,
       originalImageBase64
     });
@@ -1084,15 +1084,20 @@ async function addImageMessageToChatHelper(userDataCollection, userId, userChatI
       }
     }
 
+    // Ensure we have valid content - never save undefined content
+    const messageContent = titleString || prompt || 'Generated Image';
+    const messageTitle = titleString || '';
+    const messagePrompt = prompt || '';
+
     const imageMessage = {
       role: "assistant",
-      content: titleString || prompt,
+      content: messageContent,
       imageUrl,
       imageId: imageIdStr,
       type: isMerged ? "mergeFace" : "image",
       hidden: true,
-      prompt,
-      title: titleString,
+      prompt: messagePrompt,
+      title: messageTitle,
       nsfw,
       isMerged: isMerged || false,
       createdAt: new Date(),
@@ -1400,6 +1405,10 @@ async function checkTaskStatus(taskId, fastify) {
   );
 
   if (!lockResult.value) {
+    // Another process is already handling this task - return cached result with flag
+    // IMPORTANT: Callers should NOT call handleTaskCompletion() when fromCache is true
+    // to prevent duplicate WebSocket notifications
+    console.log(`🔒 [checkTaskStatus] Task ${task.taskId} already being processed by another worker, returning cached result`);
     const lockedTask = await tasksCollection.findOne({ taskId: task.taskId });
     return {
       taskId: lockedTask.taskId,
@@ -1407,7 +1416,8 @@ async function checkTaskStatus(taskId, fastify) {
       userChatId: lockedTask.userChatId,
       status: 'completed',
       images: lockedTask.result?.images || [],
-      result: lockedTask.result || { images: [] }
+      result: lockedTask.result || { images: [] },
+      fromCache: true  // Flag to indicate this is a cached result, not freshly processed
     };
   }
 
@@ -1527,7 +1537,7 @@ async function checkTaskStatus(taskId, fastify) {
       if (moderationResult && moderationResult.results && moderationResult.results.length > 0) {
         const result = moderationResult.results[0];
 
-        // Check if flagged by OpenAI
+        // OpenAI moderation is authoritative - trust its result over task.type
         if (result.flagged) {
           console.log(`[NSFW-CHECK]   - ⚠️ FLAGGED by OpenAI moderation`);
           nsfw = true;
@@ -1548,7 +1558,9 @@ async function checkTaskStatus(taskId, fastify) {
             }
           }
         } else {
-          console.log(`[NSFW-CHECK]   - ✅ PASSED OpenAI moderation`);
+          // OpenAI says it's safe - trust OpenAI over task.type
+          console.log(`[NSFW-CHECK]   - ✅ PASSED OpenAI moderation - marking as safe`);
+          nsfw = false;
         }
       } else {
         console.log(`[NSFW-CHECK]   - ℹ️ No valid OpenAI moderation result`);
@@ -2318,17 +2330,21 @@ async function saveImageToDB({taskId, userId, chatId, userChatId, prompt, title,
       }
     }
 
-    const imageDocument = { 
-      _id: imageId, 
+    // Ensure we never save undefined values for prompt and title
+    const safePrompt = prompt || '';
+    const safeTitle = title || '';
+
+    const imageDocument = {
+      _id: imageId,
       taskId,
-      prompt, 
-      title,
+      prompt: safePrompt,
+      title: safeTitle,
       slug,
-      imageUrl, 
+      imageUrl,
       thumbnailUrl: finalThumbnailUrl,
       originalImageUrl: imageUrl,
-      blurredImageUrl, 
-      aspectRatio, 
+      blurredImageUrl,
+      aspectRatio,
       seed,
       isBlurred: !!blurredImageUrl,
       nsfw,
@@ -2689,45 +2705,52 @@ async function pollSequentialTasksWithFallback(taskId, allTaskIds, fastify, opti
           
           if (taskStatus && taskStatus.status === 'completed' && taskStatus.images && taskStatus.images.length > 0) {
             completedTasks.set(tid, taskStatus.images);
-            
-            // Get the task document for options
-            const taskDocAfter = await tasksCollection.findOne({ taskId: tid });
-            
-            // Call handleTaskCompletion to send notifications
-            if (taskDocAfter) {
-              // Build sequentialBatchInfo for proper batch grouping in carousel
-              // Models without batch support generate each image as a separate task
-              // We need to tell the frontend the correct batch size and index
-              let sequentialBatchInfo = null;
-              let effectivePlaceholderId = taskDocAfter.placeholderId;
-              
-              if (taskIds.length > 1) {
-                // This is part of a sequential multi-image batch
-                const taskIndex = taskIds.indexOf(tid);
-                sequentialBatchInfo = {
-                  batchIndex: taskIndex >= 0 ? taskIndex : 0,
-                  batchSize: taskIds.length
-                };
-                
-                // For child tasks (not the first task), use the parent's placeholderId
-                if (taskIndex > 0 && taskDocAfter.sequentialParentTaskId) {
-                  const parentTask = await tasksCollection.findOne({ taskId: taskDocAfter.sequentialParentTaskId });
-                  if (parentTask) {
-                    effectivePlaceholderId = parentTask.placeholderId || taskDocAfter.sequentialParentTaskId;
+
+            // IMPORTANT: Skip handleTaskCompletion if fromCache is true
+            // Another worker is processing this task and will send the notifications
+            // Sending from cached result would cause duplicate notifications
+            if (taskStatus.fromCache) {
+              console.log(`[pollSequentialTasks] Task ${tid} returned cached result, skipping handleTaskCompletion`);
+            } else {
+              // Get the task document for options
+              const taskDocAfter = await tasksCollection.findOne({ taskId: tid });
+
+              // Call handleTaskCompletion to send notifications
+              if (taskDocAfter) {
+                // Build sequentialBatchInfo for proper batch grouping in carousel
+                // Models without batch support generate each image as a separate task
+                // We need to tell the frontend the correct batch size and index
+                let sequentialBatchInfo = null;
+                let effectivePlaceholderId = taskDocAfter.placeholderId;
+
+                if (taskIds.length > 1) {
+                  // This is part of a sequential multi-image batch
+                  const taskIndex = taskIds.indexOf(tid);
+                  sequentialBatchInfo = {
+                    batchIndex: taskIndex >= 0 ? taskIndex : 0,
+                    batchSize: taskIds.length
+                  };
+
+                  // For child tasks (not the first task), use the parent's placeholderId
+                  if (taskIndex > 0 && taskDocAfter.sequentialParentTaskId) {
+                    const parentTask = await tasksCollection.findOne({ taskId: taskDocAfter.sequentialParentTaskId });
+                    if (parentTask) {
+                      effectivePlaceholderId = parentTask.placeholderId || taskDocAfter.sequentialParentTaskId;
+                    }
                   }
+
+                  console.log(`[pollSequentialTasks] Sequential batch info for task ${tid}: index=${sequentialBatchInfo.batchIndex}, size=${sequentialBatchInfo.batchSize}, placeholderId=${effectivePlaceholderId}`);
                 }
-                
-                console.log(`[pollSequentialTasks] Sequential batch info for task ${tid}: index=${sequentialBatchInfo.batchIndex}, size=${sequentialBatchInfo.batchSize}, placeholderId=${effectivePlaceholderId}`);
+
+                await handleTaskCompletion(taskStatus, fastify, {
+                  chatCreation: taskDocAfter.chatCreation || false,
+                  translations: taskDocAfter.translations || translations,
+                  userId: taskStatus.userId?.toString() || taskDocAfter.userId?.toString(),
+                  chatId: taskDocAfter.chatId?.toString(),
+                  placeholderId: effectivePlaceholderId,
+                  sequentialBatchInfo
+                });
               }
-              
-              await handleTaskCompletion(taskStatus, fastify, {
-                chatCreation: taskDocAfter.chatCreation || false,
-                translations: taskDocAfter.translations || translations,
-                userId: taskStatus.userId?.toString() || taskDocAfter.userId?.toString(),
-                chatId: taskDocAfter.chatId?.toString(),
-                placeholderId: effectivePlaceholderId,
-                sequentialBatchInfo
-              });
             }
           } else {
             completedTasks.set(tid, []);

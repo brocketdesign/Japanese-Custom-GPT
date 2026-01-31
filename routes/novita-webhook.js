@@ -224,7 +224,9 @@ async function handleImageWebhook(taskId, task, payload, taskDoc, fastify, db) {
     const taskStatus = await checkTaskStatus(taskId, fastify);
     
     // Handle task completion notifications (sends characterImageGenerated for character creation)
-    if (taskStatus && taskStatus.status === 'completed' && taskStatus.images && taskStatus.images.length > 0) {
+    // IMPORTANT: Skip if taskStatus.fromCache is true - another worker is processing this task
+    // and will send the notifications. Sending from cached result would cause duplicate notifications.
+    if (taskStatus && taskStatus.status === 'completed' && taskStatus.images && taskStatus.images.length > 0 && !taskStatus.fromCache) {
       try {
         // Get task document to access chatCreation and other metadata
         const taskDoc = await tasksCollection.findOne({ taskId });

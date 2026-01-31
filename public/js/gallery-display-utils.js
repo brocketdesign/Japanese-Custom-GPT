@@ -91,12 +91,6 @@ window.displayChats = function (chatData, targetGalleryId = 'chat-gallery', moda
                         <i class="bi bi-images multi-indicator"></i>
                     ` : ''}
                     
-                    <!-- Top badges -->
-                    <div class="position-absolute top-0 end-0 m-1 d-flex flex-column gap-1" style="z-index: 10;">
-                        ${finalNsfwResult ? `<span class="badge bg-danger">18+</span>` : ''}
-                        ${chat.premium ? `<span class="badge" style="background: var(--explore-accent);"><i class="bi bi-gem"></i></span>` : ''}
-                    </div>
-                    
                     <!-- Floating Like Button -->
                     <button class="gallery-like-btn d-none" 
                             data-chat-id="${chatId}"

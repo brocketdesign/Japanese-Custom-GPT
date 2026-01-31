@@ -1487,6 +1487,7 @@
     "thumbnailAlt": "チャットのサムネイル",
     "posts": "投稿",
     "likes": "いいね",
+    "likesTabInfo":"いいねした画像は自分しか見れません。ß",
     "characters": "キャラ",
     "following": "フォロー中",
     "followers": "フォロワー",

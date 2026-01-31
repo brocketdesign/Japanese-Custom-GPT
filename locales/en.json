@@ -1503,6 +1503,7 @@
     "thumbnailAlt": "Chat Thumbnail",
     "posts": "Posts",
     "likes": "Likes",
+    "likesTabInfo":"Your are the only one who can see your liked posts.",
     "characters": "Characters",
     "following": "Following",
     "followers": "Followers",

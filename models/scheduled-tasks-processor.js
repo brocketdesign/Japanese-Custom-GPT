@@ -26,6 +26,57 @@ const {
 } = require('./prompt-mutation-utils');
 
 /**
+ * Wait for a task to complete by polling the database
+ * @param {string} taskId - Task ID to wait for
+ * @param {Object} db - Database instance
+ * @param {number} maxWaitMs - Maximum wait time in milliseconds (default: 5 minutes)
+ * @param {number} pollIntervalMs - Poll interval in milliseconds (default: 3 seconds)
+ * @returns {Object|null} Completed task data with images or null if timeout/failed
+ */
+async function waitForTaskCompletion(taskId, db, maxWaitMs = 300000, pollIntervalMs = 3000) {
+  const tasksCollection = db.collection('tasks');
+  const startTime = Date.now();
+
+  console.log(`[waitForTaskCompletion] Waiting for task ${taskId} to complete (max ${maxWaitMs / 1000}s)`);
+
+  while (Date.now() - startTime < maxWaitMs) {
+    const task = await tasksCollection.findOne({ taskId });
+
+    if (!task) {
+      console.log(`[waitForTaskCompletion] Task ${taskId} not found in database`);
+      await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
+      continue;
+    }
+
+    // Check if task completed successfully
+    if (task.status === 'completed' && task.result?.images?.length > 0) {
+      console.log(`[waitForTaskCompletion] Task ${taskId} completed with ${task.result.images.length} image(s)`);
+      return task;
+    }
+
+    // Check if task failed
+    if (task.status === 'failed') {
+      console.log(`[waitForTaskCompletion] Task ${taskId} failed: ${task.result?.error || 'Unknown error'}`);
+      return null;
+    }
+
+    // Check for webhook-processed images even if status isn't 'completed'
+    if (task.webhookProcessed && task.result?.images?.length > 0) {
+      console.log(`[waitForTaskCompletion] Task ${taskId} has webhook-processed images`);
+      return task;
+    }
+
+    // Still processing, wait and poll again
+    const elapsed = Math.round((Date.now() - startTime) / 1000);
+    console.log(`[waitForTaskCompletion] Task ${taskId} still processing (${elapsed}s elapsed)...`);
+    await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
+  }
+
+  console.log(`[waitForTaskCompletion] Timeout waiting for task ${taskId}`);
+  return null;
+}
+
+/**
  * Execute a scheduled action
  * @param {Object} schedule - Schedule object
  * @param {Object} fastify - Fastify instance
@@ -196,8 +247,25 @@ async function executeImageGeneration(schedule, fastify) {
 
   // Normalize various possible return shapes to get an image URL
   let imageUrl = null;
+  let completedTask = null;
+
   if (generationResultRaw) {
+    // First, try to get immediate image URL (for sync responses)
     imageUrl = generationResultRaw.imageUrl || generationResultRaw.image_url || generationResultRaw.images?.[0]?.imageUrl || generationResultRaw.images?.[0]?.image_url || generationResultRaw.images?.[0];
+
+    // If no immediate URL but we have a taskId, wait for async completion
+    if (!imageUrl && generationResultRaw.taskId) {
+      console.log(`[Scheduled Tasks] Image generation returned taskId ${generationResultRaw.taskId}, waiting for completion...`);
+
+      completedTask = await waitForTaskCompletion(generationResultRaw.taskId, db);
+
+      if (completedTask && completedTask.result?.images?.length > 0) {
+        // Get the image URL from the completed task
+        const firstImage = completedTask.result.images[0];
+        imageUrl = firstImage.imageUrl || firstImage.image_url || firstImage;
+        console.log(`[Scheduled Tasks] Task completed, got image URL: ${imageUrl?.substring(0, 60)}...`);
+      }
+    }
   }
 
   if (!imageUrl) {

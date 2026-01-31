@@ -359,7 +359,7 @@ class OnboardingFunnel {
                     document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
                     e.target.classList.add('active');
                     this.userData.preferredStyle = e.target.dataset.style;
-                    
+
                     // Update user in database
                     await this.updateUserData({ preferredImageStyle: this.userData.preferredStyle });
                     this.validateStep1();
@@ -372,10 +372,31 @@ class OnboardingFunnel {
                     document.querySelectorAll('.char-gender-btn').forEach(b => b.classList.remove('active'));
                     e.target.classList.add('active');
                     this.userData.preferredCharacterGender = e.target.dataset.charGender;
-                    
+
                     // Update user in database
                     await this.updateUserData({ preferredCharacterGender: this.userData.preferredCharacterGender });
                     this.validateStep1();
+                });
+            });
+
+            // Character tags selection (multi-select)
+            this.userData.selectedTags = this.userData.selectedTags || [];
+            document.querySelectorAll('.tag-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const tag = e.target.dataset.tag;
+
+                    if (e.target.classList.contains('active')) {
+                        // Remove tag
+                        e.target.classList.remove('active');
+                        this.userData.selectedTags = this.userData.selectedTags.filter(t => t !== tag);
+                    } else {
+                        // Add tag
+                        e.target.classList.add('active');
+                        this.userData.selectedTags.push(tag);
+                    }
+
+                    // Update user in database
+                    await this.updateUserData({ preferredTags: this.userData.selectedTags });
                 });
             });
         }, 100);
@@ -399,17 +420,6 @@ class OnboardingFunnel {
         if (continueBtn) {
             continueBtn.disabled = !hasRequiredFields;
         }
-    }
-
-    validateStep2() {
-        const hasSelection = this.userData.selectedCharacter;
-        const continueBtn = document.querySelector('.btn-continue');
-        if (continueBtn) {
-            continueBtn.disabled = !hasSelection;
-        }
-
-        // Complete onboarding if all steps are valid
-        this.complete();
     }
 
     // Add real-time user update method
@@ -439,6 +449,18 @@ class OnboardingFunnel {
     }
 
     async loadCharacterRecommendations() {
+        const container = document.getElementById('character-recommendations');
+        if (!container) return;
+
+        // Show loading spinner
+        container.innerHTML = `
+            <div class="loading-spinner d-flex justify-content-center align-items-center w-100" style="height: 200px;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">${this.t('loading', 'Loading...')}</span>
+                </div>
+            </div>
+        `;
+
         try {
             const params = new URLSearchParams({
                 style: this.userData.preferredStyle || 'anime',
@@ -446,14 +468,35 @@ class OnboardingFunnel {
                 limit: 10
             });
 
+            // Add interests/tags if selected
+            if (this.userData.selectedTags && this.userData.selectedTags.length > 0) {
+                params.append('interests', this.userData.selectedTags.join(','));
+            }
+
+            console.log('Loading character recommendations with params:', params.toString());
+
             const response = await fetch(`/api/character-recommendations?${params}`);
             const data = await response.json();
 
-            if (data.success && data.characters) {
+            console.log('Character recommendations response:', data);
+
+            if (data.success && data.characters && data.characters.length > 0) {
                 this.renderCharacterRecommendations(data.characters);
+            } else {
+                // Show fallback message if no characters found
+                container.innerHTML = `
+                    <div class="text-center w-100 py-4">
+                        <p class="text-muted">${this.t('no_characters_found', 'No characters found. Please try different preferences.')}</p>
+                    </div>
+                `;
             }
         } catch (error) {
             console.error('Error loading character recommendations:', error);
+            container.innerHTML = `
+                <div class="text-center w-100 py-4">
+                    <p class="text-muted">${this.t('loading_error', 'Error loading characters. Please try again.')}</p>
+                </div>
+            `;
         }
     }
 
@@ -463,97 +506,52 @@ class OnboardingFunnel {
 
         // Clear existing content
         container.innerHTML = '';
-        
-        // Use the existing displayChats function which already handles all the formatting
-        window.displayChats(characters, 'character-recommendations');
-        
-        // Add click event listeners to the generated character cards for selection
-        container.querySelectorAll('.gallery-card').forEach(card => {
-            const chatId = card.dataset.id;
-            if (chatId) {
-                // Remove the existing onclick from displayChats and add our selection logic
-                const clickableArea = card.querySelector('.chat-card-clickable-area');
-                if (clickableArea) {
-                    
-                    // Add our selection click handler
-                    clickableArea.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        this.selectCharacter(chatId);
-                    });
-                    
-                    // Update cursor to indicate it's selectable
-                    clickableArea.style.cursor = 'pointer';
-                }
-            }
+
+        // Always use custom rendering to ensure proper click handling for onboarding
+        // This avoids conflicts with displayChats which redirects to /character/ instead of /chat/
+        characters.forEach(character => {
+            const card = document.createElement('div');
+            card.className = 'gallery-card col-auto';
+            card.dataset.id = character._id;
+            card.innerHTML = `
+                <div class="card h-100">
+                    <img src="${character.chatImageUrl || '/images/default-avatar.png'}"
+                         class="card-img-top"
+                         alt="${character.name}"
+                         onerror="this.src='/images/default-avatar.png'">
+                    <div class="card-body">
+                        <h6 class="card-title">${character.name}</h6>
+                    </div>
+                </div>
+            `;
+            card.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.selectCharacter(character._id);
+            });
+            container.appendChild(card);
         });
     }
 
     selectCharacter(characterId) {
         this.userData.selectedCharacter = characterId;
-        
+
         // Remove selected class from all cards
         const container = document.getElementById('character-recommendations');
         if (container) {
             container.querySelectorAll('.gallery-card').forEach(card => {
                 card.classList.remove('selected');
             });
-            
-            //Update onclick event
-            container.querySelectorAll('.gallery-card').forEach(card => {
-                const startIcon = card.querySelector('.start-chat-icon');
-                const clickableArea = card.querySelector('.chat-card-clickable-area');
-                if (!startIcon || !clickableArea) return;
-
-                try {
-                    // Transfer inline onclick attribute if present
-                    const inlineHandler = startIcon.getAttribute && startIcon.getAttribute('onclick');
-                    if (inlineHandler) {
-                        clickableArea.setAttribute('onclick', inlineHandler);
-                        startIcon.removeAttribute('onclick');
-                    } else if (startIcon.onclick) {
-                        // Transfer assigned onclick function if present
-                        clickableArea.onclick = startIcon.onclick;
-                        startIcon.onclick = null;
-                    } else {
-                        // Fallback: make clickable area trigger the icon's click (fires attached listeners)
-                        clickableArea.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            startIcon.click();
-                        });
-                    }
-
-                    // Prevent direct interaction on the icon to avoid duplicate triggers
-                    startIcon.style.pointerEvents = 'none';
-                    startIcon.style.cursor = 'default';
-                    clickableArea.style.cursor = 'pointer';
-                } catch (err) {
-                    // Fail silently (but log for debugging)
-                    console.error('Error transferring onclick to clickable area', err);
-                }
-            });
 
             // Add selected class to the chosen card
             const selectedCard = container.querySelector(`[data-id="${characterId}"]`);
             if (selectedCard) {
                 selectedCard.classList.add('selected');
-                
-                // Add some visual feedback for selection
-                if (!document.getElementById('onboarding-selection-styles')) {
-                    const style = document.createElement('style');
-                    style.id = 'onboarding-selection-styles';
-                    document.head.appendChild(style);
-                }
-                
-                // Update user in database
-                this.updateUserData({ selectedCharacter: characterId });
- 
-                // Validate step 2
-                this.validateStep2();
-                
             }
         }
+
+        // Complete onboarding and redirect to chat
+        this.completeAndStartChat(characterId);
     }
 
     nextStep() {
@@ -585,6 +583,44 @@ class OnboardingFunnel {
         }
     }
 
+    async completeAndStartChat(characterId) {
+        try {
+            // Save onboarding data
+            const response = await fetch('/user/onboarding-complete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userId: this.userId,
+                    onboardingData: this.userData,
+                    completedAt: new Date().toISOString()
+                })
+            });
+
+            if (response.ok) {
+                // Mark as completed in localStorage
+                localStorage.setItem(`onboarding_${this.userId}`, 'completed');
+
+                // Close onboarding modal
+                this.close();
+
+                // Show brief notification
+                if (typeof showNotification === 'function') {
+                    showNotification(this.t('character_selected', 'Character selected! Starting your chat...'), 'success');
+                }
+
+                // Redirect to chat page with the selected character
+                window.location.href = `/chat/${characterId}`;
+            }
+        } catch (error) {
+            console.error('Error completing onboarding:', error);
+            // Even if API fails, still redirect to chat
+            localStorage.setItem(`onboarding_${this.userId}`, 'completed');
+            window.location.href = `/chat/${characterId}`;
+        }
+    }
+
     async complete() {
         try {
             // Save onboarding data
@@ -603,13 +639,14 @@ class OnboardingFunnel {
             if (response.ok) {
                 // Mark as completed in localStorage
                 localStorage.setItem(`onboarding_${this.userId}`, 'completed');
-                
+
                 // Close onboarding
                 this.close();
-                
+
                 // Show completion notification
-                showNotification(this.t('onboarding_complete_notification', 'Welcome! Your setup is complete and you\'re ready to start chatting!'), 'success');
-                
+                if (typeof showNotification === 'function') {
+                    showNotification(this.t('onboarding_complete_notification', 'Welcome! Your setup is complete and you\'re ready to start chatting!'), 'success');
+                }
             }
         } catch (error) {
             console.error('Error completing onboarding:', error);

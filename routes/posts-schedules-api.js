@@ -420,6 +420,41 @@ Return ONLY the caption text with hashtags, nothing else.`;
   });
 
   /**
+   * POST /api/posts/:postId/publish
+   * Publish a post immediately
+   */
+  fastify.post('/api/posts/:postId/publish', async (request, reply) => {
+    try {
+      const user = request.user;
+      if (!user || user.isTemporary) {
+        return reply.code(401).send({ error: 'Authentication required' });
+      }
+
+      const { postId } = request.params;
+
+      // Verify ownership
+      const post = await getPostById(postId, db);
+      if (!post) {
+        return reply.code(404).send({ error: 'Post not found' });
+      }
+      if (post.userId.toString() !== user._id.toString()) {
+        return reply.code(403).send({ error: 'Not authorized' });
+      }
+
+      // Update post status to published
+      await updatePostStatus(postId, POST_STATUSES.PUBLISHED, db);
+
+      return reply.send({
+        success: true,
+        message: 'Post published'
+      });
+    } catch (error) {
+      console.error('[Posts API] Publish error:', error);
+      return reply.code(500).send({ error: 'Failed to publish post' });
+    }
+  });
+
+  /**
    * POST /api/posts/:postId/cancel-schedule
    * Cancel scheduled post
    */

@@ -56,15 +56,16 @@
             
             <div class="form-section mb-4">
                 <label class="form-label">
-                    {{onboardingTranslations.age_question}} 
+                    {{onboardingTranslations.age_question}}
                     <span class="required">*</span>
+                    <span class="badge bg-danger ms-2">18+</span>
                 </label>
                 <div class="age-options">
-                    <button type="button" class="age-btn" data-age="below18">{{onboardingTranslations.below_18}}</button>
-                    <button type="button" class="age-btn" data-age="18-20">{{onboardingTranslations.age_18_20}}</button>
-                    <button type="button" class="age-btn" data-age="21-23">{{onboardingTranslations.age_21_23}}</button>
-                    <button type="button" class="age-btn" data-age="24-26">{{onboardingTranslations.age_24_26}}</button>
-                    <button type="button" class="age-btn" data-age="above26">{{onboardingTranslations.above_26}}</button>
+                    <button type="button" class="age-btn" data-age="18-24">{{onboardingTranslations.age_18_24}}</button>
+                    <button type="button" class="age-btn" data-age="25-34">{{onboardingTranslations.age_25_34}}</button>
+                    <button type="button" class="age-btn" data-age="35-44">{{onboardingTranslations.age_35_44}}</button>
+                    <button type="button" class="age-btn" data-age="45-54">{{onboardingTranslations.age_45_54}}</button>
+                    <button type="button" class="age-btn" data-age="55+">{{onboardingTranslations.age_55_plus}}</button>
                 </div>
             </div>
         </div>
@@ -87,7 +88,7 @@
     <div class="onboarding-content">
         <div class="preference-section mb-4">
             <label class="form-label fw-semibold">
-                {{onboardingTranslations.visual_style}} 
+                {{onboardingTranslations.visual_style}}
                 <span class="required">*</span>
             </label>
             <div class="style-options">
@@ -99,9 +100,9 @@
                 </button>
             </div>
         </div>
-        <div class="preference-section">
+        <div class="preference-section mb-4">
             <label class="form-label fw-semibold">
-                {{onboardingTranslations.character_gender}} 
+                {{onboardingTranslations.character_gender}}
                 <span class="required">*</span>
             </label>
             <div class="character-gender-options">
@@ -114,6 +115,22 @@
                 <button type="button" class="char-gender-btn" data-char-gender="both">
                     {{onboardingTranslations.both_genders}}
                 </button>
+            </div>
+        </div>
+        <div class="preference-section">
+            <label class="form-label fw-semibold">
+                {{onboardingTranslations.character_tags_label}}
+            </label>
+            <p class="text-muted small mb-3">{{onboardingTranslations.character_tags_hint}}</p>
+            <div class="character-tags-options">
+                <button type="button" class="tag-btn" data-tag="romantic">{{onboardingTranslations.tag_romantic}}</button>
+                <button type="button" class="tag-btn" data-tag="dominant">{{onboardingTranslations.tag_dominant}}</button>
+                <button type="button" class="tag-btn" data-tag="submissive">{{onboardingTranslations.tag_submissive}}</button>
+                <button type="button" class="tag-btn" data-tag="playful">{{onboardingTranslations.tag_playful}}</button>
+                <button type="button" class="tag-btn" data-tag="mysterious">{{onboardingTranslations.tag_mysterious}}</button>
+                <button type="button" class="tag-btn" data-tag="caring">{{onboardingTranslations.tag_caring}}</button>
+                <button type="button" class="tag-btn" data-tag="adventurous">{{onboardingTranslations.tag_adventurous}}</button>
+                <button type="button" class="tag-btn" data-tag="shy">{{onboardingTranslations.tag_shy}}</button>
             </div>
         </div>
     </div>
@@ -133,7 +150,7 @@
 <template id="onboarding-step-2">
     <div class="onboarding-header text-center mb-4">
         <h2 class="h3 mb-3">{{onboardingTranslations.select_character}}</h2>
-        <p class="text-muted mb-0">{{onboardingTranslations.step4_intro}}</p>
+        <p class="text-muted mb-0">{{onboardingTranslations.click_to_start_chat}}</p>
     </div>
     <div class="onboarding-content">
         <div id="character-recommendations" class="character-grid row flex-nowrap overflow-auto mx-0" style="flex-wrap: nowrap; overflow-x: auto; white-space: nowrap;">
@@ -144,14 +161,11 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Navigation buttons for modal footer -->
-    <div class="onboarding-footer-buttons d-none">
+    <div class="onboarding-footer-buttons d-none" style="justify-content: center;">
         <button type="button" class="btn btn-outline-secondary" onclick="window.onboardingFunnel.prevStep()">
             {{onboardingTranslations.back}}
-        </button>
-        <button type="button" class="btn btn-primary btn-continue" onclick="window.onboardingFunnel.complete()">
-            {{onboardingTranslations.start_chatting}}
         </button>
     </div>
 </template>

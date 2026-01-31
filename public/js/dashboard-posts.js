@@ -409,7 +409,7 @@ class PostsDashboard {
           <img src="${mediaUrl}" 
                class="card-img-top" 
                alt="Post" 
-               style="height: 200px; object-fit: cover;"
+               style="aspect-ratio: 9/16;object-fit: cover;"
                onerror="this.src='/img/placeholder.png'">
           ${post.metadata?.nsfw ? '<span class="badge bg-danger position-absolute top-0 end-0 m-2">NSFW</span>' : ''}
           <span class="badge bg-${this.getStatusColor(statusClass)} position-absolute bottom-0 start-0 m-2">
@@ -725,8 +725,27 @@ class PostsDashboard {
     // Reset publish now button visibility
     this.updatePublishButtons();
     
+    // Reset publish now checkbox
+    const publishNowCheckbox = document.getElementById('publishNowCheckbox');
+    if (publishNowCheckbox) {
+      publishNowCheckbox.checked = false;
+    }
+    const scheduleDateTimeSection = document.getElementById('scheduleDateTimeSection');
+    if (scheduleDateTimeSection) {
+      scheduleDateTimeSection.style.display = 'block';
+    }
+
     this.postModal?.hide();
     this.scheduleModal?.show();
+  }
+
+  togglePublishNow() {
+    const checkbox = document.getElementById('publishNowCheckbox');
+    const scheduleDateTimeSection = document.getElementById('scheduleDateTimeSection');
+
+    if (checkbox && scheduleDateTimeSection) {
+      scheduleDateTimeSection.style.display = checkbox.checked ? 'none' : 'block';
+    }
   }
 
   async publishToProfileNow() {
@@ -773,11 +792,13 @@ class PostsDashboard {
   async confirmSchedule() {
     const postId = document.getElementById('schedulePostId').value;
     const scheduledFor = document.getElementById('scheduleDateTime').value;
-    
+    const publishNowCheckbox = document.getElementById('publishNowCheckbox');
+    const publishNow = publishNowCheckbox?.checked || false;
+
     const selection = this.getSelectedPlatforms();
 
-    if (!scheduledFor) {
-      this.showNotification('Please select a date and time', 'warning');
+    if (!publishNow && !scheduledFor) {
+      this.showNotification('Please select a date and time or check "Publish Now"', 'warning');
       return;
     }
 
@@ -803,27 +824,35 @@ class PostsDashboard {
         });
       }
 
-      // Schedule the post
-      const response = await fetch(`/api/posts/${postId}/schedule`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scheduledFor: new Date(scheduledFor).toISOString() })
-      });
+      // Publish immediately or schedule for later
+      let response;
+      if (publishNow) {
+        response = await fetch(`/api/posts/${postId}/publish`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } else {
+        response = await fetch(`/api/posts/${postId}/schedule`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ scheduledFor: new Date(scheduledFor).toISOString() })
+        });
+      }
 
       const data = await response.json();
 
       if (!data.success) {
-        throw new Error(data.error || 'Failed to schedule post');
+        throw new Error(data.error || (publishNow ? 'Failed to publish post' : 'Failed to schedule post'));
       }
 
-      this.showNotification('Post scheduled successfully!', 'success');
+      this.showNotification(publishNow ? 'Post published!' : 'Post scheduled successfully!', 'success');
       this.scheduleModal?.hide();
       this.loadPosts();
       this.loadStats();
 
     } catch (error) {
-      console.error('Error scheduling post:', error);
-      this.showNotification('Failed to schedule post', 'error');
+      console.error('Error publishing/scheduling post:', error);
+      this.showNotification(error.message || 'Failed to complete action', 'error');
     }
   }
 

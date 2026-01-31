@@ -1715,46 +1715,42 @@
     }
 }
 
-/* Modern Gift Card Styles */
+/* Modern Gift Card Styles - Dark Theme */
 .modern-gift-container {
     width: 100%;
-    background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
-    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 16px;
     padding: 0;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 
-        0 8px 32px rgba(0, 0, 0, 0.08),
-        0 2px 8px rgba(0, 0, 0, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    box-shadow: none;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     position: relative;
     overflow: hidden;
 }
 
+/* Gradient accent bar at top */
 .modern-gift-container::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, 
-        transparent 0%, 
-        rgba(110, 32, 244, 0.6) 50%, 
-        transparent 100%);
-    transform: translateX(-100%);
-    transition: transform 0.6s ease;
+    height: 3px;
+    background: linear-gradient(135deg, #D2B8FF 0%, #8240FF 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .gift-card:hover .modern-gift-container {
-    box-shadow: 
-        0 20px 40px rgba(110, 32, 244, 0.15),
-        0 8px 16px rgba(0, 0, 0, 0.1);
-    border-color: rgba(110, 32, 244, 0.2);
+    transform: translateY(-4px);
+    border-color: rgba(130, 64, 255, 0.4);
+    box-shadow: 0 12px 32px rgba(130, 64, 255, 0.2);
 }
 
 .gift-card:hover .modern-gift-container::before {
-    transform: translateX(100%);
+    opacity: 0.8;
 }
 
 .gift-image-wrapper {
@@ -1762,8 +1758,8 @@
     width: 100%;
     height: 160px;
     overflow: hidden;
-    border-radius: 16px 16px 0 0;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px 15px 0 0;
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .gift-image {
@@ -1771,9 +1767,12 @@
     height: 100%;
     object-fit: contain;
     transition: transform 0.4s ease;
-    border-radius: 16px 16px 0 0;
+    border-radius: 15px 15px 0 0;
 }
 
+.gift-card:hover .gift-image {
+    transform: scale(1.05);
+}
 
 .gift-overlay {
     position: absolute;
@@ -1783,8 +1782,8 @@
     bottom: 0;
     background: linear-gradient(
         135deg,
-        rgba(110, 32, 244, 0) 0%,
-        rgba(110, 32, 244, 0.1) 100%
+        rgba(130, 64, 255, 0) 0%,
+        rgba(130, 64, 255, 0.15) 100%
     );
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -1803,7 +1802,7 @@
     background: linear-gradient(
         45deg,
         transparent 40%,
-        rgba(255, 255, 255, 0.3) 50%,
+        rgba(210, 184, 255, 0.2) 50%,
         transparent 60%
     );
     transform: translateX(-100%) translateY(-100%) rotate(45deg);
@@ -1815,15 +1814,16 @@
 }
 
 .gift-info {
-    padding: 16px 20px 20px;
+    padding: 16px 16px 18px;
     text-align: center;
     position: relative;
+    background: transparent;
 }
 
 .gift-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: #2d3748;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #ffffff;
     margin: 0 0 12px 0;
     line-height: 1.4;
     display: -webkit-box;
@@ -1835,32 +1835,34 @@
 }
 
 .gift-card:hover .gift-title {
-    color: #6E20F4;
+    color: #D2B8FF;
 }
 
 .gift-cost-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 16px;
-    border-radius: 25px;
-    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
     font-weight: 600;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .gift-cost-badge:has(.cost-amount) {
-    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-    color: #8b5a00;
-    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    box-shadow: none;
 }
 
 .gift-cost-badge:has(.free-label) {
-    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-    color: white;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    box-shadow: none;
 }
 
 .gift-card:hover .gift-cost-badge {
@@ -1888,7 +1890,7 @@
     right: 12px;
     width: 32px;
     height: 32px;
-    background: rgba(16, 185, 129, 0.9);
+    background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -1897,7 +1899,8 @@
     transform: scale(0.5);
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     backdrop-filter: blur(10px);
-    border: 2px solid rgba(255, 255, 255, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 }
 
 .gift-selection-indicator i {
@@ -1911,15 +1914,24 @@
 }
 
 .gift-card.selected .modern-gift-container {
-    border-color: #10b981;
-    box-shadow: 
-        0 0 0 3px rgba(16, 185, 129, 0.2),
-        0 12px 24px rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow:
+        0 0 0 3px rgba(16, 185, 129, 0.15),
+        0 12px 24px rgba(16, 185, 129, 0.2);
 }
 
 /* Premium gift styling */
 .gift-card[data-cost]:not([data-cost=""]) .modern-gift-container {
-    background: linear-gradient(145deg, #fff8e1 0%, #fff3c4 100%);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.gift-card[data-cost]:not([data-cost=""]) .modern-gift-container::before {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    opacity: 0.6;
+}
+
+.gift-card[data-cost]:not([data-cost=""]):hover .modern-gift-container::before {
+    opacity: 1;
 }
 
 .gift-card[data-cost]:not([data-cost=""]) .gift-image-wrapper::after {
@@ -1932,19 +1944,24 @@
 }
 
 @keyframes sparkle {
-    0%, 100% { 
-        opacity: 0.7; 
-        transform: scale(1) rotate(0deg); 
+    0%, 100% {
+        opacity: 0.7;
+        transform: scale(1) rotate(0deg);
     }
-    50% { 
-        opacity: 1; 
-        transform: scale(1.2) rotate(180deg); 
+    50% {
+        opacity: 1;
+        transform: scale(1.2) rotate(180deg);
     }
 }
 
 /* Loading state for gift images */
 .gift-image[src*="placeholder"] {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.04) 0%,
+        rgba(255, 255, 255, 0.08) 50%,
+        rgba(255, 255, 255, 0.04) 100%
+    );
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
 }
@@ -1959,61 +1976,44 @@
     .gift-image-wrapper {
         height: 140px;
     }
-    
+
     .gift-info {
-        padding: 12px 16px 16px;
+        padding: 12px 14px 14px;
     }
-    
+
     .gift-title {
-        font-size: 13px;
+        font-size: 0.85rem;
     }
-    
+
     .gift-cost-badge {
-        padding: 6px 12px;
-        font-size: 11px;
+        padding: 5px 10px;
+        font-size: 0.7rem;
     }
-    
+
     .gift-selection-indicator {
         width: 28px;
         height: 28px;
         top: 8px;
         right: 8px;
     }
-    
+
     .gift-selection-indicator i {
         font-size: 14px;
     }
 }
 
 @media (max-width: 576px) {
-    
     .modern-gift-container {
-        border-radius: 16px;
+        border-radius: 12px;
     }
-    
+
     .gift-image-wrapper {
         height: 120px;
-        border-radius: 12px 12px 0 0;
+        border-radius: 11px 11px 0 0;
     }
-    
-    .gift-image {
-        border-radius: 12px 12px 0 0;
-    }
-}
 
-/* Dark mode support (if needed) */
-@media (prefers-color-scheme: dark) {
-    .modern-gift-container {
-        background: linear-gradient(145deg, #2d3748 0%, #1a202c 100%);
-        border-color: rgba(255, 255, 255, 0.1);
-    }
-    
-    .gift-title {
-        color: #e2e8f0;
-    }
-    
-    .gift-card:hover .gift-title {
-        color: #8B4CF8;
+    .gift-image {
+        border-radius: 11px 11px 0 0;
     }
 }
 

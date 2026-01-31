@@ -186,7 +186,7 @@ async function executeImageGeneration(schedule, fastify) {
     parameters: actionData.parameters || {},
     userId: schedule.userId.toString(),
     chatId: actionData.characterId || null, // Use characterId as chatId for character context
-    imageType: 'schedule',
+    imageType: actionData.imageType || (actionData.nsfw ? 'nsfw' : 'sfw'),
     customPromptId: customPromptId, // Pass custom prompt ID if selected
     fastify
   };

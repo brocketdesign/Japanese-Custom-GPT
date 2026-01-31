@@ -145,6 +145,9 @@ async function generateImg({
     
     const imageVersion = chat?.imageVersion || 'sdxl';
     const selectedStyle = default_prompt[imageVersion] || default_prompt['sdxl'];
+    const resolvedImageType = (imageType === 'nsfw' || imageType === 'sfw')
+      ? imageType
+      : (chat?.nsfw ? 'nsfw' : 'sfw');
     
     // Priority: 1) modelId param, 2) chat.modelId, 3) default
     let effectiveModelId = modelId || chat?.modelId || null;
@@ -214,7 +217,7 @@ async function generateImg({
     }
 
     // Prepare task based on imageType and model
-    console.log(`\x1b[36m[generateImg] Preparing image generation request for user ${userId} (Type: ${imageType.toUpperCase()}, BuiltInModel: ${isBuiltInModel})\x1b[0m`);
+    console.log(`\x1b[36m[generateImg] Preparing image generation request for user ${userId} (Type: ${resolvedImageType.toUpperCase()}, BuiltInModel: ${isBuiltInModel})\x1b[0m`);
     let image_request;
     if (isBuiltInModel) {
         // Built-in model (z-image-turbo, etc.) - use simpler request structure
@@ -223,7 +226,7 @@ async function generateImg({
         const sizeFormat = modelConfig?.sizeFormat || '*'; // 'x' for Seedream, '*' for others
         
         image_request = {
-            type: imageType,
+            type: resolvedImageType,
             prompt: prompt.replace(/^\s+/gm, '').trim(),
             negative_prompt: negativePrompt || '',
             size: defaultSize, // Use model's default size
@@ -236,16 +239,18 @@ async function generateImg({
     } else {
         // Regular model request structure (Stable Diffusion custom models)
         let modelNegativePrompt = modelData?.negativePrompt || '';
-        let finalNegativePrompt = imageType === 'sfw' ? modelNegativePrompt +','+ selectedStyle.sfw.negative_prompt : modelNegativePrompt +','+ selectedStyle.nsfw.negative_prompt;
+        let finalNegativePrompt = resolvedImageType === 'sfw'
+          ? modelNegativePrompt +','+ selectedStyle.sfw.negative_prompt
+          : modelNegativePrompt +','+ selectedStyle.nsfw.negative_prompt;
         finalNegativePrompt = ((negativePrompt || finalNegativePrompt) ? (negativePrompt || finalNegativePrompt)  + ',' : '') + genderNegativePrompt;
         finalNegativePrompt = finalNegativePrompt.replace(/,+/g, ',').replace(/^\s*,|\s*,\s*$/g, '').trim();
 
-        const modelSampler = modelData?.defaultSampler || selectedStyle[imageType].sampler_name;
+        const modelSampler = modelData?.defaultSampler || selectedStyle[resolvedImageType]?.sampler_name;
         // Determine LoRAs: For character creation with SFW, remove feminine-only LoRAs and handle gender-specific ones
-        let selectedLoras = imageType === 'sfw' ? [...selectedStyle.sfw.loras] : [...selectedStyle.nsfw.loras];
+        let selectedLoras = resolvedImageType === 'sfw' ? [...selectedStyle.sfw.loras] : [...selectedStyle.nsfw.loras];
         
         // For character creation SFW images, exclude feminine-specific LoRAs
-        if (chatCreation && imageType === 'sfw') {
+        if (chatCreation && resolvedImageType === 'sfw') {
             selectedLoras = selectedLoras.filter(lora => 
                 !lora.model_name.toLowerCase().includes('breast') && 
                 !lora.model_name.toLowerCase().includes('feminine')
@@ -260,7 +265,7 @@ async function generateImg({
             }
         }
         
-        if (imageType === 'sfw') {
+        if (resolvedImageType === 'sfw') {
           image_request = {
             type: 'sfw',
             model_name: imageModel.replace('.safetensors', '') + '.safetensors',

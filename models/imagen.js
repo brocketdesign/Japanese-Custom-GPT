@@ -16,12 +16,9 @@ const { MODEL_CONFIGS, modelRequiresSequentialGeneration } = require('./admin-im
 // Maximum number of image messages allowed per chat to prevent database bloat
 const MAX_IMAGE_MESSAGES_PER_CHAT = 500;
 
-// In-memory lock to prevent race conditions when adding image messages
-// Key: `${userChatId}:${batchId}:${batchIndex}` or `${userChatId}:${imageId}`
-const imageMessageLocks = new Map();
-
-// Lock timeout to prevent stuck locks (5 seconds)
-const LOCK_TIMEOUT_MS = 5000;
+// NOTE: In-memory locks were removed and replaced with database-level locks
+// in addImageMessageToChatHelper using the 'messageLocks' collection.
+// This ensures locks work across multiple Node.js workers/processes.
 
 
 const default_prompt = {
@@ -1040,25 +1037,10 @@ async function addImageMessageToChatHelper(userDataCollection, userId, userChatI
     return false;
   }
 
-  // ===== SAFEGUARD 1: In-memory lock to prevent race conditions =====
+  // Generate a unique lock key for this specific message
   const lockKey = batchId && batchIndex !== null
-    ? `${userChatId}:batch:${batchId}:${batchIndex}`
-    : `${userChatId}:image:${imageIdStr}`;
-
-  // Check if lock exists and is still valid
-  const existingLock = imageMessageLocks.get(lockKey);
-  if (existingLock) {
-    const lockAge = Date.now() - existingLock.timestamp;
-    if (lockAge < LOCK_TIMEOUT_MS) {
-      console.log(`🔒 [addImageMessageToChatHelper] Lock exists for ${lockKey}, skipping (age: ${lockAge}ms)`);
-      return true; // Already being processed
-    }
-    // Lock expired, remove it
-    imageMessageLocks.delete(lockKey);
-  }
-
-  // Acquire lock
-  imageMessageLocks.set(lockKey, { timestamp: Date.now() });
+    ? `msg:${userChatId}:batch:${batchId}:${batchIndex}`
+    : `msg:${userChatId}:image:${imageIdStr}`;
 
   try {
     console.log(`📝 [addImageMessageToChatHelper] START:`);
@@ -1066,6 +1048,35 @@ async function addImageMessageToChatHelper(userDataCollection, userId, userChatI
     console.log(`   batchId=${batchId}, batchIndex=${batchIndex}/${batchSize}`);
     console.log(`   isMerged=${isMerged}, mergeId=${mergeId || 'none'}`);
     console.log(`   imageUrl=${imageUrl?.substring(0, 60)}...`);
+
+    // ===== SAFEGUARD 1: Database-level lock using MongoDB =====
+    // This works across multiple processes/workers unlike in-memory locks
+    const db = userDataCollection.s.db;
+    const locksCollection = db.collection('messageLocks');
+
+    // Try to acquire distributed lock
+    try {
+      // Ensure indexes exist (only runs once, MongoDB ignores if already exists)
+      // 1. Unique index on key for atomic lock acquisition
+      // 2. TTL index for auto-cleanup of expired locks after 60 seconds
+      await locksCollection.createIndex({ key: 1 }, { unique: true }).catch(() => {});
+      await locksCollection.createIndex({ createdAt: 1 }, { expireAfterSeconds: 60 }).catch(() => {});
+
+      // Atomic lock acquisition - only succeeds if no lock exists (due to unique index)
+      await locksCollection.insertOne({
+        key: lockKey,
+        createdAt: new Date()
+      });
+      console.log(`🔒 [addImageMessageToChatHelper] Acquired DB lock for ${lockKey}`);
+    } catch (lockError) {
+      if (lockError.code === 11000) {
+        // Duplicate key error = lock already exists = another process is handling this
+        console.log(`🔒 [addImageMessageToChatHelper] Lock already exists for ${lockKey}, skipping duplicate`);
+        return true; // Return success - message is being/was added by another process
+      }
+      // Other errors - log but continue (fail open to avoid blocking)
+      console.warn(`⚠️ [addImageMessageToChatHelper] Lock acquisition warning:`, lockError.message);
+    }
 
     // ===== SAFEGUARD 2: Check image message count limit =====
     const chatDoc = await userDataCollection.findOne({
@@ -1080,7 +1091,25 @@ async function addImageMessageToChatHelper(userDataCollection, userId, userChatI
 
       if (imageMessageCount >= MAX_IMAGE_MESSAGES_PER_CHAT) {
         console.warn(`⚠️ [addImageMessageToChatHelper] Chat ${userChatId} has reached max image limit (${imageMessageCount}/${MAX_IMAGE_MESSAGES_PER_CHAT}), skipping`);
+        await locksCollection.deleteOne({ key: lockKey }).catch(() => {});
         return false;
+      }
+
+      // ===== SAFEGUARD 3: Early duplicate check before building message =====
+      // Check if message already exists with same batchId+batchIndex or imageId
+      let existingMessage;
+      if (batchId && batchIndex !== null) {
+        existingMessage = chatDoc.messages.find(m =>
+          m.batchId === batchId && m.batchIndex === batchIndex
+        );
+      } else {
+        existingMessage = chatDoc.messages.find(m => m.imageId === imageIdStr);
+      }
+
+      if (existingMessage) {
+        console.log(`💾 [addImageMessageToChatHelper] Message already exists (early check) for ${batchId ? `batchIndex=${batchIndex}` : `imageId=${imageIdStr}`}, skipping duplicate`);
+        await locksCollection.deleteOne({ key: lockKey }).catch(() => {});
+        return true;
       }
     }
 
@@ -1117,7 +1146,7 @@ async function addImageMessageToChatHelper(userDataCollection, userId, userChatI
       imageMessage.originalImageUrl = originalImageUrl;
     }
 
-    // ===== SAFEGUARD 3: Atomic duplicate check + insert using findOneAndUpdate =====
+    // ===== SAFEGUARD 4: Atomic duplicate check + insert using updateOne =====
     // Build the filter to check for duplicates atomically
     let atomicFilter;
     if (batchId && batchIndex !== null) {
@@ -1142,6 +1171,9 @@ async function addImageMessageToChatHelper(userDataCollection, userId, userChatI
       { $push: { messages: imageMessage } }
     );
 
+    // Release the lock after operation completes
+    await locksCollection.deleteOne({ key: lockKey }).catch(() => {});
+
     if (result.matchedCount === 0) {
       console.log(`💾 [addImageMessageToChatHelper] Message already exists (atomic check) for ${batchId ? `batchIndex=${batchIndex}` : `imageId=${imageIdStr}`}, skipping duplicate`);
       return true;
@@ -1156,10 +1188,12 @@ async function addImageMessageToChatHelper(userDataCollection, userId, userChatI
     return true;
   } catch (error) {
     console.error(`❌ [addImageMessageToChatHelper] Error adding image message (batchIndex=${batchIndex}):`, error.message);
+    // Try to release lock on error
+    try {
+      const db = userDataCollection.s.db;
+      await db.collection('messageLocks').deleteOne({ key: lockKey }).catch(() => {});
+    } catch (e) {}
     return false;
-  } finally {
-    // Always release lock
-    imageMessageLocks.delete(lockKey);
   }
 }
 
@@ -1321,9 +1355,12 @@ async function checkTaskStatus(taskId, fastify) {
   const db = fastify.mongo.db;
   const tasksCollection = db.collection('tasks');
   const task = await tasksCollection.findOne({ taskId });
+
+  if (!task) {
+    return false;
+  }
+
   const chat = await db.collection('chats').findOne({ _id: task.chatId });
-
-
 
   // CRITICAL: Check if already completed FIRST, before any processing
   if (task?.status === 'completed' || task?.completionNotificationSent === true && task?.result?.images?.length > 0) {
@@ -1334,32 +1371,57 @@ async function checkTaskStatus(taskId, fastify) {
       userChatId: task.userChatId,
       status: task.status,
       images: task.result?.images || [],
-      result: task.result || { images: [] }
+      result: task.result || { images: [] },
+      fromCache: true  // Already processed, don't send notifications again
     };
-  }
-
-  if (task?.completionNotificationSent === true && task?.result?.images?.length > 0) {
-    console.log(`[checkTaskStatus] Task ${taskId} has completion notification sent and images available.`);
-    return {
-      taskId: task.taskId,
-      userId: task.userId,
-      userChatId: task.userChatId,
-      status: 'completed',
-      images: task.result?.images || [],
-      result: task.result || { images: [] }
-    };
-  }
-
-  let processingPercent = 0;
-
-  if (!task) {
-    return false;
   }
 
   if (task.status === 'failed') {
     console.log(`[checkTaskStatus] Task ${taskId} has failed status`);
     return task;
   }
+
+  // ===== CRITICAL FIX: Acquire lock EARLY before any processing =====
+  // This prevents race conditions where multiple handlers process the same task
+  const lockResult = await tasksCollection.findOneAndUpdate(
+    {
+      taskId: task.taskId,
+      completionNotificationSent: { $ne: true },  // Only lock if not already locked
+      status: { $ne: 'completed' }  // Also check status for extra safety
+    },
+    {
+      $set: {
+        completionNotificationSent: true,
+        processingStartedAt: new Date(),
+        updatedAt: new Date()
+      }
+    },
+    { returnDocument: 'before' }
+  );
+
+  if (!lockResult || !lockResult.value) {
+    // Another process is already handling this task - return cached result with flag
+    // IMPORTANT: Callers should NOT call handleTaskCompletion() when fromCache is true
+    // to prevent duplicate WebSocket notifications
+    console.log(`🔒 [checkTaskStatus] Task ${task.taskId} already being processed by another worker, returning cached result`);
+
+    // Wait briefly for the other worker to finish, then return their result
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const lockedTask = await tasksCollection.findOne({ taskId: task.taskId });
+    return {
+      taskId: lockedTask?.taskId || task.taskId,
+      userId: lockedTask?.userId || task.userId,
+      userChatId: lockedTask?.userChatId || task.userChatId,
+      status: lockedTask?.status || 'completed',
+      images: lockedTask?.result?.images || [],
+      result: lockedTask?.result || { images: [] },
+      fromCache: true  // Flag to indicate this is a cached result, not freshly processed
+    };
+  }
+
+  console.log(`🔓 [checkTaskStatus] Acquired lock for task ${task.taskId}, proceeding with processing`);
+
+  let processingPercent = 0;
 
   // Check if webhook already provided the result (skip polling)
   let images;
@@ -1374,9 +1436,14 @@ async function checkTaskStatus(taskId, fastify) {
 
     if (result && result.status === 'processing') {
       processingPercent = result.progress;
+      // Release lock since task is still processing
+      await tasksCollection.updateOne(
+        { taskId: task.taskId },
+        { $set: { completionNotificationSent: false, updatedAt: new Date() } }
+      );
       return { taskId: task.taskId, status: 'processing', progress: processingPercent};
     }
-    
+
     if(result.error){
       console.log(`[checkTaskStatus] Task ${taskId} returned error: ${result.error}`);
       await tasksCollection.updateOne(
@@ -1387,38 +1454,6 @@ async function checkTaskStatus(taskId, fastify) {
     }
 
     images = Array.isArray(result) ? result : [result];
-  }
-
-  // CRITICAL: Lock the task BEFORE processing to prevent parallel execution
-  const lockResult = await tasksCollection.findOneAndUpdate(
-    { 
-      taskId: task.taskId,
-      completionNotificationSent: { $ne: true }  // Only lock if not already locked
-    },
-    { 
-      $set: { 
-        completionNotificationSent: true,
-        updatedAt: new Date() 
-      } 
-    },
-    { returnDocument: 'before' }
-  );
-
-  if (!lockResult.value) {
-    // Another process is already handling this task - return cached result with flag
-    // IMPORTANT: Callers should NOT call handleTaskCompletion() when fromCache is true
-    // to prevent duplicate WebSocket notifications
-    console.log(`🔒 [checkTaskStatus] Task ${task.taskId} already being processed by another worker, returning cached result`);
-    const lockedTask = await tasksCollection.findOne({ taskId: task.taskId });
-    return {
-      taskId: lockedTask.taskId,
-      userId: lockedTask.userId,
-      userChatId: lockedTask.userChatId,
-      status: 'completed',
-      images: lockedTask.result?.images || [],
-      result: lockedTask.result || { images: [] },
-      fromCache: true  // Flag to indicate this is a cached result, not freshly processed
-    };
   }
 
 
@@ -2648,15 +2683,22 @@ async function pollSequentialTasksWithFallback(taskId, allTaskIds, fastify, opti
       if (completedTasks.has(tid)) {
         continue;
       }
-      
-      // Check if webhook already processed this task
+
+      // Check if webhook already processed this task OR is currently processing
       const taskDoc = await tasksCollection.findOne({ taskId: tid });
-      if (taskDoc && (taskDoc.status === 'completed' || taskDoc.webhookProcessed)) {
-        console.log(`[pollSequentialTasks] Task ${tid} already processed (webhook arrived)`);
+      if (taskDoc && (taskDoc.status === 'completed' || taskDoc.webhookProcessed || taskDoc.completionNotificationSent)) {
+        console.log(`[pollSequentialTasks] Task ${tid} already processed (webhook arrived or completed)`);
         completedTasks.set(tid, taskDoc.result?.images || []);
         continue;
       }
-      
+
+      // ===== CRITICAL FIX: Skip if webhook is currently processing this task =====
+      if (taskDoc && taskDoc.webhookProcessing) {
+        console.log(`[pollSequentialTasks] Task ${tid} is being processed by webhook, skipping`);
+        allComplete = false;  // Don't mark as complete yet, wait for webhook to finish
+        continue;
+      }
+
       // Poll Novita for status
       try {
         const result = await fetchNovitaResult(tid);

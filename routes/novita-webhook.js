@@ -68,8 +68,30 @@ async function routes(fastify, options) {
         return reply.send({ received: true });
       }
 
-      // Check if already processed - but don't lock yet, let checkTaskStatus handle it
-      // We'll store webhook data and let the existing handler process it
+      // ===== CRITICAL FIX: Atomic lock acquisition to prevent duplicate webhook processing =====
+      // Novita may send multiple webhooks (retries), so we need to ensure only ONE processes the task
+      const lockResult = await tasksCollection.findOneAndUpdate(
+        {
+          taskId: taskId,
+          webhookProcessing: { $ne: true },  // Only process if not already being processed
+          status: { $ne: 'completed' }
+        },
+        {
+          $set: {
+            webhookProcessing: true,
+            webhookReceivedAt: new Date(),
+            updatedAt: new Date()
+          }
+        },
+        { returnDocument: 'before' }
+      );
+
+      if (!lockResult || !lockResult.value) {
+        console.log(`[NovitaWebhook] ⏭️ Task ${taskId} is already being processed by another webhook, skipping`);
+        return reply.send({ received: true });
+      }
+
+      console.log(`[NovitaWebhook] 🔓 Acquired processing lock for task ${taskId}`);
 
       // Process based on task type using shared constants
       if (IMAGE_TASK_TYPES.includes(taskType)) {

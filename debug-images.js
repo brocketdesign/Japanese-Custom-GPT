@@ -11,8 +11,8 @@ const dbName = process.env.MONGODB_NAME || process.env.DB_NAME || 'lamix';
 
 // IDs from user's debug session
 const DEBUG_IDS = {
-  chatId: '6971a436b839017c6d217ec4',
-  userChatId: '697c95195e3e8e627c695aad',
+  chatId: '697d9c18935a2103d7ac8f84',
+  userChatId: '697d9c7b935a2103d7ac8f8b',
   userId: '6678ff065ec30fd44a6777da'
 };
 

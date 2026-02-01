@@ -10,6 +10,7 @@ const {
 } = require('../models/chat-completion-utils');
 const { getUserChatToolSettings } = require('../models/chat-tool-settings-utils');
 const { getLanguageName } = require('../models/tool');
+const { detectConversationLanguage } = require('../models/openai');
 const { 
     awardCharacterMessageMilestoneReward 
 } = require('../models/user-points-utils');
@@ -80,8 +81,20 @@ async function routes(fastify, options) {
                 });
             }
 
-            // Get user's language preference
-            const language = getLanguageName(userInfo.lang) || 'japanese';
+            // Get user's default language preference
+            const defaultLanguage = getLanguageName(userInfo.lang) || 'japanese';
+            
+            // Detect actual conversation language (adapts to what user is actually speaking)
+            let language = defaultLanguage;
+            if (userChatData.messages && userChatData.messages.length > 2) {
+                const detectedLang = await detectConversationLanguage(userChatData.messages, defaultLanguage);
+                // Use detected language if confidence is high enough
+                if (detectedLang.confidence >= 60) {
+                    language = detectedLang.language.toLowerCase();
+                    console.log(`[chat-suggestions] Using detected language: ${language} (confidence: ${detectedLang.confidence}%)`);
+                }
+            }
+
             // Generate suggestions
             const suggestions = await generateChatSuggestions(
                 db,

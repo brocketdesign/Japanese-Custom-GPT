@@ -417,6 +417,81 @@ const checkImageRequest = async (lastAssistantMessage,lastUserMessage) => {
   }
 };
 
+// Define the schema for language detection
+const languageDetectionSchema = z.object({
+  language: z.string(),
+  confidence: z.number(),
+  language_code: z.string(),
+});
+
+/**
+ * Detects the actual language being used in a conversation
+ * by analyzing recent messages from both user and assistant.
+ * Returns the detected language name and code.
+ * 
+ * @param {Array} messages - Array of conversation messages
+ * @param {string} defaultLanguage - Fallback language if detection fails
+ * @returns {Promise<{language: string, confidence: number, language_code: string}>}
+ */
+const detectConversationLanguage = async (messages, defaultLanguage = 'english') => {
+  try {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    // Get the last 6 messages (excluding system messages and image descriptions)
+    const recentMessages = messages
+      .filter(m => m.content && 
+                   !m.content.startsWith('[Image]') && 
+                   m.role !== 'system' && 
+                   m.name !== 'context' && 
+                   m.name !== 'master')
+      .slice(-6)
+      .map(m => `${m.role}: ${m.content}`)
+      .join('\n');
+
+    if (!recentMessages || recentMessages.trim().length === 0) {
+      return { language: defaultLanguage, confidence: 50, language_code: 'en' };
+    }
+
+    const commandPrompt = `
+      You are a language detection expert. Analyze the conversation and determine the PRIMARY language being used.
+      Focus on the most recent messages, especially the user's messages, to detect what language they prefer.
+      
+      Return:
+      1. **language**: The full name of the detected language in English (e.g., "Portuguese", "Chinese", "Thai", "Japanese", "English", "French", "Spanish", "Korean", "German", etc.)
+      2. **confidence**: A number from 0-100 indicating how confident you are about the detection
+      3. **language_code**: The ISO 639-1 two-letter code (e.g., "pt", "zh", "th", "ja", "en", "fr", "es", "ko", "de")
+      
+      If the conversation uses multiple languages, prioritize the language used in the most recent user messages.
+    `;
+
+    const analysisPrompt = `
+      Analyze the following conversation and detect the primary language being used:
+      
+      ${recentMessages}
+      
+      What language is this conversation primarily in? Focus on the user's language preference.
+    `;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: "system", content: commandPrompt },
+        { role: "user", content: analysisPrompt }
+      ],
+      response_format: zodResponseFormat(languageDetectionSchema, "language_detection"),
+      max_completion_tokens: 200,
+      temperature: 0.3,
+    });
+
+    const result = JSON.parse(response.choices[0].message.content);
+    console.log(`[detectConversationLanguage] Detected: ${result.language} (${result.language_code}) with ${result.confidence}% confidence`);
+    return result;
+
+  } catch (error) {
+    console.log('[detectConversationLanguage] Detection error:', error.message);
+    return { language: defaultLanguage, confidence: 50, language_code: 'en' };
+  }
+};
 
 // Enhanced schema with relation analysis
 const enhancedAnalysisSchema = z.object({
@@ -1366,6 +1441,7 @@ module.exports = {
     generateCompletion,
     generateEditPrompt,
     checkImageRequest,
+    detectConversationLanguage,
     analyzeConversationContext,
     generatePromptTitle,
     moderateText,

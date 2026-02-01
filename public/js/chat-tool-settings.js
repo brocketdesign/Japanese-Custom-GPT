@@ -326,6 +326,28 @@ class ChatToolSettings {
                 }
             });
         }
+
+        // Language selection - Use event delegation for language options
+        document.addEventListener('click', (e) => {
+            const langOption = e.target.closest('.language-option');
+            if (langOption && langOption.closest('#chat-language-grid')) {
+                this.selectLanguage(langOption);
+            }
+        });
+    }
+
+    selectLanguage(option) {
+        const lang = option.dataset.lang;
+        if (!lang) return;
+
+        // Update selection UI
+        document.querySelectorAll('#chat-language-grid .language-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        option.classList.add('selected');
+
+        // Update settings
+        this.settings.preferredChatLanguage = lang;
     }
 
     toggleSpeechButton() {
@@ -1473,6 +1495,14 @@ class ChatToolSettings {
 
         // Apply initial speech button state
         this.toggleSpeechButton();
+
+        // Update language selection
+        const selectedLang = this.settings.preferredChatLanguage;
+        if (selectedLang) {
+            document.querySelectorAll('#chat-language-grid .language-option').forEach(opt => {
+                opt.classList.toggle('selected', opt.dataset.lang === selectedLang);
+            });
+        }
 
         // Update premium indicators
         this.setupPremiumIndicators(subscriptionStatus);

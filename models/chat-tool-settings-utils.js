@@ -406,6 +406,38 @@ function getAvailableRelationshipsByGender(gender = 'female') {
     return { free, premium };
 }
 
+/**
+ * Get user's preferred chat language
+ * Checks chatToolSettings first, then falls back to user profile's preferredChatLanguage
+ * @param {Object} db - MongoDB database instance
+ * @param {string} userId - User ID
+ * @param {string} chatId - Optional chat ID for chat-specific settings
+ * @returns {string} Preferred chat language or empty string if not set
+ */
+async function getPreferredChatLanguage(db, userId, chatId = null) {
+    try {
+        // First check chat tool settings
+        const settings = await getUserChatToolSettings(db, userId, chatId);
+        if (settings.preferredChatLanguage) {
+            return settings.preferredChatLanguage;
+        }
+        
+        // Fall back to user profile's preferredChatLanguage (set during onboarding)
+        if (userId && ObjectId.isValid(userId)) {
+            const usersCollection = db.collection('users');
+            const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+            if (user?.preferredChatLanguage) {
+                return user.preferredChatLanguage;
+            }
+        }
+        
+        return '';
+    } catch (error) {
+        console.error('[getPreferredChatLanguage] Error getting preferred chat language:', error);
+        return '';
+    }
+}
+
 module.exports = {
     DEFAULT_CHAT_SETTINGS,
     getUserChatToolSettings,
@@ -419,5 +451,6 @@ module.exports = {
     getAutoImageGenerationSetting,
     hasUserChattedWithCharacter,
     getAvailableRelationshipsByGender,
-    getUserChatCustomizations
+    getUserChatCustomizations,
+    getPreferredChatLanguage
 };

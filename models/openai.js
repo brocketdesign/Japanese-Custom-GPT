@@ -442,6 +442,7 @@ const detectConversationLanguage = async (messages, defaultLanguage = 'english')
       .filter(m => m.content && 
                    !m.content.startsWith('[Image]') && 
                    m.role !== 'system' && 
+                   m.role !== 'assistant' && // Focus on user messages primarily
                    m.name !== 'context' && 
                    m.name !== 'master')
       .slice(-6)

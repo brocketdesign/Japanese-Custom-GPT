@@ -19,6 +19,7 @@ const {
     applyUserSettingsToPrompt,
     getAutoImageGenerationSetting,
     getUserChatCustomizations,
+    getPreferredChatLanguage,
 } = require('../models/chat-tool-settings-utils');
 const { getUserPoints } = require('../models/user-points-utils');
 const {
@@ -297,8 +298,9 @@ async function routes(fastify, options) {
             
             const characterDescription = await checkImageDescription(db, chatId, chatDocument);
             
-            // Use preferredChatLanguage if set, otherwise fall back to interface language
-            const language = userInfo.preferredChatLanguage || getLanguageName(userInfo.lang);
+            // Get preferred chat language: settings > user profile > interface language
+            const preferredLang = await getPreferredChatLanguage(db, userId, chatId);
+            const language = preferredLang || getLanguageName(userInfo.lang);
 
             // Handle chat scenarios - Generate scenarios at the start of a new chat ONLY if:
             // 1. Not already generated (check for scenarioGenerated flag)

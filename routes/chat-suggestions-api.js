@@ -8,7 +8,7 @@ const {
     getUserChatData,
     getPersonaById 
 } = require('../models/chat-completion-utils');
-const { getUserChatToolSettings } = require('../models/chat-tool-settings-utils');
+const { getUserChatToolSettings, getPreferredChatLanguage } = require('../models/chat-tool-settings-utils');
 const { getLanguageName } = require('../models/tool');
 const { detectConversationLanguage } = require('../models/openai');
 const { 
@@ -81,12 +81,14 @@ async function routes(fastify, options) {
                 });
             }
 
-            // Get user's default language preference (preferredChatLanguage takes priority)
-            const defaultLanguage = userInfo.preferredChatLanguage || getLanguageName(userInfo.lang) || 'japanese';
+            // Get user's default language preference from chat settings (falls back to user profile)
+            const defaultLanguage = await getPreferredChatLanguage(db, userId, chatId) || getLanguageName(userInfo.lang) || 'japanese';
             
             // Detect actual conversation language (adapts to what user is actually speaking)
+            // Only detect if there's at least one user message to analyze
             let language = defaultLanguage;
-            if (userChatData.messages && userChatData.messages.length > 2) {
+            const userMessages = userChatData.messages?.filter(m => m.role === 'user') || [];
+            if (userMessages.length > 0) {
                 const detectedLang = await detectConversationLanguage(userChatData.messages, defaultLanguage);
                 // Use detected language if confidence is high enough
                 if (detectedLang.confidence >= 60) {

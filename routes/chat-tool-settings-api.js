@@ -28,12 +28,13 @@ async function routes(fastify, options) {
                 return reply.status(400).send({ error: 'Invalid user ID' });
             }
 
-            // Check user subscription status
+            // Check user subscription status and get preferredChatLanguage from user profile
             const usersCollection = fastify.mongo.db.collection('users');
             const user = await usersCollection.findOne({ 
                 _id: new ObjectId(userId) 
             });
             const isPremium = user?.subscriptionStatus === 'active';
+            const userPreferredChatLanguage = user?.preferredChatLanguage || '';
 
             const collection = fastify.mongo.db.collection('chatToolSettings');
             const settings = await collection.findOne({ 
@@ -42,7 +43,12 @@ async function routes(fastify, options) {
             });
             
             if (!settings) {
-                return reply.send({ success: true, settings: DEFAULT_CHAT_SETTINGS, isPremium });
+                // Return default settings with user's preferredChatLanguage from profile
+                const defaultWithUserLang = { 
+                    ...DEFAULT_CHAT_SETTINGS, 
+                    preferredChatLanguage: userPreferredChatLanguage 
+                };
+                return reply.send({ success: true, settings: defaultWithUserLang, isPremium });
             }
 
             // Remove MongoDB specific fields from response
@@ -55,6 +61,11 @@ async function routes(fastify, options) {
 
             if (!userSettings.voiceProvider) {
                 userSettings.voiceProvider = 'standard';
+            }
+            
+            // Initialize preferredChatLanguage from user profile if not set in settings
+            if (!userSettings.preferredChatLanguage && userPreferredChatLanguage) {
+                userSettings.preferredChatLanguage = userPreferredChatLanguage;
             }
             
             // Override autoImageGeneration for non-premium users
@@ -117,7 +128,8 @@ async function routes(fastify, options) {
                 scenariosEnabled: Boolean(settings.scenariosEnabled !== undefined ? settings.scenariosEnabled : false),
                 customPromptEnabled: Boolean(settings.customPromptEnabled !== undefined ? settings.customPromptEnabled : true),
                 defaultDescriptionEnabled: Boolean(settings.defaultDescriptionEnabled !== undefined ? settings.defaultDescriptionEnabled : false),
-                defaultDescription: String(settings.defaultDescription || '')
+                defaultDescription: String(settings.defaultDescription || ''),
+                preferredChatLanguage: String(settings.preferredChatLanguage || '')
             };
 
             // Only keep the field that exists in the incoming settings

@@ -15,5 +15,6 @@
     "autoImageGeneration": true,
     "customPromptEnabled": true,
     "defaultDescriptionEnabled": false,
-    "defaultDescription": ""
+    "defaultDescription": "",
+    "preferredChatLanguage": ""
 }

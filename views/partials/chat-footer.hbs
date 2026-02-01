@@ -437,7 +437,11 @@
         </div>
         <div class="settings-modal-body">
             <div class="settings-quick-nav">
-                <button type="button" class="settings-quick-nav-btn active" data-target="#image-settings">
+                <button type="button" class="settings-quick-nav-btn active" data-target="#language-settings">
+                    <i class="bi bi-translate"></i>
+                    <span>{{chatToolSettingsTranslations.chatLanguageSettings}}</span>
+                </button>
+                <button type="button" class="settings-quick-nav-btn" data-target="#image-settings">
                     <i class="bi bi-image"></i>
                     <span>{{chatToolSettingsTranslations.imageSettings}}</span>
                 </button>
@@ -469,6 +473,86 @@
                     <i class="bi bi-cpu"></i>
                     <span>{{chatToolSettingsTranslations.modelSettings}}</span>
                 </button>
+            </div>
+
+            <!-- Chat Language Settings -->
+            <div class="settings-section" id="language-settings">
+                <div class="settings-section-header">
+                    <div class="settings-section-title">
+                        <i class="bi bi-translate me-2"></i>
+                        {{chatToolSettingsTranslations.chatLanguageSettings}}
+                    </div>
+                </div>
+                <div class="settings-description text-muted mb-4">
+                    {{chatToolSettingsTranslations.chatLanguageDescription}}
+                </div>
+                
+                <div class="settings-field">
+                    <label class="settings-label fw-semibold">
+                        {{chatToolSettingsTranslations.preferredChatLanguage}}
+                    </label>
+                    <div class="settings-language-grid-0 row mt-3" id="chat-language-grid">
+                        <div class="language-option col-6 col-md-4" data-lang="english">
+                            <span class="lang-flag">🇬🇧</span>
+                            <span class="lang-name">English</span>
+                            <div class="check-badge"><i class="bi bi-check"></i></div>
+                        </div>
+                        <div class="language-option col-6 col-md-4" data-lang="japanese">
+                            <span class="lang-flag">🇯🇵</span>
+                            <span class="lang-name">日本語</span>
+                            <div class="check-badge"><i class="bi bi-check"></i></div>
+                        </div>
+                        <div class="language-option col-6 col-md-4" data-lang="french">
+                            <span class="lang-flag">🇫🇷</span>
+                            <span class="lang-name">Français</span>
+                            <div class="check-badge"><i class="bi bi-check"></i></div>
+                        </div>
+                        <div class="language-option col-6 col-md-4" data-lang="portuguese">
+                            <span class="lang-flag">🇧🇷</span>
+                            <span class="lang-name">Português</span>
+                            <div class="check-badge"><i class="bi bi-check"></i></div>
+                        </div>
+                        <div class="language-option col-6 col-md-4" data-lang="spanish">
+                            <span class="lang-flag">🇪🇸</span>
+                            <span class="lang-name">Español</span>
+                            <div class="check-badge"><i class="bi bi-check"></i></div>
+                        </div>
+                        <div class="language-option col-6 col-md-4" data-lang="chinese">
+                            <span class="lang-flag">🇨🇳</span>
+                            <span class="lang-name">中文</span>
+                            <div class="check-badge"><i class="bi bi-check"></i></div>
+                        </div>
+                        <div class="language-option col-6 col-md-4" data-lang="korean">
+                            <span class="lang-flag">🇰🇷</span>
+                            <span class="lang-name">한국어</span>
+                            <div class="check-badge"><i class="bi bi-check"></i></div>
+                        </div>
+                        <div class="language-option col-6 col-md-4" data-lang="thai">
+                            <span class="lang-flag">🇹🇭</span>
+                            <span class="lang-name">ไทย</span>
+                            <div class="check-badge"><i class="bi bi-check"></i></div>
+                        </div>
+                        <div class="language-option col-6 col-md-4" data-lang="german">
+                            <span class="lang-flag">🇩🇪</span>
+                            <span class="lang-name">Deutsch</span>
+                            <div class="check-badge"><i class="bi bi-check"></i></div>
+                        </div>
+                        <div class="language-option col-6 col-md-4" data-lang="italian">
+                            <span class="lang-flag">🇮🇹</span>
+                            <span class="lang-name">Italiano</span>
+                            <div class="check-badge"><i class="bi bi-check"></i></div>
+                        </div>
+                        <div class="language-option col-6 col-md-4" data-lang="russian">
+                            <span class="lang-flag">🇷🇺</span>
+                            <span class="lang-name">Русский</span>
+                            <div class="check-badge"><i class="bi bi-check"></i></div>
+                        </div>
+                    </div>
+                    <div class="settings-description text-muted small mt-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        {{chatToolSettingsTranslations.chatLanguageHint}}
+                    </div>
+                </div>
             </div>
 
             <!-- Image Settings -->

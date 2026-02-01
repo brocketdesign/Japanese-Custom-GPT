@@ -81,8 +81,8 @@ async function routes(fastify, options) {
                 });
             }
 
-            // Get user's default language preference
-            const defaultLanguage = getLanguageName(userInfo.lang) || 'japanese';
+            // Get user's default language preference (preferredChatLanguage takes priority)
+            const defaultLanguage = userInfo.preferredChatLanguage || getLanguageName(userInfo.lang) || 'japanese';
             
             // Detect actual conversation language (adapts to what user is actually speaking)
             let language = defaultLanguage;

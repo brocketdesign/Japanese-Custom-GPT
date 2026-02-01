@@ -54,6 +54,8 @@
   "age_35_44": "35-44歳",
   "age_45_54": "45-54歳",
   "age_55_plus": "55歳以上",
+  "chat_language_question": "どの言語でチャットしたいですか？",
+  "chat_language_hint": "キャラクターはこの言語であなたと話します",
   "relationship_question": "関係の好みは？",
   "non_binary": "ノンバイナリー",
   "enter_chatlamix": "今すぐChatLamixに入る！",

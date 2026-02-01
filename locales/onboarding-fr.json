@@ -14,6 +14,8 @@
   "age_35_44": "35-44",
   "age_45_54": "45-54",
   "age_55_plus": "55+",
+  "chat_language_question": "Dans quelle langue voulez-vous chatter ?",
+  "chat_language_hint": "Les personnages vous parleront dans cette langue",
   "relationship_question": "Quelle est votre préférence relationnelle ?",
   "male": "Homme",
   "female": "Femme",

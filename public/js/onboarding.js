@@ -347,6 +347,19 @@ class OnboardingFunnel {
                     this.validateStep0();
                 });
             });
+
+            // Chat language selection
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+                    this.userData.preferredChatLanguage = e.currentTarget.dataset.lang;
+                    
+                    // Update user in database
+                    await this.updateUserData({ preferredChatLanguage: this.userData.preferredChatLanguage });
+                    this.validateStep0();
+                });
+            });
         }, 100);
     }
 
@@ -407,7 +420,8 @@ class OnboardingFunnel {
         const hasRequiredFields = this.userData.nickname && 
                                   this.userData.nickname.trim().length > 0 && 
                                   this.userData.gender && 
-                                  this.userData.age;
+                                  this.userData.age &&
+                                  this.userData.preferredChatLanguage;
         const continueBtn = document.querySelector('.btn-continue');
         if (continueBtn) {
             continueBtn.disabled = !hasRequiredFields;

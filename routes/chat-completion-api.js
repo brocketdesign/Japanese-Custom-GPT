@@ -297,7 +297,8 @@ async function routes(fastify, options) {
             
             const characterDescription = await checkImageDescription(db, chatId, chatDocument);
             
-            const language = getLanguageName(userInfo.lang);
+            // Use preferredChatLanguage if set, otherwise fall back to interface language
+            const language = userInfo.preferredChatLanguage || getLanguageName(userInfo.lang);
 
             // Handle chat scenarios - Generate scenarios at the start of a new chat ONLY if:
             // 1. Not already generated (check for scenarioGenerated flag)

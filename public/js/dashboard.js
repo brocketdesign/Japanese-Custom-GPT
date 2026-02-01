@@ -3949,7 +3949,7 @@ function loadCharacterCreationPage(chatId) {
 }
 
 // Load the plan page and open the modal
-function loadPlanPage() {
+function loadPlanPage(trackingSource) {
     if(!user || isTemporary) {
       console.log('User is not logged in or is temporary, aborting loadPlanPage.');
       openLoginForm();
@@ -3959,6 +3959,12 @@ function loadPlanPage() {
       return;
     }
     modalStatus.isPlanLoading = true;
+
+    // Track premium view event
+    if (typeof UserTracking !== 'undefined') {
+      const source = trackingSource || UserTracking.detectPremiumViewSource();
+      UserTracking.trackPremiumView(source, { triggerAction: 'loadPlanPage' });
+    }
 
     closeAllModals();
 

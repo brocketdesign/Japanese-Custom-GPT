@@ -874,7 +874,7 @@ class ChatToolSettings {
             const voiceTranslation = this.translations.voices?.[voice.key] || {};
             
             const voiceCard = document.createElement('div');
-            voiceCard.className = `voice-card settings-premium-voice-option settings-voice-option ${isSelected ? 'selected' : ''}`;
+            voiceCard.className = `voice-card settings-premium-voice-option settings-voice-option col-12 col-md-6 ${isSelected ? 'selected' : ''}`;
             voiceCard.setAttribute('data-voice', voice.key);
 
             // Disable for non-premium users

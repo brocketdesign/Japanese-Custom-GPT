@@ -44,16 +44,41 @@ function getLanguageDirectiveMessage(language) {
     let content = '';
     switch (language.toLowerCase()) {
         case 'japanese':
-            content = '日本語で答えてください。ユーザーが他の言語で話す場合でも、明示的に言語を変更するように求められない限り、日本語で答え続けてください。';
+            content = '日本語で答えてください。ただし、ユーザーが別の言語で話しかけてきた場合は、その言語に切り替えて応答してください。';
             break;
         case 'english':
-            content = 'Please respond in English. If the user speaks in another language, continue responding in English unless explicitly asked to change language.';
+            content = 'Start responding in English. However, if the user writes in another language, naturally switch to their language and continue the conversation in that language.';
             break;
         case 'french':
-            content = 'Veuillez répondre en français. Si l\'utilisateur parle dans une autre langue, continuez à répondre en français, sauf si on vous demande explicitement de changer de langue.';
+            content = 'Commencez à répondre en français. Cependant, si l\'utilisateur écrit dans une autre langue, passez naturellement à sa langue et continuez la conversation dans cette langue.';
+            break;
+        case 'portuguese':
+            content = 'Comece respondendo em português. No entanto, se o usuário escrever em outro idioma, mude naturalmente para o idioma dele e continue a conversa nesse idioma.';
+            break;
+        case 'spanish':
+            content = 'Comienza respondiendo en español. Sin embargo, si el usuario escribe en otro idioma, cambia naturalmente a su idioma y continúa la conversación en ese idioma.';
+            break;
+        case 'chinese':
+            content = '用中文回复。但是，如果用户用其他语言写信，请自然地切换到他们的语言并继续用该语言进行对话。';
+            break;
+        case 'thai':
+            content = 'เริ่มตอบเป็นภาษาไทย อย่างไรก็ตาม หากผู้ใช้เขียนเป็นภาษาอื่น ให้เปลี่ยนไปใช้ภาษาของพวกเขาอย่างเป็นธรรมชาติและสนทนาต่อในภาษานั้น';
+            break;
+        case 'korean':
+            content = '한국어로 응답을 시작하세요. 하지만 사용자가 다른 언어로 작성하면 자연스럽게 해당 언어로 전환하여 대화를 계속하세요.';
+            break;
+        case 'german':
+            content = 'Beginne auf Deutsch zu antworten. Wenn der Benutzer jedoch in einer anderen Sprache schreibt, wechsle natürlich zu seiner Sprache und führe das Gespräch in dieser Sprache fort.';
+            break;
+        case 'italian':
+            content = 'Inizia a rispondere in italiano. Tuttavia, se l\'utente scrive in un\'altra lingua, passa naturalmente alla sua lingua e continua la conversazione in quella lingua.';
+            break;
+        case 'russian':
+            content = 'Начните отвечать на русском языке. Однако, если пользователь пишет на другом языке, естественно переключитесь на его язык и продолжайте разговор на этом языке.';
             break;
         default:
-            content = null;
+            // For any other language, provide a flexible English instruction
+            content = `Start responding in ${language}. However, if the user writes in another language, naturally switch to their language and continue the conversation in that language.`;
     }
     return content;
 }
@@ -206,8 +231,13 @@ ${userCanAffordImage ? `- When user requests an image and it's not in chat yet:
 # Gifs:
 - When user sends a GIF, react to it naturally and briefly. Don't describe it, just respond like you saw it.
 
+# Language:
+- Start the conversation in ${language}.
+- IMPORTANT: If the user writes in a different language, you MUST switch to their language immediately and naturally.
+- Match the user's language in every reply. If they write in Portuguese, reply in Portuguese. If they write in Chinese, reply in Chinese. Etc.
+- Never refuse to speak a language or say you can't speak it. Just adapt and respond.
+
 # Context:
-- Reply in ${language} only.
 - Current time: ${currentTimeInJapanese}
 - ${subscriptionStatus ? 'Premium user.' : 'Free user.'}
 - Don't mention their birthday/age/personal info in opening messages.

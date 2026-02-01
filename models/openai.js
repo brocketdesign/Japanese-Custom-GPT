@@ -137,18 +137,62 @@ const moderateText = async (text) => {
 const moderateImage = async (imageUrl) => {
   try {
     const openai = new OpenAI();
-    const moderation = await openai.moderations.create({
-      model: "omni-moderation-latest",
-      input: [
-        {
-          type: "image_url",
-          image_url: {
-            url: imageUrl
+    
+    // First try with URL directly
+    try {
+      const moderation = await openai.moderations.create({
+        model: "omni-moderation-latest",
+        input: [
+          {
+            type: "image_url",
+            image_url: {
+              url: imageUrl
+            }
           }
+        ],
+      });
+      return moderation;
+    } catch (urlError) {
+      // If OpenAI failed to download the image, try with base64
+      if (urlError.message && urlError.message.includes('Failed to download image')) {
+        console.log("[moderateImage] OpenAI couldn't download image URL, trying base64 fallback...");
+        
+        try {
+          // Download image ourselves and convert to base64
+          const response = await fetch(imageUrl);
+          if (!response.ok) {
+            console.error(`[moderateImage] Failed to download image: ${response.status} ${response.statusText}`);
+            return { results: [] };
+          }
+          
+          const contentType = response.headers.get('content-type') || 'image/png';
+          const buffer = await response.buffer();
+          const base64Image = buffer.toString('base64');
+          const dataUrl = `data:${contentType};base64,${base64Image}`;
+          
+          console.log(`[moderateImage] Successfully converted to base64 (${Math.round(buffer.length / 1024)}KB)`);
+          
+          const moderation = await openai.moderations.create({
+            model: "omni-moderation-latest",
+            input: [
+              {
+                type: "image_url",
+                image_url: {
+                  url: dataUrl
+                }
+              }
+            ],
+          });
+          return moderation;
+        } catch (base64Error) {
+          console.error("[moderateImage] Base64 fallback also failed:", base64Error.message);
+          return { results: [] };
         }
-      ],
-    });
-    return moderation;
+      }
+      
+      // Re-throw if it's a different error
+      throw urlError;
+    }
   } catch (error) {
     console.error("Error moderating image:", error);
     return { results: [] }; // Return empty result instead of throwing

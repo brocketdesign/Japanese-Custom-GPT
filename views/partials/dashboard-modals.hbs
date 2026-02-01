@@ -740,8 +740,8 @@
                             
                             <!-- Unlock All & Start Chat Buttons -->
                             <div class="d-flex justify-content-center gap-2 mt-3">
-                                <button type="button" class="btn btn-dark is-free-user btn-sm w-100" onclick="loadPlanPage()">{{translations.unlockAll}}</button>
-                                <button type="button" class="btn btn-primary btn-sm w-100" onclick="startChatting(event)">{{translations.startChatting}}</button>
+                                <button type="button" class="btn btn-dark is-free-user btn-sm w-100" onclick="loadPlanPage('character_intro_modal')" data-tracking-source="character_intro_modal">{{translations.unlockAll}}</button>
+                                <button type="button" class="btn btn-primary btn-sm w-100 track-chat-start-character-intro" data-tracking-source="character_intro_modal" onclick="startChatting(event)">{{translations.startChatting}}</button>
                             </div>
                         </div>
                         
@@ -754,8 +754,8 @@
             </div>
             <div class="modal-footer position-fixed bottom-0 start-50 translate-middle-x w-100 bg-transparent border-top" style="z-index: 1050;">
                 <div class="d-flex justify-content-center w-100">
-                    <button type="button" class="btn btn-dark me-2 is-free-user" onclick="loadPlanPage()">{{translations.unlockAll}}</button>
-                    <button type="button" class="btn btn-primary" onclick="startChatting(event)">{{translations.startChatting}}</button>
+                    <button type="button" class="btn btn-dark me-2 is-free-user" onclick="loadPlanPage('character_intro_modal')" data-tracking-source="character_intro_modal">{{translations.unlockAll}}</button>
+                    <button type="button" class="btn btn-primary track-chat-start-character-intro" data-tracking-source="character_intro_modal" onclick="startChatting(event)">{{translations.startChatting}}</button>
                 </div>
             </div>
         </div>

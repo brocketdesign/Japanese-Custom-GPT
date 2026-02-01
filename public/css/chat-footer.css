@@ -765,8 +765,6 @@
 }
 
 .settings-voice-grid {
-    display: flex;
-    flex-direction: column;
     gap: 12px;
     margin-top: 12px;
 }
@@ -1529,7 +1527,6 @@
     
     .settings-tone-grid,
     .settings-voice-grid {
-        grid-template-columns: 1fr 1fr;
         gap: 8px;
     }
 

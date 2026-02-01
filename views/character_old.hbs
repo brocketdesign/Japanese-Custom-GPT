@@ -39,7 +39,7 @@
           <div class="col-md-6 text-md-start mt-4 mt-md-0">
             <h1 class="display-4 fw-bold u-color-grad">{{translations.meet_your_ai_companion}} {{chat.name}}</h1>
             <p class="lead">{{chat.description}}</p>
-            <a {{#if user.isTemporary}}onclick="openLoginForm()"{{else}}href="/chat/{{chat._id}}"{{/if}} class="btn custom-gradient-bg btn-lg-custom mt-3">
+            <a {{#if user.isTemporary}}onclick="openLoginForm()"{{else}}href="/chat/{{chat._id}}"{{/if}} class="btn custom-gradient-bg btn-lg-custom mt-3 track-chat-start-character-page" data-tracking-source="character_page" data-chat-id="{{chat._id}}">
               <i class="bi bi-chat-dots me-2"></i> {{translations.startChattingNow}}
             </a>
             {{#if image}} 
@@ -134,7 +134,7 @@
                           {{/if}}
                         </ul>
 
-                        <a {{#if user.isTemporary}}onclick="openLoginForm()"{{else}}href="/chat/{{chat._id}}"{{/if}} class="btn custom-gradient-bg btn-lg-custom mt-3">
+                        <a {{#if user.isTemporary}}onclick="openLoginForm()"{{else}}href="/chat/{{chat._id}}"{{/if}} class="btn custom-gradient-bg btn-lg-custom mt-3 track-chat-start-character-page" data-tracking-source="character_page" data-chat-id="{{chat._id}}">
                           <i class="bi bi-chat-dots me-2"></i> {{translations.startChattingNow}}
                         </a>
                     </div>
@@ -219,7 +219,7 @@
                             <div class="fs-1 fw-bold u-color-grad mb-2">3.</div>
                             <h4>{{translations.start_conversation_step_title}}</h4>
                             <p>{{translations.start_conversation_step_desc}}</p>
-                            <a {{#if user.isTemporary}}onclick="openLoginForm()"{{else}}href="/chat/{{chat._id}}"{{/if}} class="btn custom-gradient-bg">
+                            <a {{#if user.isTemporary}}onclick="openLoginForm()"{{else}}href="/chat/{{chat._id}}"{{/if}} class="btn custom-gradient-bg track-chat-start-character-page" data-tracking-source="character_page" data-chat-id="{{chat._id}}">
                                 <i class="bi bi-chat-dots me-2"></i> {{translations.startChatting}}
                             </a>
                         </div>

@@ -620,7 +620,8 @@ const initializeCronJobs = async (fastify) => {
     // Run task recovery on startup (after all cron jobs are initialized)
     // This runs once immediately to recover any tasks that were interrupted
     // by a server restart
-    await runStartupTaskRecovery(fastify);
+    // Disable to see if duplicates disappear
+    //await runStartupTaskRecovery(fastify);
     
   } catch (error) {
     console.error('❌ [CRON] Error initializing cron jobs:', error);

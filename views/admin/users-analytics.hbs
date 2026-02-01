@@ -232,6 +232,132 @@
                     </div>
                 </div>
 
+                <!-- User Behavior Tracking Section -->
+                <div class="section-header mb-3 mt-5">
+                    <h5 class="section-title">
+                        <i class="bi bi-activity me-2"></i>User Behavior Tracking
+                    </h5>
+                </div>
+
+                <div class="row g-3 g-lg-4 mb-4">
+                    <div class="col-xl-4 col-md-6">
+                        <div class="info-card card-shadow">
+                            <div class="info-card-body">
+                                <div class="info-card-header">
+                                    <div class="info-icon bg-success-soft">
+                                        <i class="bi bi-chat-left-text-fill text-success"></i>
+                                    </div>
+                                    <h6 class="info-card-title mb-0">Chat Sessions Started</h6>
+                                </div>
+                                <div class="info-card-content">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h2 class="info-value mb-0" id="totalChatStarts">0</h2>
+                                        <span class="badge badge-success" id="uniqueChatStartUsers">0 users</span>
+                                    </div>
+                                    <div class="info-detail">
+                                        <i class="bi bi-graph-up me-1"></i>
+                                        <small class="text-muted">Total chat sessions initiated</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-4 col-md-6">
+                        <div class="info-card card-shadow">
+                            <div class="info-card-body">
+                                <div class="info-card-header">
+                                    <div class="info-icon bg-info-soft">
+                                        <i class="bi bi-send-fill text-info"></i>
+                                    </div>
+                                    <h6 class="info-card-title mb-0">Messages Sent (Tracked)</h6>
+                                </div>
+                                <div class="info-card-content">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h2 class="info-value mb-0" id="totalTrackedMessages">0</h2>
+                                        <span class="badge badge-info" id="uniqueMessageUsers">0 users</span>
+                                    </div>
+                                    <div class="info-detail">
+                                        <i class="bi bi-envelope me-1"></i>
+                                        <small class="text-muted">User messages tracked</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-4 col-md-6">
+                        <div class="info-card card-shadow">
+                            <div class="info-card-body">
+                                <div class="info-card-header">
+                                    <div class="info-icon bg-purple-soft" style="background: rgba(156, 39, 176, 0.1);">
+                                        <i class="bi bi-gem text-purple" style="color: #9c27b0;"></i>
+                                    </div>
+                                    <h6 class="info-card-title mb-0">Premium Modal Views</h6>
+                                </div>
+                                <div class="info-card-content">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h2 class="info-value mb-0" id="totalPremiumViews">0</h2>
+                                        <span class="badge" style="background: rgba(156, 39, 176, 0.2); color: #9c27b0;" id="uniquePremiumViewUsers">0 users</span>
+                                    </div>
+                                    <div class="info-detail">
+                                        <i class="bi bi-window me-1"></i>
+                                        <small class="text-muted">Times premium modal was shown</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Location Distribution -->
+                <div class="row g-3 g-lg-4 mb-4">
+                    <div class="col-xl-6 col-lg-6">
+                        <div class="chart-card card-shadow">
+                            <div class="chart-card-header">
+                                <div>
+                                    <h5 class="chart-card-title mb-1">User Locations (by Country)</h5>
+                                    <p class="chart-card-subtitle mb-0">Geographic distribution from IP geolocation</p>
+                                </div>
+                            </div>
+                            <div class="chart-card-body">
+                                <canvas id="userLocationChart" height="80"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-6 col-lg-6">
+                        <div class="chart-card card-shadow">
+                            <div class="chart-card-header">
+                                <div>
+                                    <h5 class="chart-card-title mb-1">Chat Start Sources</h5>
+                                    <p class="chart-card-subtitle mb-0">Where users click to start chats</p>
+                                </div>
+                            </div>
+                            <div class="chart-card-body">
+                                <canvas id="chatStartSourcesChart" height="80"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Behavior Trends -->
+                <div class="row g-3 g-lg-4 mb-4">
+                    <div class="col-12">
+                        <div class="chart-card card-shadow">
+                            <div class="chart-card-header">
+                                <div>
+                                    <h5 class="chart-card-title mb-1">Behavior Trends (7 Days)</h5>
+                                    <p class="chart-card-subtitle mb-0">Daily tracking of user actions</p>
+                                </div>
+                            </div>
+                            <div class="chart-card-body">
+                                <canvas id="behaviorTrendsChart" height="60"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Additional Stats -->
                 <div class="section-header mb-3 mt-5">
                     <h5 class="section-title">

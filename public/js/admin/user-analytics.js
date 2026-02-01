@@ -1,10 +1,13 @@
 let userGrowthChart, genderChart, nationalityChart, contentTrendsChart;
-let userLocationChart, chatStartSourcesChart, behaviorTrendsChart;
+let behaviorTrendsChart;
 
 // Initialize dashboard
 $(document).ready(function() {
     loadAnalyticsData();
     loadBehaviorTrackingData();
+    
+    // Debug: Get and display IP geolocation data
+    debugIPGeolocation();
     
     $('#refreshData').on('click', function() {
         $(this).html('<span class="spinner-border spinner-border-sm me-2"></span>Refreshing...');
@@ -12,6 +15,89 @@ $(document).ready(function() {
         loadBehaviorTrackingData();
     });
 });
+
+/**
+ * Debug function to test IP geolocation
+ * Retrieves the current user's IP and location data directly from ip-api.com
+ * This shows exactly what data would be saved to the database
+ */
+async function debugIPGeolocation() {
+    console.log('🌍 [IP Geolocation Debug] Starting IP geolocation test...');
+    console.log('═══════════════════════════════════════════════════════════════');
+    
+    try {
+        // Call ip-api.com directly from the browser (same service used by backend)
+        // This will automatically detect the public IP and return geolocation
+        console.log('📡 [IP Geolocation Debug] Calling ip-api.com (same service used by backend)...');
+        
+        const response = await fetch('http://ip-api.com/json/?fields=status,message,country,countryCode,region,regionName,city,lat,lon,timezone,isp,query');
+        const ipApiData = await response.json();
+        
+        if (ipApiData.status === 'success') {
+            // Format data exactly as backend would save it
+            const locationData = {
+                ip: ipApiData.query,
+                country: ipApiData.country,
+                countryCode: ipApiData.countryCode,
+                region: ipApiData.regionName,
+                city: ipApiData.city,
+                latitude: ipApiData.lat,
+                longitude: ipApiData.lon,
+                timezone: ipApiData.timezone,
+                isp: ipApiData.isp,
+                isLocal: false
+            };
+            
+            console.log('✅ [IP Geolocation Debug] Successfully retrieved geolocation data!');
+            console.log('');
+            console.log('📊 DATA THAT WOULD BE SAVED TO DATABASE:');
+            console.log('═══════════════════════════════════════════════════════════════');
+            console.table(locationData);
+            console.log('═══════════════════════════════════════════════════════════════');
+            
+            console.log('');
+            console.log('📦 [IP Geolocation Debug] Raw ip-api.com response:', ipApiData);
+            console.log('');
+            console.log('💾 [IP Geolocation Debug] Formatted location object (as stored in DB):', locationData);
+            
+            // Also check what the backend currently has stored
+            console.log('');
+            console.log('📡 [IP Geolocation Debug] Checking what backend has stored...');
+            try {
+                const storedResponse = await fetch('/api/tracking/location', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                const storedLocation = await storedResponse.json();
+                console.log('💾 [IP Geolocation Debug] Currently stored in database:', storedLocation);
+                
+                if (storedLocation.ip === '127.0.0.1' || storedLocation.isLocal) {
+                    console.warn('⚠️ [IP Geolocation Debug] Backend detected localhost (127.0.0.1)');
+                    console.warn('   This is because you are running locally. In production, the server');
+                    console.warn('   would detect your public IP from headers (x-forwarded-for, cf-connecting-ip, etc.)');
+                    console.warn('');
+                    console.warn('   Your ACTUAL public IP is: ' + locationData.ip);
+                    console.warn('   Your ACTUAL location would be: ' + locationData.city + ', ' + locationData.region + ', ' + locationData.country);
+                }
+            } catch (err) {
+                console.warn('⚠️ [IP Geolocation Debug] Could not fetch stored location:', err.message);
+            }
+            
+            console.log('');
+            console.log('═══════════════════════════════════════════════════════════════');
+            console.log('✅ [IP Geolocation Debug] Test complete!');
+            console.log('   The ip-api.com service is working correctly.');
+            console.log('   In production, users will have their location tracked properly.');
+            console.log('═══════════════════════════════════════════════════════════════');
+            
+        } else {
+            console.error('❌ [IP Geolocation Debug] ip-api.com returned error:', ipApiData.message);
+        }
+        
+    } catch (error) {
+        console.error('❌ [IP Geolocation Debug] Error during IP geolocation test:', error);
+    }
+}
 
 // Load all analytics data
 async function loadAnalyticsData() {
@@ -74,7 +160,6 @@ function updateAdditionalStats(stats) {
 function renderCharts(data) {
     renderUserGrowthChart(data.userGrowth);
     renderGenderChart(data.genderDistribution);
-    renderNationalityChart(data.nationalityDistribution);
     renderContentTrendsChart(data.contentTrends);
 }
 
@@ -190,21 +275,26 @@ function renderGenderChart(genderData) {
     });
 }
 
-// Nationality Distribution Chart
-function renderNationalityChart(nationalityData) {
-    const ctx = document.getElementById('nationalityChart').getContext('2d');
+// Nationality Distribution Chart (from IP geolocation)
+function renderNationalityChart(locationData) {
+    const ctx = document.getElementById('nationalityChart');
+    if (!ctx) return;
     
     if (nationalityChart) {
         nationalityChart.destroy();
     }
     
-    nationalityChart = new Chart(ctx, {
+    const countries = locationData?.byCountry || [];
+    const labels = countries.map(c => c.country);
+    const values = countries.map(c => c.count);
+    
+    nationalityChart = new Chart(ctx.getContext('2d'), {
         type: 'bar',
         data: {
-            labels: nationalityData.labels,
+            labels: labels.slice(0, 10),
             datasets: [{
                 label: 'Users',
-                data: nationalityData.values,
+                data: values.slice(0, 10),
                 backgroundColor: 'rgba(79, 172, 254, 0.8)',
                 borderColor: 'rgba(79, 172, 254, 1)',
                 borderWidth: 2,
@@ -213,6 +303,7 @@ function renderNationalityChart(nationalityData) {
             }]
         },
         options: {
+            indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: true,
             plugins: {
@@ -225,7 +316,7 @@ function renderNationalityChart(nationalityData) {
                 }
             },
             scales: {
-                y: {
+                x: {
                     beginAtZero: true,
                     grid: {
                         color: 'rgba(0, 0, 0, 0.05)'
@@ -234,7 +325,7 @@ function renderNationalityChart(nationalityData) {
                         precision: 0
                     }
                 },
-                x: {
+                y: {
                     grid: {
                         display: false
                     }
@@ -354,7 +445,7 @@ async function loadBehaviorTrackingData() {
         
         if (statsData) {
             updateBehaviorStats(statsData);
-            renderUserLocationChart(statsData.locations);
+            renderNationalityChart(statsData.locations);
             renderChatStartSourcesChart(statsData.startChatSources);
         }
         
@@ -387,117 +478,59 @@ function updateBehaviorStats(data) {
     $('#uniquePremiumViewUsers').text((data.events.premiumView?.uniqueUsers || 0) + ' users');
 }
 
-// User Location Chart
-function renderUserLocationChart(locationData) {
-    const ctx = document.getElementById('userLocationChart');
-    if (!ctx) return;
-    
-    if (userLocationChart) {
-        userLocationChart.destroy();
-    }
-    
-    const countries = locationData?.byCountry || [];
-    const labels = countries.map(c => c.country);
-    const values = countries.map(c => c.count);
-    
-    userLocationChart = new Chart(ctx.getContext('2d'), {
-        type: 'bar',
-        data: {
-            labels: labels.slice(0, 10),
-            datasets: [{
-                label: 'Users',
-                data: values.slice(0, 10),
-                backgroundColor: 'rgba(76, 175, 80, 0.7)',
-                borderColor: 'rgba(76, 175, 80, 1)',
-                borderWidth: 1,
-                borderRadius: 5
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    padding: 12
-                }
-            },
-            scales: {
-                x: {
-                    beginAtZero: true,
-                    grid: { color: 'rgba(0, 0, 0, 0.05)' }
-                },
-                y: {
-                    grid: { display: false }
-                }
-            }
-        }
-    });
-}
-
-// Chat Start Sources Chart
+// Chat Start Sources List
 function renderChatStartSourcesChart(sourcesData) {
-    const ctx = document.getElementById('chatStartSourcesChart');
-    if (!ctx) return;
-    
-    if (chatStartSourcesChart) {
-        chatStartSourcesChart.destroy();
-    }
+    const container = document.getElementById('chatStartSourcesList');
+    if (!container) return;
     
     const sources = sourcesData || [];
-    const labels = sources.map(s => formatSourceLabel(s.source));
-    const values = sources.map(s => s.count);
+    const total = sources.reduce((sum, s) => sum + s.count, 0);
     
-    const colors = [
-        'rgba(102, 126, 234, 0.7)',
-        'rgba(245, 87, 108, 0.7)',
-        'rgba(76, 175, 80, 0.7)',
-        'rgba(255, 167, 38, 0.7)',
-        'rgba(156, 39, 176, 0.7)',
-        'rgba(0, 188, 212, 0.7)',
-        'rgba(255, 82, 82, 0.7)',
-        'rgba(139, 195, 74, 0.7)'
-    ];
+    if (sources.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted py-3">No data available</div>';
+        return;
+    }
     
-    chatStartSourcesChart = new Chart(ctx.getContext('2d'), {
-        type: 'doughnut',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: values,
-                backgroundColor: colors.slice(0, values.length),
-                borderWidth: 0,
-                hoverOffset: 10
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        padding: 15,
-                        font: { size: 11, weight: '600' },
-                        usePointStyle: true
-                    }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    padding: 12,
-                    callbacks: {
-                        label: function(context) {
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = ((context.parsed / total) * 100).toFixed(1);
-                            return `${context.label}: ${context.parsed} (${percentage}%)`;
-                        }
-                    }
-                }
-            }
-        }
+    const sourceInfo = {
+        'character_card': { icon: 'bi-person-badge', page: 'Explore / Character Card' },
+        'character_detail': { icon: 'bi-person-lines-fill', page: 'Character Detail Page' },
+        'explore_gallery': { icon: 'bi-grid-3x3-gap', page: 'Explore Gallery' },
+        'chat_list': { icon: 'bi-chat-dots', page: 'Chat List' },
+        'image_gallery': { icon: 'bi-images', page: 'Image Gallery' },
+        'home_banner': { icon: 'bi-house', page: 'Home Page Banner' },
+        'home_featured': { icon: 'bi-star', page: 'Home Featured Section' },
+        'search_result': { icon: 'bi-search', page: 'Search Results' },
+        'recommendation': { icon: 'bi-hand-thumbs-up', page: 'Recommendations' },
+        'direct_link': { icon: 'bi-link-45deg', page: 'Direct Link' },
+        'unknown': { icon: 'bi-question-circle', page: 'Unknown' }
+    };
+    
+    let html = '<div class="list-group list-group-flush">';
+    
+    sources.forEach((s, index) => {
+        const info = sourceInfo[s.source] || sourceInfo['unknown'];
+        const percentage = total > 0 ? ((s.count / total) * 100).toFixed(1) : 0;
+        
+        html += `
+            <div class="list-group-item d-flex align-items-center justify-content-between py-2 px-3">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-light text-dark" style="min-width: 24px;">${index + 1}</span>
+                    <i class="${info.icon} text-primary"></i>
+                    <div>
+                        <div class="fw-semibold small">${formatSourceLabel(s.source)}</div>
+                        <div class="text-muted" style="font-size: 0.7rem;">${info.page}</div>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <span class="fw-bold">${s.count.toLocaleString()}</span>
+                    <span class="text-muted small ms-1">(${percentage}%)</span>
+                </div>
+            </div>
+        `;
     });
+    
+    html += '</div>';
+    container.innerHTML = html;
 }
 
 // Behavior Trends Chart

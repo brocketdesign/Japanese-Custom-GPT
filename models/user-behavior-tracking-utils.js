@@ -39,6 +39,7 @@ const ChatStartSources = {
   SEARCH_RESULTS: 'search_results',
   RECOMMENDATION: 'recommendation',
   COLD_ONBOARDING: 'cold_onboarding',
+  CHARACTER_CREATION: 'character_creation',
   PAYMENT_SUCCESS: 'payment_success',
   DIRECT_URL: 'direct_url',
   UNKNOWN: 'unknown'
@@ -423,6 +424,8 @@ async function getUserTrackingStats(db, userId) {
 
 /**
  * Get aggregate tracking statistics for admin dashboard
+ * Queries the userChat collection for chat sessions and messages
+ * Only for users created in the last 7 days
  * @param {Object} db - MongoDB database instance
  * @param {Date} startDate - Start date for filtering (optional)
  * @param {Date} endDate - End date for filtering (optional)
@@ -432,6 +435,103 @@ async function getAggregateTrackingStats(db, startDate = null, endDate = null) {
   try {
     const trackingCollection = db.collection(TRACKING_COLLECTION);
     const locationsCollection = db.collection(USER_LOCATIONS_COLLECTION);
+    const usersCollection = db.collection('users');
+    const userChatCollection = db.collection('userChat');
+    
+    // Calculate date range (last 7 days for users created)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    // Get users created in the last 7 days
+    const recentUsers = await usersCollection.find({
+      createdAt: { $gte: sevenDaysAgo }
+    }, { projection: { _id: 1 } }).toArray();
+    
+    const recentUserIds = recentUsers.map(u => u._id);
+    
+    // Get chat sessions and messages for recent users
+    let chatSessionsCount = 0;
+    let messagesCount = 0;
+    let uniqueChatUsers = new Set();
+    let uniqueMessageUsers = new Set();
+    
+    if (recentUserIds.length > 0) {
+      // Get chat sessions started (userChat documents) for recent users
+      // Use computedDate to handle docs that might not have createdAt field
+      const chatSessionsData = await userChatCollection.aggregate([
+        { 
+          $match: { 
+            userId: { $in: recentUserIds }
+          } 
+        },
+        {
+          $addFields: {
+            computedDate: {
+              $ifNull: ['$createdAt', { $toDate: '$_id' }]
+            }
+          }
+        },
+        {
+          $match: {
+            computedDate: { $gte: sevenDaysAgo }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            count: { $sum: 1 },
+            uniqueUsers: { $addToSet: '$userId' }
+          }
+        }
+      ]).toArray();
+      
+      if (chatSessionsData.length > 0) {
+        chatSessionsCount = chatSessionsData[0].count;
+        chatSessionsData[0].uniqueUsers.forEach(u => uniqueChatUsers.add(u.toString()));
+      }
+      
+      // Get messages sent (from messages array) for recent users
+      // Note: messages.timestamp is stored as a string (toLocaleString format), not a Date
+      // So we count all user messages from userChat docs created in last 7 days
+      const messagesData = await userChatCollection.aggregate([
+        { 
+          $match: { 
+            userId: { $in: recentUserIds }
+          } 
+        },
+        {
+          $addFields: {
+            computedDate: {
+              $ifNull: ['$createdAt', { $toDate: '$_id' }]
+            }
+          }
+        },
+        {
+          $match: {
+            computedDate: { $gte: sevenDaysAgo }
+          }
+        },
+        { $unwind: { path: '$messages', preserveNullAndEmptyArrays: false } },
+        { 
+          $match: { 
+            'messages.role': 'user'  // Only count user messages, not assistant messages
+          } 
+        },
+        {
+          $group: {
+            _id: null,
+            count: { $sum: 1 },
+            uniqueUsers: { $addToSet: '$userId' }
+          }
+        }
+      ]).toArray();
+      
+      if (messagesData.length > 0) {
+        messagesCount = messagesData[0].count;
+        messagesData[0].uniqueUsers.forEach(u => uniqueMessageUsers.add(u.toString()));
+      }
+    }
     
     const matchStage = {};
     if (startDate || endDate) {
@@ -440,54 +540,67 @@ async function getAggregateTrackingStats(db, startDate = null, endDate = null) {
       if (endDate) matchStage.createdAt.$lte = endDate;
     }
 
-    // Get event counts
-    const eventStats = await trackingCollection.aggregate([
-      ...(Object.keys(matchStage).length > 0 ? [{ $match: matchStage }] : []),
+    // Get start chat sources distribution (from tracking collection, filtered by recent users)
+    const startChatSources = await trackingCollection.aggregate([
+      { 
+        $match: { 
+          eventType: TrackingEventTypes.START_CHAT,
+          userId: { $in: recentUserIds.map(id => id.toString()) },
+          createdAt: { $gte: sevenDaysAgo }
+        } 
+      },
       {
         $group: {
-          _id: '$eventType',
+          _id: '$metadata.source',
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { count: -1 } }
+    ]).toArray();
+
+    // Get premium view sources distribution (filtered by recent users)
+    const premiumViewSources = await trackingCollection.aggregate([
+      { 
+        $match: { 
+          eventType: TrackingEventTypes.PREMIUM_VIEW,
+          userId: { $in: recentUserIds.map(id => id.toString()) },
+          createdAt: { $gte: sevenDaysAgo }
+        } 
+      },
+      {
+        $group: {
+          _id: '$metadata.source',
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { count: -1 } }
+    ]).toArray();
+
+    // Get premium view count from tracking collection (filtered by recent users)
+    const premiumViewStats = await trackingCollection.aggregate([
+      { 
+        $match: { 
+          eventType: TrackingEventTypes.PREMIUM_VIEW,
+          userId: { $in: recentUserIds.map(id => id.toString()) },
+          createdAt: { $gte: sevenDaysAgo }
+        } 
+      },
+      {
+        $group: {
+          _id: null,
           count: { $sum: 1 },
           uniqueUsers: { $addToSet: '$userId' }
         }
       }
     ]).toArray();
 
-    // Get start chat sources distribution
-    const startChatSources = await trackingCollection.aggregate([
-      { 
-        $match: { 
-          eventType: TrackingEventTypes.START_CHAT,
-          ...(Object.keys(matchStage).length > 0 ? matchStage : {})
-        } 
-      },
-      {
-        $group: {
-          _id: '$metadata.source',
-          count: { $sum: 1 }
-        }
-      },
-      { $sort: { count: -1 } }
-    ]).toArray();
-
-    // Get premium view sources distribution
-    const premiumViewSources = await trackingCollection.aggregate([
-      { 
-        $match: { 
-          eventType: TrackingEventTypes.PREMIUM_VIEW,
-          ...(Object.keys(matchStage).length > 0 ? matchStage : {})
-        } 
-      },
-      {
-        $group: {
-          _id: '$metadata.source',
-          count: { $sum: 1 }
-        }
-      },
-      { $sort: { count: -1 } }
-    ]).toArray();
-
-    // Get location distribution
+    // Get location distribution (filtered by recent users)
     const locationStats = await locationsCollection.aggregate([
+      {
+        $match: {
+          userId: { $in: recentUserIds }
+        }
+      },
       {
         $group: {
           _id: '$country',
@@ -498,8 +611,13 @@ async function getAggregateTrackingStats(db, startDate = null, endDate = null) {
       { $limit: 20 }
     ]).toArray();
 
-    // Get city distribution
+    // Get city distribution (filtered by recent users)
     const cityStats = await locationsCollection.aggregate([
+      {
+        $match: {
+          userId: { $in: recentUserIds }
+        }
+      },
       {
         $group: {
           _id: { city: '$city', country: '$country' },
@@ -510,12 +628,21 @@ async function getAggregateTrackingStats(db, startDate = null, endDate = null) {
       { $limit: 20 }
     ]).toArray();
 
-    // Format results
+    // Format results - using userChat collection for chat sessions and messages
     const result = {
       events: {
-        startChat: { count: 0, uniqueUsers: 0 },
-        messageSent: { count: 0, uniqueUsers: 0 },
-        premiumView: { count: 0, uniqueUsers: 0 }
+        startChat: { 
+          count: chatSessionsCount, 
+          uniqueUsers: uniqueChatUsers.size 
+        },
+        messageSent: { 
+          count: messagesCount, 
+          uniqueUsers: uniqueMessageUsers.size 
+        },
+        premiumView: { 
+          count: premiumViewStats[0]?.count || 0, 
+          uniqueUsers: premiumViewStats[0]?.uniqueUsers?.length || 0 
+        }
       },
       startChatSources: startChatSources.map(s => ({
         source: s._id || 'unknown',
@@ -535,31 +662,14 @@ async function getAggregateTrackingStats(db, startDate = null, endDate = null) {
           country: c._id.country || 'Unknown',
           count: c.count
         }))
+      },
+      // Add metadata about the query
+      metadata: {
+        period: '7 days',
+        recentUsersCount: recentUserIds.length,
+        queryDate: new Date()
       }
     };
-
-    eventStats.forEach(stat => {
-      switch (stat._id) {
-        case TrackingEventTypes.START_CHAT:
-          result.events.startChat = {
-            count: stat.count,
-            uniqueUsers: stat.uniqueUsers.length
-          };
-          break;
-        case TrackingEventTypes.MESSAGE_SENT:
-          result.events.messageSent = {
-            count: stat.count,
-            uniqueUsers: stat.uniqueUsers.length
-          };
-          break;
-        case TrackingEventTypes.PREMIUM_VIEW:
-          result.events.premiumView = {
-            count: stat.count,
-            uniqueUsers: stat.uniqueUsers.length
-          };
-          break;
-      }
-    });
 
     return result;
   } catch (error) {
@@ -569,7 +679,8 @@ async function getAggregateTrackingStats(db, startDate = null, endDate = null) {
 }
 
 /**
- * Get daily tracking trends
+ * Get daily tracking trends from userChat collection
+ * Only for users created in the last 7 days
  * @param {Object} db - MongoDB database instance
  * @param {number} days - Number of days to look back
  * @returns {Promise<Object>} Daily tracking trends
@@ -577,51 +688,171 @@ async function getAggregateTrackingStats(db, startDate = null, endDate = null) {
 async function getDailyTrackingTrends(db, days = 7) {
   try {
     const trackingCollection = db.collection(TRACKING_COLLECTION);
+    const usersCollection = db.collection('users');
+    const userChatCollection = db.collection('userChat');
     
+    // Use the same date calculation as getAggregateTrackingStats
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
     startDate.setHours(0, 0, 0, 0);
 
-    const trends = await trackingCollection.aggregate([
-      { $match: { createdAt: { $gte: startDate } } },
-      {
-        $group: {
-          _id: {
-            date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-            eventType: '$eventType'
-          },
-          count: { $sum: 1 }
-        }
-      },
-      { $sort: { '_id.date': 1 } }
-    ]).toArray();
-
-    // Organize by date and event type
+    // Get users created in the last 7 days
+    const recentUsers = await usersCollection.find({
+      createdAt: { $gte: startDate }
+    }, { projection: { _id: 1 } }).toArray();
+    
+    const recentUserIds = recentUsers.map(u => u._id);
+    
+    console.log(`[getDailyTrackingTrends] Found ${recentUserIds.length} users created since ${startDate.toISOString()}`);
+    
+    // Initialize result object with all dates
     const result = {};
-    trends.forEach(t => {
-      const date = t._id.date;
-      if (!result[date]) {
-        result[date] = {
-          date,
-          startChat: 0,
-          messageSent: 0,
-          premiumView: 0
-        };
-      }
-      switch (t._id.eventType) {
-        case TrackingEventTypes.START_CHAT:
-          result[date].startChat = t.count;
-          break;
-        case TrackingEventTypes.MESSAGE_SENT:
-          result[date].messageSent = t.count;
-          break;
-        case TrackingEventTypes.PREMIUM_VIEW:
-          result[date].premiumView = t.count;
-          break;
-      }
-    });
+    for (let i = 0; i <= days; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      const dateStr = date.toISOString().split('T')[0];
+      result[dateStr] = {
+        date: dateStr,
+        startChat: 0,
+        messageSent: 0,
+        premiumView: 0
+      };
+    }
 
-    return Object.values(result);
+    console.log(`[getDailyTrackingTrends] Date range:`, Object.keys(result));
+
+    if (recentUserIds.length > 0) {
+      // Get chat sessions (userChat documents) created per day for recent users
+      const chatTrends = await userChatCollection.aggregate([
+        { 
+          $match: { 
+            userId: { $in: recentUserIds }
+          } 
+        },
+        {
+          $addFields: {
+            computedDate: {
+              $ifNull: ['$createdAt', { $toDate: '$_id' }]
+            }
+          }
+        },
+        {
+          $match: {
+            computedDate: { $gte: startDate }
+          }
+        },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$computedDate' } },
+            count: { $sum: 1 }
+          }
+        },
+        { $sort: { '_id': 1 } }
+      ]).toArray();
+
+      console.log(`[getDailyTrackingTrends] Chat trends from DB:`, chatTrends);
+
+      chatTrends.forEach(t => {
+        if (result[t._id]) {
+          result[t._id].startChat = t.count;
+        } else {
+          console.log(`[getDailyTrackingTrends] Date ${t._id} not in result, adding...`);
+          result[t._id] = {
+            date: t._id,
+            startChat: t.count,
+            messageSent: 0,
+            premiumView: 0
+          };
+        }
+      });
+
+      // Get messages sent per day for recent users
+      const messageTrends = await userChatCollection.aggregate([
+        { 
+          $match: { 
+            userId: { $in: recentUserIds }
+          } 
+        },
+        {
+          $addFields: {
+            computedDate: {
+              $ifNull: ['$createdAt', { $toDate: '$_id' }]
+            }
+          }
+        },
+        {
+          $match: {
+            computedDate: { $gte: startDate }
+          }
+        },
+        { $unwind: { path: '$messages', preserveNullAndEmptyArrays: false } },
+        { 
+          $match: { 
+            'messages.role': 'user'
+          } 
+        },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$computedDate' } },
+            count: { $sum: 1 }
+          }
+        },
+        { $sort: { '_id': 1 } }
+      ]).toArray();
+
+      console.log(`[getDailyTrackingTrends] Message trends from DB:`, messageTrends);
+
+      messageTrends.forEach(t => {
+        if (result[t._id]) {
+          result[t._id].messageSent = t.count;
+        } else {
+          result[t._id] = {
+            date: t._id,
+            startChat: result[t._id]?.startChat || 0,
+            messageSent: t.count,
+            premiumView: 0
+          };
+        }
+      });
+
+      // Get premium view trends from tracking collection (filtered by recent users)
+      const premiumTrends = await trackingCollection.aggregate([
+        { 
+          $match: { 
+            createdAt: { $gte: startDate },
+            eventType: TrackingEventTypes.PREMIUM_VIEW,
+            userId: { $in: recentUserIds.map(id => id.toString()) }
+          } 
+        },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+            count: { $sum: 1 }
+          }
+        },
+        { $sort: { '_id': 1 } }
+      ]).toArray();
+
+      console.log(`[getDailyTrackingTrends] Premium trends from DB:`, premiumTrends);
+
+      premiumTrends.forEach(t => {
+        if (result[t._id]) {
+          result[t._id].premiumView = t.count;
+        } else {
+          result[t._id] = {
+            date: t._id,
+            startChat: result[t._id]?.startChat || 0,
+            messageSent: result[t._id]?.messageSent || 0,
+            premiumView: t.count
+          };
+        }
+      });
+    }
+
+    // Sort by date and return
+    const sortedResult = Object.values(result).sort((a, b) => a.date.localeCompare(b.date));
+    console.log(`[getDailyTrackingTrends] Final result:`, JSON.stringify(sortedResult, null, 2));
+    return sortedResult;
   } catch (error) {
     console.error('❌ [Tracking] Error getting daily tracking trends:', error);
     return [];

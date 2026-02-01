@@ -142,6 +142,55 @@ class UserAnalyticsManager {
   }
 
   /**
+   * Render analytics charts
+   */
+  renderAnalyticsCharts(analytics) {
+    if (!analytics) return;
+    
+    // Message analytics chart
+    if (analytics.messages && analytics.messages.total) {
+      this.renderMessageChart(analytics.messages);
+    }
+    
+    // Image generation chart
+    if (analytics.imageGeneration && analytics.imageGeneration.total) {
+      this.renderImageGenerationChart(analytics.imageGeneration);
+    }
+    
+    // Like analytics chart
+    if (analytics.likes && analytics.likes.total) {
+      this.renderLikesChart(analytics.likes);
+    }
+  }
+
+  /**
+   * Render message analytics chart
+   */
+  renderMessageChart(messageData) {
+    // Placeholder for message chart rendering
+    // Can be extended based on message data structure
+    console.log('[Analytics] Message data:', messageData);
+  }
+
+  /**
+   * Render image generation chart
+   */
+  renderImageGenerationChart(imageData) {
+    // Placeholder for image generation chart rendering
+    // Can be extended based on image data structure
+    console.log('[Analytics] Image data:', imageData);
+  }
+
+  /**
+   * Render likes chart
+   */
+  renderLikesChart(likeData) {
+    // Placeholder for likes chart rendering
+    // Can be extended based on like data structure
+    console.log('[Analytics] Like data:', likeData);
+  }
+
+  /**
    * Get user image generation analytics
    * @param {string} userId - User ID
    * @returns {Promise<Object>} Analytics data

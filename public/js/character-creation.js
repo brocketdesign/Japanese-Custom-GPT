@@ -2337,6 +2337,14 @@
                 // Clear session storage
                 this.clearSavedData();
                 
+                // Track chat start event
+                if (typeof UserTracking !== 'undefined' && UserTracking.trackStartChat) {
+                    UserTracking.trackStartChat(this.chatId, 'character_creation', {
+                        sourceElementId: null,
+                        sourceElementClass: 'character-creation-start-chat'
+                    });
+                }
+                
                 // Redirect to chat
                 window.location.href = `/chat/${this.chatId}`;
                 

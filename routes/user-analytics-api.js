@@ -378,7 +378,7 @@ async function calculateNationalityDistribution(db) {
   
   const distribution = await usersCollection.aggregate([
     { $match: { isTemporary: { $ne: true } } },
-    { $group: { _id: '$lang', count: { $sum: 1 } } },
+    { $group: { _id: '$userSettings.preferredChatLanguage', count: { $sum: 1 } } },
     { $sort: { count: -1 } },
     { $limit: 10 }
   ]).toArray();

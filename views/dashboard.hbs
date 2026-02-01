@@ -1161,8 +1161,16 @@ function switchDashboardTab(tab) {
 }
 
 // Open chat
-function openChat(chatId) {
+function openChat(chatId, source = 'chat_list') {
     if (!chatId) return;
+    
+    // Track chat start event
+    if (typeof UserTracking !== 'undefined' && UserTracking.trackStartChat) {
+        UserTracking.trackStartChat(chatId, source, {
+            sourceElementId: null,
+            sourceElementClass: 'chat-item'
+        });
+    }
     
     // Store chat ID for navigation
     sessionStorage.setItem('pendingChatId', chatId);

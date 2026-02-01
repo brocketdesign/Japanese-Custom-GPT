@@ -1089,6 +1089,14 @@ class ColdOnboarding {
                 // Clear saved data
                 this.clearSavedData();
                 
+                // Track chat start event
+                if (typeof UserTracking !== 'undefined' && UserTracking.trackStartChat) {
+                    UserTracking.trackStartChat(data.chatId, 'cold_onboarding', {
+                        sourceElementId: null,
+                        sourceElementClass: 'cold-onboarding-character-creation'
+                    });
+                }
+                
                 // Redirect to the new chat
                 window.location.href = `/chat/${data.chatId}`;
             } else {

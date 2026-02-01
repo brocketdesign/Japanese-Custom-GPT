@@ -1,3 +1,4 @@
+const { ObjectId } = require('mongodb');
 const {
   trackStartChat,
   trackMessageSent,
@@ -11,6 +12,7 @@ const {
   ChatStartSources,
   PremiumViewSources
 } = require('../models/user-behavior-tracking-utils');
+const { checkUserAdmin } = require('../models/tool');
 
 /**
  * User Behavior Tracking Routes
@@ -145,12 +147,31 @@ async function trackingRoutes(fastify, options) {
       }
 
       const ipAddress = getClientIP(request);
+      
+      if (!ipAddress) {
+        // Return success with local/unknown location instead of error
+        // This handles development environments where IP cannot be determined
+        return reply.send({ 
+          success: true, 
+          location: {
+            ip: 'unknown',
+            country: 'Unknown',
+            countryCode: 'XX',
+            region: 'Unknown',
+            city: 'Unknown',
+            latitude: 0,
+            longitude: 0,
+            timezone: 'UTC',
+            isLocal: true
+          }
+        });
+      }
+      
       const result = await saveUserLocation(db, user._id.toString(), ipAddress);
-
       return reply.send(result);
     } catch (error) {
       console.error('Error in /api/tracking/location:', error);
-      return reply.status(500).send({ error: 'Internal server error' });
+      return reply.status(500).send({ error: 'Internal server error', details: error.message });
     }
   });
 
@@ -205,24 +226,29 @@ async function trackingRoutes(fastify, options) {
   // ============================================
 
   /**
-   * Check if user is admin
+   * Check if user is admin using shared checkUserAdmin function
    */
   async function checkAdmin(request, reply) {
     const user = request.user;
     if (!user || !user._id) {
-      reply.status(401).send({ error: 'Unauthorized' });
+      await reply.status(401).send({ error: 'Unauthorized' });
       return false;
     }
     
-    const usersCollection = db.collection('users');
-    const dbUser = await usersCollection.findOne({ _id: user._id });
-    
-    if (!dbUser || !dbUser.isAdmin) {
-      reply.status(403).send({ error: 'Access denied' });
+    try {
+      const isAdmin = await checkUserAdmin(fastify, user._id);
+      
+      if (!isAdmin) {
+        await reply.status(403).send({ error: 'Access denied - admin privileges required' });
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      await reply.status(500).send({ error: 'Internal server error' });
       return false;
     }
-    
-    return true;
   }
 
   /**
@@ -253,7 +279,8 @@ async function trackingRoutes(fastify, options) {
    */
   fastify.get('/api/tracking/admin/stats', async (request, reply) => {
     try {
-      if (!(await checkAdmin(request, reply))) return;
+      const isAdmin = await checkAdmin(request, reply);
+      if (!isAdmin) return;
 
       const { startDate, endDate } = request.query;
       
@@ -264,7 +291,7 @@ async function trackingRoutes(fastify, options) {
       return reply.send(stats);
     } catch (error) {
       console.error('Error in /api/tracking/admin/stats:', error);
-      return reply.status(500).send({ error: 'Internal server error' });
+      return reply.status(500).send({ error: 'Internal server error', details: error.message });
     }
   });
 
@@ -274,7 +301,8 @@ async function trackingRoutes(fastify, options) {
    */
   fastify.get('/api/tracking/admin/trends', async (request, reply) => {
     try {
-      if (!(await checkAdmin(request, reply))) return;
+      const isAdmin = await checkAdmin(request, reply);
+      if (!isAdmin) return;
 
       const days = parseInt(request.query.days) || 7;
       const trends = await getDailyTrackingTrends(db, days);
@@ -282,7 +310,7 @@ async function trackingRoutes(fastify, options) {
       return reply.send(trends);
     } catch (error) {
       console.error('Error in /api/tracking/admin/trends:', error);
-      return reply.status(500).send({ error: 'Internal server error' });
+      return reply.status(500).send({ error: 'Internal server error', details: error.message });
     }
   });
 

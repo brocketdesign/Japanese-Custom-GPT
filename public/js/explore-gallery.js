@@ -590,6 +590,13 @@ class ExploreGallery {
                 window.location.href = '/login';
             }
         } else {
+            // Track chat start event
+            if (typeof UserTracking !== 'undefined' && UserTracking.trackStartChat) {
+                UserTracking.trackStartChat(chatId, 'explore_card', {
+                    sourceElementId: null,
+                    sourceElementClass: 'explore-gallery-chat'
+                });
+            }
             // Go to chat for logged-in users
             window.location.href = `/chat/${chatId}`;
         }

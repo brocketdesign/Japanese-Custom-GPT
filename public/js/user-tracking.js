@@ -29,6 +29,7 @@
     SEARCH_RESULTS: 'search_results',
     RECOMMENDATION: 'recommendation',
     COLD_ONBOARDING: 'cold_onboarding',
+    CHARACTER_CREATION: 'character_creation',
     PAYMENT_SUCCESS: 'payment_success',
     DIRECT_URL: 'direct_url',
     UNKNOWN: 'unknown'

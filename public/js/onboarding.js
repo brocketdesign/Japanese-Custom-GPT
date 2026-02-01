@@ -624,6 +624,14 @@ class OnboardingFunnel {
                     showNotification(this.t('character_selected', 'Character selected! Starting your chat...'), 'success');
                 }
 
+                // Track chat start event
+                if (typeof UserTracking !== 'undefined' && UserTracking.trackStartChat) {
+                    UserTracking.trackStartChat(characterId, 'cold_onboarding', {
+                        sourceElementId: null,
+                        sourceElementClass: 'onboarding-character-select'
+                    });
+                }
+
                 // Redirect to chat page with the selected character
                 window.location.href = `/chat/${characterId}`;
             }
@@ -631,6 +639,13 @@ class OnboardingFunnel {
             console.error('Error completing onboarding:', error);
             // Even if API fails, still redirect to chat
             localStorage.setItem(`onboarding_${this.userId}`, 'completed');
+            // Track chat start event even on error
+            if (typeof UserTracking !== 'undefined' && UserTracking.trackStartChat) {
+                UserTracking.trackStartChat(characterId, 'cold_onboarding', {
+                    sourceElementId: null,
+                    sourceElementClass: 'onboarding-character-select'
+                });
+            }
             window.location.href = `/chat/${characterId}`;
         }
     }

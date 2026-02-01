@@ -208,7 +208,7 @@
                             <div class="chart-card-header">
                                 <div>
                                     <h5 class="chart-card-title mb-1">Top Nationalities</h5>
-                                    <p class="chart-card-subtitle mb-0">Distribution by language preference</p>
+                                    <p class="chart-card-subtitle mb-0">Geographic distribution from IP geolocation</p>
                                 </div>
                             </div>
                             <div class="chart-card-body">
@@ -256,7 +256,7 @@
                                     </div>
                                     <div class="info-detail">
                                         <i class="bi bi-graph-up me-1"></i>
-                                        <small class="text-muted">Total chat sessions initiated</small>
+                                        <small class="text-muted">New users (last 7 days) - from userChat collection</small>
                                     </div>
                                 </div>
                             </div>
@@ -279,7 +279,7 @@
                                     </div>
                                     <div class="info-detail">
                                         <i class="bi bi-envelope me-1"></i>
-                                        <small class="text-muted">User messages tracked</small>
+                                        <small class="text-muted">New users (last 7 days) - from messages array</small>
                                     </div>
                                 </div>
                             </div>
@@ -310,22 +310,8 @@
                     </div>
                 </div>
 
-                <!-- User Location Distribution -->
+                <!-- Chat Start Sources -->
                 <div class="row g-3 g-lg-4 mb-4">
-                    <div class="col-xl-6 col-lg-6">
-                        <div class="chart-card card-shadow">
-                            <div class="chart-card-header">
-                                <div>
-                                    <h5 class="chart-card-title mb-1">User Locations (by Country)</h5>
-                                    <p class="chart-card-subtitle mb-0">Geographic distribution from IP geolocation</p>
-                                </div>
-                            </div>
-                            <div class="chart-card-body">
-                                <canvas id="userLocationChart" height="80"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="col-xl-6 col-lg-6">
                         <div class="chart-card card-shadow">
                             <div class="chart-card-header">
@@ -334,8 +320,8 @@
                                     <p class="chart-card-subtitle mb-0">Where users click to start chats</p>
                                 </div>
                             </div>
-                            <div class="chart-card-body">
-                                <canvas id="chatStartSourcesChart" height="80"></canvas>
+                            <div class="chart-card-body p-0">
+                                <div id="chatStartSourcesList" class="source-list"></div>
                             </div>
                         </div>
                     </div>
@@ -466,7 +452,21 @@
         </div>
     </div>
 
-    <style>.sticky-bottom, #footer-toolbar {display:none;}</style>
+    <style>
+        .sticky-bottom, #footer-toolbar {display:none;}
+        .source-list .list-group-item {
+            border-left: none;
+            border-right: none;
+            border-radius: 0;
+            transition: background-color 0.15s ease;
+        }
+        .source-list .list-group-item:hover {
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+        .source-list .list-group-item:first-child {
+            border-top: none;
+        }
+    </style>
     {{> dashboard-footer}}
     
     <!-- Chart.js -->

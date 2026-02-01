@@ -1184,6 +1184,14 @@ function handleChatListItemClick(el) {
         return;
     }
     
+    // Track chat start event
+    if (typeof UserTracking !== 'undefined' && UserTracking.trackStartChat) {
+        UserTracking.trackStartChat(selectChatId, 'chat_list', {
+            sourceElementId: null,
+            sourceElementClass: 'chat-list-item'
+        });
+    }
+    
     $el.closest('.chat-list.item').addClass('active').siblings().removeClass('active');
     //$('#chat-wrapper').css('background-image', `url(${chatImageUrl})`);
     
@@ -1521,6 +1529,14 @@ function handleChatThumbClick(el) {
     if (!selectChatId) {
         console.error('No chat ID found in clicked thumbnail');
         return;
+    }
+
+    // Track chat start event
+    if (typeof UserTracking !== 'undefined' && UserTracking.trackStartChat) {
+        UserTracking.trackStartChat(selectChatId, 'chat_list', {
+            sourceElementId: null,
+            sourceElementClass: 'chat-thumb'
+        });
     }
 
     window.chatId = selectChatId;

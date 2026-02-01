@@ -582,7 +582,7 @@ window.updatePlanStatus = function(user){
 }
 
 
-window.redirectToChat = function(chatId,chatImage) {
+window.redirectToChat = function(chatId,chatImage, source) {
     if($(`#spinner-${chatId}`).hasClass('on')){
         return
     }
@@ -597,6 +597,16 @@ window.redirectToChat = function(chatId,chatImage) {
         openLoginForm();
         return
     }
+    
+    // Track chat start event
+    const trackingSource = source || 'home_featured';
+    if (typeof UserTracking !== 'undefined' && UserTracking.trackStartChat) {
+        UserTracking.trackStartChat(chatId, trackingSource, {
+            sourceElementId: null,
+            sourceElementClass: null
+        });
+    }
+    
     // if on chat page fetchChatData else redirect to chat/${chatID}
     if (window.location.pathname.includes('/chat/')) {
         //send message to parent window fetchChatData

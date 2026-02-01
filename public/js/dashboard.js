@@ -2495,9 +2495,9 @@ window.resultImageSearch = async function (page = 1,query,style = 'anime', callb
                             <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
                         </a>
                         <div class="${!isAdmin ? 'd-none' : ''} card-body p-2 d-flex align-items-center justify-content-between">
-                            <a href="/chat/${item.chatId}" class="btn btn-outline-secondary col-12">
+                            <button onclick="event.stopPropagation(); if(typeof UserTracking !== 'undefined' && UserTracking.trackStartChat) { UserTracking.trackStartChat('${item.chatId}', 'search_results', { sourceElementClass: 'search-result-chat-btn' }); } window.location.href='/chat/${item.chatId}';" class="btn btn-outline-secondary col-12">
                               <i class="bi bi-chat-dots me-2"></i> ${translations.startChat}
-                            </a>
+                            </button>
                             <button class="btn btn-light image-nsfw-toggle ${!isAdmin ? 'd-none' : ''} ${item?.nsfw ? 'nsfw' : 'sfw'}" data-id="${item._id}">
                               <i class="bi ${item.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
                             </button>
@@ -2672,9 +2672,9 @@ window.loadAllChatImages = function (page = 1, reload = false) {
                      <img src="${item.imageUrl}" alt="${item.prompt}" class="card-img-top">
                    </a>
                    <div class="${!isAdmin ? 'd-none' : ''} card-body p-2 d-flex align-items-center justify-content-between">
-                     <a href="/chat/${item.chatId}" class="btn btn-outline-secondary col-12">
+                     <button onclick="event.stopPropagation(); if(typeof UserTracking !== 'undefined' && UserTracking.trackStartChat) { UserTracking.trackStartChat('${item.chatId}', 'explore_card', { sourceElementClass: 'gallery-chat-btn' }); } window.location.href='/chat/${item.chatId}';" class="btn btn-outline-secondary col-12">
                        <i class="bi bi-chat-dots me-2"></i> ${translations.startChat}
-                     </a>
+                     </button>
                      <button class="btn btn-light image-nsfw-toggle ${!isAdmin ? 'd-none' : ''} ${item?.nsfw ? 'nsfw' : 'sfw'}" data-id="${item._id}">
                        <i class="bi ${item.nsfw ? 'bi-eye-slash-fill' : 'bi-eye-fill'}"></i>
                      </button>
